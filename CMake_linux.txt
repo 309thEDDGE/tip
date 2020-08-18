@@ -1,0 +1,202 @@
+set(CMAKE_GENERATOR "Unix Makefiles")
+set(CMAKE_CXX_COMPILER "/usr/bin/g++")
+
+# If this is a container build, then the libs
+# are linked dynamically. Set the following
+# var to build the exe with links to the
+# directory into which the libs are installed,
+# i.e., set the correct runtime path.
+if(container)
+    set(CMAKE_INSTALL_RPATH ${out_lib_dir})
+endif()
+
+add_compile_options("-m64")
+
+# NEWARROW is used if the new (~0.17+) version of 
+# Arrow is used. Currently, only the most recent
+# Arrow version can be installed in Centos using
+# the package manager.
+if(container)
+    add_definitions(-DNEWARROW)
+endif()
+
+add_definitions(-D__linux__)
+
+if (container)
+    set(inc_dir "/usr/include")
+    set(lib_dir "/usr/lib64")
+else()
+    get_filename_component(deps_dir "deps" ABSOLUTE)
+	# NOTE:
+	# For non-container builds, this file assumes that arrow, googlemock/googletest, and yaml-cpp
+	# have been built.  The following directories should exist in tip/deps, linked to or copied 
+	# from the respective source directories as shown:
+	#    deps/arrow_library_dependencies -> .../apache-arrow-0.14.0/cpp/src
+    #    deps/gsuite/googlemock/include -> .../googletest-release-1.8.1/googlemock/include/
+    #    deps/gsuite/googlemock/lib -> .../googletest-release-1.8.1/build/googlemock/
+    #    deps/gsuite/googletest/include -> .../googletest-release-1.8.1/googletest/include/
+    #    deps/gsuite/googletest/lib -> .../googletest-release-1.8.1/build/googlemock/gtest/
+    #    deps/yaml-cpp -> .../yaml-cpp/yaml-cpp-yaml-cpp-0.6.3
+endif()
+
+#########################################################
+#                     Linux-specific
+#########################################################
+# filesystem
+set(fs_lib_name "stdc++fs")
+
+# thread
+set(thread_lib_name "pthread")
+set(dl_lib_name "dl")
+set(linux_libs ${fs_lib_name} ${thread_lib_name} ${dl_lib_name})
+
+# Link dirs
+link_directories(${lib_dir})
+
+#########################################################
+#                     Yaml Lib Paths
+#########################################################
+
+
+if(container)
+    set(yaml_inc_dir ${inc_dir})
+    set(yaml_lib_name "libyaml-cpp.so")
+else()
+    set(yaml_path "${deps_dir}/yaml-cpp")
+    set(yaml_inc_dir "${yaml_path}/include")
+    if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+        set(yaml_boost_lib_dir "${yaml_path}/build/Debug")
+        set(yaml_lib_name "${yaml_boost_lib_dir}/libyaml-cpp.a")
+    elseif(${CMAKE_BUILD_TYPE} MATCHES "Release")
+        set(yaml_boost_lib_dir "${yaml_path}/build/Release")
+        set(yaml_lib_name "${yaml_boost_lib_dir}/libyaml-cpp.a")
+    else()
+        message(FATAL_ERROR "CMAKE_BUILD_TYPE not defined")
+    endif()
+endif()
+
+#########################################################
+#                  Apache Arrow Lib Paths
+#########################################################
+
+if(container)
+    set(arrow_inc_dir ${inc_dir})
+    set(arrow_lib_name "libarrow.so")
+    set(glibarrow_lib_name "libarrow-glib.so")
+    set(parquet_lib_name  "libparquet.so")
+    #set(je_lib_name "libjemalloc.so")
+    #set(brotli_lib_name "libbrotlicommon.so")
+    #set(brotlidec_lib_name "libbrotlidec.so")
+    #set(brotlienc_lib_name "libbrotlienc.so")
+else()
+    set(arrow_path "${deps_dir}/arrow_library_dependencies")
+    set(arrow_inc_dir "${arrow_path}/include")
+    set(arrow_lib_dir "${arrow_path}/lib")
+    
+    set(arrow_lib_name "${arrow_lib_dir}/libarrow.a")
+    set(brotli_lib_name "${arrow_lib_dir}/libbrotlicommon-static.a")
+    set(brotlidec_lib_name "${arrow_lib_dir}/libbrotlidec-static.a")
+    set(brotlienc_lib_name "${arrow_lib_dir}/libbrotlienc-static.a")
+    set(doubleconv_lib_name "${arrow_lib_dir}/libdouble-conversion.a")
+    set(glog_lib_name "${arrow_lib_dir}/libglog.a")
+    set(je_lib_name "${arrow_lib_dir}/libjemalloc.a")
+    set(lz4_lib_name "${arrow_lib_dir}/liblz4.a")
+    set(parquet_lib_name  "${arrow_lib_dir}/libparquet.a")
+    set(snappy_lib_name "${arrow_lib_dir}/libsnappy.a")
+    set(thrift_lib_name "${arrow_lib_dir}/libthrift.a")
+    set(zlib_lib_name "${arrow_lib_dir}/libz.a")
+    set(zstd_lib_name  "${arrow_lib_dir}/libzstd.a")
+endif()
+
+#########################################################
+#                Required Boost Lib Paths
+#########################################################
+if(NOT container)
+    set(boost_inc_dir "${arrow_path}/boost_1_67_0")
+    set(boost_lib_dir "${arrow_path}/lib")
+
+    set(boostfs_lib_name "${boost_lib_dir}/libboost_filesystem.a")
+    set(boostsys_lib_name "${boost_lib_dir}/libboost_system.a")
+    set(boostregex_lib_name "${boost_lib_dir}/libboost_regex.a")
+endif()
+
+#########################################################
+#               Parquet-relevant dir/libs
+#########################################################
+if(container)
+    set(parquet_inc_dirs ${arrow_inc_dir})
+    set(parquet_libs 
+        ${arrow_lib_name}
+        ${glibarrow_lib_name}
+        ${parquet_lib_name} 
+#           ${je_lib_name}
+#           ${brotli_lib_name}
+#           ${brotlidec_lib_name}
+#           ${brotlienc_lib_name}
+    )
+else()
+    set(parquet_inc_dirs ${arrow_inc_dir})
+    set(parquet_libs
+                    ${parquet_lib_name} 
+                    ${arrow_lib_name}
+                    ${zlib_lib_name}
+                    ${boostfs_lib_name} 
+                    ${boostsys_lib_name} 
+                    ${boostregex_lib_name}
+                    ${lz4_lib_name} 
+                    ${zstd_lib_name} 
+                    ${snappy_lib_name} 
+                    ${thrift_lib_name}
+                    ${brotlienc_lib_name} 
+                    ${brotlidec_lib_name} 
+                    ${brotli_lib_name} 
+                    ${doubleconv_lib_name}
+                    ${je_lib_name}
+                    ${glog_lib_name}
+        # repeating all in reverse order to resolve undefined references
+        # (except for brotli_lib_name because it has to come after the other
+        #  brotli libs)
+                    # ${glog_lib_name}
+                    # ${je_lib_name}
+                    # ${doubleconv_lib_name}
+                    # ${brotlidec_lib_name} 
+                    # ${brotlienc_lib_name} 
+                    # ${brotli_lib_name} 
+                    # ${thrift_lib_name}
+                    # ${snappy_lib_name} 
+                    # ${zstd_lib_name} 
+                    # ${lz4_lib_name} 
+                    # ${boostregex_lib_name}
+                    # ${boostsys_lib_name} 
+                    # ${boostfs_lib_name} 
+                    # ${zlib_lib_name}
+                    # ${parquet_lib_name} 
+                    # ${arrow_lib_name}
+    )
+endif()
+
+#########################################################
+#             Googletest/Googlemock Lib Paths
+#########################################################
+if(container)
+    set(gsuite_inc_dirs ${inc_dir})
+
+    set(gtest_lib_name "libgtest.so")
+    set(gtestmain_lib_name "libgtest_main.so")
+    set(gmock_lib_name "libgmock.so")
+else()
+    set(gsuite_path "${deps_dir}/gsuite")
+    set(gtest_inc_dir "${gsuite_path}/googletest/include")
+    set(gtest_lib_dir "${gsuite_path}/googletest/lib")
+    set(gmock_inc_dir "${gsuite_path}/googlemock/include")
+    set(gmock_lib_dir "${gsuite_path}/googlemock/lib")
+
+    set(gtest_lib_name "${gtest_lib_dir}/libgtest.a")
+    set(gtestmain_lib_name "${gtest_lib_dir}/libgtest_main.a")
+    set(gmock_lib_name "${gmock_lib_dir}/libgmock.a")
+    
+    set(gsuite_inc_dirs ${gtest_inc_dir} ${gmock_inc_dir})
+endif()
+
+set(gsuite_libs ${gtest_lib_name} ${gtestmain_lib_name} ${gmock_lib_name})
+

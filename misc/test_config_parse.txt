@@ -1,0 +1,24 @@
+first_code=12.1
+
+tail_nums = 234, 336, 178, 188
+
+time_stamps = 20345.12, 20346.13, 20347.2, 20349.57
+
+other_codes2 = 1.267, this, is,a,code,list  ,with,numbers,1500
+tmats_codes=zxy2,R-x\R14,TIS\
+
+1t112
+#====Basic Comet Config File
+
+
+myfalcon=1,2,17
+
+msg_path=C:\Users\jacey.morine\source\repos\CH10Database\CH10Database
+wrd_path=C:\Users\jacey.morine\source\repos\CH10Database\CH10Databasewrd
+
+msg_name=msg.txt
+
+ofp=M7.2T1
+
+
+other_codes=this,is,a,code,list,with,numbers,1500

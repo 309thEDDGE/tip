@@ -1,0 +1,2 @@
+# Place in site-packages . . .
+import os; os.environ['SERVICE_URL'] = 'localhost'; os.environ['SERVICE_PORT'] = '8000' # strings

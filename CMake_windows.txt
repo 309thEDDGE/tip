@@ -1,0 +1,91 @@
+add_compile_definitions(__WIN64)
+set(deps_name "deps")
+set(CMAKE_GENERATOR_PLATFORM x64)
+set(linux_libs "")
+
+#########################################################
+#                     Yaml Lib Paths
+#########################################################
+
+get_filename_component(yaml_path "${deps_name}/yaml-cpp-yaml-cpp-0.6.0/yaml-cpp-yaml-cpp-0.6.0" ABSOLUTE)
+set(yaml_inc_dir "${yaml_path}/include")
+if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+    set(yaml_lib_dir "${yaml_path}/build/Debug")
+    set(yaml_lib_name "${yaml_lib_dir}/libyaml-cppmdd.lib")
+elseif(${CMAKE_BUILD_TYPE} MATCHES "Release")
+    set(yaml_lib_dir "${yaml_path}/build/Release")
+    set(yaml_lib_name "${yaml_lib_dir}/libyaml-cppmd.lib")
+else()
+    message(FATAL_ERROR "CMAKE_BUILD_TYPE not defined")
+
+endif()
+
+#########################################################
+#                  Apache Arrow Lib Paths
+#########################################################
+
+set(arrow_path "arrow_library_dependencies")
+get_filename_component(arrow_inc_dir "${deps_name}/${arrow_path}/include" ABSOLUTE)
+get_filename_component(arrow_lib_dir "${deps_name}/${arrow_path}/lib" ABSOLUTE)
+ 
+set(arrow_lib_name "${arrow_lib_dir}/arrow_static.lib")
+set(zlib_lib_name  "${arrow_lib_dir}/zlibstatic.lib")
+set(lz4_lib_name  "${arrow_lib_dir}/liblz4_static.lib")
+set(zstd_lib_name  "${arrow_lib_dir}/zstd_static.lib")
+set(snappy_lib_name  "${arrow_lib_dir}/snappy.lib")
+set(thrift_lib_name  "${arrow_lib_dir}/thriftmd.lib")
+set(brotli_lib_name  "${arrow_lib_dir}/brotlicommon-static.lib")
+set(brotlienc_lib_name  "${arrow_lib_dir}/brotlienc-static.lib")
+set(brotlidec_lib_name  "${arrow_lib_dir}/brotlidec-static.lib")
+set(doubleconv_lib_name "${arrow_lib_dir}/double-conversion.lib")
+set(parquet_lib_name  "${arrow_lib_dir}/parquet_static.lib")
+
+#########################################################
+#                Required Boost Lib Paths
+#########################################################
+#get_filename_component(boost_inc_dir "${deps_name}/${arrow_path}/boost_1_67_0/include" ABSOLUTE)
+get_filename_component(boost_lib_dir "${arrow_lib_dir}" ABSOLUTE)
+
+set(boostfs_lib_name "${boost_lib_dir}/libboost_filesystem-vc140-mt-x64-1_67.lib")
+set(boostsys_lib_name "${boost_lib_dir}/libboost_system-vc140-mt-x64-1_67.lib")
+set(boostregex_lib_name "${boost_lib_dir}/libboost_regex-vc140-mt-x64-1_67.lib")
+
+
+#########################################################
+#               Parquet-relevant dir/libs
+#########################################################
+#set(parquet_inc_dirs ${arrow_inc_dir} ${boost_inc_dir})
+set(parquet_inc_dirs ${arrow_inc_dir})
+set(parquet_libs 
+                    ${zlib_lib_name}
+                    ${boostfs_lib_name} 
+                    ${boostsys_lib_name} 
+                    ${boostregex_lib_name}
+                    ${lz4_lib_name} 
+                    ${zstd_lib_name} 
+                    ${snappy_lib_name} 
+                    ${thrift_lib_name}
+                    ${brotli_lib_name} 
+                    ${brotlienc_lib_name} 
+                    ${brotlidec_lib_name} 
+                    ${doubleconv_lib_name}
+                    ${arrow_lib_name}
+                    ${parquet_lib_name} 
+)
+
+#########################################################
+#             Googletest/Googlemock Lib Paths
+#########################################################
+set(gsuite_dir_name "googletest-release-1.8.1libs")
+get_filename_component(gsuite_path "${deps_name}/${gsuite_dir_name}" ABSOLUTE)
+set(gtest_inc_dir "${gsuite_path}/googletest/include")
+set(gtest_lib_dir "${gsuite_path}/googletest/lib")
+set(gmock_inc_dir "${gsuite_path}/googlemock/include")
+set(gmock_lib_dir "${gsuite_path}/googlemock/lib")
+
+set(gtest_lib_name "${gtest_lib_dir}/gtest.lib")
+set(gmain_lib_name "${gtest_lib_dir}/gtest_main.lib")
+set(gmock_lib_name "${gmock_lib_dir}/gmock.lib")
+
+set(gsuite_inc_dirs ${gtest_inc_dir} ${gmock_inc_dir})
+set(gsuite_libs ${gtest_lib_name} ${gmain_lib_name} ${gmock_lib_name})

@@ -1,0 +1,51 @@
+Boost build: 
+in VS command prompt:
+call bootstrap.bat
+b2 -j8 -a --build-dir=C:\Users\isaac.myers\boost address-model=64 architecture=x86 link=static threading=multi runtime-link=shared --build-type=complete stage install
+
+Windows Build Apache Arrow
+
+1) open x64 Native Tools command prompt for VS 2019
+
+1a) Set environment vars:
+
+setx BOOST_ROOT "C:\Boost"
+setx BOOST_INCLUDEDIR "C:\Boost\include"
+
+2) navigate to Arrow source, then:
+cd cpp
+mkdir build
+cd build
+cmake .. -G "Visual Studio 15 2017 Win64" -DARROW_BUILD=ON ^
+-DCMAKE_CXX_COMPILER="C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\bin\Hostx64\x64\cl.exe" ^
+-DCMAKE_C_COMPILER="C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.20.27508\bin\Hostx64\x64\cl.exe" ^
+-DGTest_SOURCE=BUNDLED -DARROW_BUILD_STATIC=ON -DARROW_COMPUTE=OFF -DARROW_DATASET=OFF -DARROW_IPC=OFF ^
+-DARROW_STATIC=ON -DARROW_HDFS=OFF -DARROW_HIVESERVER2=OFF -DARROW_BUILD_UTILITIES=OFF ^
+-DARROW_PARQUET=OFF -DARROW_DEPENDENCY_SOURCE=BUNDLED -DARROW_WITH_BROTLI=OFF -DARROW_WITH_SNAPPY=OFF -DARROW_WITH_ZLIB=OFF ^
+-DARROW_WITH_ZSTD=OFF -DARROW_WITH_BZ2=OFF -DARROW_WITH_LZ4=OFF -DARROW_JEMALLOC=OFF ^
+-DBOOST_SOURCE=SYSTEM -DARROW_BOOST_USE_SHARED=OFF -DARROW_PROTOBUF_USE_SHARED=OFF -DARROW_WITH_BACKTRACE=OFF
+
+Needed deps:
+Apache Thrift (not approved)
+zlib (approved) 
+double-conversion (check)
+flatbuffers (not approved, check)
+rapidjson (not approved, check)
+
+cmake --build . -j 4 --config Release install
+
+Also -DARROW_BUILD_STATIC=ON, -DARROW_STATIC=ON
+
+May not need ARROW_HDFS or ARROW_HIVESERVER2 for XDAT release. May not need hive server for non-local database release either.
+On my system I have a newer generator option, perhaps useful: "Visual Studio 15 2017 Win64"
+
+Individual dependency resolution: -D$PACKAGE_NAME_SOURCE=BUNDLED (or =AUTO, etc.).
+
+See C++ development page at https://arrow.apache.org/docs/developers/cpp.html.
+
+See section on modular build targets: use -DARROW_OPTIONAL_INSTALL=ON then:
+make parquet
+make install
+
+Not sure how those commands are given to cmake --build ... on Windows. Possibly "cmake --build . --target parquet --config Release"
+

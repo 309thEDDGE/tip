@@ -1,0 +1,137 @@
+#include "parquet_videodataf0.h"
+
+ParquetVideoDataF0::ParquetVideoDataF0(std::string outfile, uint16_t ID, bool truncate) : 
+	max_temp_element_count_(DEFAULT_ROW_GROUP_COUNT_VIDEO * DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO),
+	ParquetContext(DEFAULT_ROW_GROUP_COUNT_VIDEO), id_(ID), temp_element_count_(0)
+{
+	// Allocate vector memory. 	
+	doy_.resize(max_temp_element_count_);
+	ET_.resize(max_temp_element_count_);
+	IPH_.resize(max_temp_element_count_);
+	KLV_.resize(max_temp_element_count_);
+	PL_.resize(max_temp_element_count_);
+	SRS_.resize(max_temp_element_count_);
+
+	/*
+		Each video packet contains is 188 bytes of transport stream data
+		Storing the video payload as uint16, the vector needs to be of size 188/2 = 94
+	*/
+	video_data_.resize(max_temp_element_count_ * TransportStream_DATA_COUNT); 
+	label_.resize(max_temp_element_count_);
+	time_.resize(max_temp_element_count_);
+	channel_id_.resize(max_temp_element_count_);
+	
+
+	// Add fields to table.
+	addField(arrow::boolean(), "doy");
+	addField(arrow::boolean(), "ET");
+	addField(arrow::boolean(), "IPH");
+	addField(arrow::boolean(), "KLV");
+	addField(arrow::int16(), "PL");
+	addField(arrow::boolean(), "SRS");
+	addField(arrow::int32(), "data", TransportStream_DATA_COUNT);
+	addField(arrow::utf8(), "label");
+	addField(arrow::int64(), "time");
+	addField(arrow::int32(), "channelid");
+	
+	// Set memory locations.
+	setMemoryLocation<uint8_t>(doy_, "doy");
+	setMemoryLocation<uint8_t>(ET_, "ET");
+	setMemoryLocation<uint8_t>(IPH_, "IPH");
+	setMemoryLocation<uint8_t>(KLV_, "KLV");
+	setMemoryLocation<uint8_t>(PL_, "PL");
+	setMemoryLocation<uint8_t>(SRS_, "SRS");
+	setMemoryLocation<video_datum>(video_data_, "data");
+	setMemoryLocation<std::string>(label_, "label");
+	setMemoryLocation<uint64_t>(time_, "time");
+	setMemoryLocation<uint16_t>(channel_id_, "channelid");
+
+	uint8_t ret = open_for_write(outfile, truncate);
+}
+
+void ParquetVideoDataF0::commit()
+{
+#ifdef DEBUG
+#if DEBUG > 1
+	printf("(%03u) ParquetMilStd1553F1::commit()\n", id_);
+#endif
+#endif
+
+	if (temp_element_count_ > 0)
+	{
+		int n_calls = int(std::ceil(double(temp_element_count_) / double(DEFAULT_ROW_GROUP_COUNT_VIDEO)));
+		for (int i = 0; i < n_calls; i++)
+		{
+			if (i == n_calls - 1)
+			{
+				writeColumns(temp_element_count_ - (n_calls - 1) * DEFAULT_ROW_GROUP_COUNT_VIDEO, 
+					i * DEFAULT_ROW_GROUP_COUNT_VIDEO);
+			}
+			else
+			{
+				writeColumns(DEFAULT_ROW_GROUP_COUNT_VIDEO, i * DEFAULT_ROW_GROUP_COUNT_VIDEO);
+			}
+		}
+
+		std::fill(video_data_.begin(), video_data_.end(), 0);
+	}
+}
+
+void ParquetVideoDataF0::append_data(const std::vector<uint64_t>& time_stamp, 
+	const uint8_t& doy, 
+	const std::string& label, 
+	const uint32_t& channel_id, 
+	const VideoDataF0ChanSpecFormat* vid_flags, 
+	const uint32_t& transport_stream_pkt_count, 
+	std::vector<video_datum>& data_vec)
+{
+#ifdef DEBUG
+#if DEBUG > 2
+	printf("(%03hu) ParquetVideoDataF0: appending %u packets\n", id, transport_stream_packet_count);
+#endif
+#endif
+
+	for (int i = 0; i < transport_stream_pkt_count; i++)
+	{
+		doy_[temp_element_count_] = doy;
+		ET_[temp_element_count_] = vid_flags->ET;
+		IPH_[temp_element_count_] = vid_flags->IPH;
+		KLV_[temp_element_count_] = vid_flags->KLV;
+		PL_[temp_element_count_] = vid_flags->PL;
+		SRS_[temp_element_count_] = vid_flags->SRS;
+		label_[temp_element_count_] = label;
+
+		if (vid_flags->IPH)
+		{
+			time_[temp_element_count_] = time_stamp[i];
+		}
+		else
+		{
+			time_[temp_element_count_] = time_stamp[0];
+		}
+		
+		channel_id_[temp_element_count_] = channel_id;
+
+		std::copy(data_vec.begin() + i * TransportStream_DATA_COUNT,
+			data_vec.begin() + (i + 1) * TransportStream_DATA_COUNT, 
+			video_data_.data() + temp_element_count_ * TransportStream_DATA_COUNT);
+
+		// Increment the count variable.
+		temp_element_count_++;
+
+		if (temp_element_count_ == max_temp_element_count_)
+		{
+#ifdef DEBUG
+#if DEBUG > 0
+			printf("(%03u) Writing VideoDataF0 to Parquet, %d rows\n", id_, temp_element_count_);
+#endif
+#endif
+			for (int i = 0; i < DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO; i++)
+			{
+				writeColumns(DEFAULT_ROW_GROUP_COUNT_VIDEO, i * DEFAULT_ROW_GROUP_COUNT_VIDEO);
+			}
+
+			temp_element_count_ = 0;
+		}
+	}
+}

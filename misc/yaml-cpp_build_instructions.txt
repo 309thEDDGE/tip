@@ -1,0 +1,33 @@
+1. Download source:(I downloaded 0.6.0)
+	a. https://github.com/jbeder/yaml-cpp
+	b. Or yaml-cpp 0.6.0 from MCCR
+
+2. Make a build directory in the source and navigate to it (Visual studio native tools command line works as an option)
+	a. mkdir build
+	b. cd build
+
+3. Update the CMakeLists.txt (These options are already in the file, just make the ON/OFF adjustments)
+	a. option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
+	b. option(MSVC_SHARED_RT "MSVC: Build with shared runtime libs (/MD)" ON)
+
+4. Run cmake commands
+	a. cmake .. -G "Visual Studio 14 2015 Win64"
+	b. cmake --build . --config Release
+
+5. Make sure the preprocessor YAML_CPP_NOEXCEPT is set properly in exceptions.h
+	a. sometimes _MSC_VER is defined and “_NOEXCEPT” doesn’t work and needs to be replaced with “noexcept”
+		i. #define YAML_CPP_NOEXCEPT noexcept 
+
+6. Add the library and library path to the project
+	a. Path (yaml-cpp-yaml-cpp-0.6.0\build\Release)
+	b. Library (libyaml-cppmd.lib)
+	
+7. Add the include directories path to "Include Directories" in project properties
+	a. yaml-cpp-yaml-cpp-0.6.0\include
+	
+8. Include YAML functionality with #include "yaml-cpp/yaml.h"
+
+
+
+
+
