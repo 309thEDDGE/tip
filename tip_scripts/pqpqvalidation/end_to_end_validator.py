@@ -74,6 +74,7 @@ class E2EValidator(object):
             os.system(call_string)
             self.run_times[ch10] = time.time() - start_time
 
+
     def _log_entry(self, entry_str):
         self.log_handle.write(entry_str + '\n')
 
@@ -131,8 +132,8 @@ class E2EValidator(object):
         print('\nTIP run time stats:')
         self.print('\nTIP run time stats:')
         for key, value in self.run_times.items():
-            print('{}: {} seconds'.format(key,value))
-            self.print('{}: {} seconds'.format(key,value))
+            print('{}: {} seconds'.format(key,round(value,2)))
+            self.print('{}: {} seconds'.format(key,round(value,2)))
 
     def _assemble_validation_stats(self):
 
