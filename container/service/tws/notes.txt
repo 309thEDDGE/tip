@@ -1,0 +1,11 @@
+Run dev server: ./run.py
+
+Run tests: tws/tests/test_basic.py
+
+Run flask service in Docker container in the most simple case: https://runnable.com/docker/python/dockerize-your-flask-application
+RESTful API with python and flask blog: https://blog.miguelgrinberg.com/post/designing-a-restful-api-with-python-and-flask
+
+Link below, chapters 4, 17 and 19 particularly relevant:
+Flask mega-tutorial by a guy who wrote a flask extension: https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-iv-database
+
+

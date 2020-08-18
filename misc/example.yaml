@@ -1,0 +1,18 @@
+# See yaml_reader.h to show examples on how to read this specific yaml file
+
+platform: name
+
+booleanTest: True
+
+integerTest: 50
+
+integerList: [0, 2, 3, -1]
+
+corrections:
+  - [AJunk,A]
+  - [BJunk,B]
+
+corrections2:
+  AJunk: A
+  BJunk: B
+
