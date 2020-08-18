@@ -6,7 +6,6 @@ sys.path.append(script_path)
 
 from tip_scripts.pqpqvalidation.pqpq_raw_validation import PqPqRawValidation
 from tip_scripts.pqpqvalidation.pqpq_translated_data_validation import PqPqTranslatedDataValidation
-from tip_scripts.run_cl_process import RunCLProcess
 import time
 
 
