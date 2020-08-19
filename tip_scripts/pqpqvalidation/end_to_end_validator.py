@@ -6,11 +6,21 @@ sys.path.append(script_path)
 
 from tip_scripts.pqpqvalidation.pqpq_raw_validation import PqPqRawValidation
 from tip_scripts.pqpqvalidation.pqpq_translated_data_validation import PqPqTranslatedDataValidation
+import time
+
 
 
 class E2EValidator(object):
 
     def __init__(self, truth_set_dir, test_set_dir, log_file_path, log_desc=''):
+        self.run_tip = False
+        self.csv_path = os.path.join(truth_set_dir,'ch10list.csv')
+        if not os.path.exists(self.csv_path):
+            print('\nInvalid csv path {}, not regenerating test set'.format(self.csv_path))
+            self.run_tip = False
+        else:
+            self.run_tip = True 
+
         self.truth_set_dir = truth_set_dir
         self.test_set_dir = test_set_dir
         self.log_file_path = log_file_path
@@ -32,6 +42,37 @@ class E2EValidator(object):
         log_base_name = 'pqpqvalidation_' + log_description + time_stamp + '.txt'
         self.log_name = os.path.join(self.log_file_path, log_base_name)
         self.log_handle = None
+        self.run_times = {}
+
+    def _regenerate_test_set(self):
+
+        print('Regenerating test set\n')
+
+        #Duration: 87 sec
+
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../parse_and_translate.py'))
+
+        truth_dir = self.truth_set_dir # Directory in which ch10 files and ICDs reside
+        test_dir = self.test_set_dir # Directory into which generated raw/translated data are placed
+
+        # read in chapter ten names and associated ICDs from a provided csv
+        f = open(self.csv_path, "r")
+        lines = f.readlines()
+
+        ch10_files_and_icds = {}
+        for line in lines:
+            temp = line.split(',')
+            ch10_files_and_icds[temp[0].strip()] = temp[1].strip() # strip leading and trailing white space
+
+        for ch10,icd in ch10_files_and_icds.items():
+            call_list = ['python', script_path, os.path.join(truth_dir, ch10),
+                         os.path.join(truth_dir, icd), '-o', test_dir]
+            call_string = ' '.join(call_list)
+            print(call_string)
+            start_time = time.time()
+            os.system(call_string)
+            self.run_times[ch10] = time.time() - start_time
+
 
     def _log_entry(self, entry_str):
         self.log_handle.write(entry_str + '\n')
@@ -52,6 +93,8 @@ class E2EValidator(object):
 
 
     def validate(self):
+        if self.run_tip:
+            self._regenerate_test_set()
         self._open_log()
         self._create_validation_objects()
         self._match_raw_and_translated_comparison_objects()
@@ -84,6 +127,12 @@ class E2EValidator(object):
         msg = '\nAll validation set result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['all_ch10']))
         print(msg)
         self.print(msg)
+
+        print('\nTIP run time stats:')
+        self.print('\nTIP run time stats:')
+        for key, value in self.run_times.items():
+            print('{}: {} seconds'.format(key,round(value,2)))
+            self.print('{}: {} seconds'.format(key,round(value,2)))
 
     def _assemble_validation_stats(self):
 

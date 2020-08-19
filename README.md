@@ -93,7 +93,7 @@ Attempt to follow the Google C++ Style Guide which can be found at google.github
 
 Configuration files must be present in `tip/conf` which is relative to the binary via `../conf`. Default configuration files
 are located in `tip/conf/default_conf` and shall not be edited. Initially the user shall copy relevant `\*.yaml` files into 
-`tip/conf` from `tip/conf/default_conf` and edit them as necessary. Files with extension conf are for experts and developers.
+`tip/conf` from `tip/conf/default_conf` and edit them as necessary.
 If the `parse_and_translate.py` script is used, relevant config files are automatically copied from `tip/conf/default_conf` to 
 `tip/conf` on the first run. Detailed comments for each configuration parameter are provided in the configuration files.  
 
