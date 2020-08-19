@@ -13,7 +13,7 @@ import time
 class E2EValidator(object):
 
     def __init__(self, truth_set_dir, test_set_dir, log_file_path, log_desc=''):
-        self.run_tip = run_tip = False
+        self.run_tip = False
         self.csv_path = os.path.join(truth_set_dir,'ch10list.csv')
         if not os.path.exists(self.csv_path):
             print('\nInvalid csv path {}, not regenerating test set'.format(self.csv_path))
