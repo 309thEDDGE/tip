@@ -1,8 +1,3 @@
-#include <arrow/api.h>
-#include <arrow/io/api.h>
-#include <parquet/arrow/reader.h>
-#include <parquet/arrow/schema.h>
-#include <parquet/arrow/writer.h>
 #include <vector>
 #include <string>
 #include <filesystem>
@@ -68,17 +63,17 @@ protected:
 		// Add each vector as a column
 		for (int i = 0; i < output.size(); i++)
 		{
-			pc->addField(type, "data" + std::to_string(i));
-			pc->setMemoryLocation<T>(output[i], "data" + std::to_string(i));
+			pc->AddField(type, "data" + std::to_string(i));
+			pc->SetMemoryLocation<T>(output[i], "data" + std::to_string(i));
 		}
 
 		// Assume each vector is of the same size
 		int row_size = output[0].size();
 
-		pc->open_for_write(path, true);
+		pc->OpenForWrite(path, true);
 		for (int i = 0; i < row_size / row_group_count; i++)
 		{
-			pc->writeColumns(row_group_count, i * row_group_count);
+			pc->WriteColumns(row_group_count, i * row_group_count);
 		}
 
 		// The the remaider rows if row_group_count is 
@@ -86,7 +81,7 @@ protected:
 		int remainder = row_size % row_group_count;
 		if (remainder > 0)
 		{
-			pc->writeColumns(remainder,
+			pc->WriteColumns(remainder,
 				(row_size / row_group_count) * row_group_count);
 		}
 		
@@ -122,17 +117,17 @@ protected:
 		ParquetContext* pc = new ParquetContext(row_group_count);
 
 		// Add the vector as a list column
-		pc->addField(arrow::int32(), "data", list_size);
-		pc->setMemoryLocation<uint16_t>(output, "data");
+		pc->AddField(arrow::int32(), "data", list_size);
+		pc->SetMemoryLocation<uint16_t>(output, "data");
 
 
 		// Assume each vector is of the same size
 		int row_size = output.size()/list_size;
 
-		pc->open_for_write(path, true);
+		pc->OpenForWrite(path, true);
 		for (int i = 0; i < row_size / row_group_count; i++)
 		{
-			pc->writeColumns(row_group_count, i * row_group_count);
+			pc->WriteColumns(row_group_count, i * row_group_count);
 		}
 
 		// The the remaider rows if row_group_count is 
@@ -140,7 +135,7 @@ protected:
 		int remainder = row_size % row_group_count;
 		if (remainder > 0)
 		{
-			pc->writeColumns(remainder,
+			pc->WriteColumns(remainder,
 				(row_size / row_group_count) * row_group_count);
 		}
 

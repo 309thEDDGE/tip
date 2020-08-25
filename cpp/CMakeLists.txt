@@ -61,7 +61,7 @@ message(STATUS "Building lib: " "${pqctx_lib_name}")
 set(pqctx_src_dir ${pqctx_lib_name}/${source_dir_name})
 set(pqctx_inc_dir ${pqctx_lib_name}/${include_dir_name})
 add_library(${pqctx_lib_name}
-            ${pqctx_inc_dir}/Field_Info.h
+            ${pqctx_inc_dir}/column_data.h
             ${pqctx_src_dir}/parquet_context.cpp   ${pqctx_inc_dir}/parquet_context.h
     )
 

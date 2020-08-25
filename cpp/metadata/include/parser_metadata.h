@@ -60,9 +60,9 @@ public:
 	std::map<uint64_t, std::string> get_tmats_chanid_to_source_map();
 	std::map<uint64_t, std::string> get_tmats_chanid_to_type_map();
 
-	void write_metadata_to_parquet(std::filesystem::path parquet_dir);
+	//void write_metadata_to_parquet(std::filesystem::path parquet_dir);
 	void write_metadata_to_yaml(std::filesystem::path parquet_dir);
-	bool read_parquet_metadata(const std::string& parquet_dir);
+	//bool read_parquet_metadata(const std::string& parquet_dir);
 	bool read_yaml_metadata(const std::string& parquet_dir);
 };
 

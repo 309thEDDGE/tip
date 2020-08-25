@@ -72,7 +72,7 @@ public:
 		Compares columns between two parquet files
 		If the data types of the two columns are not
 		equivalent they will not match.
-		Note: if the column is a list, it will assume
+		Note!!! if the column is a list, it will assume
 		that the list type is INT32. 
 
 		Returns: False -> If columns don't match

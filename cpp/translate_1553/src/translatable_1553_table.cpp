@@ -615,7 +615,7 @@ uint8_t Translatable1553Table::configure_parquet_context(std::filesystem::path& 
 		printf("Adding ridealong column field: %s\n", ridealong_columns_[i]->name().c_str());
 #endif
 #endif
-		pq_->addField(ridealong_columns_[i]->arrow_type(), ridealong_columns_[i]->name());
+		pq_->AddField(ridealong_columns_[i]->arrow_type(), ridealong_columns_[i]->name());
 		if (set_parquet_context_memory_location(i, is_ridealong) == 1)
 		{
 			printf("Translatable1553Table::configure_parquet_context(): Failed to set memory location on col %s\n",
@@ -632,7 +632,7 @@ uint8_t Translatable1553Table::configure_parquet_context(std::filesystem::path& 
 		printf("Adding translatable column field: %s\n", columns_[col_ind_]->name().c_str());
 #endif
 #endif
-		pq_->addField(columns_[col_ind_]->arrow_type(), columns_[col_ind_]->name());
+		pq_->AddField(columns_[col_ind_]->arrow_type(), columns_[col_ind_]->name());
 #ifdef DEBUG
 #if DEBUG > 2
 		printf("Setting translatable column ParquetContext mem location: %s\n", 
@@ -649,7 +649,7 @@ uint8_t Translatable1553Table::configure_parquet_context(std::filesystem::path& 
 	
 	// Open the Parquet file for writing. Set truncate (2nd arg) to true to
 	// create new file and overwrite existing file, if present.
-	if (pq_->open_for_write(parquet_file_name, true) == 1)
+	if (pq_->OpenForWrite(parquet_file_name, true) == 1)
 	{
 		printf("Translatable1553Table::configure_parquet_context(): ParquetContext::open_for_write() error for path %s\n",
 			parquet_file_name.c_str());
@@ -671,7 +671,7 @@ uint8_t Translatable1553Table::set_parquet_context_memory_location(uint16_t& col
 		{
 		case arrow::Int64Type::type_id:
 		{
-			pq_->setMemoryLocation<int64_t>(
+			pq_->SetMemoryLocation<int64_t>(
 				dynamic_cast<TranslatableColumn<int64_t>*>(ridealong_columns_[col_ind].get())->translated_data_ref_,
 				ridealong_columns_[col_ind]->name());
 			return 0;
@@ -692,20 +692,20 @@ uint8_t Translatable1553Table::set_parquet_context_memory_location(uint16_t& col
 			switch (columns_[col_ind]->icd_elem_ptr_->schema_)
 			{
 			case ICDElementSchema::ASCII:
-				pq_->setMemoryLocation<int8_t>(
+				pq_->SetMemoryLocation<int8_t>(
 					dynamic_cast<TranslatableColumn<int8_t>*>(columns_[col_ind].get())->translated_data_ref_,
 					temp_name_);
 				break;
 			case ICDElementSchema::SIGNEDBITS:
 				if (columns_[col_ind]->icd_elem_ptr_->bit_count_ < 25)
 				{
-					pq_->setMemoryLocation<float>(
+					pq_->SetMemoryLocation<float>(
 						dynamic_cast<TranslatableColumn<float>*>(columns_[col_ind].get())->translated_data_ref_,
 						temp_name_);
 				}
 				else
 				{
-					pq_->setMemoryLocation<double>(
+					pq_->SetMemoryLocation<double>(
 						dynamic_cast<TranslatableColumn<double>*>(columns_[col_ind].get())->translated_data_ref_,
 						temp_name_);
 				}
@@ -713,19 +713,19 @@ uint8_t Translatable1553Table::set_parquet_context_memory_location(uint16_t& col
 			case ICDElementSchema::UNSIGNEDBITS:
 				if (columns_[col_ind]->icd_elem_ptr_->bit_count_ == 1)
 				{
-					pq_->setMemoryLocation<uint8_t>(
+					pq_->SetMemoryLocation<uint8_t>(
 						dynamic_cast<TranslatableColumn<uint8_t>*>(columns_[col_ind].get())->translated_data_ref_,
 						temp_name_);
 				}
 				else if (columns_[col_ind]->icd_elem_ptr_->bit_count_ < 25)
 				{
-					pq_->setMemoryLocation<float>(
+					pq_->SetMemoryLocation<float>(
 						dynamic_cast<TranslatableColumn<float>*>(columns_[col_ind].get())->translated_data_ref_,
 						temp_name_);
 				}
 				else
 				{
-					pq_->setMemoryLocation<double>(
+					pq_->SetMemoryLocation<double>(
 						dynamic_cast<TranslatableColumn<double>*>(columns_[col_ind].get())->translated_data_ref_,
 						temp_name_);
 				}
@@ -744,57 +744,57 @@ uint8_t Translatable1553Table::set_parquet_context_memory_location(uint16_t& col
 				printf("Error: MODE CODE -- no data to translate\n");
 				return 1;
 			case ICDElementSchema::SIGNED16:
-				pq_->setMemoryLocation<float>(
+				pq_->SetMemoryLocation<float>(
 					dynamic_cast<TranslatableColumn<float>*>(columns_[col_ind].get())->translated_data_ref_,
 					temp_name_);
 				break;
 			case ICDElementSchema::SIGNED32:
-				pq_->setMemoryLocation<double>(
+				pq_->SetMemoryLocation<double>(
 					dynamic_cast<TranslatableColumn<double>*>(columns_[col_ind].get())->translated_data_ref_,
 					temp_name_);
 				break;
 			case ICDElementSchema::UNSIGNED16:
-				pq_->setMemoryLocation<float>(
+				pq_->SetMemoryLocation<float>(
 					dynamic_cast<TranslatableColumn<float>*>(columns_[col_ind].get())->translated_data_ref_,
 					temp_name_);
 				break;
 			case ICDElementSchema::UNSIGNED32:
-				pq_->setMemoryLocation<double>(
+				pq_->SetMemoryLocation<double>(
 					dynamic_cast<TranslatableColumn<double>*>(columns_[col_ind].get())->translated_data_ref_,
 					temp_name_);
 				break;
 			case ICDElementSchema::FLOAT32_1750:
-				pq_->setMemoryLocation<float>(
+				pq_->SetMemoryLocation<float>(
 					dynamic_cast<TranslatableColumn<float>*>(columns_[col_ind].get())->translated_data_ref_,
 					temp_name_);
 				break;
 			case ICDElementSchema::FLOAT32_IEEE:
-				pq_->setMemoryLocation<float>(
+				pq_->SetMemoryLocation<float>(
 					dynamic_cast<TranslatableColumn<float>*>(columns_[col_ind].get())->translated_data_ref_,
 					temp_name_);
 				break;
 			case ICDElementSchema::FLOAT64_IEEE:
-				pq_->setMemoryLocation<double>(
+				pq_->SetMemoryLocation<double>(
 					dynamic_cast<TranslatableColumn<double>*>(columns_[col_ind].get())->translated_data_ref_,
 					temp_name_);
 				break;
 			case ICDElementSchema::FLOAT16:
-				pq_->setMemoryLocation<float>(
+				pq_->SetMemoryLocation<float>(
 					dynamic_cast<TranslatableColumn<float>*>(columns_[col_ind].get())->translated_data_ref_,
 					temp_name_);
 				break;
 			case ICDElementSchema::CAPS:
-				pq_->setMemoryLocation<double>(
+				pq_->SetMemoryLocation<double>(
 					dynamic_cast<TranslatableColumn<double>*>(columns_[col_ind].get())->translated_data_ref_,
 					temp_name_);
 				break;
 			case ICDElementSchema::FLOAT32_GPS:
-				pq_->setMemoryLocation<float>(
+				pq_->SetMemoryLocation<float>(
 					dynamic_cast<TranslatableColumn<float>*>(columns_[col_ind].get())->translated_data_ref_,
 					temp_name_);
 				break;
 			case ICDElementSchema::FLOAT64_GPS:
-				pq_->setMemoryLocation<double>(
+				pq_->SetMemoryLocation<double>(
 					dynamic_cast<TranslatableColumn<double>*>(columns_[col_ind].get())->translated_data_ref_,
 					temp_name_);
 				break;
@@ -810,7 +810,7 @@ uint8_t Translatable1553Table::set_parquet_context_memory_location(uint16_t& col
 
 void Translatable1553Table::write_to_parquet_file(uint16_t& write_rows_count)
 {
-	pq_->writeColumns(write_rows_count);
+	pq_->WriteColumns(write_rows_count);
 }
 
 bool Translatable1553Table::is_bad()
