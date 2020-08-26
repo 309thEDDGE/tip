@@ -1847,6 +1847,81 @@ TEST_F(ParquetContextTest, StringWriteOutMoreThanAvailable)
 	remove(pq_file.c_str());
 }
 
+TEST_F(ParquetContextTest, NoCastingFromStrings)
+{
+	if (arrow_file_ != nullptr)
+	{
+		if (!arrow_file_->closed())
+			arrow_file_->Close();
+	}
+
+	remove(pq_file.c_str());
+
+	std::string file_name = "file.parquet";
+	std::vector<std::string> file =
+	{ "a","b","d","jack","bell","tell" };
+
+	ASSERT_FALSE(CreateParquetFileList(arrow::int16(), file_name, file, 1, 2));
+
+	ASSERT_FALSE(SetPQPath(file_name));
+}
+
+TEST_F(ParquetContextTest, NoCastingToStrings)
+{
+	if (arrow_file_ != nullptr)
+	{
+		if (!arrow_file_->closed())
+			arrow_file_->Close();
+	}
+
+	remove(pq_file.c_str());
+
+	std::string file_name = "file.parquet";
+	std::vector<int16_t> file =
+	{ 0,1,2,3,4,5 };
+
+	ASSERT_FALSE(CreateParquetFileList(arrow::utf8(), file_name, file, 1, 2));
+
+	ASSERT_FALSE(SetPQPath(file_name));
+}
+
+TEST_F(ParquetContextTest, NoCastingFromBool)
+{
+	if (arrow_file_ != nullptr)
+	{
+		if (!arrow_file_->closed())
+			arrow_file_->Close();
+	}
+
+	remove(pq_file.c_str());
+
+	std::string file_name = "file.parquet";
+	std::vector<uint8_t> file =
+	{ 0,1,0,0,1,0 };
+
+	ASSERT_FALSE(CreateParquetFileList(arrow::int16(), file_name, file, 1, 2));
+
+	ASSERT_FALSE(SetPQPath(file_name));
+}
+
+TEST_F(ParquetContextTest, NoCastingToBool)
+{
+	if (arrow_file_ != nullptr)
+	{
+		if (!arrow_file_->closed())
+			arrow_file_->Close();
+	}
+
+	remove(pq_file.c_str());
+
+	std::string file_name = "file.parquet";
+	std::vector<int16_t> file =
+	{ 0,1,2,3,4,5 };
+
+	ASSERT_FALSE(CreateParquetFileList(arrow::boolean(), file_name, file, 3, 2));
+
+	ASSERT_FALSE(SetPQPath(file_name));
+}
 
 // Arrow Truncation doesn't work
 // See st_ = arrow::io::FileOutputStream::Open(path_, !truncate_, &ostream_);

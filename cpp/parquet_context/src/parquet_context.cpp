@@ -328,7 +328,7 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 	
 	bool castRequired;
 
-	if (columnData.cast_from_ == "")
+	if (columnData.cast_from_ == NONE)
 		castRequired = false;
 	else
 		castRequired = true;

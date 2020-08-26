@@ -49,6 +49,7 @@ private:
 	std::shared_ptr<parquet::WriterProperties> props_;
 	std::shared_ptr<arrow::io::ReadableFile> input_file_;
 	std::vector<std::shared_ptr<arrow::Field>> fields_;
+	std::vector<uint8_t> cast_vec_;
 
 	std::unique_ptr<arrow::ArrayBuilder> 
 		GetBuilderFromDataType(
@@ -83,9 +84,9 @@ private:
 	std::string GetTypeIDFromArrowType(const std::shared_ptr<arrow::DataType> type,
 		int& byteSize);
 
-	template<typename castType> void CastTo(const void const * data,
-		std::vector<castType>& buildVec,
-		const std::string& castFrom,
+	template<typename castToType> 
+	void CastTo(const void const* data,
+		const CastFromType castFrom,
 		const int& size,
 		const int& offset);
 	
@@ -135,6 +136,11 @@ void ParquetContext::Append(const bool& isList,
 		// Resize array to allocate space and append data.
 		bldr->Resize(append_row_count_);
 
+		// Resize the global cast vector to the minimum size needed
+		// in bytes
+		if (cast_vec_.size() < (append_row_count_ * listCount * sizeof(T)))
+			cast_vec_.resize(append_row_count_ * listCount * sizeof(T));
+
 		if (castRequired)
 		{
 			std::vector<int32_t> offsets_vec = 
@@ -143,17 +149,14 @@ void ParquetContext::Append(const bool& isList,
 			bldr->AppendValues(offsets_vec.data(), append_row_count_);
 
 			A* sub_bldr =
-				static_cast<A*>(bldr->value_builder());
+				static_cast<A*>(bldr->value_builder());			
 
-			std::vector<T> castVec(append_row_count_ * listCount);
-
-			CastTo<T>(columnData.data_, 
-				castVec, 
-				columnData.cast_from_, 
-				append_row_count_ * listCount, 
+			CastTo<T>(columnData.data_,
+				columnData.cast_from_,
+				append_row_count_ * listCount,
 				offset * listCount);
 
-			sub_bldr->AppendValues(castVec.data(), 
+			sub_bldr->AppendValues((T*)cast_vec_.data(), 
 				append_row_count_ * listCount);
 		}
 		else
@@ -175,18 +178,23 @@ void ParquetContext::Append(const bool& isList,
 
 		// Resize array to allocate space and append data.
 		bldr->Resize(append_row_count_);
+
+		// Resize the global cast vector to the minimum size needed
+		// in bytes
+		if (cast_vec_.size() < (append_row_count_ * sizeof(T)))
+			cast_vec_.resize(append_row_count_ * sizeof(T));
+
 		if (columnData.null_values_ == nullptr) 
 		{
 			if (castRequired) 
 			{
-				std::vector<T> castVec(append_row_count_);
-				CastTo<T>(columnData.data_, 
-					castVec, 
-					columnData.cast_from_, 
-					append_row_count_, 
+				CastTo<T>(columnData.data_,
+					columnData.cast_from_,
+					append_row_count_,
 					offset);
 
-				bldr->AppendValues(castVec.data(), append_row_count_);
+				bldr->AppendValues((T*)cast_vec_.data(),
+					append_row_count_);
 			}
 			else
 				bldr->AppendValues(((T*)columnData.data_) + offset, 
@@ -196,15 +204,12 @@ void ParquetContext::Append(const bool& isList,
 		{
 			if (castRequired) 
 			{
-				std::vector<T> castVec(append_row_count_);
-
-				CastTo<T>(columnData.data_, 
-					castVec, 
-					columnData.cast_from_, 
-					append_row_count_, 
+				CastTo<T>(columnData.data_,
+					columnData.cast_from_,
+					append_row_count_,
 					offset);
 
-				bldr->AppendValues(castVec.data(), 
+				bldr->AppendValues((T*)cast_vec_.data(),
 					append_row_count_,
 					columnData.null_values_);
 
@@ -217,59 +222,61 @@ void ParquetContext::Append(const bool& isList,
 	}
 }
 
-template<typename castType> void ParquetContext::CastTo(const void const * data, 
-	std::vector<castType>& buildVec,
-	const std::string& castFrom, 
-	const int& size, 
+template<typename castToType>
+void ParquetContext::CastTo(const void const* data,
+	const CastFromType castFrom,
+	const int& size,
 	const int& offset)
 {
-	if (castFrom == typeid(int8_t).name()) 
+	switch (castFrom)
 	{
-		std::copy((int8_t*)data + offset, 
-			(int8_t*)data + offset + size, 
-			buildVec.data());
-	}
-	else if (castFrom == typeid(uint8_t).name()) 
-	{
-		std::copy((uint8_t*)data + offset, 
-			(uint8_t*)data + offset + size, 
-			buildVec.data());
-	}
-	else if (castFrom == typeid(int16_t).name()) 
-	{
-		std::copy((int16_t*)data + offset, 
-			(int16_t*)data + offset + size, 
-			buildVec.data());
-	}
-	else if (castFrom == typeid(uint16_t).name()) 
-	{
-		std::copy((uint16_t*)data + offset, 
-			(uint16_t*)data + offset + size, 
-			buildVec.data());
-	}
-	else if (castFrom == typeid(int32_t).name()) 
-	{
-		std::copy((int32_t*)data + offset, 
-			(int32_t*)data + offset + size, 
-			buildVec.data());
-	}
-	else if (castFrom == typeid(uint32_t).name()) 
-	{
-		std::copy((uint32_t*)data + offset, 
-			(uint32_t*)data + offset + size, 
-			buildVec.data());
-	}
-	else if (castFrom == typeid(int64_t).name()) 
-	{
-		std::copy((int64_t*)data + offset, 
-			(int64_t*)data + offset + size, 
-			buildVec.data());
-	}
-	else if (castFrom == typeid(uint64_t).name()) 
-	{
-		std::copy((uint64_t*)data + offset, 
-			(uint64_t*)data + offset + size, 
-			buildVec.data());
+	case INT8:
+		std::copy((int8_t*)data + offset,
+			(int8_t*)data + offset + size,
+			(castToType*)cast_vec_.data());
+		break;
+
+	case UINT8:
+		std::copy((uint8_t*)data + offset,
+			(uint8_t*)data + offset + size,
+			(castToType*)cast_vec_.data());
+		break;
+
+	case INT16:
+		std::copy((int16_t*)data + offset,
+			(int16_t*)data + offset + size,
+			(castToType*)cast_vec_.data());
+		break;
+
+	case UINT16:
+		std::copy((uint16_t*)data + offset,
+			(uint16_t*)data + offset + size,
+			(castToType*)cast_vec_.data());
+		break;
+
+	case INT32:
+		std::copy((int32_t*)data + offset,
+			(int32_t*)data + offset + size,
+			(castToType*)cast_vec_.data());
+		break;
+	
+	case UINT32:
+		std::copy((uint32_t*)data + offset,
+			(uint32_t*)data + offset + size,
+			(castToType*)cast_vec_.data());
+		break;
+
+	case INT64:
+		std::copy((int64_t*)data + offset,
+			(int64_t*)data + offset + size,
+			(castToType*)cast_vec_.data());
+		break;
+
+	case UINT64:
+		std::copy((uint64_t*)data + offset,
+			(uint64_t*)data + offset + size,
+			(castToType*)cast_vec_.data());
+		break;
 	}
 }
 
@@ -315,15 +322,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 						fieldName);
 					parquet_stop_ = true;
 					return false;
-				}
-				else
-				{
-					it->second.SetColumnData(data.data(),
-						fieldName,
-						typeid(NativeType).name(),
-						boolField, data.size());
-				}
-				
+				}				
 			}
 
 			// Check if ptr is already set
@@ -339,20 +338,25 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 			}
 
 			// If the casting is required			
-			else if (typeid(NativeType).name() != it->second.type_ID_) 
+			if (typeid(NativeType).name() != it->second.type_ID_) 
 			{
 				// Check if other types are being written
-				// to a string (NativeType being cast to second.typeID)
-				if (it->second.type_ID_ == typeid(std::string).name() && 
-					typeid(std::string).name() != typeid(NativeType).name()) 
+				// to or from a string or boolean
+				// (NativeType being cast to second.typeID)
+				if (it->second.type_ID_ == typeid(std::string).name() || 
+					typeid(std::string).name() == typeid(NativeType).name() ||
+					it->second.type_ID_ == typeid(uint8_t).name() ||
+					typeid(uint8_t).name() == typeid(NativeType).name() )
 				{
 #ifdef DEBUG
 #if DEBUG > 1
 					printf("Warning!!!!!!!!!!!!  can't cast from other data"
-							"type to string for: %s\n", 
+							"type to string or bool for: %s\n", 
 						fieldName.c_str());
 #endif
 #endif
+					parquet_stop_ = true;
+					return false;
 				}
 				// Cast to larger datatype check
 				else if (it->second.byte_size_ < sizeof(a)) 
@@ -364,6 +368,8 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 						fieldName.c_str());
 #endif
 #endif
+					parquet_stop_ = true;
+					return false;
 				}// Check if floating point casting is happening
 				else if (it->second.type_ID_ == typeid(float).name() ||
 					it->second.type_ID_ == typeid(double).name() || 
@@ -377,6 +383,8 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 						fieldName.c_str());
 #endif
 #endif
+					parquet_stop_ = true;
+					return false;
 				}
 				// Equal size datatypes check
 				else if (it->second.byte_size_ == sizeof(a)) 
@@ -450,6 +458,8 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 					fieldName);
 #endif
 #endif
+				parquet_stop_ = true;
+				return false;
 			}
 			else if (it->second.pointer_set_)
 			{
@@ -461,7 +471,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 #endif
 #endif
 			}
-			else if (it->second.is_list_)
+			if (it->second.is_list_)
 			{
 				if (boolField != nullptr)
 				{
@@ -472,6 +482,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 						fieldName);
 #endif
 #endif
+					boolField = nullptr;
 				}
 				if (data.size() % it->second.list_size_ != 0)
 				{
@@ -484,21 +495,15 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 					parquet_stop_ = true;
 					return false;
 				}
-				else
-				{
-					it->second.SetColumnData(data, fieldName, nullptr, data.size());
-				}
 			}
-			else
-			{
 #ifdef DEBUG
 #if DEBUG > 1
-				printf("setting field info for %s\n",
-					fieldName.c_str());
+			printf("setting field info for %s\n",
+				fieldName.c_str());
 #endif
 #endif
-				it->second.SetColumnData(data, fieldName, boolField, data.size());
-			}
+			it->second.SetColumnData(data, fieldName, boolField, data.size());
+			
 			return true;
 		}
 	}
