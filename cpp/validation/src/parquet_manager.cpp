@@ -111,7 +111,7 @@ bool ParquetManager::SetPQPath(std::string base_path)
 }
 
 
-bool ParquetManager::GetNextRGBool(int col, std::vector<bool>& data, 
+bool ParquetManager::GetNextRGBool(int col, std::vector<uint8_t>& data, 
 	int& size, 
 	bool list)
 {

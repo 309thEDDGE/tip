@@ -316,8 +316,8 @@ bool Comparator::CompareBool(int column, bool is_list)
 	int size1 = 0;
 	int size2 = 0;
 
-	std::vector<bool> buffer1;
-	std::vector<bool> buffer2;
+	std::vector<uint8_t> buffer1;
+	std::vector<uint8_t> buffer2;
 
 	if (!pm1_.GetNextRGBool(column,
 		buffer1,

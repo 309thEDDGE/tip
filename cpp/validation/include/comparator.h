@@ -119,8 +119,7 @@ bool Comparator::CompareVecs(std::vector<T>& vec1,
 	int column)
 {
 	
-	// If comparing booleans, must use different compare method
-	if (typeid(T) == typeid(bool))
+	if (typeid(T) == typeid(std::string))
 	{
 		// If nothing exists in one of the vectors
 		// comparison should be false
@@ -138,7 +137,7 @@ bool Comparator::CompareVecs(std::vector<T>& vec1,
 		{
 			compare_vec_result_ =
 				std::equal(vec2.begin() + begin_pos_2_,
-					vec2.begin() + size2 + begin_pos_2_,
+					vec2.begin() + (size2 + begin_pos_2_),
 					vec1.begin() + begin_pos_1_);
 			compared_count_[column] = compared_count_[column] + size1;
 			begin_pos_1_ = 0;
@@ -153,7 +152,7 @@ bool Comparator::CompareVecs(std::vector<T>& vec1,
 		{
 			compare_vec_result_ =
 				std::equal(vec2.begin() + begin_pos_2_,
-					vec2.begin() + size2 + begin_pos_2_,
+					vec2.begin() + (size2 + begin_pos_2_),
 					vec1.begin() + begin_pos_1_);
 			compared_count_[column] = compared_count_[column] + size2;
 			size1 = size1 - size2;
@@ -168,7 +167,7 @@ bool Comparator::CompareVecs(std::vector<T>& vec1,
 		{
 			compare_vec_result_ =
 				std::equal(vec1.begin() + begin_pos_1_,
-					vec1.begin() + size1 + begin_pos_1_,
+					vec1.begin() + (size1 + begin_pos_1_),
 					vec2.begin() + begin_pos_2_);
 			compared_count_[column] = compared_count_[column] + size1;
 			size2 = size2 - size1;
@@ -177,11 +176,10 @@ bool Comparator::CompareVecs(std::vector<T>& vec1,
 			size1 = 0;
 		}
 	}
-
-	// Note the conversion to uint8_t allows for comparisons of NaN
-	// in the case of float and double
 	else
 	{
+		// Note the conversion to uint8_t allows for comparisons of NaN
+		// in the case of float and double
 		// If nothing exists in one of the vectors
 		// comparison should be false
 		if (size1 == 0 || size2 == 0)
@@ -197,9 +195,9 @@ bool Comparator::CompareVecs(std::vector<T>& vec1,
 		if (size1 == size2)
 		{
 			compare_vec_result_ =
-				std::equal((uint8_t*)&vec2[0] + (begin_pos_2_ * sizeof(T)),
-					(uint8_t*)&vec2[0] + ((size2 + begin_pos_2_) * sizeof(T)),
-					(uint8_t*)&vec1[0] + (begin_pos_1_ * sizeof(T)));
+				std::equal((uint8_t*)vec2.data() + (begin_pos_2_ * sizeof(T)),
+					(uint8_t*)vec2.data() + ((size2 + begin_pos_2_) * sizeof(T)),
+					(uint8_t*)vec1.data() + (begin_pos_1_ * sizeof(T)));
 			compared_count_[column] = compared_count_[column] + size1;
 			begin_pos_1_ = 0;
 			begin_pos_2_ = 0;
@@ -212,9 +210,9 @@ bool Comparator::CompareVecs(std::vector<T>& vec1,
 		else if (size1 > size2)
 		{
 			compare_vec_result_ =
-				std::equal((uint8_t*)&vec2[0] + (begin_pos_2_ * sizeof(T)),
-					(uint8_t*)&vec2[0] + ((size2 + begin_pos_2_) * sizeof(T)),
-					(uint8_t*)&vec1[0] + (begin_pos_1_ * sizeof(T)));
+				std::equal((uint8_t*)vec2.data() + (begin_pos_2_ * sizeof(T)),
+					(uint8_t*)vec2.data() + ((size2 + begin_pos_2_) * sizeof(T)),
+					(uint8_t*)vec1.data() + (begin_pos_1_ * sizeof(T)));
 			compared_count_[column] = compared_count_[column] + size2;
 			size1 = size1 - size2;
 			begin_pos_1_ += size2;
@@ -227,16 +225,16 @@ bool Comparator::CompareVecs(std::vector<T>& vec1,
 		else
 		{
 			compare_vec_result_ =
-				std::equal((uint8_t*)&vec1[0] + (begin_pos_1_ * sizeof(T)),
-					(uint8_t*)&vec1[0] + ((size1 + begin_pos_1_) * sizeof(T)),
-					(uint8_t*)&vec2[0] + (begin_pos_2_ * sizeof(T)));
+				std::equal((uint8_t*)vec1.data() + (begin_pos_1_ * sizeof(T)),
+					(uint8_t*)vec1.data() + ((size1 + begin_pos_1_) * sizeof(T)),
+					(uint8_t*)vec2.data() + (begin_pos_2_ * sizeof(T)));
 			compared_count_[column] = compared_count_[column] + size1;
 			size2 = size2 - size1;
 			begin_pos_2_ += size1;
 			begin_pos_1_ = 0;
 			size1 = 0;
 		}
-	}
+	}	
 
 	return compare_vec_result_;
 }

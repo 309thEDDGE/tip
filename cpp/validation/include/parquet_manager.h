@@ -69,7 +69,7 @@ public:
 	bool GetNextRG(int col, std::vector<T>& data, 
 		int& size,
 		bool list = false);
-	bool GetNextRGBool(int col, std::vector<bool>& data, 
+	bool GetNextRGBool(int col, std::vector<uint8_t>& data, 
 		int& size, 
 		bool list = false);
 	bool GetNextRGString(int col, std::vector<std::string>& data, 

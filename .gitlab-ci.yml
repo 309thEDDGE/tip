@@ -1,0 +1,4 @@
+include:
+  - project: 'platform/pipeline-templates'
+    file: '/products/skicamp/opal-tip.yml'
+    ref: master
