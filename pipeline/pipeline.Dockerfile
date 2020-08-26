@@ -8,7 +8,7 @@ ARG RHEL_SUB_PASSWORD
 #
 RUN dnf update -y \
     && $YUMOPT dnf-plugins-core \
-    && subscription-manager register --username isaac.myers --password A10ContainerTest --auto-attach \
+    && subscription-manager register --username ${RHEL_SUB_USERNAME} --password ${RHEL_SUB_PASSWORD} --auto-attach \
     && subscription-manager repos --enable "codeready-builder-for-rhel-8-x86_64-rpms" \
     && $YUMOPT https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
     && dnf update -y && dnf clean all && rm -r /var/cache/dnf && dnf upgrade -y
@@ -54,3 +54,4 @@ RUN yum clean all
 # Setup default entrypoint
 #
 #ENTRYPOINT ["python3.6", "/usr/local/tip/parse_and_translate.py"]
+
