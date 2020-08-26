@@ -337,16 +337,26 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 #endif
 			}
 
-			// If the casting is required			
+			// If casting is required			
 			if (typeid(NativeType).name() != it->second.type_ID_) 
 			{
 				// Check if other types are being written
-				// to or from a string or boolean
-				// (NativeType being cast to second.typeID)
-				if (it->second.type_ID_ == typeid(std::string).name() || 
+				// to or from a string or to boolean from 
+				// anything but uint8_t 
+				// NativeType is they type being cast FROM and second.type_->id() 
+				// is the type being cast TO which is the original arrow type passed 
+				// to AddField 
+				// Note: It is impossible to stop boolean from being cast
+				// up to a larger type, since NativeType for boolean is uint8_t.
+				// The only way to stop boolean from being cast
+				// up would be to stop all uint8_t from being cast up.
+				// Also note that it->second.type_ID_ is originally retrieved from
+				// ParquetContext::GetTypeIDFromArrowType and every type is as 
+				// expected except boolean. Boolean arrow types will result in 
+				// uint8_t being assigned to it->second.type_ID_
+				if (it->second.type_->id() == arrow::StringType::type_id ||
 					typeid(std::string).name() == typeid(NativeType).name() ||
-					it->second.type_ID_ == typeid(uint8_t).name() ||
-					typeid(uint8_t).name() == typeid(NativeType).name() )
+					it->second.type_->id() == arrow::BooleanType::type_id)
 				{
 #ifdef DEBUG
 #if DEBUG > 1
@@ -370,7 +380,8 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 #endif
 					parquet_stop_ = true;
 					return false;
-				}// Check if floating point casting is happening
+				}
+				// Check if floating point casting is happening
 				else if (it->second.type_ID_ == typeid(float).name() ||
 					it->second.type_ID_ == typeid(double).name() || 
 					typeid(NativeType).name() == typeid(float).name() || 
@@ -417,7 +428,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 #endif
 				}
 			}
-			// data types are the same and no casting required
+			// Data types are the same and no casting required
 			else
 			{
 				it->second.SetColumnData(data.data(), 

@@ -322,7 +322,6 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 	const int& rows, 
 	const int offset) 
 {
-	std::string col_name = columnData.field_name_;
 	int datatypeID = columnData.type_->id(); 
 	bool isList = columnData.is_list_;
 	
@@ -336,10 +335,7 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 	int listCount = 0;
 
 	if (isList) 
-	{
-		datatypeID = columnData.type_->id();
 		listCount = columnData.list_size_;
-	}
 
 	append_row_count_ = rows;
 
@@ -746,6 +742,8 @@ std::string ParquetContext::GetTypeIDFromArrowType(const std::shared_ptr<arrow::
 		return typeid(a).name();
 		break;
 	}
+	// Note that boolean types need to come in
+	// as uint8_t
 	case arrow::BooleanType::type_id:
 	{
 		uint8_t a;

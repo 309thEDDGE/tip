@@ -75,7 +75,7 @@ public:
 	std::shared_ptr<arrow::ArrayBuilder> builder_;
 	std::shared_ptr<arrow::ListBuilder> list_builder_;
 	bool ready_for_write_;
-	std::string type_ID_;
+	std::string type_ID_; //intended output type (arrow type)
 	int byte_size_;
 	CastFromType cast_from_;
 
@@ -87,11 +87,13 @@ public:
 		type_(type), pointer_set_(false), ready_for_write_(false), cast_from_(NONE), builder_(), 
 		list_builder_(), initial_max_row_size_(0)
 	{
-		if (listSize == NULL){
+		if (listSize == NULL)
+		{
 			is_list_ = false;
 			list_size_ = NULL;
 		}
-		else {
+		else 
+		{
 			is_list_ = true;
 			list_size_ = listSize;
 		}

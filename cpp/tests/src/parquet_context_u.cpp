@@ -1885,25 +1885,6 @@ TEST_F(ParquetContextTest, NoCastingToStrings)
 	ASSERT_FALSE(SetPQPath(file_name));
 }
 
-TEST_F(ParquetContextTest, NoCastingFromBool)
-{
-	if (arrow_file_ != nullptr)
-	{
-		if (!arrow_file_->closed())
-			arrow_file_->Close();
-	}
-
-	remove(pq_file.c_str());
-
-	std::string file_name = "file.parquet";
-	std::vector<uint8_t> file =
-	{ 0,1,0,0,1,0 };
-
-	ASSERT_FALSE(CreateParquetFileList(arrow::int16(), file_name, file, 1, 2));
-
-	ASSERT_FALSE(SetPQPath(file_name));
-}
-
 TEST_F(ParquetContextTest, NoCastingToBool)
 {
 	if (arrow_file_ != nullptr)
