@@ -35,7 +35,7 @@ if len(sys.argv) > 5:
 	elif sys.argv[5] == '--with-row-count':
 		req_same_row_count = True
 
-skip_col_names = ['msglen']
+skip_col_names = []
 
 #before we can do any manipulations, we need to make sure the files are equal in both columns and rows
 #check to see if the row count matches if not then it is not the same

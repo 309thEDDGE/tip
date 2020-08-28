@@ -25,7 +25,6 @@ ParquetMilStd1553F1::ParquetMilStd1553F1(std::string outfile, uint16_t ID, bool 
 	gap2_.resize(max_temp_element_count_);
 	mode_code_.resize(max_temp_element_count_);
 	data_.resize(max_temp_element_count_ * DATA_PAYLOAD_LIST_COUNT, 0);
-	//word_count_.resize(max_temp_element_count_);
 	comm_word1_.resize(max_temp_element_count_);
 	comm_word2_.resize(max_temp_element_count_);
 	rtaddr1_.resize(max_temp_element_count_);
@@ -37,8 +36,9 @@ ParquetMilStd1553F1::ParquetMilStd1553F1(std::string outfile, uint16_t ID, bool 
 	subaddr2_.resize(max_temp_element_count_);
 	wrdcnt2_.resize(max_temp_element_count_);
 	channel_id_.resize(max_temp_element_count_);
-	payload_count_.resize(max_temp_element_count_);
-	//msglen_.resize(max_temp_element_count_);
+	totwrdcnt_.resize(max_temp_element_count_);
+	calcwrdcnt_.resize(max_temp_element_count_);
+	payload_incomplete_.resize(max_temp_element_count_);
 
 	// Add fields to table.
 	AddField(arrow::int64(), "time");
@@ -56,7 +56,6 @@ ParquetMilStd1553F1::ParquetMilStd1553F1(std::string outfile, uint16_t ID, bool 
 	AddField(arrow::int16(), "gap2");
 	AddField(arrow::boolean(), "mode");
 	AddField(arrow::int32(), "data", DATA_PAYLOAD_LIST_COUNT);
-	//AddField(arrow::int8(), "count");
 	AddField(arrow::int32(), "txcommwrd");
 	AddField(arrow::int32(), "rxcommwrd");
 	AddField(arrow::int8(), "txrtaddr");
@@ -67,38 +66,39 @@ ParquetMilStd1553F1::ParquetMilStd1553F1(std::string outfile, uint16_t ID, bool 
 	AddField(arrow::boolean(), "rxtr");
 	AddField(arrow::int8(), "rxsubaddr");
 	AddField(arrow::int8(), "rxwrdcnt");
-	AddField(arrow::int8(), "payloadwrdcnt");
-	//AddField(arrow::int16(), "msglen");
+	AddField(arrow::int8(), "totwrdcnt");
+	AddField(arrow::int8(), "calcwrdcnt");
+	AddField(arrow::boolean(), "incomplete");
 
 	// Set memory locations.
-	SetMemoryLocation<uint64_t>(time_stamp_, "time");
-	SetMemoryLocation<uint8_t>(doy_, "doy");
-	SetMemoryLocation<int8_t>(ttb_, "ttb");
-	SetMemoryLocation<uint8_t>(WE_, "WE");
-	SetMemoryLocation<uint8_t>(SE_, "SE");
-	SetMemoryLocation<uint8_t>(WCE_, "WCE");
-	SetMemoryLocation<uint8_t>(TO_, "TO");
-	SetMemoryLocation<uint8_t>(FE_, "FE");
-	SetMemoryLocation<uint8_t>(RR_, "RR");
-	SetMemoryLocation<uint8_t>(ME_, "ME");
-	SetMemoryLocation<uint8_t>(gap1_, "gap1");
-	SetMemoryLocation<uint8_t>(gap2_, "gap2");
-	SetMemoryLocation<uint8_t>(mode_code_, "mode");
-	SetMemoryLocation<uint16_t>(data_, "data");
-	//SetMemoryLocation<int8_t>(word_count_, "count");
-	SetMemoryLocation<uint16_t>(comm_word1_, "txcommwrd");
-	SetMemoryLocation<uint16_t>(comm_word2_, "rxcommwrd");
-	SetMemoryLocation<int8_t>(rtaddr1_, "txrtaddr");
-	SetMemoryLocation<uint8_t>(tr1_, "txtr");
-	SetMemoryLocation<int8_t>(subaddr1_, "txsubaddr");
-	SetMemoryLocation<int8_t>(wrdcnt1_, "txwrdcnt");
-	SetMemoryLocation<int8_t>(rtaddr2_, "rxrtaddr");
-	SetMemoryLocation<uint8_t>(tr2_, "rxtr");
-	SetMemoryLocation<int8_t>(subaddr2_, "rxsubaddr");
-	SetMemoryLocation<int8_t>(wrdcnt2_, "rxwrdcnt");
-	SetMemoryLocation<uint16_t>(channel_id_, "channelid");
-	SetMemoryLocation<int8_t>(payload_count_, "payloadwrdcnt");
-	//SetMemoryLocation<int16_t>(msglen_, "msglen");
+	SetMemoryLocation(time_stamp_, "time");
+	SetMemoryLocation(doy_, "doy");
+	SetMemoryLocation(ttb_, "ttb");
+	SetMemoryLocation(WE_, "WE");
+	SetMemoryLocation(SE_, "SE");
+	SetMemoryLocation(WCE_, "WCE");
+	SetMemoryLocation(TO_, "TO");
+	SetMemoryLocation(FE_, "FE");
+	SetMemoryLocation(RR_, "RR");
+	SetMemoryLocation(ME_, "ME");
+	SetMemoryLocation(gap1_, "gap1");
+	SetMemoryLocation(gap2_, "gap2");
+	SetMemoryLocation(mode_code_, "mode");
+	SetMemoryLocation(data_, "data");
+	SetMemoryLocation(comm_word1_, "txcommwrd");
+	SetMemoryLocation(comm_word2_, "rxcommwrd");
+	SetMemoryLocation(rtaddr1_, "txrtaddr");
+	SetMemoryLocation(tr1_, "txtr");
+	SetMemoryLocation(subaddr1_, "txsubaddr");
+	SetMemoryLocation(wrdcnt1_, "txwrdcnt");
+	SetMemoryLocation(rtaddr2_, "rxrtaddr");
+	SetMemoryLocation(tr2_, "rxtr");
+	SetMemoryLocation(subaddr2_, "rxsubaddr");
+	SetMemoryLocation(wrdcnt2_, "rxwrdcnt");
+	SetMemoryLocation(channel_id_, "channelid");
+	SetMemoryLocation(totwrdcnt_, "totwrdcnt");
+	SetMemoryLocation(calcwrdcnt_, "calcwrdcnt");
+	SetMemoryLocation(payload_incomplete_, "incomplete");
 
 	bool ret = OpenForWrite(outfile, truncate);
 }
@@ -182,7 +182,9 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, c
 	}
 	
 	channel_id_[temp_element_count_] = chanid;
-	payload_count_[temp_element_count_] = payload_count;
+	totwrdcnt_[temp_element_count_] = totwrdcnt;
+	calcwrdcnt_[temp_element_count_] = calcwrdcnt;
+	payload_incomplete_[temp_element_count_] = payload_incomplete;
 
 	// If the calculated word count is less than or equal to zero,
 	// do not copy any data. The payload for the current row shall

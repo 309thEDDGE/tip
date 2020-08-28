@@ -35,7 +35,6 @@ private:
 	std::vector<uint8_t> gap2_;  // save as int16
 	std::vector<uint8_t> mode_code_;  // save as single bit
 	std::vector<uint16_t> data_;  // for all data payloads, save as int16
-	//std::vector<int8_t> word_count_;  // save as int8
 	std::vector<uint16_t> comm_word1_; 
 	std::vector<uint16_t> comm_word2_;
 	std::vector<int8_t> rtaddr1_;
@@ -47,8 +46,9 @@ private:
 	std::vector<int8_t> subaddr2_;
 	std::vector<int8_t> wrdcnt2_;
 	std::vector<uint16_t> channel_id_;
-	std::vector<int8_t> payload_count_;
-	//std::vector<int16_t> msglen_;
+	std::vector<int8_t> totwrdcnt_;
+	std::vector<int8_t> calcwrdcnt_;
+	std::vector<uint8_t> payload_incomplete_;
 
 public:
 	ParquetMilStd1553F1();
