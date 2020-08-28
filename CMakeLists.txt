@@ -13,8 +13,6 @@ project(TIP
         LANGUAGES C CXX
 )
 
-
-
 set(CMAKE_PLATFORM_INDEPENDENT_CODE ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE true)
 
@@ -25,6 +23,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE true)
 set(linux false)
 set(container false)
 set(debug 1)
+set(libirig106 true)
 
 if (DEFINED DEBUG)
     message(STATUS "DEBUG defined")
@@ -54,6 +53,17 @@ if(DEFINED NOTESTS)
     message(STATUS "Not building tests")
     set(ignore ${NOTESTS})
     set(build_tests false)
+endif()
+
+if(DEFINED LIBIRIG106)
+    if("${LIBIRIG106}" MATCHES "OFF")
+        message(STATUS "LIBIRIG106 set to OFF")
+        set(libirig106 false)
+    endif()
+endif()
+
+if(libirig106)
+    message(STATUS "Using libirig106, defining LIBIRIG106")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -140,6 +150,14 @@ if(video_data)
         add_definitions(-DVIDEO_DATA)
     else()
 	    add_compile_definitions(VIDEO_DATA)
+    endif()
+endif()
+
+if(libirig106)
+    if(linux)
+        add_definitions(-DLIBIRIG106)
+    else()
+        add_compile_definitions(LIBIRIG106)
     endif()
 endif()
 

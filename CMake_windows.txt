@@ -89,3 +89,13 @@ set(gmock_lib_name "${gmock_lib_dir}/gmock.lib")
 
 set(gsuite_inc_dirs ${gtest_inc_dir} ${gmock_inc_dir})
 set(gsuite_libs ${gtest_lib_name} ${gmain_lib_name} ${gmock_lib_name})
+
+#########################################################
+#                   LibIrig106 Paths
+#########################################################
+set(irig_dir_name "libirig106")
+get_filename_component(irig_path "${deps_name}/${irig_dir_name}" ABSOLUTE)
+#message(STATUS "IRIG path: ${irig_path}")
+set(irig_inc_dir ${irig_path}/include)
+set(irig_lib_dir ${irig_path}/lib)
+set(irig_lib_name ${irig_lib_dir}/irig106.lib)

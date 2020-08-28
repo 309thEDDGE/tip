@@ -36,6 +36,9 @@ class ParseManager
 #ifdef PARQUET
 	std::set<std::string> name_set;
 #endif
+#ifdef LIBIRIG106
+	std::vector<std::string> tmats_body_vec_;
+#endif
 	std::string input_fname;
 	std::string output_path;
 	std::string comet_input_fname;

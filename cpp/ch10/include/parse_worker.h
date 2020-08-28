@@ -18,11 +18,32 @@
 #include "ch10_videodataf0.h"
 #endif
 
+#ifdef LIBIRIG106
+extern "C" {
+#include "i106_decode_tmats.h"
+#include "i106_decode_time.h"
+#include "i106_decode_1553f1.h"
+}
+#endif
 
 class ParseWorker
 {
 	
 	private:
+		// libirig106
+#ifdef LIBIRIG106
+		int i106_handle_;
+		I106C10Header i106_header_;
+		I106Status i106_status_;
+		int64_t i106_offset_;
+		TMATS_Info i106_tmats_info_;
+		bool found_tmats_;
+		const size_t temp_buffer_size_ = 10e6;
+		std::vector<uint8_t> temp_buffer_vec_;
+		I106Time i106_time_;
+		MS1553F1_Message i106_1553msg_;
+
+#endif
 	uint8_t retcode;
 	bool continue_parsing;
 	bool delete_alloc;
@@ -78,6 +99,10 @@ class ParseWorker
 	uint16_t get_binbuff_ind();
 	void operator()(BinBuff& bb, bool append_mode, bool word_count_check, bool milstd1553_msg_selection,
 		std::vector<std::string> milstd1553_sorted_selected_msgs);
+#ifdef LIBIRIG106
+	void operator()(BinBuff& bb, bool append_mode, bool word_count_check, bool milstd1553_msg_selection,
+		std::vector<std::string> milstd1553_sorted_selected_msgs, std::vector<std::string>& tmats_body_vec);
+#endif
 	//void operator()(BinBuff& bb, uint16_t ID, TMATS& tmatsdata);
 	uint64_t& get_last_position();
 	void time_info(uint64_t&&, uint64_t&&);

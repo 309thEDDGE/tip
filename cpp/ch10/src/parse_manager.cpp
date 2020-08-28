@@ -176,7 +176,15 @@ void ParseManager::start_workers()
 
 	// Advance the total read position by the tmats end position.
 	uint32_t tmats_end = tmats.post_tmats_location();
+
+	// If libirig106 is defined, let the value of total_read_pos remain
+	// at its initialization value of 0. Do this so libirig106 can 
+	// parse the TMATS Ch10 packet. Otherwise, assume that TMATS has 
+	// already been found and read, and set the total_read_pos to 
+	// the end of TMATS to skip it.
+#ifndef LIBIRIG106
 	total_read_pos = tmats_end;
+#endif
 
 	// Start queue to activate all workers, limiting the quantity of 
 	// concurrent threads to n_threads.
@@ -275,8 +283,14 @@ std::streamsize ParseManager::activate_worker(uint16_t binbuff_ind, uint16_t ID,
 	#endif
 		
 	// Start this instance of ParseWorker. Append mode false.
+#ifdef LIBIRIG106
+	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
+		false, check_word_count, milstd1553_msg_selection, milstd1553_sorted_msg_selection, 
+		std::ref(tmats_body_vec_));
+#else
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
 		false, check_word_count, milstd1553_msg_selection, milstd1553_sorted_msg_selection);
+#endif
 	
 	return read_count;
 }
@@ -302,9 +316,14 @@ std::streamsize ParseManager::activate_append_mode_worker(uint16_t binbuff_ind, 
 	workers[ID].append_mode_initialize(n_read, binbuff_ind, last_pos);
 
 	// Start this instance of ParseWorker. Append mode true.
+#ifdef LIBIRIG106
+	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
+		true, check_word_count, milstd1553_msg_selection, milstd1553_sorted_msg_selection, 
+		std::ref(tmats_body_vec_));
+#else
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
 		true, check_word_count, milstd1553_msg_selection, milstd1553_sorted_msg_selection);
-
+#endif
 	return read_count;
 }
 
@@ -492,9 +511,6 @@ void ParseManager::worker_queue(bool append_mode)
 						threads[active_workers[act_work_ind]].join();
 						active_workers.erase(active_workers.begin() + act_work_ind);
 
-#ifdef PARQUET
-#endif
-
 						// Immediately start a new worker.
 						if (append_mode)
 						{
@@ -602,7 +618,6 @@ void ParseManager::worker_retire_queue()
 					printf("Worker %u STILL ACTIVE\n", active_workers[act_work_ind]);
 				#endif
 			}
-
 		}
 
 		// Wait before checking for available workers.

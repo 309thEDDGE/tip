@@ -5,6 +5,12 @@
 #include "TDF1Format.h"
 #include <ctime>
 
+#ifdef LIBIRIG106
+extern "C" {
+#include "i106_decode_time.h"
+}
+#endif
+
 class Ch10TDF1 : public ParseContext<TDF1ChanSpecFormat, TDF1Status>
 {
 	private:
@@ -25,6 +31,9 @@ class Ch10TDF1 : public ParseContext<TDF1ChanSpecFormat, TDF1Status>
 	void debug_info();
 	void proc_3byte_date();
 	void proc_4byte_date();
+#ifdef LIBIRIG106
+	void UseI106Time(const I106Time* i106_time);
+#endif
 };
 
 #endif

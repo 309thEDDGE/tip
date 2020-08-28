@@ -129,6 +129,9 @@ if __name__ == '__main__':
     aparse.add_argument('--video', action='store_true', default=False, 
                         help='Parse video data and extract to transport stream files.')
 
+    aparse.add_argument('--no-ts', action='store_true', default=False, 
+                        help='Prevent extraction of TS files from video Parquet files.')
+
     aparse.add_argument('--dry-run', action='store_true', 
                         help='Test input arguments. Do not parse or translate.')
 
@@ -152,7 +155,7 @@ if __name__ == '__main__':
     args = aparse.parse_args()
 
     if args.video:
-        rmcomet_parser_exe_name = parser_exe_name + '_video'
+        rmcomet_parser_exe_name = 'tip_parse_video.exe'
     else:
         rmcomet_parser_exe_name = parser_exe_name
 
@@ -240,7 +243,7 @@ if __name__ == '__main__':
         # Set up Parser call.
         #
         parser_exe_path = os.path.join(exe_dir, use_parser_exe)
-        #print(parser_exe_path)
+        print("parser exe: {:s}".format(parser_exe_path))
         parser_call = RunCLProcess()
         parser_call.set_executable_path(parser_exe_path)
 
@@ -328,7 +331,7 @@ if __name__ == '__main__':
         #
         # Set up TS extractor call (if --video)
         #
-        if args.video:
+        if args.video and not args.no_ts:
 
             video_extr = RunCLProcess()
 

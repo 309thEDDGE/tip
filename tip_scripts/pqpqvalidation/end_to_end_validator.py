@@ -8,11 +8,9 @@ from tip_scripts.pqpqvalidation.pqpq_raw_validation import PqPqRawValidation
 from tip_scripts.pqpqvalidation.pqpq_translated_data_validation import PqPqTranslatedDataValidation
 import time
 
-
-
 class E2EValidator(object):
 
-    def __init__(self, truth_set_dir, test_set_dir, log_file_path, log_desc=''):
+    def __init__(self, truth_set_dir, test_set_dir, log_file_path, log_desc='', video=False):
         self.run_tip = False
         self.csv_path = os.path.join(truth_set_dir,'ch10list.csv')
         if not os.path.exists(self.csv_path):
@@ -24,6 +22,7 @@ class E2EValidator(object):
         self.truth_set_dir = truth_set_dir
         self.test_set_dir = test_set_dir
         self.log_file_path = log_file_path
+        self.video = video
         self.save_stdout = False
         self.raw_validation_dict = {}
         self.transl_validation_dict = {}
@@ -65,8 +64,12 @@ class E2EValidator(object):
             ch10_files_and_icds[temp[0].strip()] = temp[1].strip() # strip leading and trailing white space
 
         for ch10,icd in ch10_files_and_icds.items():
-            call_list = ['python', script_path, os.path.join(truth_dir, ch10),
-                         os.path.join(truth_dir, icd), '-o', test_dir]
+            if self.video:
+                 call_list = ['python', script_path, os.path.join(truth_dir, ch10),
+                         os.path.join(truth_dir, icd), '-o', test_dir, '--video', '--no-ts']
+            else:
+                call_list = ['python', script_path, os.path.join(truth_dir, ch10),
+                        os.path.join(truth_dir, icd), '-o', test_dir]
             call_string = ' '.join(call_list)
             print(call_string)
             start_time = time.time()
@@ -388,5 +391,5 @@ if __name__ == '__main__':
     if len(sys.argv) == 5:
         desc = sys.argv[4]
 
-    e = E2EValidator(sys.argv[1], sys.argv[2], sys.argv[3], log_desc=desc)
+    e = E2EValidator(sys.argv[1], sys.argv[2], sys.argv[3], log_desc=desc, video=True)
     e.validate()

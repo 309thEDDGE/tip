@@ -86,7 +86,7 @@ uint8_t Ch10VideoDataF0::Parse()
 	subpkt_unit_count = (ch10hd_ptr_->pkt_body_size_ - data_fmt_size_) / subpkt_unit_size;
 #ifdef DEBUG
 #if DEBUG > 2
-	printf("(%03hu) subpkt_unit_count: %u\n", id, subpkt_unit_count);
+	printf("(%03hu) subpkt_unit_count: %u\n", id_, subpkt_unit_count);
 #endif
 #endif
 
@@ -125,10 +125,10 @@ uint8_t Ch10VideoDataF0::Parse()
 			}
 
 			// Copy the time stamp (TS) into the transport_stream_TS vector.
-			transport_stream_TS[subpkt_unit_count] = msg_abstime_;
+			transport_stream_TS[subpkt_unit_index] = msg_abstime_;
 #ifdef DEBUG
 #if DEBUG > 2
-			printf("(%03hu) absolute_msg_TS = %llu\n", id, absolute_msg_TS);
+			printf("(%03hu) absolute_msg_TS = %llu\n", id_, msg_abstime_);
 #endif
 #endif
 
@@ -139,6 +139,7 @@ uint8_t Ch10VideoDataF0::Parse()
 		{
 			// If Intra-packet header is not present, set only the video_datum pointer.
 			transport_stream_pkt = (const video_datum*)bb_ptr_->Data();
+			transport_stream_TS[0] = msg_abstime_;
 		}
 
 		// Copy the current transport stream packet into the transport_stream_data vector.
@@ -199,3 +200,119 @@ void Ch10VideoDataF0::close()
 void Ch10VideoDataF0::set_truncate(bool state)
 {
 }
+
+#ifdef LIBIRIG106
+uint8_t Ch10VideoDataF0::UseLibIRIG106(I106C10Header* i106_header, void* buffer)
+{
+	retcode_ = 0;
+	subpkt_unit_index = 0;
+
+	// Get the first sub-packet of video data.
+	i106_status_ = I106_Decode_FirstVideoF0(i106_header, buffer, &i106_videomsg_);
+	if (i106_status_ != I106Status::I106_OK)
+	{
+		printf("\n(%03u) Ch10VideoDataF0::UseLibIRIG106(): I106_Decode_FirstVideoF0: %s\n",
+			id_, I106ErrorString(i106_status_));
+
+		// There ought to be at least one message in a 1553 packet so I106_NO_MORE_DATA
+		// error doesn't apply and the ReadData function that reads the packet body
+		// ought to have checked for buffer overruns so the I106_BUFFER_OVERRUN error 
+		// does also not apply. If there is a single error then something else is wrong 
+		// and we should exit.
+		retcode_ = 1;
+		return retcode_;
+	}
+
+	// Set the IPH data pointer.
+	data_fmt_ptr_ = (const VideoDataF0ChanSpecFormat*)i106_videomsg_.CSDW;
+
+	// If there is no IPH indicated then calculate the same time stamp
+	// for all video packets within the current ch10 video packet.
+	if (!data_fmt_ptr_->IPH)
+	{
+		if (CalcAbsTimeFromHdrRtc() == 1)
+		{
+			printf("\n(%03u) Ch10VideoDataF0::UseLibIRIG106(): Error calculating non-IPH packet abs time\n",
+				id_);
+			retcode_ = 1;
+			return retcode_;
+		}
+		
+		// Fill the first and only element of the TS time vector. 
+		transport_stream_TS[0] = msg_abstime_;
+	}
+
+#ifdef DEBUG
+#if DEBUG > 2
+	print_video_pkt_info();
+#endif
+#endif
+
+	// Set up pointers and do some checks.
+	if (IngestLibIRIG106Msg() == 1)
+		return retcode_;
+
+	// Collect all video packets
+	while((i106_status_ = I106_Decode_NextVideoF0(i106_header, &i106_videomsg_)) == I106Status::I106_OK)
+	{
+
+		if (IngestLibIRIG106Msg() == 1)
+			return retcode_;
+	}
+
+	db.append_data(transport_stream_TS, ch10td_ptr_->doy_, chanid_label,
+		ch10hd_ptr_->channel_id_, data_fmt_ptr_, subpkt_unit_index, transport_stream_data);
+
+	// Under normal circumstances the only non-OK status occurs when the 
+	// end of the packet body is reached and no more data is indicated. Otherwise,
+	// an error occurred.
+	if (i106_status_ != I106Status::I106_NO_MORE_DATA)
+	{
+		printf("\n(%03u) Ch10VideoDataF0::UseLibIRIG106(): I106_Decode_NextVideoF0: %s\n",
+			id_, I106ErrorString(i106_status_));
+
+		// I don't yet know what to do in this case. Return 1 for now.
+		retcode_ = 1;
+		return retcode_;
+	}
+
+	return retcode_;
+}
+
+uint8_t Ch10VideoDataF0::IngestLibIRIG106Msg()
+{
+
+	// Parse the time stamp.
+	if (data_fmt_ptr_->IPH)
+	{
+		// Set time stamp pointer to the beginning of the IPH.
+		ts_ptr_ = (const TimeStamp*)i106_videomsg_.IPH;
+
+		if (CalcAbsTimeFromTs() == 1)
+		{
+			retcode_ = 1;
+			return retcode_;
+		}
+		transport_stream_TS[subpkt_unit_index] = msg_abstime_;
+	}
+
+	transport_stream_pkt = (const video_datum*)i106_videomsg_.Data;
+
+	// Copy the current transport stream packet into the transport_stream_data vector.
+	std::copy(transport_stream_pkt, transport_stream_pkt + TransportStream_DATA_COUNT,
+		video_datum_it + (subpkt_unit_index * TransportStream_DATA_COUNT));
+
+	// Fill the channel ID label variable.
+	if (have_chanid_to_label_map)
+	{
+		chanid_label = chanid_to_label_map[ch10hd_ptr_->channel_id_];
+	}
+	else
+	{
+		chanid_label = std::to_string(ch10hd_ptr_->channel_id_);
+	}
+
+	subpkt_unit_index++;
+	return retcode_;
+}
+#endif

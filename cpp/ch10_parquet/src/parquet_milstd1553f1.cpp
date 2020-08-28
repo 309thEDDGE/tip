@@ -38,6 +38,7 @@ ParquetMilStd1553F1::ParquetMilStd1553F1(std::string outfile, uint16_t ID, bool 
 	wrdcnt2_.resize(max_temp_element_count_);
 	channel_id_.resize(max_temp_element_count_);
 	payload_count_.resize(max_temp_element_count_);
+	//msglen_.resize(max_temp_element_count_);
 
 	// Add fields to table.
 	AddField(arrow::int64(), "time");
@@ -67,6 +68,7 @@ ParquetMilStd1553F1::ParquetMilStd1553F1(std::string outfile, uint16_t ID, bool 
 	AddField(arrow::int8(), "rxsubaddr");
 	AddField(arrow::int8(), "rxwrdcnt");
 	AddField(arrow::int8(), "payloadwrdcnt");
+	//AddField(arrow::int16(), "msglen");
 
 	// Set memory locations.
 	SetMemoryLocation<uint64_t>(time_stamp_, "time");
@@ -96,6 +98,7 @@ ParquetMilStd1553F1::ParquetMilStd1553F1(std::string outfile, uint16_t ID, bool 
 	SetMemoryLocation<int8_t>(wrdcnt2_, "rxwrdcnt");
 	SetMemoryLocation<uint16_t>(channel_id_, "channelid");
 	SetMemoryLocation<int8_t>(payload_count_, "payloadwrdcnt");
+	//SetMemoryLocation<int16_t>(msglen_, "msglen");
 
 	uint8_t ret = OpenForWrite(outfile, truncate);
 }
@@ -116,6 +119,7 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, c
 	ttb_[temp_element_count_] = chan_spec->ttb;
 	doy_[temp_element_count_] = doy;
 	time_stamp_[temp_element_count_] = time_stamp;
+	//msglen_[temp_element_count_] = msg->length;
 
 	// Get full command words. Intepret the MilStd1553MsgCommword pointer
 	// as a uint16_t pointer. 48 bits (= 3 * uint16_t) later is the beginning
@@ -179,10 +183,7 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, c
 	channel_id_[temp_element_count_] = chanid;
 	payload_count_[temp_element_count_] = payload_count;
 
-	// Insert name into set.
-
-	// Don't copy data if the msg is a mode code. No data are transmitted
-	// in this case.
+	// Check for mode code.
 	if (msg->sub_addr1 > 0 && msg->sub_addr1 < 31)
 	{
 		mode_code_[temp_element_count_] = 0;
@@ -222,7 +223,7 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, c
 	if (temp_element_count_ == max_temp_element_count_)
 	{
 #ifdef DEBUG
-#if DEBUG > 0
+#if DEBUG > 0	
 		printf("(%03u) Writing MilStd1553F1 to Parquet, %d rows\n", id_, temp_element_count_);
 #endif
 #endif
@@ -243,8 +244,8 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, c
 void ParquetMilStd1553F1::commit()
 {
 #ifdef DEBUG
-#if DEBUG > 1
-	printf("(%03u) ParquetMilStd1553F1::commit()\n", id_);
+#if DEBUG > 0
+	printf("(%03u) ParquetMilStd1553F1::commit(): temp_element_count_ = %d\n", id_, temp_element_count_);
 #endif
 #endif
 
