@@ -100,7 +100,7 @@ ParquetMilStd1553F1::ParquetMilStd1553F1(std::string outfile, uint16_t ID, bool 
 	SetMemoryLocation<int8_t>(payload_count_, "payloadwrdcnt");
 	//SetMemoryLocation<int16_t>(msglen_, "msglen");
 
-	uint8_t ret = OpenForWrite(outfile, truncate);
+	bool ret = OpenForWrite(outfile, truncate);
 }
 
 void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, const char* name,

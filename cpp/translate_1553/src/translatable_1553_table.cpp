@@ -649,7 +649,7 @@ uint8_t Translatable1553Table::configure_parquet_context(std::filesystem::path& 
 	
 	// Open the Parquet file for writing. Set truncate (2nd arg) to true to
 	// create new file and overwrite existing file, if present.
-	if (pq_->OpenForWrite(parquet_file_name, true) == 1)
+	if (pq_->OpenForWrite(parquet_file_name, true) == false)
 	{
 		printf("Translatable1553Table::configure_parquet_context(): ParquetContext::open_for_write() error for path %s\n",
 			parquet_file_name.c_str());

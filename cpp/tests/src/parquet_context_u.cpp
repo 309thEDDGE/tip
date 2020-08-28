@@ -68,7 +68,9 @@ protected:
 		// Add each vector as a column
 		for (int i = 0; i < output.size(); i++)
 		{
-			pc->AddField(type, "data" + std::to_string(i));
+			ret_value = pc->AddField(type, "data" + std::to_string(i));
+			if (!ret_value)
+				return false;
 			ret_value = pc->SetMemoryLocation<T>(output[i], "data" + std::to_string(i), bool_fields);
 			if (!ret_value)
 				return false;
@@ -77,7 +79,8 @@ protected:
 		// Assume each vector is of the same size
 		int row_size = output[0].size();
 
-		pc->OpenForWrite(file_name, truncate);
+		if(!pc->OpenForWrite(file_name, truncate))
+			return false;
 		for (int i = 0; i < row_size / row_group_count; i++)
 		{
 			ret_value = pc->WriteColumns(row_group_count, i * row_group_count);
@@ -120,7 +123,9 @@ protected:
 		bool ret_value = true;
 
 		// Add the vector as a list column
-		pc->AddField(type, "data", list_size);
+		ret_value = pc->AddField(type, "data", list_size);
+		if (!ret_value)
+			return false;
 		ret_value = pc->SetMemoryLocation<T>(output, "data", bool_fields);
 		if (!ret_value)
 			return false;
@@ -130,7 +135,8 @@ protected:
 		int row_size = output.size() / list_size;
 		
 
-		pc->OpenForWrite(file_name, truncate);
+		if(!pc->OpenForWrite(file_name, truncate))
+			return false;
 		for (int i = 0; i < row_size / row_group_count; i++)
 		{
 			ret_value = pc->WriteColumns(row_group_count, i * row_group_count);
@@ -1186,7 +1192,7 @@ TEST_F(ParquetContextTest, WriteColumnsNoArguments)
 	pq_file = file_name;
 	delete pc;
 
-	ASSERT_FALSE(SetPQPath(file_name));
+	remove(file_name.c_str());
 
 	ParquetContext* pc2 = new ParquetContext(8);
 
@@ -1789,8 +1795,6 @@ TEST_F(ParquetContextTest, NumericWriteOutMoreThanAvailable)
 	pq_file = file_name;
 	delete pc;
 
-	ASSERT_FALSE(SetPQPath(file_name));
-
 
 	if (arrow_file_ != nullptr)
 	{
@@ -1814,8 +1818,6 @@ TEST_F(ParquetContextTest, NumericWriteOutMoreThanAvailable)
 	pc2->Close();
 	pq_file = file_name;
 	delete pc2;
-
-	ASSERT_FALSE(SetPQPath(file_name));
 
 	if (arrow_file_ != nullptr)
 	{
@@ -1858,7 +1860,6 @@ TEST_F(ParquetContextTest, StringWriteOutMoreThanAvailable)
 	pq_file = file_name;
 	delete pc;
 
-	ASSERT_FALSE(SetPQPath(file_name));
 
 	if (arrow_file_ != nullptr)
 	{
@@ -1882,8 +1883,6 @@ TEST_F(ParquetContextTest, StringWriteOutMoreThanAvailable)
 	pc2->Close();
 	pq_file = file_name;
 	delete pc2;
-
-	ASSERT_FALSE(SetPQPath(file_name));
 
 	if (arrow_file_ != nullptr)
 	{
@@ -2167,6 +2166,102 @@ TEST_F(ParquetContextTest, Int64NullNotSameSizeAsDataVector)
 	ASSERT_FALSE(CreateParquetFile(arrow::int64(), file_name, file, 6, true, &bool_fields));
 	ASSERT_FALSE(SetPQPath(file_name));
 }
+
+TEST_F(ParquetContextTest, OpenForWrite)
+{
+	std::string file_name = "junk/file.parquet";
+	std::vector<int64_t> file =
+	{ 1,2,3,4,5,6,7,8 };
+
+	file_name = "./" + file_name;
+
+	ParquetContext* pc = new ParquetContext(50);
+
+	
+	std::string temp = "file.parquet";
+
+	// fields not set
+	ASSERT_FALSE(pc->OpenForWrite(temp, true));
+
+	pc->AddField(arrow::int64(), "data");
+	pc->SetMemoryLocation<int64_t>(file, "data");
+
+	// bad file path
+	ASSERT_FALSE(pc->OpenForWrite(file_name, true));
+
+	file_name = "file.parquet";
+
+	// valid file path
+	ASSERT_TRUE(pc->OpenForWrite(file_name, true));
+
+	pc->Close();
+	delete pc;
+
+	remove(file_name.c_str());
+}
+
+TEST_F(ParquetContextTest, SetMemoryLocationNotSet)
+{
+	std::string file_name = "file.parquet";
+	std::vector<int64_t> file =
+	{ 1,2,3,4,5,6,7,8 };
+
+	file_name = "./" + file_name;
+
+	ParquetContext* pc = new ParquetContext(50);
+
+	pc->AddField(arrow::int64(), "data");
+
+	ASSERT_FALSE(pc->OpenForWrite(file_name, true));
+	ASSERT_FALSE(pc->WriteColumns());
+
+	pc->Close();
+	delete pc;
+
+	remove(file_name.c_str());
+}
+
+TEST_F(ParquetContextTest, SetMemoryLocationBeforeField)
+{
+	std::string file_name = "file.parquet";
+	std::vector<int64_t> file =
+	{ 1,2,3,4,5,6,7,8 };
+
+	file_name = "./" + file_name;
+
+	ParquetContext* pc = new ParquetContext(50);
+	ASSERT_FALSE(pc->SetMemoryLocation<int64_t>(file, "data"));
+
+
+	ASSERT_FALSE(pc->OpenForWrite(file_name, true));
+	ASSERT_FALSE(pc->WriteColumns());
+
+	pc->Close();
+	delete pc;
+
+	remove(file_name.c_str());
+}
+
+TEST_F(ParquetContextTest, WriteColumnsCalledBeforeOpenForWrite)
+{
+	std::string file_name = "file.parquet";
+	std::vector<int64_t> file =
+	{ 1,2,3,4,5,6,7,8 };
+
+	file_name = "./" + file_name;
+
+	ParquetContext* pc = new ParquetContext(50);
+	pc->AddField(arrow::int64(), "data");
+	pc->SetMemoryLocation<int64_t>(file, "data");
+	
+	ASSERT_FALSE(pc->WriteColumns());
+
+	pc->Close();
+	delete pc;
+
+	remove(file_name.c_str());
+}
+
 
 // Arrow Truncation doesn't work
 // See st_ = arrow::io::FileOutputStream::Open(path_, !truncate_, &ostream_);

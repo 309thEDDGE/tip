@@ -46,7 +46,7 @@ ParquetVideoDataF0::ParquetVideoDataF0(std::string outfile, uint16_t ID, bool tr
 	SetMemoryLocation<uint64_t>(time_, "time");
 	SetMemoryLocation<uint16_t>(channel_id_, "channelid");
 
-	uint8_t ret = OpenForWrite(outfile, truncate);
+	bool ret = OpenForWrite(outfile, truncate);
 }
 
 void ParquetVideoDataF0::commit()

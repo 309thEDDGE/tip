@@ -122,8 +122,7 @@ public:
 
 	void SetColumnData(std::vector<std::string>& data, 
 		std::string name, 
-		std::vector<uint8_t>* boolField,
-		int initialRowSize) 
+		std::vector<uint8_t>* boolField) 
 	{
 		data_ = nullptr;
 		str_ptr_ = &data;
@@ -137,9 +136,9 @@ public:
 		}
 		pointer_set_ = true;
 		if (is_list_)
-			initial_max_row_size_ = initialRowSize / list_size_;
+			initial_max_row_size_ = data.size() / list_size_;
 		else
-			initial_max_row_size_ = initialRowSize;
+			initial_max_row_size_ = data.size();
 
 	}
 

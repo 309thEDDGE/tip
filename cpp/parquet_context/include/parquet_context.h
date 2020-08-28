@@ -42,7 +42,6 @@ private:
 	int ROW_GROUP_COUNT_;
 	int append_row_count_;
 	bool have_created_table_;
-	uint8_t ret_;
 	std::map<std::string, ColumnData> column_data_map_;
 	std::shared_ptr<arrow::Schema> schema_;
 	std::shared_ptr<arrow::io::FileOutputStream> ostream_;
@@ -73,7 +72,7 @@ private:
 		const int& elements_per_row, 
 		const int offset = 0);
 
-	void WriteColsIfReady();
+	bool WriteColsIfReady();
 
 	void FillStringVec(std::vector<std::string>* str_data_vec_ptr, 
 		const int& count,
@@ -128,18 +127,20 @@ public:
 								data type that the data source 
 								will be cast TO. The cast FROM 
 								data type is specified by the 
-								data type passed to SetMemoryLocation.
+								data type used in SetMemoryLocation.
 								Casting is generally used to cast
 								from unsigned data types to signed.
 								Casting is done automatically and is
 								only available under the following conditions
 								1. only between integers
 								2. only if the data type being cast TO
-								is of greater size or equal to the size
-								of the data type being cast from (ie. cannot
-								cast from int32 to int16).
+								   is of greater size or equal to the size
+								   of the data type being cast from (ie. cannot
+								   cast from int32 to int16).
+								3. casting TO unsigned integers is not
+								   supported
 
-								type options include:
+								arrow column type options supported:
 								arrow::int64()
 								arrow::int32()
 								arrow::int16()
@@ -148,10 +149,12 @@ public:
 								arrow::boolean()
 								arrow::float32() -> float
 								arrow::float64() -> double
+
 				fieldName	-> name of the column
-								Must be the same name as fieldName when
+								Must be consistent with fieldName when
 								calling the associated SetMemoryLocation
 								function call
+
 				listSize	-> if the column is to be a list (meaning
 								each row of that column will be a list
 								of values) specify the size of the list
@@ -159,8 +162,12 @@ public:
 								per row listSize=32. If the column is
 								not a list, leave as NULL.
 
+		Returns:				True if field created successfully
+								False if output type is unsigned
+								(unsigned output currently not supported)
+
 	*/
-	void AddField(const std::shared_ptr<arrow::DataType> type, 
+	bool AddField(const std::shared_ptr<arrow::DataType> type, 
 		const std::string& fieldName, 
 		const int listSize=NULL);
 
@@ -170,16 +177,17 @@ public:
 		are to be initialized and managed outsize of parquet
 		context. Parquet context only stores a pointer to 
 		each vector for each column. SetMemoryLocation 
-		should be called once for each column along side
+		should be called once for each column added with
 		AddField. It should be called after AddField. 
 		The vectors should be at least as large as the maximum 
 		intended row group size. They should also exceed the 
-		amount of rows needed for 
+		amount of rows needed for the maximum intented row
+		size called when using
 		WriteColumns(const int& rows, const int offset = 0).
 		Automatic casting is done when the Nativetype is different
 		from the arrow type specified in AddField. Nativetype
-		is the type casted from and the arrow type is the
-		type casted to. See AddField comments above for details
+		is the type casted FROM and the arrow type is the
+		type casted TO. See AddField comments above for details
 		on casting restrictions.
 
 		Inputs:	 data		-> vectors to be writen to the parquet
@@ -197,17 +205,23 @@ public:
 
 				boolField	-> boolField is a vector of uint8_t that
 								will specify to arrow which rows should
-								be null for the given column. This specification
+								be null for a given column. This specification
 								is not currently supported for list columns.
+
 								Example: data			= {1,2,3,4}
 										 boolField		= {0,1,1,0}
 										 parquetColumn	= {NULL,2,3,NULL}
+
+		Returns:				True if successful
+								False if fieldName was not added previously with 
+								AddField or casting isn't possible
 	*/
 	template<typename NativeType> 
 	bool SetMemoryLocation(std::vector<NativeType>& data, 
 		const std::string& fieldName, 
 		std::vector<uint8_t>* boolField=nullptr);
 
+	
 	// Overloaded function for strings. 
 	template<typename NativeType>
 	bool SetMemoryLocation(std::vector<std::string>& strVec, 
@@ -215,9 +229,10 @@ public:
 		std::vector<uint8_t>* boolField=nullptr);
 
 	/*
-		Sets the parquet file output path. Note that OpenForWrite
-		should be called after all SetMemoryLocation and
-		AddField function calls.
+		Creates the parquet file with an initial schema
+		specified by AddField calls. 
+		Note!!!!! OpenForWrite should be called after 
+		all SetMemoryLocation and AddField function calls.
 
 		Inputs:	path	 -> full path of paruqet file
 								"<path>/file.parquet"
@@ -226,12 +241,17 @@ public:
 							is not currently working, trunucate is
 							hardcoded to true no matter what is passed
 							for consistent implementation.
+
+		Returns:			True if the parquet file was created successfully
+							False if any AddField calls aren't initialized with a 
+							subsequent SetMemoryLocation call, or if no AddField
+							calls are made.
 	*/
-	uint8_t OpenForWrite(const std::string path,
+	bool OpenForWrite(const std::string path,
 		const bool truncate = true);
 
 	/*
-		Writes all data vectors to all columns in the parquet file. 
+		Writes all columns using vectors passed to SetMemoryLocation. 
 		Can be called multiple times to append to the existing parquet file.
 
 		Inputs:	rows	-> the number of rows to be written 
@@ -241,12 +261,12 @@ public:
 							each write.
 
 				offset	-> An offset can be provided to specify
-							the starting location of the SetMemoryLocation
-							vectors	provided to start writing from. 
+							the starting location from which to begin
+							writing from the SetMemoryLocation vectors.
 							If the column is a list, the actual starting
 							location in the vector will be (offset * listSize).
 
-		Returns:		   True if all columns were written successfully, 
+		Returns:		   True if all columns were writen successfully, 
 							False otherwise
 						   Note: If rows + offset exceeds the amount of 
 						   data in the original vectors passed to 
@@ -441,7 +461,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 		it != column_data_map_.end(); 
 		++it) 
 	{
-		if (it->first == fieldName) 
+		if (it->first == fieldName)
 		{
 			NativeType a;
 			// If it is a list and boolField is defined
@@ -458,7 +478,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 						"for column: %s\n",
 						it->second.list_size_,
 						data.size(),
-						fieldName);
+						fieldName.c_str());
 					parquet_stop_ = true;
 					return false;
 				}
@@ -473,7 +493,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 #endif
 #endif
 					boolField = nullptr;
-				}								
+				}
 			}
 
 			// The null field vector must be the same size as the 
@@ -484,7 +504,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 				{
 					printf("Error!!!!!!!!!!!!  null field vector must be the "
 						"same size as data vector: %s\n",
-						fieldName);
+						fieldName.c_str());
 					parquet_stop_ = true;
 					return false;
 				}
@@ -496,14 +516,14 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 #ifdef DEBUG
 #if DEBUG > 1
 				printf("Warning!!!!!!!!!!!!  in SetMemoryLocation, ptr"
-						"is already set for: %s\n", 
+					"is already set for: %s\n",
 					fieldName.c_str());
 #endif
 #endif
 			}
 
 			// If casting is required			
-			if (typeid(NativeType).name() != it->second.type_ID_) 
+			if (typeid(NativeType).name() != it->second.type_ID_)
 			{
 				// Check if other types are being written
 				// to or from a string or to boolean from 
@@ -524,17 +544,17 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 					it->second.type_->id() == arrow::BooleanType::type_id)
 				{
 					printf("Error!!!!!!!!!!!!  can't cast from other data"
-							"type to string or bool for: %s\n", 
+						"type to string or bool for: %s\n",
 						fieldName.c_str());
 					parquet_stop_ = true;
 					return false;
 				}
 
 				// Cast to larger datatype check
-				if (it->second.byte_size_ < sizeof(a)) 
+				if (it->second.byte_size_ < sizeof(a))
 				{
 					printf("Error!!!!!!!!!!!!  Intended datatype to be cast"
-							"is smaller than the given datatype for: %s\n", 
+						"is smaller than the given datatype for: %s\n",
 						fieldName.c_str());
 					parquet_stop_ = true;
 					return false;
@@ -542,49 +562,49 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 
 				// Check if floating point casting is happening
 				if (it->second.type_ID_ == typeid(float).name() ||
-					it->second.type_ID_ == typeid(double).name() || 
-					typeid(NativeType).name() == typeid(float).name() || 
-					typeid(NativeType).name() == typeid(double).name()) 
+					it->second.type_ID_ == typeid(double).name() ||
+					typeid(NativeType).name() == typeid(float).name() ||
+					typeid(NativeType).name() == typeid(double).name())
 				{
 					printf("Error!!!!!!!!!!!!  Can't cast floating"
-							"point data types: %s, \n", 
+						"point data types: %s, \n",
 						fieldName.c_str());
 					parquet_stop_ = true;
 					return false;
 				}
 
 				// Equal size datatypes check
-				if (it->second.byte_size_ == sizeof(a)) 
+				if (it->second.byte_size_ == sizeof(a))
 				{
 #ifdef DEBUG
 #if DEBUG > 1
 					printf("Warning!!!!!!!!!!!!  Intended datatype to "
-							"be cast is equal to the casting type for: %s\n", 
+						"be cast is equal to the casting type for: %s\n",
 						fieldName.c_str());
 #endif
 #endif
 				}
-				
-				it->second.SetColumnData(data.data(), 
-					fieldName, 
-					typeid(NativeType).name(), 
-					boolField, 
+
+				it->second.SetColumnData(data.data(),
+					fieldName,
+					typeid(NativeType).name(),
+					boolField,
 					data.size());
 #ifdef DEBUG
 #if DEBUG > 1
-				printf("Cast from %s planned for: %s, \n", 
-					typeid(NativeType).name(), 
+				printf("Cast from %s planned for: %s, \n",
+					typeid(NativeType).name().c_str(),
 					fieldName.c_str());
 #endif
 #endif
-				
+
 			}
 			// Data types are the same and no casting required
 			else
 			{
-				it->second.SetColumnData(data.data(), 
-					fieldName, 
-					"", 
+				it->second.SetColumnData(data.data(),
+					fieldName,
+					"",
 					boolField,
 					data.size());
 			}
@@ -599,6 +619,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 	parquet_stop_ = true;
 	return false;
 }
+
 
 template<typename NativeType>
 bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
@@ -616,7 +637,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 			{
 				printf("Error!!!!!!!!!!!!  in SetMemoryLocation, "
 					"can't cast from string to other types: %s\n",
-					fieldName);
+					fieldName.c_str());
 				parquet_stop_ = true;
 				return false;
 			}
@@ -626,7 +647,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 #if DEBUG > 1
 				printf("Warning!!!!!!!!!!!!  in SetMemoryLocation, "
 					"ptr is already set for: %s\n",
-					fieldName);
+					fieldName.c_str());
 #endif
 #endif
 			}
@@ -640,7 +661,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 						"for column: %s\n",
 						it->second.list_size_,
 						data.size(),
-						fieldName);
+						fieldName.c_str());
 					parquet_stop_ = true;
 					return false;
 				}
@@ -651,7 +672,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 #if DEBUG > 1
 					printf("Warning!!!!!!!!!!!!  Null fields for lists"
 						"are currently unavailable: %s\n",
-						fieldName);
+						fieldName.c_str());
 #endif
 #endif
 					boolField = nullptr;
@@ -667,7 +688,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 				{
 					printf("Error!!!!!!!!!!!!  null field vector must be the "
 						"same size as data vector: %s\n",
-						fieldName);
+						fieldName.c_str());
 					parquet_stop_ = true;
 					return false;
 				}
@@ -678,7 +699,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 				fieldName.c_str());
 #endif
 #endif
-			it->second.SetColumnData(data, fieldName, boolField, data.size());
+			it->second.SetColumnData(data, fieldName, boolField);
 			
 			return true;
 		}

@@ -2,7 +2,7 @@
 
 ParquetContext::ParquetContext() : ROW_GROUP_COUNT_(10000),
 have_created_table_(false), path_(""), have_created_writer_(false),
-pool_(nullptr), schema_(nullptr), ret_(0),
+pool_(nullptr), schema_(nullptr),
 append_row_count_(0), host_(""), user_(""), port_(-1),
 have_created_schema_(false), writer_(nullptr), parquet_stop_(false),
 truncate_(true)
@@ -10,7 +10,7 @@ truncate_(true)
 
 ParquetContext::ParquetContext(int rgSize) : ROW_GROUP_COUNT_(rgSize),
 have_created_table_(false), path_(""), have_created_writer_(false),
-pool_(nullptr), schema_(nullptr), ret_(0),
+pool_(nullptr), schema_(nullptr),
 append_row_count_(0), host_(""), user_(""), port_(-1),
 have_created_schema_(false), writer_(nullptr), parquet_stop_(false),
 truncate_(true)
@@ -48,14 +48,84 @@ ParquetContext::GetOffsetsVector(const int& n_rows,
 	return offsets_vec;
 }
 
-uint8_t ParquetContext::OpenForWrite(const std::string path, const bool truncate)
+bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 {
-	path_ = path;
-	truncate_ = true;
-	schema_ = arrow::schema(fields_);
-	have_created_schema_ = true;
-	CreateBuilders();
-	return ret_;
+	// must have at least one column set with AddField
+	// and SetMemoryLocation before writing
+	if (fields_.size() == 0)
+	{
+		printf("Must call AddField and SetMemoryLocation before calling OpenForWrite\n");
+		return false;
+	}
+
+	// Check to see if all memory locations are set for each column
+	for (std::map<std::string, ColumnData>::iterator
+		it = column_data_map_.begin();
+		it != column_data_map_.end();
+		++it)
+	{
+		if (!it->second.pointer_set_)
+		{
+			printf("Error!!!!!!, memory location for field not set: %s \n",
+				it->second.field_name_.c_str());
+			parquet_stop_ = true;
+			return false;
+		}
+	}
+
+	if (parquet_stop_)
+		return false;
+	
+	if (!have_created_writer_)
+	{
+#ifdef NEWARROW
+		PARQUET_ASSIGN_OR_THROW(ostream_,
+			arrow::io::FileOutputStream::Open(path));
+#else
+		st_ = arrow::io::FileOutputStream::Open(path,
+			!truncate_,
+			&ostream_);
+
+		if (!st_.ok())
+		{
+			printf("FileOutputStream::Open error (ID %s): %s\n",
+				st_.CodeAsString().c_str(),
+				st_.message().c_str());
+			return false;
+		}
+#endif
+
+		path_ = path;
+		truncate_ = true;
+		schema_ = arrow::schema(fields_);
+		have_created_schema_ = true;
+		CreateBuilders();
+		// Create properties for the writer.
+		parquet::WriterProperties::Builder props_builder;
+		props_builder.compression(parquet::Compression::GZIP);
+		props_builder.memory_pool(pool_);
+		props_builder.enable_dictionary();
+
+		// The only encoding that works
+		props_builder.encoding(parquet::Encoding::PLAIN);
+		props_builder.enable_statistics();
+		props_ = props_builder.build();
+
+		st_ = parquet::arrow::FileWriter::Open(*schema_, pool_,
+			ostream_,
+			props_,
+			&writer_);
+
+		if (!st_.ok())
+		{
+			printf("parquet::arrow::FileWriter::Open error (ID %s): %s\n",
+				st_.CodeAsString().c_str(),
+				st_.message().c_str());
+			return false;
+		}
+		have_created_writer_ = true;
+	}
+	return true;
 }
 
 std::unique_ptr<arrow::ArrayBuilder> 
@@ -169,7 +239,6 @@ ParquetContext::GetBuilderFromDataType(const std::shared_ptr<arrow::DataType> dt
 void ParquetContext::CreateBuilders()
 {
 	pool_ = arrow::default_memory_pool();
-	ret_ = 0;
 	arrow::NullType null_type;
 	arrow::Type::type dtype = arrow::Type::NA;
 	for (std::map<std::string, ColumnData>::iterator 
@@ -185,60 +254,11 @@ void ParquetContext::CreateBuilders()
 	}
 }
 
-void ParquetContext::WriteColsIfReady()
+bool ParquetContext::WriteColsIfReady()
 {
 	// Check if the table has been created. If not, then create it.
 	if (!have_created_table_)
-	{
-		if (!have_created_writer_)
-		{
-#ifdef NEWARROW
-			PARQUET_ASSIGN_OR_THROW(ostream_,
-						arrow::io::FileOutputStream::Open(path_));
-#else
-			st_ = arrow::io::FileOutputStream::Open(path_, 
-				!truncate_,
-				&ostream_);
-
-			if (!st_.ok())
-			{
-				printf("FileOutputStream::Open error (ID %s): %s\n", 
-					st_.CodeAsString().c_str(), 
-					st_.message().c_str());
-
-				ret_ = 3;
-				return;
-			}
-#endif
-
-			// Create properties for the writer.
-			parquet::WriterProperties::Builder props_builder;
-			props_builder.compression(parquet::Compression::GZIP);
-			props_builder.memory_pool(pool_);
-			props_builder.enable_dictionary();
-
-			// The only encoding that works
-			props_builder.encoding(parquet::Encoding::PLAIN); 
-			props_builder.enable_statistics();
-			props_ = props_builder.build();
-
-			st_ = parquet::arrow::FileWriter::Open(*schema_, pool_, 
-				ostream_, 
-				props_, 
-				&writer_);
-
-			if (!st_.ok())
-			{
-				printf("parquet::arrow::FileWriter::Open error (ID %s): %s\n", 
-					st_.CodeAsString().c_str(), 
-					st_.message().c_str());
-
-				ret_ = 4;
-				return;
-			}
-			have_created_writer_ = true;			
-		}
-		
+	{		
 #ifdef NEWARROW
 		std::vector<std::shared_ptr<arrow::Array>> arr_vec;
 #else
@@ -257,8 +277,7 @@ void ParquetContext::WriteColsIfReady()
 				printf("\"Finish\" error (ID %s): %s\n", 
 					st_.CodeAsString().c_str(), 
 					st_.message().c_str());
-				ret_ = 5;
-				return;
+				return false;
 			}
 			arr_vec.push_back(temp_array_ptr);
 		}
@@ -271,9 +290,7 @@ void ParquetContext::WriteColsIfReady()
 			printf("WriteTable error (ID %s): %s\n", 
 				st_.CodeAsString().c_str(), 
 				st_.message().c_str());
-
-			ret_ = 6;
-			return;
+			return false;
 		}
 		have_created_table_ = true;
 		
@@ -300,9 +317,7 @@ void ParquetContext::WriteColsIfReady()
 				printf("\"Finish\" error (ID %s): %s", 
 					st_.CodeAsString().c_str(), 
 					st_.message().c_str());
-
-				ret_ = 7;
-				return;
+				return false;
 			}
 			st_ = writer_->WriteColumnChunk(*temp_array_ptr);
 			if (!st_.ok())
@@ -311,11 +326,11 @@ void ParquetContext::WriteColsIfReady()
 					st_.CodeAsString().c_str(), 
 					st_.message().c_str());
 
-				ret_ = 8;
-				return;
+				return false;
 			}
 		}
 	}
+	return true;
 }
 
 bool ParquetContext::AppendColumn(ColumnData& columnData, 
@@ -551,7 +566,7 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 }
 
 
-void ParquetContext::AddField(const std::shared_ptr<arrow::DataType> type, 
+bool ParquetContext::AddField(const std::shared_ptr<arrow::DataType> type, 
 	const std::string& fieldName, 
 	const int listSize)
 {
@@ -565,13 +580,9 @@ void ParquetContext::AddField(const std::shared_ptr<arrow::DataType> type,
 	// Spark can't read unsigned data types from a parquet file
 	if (IsUnsigned(type)) 
 	{
-#ifdef DEBUG
-#if DEBUG > 1
-		printf("Warning!!!!!!!!!!!!  Unsigned types are currently"
+		printf("Error!!!!!!!!!!!!  Unsigned types are currently"
 				"not available for writing parquet");
-#endif
-#endif
-		return;
+		return false;
 		
 	}
 	int byteSize;
@@ -594,6 +605,8 @@ void ParquetContext::AddField(const std::shared_ptr<arrow::DataType> type,
 		tempField = arrow::field(fieldName, type);
 		fields_.push_back(tempField);
 	}
+
+	return true;
 }
 
 bool ParquetContext::IsUnsigned(const std::shared_ptr<arrow::DataType> type) 
@@ -609,33 +622,18 @@ bool ParquetContext::IsUnsigned(const std::shared_ptr<arrow::DataType> type)
 
 bool ParquetContext::WriteColumns(const int& rows,const int offset)
 {
-	
-	for (std::map<std::string, ColumnData>::iterator 
-		it = column_data_map_.begin(); 
-		it != column_data_map_.end();
-		++it) 
-	{
-		if (!it->second.pointer_set_) 
-		{
-#ifdef DEBUG
-#if DEBUG > 1
-			printf("Warning!!!!!!, memory location for field not set: %s \n", 
-				it->second.field_name_);
-#endif
-#endif
-			return false;
-		}
-	}
 	if (parquet_stop_) 
 	{
-#ifdef DEBUG
-#if DEBUG > 1
-		printf("Warning!!!!!!, parquetStop = true\n");
-#endif
-#endif
+		printf("Error!!!!!!, parquetStop = true\n");
 		return false;
 	}
 
+	if (!have_created_writer_)
+	{
+		printf("Error!!!!!!, must call OpenForWrite"
+			" before calling WriteColumns\n");
+		return false;
+	}
 	append_row_count_ = rows;
 	bool ret_val = true;
 
@@ -654,7 +652,8 @@ bool ParquetContext::WriteColumns(const int& rows,const int offset)
 			}
 		}
 
-		WriteColsIfReady();
+		if (!WriteColsIfReady())
+			return false;
 
 		// Reset the status of each column.
 		for (std::map<std::string, ColumnData>::iterator
