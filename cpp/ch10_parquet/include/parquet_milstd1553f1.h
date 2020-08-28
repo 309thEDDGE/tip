@@ -56,7 +56,7 @@ public:
 	void append_data(const uint64_t& time_stamp, uint8_t doy, const char* name, 
 		const MilStd1553F1ChanSpecFormat* chan_spec,
 		const MilStd1553F1MsgCommWord* msg, const uint16_t* data, const uint16_t& chanid, 
-		const uint16_t& payload_count);
+		int8_t totwrdcnt, int8_t calcwrdcnt, uint8_t payload_incomplete);
 	void commit();
 	void add_names_to_set(std::set<std::string>& output_set);
 };

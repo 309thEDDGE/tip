@@ -105,7 +105,8 @@ ParquetMilStd1553F1::ParquetMilStd1553F1(std::string outfile, uint16_t ID, bool 
 
 void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, const char* name,
 	const MilStd1553F1ChanSpecFormat* chan_spec, const MilStd1553F1MsgCommWord* msg, 
-	const uint16_t* data, const uint16_t& chanid, const uint16_t& payload_count)
+	const uint16_t* data, const uint16_t& chanid, int8_t totwrdcnt, 
+	int8_t calcwrdcnt, uint8_t payload_incomplete)
 {
 	WE_[temp_element_count_] = msg->WE;
 	SE_[temp_element_count_] = msg->SE;
@@ -183,39 +184,19 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, c
 	channel_id_[temp_element_count_] = chanid;
 	payload_count_[temp_element_count_] = payload_count;
 
+	// If the calculated word count is less than or equal to zero,
+	// do not copy any data. The payload for the current row shall
+	// remain all zeros.
+	if (calcwrdcnt > 0)
+	{
+		std::copy(data, data + calcwrdcnt, data_.data() + temp_element_count_ * DATA_PAYLOAD_LIST_COUNT);
+	}
+
 	// Check for mode code.
 	if (msg->sub_addr1 > 0 && msg->sub_addr1 < 31)
-	{
 		mode_code_[temp_element_count_] = 0;
-		if (msg->word_count1 == 0)
-		{
-			//word_count_[temp_element_count_] = 32;
-			std::copy(data, data + 32, data_.data() + temp_element_count_ * DATA_PAYLOAD_LIST_COUNT);
-		}
-		else
-		{
-			//word_count_[temp_element_count_] = msg->word_count1;
-			std::copy(data, data + msg->word_count1, data_.data() + temp_element_count_ * DATA_PAYLOAD_LIST_COUNT);
-		}
-	}
 	else
-	{
 		mode_code_[temp_element_count_] = 1;
-
-		// There is the possibility that a mode code message
-		// includes a single data payload in addition to the command
-		// word (see Section 4.3.3.5.1.7 of MIL-STD-1553B). The single
-		// data payload condition can only occur if the mode code, i.e.,
-		// word count bits, of a mode code message is > 15. Further,
-		// not all mode code messages in the range [16, 31] shall contain
-		// a single data payload, so use the payload_count to decide
-		// if data ought to be copied.
-		if (msg->word_count1 > 15 && payload_count == 1)
-		{
-			data_[temp_element_count_ * DATA_PAYLOAD_LIST_COUNT] = data[0];
-		}
-
-	}
 
 	// Increment the count variable.
 	temp_element_count_++;
