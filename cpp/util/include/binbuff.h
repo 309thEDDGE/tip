@@ -102,6 +102,11 @@ class BinBuff
 
 		// Return true if Initialize() has been called.
 		bool IsInitialized() const;
+
+		// Get the count of bytes actually read into the buffer
+		// after initialization. This is the functional size
+		// of the buffer.
+		uint64_t Size() const;
 	
 };
 

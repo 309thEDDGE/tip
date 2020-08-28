@@ -28,6 +28,7 @@ add_library(${util_lib_name}
             ${util_src_dir}/parse_text.cpp           ${util_inc_dir}/parse_text.h
             ${util_src_dir}/user_input.cpp           ${util_inc_dir}/user_input.h
             ${util_src_dir}/yaml_reader.cpp          ${util_inc_dir}/yaml_reader.h
+            ${util_src_dir}/tmats_parser.cpp         ${util_inc_dir}/tmats_parser.h
  )
 
 target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} ${yaml_inc_dir})
@@ -195,6 +196,14 @@ set(ch10parse_exe_name "tip_parse")
 if(video_data)
     set(ch10parse_exe_name "tip_parse_video")
 endif()
+
+set(temp_irig_lib_name "")
+set(temp_irig_inc_dir "")
+if(libirig106)
+    set(temp_irig_lib_name ${irig_lib_name})
+    set(temp_irig_inc_dir ${irig_inc_dir})
+endif()
+
 message(STATUS "Building exe: " "${ch10parse_exe_name}")
 add_executable(${ch10parse_exe_name} ${ch10_main_dir}/ch10parse.cpp
     ${ch10_inc_dir}/ch10.h ${ch10_inc_dir}/ch10_milstd1553f1.h ${ch10_inc_dir}/ch10_milstd1553f1stats.h
@@ -210,8 +219,11 @@ add_executable(${ch10parse_exe_name} ${ch10_main_dir}/ch10parse.cpp
     )
 target_include_directories(${ch10parse_exe_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
-                            ${metadata_inc_dir} ${tmats_inc_dir})
+                            ${metadata_inc_dir} ${tmats_inc_dir}
+                            ${temp_irig_inc_dir}
+                            )
 target_compile_features(${ch10parse_exe_name} PUBLIC cxx_std_17)
+
 target_link_libraries(${ch10parse_exe_name} 
                         #${util_lib_name}
                         ${tmats_lib_name}
@@ -220,6 +232,7 @@ target_link_libraries(${ch10parse_exe_name}
                         ${metadata_lib_name}
                         #${parquet_libs}
                         ${linux_libs}
+                        ${temp_irig_lib_name}
     )
 
 #########################################################
@@ -258,6 +271,7 @@ if(build_tests)
                    ${test_src_dir}/user_input_u.cpp ${test_src_dir}/yaml_reader_u.cpp
                    ${test_src_dir}/binbuff_u.cpp ${test_src_dir}/parse_context_u.cpp
                    ${test_src_dir}/parquet_arrow_validator_u.cpp
+                   ${test_src_dir}/tmats_parser_u.cpp
                    )
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
                                ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} ${comp_inc_dir})

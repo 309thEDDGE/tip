@@ -11,9 +11,19 @@
 #endif
 #endif 
 
+#ifdef LIBIRIG106
+extern "C" {
+#include "i106_decode_video.h"
+}
+#endif
+
 class Ch10VideoDataF0 : public ParseContext<VideoDataF0ChanSpecFormat, VideoDataF1Status>
 {
 private: 
+#ifdef LIBIRIG106
+	I106Status i106_status_;
+	VideoF0_Message i106_videomsg_;
+#endif
 	//TMATS& tdata;
 
 	// Map of channel id to label if given in the TMATS preface.
@@ -86,6 +96,10 @@ public:
 	uint8_t Parse() override;
 	void close();
 	void set_truncate(bool state);
+#ifdef LIBIRIG106
+	uint8_t UseLibIRIG106(I106C10Header* i106_header, void* buffer);
+	uint8_t IngestLibIRIG106Msg();
+#endif
 };
 
 #endif

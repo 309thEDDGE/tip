@@ -87,7 +87,7 @@ void ParquetVideoDataF0::append_data(const std::vector<uint64_t>& time_stamp,
 {
 #ifdef DEBUG
 #if DEBUG > 2
-	printf("(%03hu) ParquetVideoDataF0: appending %u packets\n", id, transport_stream_packet_count);
+	printf("(%03hu) ParquetVideoDataF0: appending %u packets\n", id_, transport_stream_pkt_count);
 #endif
 #endif
 

@@ -15,10 +15,11 @@ uint8_t Ch10PacketHeader::Parse()
 	bool data_present = bb_ptr_->BytesAvailable(data_fmt_size_);
 	if(!data_present)
 	{
-		#ifdef DEBUG
-		if (DEBUG > 2)
+#ifdef DEBUG
+#if DEBUG > 2
 			printf("(%03u) Ch10PacketHeader: Packet header exceeds binary buffer\n", id_);
-		#endif
+#endif
+#endif
 		status_ = Ch10PacketHeaderStatus::HEADER_EXCEEDS;
 		retcode_ = 1;
 		return retcode_;
@@ -46,10 +47,11 @@ uint8_t Ch10PacketHeader::Parse()
 	bool check = calc_checksum();
 	if(!check)
 	{
-		#ifdef DEBUG
-		if (DEBUG > 2)
+#ifdef DEBUG
+#if DEBUG > 2
 			printf("(%03u) Ch10PacketHeader: checksum is INCORRECT\n", id_);
-		#endif
+#endif
+#endif
 		status_ = Ch10PacketHeaderStatus::CHECKSUM_INCORRECT;
 		retcode_ = 1;
 		return retcode_;
@@ -60,10 +62,11 @@ uint8_t Ch10PacketHeader::Parse()
 	data_present = bb_ptr_->BytesAvailable(data_fmt_ptr_->pkt_size);
 	if(!data_present)
 	{
-		#ifdef DEBUG
-		if (DEBUG > 2)
+#ifdef DEBUG
+#if DEBUG > 2
 			printf("(%03u) Ch10PacketHeader: Packet body exceeds binary buffer\n", id_);
-		#endif
+#endif
+#endif
 		status_ = Ch10PacketHeaderStatus::BODY_EXCEEDS;
 		retcode_ = 1;
 		return retcode_;
@@ -74,15 +77,48 @@ uint8_t Ch10PacketHeader::Parse()
 	check = calc_data_checksum();
 	if(!check)
 	{
-		#ifdef DEBUG
-		if (DEBUG > 2)
+#ifdef DEBUG
+#if DEBUG > 2
 			printf("(%03u) Ch10PacketHeader: data checksum is INCORRECT\n", id_);
-		#endif
+#endif
+#endif
 		status_ = Ch10PacketHeaderStatus::DATA_CHECKSUM_INCORRECT;
 		retcode_ = 1;
 		return retcode_;
 	}
 	
+	// Calculate the relative time counter (RTC). This function automatically
+	// fills the Ch10HeaderData::calculated_rtc_ field.
+	CalcRtc(data_fmt_ptr_->rtc1, data_fmt_ptr_->rtc2);
+	ch10hd_.header_rtc_ = calculated_rtc_ref_;
+
+	// Fill Ch10HeaderData object with parsed data.
+	ch10hd_.time_format_ = data_fmt_ptr_->time_format;
+	ch10hd_.intrapkt_ts_source_ = data_fmt_ptr_->intrapkt_ts_source;
+	ch10hd_.channel_id_ = data_fmt_ptr_->chanID;
+	ch10hd_.pkt_body_size_ = data_fmt_ptr_->data_size;
+	
+#ifdef DEBUG
+#if DEBUG > 3
+		debug_info();
+#endif
+#endif
+	
+	status_ = Ch10PacketHeaderStatus::PARSE_OK;
+	return retcode_;
+}
+
+#ifdef LIBIRIG106
+void Ch10PacketHeader::UseLibIRIG106PktHdrStruct(const I106C10Header* i106_header_ptr, const int64_t& offset,
+	int header_length)
+{
+	// Set the packet start position as the current LibIRIG106 file pointer offset
+	// (which is placed at the beginning of the packet body after reading a header)
+	// subract the header size.
+	start_pos = offset - header_length;
+
+	data_fmt_ptr_ = (const Ch10PacketHeaderFormat*)i106_header_ptr;
+
 	// Calculate the relative time counter (RTC). This function automatically
 	// fills the Ch10HeaderData::header_rtc_ field.
 	CalcRtc(data_fmt_ptr_->rtc1, data_fmt_ptr_->rtc2);
@@ -93,15 +129,14 @@ uint8_t Ch10PacketHeader::Parse()
 	ch10hd_.intrapkt_ts_source_ = data_fmt_ptr_->intrapkt_ts_source;
 	ch10hd_.channel_id_ = data_fmt_ptr_->chanID;
 	ch10hd_.pkt_body_size_ = data_fmt_ptr_->data_size;
-	
-	#ifdef DEBUG
-	if (DEBUG > 3)
+
+#ifdef DEBUG
+#if DEBUG > 3
 		debug_info();
-	#endif
-	
-	status_ = Ch10PacketHeaderStatus::PARSE_OK;
-	return retcode_;
+#endif
+#endif
 }
+#endif
 
 void Ch10PacketHeader::find_sync_locs()
 {
@@ -110,10 +145,11 @@ void Ch10PacketHeader::find_sync_locs()
 	sync_loc_index = 0;
 	bb_ptr_->SetReadPos(0);
 	sync_locs = bb_ptr_->FindAllPattern(search_pattern);
-	#ifdef DEBUG
-	if (DEBUG > 1)
+#ifdef DEBUG
+#if DEBUG > 1
 		printf("(%03u) Ch10PacketHeader: Sync location quantity = %zu\n", id_, sync_locs.size());
-	#endif
+#endif
+#endif
 }
 
 uint32_t Ch10PacketHeader::find_first_time_data_packet(bool append_mode)
@@ -129,10 +165,12 @@ uint32_t Ch10PacketHeader::find_first_time_data_packet(bool append_mode)
 		retcode = Parse();
 		if(retcode)
 		{
-			#ifdef DEBUG
-			if (DEBUG > 2)
-				printf("(%03u) Ch10PacketHeader::find_first_time_data_packet: pkt %u status %u\n", id_, i, stat);
-			#endif
+#ifdef DEBUG
+#if DEBUG > 2
+				printf("(%03u) Ch10PacketHeader::find_first_time_data_packet: pkt %u status %u\n", 
+					id_, i, status_);
+#endif
+#endif
 			//return UINT32_MAX; // debug, remove this!
 		}
 		else if (append_mode)
@@ -143,10 +181,11 @@ uint32_t Ch10PacketHeader::find_first_time_data_packet(bool append_mode)
 		else if (data_fmt_ptr_->data_type == static_cast<uint8_t>(Ch10DataType::TIME_DATA_F1))
 		{
 			// Set bb_ptr_ read position to the end of the packet header.
-			#ifdef DEBUG
-			if (DEBUG > 2)
+#ifdef DEBUG
+#if DEBUG > 2
 				printf("(%03hu) Ch10PacketHeader::find_first_time_data_packet: time data pkt found at loc %llu\n", id_, sync_locs[i]);
-			#endif
+#endif
+#endif
 			sync_loc_index = i;
 			//bb_ptr_.SetReadPos(sync_locs[i]);
 			return sync_locs[i];
@@ -168,13 +207,14 @@ bool Ch10PacketHeader::calc_checksum()
 	uint16_t checksum = 0;
 	for(uint8_t i = 0; i < n_units; i++)
 		checksum += check_units[i];
-	#ifdef DEBUG
-	if (DEBUG > 3)
+#ifdef DEBUG
+#if DEBUG > 3
 	{
 		printf("\n(%03u) Ch10PacketHeader: %u checksum units\n", id_, n_units);
 		printf("(%03u) checksum value/calculated: %u/%u\n", id_, data_fmt_ptr_->checksum, checksum);
 	}
-	#endif
+#endif
+#endif
 	if(checksum == data_fmt_ptr_->checksum)
 		return true;
 	return false;
@@ -256,20 +296,22 @@ bool Ch10PacketHeader::calc_data_checksum()
 		}
 		default:
 		{
-			#ifdef DEBUG
-			if (DEBUG > 1)
+#ifdef DEBUG
+#if DEBUG > 1
 				printf("(%03u) checksum_existence value %hhu invalid\n", id_, data_fmt_ptr_->checksum_existence);
-			#endif
+#endif
+#endif
 			return false;
 		}
 	}
 	
 	#ifdef DEBUG
-	if (DEBUG > 3)
+#if DEBUG > 3
 	{
 		printf("\n(%03u) Ch10PacketHeader: %u bit, %u checksum units\n", id_, checksum_bits, n_units);
 		printf("(%03u) data checksum value/calculated: %u/%u\n", id_, given_checksum, calculated_checksum);
 	}
+#endif
 	#endif
 	if(given_checksum == calculated_checksum)
 		return true;

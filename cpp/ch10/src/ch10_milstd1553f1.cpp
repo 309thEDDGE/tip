@@ -208,334 +208,6 @@ uint8_t Ch10MilStd1553F1::Parse()
 	return retcode_;
 }
 
-//uint8_t Ch10MilStd1553F1::parse_time_stamp()
-//{
-//	// time_data_fmt_ptr_: 0 = IRIG106 Ch4 48-bit time format, 1 = IEEE-1588 format.
-//	
-//	// ts_source: 0 = 48-bit rtc, 1 = pkt secondary header time 
-//	// (packet secondary header must be 1, from pkt header)
-//	if(ts_source == 1)
-//	{
-//		// Not implemented.
-//		printf("(%03u) Ch10MilStd1553F1::parse_time_stamp(): ts_source = 1 NOT IMPLEMENTED\n", id);
-//		status_ = MilStd1553F1Status::TS_NOT_IMPL;
-//		#ifdef COLLECT_STATS
-//		stats.ts_not_impl++;
-//		#endif		
-//		retcode_ = 1;
-//	}
-//	else
-//	{
-//		switch(time_format)
-//		{
-//			case 0:
-//				// 48-bit time format.
-//				//temp_msg_rtc = uint64_t(msg->ts1) + uint64_t(msg->ts2 >> 16);
-//				//ts48 = (TimeStamp48Bit*) &temp_msg_rtc;
-//				msg_abstime = abstime + (CalcRtc(ts_ptr_->ts1, ts->ts2) - abstime_rtc);
-//				break;
-//			case 1:
-//				// IEEE-1588 time format.
-//				printf("(%03u) Ch10MilStd1553F1::parse_time_stamp(): time_fmt = 1 NOT IMPLEMENTED\n", id);
-//				status_ = MilStd1553F1Status::TS_NOT_IMPL;
-//				#ifdef COLLECT_STATS
-//				stats.ts_not_impl++;
-//				#endif	
-//				retcode_ = 1;
-//				break;
-//			case 2:
-//				printf("(%03u) Ch10MilStd1553F1::parse_time_stamp(): ts_source == 2 RESERVED\n", id);
-//				status_ = MilStd1553F1Status::TS_RESERVED;
-//				#ifdef COLLECT_STATS
-//				stats.ts_reserved++;
-//				#endif	
-//				retcode_ = 1;
-//				break;
-//			case 3:
-//				printf("(%03u) Ch10MilStd1553F1::parse_time_stamp(): ts_source == 3 RESERVED\n", id);
-//				retcode_ = 1;
-//				status_ = MilStd1553F1Status::TS_RESERVED;
-//				#ifdef COLLECT_STATS
-//				stats.ts_reserved++;
-//				#endif	
-//				break;
-//		}
-//	}
-//	return retcode_;
-//}
-
-//uint8_t Ch10MilStd1553F1::parse_payload()
-//{
-//	// Cast the datum pointer to the location of the first 
-//	// payload word. 
-//	datum = (uint16_t*) bb_ptr_->Data();
-//
-//	// Command word is parsed from the first data word. 
-//	comm_word = (CommandWord*)datum;
-//
-//	// The command word sub address is 0 or 31 if the message is a mode code,
-//	// which we currently discard. Further, mode codes can't be identified
-//	// using comet.
-//	if (comm_word->sub_addr == 0 || comm_word->sub_addr == 31)
-//	{
-//		#ifdef DEBUG
-//		if (DEBUG > 3)
-//			printf("(%03hu) Mode code message -- skipping\n", id_);
-//		#endif
-//	}
-//	else
-//	{
-//
-//		// Note: I may need additional information that is not given explicitly in 
-//		// the message header. See comet_pd.py -> CometPD.parse_raw_message() for 
-//		// the way to calculate if the message is RT to BC. I'll calculate it here 
-//		// and use it for testing purposes.
-//		RTtoBC = (datum[0] >> 10) & 1;
-//
-//		// Determine the order of rx/tx/status/data words.
-//
-//		// Message below: I believe the message below is incorrect now, 
-//		// after further research. I'm leaving it unless I want to review
-//		// the reasons later after more evidence, haha. 
-//		//        |
-//		//        |
-//		//        V
-//
-//		/*
-//		Note: msg->RR seems to be incorrect. That is, I believe I am reading
-//		and interpreting the value correctly from the intra-pkt header, yet
-//		the value is misleading. This was the same conclusion I reached when
-//		writing this code in Python. Instead of checking this bit, I will only
-//		assume an RT to RT transfer if both datum[0] and datum[1] are non-zero.
-//		if(datum[0] != 0 && datum[1] != 0)
-//		*/
-//		if (msg->RR)
-//		{
-//			/*
-//			   [ RX ][ TX ][ TX STAT ][ DATA0 ] ... [ DATAN ][ RX STAT ]
-//			   // Length in bytes, so divide by 2 to get data word count.
-//			   // Subtract four (rx, tx, tx stat, rx stat) to get the data word count.
-//			*/
-//			datum_count = (msg->length / 2) - 4;
-//			datum_shift = 3;
-//		}
-//		else if (RTtoBC)
-//		{
-//			/* [ TX ][ STAT ][ DATA0 ] ... [ DATAN ] */
-//
-//			datum_count = (msg->length / 2) - 2;
-//			datum_shift = 2;
-//		}
-//		else
-//		{
-//			/* [ RX ][ DATA0 ] ... [ DATAN ][ STAT ] */
-//
-//			datum_count = (msg->length / 2) - 2;
-//			datum_shift = 1;
-//		}
-//
-//		// If no message is identified, word_count points to UINT8_MAX
-//		// and msg_name points to "NONE".
-//		if (*word_count == UINT8_MAX)
-//		{
-//			status_ = MilStd1553F1Status::MSG_IDENTITY_FAIL;
-//			#ifdef COLLECT_STATS
-//			stats.msg_identity_fail++;
-//			#endif	
-//
-//			#ifdef DEBUG
-//			if (DEBUG > 1)
-//				printf("(%03hu) MESSAGE IDENTITY FAILURE\n", id_);
-//			#endif
-//		}
-//		else if ((*word_count != datum_count) && check_word_count)
-//		{
-//			// If the calculated word count based on message length is equal
-//			// to the comet specified word count minus one AND the message 
-//			// Time Out error is set, then a status word wasn't received
-//			// which means one less word unit should have been subracted from
-//			// the datum_count and there is no actual mismatch. 
-//			if (!((datum_count == *word_count - 1) && (msg->TO > 0)))
-//			{
-//				status_ = MilStd1553F1Status::WRD_COUNT_MISMATCH;
-//				#ifdef COLLECT_STATS
-//				stats.wrd_count_mismatch++;
-//				#endif	
-//
-//				// If the word_count mismatches, count this as a fail?
-//				#ifdef DEBUG
-//				if (DEBUG > 1)
-//					printf("(%03hu) WORD COUNT MISMATCH\n", id_);
-//				#endif			
-//			}
-//		}
-//
-//		#ifdef COLLECT_STATS
-//		if (std::strcmp(msg_name, "NONE") != 0)
-//		{
-//			stats.add_msg(msg_name);
-//		}
-//		#endif
-//
-//		#ifdef DEBUG
-//		if (true)
-//		{
-//			if (DEBUG > 2)
-//			{
-//				msg_debug_info();
-//			}
-//		}
-//		#endif
-//
-//		// Set data payload position based on the type of message.
-//		datum += datum_shift;
-//	}
-//	
-//	return retcode_;
-//}
-
-//uint8_t Ch10MilStd1553F1::parse_payload_without_comet_command_improved()
-//{
-//	// Cast the datum pointer to the location of the first 
-//	// payload word. 
-//	datum = (uint16_t*)bb_ptr_->Data();
-//
-//	/*
-//	Note: Remove mode code check (immediately below). DRA keeps these and some mode codes
-//	may be useful , such as IFM02, "LASTE MARKPOINT".
-//	*/
-//
-//	// The command word sub address is 0 or 31 if the message is a mode code,
-//	// which we currently discard. Further, mode codes can't be identified
-//	// using comet.
-//	/*if (msg_commword->sub_addr1 == 0 || msg_commword->sub_addr1 == 31)
-//	{
-//		#ifdef DEBUG
-//		if (DEBUG > 3)
-//			printf("(%03hu) Mode code message -- skipping\n", id);
-//		#endif
-//	}*/
-//
-//	// Note: I may need additional information that is not given explicitly in 
-//	// the message header. See comet_pd.py -> CometPD.parse_raw_message() for 
-//	// the way to calculate if the message is RT to BC. I'll calculate it here 
-//	// and use it for testing purposes.
-//	RTtoBC = msg_commword->tx1;
-//
-//	// Determine the order of rx/tx/status/data words.
-//	if (msg_commword->RR)
-//	{
-//		/*
-//			[ RX ][ TX ][ TX STAT ][ DATA0 ] ... [ DATAN ][ RX STAT ]
-//			// Length in bytes, so divide by 2 to get data word count.
-//			// Subtract four (rx, tx, tx stat, rx stat) to get the data word count.
-//		*/
-//		datum_count = (msg_commword->length / 2) - 4;
-//		datum_shift = 3;
-//	}
-//	else if (RTtoBC)
-//	{
-//		/* [ TX ][ STAT ][ DATA0 ] ... [ DATAN ] */
-//
-//		datum_count = (msg_commword->length / 2) - 2;
-//		datum_shift = 2;
-//	}
-//	else
-//	{
-//		/* [ RX ][ DATA0 ] ... [ DATAN ][ STAT ] */
-//
-//		datum_count = (msg_commword->length / 2) - 2;
-//		datum_shift = 1;
-//	}
-//
-//	// If no message is identified, msg_name points to "NONE".
-//	if (std::strcmp(msg_name, "NONE") == 0)
-//	{
-//		status_ = MilStd1553F1Status::MSG_IDENTITY_FAIL;
-//#ifdef COLLECT_STATS
-//		stats.msg_identity_fail++;
-//#endif	
-//
-//#ifdef DEBUG
-//		if (DEBUG > 1)
-//			printf("(%03hu) MESSAGE IDENTITY FAILURE\n", id_);
-//#endif
-//	}
-//	else if ((msg_commword->word_count1 != datum_count) && check_word_count)
-//	{
-//		// If the calculated word count based on message length is equal
-//		// to the comet specified word count minus one AND the message 
-//		// Time Out error is set, then a status word wasn't received
-//		// which means one less word unit should have been subracted from
-//		// the datum_count and there is no actual mismatch. 
-//
-//		/*
-//		Note: Per a discussion in analysis meeting 190523, I will
-//		record all data, regardless of word count mismatch. Message
-//		errors will be saved so post-processing check can be conducted
-//		for datum_count = word_count1 -1, in which case all data ought
-//		to be present.
-//		*/
-//
-//		// if word_count1 == 0, this indicates an actual word count
-//		// of 32. 
-//		if (!(msg_commword->word_count1 == 0 && datum_count == 32))
-//		{
-//			status_ = MilStd1553F1Status::WRD_COUNT_MISMATCH;
-//#ifdef COLLECT_STATS
-//			stats.wrd_count_mismatch++;
-//#endif	
-//
-//#ifdef DEBUG
-//			if (DEBUG > 3)
-//				printf("(%03hu) WORD COUNT MISMATCH\n", id_);
-//#endif			
-//		}
-//	}
-//
-//#ifdef COLLECT_STATS
-//	if (std::strcmp(msg_name, "NONE") != 0)
-//	{
-//		stats.add_msg(msg_name);
-//	}
-//#endif
-//
-//#ifdef DEBUG
-//	if (status_ == MilStd1553F1Status::MSG_IDENTITY_FAIL)
-//	{
-//		if (DEBUG > 2)
-//		{
-//			msg_debug_info2();
-//		}
-//	}
-//#endif
-//
-//	// Set data payload position based on the type of message.
-//	datum += datum_shift;
-//
-//#ifdef LOCALDB
-//#ifdef PARQUET
-//	if (status_ != MilStd1553F1Status::MSG_IDENTITY_FAIL)
-//#ifdef XDAT
-//	{
-//		if (use_selected_msg_list)
-//		{
-//			msg_names_itr = std::find(msg_names_start, msg_names_end, msg_name);
-//			if (msg_names_itr != msg_names_end)
-//				db.append_data(msg_abstime_, day_of_year, msg_name, data_fmt_ptr_, msg_commword, datum);
-//		}
-//		else
-//			db.append_data(msg_abstime_, day_of_year, msg_name, data_fmt_ptr_, msg_commword, datum);
-//	}
-//#else
-//		db.append_data(msg_abstime_, ch10td_ptr_->doy_, msg_name,
-//			data_fmt_ptr_, msg_commword, datum, ch10hd_ptr_->channel_id_, datum_count);
-//#endif
-//#endif
-//#endif
-//	return retcode_;
-//}
-
 uint8_t Ch10MilStd1553F1::parse_payload_new()
 {
 	// Cast the datum pointer to the location of the first 
@@ -604,7 +276,6 @@ uint8_t Ch10MilStd1553F1::parse_payload_new()
 		}
 	}
 
-
 	// Set data payload position based on the type of message.
 	datum += datum_shift;
 
@@ -631,6 +302,139 @@ uint8_t Ch10MilStd1553F1::parse_payload_new()
 	}
 	return retcode_;
 }
+
+#ifdef LIBIRIG106
+uint8_t Ch10MilStd1553F1::UseLibIRIG106(I106C10Header* i106_header, void* buffer)
+{
+	retcode_ = 0;
+
+	// Parse the ch10 packet body using the LibIRIG106 parser. 
+	//Get the first 1553 message.
+	i106_status_ = I106_Decode_First1553F1(i106_header, buffer, &i106_1553msg_);
+	if (i106_status_ != I106Status::I106_OK)
+	{
+		printf("\n(%03u) Ch10MilStd1553F1::UseLibIRIG106(): I106_Decode_First1553F1: %s\n", 
+			id_, I106ErrorString(i106_status_));
+
+		// There ought to be at least one message in a 1553 packet so I106_NO_MORE_DATA
+		// error doesn't apply and the ReadData function that reads the packet body
+		// ought to have checked for buffer overruns so the I106_BUFFER_OVERRUN error 
+		// does also not apply. If there is a single error then something else is wrong 
+		// and we should exit.
+		retcode_ = 1;
+		return retcode_;
+	}
+
+	// Set the CSDW pointer.
+	data_fmt_ptr_ = (const MilStd1553F1ChanSpecFormat*)i106_1553msg_.CSDW;
+
+	// Set up pointers and do some checks.
+	if (IngestLibIRIG106Msg() == 1)
+		return retcode_;
+
+	// Parse the 1553 msg payload.
+	ParsePayloadLibIRIG106();
+
+	int msg_count = 1;
+	while ((i106_status_ = I106_Decode_Next1553F1(&i106_1553msg_)) == I106Status::I106_OK)
+	{
+		// Set up pointers and do some checks.
+		if (IngestLibIRIG106Msg() == 1)
+			return retcode_;
+
+		// Parse the 1553 msg payload.
+		ParsePayloadLibIRIG106();
+
+		msg_count++;
+	}
+
+	if (msg_count != i106_1553msg_.CSDW->MessageCount)
+	{
+		printf("\n(%03u) Ch10MilStd1553F1::UseLibIRIG106(): "
+			"real message count (%d) not equal to header count (%u)\n",
+			id_, msg_count, i106_1553msg_.CSDW->MessageCount);
+	}
+
+	// Under normal circumstances the only non-OK status occurs when the 
+	// end of the packet body is reached and no more data is indicated. Otherwise,
+	// an error occurred.
+	if (i106_status_ != I106Status::I106_NO_MORE_DATA)
+	{
+		printf("\n(%03u) Ch10MilStd1553F1::UseLibIRIG106(): I106_Decode_Next1553F1: %s\n",
+			id_, I106ErrorString(i106_status_));
+
+		// I don't yet know what to do in this case. Return 1 for now.
+		retcode_ = 1;
+		return retcode_;
+	}
+
+	return retcode_;
+}
+
+uint8_t Ch10MilStd1553F1::IngestLibIRIG106Msg()
+{
+	// This function assumes that i106_1553_msg_ has already been set.
+
+	// Set the time stamp pointer to the beginning of the IPH.
+	ts_ptr_ = (const TimeStamp*)i106_1553msg_.IPH;
+
+	// Parse the time stamp.
+	if (CalcAbsTimeFromTs() == 1)
+	{
+		retcode_ = 1;
+		return retcode_;
+	}
+
+	// Set MilStd1553F1Msg class pointer to 2 32-bit positions
+	// past the time stamp pointer = 1 MsgTimeStamp position.
+	msg_commword = (const MilStd1553F1MsgCommWord*)(ts_ptr_ + 1);
+
+	// Check if the data length is too long to make sense, i.e., if it exceeds
+	// a max of (32 payload words + 2 command words + 2 status words) * 2 bytes per word = 72 bytes.
+	if (msg_commword->length > 72)
+	{
+		printf("\n(%03u) Ch10MilStd1553F1::UseLibIRIG106(): Message data length (%u) > 64\n", id_,
+			i106_1553msg_.DataLength);
+
+		// Do not return 1. We only wish to stop parsing the current 1553 packet,
+		// not retire the worker.
+		return retcode_;
+	}
+	
+	// Insert subaddress1 and 2 into the map.
+	if (msg_commword->RR)
+	{
+		chanid_remoteaddr1_ptr->at(ch10hd_ptr_->channel_id_).insert(msg_commword->remote_addr1);
+		chanid_remoteaddr2_ptr->at(ch10hd_ptr_->channel_id_).insert(msg_commword->remote_addr2);
+	}
+	else
+		chanid_remoteaddr1_ptr->at(ch10hd_ptr_->channel_id_).insert(msg_commword->remote_addr1);
+
+	return retcode_;
+}
+
+void Ch10MilStd1553F1::ParsePayloadLibIRIG106()
+{
+	datum = (const uint16_t*)i106_1553msg_.Data;
+
+	// Using the old, often incorrect method of calculating the message
+	// payload count from the message length. This is done to easily compare
+	// with the "truth" data set. In the future, use i106_1553msg_.WordCount instead.
+	if (msg_commword->RR)
+		datum_count = (msg_commword->length / 2) - 4;
+	else if (RTtoBC)
+		datum_count = (msg_commword->length / 2) - 2;
+	else
+		datum_count = (msg_commword->length / 2) - 2;
+
+#ifdef LOCALDB
+#ifdef PARQUET
+	db.append_data(msg_abstime_, ch10td_ptr_->doy_, msg_name,
+		data_fmt_ptr_, msg_commword, datum, ch10hd_ptr_->channel_id_, datum_count);
+#endif
+#endif
+}
+#endif
 
 //uint8_t Ch10MilStd1553F1::parse_payload_without_comet_command()
 //{
@@ -773,30 +577,30 @@ uint8_t Ch10MilStd1553F1::parse_payload_new()
 //	return retcode_;
 //}
 
-void Ch10MilStd1553F1::msg_debug_info()
-{
-	printf("(%03hu) Message index  : %03hu\n", id_, msg_index);
-	printf("RTC [ns]       : %llu\n", calculated_rtc_ref_);
-	printf("RT to RT       : %hhu\n", msg->RR);
-	printf("Datum[0]       : %hu\n", datum[0]);
-	printf("Datum[1]       : %hu\n", datum[1]);
-	printf("Comm RT addr/TX/sub addr/N words : %02hu/%01hu/%02hu/%02hu\n", comm_word->remote_addr,
-		comm_word->tx, comm_word->sub_addr, comm_word->word_count);
-	printf("RTtoBC         : %hhu\n", RTtoBC);
-	printf("Message length : %hu\n", msg->length);
-	printf("Calc wrd count : %hu\n", datum_count);
-	printf("Comet wrd count: %hu\n", *word_count);
-	printf("Comet msg name : %s\n", msg_name);
-#ifdef DEBUG
-#if DEBUG > 2
-	{
-		printf("WE/SE/WCE/TO/FE/ME/BusID %hu/%hu/%hu/%hu/%hu/%hu/%hu\n", msg->WE, msg->SE,
-			msg->WCE, msg->TO, msg->FE, msg->ME, msg->bus_dir);
-	}
-#endif
-#endif
-	printf("\n");
-}
+//void Ch10MilStd1553F1::msg_debug_info()
+//{
+//	printf("(%03hu) Message index  : %03hu\n", id_, msg_index);
+//	printf("RTC [ns]       : %llu\n", calculated_rtc_ref_);
+//	printf("RT to RT       : %hhu\n", msg->RR);
+//	printf("Datum[0]       : %hu\n", datum[0]);
+//	printf("Datum[1]       : %hu\n", datum[1]);
+//	printf("Comm RT addr/TX/sub addr/N words : %02hu/%01hu/%02hu/%02hu\n", comm_word->remote_addr,
+//		comm_word->tx, comm_word->sub_addr, comm_word->word_count);
+//	printf("RTtoBC         : %hhu\n", RTtoBC);
+//	printf("Message length : %hu\n", msg->length);
+//	printf("Calc wrd count : %hu\n", datum_count);
+//	printf("Comet wrd count: %hu\n", *word_count);
+//	printf("Comet msg name : %s\n", msg_name);
+//#ifdef DEBUG
+//#if DEBUG > 2
+//	{
+//		printf("WE/SE/WCE/TO/FE/ME/BusID %hu/%hu/%hu/%hu/%hu/%hu/%hu\n", msg->WE, msg->SE,
+//			msg->WCE, msg->TO, msg->FE, msg->ME, msg->bus_dir);
+//	}
+//#endif
+//#endif
+//	printf("\n");
+//}
 
 void Ch10MilStd1553F1::msg_debug_info2()
 {
