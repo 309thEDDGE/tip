@@ -282,6 +282,9 @@ public:
 
 	// Return a pointer to the member ch10hd_;
 	const Ch10HeaderData* GetCh10HeaderDataPtr() const;
+
+	// Get the size in bytes of the Tfmt object.
+	size_t DataSize() const;
 };
 
 template<class Tfmt, typename Tstat>
@@ -312,6 +315,12 @@ ParseContext<Tfmt, Tstat>::~ParseContext<Tfmt, Tstat>()
 template<class Tfmt, typename Tstat>
 const Tfmt* ParseContext<Tfmt, Tstat>::Data()
 { return data_fmt_ptr_; }
+
+template<class Tfmt, typename Tstat>
+size_t ParseContext<Tfmt, Tstat>::DataSize() const
+{
+	return data_fmt_size_;
+}
 
 template<class Tfmt, typename Tstat>
 const Tstat& ParseContext<Tfmt, Tstat>::Status()

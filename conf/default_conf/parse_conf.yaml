@@ -9,8 +9,8 @@
 #
 # parse_chunk_bytes
 #
-# Quantity of bytes, in units of millions, ingested for parsing by each worker thread. Usually 
-# in range [20, 600]. 
+# Quantity of bytes, in units of millions, ingested for parsing by each worker thread. Must be 
+# in range [100, 1000]. 
 #
 parse_chunk_bytes: 200
 

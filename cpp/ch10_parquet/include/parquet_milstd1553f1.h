@@ -48,6 +48,7 @@ private:
 	std::vector<int8_t> wrdcnt2_;
 	std::vector<uint16_t> channel_id_;
 	std::vector<int8_t> payload_count_;
+	//std::vector<int16_t> msglen_;
 
 public:
 	ParquetMilStd1553F1();

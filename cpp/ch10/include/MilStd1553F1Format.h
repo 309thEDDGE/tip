@@ -93,13 +93,13 @@ public:
 //	uint32_t length		: 16; // total bytes in the message (command, data, status)
 //};
 
-class CommandWord
-{
-public:
-	uint16_t word_count : 5;
-	uint16_t sub_addr : 5;
-	uint16_t tx : 1;
-	uint16_t remote_addr : 5;
-};
+//class CommandWord
+//{
+//public:
+//	uint16_t word_count : 5;
+//	uint16_t sub_addr : 5;
+//	uint16_t tx : 1;
+//	uint16_t remote_addr : 5;
+//};
 
 #endif

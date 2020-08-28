@@ -4,6 +4,11 @@
 #include "parse_context.h"
 #include "ch10_packet_header_format.h"
 #include "ch10.h"
+#ifdef LIBIRIG106
+extern "C" {
+#include "irig106ch10.h"
+}
+#endif
 
 class Ch10PacketHeader : public ParseContext<Ch10PacketHeaderFormat, Ch10PacketHeaderStatus>
 {
@@ -33,6 +38,10 @@ class Ch10PacketHeader : public ParseContext<Ch10PacketHeaderFormat, Ch10PacketH
 	uint64_t& relative_time_counter();
 	std::string status_desc();
 	uint32_t& start_position();
+#ifdef LIBIRIG106
+	void UseLibIRIG106PktHdrStruct(const I106C10Header* i106_header_ptr, const int64_t& offset,
+		int header_length);
+#endif
 };
 
 #endif

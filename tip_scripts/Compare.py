@@ -1,6 +1,7 @@
 import sys
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
+import numpy as np
 
 # For isnan and isinf
 import math
@@ -34,6 +35,8 @@ if len(sys.argv) > 5:
 	elif sys.argv[5] == '--with-row-count':
 		req_same_row_count = True
 
+skip_col_names = ['msglen']
+
 #before we can do any manipulations, we need to make sure the files are equal in both columns and rows
 #check to see if the row count matches if not then it is not the same
 count1 = df1.count()
@@ -57,6 +60,9 @@ if row_count_equal or not req_same_row_count:
 			#we need a for loop to iterate through the whole thing
 			#a for loop that starts at zero and goes til the end of the column length
 			for column in range (0, len(df1.columns)):
+				if column in skip_col_names:
+					print('Skipping column: {:s}'.format(column))
+					continue
 				#put get the values of the first column of both files into lists
 				df1_col1 = df1.select(schema1[column].name)
 				native_dictionary1 = df1_col1.collect()
@@ -70,7 +76,7 @@ if row_count_equal or not req_same_row_count:
 					if native_dictionary1[row][schema1[column].name] != native_dictionary2[row][schema2[column].name]:
 						print("------------------------------------------------------------------------")
 						print("MISMATCH FOUND! SEE LINE BELOW FOR DETAILS ON WHERE THE MISMATCH OCCURED.")
-						print("On row {} The following two values did not match {} and {}.".format(row + 1, native_dictionary1[row][schema1[column].name], native_dictionary2[row][schema2[column].name]))
+						print("On row {} The following two values did not match {} and {}.".format(row, native_dictionary1[row][schema1[column].name], native_dictionary2[row][schema2[column].name]))
 						print("------------------------------------------------------------------------")
 						print("Now continuing to compare all other columns.")
 						print("\n")
@@ -100,8 +106,11 @@ if row_count_equal or not req_same_row_count:
 		print("\n")
 		#we need a for loop to iterate through the whole thing
 		#a for loop that starts at zero and goes til the end of the column length
+		time_col_data = None
+		is_time_col = False
+		have_time_col = False
 		for column in df2.columns:
-
+			
 			##### Debug #####
 			#if column != 'data':
 			#	continue
@@ -113,6 +122,10 @@ if row_count_equal or not req_same_row_count:
 			##### end Debug #####
 			
 			if column in schema1_field_names:
+				if column in skip_col_names:
+					print('Skipping column: {:s}'.format(column))
+					continue
+				is_time_col = False
 				df1_col1 = df1.select(column)
 				native_dictionary1 = df1_col1.collect()
 				df2_col1 = df2.select(column)
@@ -128,7 +141,13 @@ if row_count_equal or not req_same_row_count:
 				print("Comparing " + column + " column in File 1 with " + column +" column in File 2.\n")
 				
 				#Iterate through the first dictionary and compare the values of both columns
-				for row in range(use_count):	
+				if column == 'time':
+					print('found time col!')
+					is_time_col = True
+					have_time_col = True
+					time_col_data = np.zeros(use_count, dtype='uint64')
+				for row in range(use_count):
+					
 					#if column == 'CI03_I-2509':
 					#	print('val1 = {}, val2 = {}'.format(native_dictionary1[row][column], native_dictionary2[row][column]))
 					
@@ -143,17 +162,26 @@ if row_count_equal or not req_same_row_count:
 						
 						for i in range(len(dlist1)):
 							if dlist1[i] != dlist2[i]:
-								print("On row {} The following two lists did not match {} and {}.".format(
-								row + 1, dlist1, dlist2))
+								if have_time_col:
+									print("time {:d}, row {}: no match {}, {}.".format(time_col_data[row],
+										row, dlist1, dlist2))
+								else:
+									print("row {}: lists don't match {} and {}.".format(
+										row, dlist1, dlist2))
 								stats[column] += 1
 								break
 					else:
+						if is_time_col:
+							time_col_data[row] = native_dictionary1[row][column]
 						# Check for Nan and (-)inf.
 						if math.isnan(native_dictionary1[row][column]) or math.isinf(native_dictionary1[row][column]):
 							continue
 
 						if native_dictionary1[row][column] != native_dictionary2[row][column]:
-							print("On row {} The following two values did not match {} and {}.".format(row + 1, native_dictionary1[row][column], native_dictionary2[row][column]))
+							if have_time_col:
+								print("(time {:d}, row {}: no match ({}, {}).".format(time_col_data[row], row, native_dictionary1[row][column], native_dictionary2[row][column]))
+							else:
+								print("On row {} The following two values did not match {} and {}.".format(row, native_dictionary1[row][column], native_dictionary2[row][column]))
 							stats[column] += 1
 							
 				native_dictionary1.clear()

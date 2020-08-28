@@ -195,6 +195,22 @@ void Ch10TDF1::proc_4byte_date()
 #endif
 }
 
+#ifdef LIBIRIG106
+void Ch10TDF1::UseI106Time(const I106Time* i106_time)
+{
+	// Set the doy bool value.
+	if (i106_time->Format == I106DateFormat::I106_DATEFMT_DAY)
+		ch10td_.doy_ = 1;
+	else
+		ch10td_.doy_ = 0;
+
+	// Calculate the time data packet absolute time.
+	ch10td_.timedatapkt_abstime_ = i106_time->Seconds * uint64_t(1e9) +
+		uint64_t(i106_time->Fraction) * 100;
+
+}
+#endif
+
 void Ch10TDF1::debug_info()
 {
 	printf("\n-- (%03u) Time Data Packet, Format 1 -- \n", id_);

@@ -114,3 +114,11 @@ bool BinBuff::BytesAvailable(const uint64_t& count) const
 		return true;
 	return false;
 }
+
+uint64_t BinBuff::Size() const
+{
+	if (is_initialized_)
+		return read_count_;
+	else
+		return uint64_t(0);
+}
