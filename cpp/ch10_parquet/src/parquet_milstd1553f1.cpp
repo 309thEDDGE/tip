@@ -41,66 +41,66 @@ ParquetMilStd1553F1::ParquetMilStd1553F1(std::string outfile, uint16_t ID, bool 
 	//msglen_.resize(max_temp_element_count_);
 
 	// Add fields to table.
-	addField(arrow::int64(), "time");
-	addField(arrow::int16(), "doy");
-	addField(arrow::int32(), "channelid");
-	addField(arrow::int8(), "ttb");
-	addField(arrow::boolean(), "WE");
-	addField(arrow::boolean(), "SE");
-	addField(arrow::boolean(), "WCE");
-	addField(arrow::boolean(), "TO");
-	addField(arrow::boolean(), "FE");
-	addField(arrow::boolean(), "RR");
-	addField(arrow::boolean(), "ME");
-	addField(arrow::int16(), "gap1");
-	addField(arrow::int16(), "gap2");
-	addField(arrow::boolean(), "mode");
-	addField(arrow::int32(), "data", DATA_PAYLOAD_LIST_COUNT);
-	//addField(arrow::int8(), "count");
-	addField(arrow::int32(), "txcommwrd");
-	addField(arrow::int32(), "rxcommwrd");
-	addField(arrow::int8(), "txrtaddr");
-	addField(arrow::boolean(), "txtr");
-	addField(arrow::int8(), "txsubaddr");
-	addField(arrow::int8(), "txwrdcnt");
-	addField(arrow::int8(), "rxrtaddr");
-	addField(arrow::boolean(), "rxtr");
-	addField(arrow::int8(), "rxsubaddr");
-	addField(arrow::int8(), "rxwrdcnt");
-	addField(arrow::int8(), "payloadwrdcnt");
-	//addField(arrow::int16(), "msglen");
+	AddField(arrow::int64(), "time");
+	AddField(arrow::int16(), "doy");
+	AddField(arrow::int32(), "channelid");
+	AddField(arrow::int8(), "ttb");
+	AddField(arrow::boolean(), "WE");
+	AddField(arrow::boolean(), "SE");
+	AddField(arrow::boolean(), "WCE");
+	AddField(arrow::boolean(), "TO");
+	AddField(arrow::boolean(), "FE");
+	AddField(arrow::boolean(), "RR");
+	AddField(arrow::boolean(), "ME");
+	AddField(arrow::int16(), "gap1");
+	AddField(arrow::int16(), "gap2");
+	AddField(arrow::boolean(), "mode");
+	AddField(arrow::int32(), "data", DATA_PAYLOAD_LIST_COUNT);
+	//AddField(arrow::int8(), "count");
+	AddField(arrow::int32(), "txcommwrd");
+	AddField(arrow::int32(), "rxcommwrd");
+	AddField(arrow::int8(), "txrtaddr");
+	AddField(arrow::boolean(), "txtr");
+	AddField(arrow::int8(), "txsubaddr");
+	AddField(arrow::int8(), "txwrdcnt");
+	AddField(arrow::int8(), "rxrtaddr");
+	AddField(arrow::boolean(), "rxtr");
+	AddField(arrow::int8(), "rxsubaddr");
+	AddField(arrow::int8(), "rxwrdcnt");
+	AddField(arrow::int8(), "payloadwrdcnt");
+	//AddField(arrow::int16(), "msglen");
 
 	// Set memory locations.
-	setMemoryLocation<uint64_t>(time_stamp_, "time");
-	setMemoryLocation<uint8_t>(doy_, "doy");
-	setMemoryLocation<int8_t>(ttb_, "ttb");
-	setMemoryLocation<uint8_t>(WE_, "WE");
-	setMemoryLocation<uint8_t>(SE_, "SE");
-	setMemoryLocation<uint8_t>(WCE_, "WCE");
-	setMemoryLocation<uint8_t>(TO_, "TO");
-	setMemoryLocation<uint8_t>(FE_, "FE");
-	setMemoryLocation<uint8_t>(RR_, "RR");
-	setMemoryLocation<uint8_t>(ME_, "ME");
-	setMemoryLocation<uint8_t>(gap1_, "gap1");
-	setMemoryLocation<uint8_t>(gap2_, "gap2");
-	setMemoryLocation<uint8_t>(mode_code_, "mode");
-	setMemoryLocation<uint16_t>(data_, "data");
-	//setMemoryLocation<int8_t>(word_count_, "count");
-	setMemoryLocation<uint16_t>(comm_word1_, "txcommwrd");
-	setMemoryLocation<uint16_t>(comm_word2_, "rxcommwrd");
-	setMemoryLocation<int8_t>(rtaddr1_, "txrtaddr");
-	setMemoryLocation<uint8_t>(tr1_, "txtr");
-	setMemoryLocation<int8_t>(subaddr1_, "txsubaddr");
-	setMemoryLocation<int8_t>(wrdcnt1_, "txwrdcnt");
-	setMemoryLocation<int8_t>(rtaddr2_, "rxrtaddr");
-	setMemoryLocation<uint8_t>(tr2_, "rxtr");
-	setMemoryLocation<int8_t>(subaddr2_, "rxsubaddr");
-	setMemoryLocation<int8_t>(wrdcnt2_, "rxwrdcnt");
-	setMemoryLocation<uint16_t>(channel_id_, "channelid");
-	setMemoryLocation<int8_t>(payload_count_, "payloadwrdcnt");
-	//setMemoryLocation<int16_t>(msglen_, "msglen");
+	SetMemoryLocation<uint64_t>(time_stamp_, "time");
+	SetMemoryLocation<uint8_t>(doy_, "doy");
+	SetMemoryLocation<int8_t>(ttb_, "ttb");
+	SetMemoryLocation<uint8_t>(WE_, "WE");
+	SetMemoryLocation<uint8_t>(SE_, "SE");
+	SetMemoryLocation<uint8_t>(WCE_, "WCE");
+	SetMemoryLocation<uint8_t>(TO_, "TO");
+	SetMemoryLocation<uint8_t>(FE_, "FE");
+	SetMemoryLocation<uint8_t>(RR_, "RR");
+	SetMemoryLocation<uint8_t>(ME_, "ME");
+	SetMemoryLocation<uint8_t>(gap1_, "gap1");
+	SetMemoryLocation<uint8_t>(gap2_, "gap2");
+	SetMemoryLocation<uint8_t>(mode_code_, "mode");
+	SetMemoryLocation<uint16_t>(data_, "data");
+	//SetMemoryLocation<int8_t>(word_count_, "count");
+	SetMemoryLocation<uint16_t>(comm_word1_, "txcommwrd");
+	SetMemoryLocation<uint16_t>(comm_word2_, "rxcommwrd");
+	SetMemoryLocation<int8_t>(rtaddr1_, "txrtaddr");
+	SetMemoryLocation<uint8_t>(tr1_, "txtr");
+	SetMemoryLocation<int8_t>(subaddr1_, "txsubaddr");
+	SetMemoryLocation<int8_t>(wrdcnt1_, "txwrdcnt");
+	SetMemoryLocation<int8_t>(rtaddr2_, "rxrtaddr");
+	SetMemoryLocation<uint8_t>(tr2_, "rxtr");
+	SetMemoryLocation<int8_t>(subaddr2_, "rxsubaddr");
+	SetMemoryLocation<int8_t>(wrdcnt2_, "rxwrdcnt");
+	SetMemoryLocation<uint16_t>(channel_id_, "channelid");
+	SetMemoryLocation<int8_t>(payload_count_, "payloadwrdcnt");
+	//SetMemoryLocation<int16_t>(msglen_, "msglen");
 
-	uint8_t ret = open_for_write(outfile, truncate);
+	bool ret = OpenForWrite(outfile, truncate);
 }
 
 void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, const char* name,
@@ -211,7 +211,7 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, c
 		for (int i = 0; i < DEFAULT_BUFFER_SIZE_MULTIPLIER; i++)
 		{
 			//printf("write offset %d\n", i * DEFAULT_ROW_GROUP_COUNT);
-			writeColumns(DEFAULT_ROW_GROUP_COUNT, i * DEFAULT_ROW_GROUP_COUNT);
+			WriteColumns(DEFAULT_ROW_GROUP_COUNT, i * DEFAULT_ROW_GROUP_COUNT);
 		}
 
 		// Set all of the data_ values to zero to ensure that only word_count_ 
@@ -238,13 +238,13 @@ void ParquetMilStd1553F1::commit()
 		{
 			if (i == n_calls - 1)
 			{
-				writeColumns(temp_element_count_ - (n_calls - 1)*DEFAULT_ROW_GROUP_COUNT, i * DEFAULT_ROW_GROUP_COUNT);
+				WriteColumns(temp_element_count_ - (n_calls - 1)*DEFAULT_ROW_GROUP_COUNT, i * DEFAULT_ROW_GROUP_COUNT);
 				/*printf("(%03u) ParquetMilStd1553F1::commit(): write %u\n", id_,
 					temp_element_count_ - (n_calls - 1) * DEFAULT_ROW_GROUP_COUNT);*/
 			}
 			else
 			{
-				writeColumns(DEFAULT_ROW_GROUP_COUNT, i*DEFAULT_ROW_GROUP_COUNT);
+				WriteColumns(DEFAULT_ROW_GROUP_COUNT, i*DEFAULT_ROW_GROUP_COUNT);
 				//printf("(%03u) ParquetMilStd1553F1::commit(): write %u\n", id_, DEFAULT_ROW_GROUP_COUNT);
 			}
 		}

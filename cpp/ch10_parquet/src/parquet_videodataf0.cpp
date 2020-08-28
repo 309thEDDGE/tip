@@ -23,30 +23,30 @@ ParquetVideoDataF0::ParquetVideoDataF0(std::string outfile, uint16_t ID, bool tr
 	
 
 	// Add fields to table.
-	addField(arrow::boolean(), "doy");
-	addField(arrow::boolean(), "ET");
-	addField(arrow::boolean(), "IPH");
-	addField(arrow::boolean(), "KLV");
-	addField(arrow::int16(), "PL");
-	addField(arrow::boolean(), "SRS");
-	addField(arrow::int32(), "data", TransportStream_DATA_COUNT);
-	addField(arrow::utf8(), "label");
-	addField(arrow::int64(), "time");
-	addField(arrow::int32(), "channelid");
+	AddField(arrow::boolean(), "doy");
+	AddField(arrow::boolean(), "ET");
+	AddField(arrow::boolean(), "IPH");
+	AddField(arrow::boolean(), "KLV");
+	AddField(arrow::int16(), "PL");
+	AddField(arrow::boolean(), "SRS");
+	AddField(arrow::int32(), "data", TransportStream_DATA_COUNT);
+	AddField(arrow::utf8(), "label");
+	AddField(arrow::int64(), "time");
+	AddField(arrow::int32(), "channelid");
 	
 	// Set memory locations.
-	setMemoryLocation<uint8_t>(doy_, "doy");
-	setMemoryLocation<uint8_t>(ET_, "ET");
-	setMemoryLocation<uint8_t>(IPH_, "IPH");
-	setMemoryLocation<uint8_t>(KLV_, "KLV");
-	setMemoryLocation<uint8_t>(PL_, "PL");
-	setMemoryLocation<uint8_t>(SRS_, "SRS");
-	setMemoryLocation<video_datum>(video_data_, "data");
-	setMemoryLocation<std::string>(label_, "label");
-	setMemoryLocation<uint64_t>(time_, "time");
-	setMemoryLocation<uint16_t>(channel_id_, "channelid");
+	SetMemoryLocation<uint8_t>(doy_, "doy");
+	SetMemoryLocation<uint8_t>(ET_, "ET");
+	SetMemoryLocation<uint8_t>(IPH_, "IPH");
+	SetMemoryLocation<uint8_t>(KLV_, "KLV");
+	SetMemoryLocation<uint8_t>(PL_, "PL");
+	SetMemoryLocation<uint8_t>(SRS_, "SRS");
+	SetMemoryLocation<video_datum>(video_data_, "data");
+	SetMemoryLocation<std::string>(label_, "label");
+	SetMemoryLocation<uint64_t>(time_, "time");
+	SetMemoryLocation<uint16_t>(channel_id_, "channelid");
 
-	uint8_t ret = open_for_write(outfile, truncate);
+	bool ret = OpenForWrite(outfile, truncate);
 }
 
 void ParquetVideoDataF0::commit()
@@ -64,12 +64,12 @@ void ParquetVideoDataF0::commit()
 		{
 			if (i == n_calls - 1)
 			{
-				writeColumns(temp_element_count_ - (n_calls - 1) * DEFAULT_ROW_GROUP_COUNT_VIDEO, 
+				WriteColumns(temp_element_count_ - (n_calls - 1) * DEFAULT_ROW_GROUP_COUNT_VIDEO, 
 					i * DEFAULT_ROW_GROUP_COUNT_VIDEO);
 			}
 			else
 			{
-				writeColumns(DEFAULT_ROW_GROUP_COUNT_VIDEO, i * DEFAULT_ROW_GROUP_COUNT_VIDEO);
+				WriteColumns(DEFAULT_ROW_GROUP_COUNT_VIDEO, i * DEFAULT_ROW_GROUP_COUNT_VIDEO);
 			}
 		}
 
@@ -128,7 +128,7 @@ void ParquetVideoDataF0::append_data(const std::vector<uint64_t>& time_stamp,
 #endif
 			for (int i = 0; i < DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO; i++)
 			{
-				writeColumns(DEFAULT_ROW_GROUP_COUNT_VIDEO, i * DEFAULT_ROW_GROUP_COUNT_VIDEO);
+				WriteColumns(DEFAULT_ROW_GROUP_COUNT_VIDEO, i * DEFAULT_ROW_GROUP_COUNT_VIDEO);
 			}
 
 			temp_element_count_ = 0;
