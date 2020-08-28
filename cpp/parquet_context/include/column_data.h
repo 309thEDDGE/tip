@@ -66,7 +66,7 @@ public:
 	std::string field_name_;
 	std::shared_ptr<arrow::DataType> type_;
 	void* data_;
-	uint8_t* null_values_;
+	std::vector<uint8_t>* null_values_;
 	std::vector<std::string>* str_ptr_;
 	bool is_list_;
 	int list_size_;
@@ -99,16 +99,19 @@ public:
 		}
 	}
 		
-	void SetColumnData(void* data, std::string name, std::string castFrom, uint8_t* valid, int initialRowSize)
+	void SetColumnData(void* data, std::string name, 
+		std::string castFrom, 
+		std::vector<uint8_t>* boolField, 
+		int initialRowSize)
 	{
 		data_ = data;
 		field_name_ = name;
 		str_ptr_ = nullptr;
 		SetTypeEnum(castFrom);
-		if (valid == nullptr) {
+		if (boolField == nullptr) {
 			null_values_ = nullptr;
 		} else {
-			null_values_ = valid;
+			null_values_ = boolField;
 		}
 		pointer_set_ = true;
 		if (is_list_)
@@ -117,17 +120,20 @@ public:
 			initial_max_row_size_ = initialRowSize;
 	}
 
-	void SetColumnData(std::vector<std::string>& data, std::string name, uint8_t* valid, int initialRowSize) 
+	void SetColumnData(std::vector<std::string>& data, 
+		std::string name, 
+		std::vector<uint8_t>* boolField,
+		int initialRowSize) 
 	{
 		data_ = nullptr;
 		str_ptr_ = &data;
 		cast_from_ = NONE;
 		field_name_ = name;
-		if (valid == nullptr) {
+		if (boolField == nullptr) {
 			null_values_ = nullptr;
 		}
 		else {
-			null_values_ = valid;
+			null_values_ = boolField;
 		}
 		pointer_set_ = true;
 		if (is_list_)

@@ -20,6 +20,7 @@ protected:
 	{
 		row_group_count_ = 0;
 		current_row_group_ = 0;
+		null_bitmap_ = nullptr;
 	};
 
 	// Arrow variables.
@@ -27,6 +28,7 @@ protected:
 	arrow::MemoryPool* pool_ = arrow::default_memory_pool();
 	std::shared_ptr<arrow::io::ReadableFile> arrow_file_;
 	std::unique_ptr<parquet::arrow::FileReader> arrow_reader_;
+	const uint8_t* null_bitmap_;
 
 
 	int row_group_count_;
@@ -53,23 +55,27 @@ protected:
 	bool CreateParquetFile(std::shared_ptr<arrow::DataType> type,
 		std::string file_name,
 		std::vector<std::vector<T>> output,
-		int row_group_count, bool truncate = true)
+		int row_group_count, bool truncate = true,
+		std::vector<uint8_t>* bool_fields = nullptr)
 	{
 
 		file_name = "./" + file_name;
 
 		ParquetContext* pc = new ParquetContext(row_group_count);
 
+		bool ret_value = true;
+
 		// Add each vector as a column
 		for (int i = 0; i < output.size(); i++)
 		{
 			pc->AddField(type, "data" + std::to_string(i));
-			pc->SetMemoryLocation<T>(output[i], "data" + std::to_string(i));
+			ret_value = pc->SetMemoryLocation<T>(output[i], "data" + std::to_string(i), bool_fields);
+			if (!ret_value)
+				return false;
 		}
 
 		// Assume each vector is of the same size
 		int row_size = output[0].size();
-		bool ret_value = true;
 
 		pc->OpenForWrite(file_name, truncate);
 		for (int i = 0; i < row_size / row_group_count; i++)
@@ -99,21 +105,30 @@ protected:
 
 	// Create parquet file with one list column
 	template <typename T>
-	bool CreateParquetFileList(std::shared_ptr<arrow::DataType> type, std::string file_name, std::vector<T> output,
-		int row_group_count, int list_size, bool truncate = true)
+	bool CreateParquetFileList(std::shared_ptr<arrow::DataType> type, 
+		std::string file_name, 
+		std::vector<T> output,
+		int row_group_count, 
+		int list_size, 
+		bool truncate = true, 
+		std::vector<uint8_t>* bool_fields = nullptr)
 	{
 		ParquetContext* pc = new ParquetContext(row_group_count);
 
 		file_name = "./" + file_name;
 
+		bool ret_value = true;
+
 		// Add the vector as a list column
 		pc->AddField(type, "data", list_size);
-		pc->SetMemoryLocation<T>(output, "data");
+		ret_value = pc->SetMemoryLocation<T>(output, "data", bool_fields);
+		if (!ret_value)
+			return false;
 
 
 		// Assume each vector is of the same size
 		int row_size = output.size() / list_size;
-		bool ret_value = true;
+		
 
 		pc->OpenForWrite(file_name, truncate);
 		for (int i = 0; i < row_size / row_group_count; i++)
@@ -143,8 +158,9 @@ protected:
 
 	template<typename T, typename A>
 	bool GetNextRG(int col,
-		std::vector<T>& data,
-		bool list = false)
+		std::vector<T>& data,		
+		bool list = false,
+		std::vector<size_t>* null_indicies = nullptr)
 	{
 		int size = 0;
 
@@ -189,9 +205,19 @@ protected:
 		else
 		{
 			A data_array =
-				A(arrow_table->column(0)->data()->chunk(0)->data());
+				A(arrow_table->column(0)->data()->chunk(0)->data());		
 
 			size = data_array.length();
+
+			if (null_indicies != nullptr)
+			{
+				null_indicies->clear();
+				for (int i = 0; i < size; i++)
+				{
+					if (data_array.IsNull(i))
+						null_indicies->push_back(i);
+				}
+			}
 
 			if (data.size() < size)
 				data.resize(size);
@@ -208,7 +234,8 @@ protected:
 	}
 
 	bool GetNextRGBool(int col, std::vector<bool>& data,
-		bool list = false)
+		bool list = false,
+		std::vector<size_t>* null_indicies = nullptr)
 	{
 		int size = 0;
 
@@ -237,8 +264,8 @@ protected:
 			arrow::ListArray data_list_arr =
 				arrow::ListArray(arrow_table->column(0)->data()->chunk(0)->data());
 
-			arrow::BooleanArray data_array =
-				arrow::BooleanArray(data_list_arr.values()->data());
+			arrow::BooleanArray data_array=
+				arrow::BooleanArray(data_list_arr.values()->data());			
 
 			size = data_array.length();
 
@@ -257,6 +284,16 @@ protected:
 
 			size = data_array.length();
 
+			if (null_indicies != nullptr)
+			{
+				null_indicies->clear();
+				for (int i = 0; i < size; i++)
+				{
+					if (data_array.IsNull(i))
+						null_indicies->push_back(i);
+				}
+			}
+
 			if (data.size() < size)
 				data.resize(size);
 
@@ -271,7 +308,8 @@ protected:
 	}
 
 	bool GetNextRGString(int col, std::vector<std::string>& data,
-		bool list = false)
+		bool list = false,
+		std::vector<size_t>* null_indicies = nullptr)
 	{
 		int size = 0;
 
@@ -319,6 +357,16 @@ protected:
 				arrow::StringArray(arrow_table->column(0)->data()->chunk(0)->data());
 
 			size = data_array.length();
+
+			if (null_indicies != nullptr)
+			{
+				null_indicies->clear();
+				for (int i = 0; i < size; i++)
+				{
+					if (data_array.IsNull(i))
+						null_indicies->push_back(i);
+				}
+			}
 
 			if (data.size() < size)
 				data.resize(size);
@@ -1148,8 +1196,7 @@ TEST_F(ParquetContextTest, WriteColumnsNoArguments)
 
 	pc2->OpenForWrite(file_name, true);
 
-	// Should return false because default 
-	// row group size of 50 exceeds value count
+
 	ASSERT_TRUE(pc2->WriteColumns());
 
 	pc2->Close();
@@ -1901,6 +1948,223 @@ TEST_F(ParquetContextTest, NoCastingToBool)
 
 	ASSERT_FALSE(CreateParquetFileList(arrow::boolean(), file_name, file, 3, 2));
 
+	ASSERT_FALSE(SetPQPath(file_name));
+}
+
+// null lists are not possible and should yield
+// all original values
+TEST_F(ParquetContextTest, Int64ListNull)
+{
+	std::string file_name = "file.parquet";
+	std::vector<int64_t> file =		   { 5,10,12,13,15,8,9,1,3,4,5,7,9,6 };
+	std::vector<uint8_t> bool_fields = { 0,1,1,1,0,0,0,0,1,1,0,0,1,1, };
+
+	ASSERT_TRUE(CreateParquetFileList(arrow::int64(), file_name, file, 3, 2, true, &bool_fields));
+
+	ASSERT_TRUE(SetPQPath(file_name));
+
+	std::vector<int64_t> input;
+	bool ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, true);
+	ASSERT_TRUE(ret_val);
+	ASSERT_THAT(input, ::testing::ElementsAre(5, 10, 12, 13, 15, 8));
+
+	input.clear();
+	ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, true);
+	ASSERT_TRUE(ret_val);
+	ASSERT_THAT(input, ::testing::ElementsAre(9, 1, 3, 4, 5, 7));
+
+	input.clear();
+	ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, true);
+	ASSERT_TRUE(ret_val);
+	ASSERT_THAT(input, ::testing::ElementsAre(9, 6));
+
+	// Assert end of data
+	input.clear();
+	ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, true);
+	ASSERT_FALSE(ret_val);
+}
+
+// Null fields not applicable for lists 
+// Should yield the same result
+TEST_F(ParquetContextTest, StringListNull)
+{
+	std::string file_name = "file.parquet";
+	std::vector<std::string> file =
+	{ "a","b","d","jack","bell","bell",
+		"dale","fell","cake","say what??","ee","ff",
+		"gg","d2" };
+	std::vector<uint8_t> null_fields = { 1,0,1,0,0,1,1,0,1,0,1,0,1,1 };
+
+	ASSERT_TRUE(CreateParquetFileList(arrow::utf8(), file_name, file, 3, 2, true, &null_fields));
+
+	ASSERT_TRUE(SetPQPath(file_name));
+
+	std::vector<std::string> input;
+	bool ret_val = GetNextRGString(0, input, true);
+	ASSERT_TRUE(ret_val);
+	ASSERT_THAT(input, ::testing::ElementsAre("a", "b", "d", "jack", "bell", "bell"));
+
+	input.clear();
+	ret_val = GetNextRGString(0, input, true);
+	ASSERT_TRUE(ret_val);
+	ASSERT_THAT(input, ::testing::ElementsAre("dale", "fell", "cake", "say what??", "ee", "ff"));
+
+	input.clear();
+	ret_val = GetNextRGString(0, input, true);
+	ASSERT_TRUE(ret_val);
+	ASSERT_THAT(input, ::testing::ElementsAre("gg", "d2"));
+
+	// Assert end of data
+	input.clear();
+	ret_val = GetNextRGString(0, input, true);
+	ASSERT_FALSE(ret_val);
+}
+
+TEST_F(ParquetContextTest, Int64Null)
+{
+	std::string file_name = "file.parquet";
+	std::vector<std::vector<int64_t>> file = { { 5,10,12,13,15,8, 9,1,3,4,5,7, 9,6 } };
+	std::vector<uint8_t> bool_fields =         { 0, 1, 1, 1, 0,0, 0,0,1,1,0,0, 1,1 };
+
+	ASSERT_TRUE(CreateParquetFile(arrow::int64(), file_name, file, 6, true, &bool_fields));
+	std::vector<size_t> null_indicies;
+	ASSERT_TRUE(SetPQPath(file_name));
+
+	std::vector<int64_t> input;
+	bool ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, false, &null_indicies);
+	ASSERT_TRUE(ret_val);
+	ASSERT_EQ(input[1], 10);
+	ASSERT_EQ(input[2], 12);
+	ASSERT_EQ(input[3], 13);
+	ASSERT_THAT(null_indicies, ::testing::ElementsAre(0, 4, 5));
+
+
+	input.clear();
+	ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, false, &null_indicies);
+	ASSERT_TRUE(ret_val);
+	ASSERT_EQ(input[2], 3);
+	ASSERT_EQ(input[3], 4);
+	ASSERT_THAT(null_indicies, ::testing::ElementsAre(0, 1, 4, 5));
+
+	input.clear();
+	ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, false, &null_indicies);
+	ASSERT_TRUE(ret_val);
+	ASSERT_THAT(input, ::testing::ElementsAre(9, 6));
+	ASSERT_EQ(null_indicies.size(), 0);
+
+	// Assert end of data
+	input.clear();
+	ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, false, &null_indicies);
+	ASSERT_FALSE(ret_val);
+}
+
+TEST_F(ParquetContextTest, Int64NullWithCast)
+{
+	std::string file_name = "file.parquet";
+	std::vector<std::vector<uint16_t>> file = { { 5,10,12,13,15,8, 9,1,3,4,5,7, 9,6 } };
+	std::vector<uint8_t> bool_fields = { 0, 1, 1, 1, 0,0, 0,0,1,1,0,0, 1,1 };
+
+	ASSERT_TRUE(CreateParquetFile(arrow::int32(), file_name, file, 6, true, &bool_fields));
+	std::vector<size_t> null_indicies;
+	ASSERT_TRUE(SetPQPath(file_name));
+
+	std::vector<int32_t> input;
+	bool ret_val = GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, input, false, &null_indicies);
+	ASSERT_TRUE(ret_val);
+	ASSERT_EQ(input[1], 10);
+	ASSERT_EQ(input[2], 12);
+	ASSERT_EQ(input[3], 13);
+	ASSERT_THAT(null_indicies, ::testing::ElementsAre(0, 4, 5));
+
+
+	input.clear();
+	ret_val = GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, input, false, &null_indicies);
+	ASSERT_TRUE(ret_val);
+	ASSERT_EQ(input[2], 3);
+	ASSERT_EQ(input[3], 4);
+	ASSERT_THAT(null_indicies, ::testing::ElementsAre(0, 1, 4, 5));
+
+	input.clear();
+	ret_val = GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, input, false, &null_indicies);
+	ASSERT_TRUE(ret_val);
+	ASSERT_THAT(input, ::testing::ElementsAre(9, 6));
+	ASSERT_EQ(null_indicies.size(), 0);
+
+	// Assert end of data
+	input.clear();
+	ret_val = GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, input, false, &null_indicies);
+	ASSERT_FALSE(ret_val);
+}
+
+
+TEST_F(ParquetContextTest, StringNull)
+{
+	std::string file_name = "file.parquet";
+	std::vector<std::vector<std::string>> file =
+	{ { "a","b","d","jack","bell","bell",
+		"dale","fell","cake","say what??","ee","ff",
+		"gg","d2" } };
+	std::vector<uint8_t> null_fields = { 1,0,1,0,0,1,
+										 1,0,1,0,1,0,
+										 1,1 };
+
+	ASSERT_TRUE(CreateParquetFile(arrow::utf8(), file_name, file, 6, true, &null_fields));
+
+	ASSERT_TRUE(SetPQPath(file_name));
+
+	std::vector<std::string> input;
+	std::vector<size_t> null_indicies;
+	bool ret_val = GetNextRGString(0, input, false, &null_indicies);
+	ASSERT_TRUE(ret_val);
+	ASSERT_EQ(input[0], "a");
+	ASSERT_EQ(input[2], "d");
+	ASSERT_EQ(input[5], "bell");
+	ASSERT_THAT(null_indicies, ::testing::ElementsAre(1,3,4));
+
+	input.clear();
+	ret_val = GetNextRGString(0, input, false, &null_indicies);
+	ASSERT_TRUE(ret_val);
+	ASSERT_EQ(input[0], "dale");
+	ASSERT_EQ(input[2], "cake");
+	ASSERT_EQ(input[4], "ee");
+	ASSERT_THAT(null_indicies, ::testing::ElementsAre(1, 3, 5));
+
+	input.clear();
+	ret_val = GetNextRGString(0, input, false, &null_indicies);
+	ASSERT_TRUE(ret_val);
+	ASSERT_EQ(null_indicies.size(), 0);
+	ASSERT_THAT(input, ::testing::ElementsAre("gg", "d2"));
+
+	// Assert end of data
+	input.clear();
+	ret_val = GetNextRGString(0, input);
+	ASSERT_FALSE(ret_val);
+}
+
+TEST_F(ParquetContextTest, StringNullVectorNotSameSizeAsDataVector)
+{
+	std::string file_name = "file.parquet";
+	std::vector<std::vector<std::string>> file =
+	{ { "a","b","d","jack","bell","bell",
+		"dale","fell","cake","say what??","ee","ff",
+		"gg","d2" } };
+	std::vector<uint8_t> null_fields = { 1,0,1,0,0,1,
+										 1,0,1,0,1,0,
+										 1 };
+
+	ASSERT_FALSE(CreateParquetFile(arrow::utf8(), file_name, file, 6, true, &null_fields));
+
+	ASSERT_FALSE(SetPQPath(file_name)); 
+
+}
+
+TEST_F(ParquetContextTest, Int64NullNotSameSizeAsDataVector)
+{
+	std::string file_name = "file.parquet";
+	std::vector<std::vector<int64_t>> file = { { 5,10,12,13,15,8, 9,1,3,4,5,7, 9,6 } };
+	std::vector<uint8_t> bool_fields = { 0, 1, 1, 1, 0,0, 0,0,1,1,0,0, 1 };
+
+	ASSERT_FALSE(CreateParquetFile(arrow::int64(), file_name, file, 6, true, &bool_fields));
 	ASSERT_FALSE(SetPQPath(file_name));
 }
 

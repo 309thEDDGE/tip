@@ -2,7 +2,7 @@
 
 ParquetContext::ParquetContext() : ROW_GROUP_COUNT_(10000),
 have_created_table_(false), path_(""), have_created_writer_(false),
-pool_(nullptr), schema_(nullptr), ret_(UINT8_MAX),
+pool_(nullptr), schema_(nullptr), ret_(0),
 append_row_count_(0), host_(""), user_(""), port_(-1),
 have_created_schema_(false), writer_(nullptr), parquet_stop_(false),
 truncate_(true)
@@ -10,7 +10,7 @@ truncate_(true)
 
 ParquetContext::ParquetContext(int rgSize) : ROW_GROUP_COUNT_(rgSize),
 have_created_table_(false), path_(""), have_created_writer_(false),
-pool_(nullptr), schema_(nullptr), ret_(UINT8_MAX),
+pool_(nullptr), schema_(nullptr), ret_(0),
 append_row_count_(0), host_(""), user_(""), port_(-1),
 have_created_schema_(false), writer_(nullptr), parquet_stop_(false),
 truncate_(true)
@@ -48,7 +48,7 @@ ParquetContext::GetOffsetsVector(const int& n_rows,
 	return offsets_vec;
 }
 
-uint8_t ParquetContext::OpenForWrite(const std::string& path, const bool& truncate)
+uint8_t ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 {
 	path_ = path;
 	truncate_ = true;
@@ -519,7 +519,7 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 				}
 				else
 				{
-					bldr->AppendValues(*columnData.str_ptr_, columnData.null_values_);
+					bldr->AppendValues(*columnData.str_ptr_, columnData.null_values_->data() + offset);
 				}
 			}
 			else
@@ -531,7 +531,7 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 				}
 				else
 				{
-					bldr->AppendValues(temp_string_vec_, columnData.null_values_);
+					bldr->AppendValues(temp_string_vec_, columnData.null_values_->data() + offset);
 				}
 			}			
 		}
