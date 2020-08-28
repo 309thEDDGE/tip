@@ -62,7 +62,7 @@ message(STATUS "Building lib: " "${pqctx_lib_name}")
 set(pqctx_src_dir ${pqctx_lib_name}/${source_dir_name})
 set(pqctx_inc_dir ${pqctx_lib_name}/${include_dir_name})
 add_library(${pqctx_lib_name}
-            ${pqctx_inc_dir}/Field_Info.h
+            ${pqctx_inc_dir}/column_data.h
             ${pqctx_src_dir}/parquet_context.cpp   ${pqctx_inc_dir}/parquet_context.h
     )
 
@@ -270,9 +270,8 @@ if(build_tests)
                    ${test_src_dir}/parser_config_params_u.cpp ${test_src_dir}/translation_config_params_u.cpp
                    ${test_src_dir}/user_input_u.cpp ${test_src_dir}/yaml_reader_u.cpp
                    ${test_src_dir}/binbuff_u.cpp ${test_src_dir}/parse_context_u.cpp
-                   ${test_src_dir}/parquet_arrow_validator_u.cpp
-                   ${test_src_dir}/tmats_parser_u.cpp
-                   )
+                   ${test_src_dir}/parquet_arrow_validator_u.cpp ${test_src_dir}/parquet_context_u.cpp
+                   ${test_src_dir}/tmats_parser_u.cpp)
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
                                ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} ${comp_inc_dir})
     target_compile_features(${test_exe_name} PUBLIC cxx_std_17)

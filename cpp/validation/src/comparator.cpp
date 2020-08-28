@@ -151,6 +151,10 @@ bool Comparator::CompareColumn(int column)
 			break;
 		}
 
+		default:
+			ret_status = false;
+			break;
+
 	}
 
 	if (ret_status)

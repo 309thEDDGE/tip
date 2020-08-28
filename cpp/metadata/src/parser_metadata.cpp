@@ -286,6 +286,7 @@ void ParserMetadata::print_tmats_chanid_to_type_map()
 	}
 }
 
+/*
 void ParserMetadata::write_metadata_to_parquet(std::filesystem::path parquet_dir)
 {
 	create_output_parquet_path(parquet_dir);
@@ -304,12 +305,12 @@ void ParserMetadata::write_metadata_to_parquet(std::filesystem::path parquet_dir
 	// TODO
 
 	// Append the metadata.
-	db.set_metadata(keyvals);
+	db.SetMetadata(keyvals);
 
 	// Write the file to disk and close. Note: file is 
 	// closed when db goes out of scope.
-	db.writeColumns(0);
-}
+	db.WriteColumns(0);
+}*/
 
 
 void ParserMetadata::write_metadata_to_yaml(std::filesystem::path parquet_dir)
@@ -349,6 +350,7 @@ void ParserMetadata::create_output_yaml_path(std::filesystem::path parquet_dir)
 	printf("Metadata output path: %s\n", output_path_.c_str());
 }
 
+/*
 bool ParserMetadata::read_parquet_metadata(const std::string& parquet_dir)
 {
 	std::filesystem::path _parquet_dir(parquet_dir);
@@ -357,8 +359,8 @@ bool ParserMetadata::read_parquet_metadata(const std::string& parquet_dir)
 	// Open parquet file for read using ParquetContext and get map 
 	// of metadata.
 	ParquetContext db;
-	db.open_for_read(output_path_, false);
-	std::unordered_map<std::string, std::string> kvmd = db.get_metadata();
+	db.OpenForRead(output_path_, false);
+	std::unordered_map<std::string, std::string> kvmd = db.GetMetadata();
 	printf("Metadata map size: %zu\n", kvmd.size());
 
 	// If there are no metadata, return false.
@@ -396,6 +398,7 @@ bool ParserMetadata::read_parquet_metadata(const std::string& parquet_dir)
 	}
 	return true;
 }
+*/
 
 bool ParserMetadata::read_yaml_metadata(const std::string& parquet_dir)
 {
