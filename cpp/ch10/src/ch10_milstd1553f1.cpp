@@ -474,7 +474,7 @@ void Ch10MilStd1553F1::ParsePayloadLibIRIG106()
 	// * BC to RT: 2 --> 1
 	if (msg_commword->RR)
 		datum_count = (msg_commword->length / 2) - 3;
-	else if (RTtoBC)
+	else if (msg_commword->tx1)
 		datum_count = (msg_commword->length / 2) - 2;
 	else
 		datum_count = (msg_commword->length / 2) - 1;

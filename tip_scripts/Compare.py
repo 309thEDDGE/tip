@@ -120,10 +120,13 @@ if row_count_equal or not req_same_row_count:
 			#	continue
 
 			##### end Debug #####
-			
+			keep_col_names = ['totwrdcnt', 'calcwrdcnt', 'incomplete']
 			if column in schema1_field_names:
 				if column in skip_col_names:
 					print('Skipping column: {:s}'.format(column))
+					continue
+
+				if column not in keep_col_names:
 					continue
 				is_time_col = False
 				df1_col1 = df1.select(column)
