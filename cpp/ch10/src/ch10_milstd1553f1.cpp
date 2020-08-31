@@ -217,6 +217,7 @@ uint8_t Ch10MilStd1553F1::parse_payload_new()
 	RTtoBC = msg_commword->tx1;
 
 	// Determine the order of rx/tx/status/data words.
+	// See explanation in ParsePayloadLibIRIG106().
 	if (msg_commword->RR)
 	{
 		/*
