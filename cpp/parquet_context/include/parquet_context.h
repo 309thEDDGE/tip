@@ -173,7 +173,7 @@ public:
 
 	/*
 		Sets a pointer to the memory location of vectors
-		where data will be writen from. These vectors
+		where data will be written from. These vectors
 		are to be initialized and managed outsize of parquet
 		context. Parquet context only stores a pointer to 
 		each vector for each column. SetMemoryLocation 
@@ -190,7 +190,7 @@ public:
 		type casted TO. See AddField comments above for details
 		on casting restrictions.
 
-		Inputs:	 data		-> vectors to be writen to the parquet
+		Inputs:	 data		-> vectors to be written to the parquet
 								file. Memory is managed outside 
 								parquet context. Only a pointer is
 								stored in parquet context. Vectors 
@@ -266,7 +266,7 @@ public:
 							If the column is a list, the actual starting
 							location in the vector will be (offset * listSize).
 
-		Returns:		   True if all columns were writen successfully, 
+		Returns:		   True if all columns were written successfully, 
 							False otherwise
 						   Note: If rows + offset exceeds the amount of 
 						   data in the original vectors passed to 
