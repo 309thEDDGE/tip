@@ -17,6 +17,10 @@ bool ParquetManager::OpenNextParquetFile()
 	current_row_group_ = 0;
 
 	// Open file reader.
+#ifdef NEWARROW
+	PARQUET_ASSIGN_OR_THROW(arrow_file_, 
+		arrow::io::ReadableFile::Open(file_path, pool_));     
+#else
 	st_ = arrow::io::ReadableFile::Open(file_path, pool_, &arrow_file_);
 	if (!st_.ok())
 	{
@@ -24,6 +28,7 @@ bool ParquetManager::OpenNextParquetFile()
 			st_.CodeAsString().c_str(), st_.message().c_str());
 		return false;
 	}
+#endif
 	st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
 	if (!st_.ok())
 	{
@@ -34,7 +39,9 @@ bool ParquetManager::OpenNextParquetFile()
 
 	
 	arrow_reader_->set_use_threads(true);
+#ifndef NEWARROW
 	arrow_reader_->set_num_threads(2);
+#endif
 
 	// Get schema1.
 	st_ = arrow_reader_->GetSchema(&schema_);
@@ -140,8 +147,13 @@ bool ParquetManager::GetNextRGBool(int col, std::vector<uint8_t>& data,
 
 	if (list)
 	{
+#ifdef NEWARROW
+		arrow::ListArray data_list_arr =
+			arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
+#else
 		arrow::ListArray data_list_arr =
 			arrow::ListArray(arrow_table->column(0)->data()->chunk(0)->data());
+#endif
 
 		arrow::BooleanArray data_array =
 			arrow::BooleanArray(data_list_arr.values()->data());
@@ -158,8 +170,13 @@ bool ParquetManager::GetNextRGBool(int col, std::vector<uint8_t>& data,
 	}
 	else
 	{
+#ifdef NEWARROW
+		arrow::BooleanArray data_array =
+			arrow::BooleanArray(arrow_table->column(0)->chunk(0)->data());
+#else
 		arrow::BooleanArray data_array =
 			arrow::BooleanArray(arrow_table->column(0)->data()->chunk(0)->data());
+#endif
 
 		size = data_array.length();
 
@@ -205,8 +222,13 @@ bool ParquetManager::GetNextRGString(int col, std::vector<std::string>& data,
 
 	if (list)
 	{
+#ifdef NEWARROW
+		arrow::ListArray data_list_arr =
+			arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
+#else
 		arrow::ListArray data_list_arr =
 			arrow::ListArray(arrow_table->column(0)->data()->chunk(0)->data());
+#endif
 
 		arrow::StringArray data_array =
 			arrow::StringArray(data_list_arr.values()->data());
@@ -223,8 +245,13 @@ bool ParquetManager::GetNextRGString(int col, std::vector<std::string>& data,
 	}
 	else
 	{
+#ifdef NEWARROW
+		arrow::StringArray data_array =
+			arrow::StringArray(arrow_table->column(0)->chunk(0)->data());
+#else
 		arrow::StringArray data_array =
 			arrow::StringArray(arrow_table->column(0)->data()->chunk(0)->data());
+#endif
 
 		size = data_array.length();
 

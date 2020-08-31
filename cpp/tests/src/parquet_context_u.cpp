@@ -192,8 +192,13 @@ protected:
 
 		if (list)
 		{
+#ifdef NEWARROW
+			arrow::ListArray data_list_arr =
+				arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
+#else
 			arrow::ListArray data_list_arr =
 				arrow::ListArray(arrow_table->column(0)->data()->chunk(0)->data());
+#endif
 
 
 			A data_array =
@@ -210,8 +215,13 @@ protected:
 		}
 		else
 		{
+#ifdef NEWARROW
+			A data_array =
+				A(arrow_table->column(0)->chunk(0)->data());		
+#else
 			A data_array =
 				A(arrow_table->column(0)->data()->chunk(0)->data());		
+#endif
 
 			size = data_array.length();
 
@@ -267,8 +277,13 @@ protected:
 
 		if (list)
 		{
+#ifdef NEWARROW
+			arrow::ListArray data_list_arr =
+				arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
+#else
 			arrow::ListArray data_list_arr =
 				arrow::ListArray(arrow_table->column(0)->data()->chunk(0)->data());
+#endif
 
 			arrow::BooleanArray data_array=
 				arrow::BooleanArray(data_list_arr.values()->data());			
@@ -285,8 +300,13 @@ protected:
 		}
 		else
 		{
+#ifdef NEWARROW
+			arrow::BooleanArray data_array =
+				arrow::BooleanArray(arrow_table->column(0)->chunk(0)->data());
+#else
 			arrow::BooleanArray data_array =
 				arrow::BooleanArray(arrow_table->column(0)->data()->chunk(0)->data());
+#endif
 
 			size = data_array.length();
 
@@ -341,8 +361,13 @@ protected:
 
 		if (list)
 		{
+#ifdef NEWARROW
+			arrow::ListArray data_list_arr =
+				arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
+#else
 			arrow::ListArray data_list_arr =
 				arrow::ListArray(arrow_table->column(0)->data()->chunk(0)->data());
+#endif
 
 			arrow::StringArray data_array =
 				arrow::StringArray(data_list_arr.values()->data());
@@ -359,8 +384,13 @@ protected:
 		}
 		else
 		{
+#ifdef NEWARROW
+			arrow::StringArray data_array =
+				arrow::StringArray(arrow_table->column(0)->chunk(0)->data());
+#else
 			arrow::StringArray data_array =
 				arrow::StringArray(arrow_table->column(0)->data()->chunk(0)->data());
+#endif
 
 			size = data_array.length();
 
@@ -448,7 +478,9 @@ protected:
 
 
 		arrow_reader_->set_use_threads(true);
+#ifndef NEWARROW
 		arrow_reader_->set_num_threads(2);
+#endif
 
 		if (!st_.ok())
 		{
