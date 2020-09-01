@@ -309,6 +309,7 @@ set(comp_exe_name "pqcompare")
 message(STATUS "Building pq-to-pq comparator exe: " "${comp_exe_name}")
 add_executable(${comp_exe_name} ${comp_main_dir}/parquet_arrow_validator_main.cpp)
 target_include_directories(${comp_exe_name} PUBLIC ${comp_inc_dir} ${parquet_inc_dirs})
+target_compile_features(${comp_exe_name} PUBLIC cxx_std_17)
 target_link_libraries(${comp_exe_name} ${comp_lib_name} ${parquet_libs})
 
 #########################################################
