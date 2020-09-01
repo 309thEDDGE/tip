@@ -2,7 +2,8 @@
 !*.Dockerfile
 !pipeline
 !vendor
-!vendor/**
+!vendor/*.gz
+!vendor/parquet-testing-master
 !.gitignore
 !bin
 !deps
