@@ -461,6 +461,10 @@ protected:
 		current_row_group_ = 0;
 
 		// Open file reader.
+#ifdef NEWARROW
+		PARQUET_ASSIGN_OR_THROW(arrow_file_,
+			arrow::io::ReadableFile::Open(file_path, pool_));
+#else
 		st_ = arrow::io::ReadableFile::Open(file_path, pool_, &arrow_file_);
 		if (!st_.ok())
 		{
@@ -468,6 +472,7 @@ protected:
 				st_.CodeAsString().c_str(), st_.message().c_str());
 			return false;
 		}
+#endif
 		st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
 		if (!st_.ok())
 		{
