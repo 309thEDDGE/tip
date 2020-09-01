@@ -1,6 +1,7 @@
 *
 !*.Dockerfile
 !pipeline
+!vendor
 !.gitignore
 !bin
 !deps
