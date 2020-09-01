@@ -174,6 +174,7 @@ message(STATUS "Building pq-to-pq comparator lib: " "${comp_lib_name}")
 add_library(${comp_lib_name} ${comp_src_dir}/comparator.cpp 
             ${comp_src_dir}/parquet_manager.cpp)
 target_include_directories(${comp_lib_name} PUBLIC ${comp_inc_dir} ${parquet_inc_dirs})
+target_link_libraries(${comp_lib_name} PUBLIC ${linux_libs})
 target_compile_features(${comp_lib_name} PUBLIC cxx_std_17)
 
 #########################################################

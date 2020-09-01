@@ -6,5 +6,5 @@ BUILD_DIR=build
 
 mkdir -p $BUILD_DIR \
     && cd $BUILD_DIR \
-    && cmake .. -DCONTAINER=ON \
+    && cmake .. -DCONTAINER=ON -DLIBIRIG106=OFF \
     && make -j2 VERBOSE=1
