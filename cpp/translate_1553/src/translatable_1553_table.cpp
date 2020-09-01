@@ -562,6 +562,9 @@ uint8_t Translatable1553Table::configure_parquet_context(std::filesystem::path& 
 					parquet_path.string().c_str());
 				return 1;
 			}
+
+			// Sleep to give the OS some time before the next file is created.
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		}
 
 		// Create the output parquet file name based on the parquet_path file name.

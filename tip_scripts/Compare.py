@@ -35,7 +35,7 @@ if len(sys.argv) > 5:
 	elif sys.argv[5] == '--with-row-count':
 		req_same_row_count = True
 
-skip_col_names = ['msglen']
+skip_col_names = []
 
 #before we can do any manipulations, we need to make sure the files are equal in both columns and rows
 #check to see if the row count matches if not then it is not the same
@@ -120,10 +120,13 @@ if row_count_equal or not req_same_row_count:
 			#	continue
 
 			##### end Debug #####
-			
+			keep_col_names = ['totwrdcnt', 'calcwrdcnt', 'incomplete']
 			if column in schema1_field_names:
 				if column in skip_col_names:
 					print('Skipping column: {:s}'.format(column))
+					continue
+
+				if column not in keep_col_names:
 					continue
 				is_time_col = False
 				df1_col1 = df1.select(column)

@@ -391,5 +391,5 @@ if __name__ == '__main__':
     if len(sys.argv) == 5:
         desc = sys.argv[4]
 
-    e = E2EValidator(sys.argv[1], sys.argv[2], sys.argv[3], log_desc=desc, video=True)
+    e = E2EValidator(sys.argv[1], sys.argv[2], sys.argv[3], log_desc=desc, video=False)
     e.validate()
