@@ -300,7 +300,8 @@ if(video_data)
                    ${video_inc_dir}/parquet_video_extraction.h ${video_src_dir}/parquet_video_extraction.cpp)
     target_include_directories(${video_exe_name} PUBLIC ${video_inc_dir}
                                ${parquet_inc_dirs})
-    target_link_libraries(${video_exe_name} ${parquet_libs})
+    target_compile_features(${video_exe_name} PUBLIC cxx_std_17)
+    target_link_libraries(${video_exe_name} ${parquet_libs} ${linux_libs})
 endif()
 
 #########################################################

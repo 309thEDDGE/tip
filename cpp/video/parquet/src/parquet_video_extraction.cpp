@@ -5,6 +5,18 @@ bool ParquetVideoExtraction::OpenParquetFile(std::string file_path)
 {
 	std::string data_col_name = "data";
 	std::string channel_id_col_name = "channelid";
+
+#ifdef NEWARROW
+	try
+	{
+	PARQUET_ASSIGN_OR_THROW(arrow_file_, arrow::io::ReadableFile::Open(file_path, pool_));
+	}
+	catch (...)
+	{
+		printf("ReadableFile::Open error\n");
+		return false;
+	}
+#else
 	// Open file reader.
 	st_ = arrow::io::ReadableFile::Open(file_path, pool_, &arrow_file_);
 	if (!st_.ok())
@@ -13,6 +25,7 @@ bool ParquetVideoExtraction::OpenParquetFile(std::string file_path)
 			st_.CodeAsString().c_str(), st_.message().c_str());
 		return false;
 	}
+#endif
 	st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
 	if (!st_.ok())
 	{
@@ -85,15 +98,24 @@ bool ParquetVideoExtraction::ExtractFileTS()
 			return false;
 		}
 
+#ifdef NEWARROW
+		arrow::ListArray data_list_arr =
+			arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
+#else
 		arrow::ListArray data_list_arr =
 			arrow::ListArray(arrow_table->column(0)->data()->chunk(0)->data());
-
+#endif
 
 		arrow::NumericArray<arrow::Int32Type> data_arr = 
 			arrow::NumericArray<arrow::Int32Type>(data_list_arr.values()->data());
 
+#ifdef NEWARROW
 		arrow::NumericArray<arrow::Int32Type> channel_ids = 
+			arrow::NumericArray<arrow::Int32Type>(arrow_table->column(1)->chunk(0)->data());
+#else
+		arrow::NumericArray<arrow::Int32Type> channel_ids =
 			arrow::NumericArray<arrow::Int32Type>(arrow_table->column(1)->data()->chunk(0)->data());
+#endif
 		
 		WriteRowGroup(data_arr, channel_ids);
 	}

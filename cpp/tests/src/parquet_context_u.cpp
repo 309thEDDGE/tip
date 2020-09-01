@@ -462,8 +462,17 @@ protected:
 
 		// Open file reader.
 #ifdef NEWARROW
-		PARQUET_ASSIGN_OR_THROW(arrow_file_,
+		try
+		{
+			PARQUET_ASSIGN_OR_THROW(arrow_file_,
 			arrow::io::ReadableFile::Open(file_path, pool_));
+		}
+		catch (...)
+		{
+			printf("ReadableFile::Open error\n");
+			return false;
+		}
+		
 #else
 		st_ = arrow::io::ReadableFile::Open(file_path, pool_, &arrow_file_);
 		if (!st_.ok())

@@ -18,8 +18,16 @@ bool ParquetManager::OpenNextParquetFile()
 
 	// Open file reader.
 #ifdef NEWARROW
+	try
+	{
 	PARQUET_ASSIGN_OR_THROW(arrow_file_, 
 		arrow::io::ReadableFile::Open(file_path, pool_));     
+	}
+	catch(...)
+	{
+		printf("arrow::io::ReadableFile::Open error\n");
+		return false;
+	}
 #else
 	st_ = arrow::io::ReadableFile::Open(file_path, pool_, &arrow_file_);
 	if (!st_.ok())

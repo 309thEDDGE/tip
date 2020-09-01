@@ -135,6 +135,7 @@ bool ParquetManager::GetNextRG(int col,
 
 		size = data_array.length();
 
+
 		if (data.size() < size)
 			data.resize(size);
 
