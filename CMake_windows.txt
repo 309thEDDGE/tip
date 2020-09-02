@@ -108,7 +108,16 @@ get_filename_component(tins_path "${deps_name}/${tins_dir_name}" ABSOLUTE)
 set(tins_inc_dir ${tins_path}/include)
 set(tins_lib_dir ${tins_path}/lib)
 set(tins_lib_name ${tins_lib_dir}/tins.lib)
-set(pcap_lib_name ${tins_lib_dir}/wpcap.lib)
+
+# pcap necessary to link for libtins
+set(pcap_dir_name "npcap")
+get_filename_component(pcap_path "${deps_name}/${pcap_dir_name}" ABSOLUTE)
+set(pcap_inc_dir ${pcap_path}/include)
+set(pcap_lib_dir ${pcap_path}/lib/x64)
+set(pcap_lib_name ${pcap_lib_dir}/wpcap.lib)
+
 # Other system libs necessary, ought to be found by compiler
 set(other_tins_lib_names Ws2_32.lib Iphlpapi.lib)
+
+set(all_tins_incs ${tins_inc_dir} ${pcap_inc_dir})
 set(all_tins_libs ${tins_lib_name} ${pcap_lib_name} ${other_tins_lib_names})
