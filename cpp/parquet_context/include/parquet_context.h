@@ -400,49 +400,49 @@ void ParquetContext::CastTo(const void const* data,
 {
 	switch (castFrom)
 	{
-	case INT8:
+	case CastFromType::TypeINT8:
 		std::copy((int8_t*)data + offset,
 			(int8_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 
-	case UINT8:
+	case CastFromType::TypeUINT8:
 		std::copy((uint8_t*)data + offset,
 			(uint8_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 
-	case INT16:
+	case CastFromType::TypeINT16:
 		std::copy((int16_t*)data + offset,
 			(int16_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 
-	case UINT16:
+	case CastFromType::TypeUINT16:
 		std::copy((uint16_t*)data + offset,
 			(uint16_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 
-	case INT32:
+	case CastFromType::TypeINT32:
 		std::copy((int32_t*)data + offset,
 			(int32_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 	
-	case UINT32:
+	case CastFromType::TypeUINT32:
 		std::copy((uint32_t*)data + offset,
 			(uint32_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 
-	case INT64:
+	case CastFromType::TypeINT64:
 		std::copy((int64_t*)data + offset,
 			(int64_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 
-	case UINT64:
+	case CastFromType::TypeUINT64:
 		std::copy((uint64_t*)data + offset,
 			(uint64_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
