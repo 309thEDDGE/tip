@@ -120,4 +120,4 @@ set(pcap_lib_name ${pcap_lib_dir}/wpcap.lib)
 set(other_tins_lib_names Ws2_32.lib Iphlpapi.lib)
 
 set(all_tins_incs ${tins_inc_dir} ${pcap_inc_dir})
-set(all_tins_libs ${tins_lib_name} ${pcap_lib_name} ${other_tins_lib_names})
+set(all_tins_libs ${tins_lib_name} ${other_tins_lib_names} ${pcap_lib_name})

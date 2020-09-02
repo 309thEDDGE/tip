@@ -185,6 +185,13 @@ if(ethernet_data)
     else()
         add_compile_definitions(ETHERNET_DATA)
     endif()
+    if(libirig106)
+        if(linux)
+            add_definitions(-DTINS_STATIC)
+        else()
+            add_compile_definitions(TINS_STATIC)
+        endif()
+    endif()
 endif()
 
 # Add source files dir.
