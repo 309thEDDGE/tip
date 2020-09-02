@@ -406,8 +406,12 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 			milstd1553_msg_selection, milstd1553_sorted_selected_msgs);
 		milstd->set_channelid_remoteaddress_output(&chanid_remoteaddr1_map, &chanid_remoteaddr2_map);
 #ifdef VIDEO_DATA
-		printf("\n(%03u) ParseWorker parsing VIDEO\n", id);
+		printf("\n(%03u) ParseWorker parsing video packets\n", id);
 		video = new Ch10VideoDataF0(bb, id, tdata, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
+#endif
+#ifdef ETHERNET_DATA
+		printf("\n(%03u) ParseWorker parsing Ethernet packets\n", id);
+		i106_ethernetf0_.Initialize(id, &ch10md_);
 #endif
 		delete_alloc = true;
 	}
@@ -714,6 +718,30 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 
 				break;
 			}
+#ifdef ETHERNET_DATA
+			case I106CH10_DTYPE_ETHERNET_FMT_0:
+			{
+				// The following lines are a stop-gap during the transition to a cleaner
+				// LibIRIG106 integration. Here I record the data stored in Ch10TimeData and
+				// Ch10HeaderData in the Ch10MetaData object in preparation for passing it 
+				// to the I106Ch10EthernetF0::Ingest() method.
+				const Ch10TimeData* ch10td = tdf->GetCh10TimeDataPtr();
+				const Ch10HeaderData* ch10hd = pkthdr->GetCh10HeaderDataPtr();
+				ch10md_.timedatapkt_rtc_ = ch10td->timedatapkt_rtc_;
+				ch10md_.doy_ = ch10td->doy_;
+				ch10md_.timedatapkt_abstime_ = ch10td->timedatapkt_abstime_;
+				ch10md_.intrapkt_ts_source_ = ch10hd->intrapkt_ts_source_;
+				ch10md_.time_format_ = ch10hd->time_format_;
+				ch10md_.header_rtc_ = ch10hd->header_rtc_;
+
+				if (i106_ethernetf0_.Ingest(&i106_header_, temp_buffer_ptr) == 1)
+				{
+					continue_parsing = false;
+					continue;
+				}
+				break;
+			}
+#endif
 #ifdef VIDEO_DATA
 			case I106CH10_DTYPE_VIDEO_FMT_0:
 			{
