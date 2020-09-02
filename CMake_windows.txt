@@ -99,3 +99,16 @@ get_filename_component(irig_path "${deps_name}/${irig_dir_name}" ABSOLUTE)
 set(irig_inc_dir ${irig_path}/include)
 set(irig_lib_dir ${irig_path}/lib)
 set(irig_lib_name ${irig_lib_dir}/irig106.lib)
+
+#########################################################
+#                   libtins Paths
+#########################################################
+set(tins_dir_name "libtins")
+get_filename_component(tins_path "${deps_name}/${tins_dir_name}" ABSOLUTE)
+set(tins_inc_dir ${tins_path}/include)
+set(tins_lib_dir ${tins_path}/lib)
+set(tins_lib_name ${tins_lib_dir}/tins.lib)
+set(pcap_lib_name ${tins_lib_dir}/wpcap.lib)
+# Other system libs necessary, ought to be found by compiler
+set(other_tins_lib_names Ws2_32.lib Iphlpapi.lib)
+set(all_tins_libs ${tins_lib_name} ${pcap_lib_name} ${other_tins_lib_names})

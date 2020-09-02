@@ -199,9 +199,14 @@ endif()
 
 set(temp_irig_lib_name "")
 set(temp_irig_inc_dir "")
+set(ethernet_src "")
 if(libirig106)
     set(temp_irig_lib_name ${irig_lib_name})
     set(temp_irig_inc_dir ${irig_inc_dir})
+    if(ethernet_data)
+        set(ethernet_src ${ch10_inc_dir}/i106_parse_context.h ${ch10_src_dir}/i106_parse_context.cpp
+                         ${ch10_inc_dir}/i106_ch10_ethernetf0.h ${ch10_src_dir}/i106_ch10_ethernetf0.cpp)
+    endif()
 endif()
 
 message(STATUS "Building exe: " "${ch10parse_exe_name}")
@@ -216,6 +221,7 @@ add_executable(${ch10parse_exe_name} ${ch10_main_dir}/ch10parse.cpp
     ${ch10_src_dir}/ch10_packet_header.cpp ${ch10_src_dir}/ch10_tdf1.cpp 
     ${ch10_src_dir}/ch10_videodataf0.cpp ${ch10_src_dir}/parse_manager.cpp ${ch10_src_dir}/parse_util.cpp
     ${ch10_src_dir}/parse_worker.cpp
+    ${ethernet_src}
     )
 target_include_directories(${ch10parse_exe_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 

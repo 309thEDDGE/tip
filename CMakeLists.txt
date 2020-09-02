@@ -24,6 +24,8 @@ set(linux false)
 set(container false)
 set(debug 1)
 set(libirig106 true)
+set(video_data false)
+set(ethernet_data true)
 
 if (DEFINED DEBUG)
     message(STATUS "DEBUG defined")
@@ -39,11 +41,22 @@ endif()
 
 # Default def video_data = false. Set the VIDEO_DATA preproc 
 # def if true. User can set -DVIDEO=1 to set this property.
-set(video_data false)
 if(DEFINED VIDEO)
     message(STATUS "VIDEO defined")
     set(ignore ${VIDEO})
     set(video_data true)
+endif()
+
+if(DEFINED ETHERNET)
+    if("${ETHERNET}" MATCHES "OFF")
+        message(STATUS "ETHERNET set to OFF")
+        set(ethernet_data false)
+    endif()
+    set(ignore ${ETHERNET})
+endif()
+    
+if(ethernet_data)
+     message(STATUS "ETHERNET set to ON")
 endif()
 
 # Default def build_tests = true. If TESTS is defined by the
@@ -60,10 +73,15 @@ if(DEFINED LIBIRIG106)
         message(STATUS "LIBIRIG106 set to OFF")
         set(libirig106 false)
     endif()
+    set(ignore LIBIRIG106)
 endif()
 
 if(libirig106)
     message(STATUS "Using libirig106, defining LIBIRIG106")
+endif()
+
+if(ethernet_data AND NOT libirig106)
+    message(FATAL_ERROR "LIBIRIG106 (default ON) must be ON if ETHERNET (default ON) is ON")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -158,6 +176,14 @@ if(libirig106)
         add_definitions(-DLIBIRIG106)
     else()
         add_compile_definitions(LIBIRIG106)
+    endif()
+endif()
+
+if(ethernet_data)
+    if(linux)
+        add_definitions(-DETHERNET_DATA)
+    else()
+        add_compile_definitions(ETHERNET_DATA)
     endif()
 endif()
 
