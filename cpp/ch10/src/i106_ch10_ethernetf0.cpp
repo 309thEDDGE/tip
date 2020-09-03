@@ -1,7 +1,8 @@
 #include "i106_ch10_ethernetf0.h"
 
 I106Ch10EthernetF0::I106Ch10EthernetF0() : I106ParseContext(), frame_index_(0),
-framelen_(0), framelen_ptr_((uint8_t*)&framelen_), typelen_ptr_(nullptr), i106_status_(I106Status::I106_OK)
+framelen_(0), framelen_ptr_((uint8_t*)&framelen_), typelen_ptr_(nullptr), 
+i106_status_(I106Status::I106_OK), npp()
 {
 
 }
@@ -79,15 +80,21 @@ uint8_t I106Ch10EthernetF0::RecordFrame()
 		return retcode_;
 	}
 
+	if (npp.ParseEthernetDot3(i106_ethmsg_.Data, i106_ethiph_->Length) == 1)
+	{
+		retcode_ = 1;
+		return retcode_;
+	}
+
 	// Set the Ethernet frame struct.
-	i106_ethframe_ = (const EthernetF0_Physical_FullMAC*)i106_ethmsg_.Data;
+	//i106_ethframe_ = (const EthernetF0_Physical_FullMAC*)i106_ethmsg_.Data;
 
 	// Test: calculate length, compare with length from IPH.
 	// The payload length given within the frame plus the MAC addresses (2 * 6),
 	// Ethertype/length (2) and frame check sequence (4) (= total of 18) is equal to the total 
 	// frame size given in the IPH.
-	CalculateFrameLength();
-	if (i106_ethiph_->Length - 18 != framelen_)
+	//CalculateFrameLength();
+	/*if (i106_ethiph_->Length - 18 != framelen_)
 	{
 		printf("\n(%03u) I106Ch10EthernetF0::Ingest(): payload length not in agreement:\n",
 			id_, frame_index_, i106_ethmsg_.CSDW->Frames);
@@ -97,7 +104,7 @@ uint8_t I106Ch10EthernetF0::RecordFrame()
 		return retcode_;
 	}
 
-	CreateStringMACAddrs();
+	CreateStringMACAddrs();*/
 
 	// Add data to Parquet file.
 

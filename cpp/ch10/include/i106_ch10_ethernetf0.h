@@ -25,6 +25,8 @@ private:
 	std::stringstream dest_mac_stream_;
 	std::stringstream src_mac_stream_;
 
+	NetworkPacketParser npp;
+
 public:
 	const uint16_t& frame_length_ = framelen_;
 	I106Ch10EthernetF0();
