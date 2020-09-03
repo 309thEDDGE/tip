@@ -180,6 +180,12 @@ target_compile_features(${comp_lib_name} PUBLIC cxx_std_17)
 #      Build/link ethernet lib
 #########################################################
 if(libirig106 AND ethernet_data)
+
+    # Copy pcap dlls to bin dir.
+    configure_file(${pcap_dll1} ${out_bin_dir})
+    configure_file(${pcap_dll2} ${out_bin_dir})
+
+    # Build ch10ethernet add_library(${1:target_name} ${2:source_file}).
     set(eth_lib_name "ch10ethernet.lib")
     set(eth_path "ethernet")
     set(eth_inc_dir ${eth_path}/${include_dir_name})

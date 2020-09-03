@@ -116,6 +116,10 @@ set(pcap_inc_dir ${pcap_path}/include)
 set(pcap_lib_dir ${pcap_path}/lib/x64)
 set(pcap_lib_name ${pcap_lib_dir}/wpcap.lib ${pcap_lib_dir}/Packet.lib)
 
+# Pcap dlls that must be installed next to tip_parse.exe.
+set(pcap_dll1 ${pcap_lib_dir}/wpcap.dll)
+set(pcap_dll2 ${pcap_lib_dir}/Packet.dll)
+
 # Other system libs necessary, ought to be found by compiler
 set(other_tins_lib_names Ws2_32.lib Iphlpapi.lib)
 
