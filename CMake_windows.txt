@@ -114,7 +114,7 @@ set(pcap_dir_name "npcap")
 get_filename_component(pcap_path "${deps_name}/${pcap_dir_name}" ABSOLUTE)
 set(pcap_inc_dir ${pcap_path}/include)
 set(pcap_lib_dir ${pcap_path}/lib/x64)
-set(pcap_lib_name ${pcap_lib_dir}/wpcap.lib)
+set(pcap_lib_name ${pcap_lib_dir}/wpcap.lib ${pcap_lib_dir}/Packet.lib)
 
 # Other system libs necessary, ought to be found by compiler
 set(other_tins_lib_names Ws2_32.lib Iphlpapi.lib)

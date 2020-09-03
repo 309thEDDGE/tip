@@ -219,6 +219,7 @@ set(temp_irig_inc_dir "")
 set(parse_ethernet_src "")
 set(temp_eth_lib_name "")
 set(temp_eth_inc_dir "")
+set(temp_tins_libs "")
 if(libirig106)
     set(temp_irig_lib_name ${irig_lib_name})
     set(temp_irig_inc_dir ${irig_inc_dir})
@@ -227,6 +228,7 @@ if(libirig106)
                          ${ch10_inc_dir}/i106_ch10_ethernetf0.h ${ch10_src_dir}/i106_ch10_ethernetf0.cpp)
         set(temp_eth_lib_name ${eth_lib_name})
         set(temp_eth_inc_dir ${eth_inc_dir})
+        set(temp_tins_libs ${all_tins_libs})
     endif()
 endif()
 
@@ -260,6 +262,7 @@ target_link_libraries(${ch10parse_exe_name}
                         #${parquet_libs}
                         ${linux_libs}
                         ${temp_irig_lib_name}
+                        ${temp_tins_libs}
                         ${temp_eth_lib_name}
     )
 
