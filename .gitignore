@@ -3,6 +3,7 @@
 !pipeline
 !vendor
 !vendor/*.gz
+!vendor/*.sh
 !vendor/parquet-testing-master
 !.gitignore
 !bin

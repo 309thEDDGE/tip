@@ -11,10 +11,12 @@
 #   make -j ${CMAKE_BUILD_TARGETS} ${CMAKE_BUILD_ARGS} VERBOSE=1
 BUILD_DIR=build
 
+if [ ! -f deps/arrow_library_dependencies/lib/libarrow.a ] ; then vendor/build.sh ; fi
+
 mkdir -p $BUILD_DIR \
     && cd $BUILD_DIR \
-    && cmake .. -DCONTAINER=ON \
-    && make -j VERBOSE=1
+    && cmake -G Ninja .. -DLIBIRIG106=OFF \
+    && ninja
 
 # cmake --version
 # gcc --version
