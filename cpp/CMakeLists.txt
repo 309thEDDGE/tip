@@ -186,7 +186,7 @@ if(libirig106 AND ethernet_data)
     configure_file(${pcap_dll2} ${out_bin_dir} COPYONLY)
 
     # Build ch10ethernet add_library(${1:target_name} ${2:source_file}).
-    set(eth_lib_name "ch10ethernet.lib")
+    set(eth_lib_name "ch10ethernet")
     set(eth_path "ethernet")
     set(eth_inc_dir ${eth_path}/${include_dir_name})
     set(eth_src_dir ${eth_path}/${source_dir_name})
