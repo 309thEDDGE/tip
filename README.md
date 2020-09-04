@@ -11,7 +11,7 @@
 - [Changelog](#changelog)
 
 ## Markdown
-Use `markdown_to_html.py` in the scripts directory to convert md file to html. Requires markdown2.py to be in PYTHONPATH. markdown2 is approved for use in SWEG.
+Use `markdown_to_html.py` in the tip_scripts directory to convert md file to html. Requires markdown2.py to be in PYTHONPATH. markdown2 is approved for use in SWEG.
 
 ## CMake Build
 
@@ -19,7 +19,6 @@ Use `markdown_to_html.py` in the scripts directory to convert md file to html. R
 
 #### Source
 
-* Clone TIP source (di2e: see `di2e_bitbutcket_clone.txt`)
 * `cd` to TIP root dir (let's call it `tip/`)
 * `mkdir build`
 
@@ -27,15 +26,16 @@ Use `markdown_to_html.py` in the scripts directory to convert md file to html. R
 
 * Dependencies for developers will be provided via the `tip_deps.zip` file which contains a "deps" directory which shall be copied into `tip/`
 * `tip/deps` contains the following subdirectories:
-	- Anaconda
 	- arrow\_library\_dependencies
 	- yaml-cpp-yaml-cpp-0.6.0 (itself containing a subdirectory of the same name)
 	- googletest-release-1.8.1libs
+	- libirig106
 	
 #### CMake
 
 * `cd tip/build`
 * `cmake .. -D<option>=<value>`
+	- add `-GNinja` for faster build
 * Default options: 
 	- no video output
 	- build tests
@@ -57,9 +57,13 @@ Use `markdown_to_html.py` in the scripts directory to convert md file to html. R
 * In command prompt or VS x64 command prompt:
 	- `cd tip/build`
 	- `cmake .. -D<option>=<value>`
-	- `msbuild.exe INSTALL.vcxproj /property:Configuration=Release`
-		- must be in VS x64 Native Tools Command Prompt
-		- VS x64 Native Tools Command Prompt can be installed with VS, developer tools module enabled. License not required. From the Start menu navigate to the Visual Studio 2019 folder and select the correct command prompt.
+	- build with one of these commands
+		- `msbuild.exe INSTALL.vcxproj /property:Configuration=Release`
+			- must be in VS x64 Native Tools Command Prompt
+			- VS x64 Native Tools Command Prompt can be installed with VS, developer tools module enabled. License not required. From the Start menu navigate to the Visual Studio 2019 folder and select the correct command prompt.
+		- `ninja install` (if -GNinja was included)
+		- `cmake --build . --config Release`
+
 * INSTALL will automatically run ALL_BUILD
 * gtest/gmock and yaml-cpp libraries are included in `tip_deps.zip`, but if a rebuild is necessary, note the following:  
 	- gmock/gtest  
@@ -82,9 +86,6 @@ Use `markdown_to_html.py` in the scripts directory to convert md file to html. R
 			- `cmake .. -DCMAKE_GENERATOR_PLATFORM=x64`
 			- `cmake --build . --config Release`
 
-#### Cygwin (Not working)
-
-* Requires: gcc, cmake, make
 
 ## Code Convention
 Attempt to follow the Google C++ Style Guide which can be found at google.github.io/styleguide/cppguide.html. 
@@ -114,22 +115,22 @@ If the `parse_and_translate.py` script is used, relevant config files are automa
 ### Call Executables Directly
 
 #### --Standard executables
-**tip_parse.exe**: Parse ch10 file into intermediate Parquet files with raw 1553 payload information. The output parquet path is the folder containing the ch10 provided in the argument.  
+**tip\_parse.exe**: Parse ch10 file into intermediate Parquet files with raw 1553 payload information. The output parquet path is the folder containing the ch10 provided in the argument.  
  `tip_parse.exe [path to \*.ch10 file]`  
 
- **tip_parse_video.exe**: Parse ch10 file into intermediate Parquet files with raw 1553 payload information and video transport stream data. The output parquet path is the folder containing the ch10 provided in the argument. (only available when `-DVIDEO=ON`)
+ **tip\_parse\_video.exe**: Parse ch10 file into intermediate Parquet files with raw 1553 payload information and video transport stream data. The output parquet path is the folder containing the ch10 provided in the argument. (only available when built with `-DVIDEO=ON`)
  `tip_parse_video.exe [path to \*.ch10 file]`  
 
- **parquet\_video\_extractor.exe**: Extract video transport stream data from parquet files. Exports TS files to a folder `<ch10path>/<ch10name>_video_TS` next to `<ch10path>/<ch10name>_video.parquet` (only available when `-DVIDEO=ON`)  
+ **parquet\_video\_extractor.exe**: Extract video transport stream data from parquet files. Exports TS files to a folder `<ch10path>/<ch10name>_video_TS` next to `<ch10path>/<ch10name>_video.parquet` (only available when built with `-DVIDEO=ON`)  
  `parquet_video_extractor.exe [path to <ch10path>/<ch10name>_video.parquet folder]`  
 
-  **tip_translate.exe**: Translate raw 1553 data from Parquet files to parquet tables of enginering units.  
+  **tip\_translate.exe**: Translate raw 1553 data from Parquet files to parquet tables of enginering units.  
 `tip_translate.exe [path to parsed 1553 data directory, output from *ch10parse.exe ('<ch10path>/<ch10name>_1553.parquet')] [path to ICD]`
 
 ## Build Notes
 
 ### Preprocessor Definitions
-Flags control debug print statement output verbosity, toggle enable/disble parsing of Ch10 packet types, indicate specific 1553 message selection, and specify output file type. **Default definitions are already handled in CMakeLists.txt**.
+Flags control debug print statement output verbosity, toggle enable/disable parsing of Ch10 packet types, indicate specific 1553 message selection, and specify output file type. **Default definitions are already handled in CMakeLists.txt**.
 
 * `__WIN64` - Compatibility mode for Windows 64-bit. This is the only mode implemented currently.
 * `DEBUG` - Debug level for print statements. If defined, print statements will be turned on but only printed if the value assigned is greater than each print statements threshold. Recommend 1 for normal use. Values in the range 3 to 5 are only useful in true debug mode because the output is too verbose for regular program functionality.
@@ -141,15 +142,8 @@ Flags control debug print statement output verbosity, toggle enable/disble parsi
 * `PARQUET` - When coupled with `LOCALDB`, causes Parquet format files to be written locally.
 * `ARROW_STATIC` and `PARQUET_STATIC` - Must be defined when `PARQUET` is used and linker is configured to link statically.
 * `ETHERNET_DATA` - (*Not Implemented*) If defined, parse and record Ethernet data packets. Does not cause Ethernet data payloads to be translated into distinct messages with engineering units.
-
-### Library Dependencies (already handled in CMakeLists.txt and included in tip_deps.zip)
-
-In order:
-
-* Parquet (`parquet_context.h` Parquet output); Uses approved Apache Arrow libraries built from source - `brotlidec-static.lib`, `brotlicommon-static.lib`, `brotlienc-static.lib`, `arrow_static.lib`, `double-conversion.lib`, `thriftmd.lib`, `snappy.lib`, `liblz4_static.lib`, `zlibstatic.lib`, `zstd_static.lib`, `parquet_static.lib`
-* Boost libraries - `libboost_system-vc140-mt-x64-1_67.lib`, `libboost_regex-vc140-mt-x64-1_67.lib`, `libboost_filesystem-vc140-mt-x64-1_67.lib`
-* YAML ...
-* GTest/GMock ...
+* `NEWARROW` - build using newer arrow implementation (mainly used for container builds).
+* `LIBIRIG106` - implement libirig106 libraries.
 
 ## Changelog
 

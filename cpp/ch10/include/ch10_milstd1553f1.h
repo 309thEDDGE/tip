@@ -38,6 +38,8 @@ private:
 	const MilStd1553F1Msg* msg;
 	const MilStd1553F1MsgCommWord* msg_commword;
 	uint8_t busid;
+	int8_t command_word_payload_count_;
+	uint8_t is_payload_incomplete_;
 	/*const CommandWord* comm_word;
 	const CommandWord* comm_word2;*/
 	uint32_t msg_hdr_size;
@@ -48,7 +50,7 @@ private:
 	std::string bus_name;
 	const uint16_t* datum;
 	int datum_shift;
-	uint16_t datum_count;
+	int8_t datum_count;
 	uint8_t RTtoBC;
 	uint16_t zero;
 	bool check_word_count;
@@ -87,12 +89,12 @@ public:
 		std::vector<std::string> sorted_msg_selection_names) : ParseContext(buff, ID), msg(nullptr),
 		use_selected_msg_list(msg_selection),
 		selected_msg_names(sorted_msg_selection_names),
-		datum(nullptr), channel_id(0),
+		datum(nullptr), channel_id(0), command_word_payload_count_(0),
 		msg_hdr_size(14), msg_size(0), datum_count(0), msg_commword(nullptr),
 		RTtoBC(0), msg_index(0), msg_name(nullptr), word_count(nullptr),
 		tdata(tmats), zero(0), datum_shift(0), stats(), check_word_count(wc_check),
 		intrapkt_hdr_size(sizeof(*msg)), use_comet_command_words(use_comet_comm_wrd),
-		db(out_path, ID, true),
+		db(out_path, ID, true), is_payload_incomplete_(0),
 		msg_names_start(selected_msg_names.begin()), msg_names_end(selected_msg_names.end()),
 		chanid_remoteaddr1_ptr(nullptr), chanid_remoteaddr2_ptr(nullptr), busid(UINT8_MAX)
 	{	}
@@ -102,8 +104,8 @@ public:
 
 	Ch10MilStd1553F1(BinBuff& buff, uint16_t ID, TMATS& tmats, bool wc_check, bool use_comet_comm_wrd,
 		bool msg_selection) : ParseContext(buff, ID), msg(nullptr), tdata(tmats),
-		use_selected_msg_list(msg_selection),
-		datum(nullptr), channel_id(0),
+		use_selected_msg_list(msg_selection), command_word_payload_count_(0),
+		datum(nullptr), channel_id(0), is_payload_incomplete_(0),
 		msg_hdr_size(14), msg_size(0), datum_count(0), msg_commword(nullptr),
 		RTtoBC(0), msg_index(0), msg_name(nullptr), word_count(nullptr),
 		zero(0), datum_shift(0), stats(), check_word_count(wc_check),

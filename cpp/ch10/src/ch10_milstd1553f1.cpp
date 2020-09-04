@@ -217,6 +217,7 @@ uint8_t Ch10MilStd1553F1::parse_payload_new()
 	RTtoBC = msg_commword->tx1;
 
 	// Determine the order of rx/tx/status/data words.
+	// See explanation in ParsePayloadLibIRIG106().
 	if (msg_commword->RR)
 	{
 		/*
@@ -224,8 +225,18 @@ uint8_t Ch10MilStd1553F1::parse_payload_new()
 			// Length in bytes, so divide by 2 to get data word count.
 			// Subtract four (rx, tx, tx stat, rx stat) to get the data word count.
 		*/
-		datum_count = (msg_commword->length / 2) - 4;
+		datum_count = (msg_commword->length / 2) - 3;
 		datum_shift = 3;
+		if (msg_commword->sub_addr2 == 0 || msg_commword->sub_addr2 == 31)
+			command_word_payload_count_ = msg_commword->word_count2 & 0x0010;
+		else
+		{
+			if (msg_commword->word_count2 == 0)
+				command_word_payload_count_ = 32;
+			else
+				command_word_payload_count_ = msg_commword->word_count2;
+		}
+
 	}
 	else if (RTtoBC)
 	{
@@ -233,73 +244,98 @@ uint8_t Ch10MilStd1553F1::parse_payload_new()
 
 		datum_count = (msg_commword->length / 2) - 2;
 		datum_shift = 2;
+		if (msg_commword->sub_addr1 == 0 || msg_commword->sub_addr1 == 31)
+			command_word_payload_count_ = msg_commword->word_count1 & 0x0010;
+		else
+		{
+			if (msg_commword->word_count1 == 0)
+				command_word_payload_count_ = 32;
+			else
+				command_word_payload_count_ = msg_commword->word_count1;
+		}
 	}
 	else
 	{
 		/* [ RX ][ DATA0 ] ... [ DATAN ][ STAT ] */
 
-		datum_count = (msg_commword->length / 2) - 2;
+		datum_count = (msg_commword->length / 2) - 1;
 		datum_shift = 1;
-	}
-
-	if ((msg_commword->word_count1 != datum_count) && check_word_count)
-	{
-		// If the calculated word count based on message length is equal
-		// to the comet specified word count minus one AND the message 
-		// Time Out error is set, then a status word wasn't received
-		// which means one less word unit should have been subracted from
-		// the datum_count and there is no actual mismatch. 
-
-		/*
-		Note: Per a discussion in analysis meeting 190523, I will
-		record all data, regardless of word count mismatch. Message
-		errors will be saved so post-processing check can be conducted
-		for datum_count = word_count1 -1, in which case all data ought
-		to be present.
-		*/
-
-		// if word_count1 == 0, this indicates an actual word count
-		// of 32. 
-		if (!(msg_commword->word_count1 == 0 && datum_count == 32))
+		if (msg_commword->sub_addr1 == 0 || msg_commword->sub_addr1 == 31)
+			command_word_payload_count_ = msg_commword->word_count1 & 0x0010;
+		else
 		{
-			if(status_ != MilStd1553F1Status::MSG_IDENTITY_FAIL)
-				status_ = MilStd1553F1Status::WRD_COUNT_MISMATCH;
-#ifdef COLLECT_STATS
-			stats.wrd_count_mismatch++;
-#endif	
-
-#ifdef DEBUG
-#if DEBUG > 3
-			printf("(%03hu) WORD COUNT MISMATCH\n", id);
-#endif
-#endif			
+			if (msg_commword->word_count1 == 0)
+				command_word_payload_count_ = 32;
+			else
+				command_word_payload_count_ = msg_commword->word_count1;
 		}
 	}
+
+//	if ((msg_commword->word_count1 != datum_count) && check_word_count)
+//	{
+//		// If the calculated word count based on message length is equal
+//		// to the comet specified word count minus one AND the message 
+//		// Time Out error is set, then a status word wasn't received
+//		// which means one less word unit should have been subracted from
+//		// the datum_count and there is no actual mismatch. 
+//
+//		/*
+//		Note: Per a discussion in analysis meeting 190523, I will
+//		record all data, regardless of word count mismatch. Message
+//		errors will be saved so post-processing check can be conducted
+//		for datum_count = word_count1 -1, in which case all data ought
+//		to be present.
+//		*/
+//
+//		// if word_count1 == 0, this indicates an actual word count
+//		// of 32. 
+//		if (!(msg_commword->word_count1 == 0 && datum_count == 32))
+//		{
+//			if(status_ != MilStd1553F1Status::MSG_IDENTITY_FAIL)
+//				status_ = MilStd1553F1Status::WRD_COUNT_MISMATCH;
+//#ifdef COLLECT_STATS
+//			stats.wrd_count_mismatch++;
+//#endif	
+//
+//#ifdef DEBUG
+//#if DEBUG > 3
+//			printf("(%03hu) WORD COUNT MISMATCH\n", id);
+//#endif
+//#endif			
+//		}
+//	}
 
 	// Set data payload position based on the type of message.
 	datum += datum_shift;
 
-	if (status_ != MilStd1553F1Status::MSG_IDENTITY_FAIL)
+	// If the datum_count is less than indicated count, via 
+	// command word, then set the is_payload_incomplete_ bool.
+	if (datum_count < command_word_payload_count_)
+		is_payload_incomplete_ = 1;
+	else
 	{
+		datum_count = command_word_payload_count_;
+		is_payload_incomplete_ = 0;
+	}
 
 #ifdef LOCALDB
 #ifdef PARQUET
 #ifdef XDAT
-		if (use_selected_msg_list)
-		{
-			msg_names_itr = std::find(msg_names_start, msg_names_end, msg_name);
-			if (msg_names_itr != msg_names_end)
-				db.append_data(msg_abstime_, day_of_year, msg_name, data_fmt_ptr_, msg_commword, datum);
-		}
-		else
+	if (use_selected_msg_list)
+	{
+		msg_names_itr = std::find(msg_names_start, msg_names_end, msg_name);
+		if (msg_names_itr != msg_names_end)
 			db.append_data(msg_abstime_, day_of_year, msg_name, data_fmt_ptr_, msg_commword, datum);
-#else
-		db.append_data(msg_abstime_, ch10td_ptr_->doy_, msg_name, 
-			data_fmt_ptr_, msg_commword, datum, ch10hd_ptr_->channel_id_, datum_count);
-#endif
-#endif
-#endif
 	}
+	else
+		db.append_data(msg_abstime_, day_of_year, msg_name, data_fmt_ptr_, msg_commword, datum);
+#else
+	db.append_data(msg_abstime_, ch10td_ptr_->doy_, msg_name, 
+		data_fmt_ptr_, msg_commword, datum, ch10hd_ptr_->channel_id_,
+		msg_commword->length/2, datum_count, is_payload_incomplete_);
+#endif
+#endif
+#endif
 	return retcode_;
 }
 
@@ -417,20 +453,46 @@ void Ch10MilStd1553F1::ParsePayloadLibIRIG106()
 {
 	datum = (const uint16_t*)i106_1553msg_.Data;
 
-	// Using the old, often incorrect method of calculating the message
-	// payload count from the message length. This is done to easily compare
-	// with the "truth" data set. In the future, use i106_1553msg_.WordCount instead.
+	// Calculate the message payload count from the message length. 
+	// We are interested in calculating the payload count to know if 
+	// it contains fewer words than expected from the command word.
+	// In the case of BC to RT and RT to RT the series of data words
+	// is followed by a status word. Because the 1553 data are temporally
+	// scheduled, if the 1553 message is short one word it must be the 
+	// final word, or the status word for the two transfer formats mentioned.
+	// Modify the subtracted word count (sum of command and status words)
+	// below to compensate for the trailing status word. Ex: An RT to RT
+	// message with a total payload of 70 bytes does not actually truncate
+	// the data payload in the case of a 32-word expected payload, 
+	// 70/2 - 3 = 32 words. The fact that a RT to RT message with 32 payload
+	// words is not 72 bytes (36 words = 2 comm + 2 status + 32 data) does 
+	// not matter because the data shorage, in this case one word, the final
+	// status word, always occurs at the end of the payload.
+
+	// The subtracted word count mods are: 
+	// * RT to RT: 4 --> 3
+	// * BC to RT: 2 --> 1
 	if (msg_commword->RR)
-		datum_count = (msg_commword->length / 2) - 4;
-	else if (RTtoBC)
+		datum_count = (msg_commword->length / 2) - 3;
+	else if (msg_commword->tx1)
 		datum_count = (msg_commword->length / 2) - 2;
 	else
-		datum_count = (msg_commword->length / 2) - 2;
+		datum_count = (msg_commword->length / 2) - 1;
+
+	command_word_payload_count_ = i106_1553msg_.WordCount;
+	if (datum_count < command_word_payload_count_)
+		is_payload_incomplete_ = 1;
+	else
+	{
+		datum_count = command_word_payload_count_;
+		is_payload_incomplete_ = 0;
+	}
 
 #ifdef LOCALDB
 #ifdef PARQUET
 	db.append_data(msg_abstime_, ch10td_ptr_->doy_, msg_name,
-		data_fmt_ptr_, msg_commword, datum, ch10hd_ptr_->channel_id_, datum_count);
+		data_fmt_ptr_, msg_commword, datum, ch10hd_ptr_->channel_id_, 
+		msg_commword->length/2, datum_count, is_payload_incomplete_);
 #endif
 #endif
 }

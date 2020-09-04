@@ -36,7 +36,6 @@ private:
 	std::vector<uint8_t> gap2_;  // save as int16
 	std::vector<uint8_t> mode_code_;  // save as single bit
 	std::vector<uint16_t> data_;  // for all data payloads, save as int16
-	//std::vector<int8_t> word_count_;  // save as int8
 	std::vector<uint16_t> comm_word1_; 
 	std::vector<uint16_t> comm_word2_;
 	std::vector<int8_t> rtaddr1_;
@@ -48,8 +47,9 @@ private:
 	std::vector<int8_t> subaddr2_;
 	std::vector<int8_t> wrdcnt2_;
 	std::vector<uint16_t> channel_id_;
-	std::vector<int8_t> payload_count_;
-	//std::vector<int16_t> msglen_;
+	std::vector<int8_t> totwrdcnt_;
+	std::vector<int8_t> calcwrdcnt_;
+	std::vector<uint8_t> payload_incomplete_;
 
 public:
 	ParquetMilStd1553F1();
@@ -57,7 +57,7 @@ public:
 	void append_data(const uint64_t& time_stamp, uint8_t doy, const char* name, 
 		const MilStd1553F1ChanSpecFormat* chan_spec,
 		const MilStd1553F1MsgCommWord* msg, const uint16_t* data, const uint16_t& chanid, 
-		const uint16_t& payload_count);
+		int8_t totwrdcnt, int8_t calcwrdcnt, uint8_t payload_incomplete);
 	void commit();
 	void add_names_to_set(std::set<std::string>& output_set);
 };

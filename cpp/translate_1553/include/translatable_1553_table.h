@@ -4,6 +4,8 @@
 #include "translatable_column.h"
 #include "parquet_context.h"
 #include <filesystem>
+#include <thread>
+#include <chrono>
 #include "icd_data.h"
 #include "icd_translate.h"
 
