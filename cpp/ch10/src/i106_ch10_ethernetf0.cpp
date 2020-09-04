@@ -80,10 +80,27 @@ uint8_t I106Ch10EthernetF0::RecordFrame()
 		return retcode_;
 	}
 
-	if (npp.ParseEthernetDot3(i106_ethmsg_.Data, i106_ethiph_->Length) == 1)
+	i106_ethframe_ = (const EthernetF0_Physical_FullMAC*)i106_ethmsg_.Data;
+
+	// Calculate frame length.
+	CalculateFrameLength();
+
+	// Ethernet II
+	if (framelen_ > 1500)
 	{
-		retcode_ = 1;
-		return retcode_;
+		if (npp.ParseEthernetII(i106_ethmsg_.Data, i106_ethiph_->Length) == 1)
+		{
+			retcode_ = 1;
+			return retcode_;
+		}
+	}
+	else
+	{
+		if (npp.ParseEthernet(i106_ethmsg_.Data, i106_ethiph_->Length) == 1)
+		{
+			retcode_ = 1;
+			return retcode_;
+		}
 	}
 
 	// Set the Ethernet frame struct.

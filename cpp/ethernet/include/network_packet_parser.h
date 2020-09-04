@@ -15,6 +15,7 @@
 class NetworkPacketParser
 {
 private:
+	const uint16_t* raw_payload_;
 	uint16_t pdu_type_;
 	const std::map<uint16_t, std::string> pdu_type_to_name_map_ = { {0, "RAW"}, {1, "ETHERNET_II"},
 		{2,"IEEE802_3"}, {3,"RADIOTAP"}, {4, "DOT11"}, {5, "DOT11_ACK"}, {6, "DOT11_ASSOC_REQ"},
@@ -32,11 +33,17 @@ private:
 public:
 	NetworkPacketParser();
 
-	// 802.3
-	uint8_t ParseEthernetDot3(const uint8_t* buffer, const uint32_t& tot_size);
+	// 802.3 (with total payload <= 1500), multiple sub-types possible.
+	uint8_t ParseEthernet(const uint8_t* buffer, const uint32_t& tot_size);
+
+	// 802.2 LLC
+	uint8_t ParseEthernetLLC(const uint8_t* buffer, const uint32_t& tot_size);
+
+	// Ethernet II (802.3 with total payload > 1500)
+	uint8_t ParseEthernetII(const uint8_t* buffer, const uint32_t& tot_size);
 
 	void PrintPDUType();
-	//uint8_t ParseUDP(const uint8_t* buffer, const uint32_t& tot_size);
+	void PrintPDUTypeNotHandled();
 };
 
 #endif
