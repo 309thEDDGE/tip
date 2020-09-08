@@ -3,6 +3,7 @@
 
 #include "parquet_context.h"
 #include "VideoDataF0Format.h"
+#include <cmath>
 
 const int DEFAULT_ROW_GROUP_COUNT_VIDEO = 10000;
 const int DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO = 10;

@@ -16,11 +16,11 @@ protected:
 	int pq_file_count;
 	ParquetArrowValidatorTest()
 	{
-		pq_file_count = 0;
+		
 	}
 	void SetUp() override
 	{
-
+		pq_file_count = 0;
 	}
 	~ParquetArrowValidatorTest()
 	{
@@ -33,7 +33,7 @@ protected:
 		for (int i = 0; i < pq_directories.size(); i++)
 		{
 			std::filesystem::remove_all(pq_directories[i]);
-		}		
+		}	
 	}
 
 	// Generate Parquet file with single value
@@ -314,6 +314,7 @@ TEST_F(ParquetArrowValidatorTest, ParquetManagerGetNextRGMultipleFilesSecondColu
 
 TEST_F(ParquetArrowValidatorTest, ParquetManagerGetNextRGMultipleFilesListColumn)
 {
+	printf("test beginning");
 	int size;
 	std::vector<uint16_t> data1 = 
 	{ 1,1,1,1,1, 2,2,2,2,2 };
@@ -321,14 +322,24 @@ TEST_F(ParquetArrowValidatorTest, ParquetManagerGetNextRGMultipleFilesListColumn
 	{ 3,3,3,3,3, 4,4,4,4,4, 5,5,5,5,5, 6,6,6,6,6, 7,7,7,7,7 };
 
 	std::string dirname = "file1.parquet";
+	printf("no parquet files created");
 	ASSERT_TRUE(CreateParquetFile(dirname, data1, 1, 5));
+
+	printf("parquet file created");
 	ASSERT_TRUE(CreateParquetFile(dirname, data2, 2, 5));
+
+	printf("parquet file created");
 
 	ParquetManager pm;
 	ASSERT_TRUE(pm.SetPQPath(dirname));
 
+	printf("set pq path success");
+
 	std::vector<int32_t> out(100);
 	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true);
+
+	printf("rg1");
+
 	ASSERT_EQ(size, 5);
 	EXPECT_EQ(out[0], 1);
 	EXPECT_EQ(out[1], 1);
@@ -337,6 +348,8 @@ TEST_F(ParquetArrowValidatorTest, ParquetManagerGetNextRGMultipleFilesListColumn
 	EXPECT_EQ(out[4], 1);
 
 	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true);
+
+	printf("rg2");
 	ASSERT_EQ(size, 5);
 	EXPECT_EQ(out[0], 2);
 	EXPECT_EQ(out[1], 2);
@@ -345,6 +358,7 @@ TEST_F(ParquetArrowValidatorTest, ParquetManagerGetNextRGMultipleFilesListColumn
 	EXPECT_EQ(out[4], 2);
 
 	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true);
+	printf("rg3");
 	ASSERT_EQ(size, 10);
 	EXPECT_EQ(out[0], 3);
 	EXPECT_EQ(out[1], 3);
@@ -358,6 +372,7 @@ TEST_F(ParquetArrowValidatorTest, ParquetManagerGetNextRGMultipleFilesListColumn
 	EXPECT_EQ(out[9], 4);
 
 	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true);
+	printf("rg4");
 	ASSERT_EQ(size, 10);
 	EXPECT_EQ(out[0], 5);
 	EXPECT_EQ(out[1], 5);
@@ -371,6 +386,7 @@ TEST_F(ParquetArrowValidatorTest, ParquetManagerGetNextRGMultipleFilesListColumn
 	EXPECT_EQ(out[9], 6);
 
 	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true);
+	printf("rg5");
 	ASSERT_EQ(size, 5);
 	EXPECT_EQ(out[0], 7);
 	EXPECT_EQ(out[1], 7);
