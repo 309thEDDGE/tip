@@ -5,6 +5,8 @@
 !vendor
 !vendor/*.gz
 !vendor/*.sh
+!vendor/*.bz2
+!vendor/*.zip
 !vendor/parquet-testing-master
 !.gitignore
 !bin

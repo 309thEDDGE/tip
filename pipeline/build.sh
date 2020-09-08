@@ -39,7 +39,7 @@ fi
 
 mkdir -p $BUILD_DIR \
     && cd $BUILD_DIR \
-    && $CMAKE .. -DLIBIRIG106=OFF \
+    && $CMAKE .. -DLIBIRIG106=ON -DVIDEO=ON \
     && $MAKE
 
 

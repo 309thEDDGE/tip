@@ -33,12 +33,14 @@ ARROW_BUILD_DIR=$VENDOR/$ARROW_VERSION/cpp/build
 ARROW_LIB=$ARROW_BUILD_DIR/release/libarrow.a
 TIP_DEPS_DIR=$VENDOR/deps
 TIP_DEPS_TARBALL=deps.tar.gz
+LIBIRIG106_VERSION=libirig106-master
 
 cd $VENDOR
 NEWEST=`ls -1t *.tar.* | head -1`
 if [[ "$NEWEST" == "$TIP_DEPS_TARBALL" ]] ; then
 	echo "TIP dependencies cache is current"
 	cd $BASE_DIR
+	rm -rf deps
 	tar -xvzf $VENDOR/$TIP_DEPS_TARBALL
 	exit 0
 fi
@@ -51,6 +53,12 @@ test -d $BISON_VERSION || ( echo extracting Bison ; tar -xzf "$BISON_VERSION.tar
 test -d $FLEX_VERSION || ( echo extracting Flex ; tar -xzf "$FLEX_VERSION.tar.gz" )
 test -d $GOOGLE_TEST_VERSION || (echo extracting gtest ; tar -xzf "$GOOGLE_TEST_VERSION.tar.gz")
 test -d $YAML_CPP_VERSION || (echo extracting yaml-cpp ; tar -xzf "$YAML_CPP_VERSION.tar.gz")
+if [ ! -d $LIBIRIG106 ] ; then
+	echo extracting libirig106
+	if [ -f $LIBIRIG106.tar.gz ] ; then tar -xzf $LIBIRIG106.tar.gz
+	else unzip $LIBIRIG106.zip
+	fi
+fi
 
 which m4 >& /dev/null || dnf -y install m4
 
@@ -155,7 +163,6 @@ fi
 # export PARQUET_TEST_DATA=$ARROW_VERSION/cpp/submodules/parquet-testing/data
 # cp -rfn $PARQUET_TEST_DATA_SOURCE_PATH/* cpp/submodules/parquet-testing/data
 # ctest --output-on-failure -j2
-# cd $VENDOR ; pwd
 
 echo 
 echo Building Google Test
@@ -173,6 +180,11 @@ cd build
 $CMAKE ..
 ninja
 test/run-tests
+
+echo
+echo Building libirig106
+cd $VENDOR/$LIBIRIG106_VERSION
+$MAKE
 
 # Gather dependencies into deps folder
 echo "Gathering dependencies"
@@ -192,6 +204,12 @@ echo "...yaml-cpp"
 mkdir -p $TIP_DEPS_DIR/yaml-cpp/build
 cp -rf $VENDOR/$YAML_CPP_VERSION/include $TIP_DEPS_DIR/yaml-cpp
 cp -rf $VENDOR/$YAML_CPP_VERSION/build/libyaml-cpp.a $TIP_DEPS_DIR/yaml-cpp/build
+
+echo "...libirig106"
+mkdir -p $TIP_DEPS_DIR/libirig106/lib
+cp $VENDOR/$LIBIRIG106_VERSION/libirig106.a $TIP_DEPS_DIR/libirig106/lib
+mkdir -p $TIP_DEPS_DIR/libirig106/include
+cp $VENDOR/$LIBIRIG106_VERSION/src/*.h $TIP_DEPS_DIR/libirig106/include
 
 echo "...arrow include files"
 
