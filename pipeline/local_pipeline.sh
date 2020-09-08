@@ -1,5 +1,6 @@
 ARTIFACTORY=artifactory.spacecamp.ninja
-IMAGE=$ARTIFACTORY/docker/platform/tip-rhel-cpp-build:0.1
+# IMAGE=$ARTIFACTORY/docker/platform/tip-rhel-cpp-build:0.1
+IMAGE=$ARTIFACTORY/docker/platform/ubi8-gcc-gcov-cmake
 
 docker login $ARTIFACTORY
 

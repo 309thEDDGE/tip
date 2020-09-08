@@ -27,16 +27,6 @@ if (container)
     set(lib_dir "/usr/lib64")
 else()
     get_filename_component(deps_dir "deps" ABSOLUTE)
-	# NOTE:
-	# For non-container builds, this file assumes that arrow, googlemock/googletest, and yaml-cpp
-	# have been built.  The following directories should exist in tip/deps, linked to or copied 
-	# from the respective source directories as shown:
-	#    deps/arrow_library_dependencies -> .../apache-arrow-0.14.0/cpp/src
-    #    deps/gsuite/googlemock/include -> .../googletest-release-1.8.1/googlemock/include/
-    #    deps/gsuite/googlemock/lib -> .../googletest-release-1.8.1/build/googlemock/
-    #    deps/gsuite/googletest/include -> .../googletest-release-1.8.1/googletest/include/
-    #    deps/gsuite/googletest/lib -> .../googletest-release-1.8.1/build/googlemock/gtest/
-    #    deps/yaml-cpp -> .../yaml-cpp/yaml-cpp-yaml-cpp-0.6.3
 endif()
 
 #########################################################
@@ -64,15 +54,8 @@ if(container)
 else()
     set(yaml_path "${deps_dir}/yaml-cpp")
     set(yaml_inc_dir "${yaml_path}/include")
-    if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-        set(yaml_boost_lib_dir "${yaml_path}/build/Debug")
-        set(yaml_lib_name "${yaml_boost_lib_dir}/libyaml-cpp.a")
-    elseif(${CMAKE_BUILD_TYPE} MATCHES "Release")
-        set(yaml_boost_lib_dir "${yaml_path}/build/Release")
-        set(yaml_lib_name "${yaml_boost_lib_dir}/libyaml-cpp.a")
-    else()
-        message(FATAL_ERROR "CMAKE_BUILD_TYPE not defined")
-    endif()
+	set(yaml_lib_dir "${yaml_path}/build")
+    set(yaml_lib_name "${yaml_lib_dir}/libyaml-cpp.a")
 endif()
 
 #########################################################
@@ -90,7 +73,7 @@ if(container)
     #set(brotlienc_lib_name "libbrotlienc.so")
 else()
     set(arrow_path "${deps_dir}/arrow_library_dependencies")
-    set(arrow_inc_dir "${arrow_path}/include")
+    set(arrow_inc_dir "${arrow_path}/src")
     set(arrow_lib_dir "${arrow_path}/lib")
     
     set(arrow_lib_name "${arrow_lib_dir}/libarrow.a")

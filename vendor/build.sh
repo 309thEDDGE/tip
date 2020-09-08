@@ -13,6 +13,11 @@ cd .. ; pwd
 BASE_DIR=$PWD
 pwd
 
+# CMAKE="cmake -G Ninja"
+# MAKE=ninja
+CMAKE="cmake"
+MAKE=make
+
 SCRIPT_NAME=$(basename $0)
 ARROW_VERSION=apache-arrow-0.14.0
 BISON_VERSION=bison-3.6
@@ -28,7 +33,6 @@ ARROW_BUILD_DIR=$VENDOR/$ARROW_VERSION/cpp/build
 ARROW_LIB=$ARROW_BUILD_DIR/release/libarrow.a
 TIP_DEPS_DIR=$VENDOR/deps
 TIP_DEPS_TARBALL=deps.tar.gz
-
 
 cd $VENDOR
 NEWEST=`ls -1t *.tar.* | head -1`
@@ -55,15 +59,15 @@ cd $VENDOR/$FLEX_VERSION ; pwd
 if [[ -f $FLEX_EXECUTABLE ]] ; then 
 	echo "Flex already built"
 	if [[ ! -f /usr/local/bin/flex ]] ; then
-		echo "Running 'make install' for Flex"
-		make install
+		echo "Running '$MAKE install' for Flex"
+		$MAKE install
 		echo "Installed Flex"
 	fi
 else
 	echo "Building Flex"
 	./configure
-	make
-	make install
+	$MAKE
+	$MAKE install
 fi
 
 cd $VENDOR/$BISON_VERSION ; pwd
@@ -71,15 +75,15 @@ echo -n "Checking for Bison..."
 if [[ -f $BISON_EXECUTABLE ]] ; then 
 	echo "Bison already built"
 	if [[ ! -f /usr/local/bin/bison ]] ; then
-		echo "Running 'make install for Bison'"
-		make install
+		echo "Running '$MAKE install for Bison'"
+		$MAKE install
 		echo "Installed Bison"
 	fi
 else
 	echo "Building Bison"
 	./configure
-	make
-	make install
+	$MAKE
+	$MAKE install
 fi
 
 echo -n "Checking for Arrow..."
@@ -117,10 +121,10 @@ else
 	export CXXFLAGS=-pthread
 
 	echo
-	echo Running cmake for Arrow
+	echo Running $CMAKE for Arrow
 	mkdir -p $ARROW_BUILD_DIR && cd $ARROW_BUILD_DIR
 
-	cmake \
+	$CMAKE \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DARROW_BUILD_TESTS=OFF \
 		-DARROW_BUILD_STATIC=ON \
@@ -137,10 +141,10 @@ else
 	echo
 	echo Building Arrow
 	pwd
-	sudo cmake --build . --target install --config Release | tee -i cmake_build.out
-	# CMake doesn't return an exit code. Fail if libarrow.a wasn't built
-	cd $VENDOR ; pwd
-	test -f $ARROW_LIB
+	sudo $CMAKE --build . --target install --config Release
+	##CMake doesn't return an exit code. Fail if libarrow.a wasn't built
+	# cd $VENDOR ; pwd
+	# test -f $ARROW_LIB
 fi
 
 # echo
@@ -157,7 +161,7 @@ echo
 echo Building Google Test
 cd $VENDOR/$GOOGLE_TEST_VERSION ; pwd
 mkdir -p build ; cd build ; pwd
-cmake -G Ninja ..
+$CMAKE ..
 ninja
 
 echo
@@ -166,28 +170,43 @@ cd $VENDOR/$YAML_CPP_VERSION
 mkdir -p build/test/prefix/lib
 cp -n $VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/libgmock.a build/test/prefix/lib
 cd build
-cmake -G Ninja ..
+$CMAKE ..
 ninja
 test/run-tests
 
 # Gather dependencies into deps folder
+echo "Gathering dependencies"
 
 cd $BASE_DIR
+echo "...gmock"
 mkdir -p $TIP_DEPS_DIR/gsuite/googlemock/
-cp -rfn vendor/$GOOGLE_TEST_VERSION/googlemock/include $TIP_DEPS_DIR/gsuite/googlemock/googlemock/
-cp -rfn vendor/$GOOGLE_TEST_VERSION/build/googlemock/ $TIP_DEPS_DIR/gsuite/googlemock/lib
+cp -rf $VENDOR/$GOOGLE_TEST_VERSION/googlemock/include $TIP_DEPS_DIR/gsuite/googlemock
+cp -rf $VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/ $TIP_DEPS_DIR/gsuite/googlemock/lib
 
+echo "...gtest"
 mkdir -p $TIP_DEPS_DIR/gsuite/googletest/
-cp -rfn vendor/$GOOGLE_TEST_VERSION/googletest/include/ $TIP_DEPS_DIR/gsuite/googletest/include
-cp -rfn vendor/$GOOGLE_TEST_VERSION/build/googlemock/gtest $TIP_DEPS_DIR/gsuite/googletest/lib
+cp -rf $VENDOR/$GOOGLE_TEST_VERSION/googletest/include/ $TIP_DEPS_DIR/gsuite/googletest/include
+cp -rf $VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/gtest $TIP_DEPS_DIR/gsuite/googletest/lib
 
+echo "...yaml-cpp"
 mkdir -p $TIP_DEPS_DIR/yaml-cpp/build
-cp -rfn vendor/$YAML_CPP_VERSION/include $TIP_DEPS_DIR/yaml-cpp
-cp -rfn vendor/$YAML_CPP_VERSION/build/libyaml-cpp.a $TIP_DEPS_DIR/yaml-cpp
+cp -rf $VENDOR/$YAML_CPP_VERSION/include $TIP_DEPS_DIR/yaml-cpp
+cp -rf $VENDOR/$YAML_CPP_VERSION/build/libyaml-cpp.a $TIP_DEPS_DIR/yaml-cpp/build
 
+echo "...arrow include files"
+
+cd $VENDOR/$ARROW_VERSION/cpp/src
+find arrow -type f -name \*.h -exec install -D {} $TIP_DEPS_DIR/arrow_library_dependencies/src/{} \;
+find arrow -type f -name \*.hpp -exec install -D {} $TIP_DEPS_DIR/arrow_library_dependencies/src/{} \;
+find parquet -type f -name \*.h -exec install -D {} $TIP_DEPS_DIR/arrow_library_dependencies/src/{} \;
+
+cd $ARROW_BUILD_DIR/src
+find arrow -type f -name \*.h -exec install -D {} $TIP_DEPS_DIR/arrow_library_dependencies/src/{} \;
+find parquet -type f -name \*.h -exec install -D {} $TIP_DEPS_DIR/arrow_library_dependencies/src/{} \;
+
+echo "...arrow libraries"
 mkdir -p $TIP_DEPS_DIR/arrow_library_dependencies/lib
-cp -rfn vendor/$ARROW_VERSION/cpp/src $TIP_DEPS_DIR/arrow_library_dependencies/
-cp -fn \
+cp -f \
 	$ARROW_BUILD_DIR/release/libarrow.a \
 	$ARROW_BUILD_DIR/boost_ep-prefix/src/boost_ep/stage/lib/libboost_filesystem.a \
 	$ARROW_BUILD_DIR/boost_ep-prefix/src/boost_ep/stage/lib/libboost_regex.a \
@@ -206,6 +225,10 @@ cp -fn \
 	$ARROW_BUILD_DIR/zstd_ep-install/lib64/libzstd.a \
 	$TIP_DEPS_DIR/arrow_library_dependencies/lib
 
-echo "Finished building TIP dependencies"
-tar czf $VENDOR/$TIP_DEPS_TARBALL $TIP_DEPS_DIR
+echo "Finished building TIP dependencies; caching results"
+cd $VENDOR
+tar czf $TIP_DEPS_TARBALL $(basename $TIP_DEPS_DIR)
 echo "Cached TIP dependencies in $TIP_DEPS_TARBALL"
+
+rm -rf $BASE_DIR/deps
+mv $TIP_DEPS_DIR $BASE_DIR
