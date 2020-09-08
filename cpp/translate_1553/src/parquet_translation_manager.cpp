@@ -506,7 +506,16 @@ uint8_t ParquetTranslationManager::open_raw_1553_parquet_file(std::string& curre
 #endif
 
 #ifdef NEWARROW
-	PARQUET_ASSIGN_OR_THROW(arrow_file_, arrow::io::ReadableFile::Open(current_path, pool_));     
+	try
+	{
+		PARQUET_ASSIGN_OR_THROW(arrow_file_, arrow::io::ReadableFile::Open(current_path, pool_));  
+	}
+	catch (...)
+	{
+		printf("ReadableFile::Open error\n");
+		return false;
+	}
+	   
 #else
 	st_ = arrow::io::ReadableFile::Open(current_path, pool_, &arrow_file_);
 	if (!st_.ok())
