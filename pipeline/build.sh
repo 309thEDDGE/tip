@@ -34,7 +34,7 @@ if [ -f deps/arrow_library_dependencies/lib/libarrow.a ] ; then
 	echo "found deps/arrow_library_dependencies/lib/libarrow.a"
 else
 	echo "not found; building dependencies"
-	vendor/build.sh
+	bash vendor/build.sh
 fi
 
 mkdir -p $BUILD_DIR \
