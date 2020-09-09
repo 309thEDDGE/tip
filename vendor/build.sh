@@ -12,6 +12,8 @@ VENDOR=$PWD
 cd ..
 BASE_DIR=$PWD
 
+ls -l $VENDOR
+
 echo -n "Checking for ninja..."
 if [ -f /usr/local/bin/ninja ] ; then
 	echo "yes"
@@ -347,3 +349,4 @@ cd $VENDOR
 tar czf $TIP_DEPS_TARBALL $(basename $TIP_DEPS_DIR)
 echo "Cached TIP dependencies in $TIP_DEPS_TARBALL"
 
+ls -l $VENDOR

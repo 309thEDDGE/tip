@@ -1,6 +1,9 @@
 # In the pipeline the working directory is the root of the project repository.
 # When running from docker, the tip folder is mounted as /app
 test -d /app/cpp && cd /app # if /app/cpp exists cd to /app
+BASE_DIR=$PWD
+BUILD_DIR=$PWD/build
+
 
 # custom build command which will run in the pipeline
 # in the pipeline the working directory is the root of the project repository
@@ -33,25 +36,18 @@ else
 	MAKE="make -j8"
 fi
 
-BUILD_DIR=/app/build
-
 echo -n "Checking for dependencies..."
 if [ -f deps/arrow_library_dependencies/lib/libarrow.a ] ; then 
 	echo "found deps/arrow_library_dependencies/lib/libarrow.a"
 else
 	echo "libarrow.a not found; building dependencies"
 	bash vendor/build.sh
-	rm -rf /app/deps
-	mv vendor/deps /app/
+	rm -rf $BASE_DIR/deps
+	mv $BASE_DIR/vendor/deps $BASE_DIR/
 fi
 
-BUILD_COMMAND="cd $BUILD_DIR \
-    && $CMAKE .. -DLIBIRIG106=ON -DVIDEO=ON \
-    && $MAKE"
-	
-# try an incremental build; if it fails do a full build
-if ! eval "$BUILD_COMMAND" ; then
-	rm -rf $BUILD_DIR
-	mkdir -p $BUILD_DIR
-	eval $BUILD_COMMAND
-fi
+rm -rf $BUILD_DIR
+mkdir $BUILD_DIR
+cd $BUILD_DIR
+$CMAKE .. -DLIBIRIG106=ON -DVIDEO=ON \
+$MAKE
