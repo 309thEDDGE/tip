@@ -97,10 +97,10 @@ test -d $BISON_VERSION || ( echo extracting Bison ; tar -xzf "$BISON_VERSION.tar
 test -d $FLEX_VERSION || ( echo extracting Flex ; tar -xzf "$FLEX_VERSION.tar.gz" )
 test -d $GOOGLE_TEST_VERSION || (echo extracting gtest ; tar -xzf "$GOOGLE_TEST_VERSION.tar.gz")
 test -d $YAML_CPP_VERSION || (echo extracting yaml-cpp ; tar -xzf "$YAML_CPP_VERSION.tar.gz")
-if [ ! -d $LIBIRIG106 ] ; then
+if [ ! -d $LIBIRIG106_VERSION ] ; then
 	echo extracting libirig106
-	if [ -f $LIBIRIG106.tar.gz ] ; then tar -xzf $LIBIRIG106.tar.gz
-	else unzip $LIBIRIG106.zip
+	if [ -f $LIBIRIG106_VERSION.tar.gz ] ; then tar -xzf $LIBIRIG106_VERSION.tar.gz
+	else unzip $LIBIRIG106_VERSION.zip
 	fi
 fi
 
