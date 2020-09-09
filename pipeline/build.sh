@@ -22,25 +22,34 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
 trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
-CMAKE="cmake -G Ninja"
-MAKE=ninja
-# CMAKE="cmake"
-# MAKE=make
+echo -n "Checking for ninja..."
+if [ -f /usr/local/bin/ninja ] ; then
+	echo "yes"
+	CMAKE="cmake -G Ninja"
+	MAKE=ninja
+else
+	echo "no.  Using make"
+	CMAKE="cmake"
+	MAKE="make -j8"
+fi
 
-BUILD_DIR=build
+BUILD_DIR=/app/build
 
 echo -n "Checking for dependencies..."
 if [ -f deps/arrow_library_dependencies/lib/libarrow.a ] ; then 
 	echo "found deps/arrow_library_dependencies/lib/libarrow.a"
 else
-	echo "not found; building dependencies"
+	echo "libarrow.a not found; building dependencies"
 	bash vendor/build.sh
 fi
 
-mkdir -p $BUILD_DIR \
-    && cd $BUILD_DIR \
+BUILD_COMMAND="cd $BUILD_DIR \
     && $CMAKE .. -DLIBIRIG106=ON -DVIDEO=ON \
-    && $MAKE
+    && $MAKE"
+	
+# try an incremental build; if it fails do a full build
+eval $BUILD_COMMAND \
+	|| rm -rf $BUILD_DIR ; mkdir -p $BUILD_DIR ; eval $BUILD_COMMAND
 
 
 # cmake --version
