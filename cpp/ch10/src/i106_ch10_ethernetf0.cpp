@@ -2,9 +2,15 @@
 
 I106Ch10EthernetF0::I106Ch10EthernetF0() : I106ParseContext(), frame_index_(0),
 framelen_(0), framelen_ptr_((uint8_t*)&framelen_), typelen_ptr_(nullptr), 
-i106_status_(I106Status::I106_OK), npp()
+i106_status_(I106Status::I106_OK), npp(), pq_eth_writer_()
 {
 
+}
+
+bool I106Ch10EthernetF0::InitializeWriter()
+{
+	return pq_eth_writer_.Initialize(output_path_, id_);
+	//return true;
 }
 
 uint8_t I106Ch10EthernetF0::Ingest(I106C10Header* header, void* buffer)
@@ -97,7 +103,9 @@ uint8_t I106Ch10EthernetF0::RecordFrame()
 	{
 		if (npp.ParseEthernetII(i106_ethmsg_.Data, i106_ethiph_->Length, &ed) == 1)
 		{
-			retcode_ = 1;
+			//printf("ParseEthernetII Error!\n");
+			frame_index_++;
+			//retcode_ = 1;
 			return retcode_;
 		}
 	}
@@ -105,12 +113,15 @@ uint8_t I106Ch10EthernetF0::RecordFrame()
 	{
 		if (npp.ParseEthernet(i106_ethmsg_.Data, i106_ethiph_->Length, &ed) == 1)
 		{
-			retcode_ = 1;
+			//printf("ParseEthernet Error!\n");
+			frame_index_++;
+			//retcode_ = 1;
 			return retcode_;
 		}
 	}
 
 	// Add data to Parquet file.
+	pq_eth_writer_.Append(msg_abstime_, &ed);
 
 	frame_index_++;
 	return retcode_;
@@ -144,5 +155,10 @@ void I106Ch10EthernetF0::CreateStringMACAddrs()
 	dest_mac_addr_ = dest_mac_stream_.str();
 	src_mac_addr_ = src_mac_stream_.str();
 	//printf("dest MAC: %s, src MAC: %s\n", dest_mac_addr_.c_str(), src_mac_addr_.c_str());
+}
+
+void I106Ch10EthernetF0::Finalize()
+{
+	pq_eth_writer_.Finalize();
 }
 

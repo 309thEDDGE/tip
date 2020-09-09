@@ -4,8 +4,10 @@
 
 #include <sstream>
 #include "i106_parse_context.h"
+
+// Must include parquet_ethernetf0.h prior to network_packet_parser.h
+#include "parquet_ethernetf0.h"
 #include "network_packet_parser.h"
-#include "ethernet_data.h"
 extern "C" {
 #include "i106_decode_ethernet.h"
 }
@@ -13,6 +15,7 @@ extern "C" {
 class I106Ch10EthernetF0 : public I106ParseContext
 {
 private:
+	ParquetEthernetF0 pq_eth_writer_;
 	I106Status i106_status_;
 	EthernetF0_Message i106_ethmsg_;
 	const EthernetF0_IPH* i106_ethiph_;
@@ -31,10 +34,12 @@ private:
 public:
 	const uint16_t& frame_length_ = framelen_;
 	I106Ch10EthernetF0();
+	bool InitializeWriter() override;
 	uint8_t Ingest(I106C10Header* header, void* buffer);
 	uint8_t RecordFrame();
 	void CalculateFrameLength();
 	void CreateStringMACAddrs();
+	void Finalize();
 };
 
 #endif

@@ -13,6 +13,7 @@ more complicated or less reliable.)
 #include <cstdio>
 #include "binbuff.h"
 
+
 class Ch10MetaData
 {
 public:
@@ -171,6 +172,9 @@ protected:
 	// than TimeStamp, as is possible per the Ch10 spec.
 	const uint8_t ts_size_;
 
+	// Output file path relevant to the derived class parse type.
+	std::string output_path_;
+
 	// Uses the TS_source and TS_format values to determine the
 	// correct means of parsing the time stamp. This function does
 	// not require the user to understand the various time formats.
@@ -189,7 +193,13 @@ public:
 	// Pass the binary buffer containing the data that are to be
 	// parsed. ID is used to identify the calling thread. 
 	I106ParseContext();
-	void Initialize(uint16_t ID, const Ch10MetaData* ch10md_ptr);
+	void Initialize(uint16_t ID, const Ch10MetaData* ch10md_ptr, 
+		const std::string& outpath);
+
+	// Virtual method to be defined in derived class. Mentioned 
+	// here as a reminder to initialize the class that writes 
+	// parsed data to disk or other medium.
+	virtual bool InitializeWriter();
 
 	// Create virtual destructor, even it does nothing. This ensures that 
 	// derived class destructor functions as expected. 
