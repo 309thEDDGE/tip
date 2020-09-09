@@ -47,8 +47,10 @@ else
 	mv $BASE_DIR/vendor/deps $BASE_DIR/
 fi
 
-rm -rf $BUILD_DIR
-mkdir $BUILD_DIR
+echo "Running '$CMAKE' for TIP"
+mkdir -p $BUILD_DIR
 cd $BUILD_DIR
-$CMAKE .. -DLIBIRIG106=ON -DVIDEO=ON \
+$CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
+
+echo "Running '$MAKE' for TIP"
 $MAKE
