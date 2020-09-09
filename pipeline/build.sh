@@ -50,8 +50,11 @@ BUILD_COMMAND="cd $BUILD_DIR \
     && $MAKE"
 	
 # try an incremental build; if it fails do a full build
-eval $BUILD_COMMAND \
-	|| rm -rf $BUILD_DIR ; mkdir -p $BUILD_DIR ; eval $BUILD_COMMAND
+if [[ ! eval $BUILD_COMMAND ]] ; then
+	rm -rf $BUILD_DIR
+	mkdir -p $BUILD_DIR
+	eval $BUILD_COMMAND
+fi
 
 
 # cmake --version
