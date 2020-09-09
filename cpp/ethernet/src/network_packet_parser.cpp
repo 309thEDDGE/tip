@@ -17,8 +17,8 @@ uint8_t NetworkPacketParser::ParseEthernet(const uint8_t* buffer, const uint32_t
 	Tins::Dot3 dot3(buffer, tot_size);
 	ethernet_data_ptr_->dst_mac_addr_ = dot3.dst_addr().to_string();
 	ethernet_data_ptr_->src_mac_addr_ = dot3.src_addr().to_string();
-	printf("\nDot3 -- > dst: %s, src: %s, length: %hu\n", ethernet_data_ptr_->dst_mac_addr_.c_str(), 
-		ethernet_data_ptr_->src_mac_addr_.c_str(), dot3.length());
+	/*printf("\nDot3 -- > dst: %s, src: %s, length: %hu\n", ethernet_data_ptr_->dst_mac_addr_.c_str(), 
+		ethernet_data_ptr_->src_mac_addr_.c_str(), dot3.length());*/
 
 	// Get inner pdu and check type.
 	pdu_ptr_ = dot3.inner_pdu();
@@ -46,26 +46,6 @@ uint8_t NetworkPacketParser::ParseEthernet(const uint8_t* buffer, const uint32_t
 		return 1;
 	}
 
-	//// Get the first two bytes of the payload. Have to skip both MAC addresses (6 bytes each),
-	//// and EtherType/Length (2 bytes) = 14 bytes.
-	//raw_payload_ = (const uint16_t*)buffer + 14;
-
-	//// Novell Raw IEEE 802.3
-	//if (*raw_payload_ == 0xffff)
-	//{
-	//	printf("Raw 802.3\n");
-	//}
-	//// IEEE 802.2 SNAP
-	//else if (*raw_payload_ == 0xaaaa)
-	//{
-	//	printf("802.2 SNAP\n");
-	//}
-	//// IEEE 802.2 LLC
-	//else
-	//{
-	//	printf("802.2 LLC\n");
-	//	return ParseEthernetLLC(buffer, tot_size);
-	//}
 	return 0;
 }
 
@@ -79,17 +59,17 @@ uint8_t NetworkPacketParser::ParseEthernetLLC()
 	ethernet_data_ptr_->frame_format_ = llc_pdu_->type();
 	ethernet_data_ptr_->snd_seq_number_ = llc_pdu_->send_seq_number();
 	ethernet_data_ptr_->rcv_seq_number_ = llc_pdu_->receive_seq_number();
-	printf("LLC: dsap %hhu, ssap %hhu, type %hhu, sendseqnum %hhu, rcvseqnum %hhu\n",
+	/*printf("LLC: dsap %hhu, ssap %hhu, type %hhu, sendseqnum %hhu, rcvseqnum %hhu\n",
 		ethernet_data_ptr_->dsap_, ethernet_data_ptr_->ssap_, 
 		ethernet_data_ptr_->frame_format_, ethernet_data_ptr_->snd_seq_number_, 
-		ethernet_data_ptr_->rcv_seq_number_);
+		ethernet_data_ptr_->rcv_seq_number_);*/
 
 	pdu_ptr_ = llc_pdu_->inner_pdu();
 	PDUType();
 
 	if (pdu_type_ == 0)
 	{
-		ParseRaw();
+		return ParseRaw();
 	}
 	else
 	{
@@ -108,8 +88,8 @@ uint8_t NetworkPacketParser::ParseEthernetII(const uint8_t* buffer, const uint32
 	ethernet_data_ptr_->dst_mac_addr_ = eth.dst_addr().to_string();
 	ethernet_data_ptr_->src_mac_addr_ = eth.src_addr().to_string();
 	ethernet_data_ptr_->payload_type_ = eth.payload_type();
-	printf("\nEthII -- > dst: %s, src: %s, payload type: %hu\n", ethernet_data_ptr_->dst_mac_addr_.c_str(),
-		ethernet_data_ptr_->src_mac_addr_.c_str(), ethernet_data_ptr_->payload_type_);
+	/*printf("\nEthII -- > dst: %s, src: %s, payload type: %hu\n", ethernet_data_ptr_->dst_mac_addr_.c_str(),
+		ethernet_data_ptr_->src_mac_addr_.c_str(), ethernet_data_ptr_->payload_type_);*/
 	pdu_ptr_ = eth.inner_pdu();
 	PDUType();
 
@@ -168,9 +148,9 @@ uint8_t NetworkPacketParser::ParseIPv4()
 	ethernet_data_ptr_->protocol_ = ip_pdu_->protocol();
 	ethernet_data_ptr_->offset_ = ip_pdu_->fragment_offset();
 
-	printf("IPv4: srcaddr %s, dstaddr %s, id %hu, protocol %hhu, offset %hu\n",
+	/*printf("IPv4: srcaddr %s, dstaddr %s, id %hu, protocol %hhu, offset %hu\n",
 		ethernet_data_ptr_->src_ip_addr_.c_str(), ethernet_data_ptr_->dst_ip_addr_.c_str(), 
-		ethernet_data_ptr_->id_, ethernet_data_ptr_->protocol_, ethernet_data_ptr_->offset_);
+		ethernet_data_ptr_->id_, ethernet_data_ptr_->protocol_, ethernet_data_ptr_->offset_);*/
 
 	pdu_ptr_ = ip_pdu_->inner_pdu();
 	PDUType();
@@ -194,8 +174,8 @@ uint8_t NetworkPacketParser::ParseUDP()
 	udp_pdu_ = dynamic_cast<Tins::UDP*>(pdu_ptr_);
 	ethernet_data_ptr_->src_port_ = udp_pdu_->sport();
 	ethernet_data_ptr_->dst_port_ = udp_pdu_->dport();
-	printf("UDP: src port %hu, dst port %hu\n", ethernet_data_ptr_->src_port_, 
-		ethernet_data_ptr_->dst_port_);
+	/*printf("UDP: src port %hu, dst port %hu\n", ethernet_data_ptr_->src_port_, 
+		ethernet_data_ptr_->dst_port_);*/
 
 	pdu_ptr_ = udp_pdu_->inner_pdu();
 	PDUType();
@@ -223,8 +203,8 @@ uint8_t NetworkPacketParser::ParseRaw()
 
 	if (ethernet_data_ptr_->payload_size_ > EthernetData::mtu_)
 	{
-		printf("NetworkPacketParser::ParseRaw(): Payload size exceeds MTU: %u\n",
-			ethernet_data_ptr_->payload_size_);
+		/*printf("NetworkPacketParser::ParseRaw(): Payload size exceeds MTU: %u\n",
+			ethernet_data_ptr_->payload_size_);*/
 		return 1;
 	}
 
