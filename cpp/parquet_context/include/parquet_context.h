@@ -39,7 +39,7 @@ private:
 	arrow::MemoryPool* pool_;
 	bool parquet_stop_;
 	std::unique_ptr<parquet::arrow::FileWriter> writer_;
-	int ROW_GROUP_COUNT_;
+	size_t ROW_GROUP_COUNT_;
 	int append_row_count_;
 	bool have_created_table_;
 	std::map<std::string, ColumnData> column_data_map_;
@@ -89,6 +89,17 @@ private:
 		const int& size,
 		const int& offset);
 	
+	// Track the count of appended rows.
+	size_t temp_element_count_;
+
+	// Determine if row groups are ready to be written
+	// by comparing appended row count to buffer size.
+	size_t max_temp_element_count_;
+	size_t row_group_count_multiplier_;
+	bool ready_for_automatic_tracking_;
+	bool print_activity_;
+	std::string print_msg_;
+
 
 public:
 	/*
@@ -288,6 +299,14 @@ public:
 						   False will be returned.
 	*/
 	bool WriteColumns();
+
+	// Helper functions for tracking and writing rows.
+	void SetupRowCountTracking(size_t row_group_count_multiplier, bool print_activity,
+		std::string print_msg = "");
+	bool ReadyForRowCountTracking();
+	bool IncrementAndWrite();
+	void Finalize();
+	//void ResetListBuffers();
 };
 
 template<typename T, typename A>

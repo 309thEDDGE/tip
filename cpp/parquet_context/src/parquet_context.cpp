@@ -5,7 +5,9 @@ have_created_table_(false), path_(""), have_created_writer_(false),
 pool_(nullptr), schema_(nullptr),
 append_row_count_(0), host_(""), user_(""), port_(-1),
 have_created_schema_(false), writer_(nullptr), parquet_stop_(false),
-truncate_(true)
+truncate_(true), temp_element_count_(0), max_temp_element_count_(0),
+row_group_count_multiplier_(1), ready_for_automatic_tracking_(false),
+print_activity_(false), print_msg_("")
 {}
 
 ParquetContext::ParquetContext(int rgSize) : ROW_GROUP_COUNT_(rgSize),
@@ -13,7 +15,9 @@ have_created_table_(false), path_(""), have_created_writer_(false),
 pool_(nullptr), schema_(nullptr),
 append_row_count_(0), host_(""), user_(""), port_(-1),
 have_created_schema_(false), writer_(nullptr), parquet_stop_(false),
-truncate_(true)
+truncate_(true), temp_element_count_(0), max_temp_element_count_(0),
+row_group_count_multiplier_(1), ready_for_automatic_tracking_(false),
+print_activity_(false), print_msg_("")
 {}
 
 ParquetContext::~ParquetContext()
@@ -791,3 +795,83 @@ void ParquetContext::FillStringVec(std::vector<std::string>* str_data_vec_ptr,
 		temp_string_vec_.data());
 }
 
+bool ParquetContext::IncrementAndWrite()
+{
+	// Increment appended row counter. 
+	temp_element_count_++;
+
+	// If the buffer is full, write the data to disk.
+	if (temp_element_count_ == max_temp_element_count_)
+	{
+		if (print_activity_)
+		{
+			printf("ParquetContext::IncrementAndWrite(): %s, Writing %zu rows\n",
+				print_msg_.c_str(), temp_element_count_);
+		}
+
+		// Write each of the row groups.
+		for (int i = 0; i < row_group_count_multiplier_; i++)
+			WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+
+		// Reset
+		temp_element_count_ = 0;
+		return true;
+	}
+	return false;
+}
+
+void ParquetContext::SetupRowCountTracking(size_t row_group_count_multiplier,
+	bool print_activity, std::string print_msg)
+{
+	row_group_count_multiplier_ = row_group_count_multiplier_;
+	max_temp_element_count_ = row_group_count_multiplier_ * ROW_GROUP_COUNT_;
+	print_activity_ = print_activity;
+	print_msg_ = print_msg;
+
+	ready_for_automatic_tracking_ = true;
+}
+
+bool ParquetContext::ReadyForRowCountTracking()
+{
+	return ready_for_automatic_tracking_;
+}
+
+void ParquetContext::Finalize()
+{
+	if(temp_element_count_ > 0)
+	{
+		if (print_activity_)
+		{
+			printf("ParquetContext::Finalize(): %s, Writing %zu rows\n",
+				print_msg_.c_str(), temp_element_count_);
+		}
+
+		int n_calls = int(std::ceil(double(temp_element_count_) / double(ROW_GROUP_COUNT_)));
+		for (int i = 0; i < n_calls; i++)
+		{
+			if (i == n_calls - 1)
+			{
+				WriteColumns(temp_element_count_ - (n_calls - 1) * ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+			}
+			else
+			{
+				WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+			}
+		}
+
+		temp_element_count_ = 0;
+	}
+}
+
+//void ParquetContext::ResetListBuffers()
+//{
+//	// Iterate over columns, fill all list buffers with zeros.
+//	for (std::map<std::string, ColumnData>::const_iterator it = column_data_map_.begin();
+//		it != column_data_map_.end(); ++it)
+//	{
+//		if (it->second.is_list_)
+//		{
+//			std::fill()
+//		}
+//	}
+//}
