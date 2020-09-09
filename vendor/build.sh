@@ -112,7 +112,7 @@ if [[ -f $FLEX_EXECUTABLE ]] ; then
 	echo "Flex already built"
 	if [[ ! -f /usr/local/bin/flex ]] ; then
 		echo "Running '$MAKE install' for Flex"
-		$MAKE install
+		make install
 		echo "Installed Flex"
 	fi
 else
@@ -128,7 +128,7 @@ if [[ -f $BISON_EXECUTABLE ]] ; then
 	echo "Bison already built"
 	if [[ ! -f /usr/local/bin/bison ]] ; then
 		echo "Running '$MAKE install for Bison'"
-		$MAKE install
+		make install
 		echo "Installed Bison"
 	fi
 else
@@ -206,7 +206,7 @@ fi
 # ctest --output-on-failure -j2
 
 echo -n "Checking for Google Test..."
-cd $GOOGLE_TEST_LIB
+mkdir -p $GOOGLE_TEST_LIB ; cd $GOOGLE_TEST_LIB
 if $FIND_LIBS_CMD ; then
 	echo "Google Test already built"
 else
@@ -218,7 +218,7 @@ else
 fi
 
 echo -n "Checking for yaml-cpp..."
-cd $YAML_CPP_LIB 
+mkdir -p $YAML_CPP_LIB ; cd $YAML_CPP_LIB 
 if $FIND_LIBS_CMD ; then
 	echo "yaml-cpp already built"
 else
@@ -233,7 +233,7 @@ else
 fi
 
 echo -n "Checking for libirig106..."
-cd $LIBIRIG106_LIB
+mkdir -p $LIBIRIG106_LIB ; cd $LIBIRIG106_LIB
 if $FIND_LIBS_CMD ; then
 	echo "libirig106 already built"
 else
@@ -317,6 +317,7 @@ echo "...arrow include files"
 for source in $ARROW_INCLUDE; do
 	cd $source
 	find arrow -type f -name \*.h -exec install -D {} $ARROW_INC_DEST/{} \;
+	find arrow -type f -name \*.hpp -exec install -D {} $ARROW_INC_DEST/{} \;
 	find parquet -type f -name \*.h -exec install -D {} $ARROW_INC_DEST/{} \;
 done
 
