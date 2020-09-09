@@ -192,7 +192,8 @@ else
 
 	echo
 	echo "...Running $MAKE for Arrow"
-	sudo $CMAKE --build . --target install --config release
+#	sudo $CMAKE --build . --target install --config release
+	$MAKE
 fi
 
 # echo
