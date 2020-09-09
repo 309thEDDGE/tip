@@ -5,6 +5,7 @@
 #include <sstream>
 #include "i106_parse_context.h"
 #include "network_packet_parser.h"
+#include "ethernet_data.h"
 extern "C" {
 #include "i106_decode_ethernet.h"
 }

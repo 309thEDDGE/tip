@@ -4,19 +4,24 @@
 #include <cstdint>
 #include <cstdio>
 #include <string>
+#include <algorithm> // copy
 //#include <map>
 #include "tins/tins.h"
-
-//enum class TinsPDUType : uint8_t
-//{
-//
-//};
+#include "ethernet_data.h"
 
 class NetworkPacketParser
 {
 private:
-	const uint16_t* raw_payload_;
+	EthernetData* ethernet_data_ptr_;
+	//std::vector<uint8_t> temp_payload_;
+	//std::vector<uint8_t>& raw_payload_;
+	//uint32_t raw_payload_size_;
 	uint16_t pdu_type_;
+	Tins::PDU* pdu_ptr_;
+	Tins::RawPDU* raw_pdu_;
+	Tins::UDP* udp_pdu_;
+	Tins::IP* ip_pdu_;
+	Tins::LLC* llc_pdu_;
 	const std::map<uint16_t, std::string> pdu_type_to_name_map_ = { {0, "RAW"}, {1, "ETHERNET_II"},
 		{2,"IEEE802_3"}, {3,"RADIOTAP"}, {4, "DOT11"}, {5, "DOT11_ACK"}, {6, "DOT11_ASSOC_REQ"},
 		{7, "DOT11_ASSOC_RESP"}, { 8, "DOT11_AUTH" }, { 9, "DOT11_BEACON" }, { 10, "DOT11_BLOCK_ACK" },
@@ -32,17 +37,38 @@ private:
 
 public:
 	NetworkPacketParser();
+	
 
+	/************************************************************
+						 Data Link Layer
+	*************************************************************/
 	// 802.3 (with total payload <= 1500), multiple sub-types possible.
-	uint8_t ParseEthernet(const uint8_t* buffer, const uint32_t& tot_size);
+	uint8_t ParseEthernet(const uint8_t* buffer, const uint32_t& tot_size, EthernetData* ed);
 
 	// 802.2 LLC
-	uint8_t ParseEthernetLLC(const uint8_t* buffer, const uint32_t& tot_size);
+	uint8_t ParseEthernetLLC();
 
 	// Ethernet II (802.3 with total payload > 1500)
-	uint8_t ParseEthernetII(const uint8_t* buffer, const uint32_t& tot_size);
+	uint8_t ParseEthernetII(const uint8_t* buffer, const uint32_t& tot_size, EthernetData* ed);
 
-	void PrintPDUType();
+	/************************************************************
+	                       Network Layer
+	*************************************************************/
+	uint8_t ParseIPv4();
+
+	/************************************************************
+						   Transport Layer
+	*************************************************************/
+	uint8_t ParseUDP();
+
+	/************************************************************
+						   Application Layer
+	*************************************************************/
+	// Very basic in its interaction with libtins. Provides a common
+	// function for recording data.
+	uint8_t ParseRaw();
+
+	void PDUType();
 	void PrintPDUTypeNotHandled();
 };
 

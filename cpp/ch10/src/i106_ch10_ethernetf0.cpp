@@ -85,10 +85,17 @@ uint8_t I106Ch10EthernetF0::RecordFrame()
 	// Calculate frame length.
 	CalculateFrameLength();
 
+	// Create new EthernetData object in which to store parsed data.
+	// Is it faster to create a new object each time or reuse the same 
+	// object, which could be created in the constructor, and call
+	// a "Clean" function or similar to reset all of the member variables
+	// to default values?
+	EthernetData ed;
+
 	// Ethernet II
 	if (framelen_ > 1500)
 	{
-		if (npp.ParseEthernetII(i106_ethmsg_.Data, i106_ethiph_->Length) == 1)
+		if (npp.ParseEthernetII(i106_ethmsg_.Data, i106_ethiph_->Length, &ed) == 1)
 		{
 			retcode_ = 1;
 			return retcode_;
@@ -96,32 +103,12 @@ uint8_t I106Ch10EthernetF0::RecordFrame()
 	}
 	else
 	{
-		if (npp.ParseEthernet(i106_ethmsg_.Data, i106_ethiph_->Length) == 1)
+		if (npp.ParseEthernet(i106_ethmsg_.Data, i106_ethiph_->Length, &ed) == 1)
 		{
 			retcode_ = 1;
 			return retcode_;
 		}
 	}
-
-	// Set the Ethernet frame struct.
-	//i106_ethframe_ = (const EthernetF0_Physical_FullMAC*)i106_ethmsg_.Data;
-
-	// Test: calculate length, compare with length from IPH.
-	// The payload length given within the frame plus the MAC addresses (2 * 6),
-	// Ethertype/length (2) and frame check sequence (4) (= total of 18) is equal to the total 
-	// frame size given in the IPH.
-	//CalculateFrameLength();
-	/*if (i106_ethiph_->Length - 18 != framelen_)
-	{
-		printf("\n(%03u) I106Ch10EthernetF0::Ingest(): payload length not in agreement:\n",
-			id_, frame_index_, i106_ethmsg_.CSDW->Frames);
-		printf("data length = %u - 18 != frame length = %hu\n", i106_ethiph_->Length, framelen_);
-
-		retcode_ = 1;
-		return retcode_;
-	}
-
-	CreateStringMACAddrs();*/
 
 	// Add data to Parquet file.
 
