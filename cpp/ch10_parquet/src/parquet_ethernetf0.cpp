@@ -1,18 +1,22 @@
 #include "parquet_ethernetf0.h"
 
-ParquetEthernetF0::ParquetEthernetF0() : thread_id_(UINT16_MAX), temp_element_count_(0)
+ParquetEthernetF0::ParquetEthernetF0() : ParquetContext(DEFAULT_ROW_GROUP_COUNT),
+thread_id_(UINT16_MAX), PAYLOAD_LIST_COUNT(EthernetData::mtu_), 
+MAX_TEMP_ELEMENT_COUNT(DEFAULT_ROW_GROUP_COUNT* DEFAULT_BUFFER_SIZE_MULTIPLIER),
+payload_ptr_(nullptr)
 {
 
 }
 
-ParquetEthernetF0::ParquetEthernetF0(const std::string& outfile, uint16_t thread_id,
-	size_t payload_list_count) : thread_id_(thread_id), PAYLOAD_LIST_COUNT(payload_list_count),
-	MAX_TEMP_ELEMENT_COUNT(DEFAULT_ROW_GROUP_COUNT* DEFAULT_BUFFER_SIZE_MULTIPLIER),
-	temp_element_count_(0), payload_ptr_(payload_.data());
+bool ParquetEthernetF0::Initialize(const std::string& outfile, uint16_t thread_id)
 {
+	thread_id_ = thread_id;
+
 	// Allocate vector memory. 
 	time_stamp_.resize(MAX_TEMP_ELEMENT_COUNT);
 	payload_.resize(MAX_TEMP_ELEMENT_COUNT * PAYLOAD_LIST_COUNT, 0);
+	payload_ptr_ = payload_.data();
+
 	payload_size_.resize(MAX_TEMP_ELEMENT_COUNT);
 	dst_mac_addr_.resize(MAX_TEMP_ELEMENT_COUNT);
 	src_mac_addr_.resize(MAX_TEMP_ELEMENT_COUNT);
@@ -70,39 +74,52 @@ ParquetEthernetF0::ParquetEthernetF0(const std::string& outfile, uint16_t thread
 	SetMemoryLocation(dst_port_, "ipdstport");
 	SetMemoryLocation(src_port_, "ipsrcport");
 
-	bool ret = OpenForWrite(outfile, true);
+	if (!OpenForWrite(outfile, true))
+	{
+		printf("(%03hu) ParquetEthernetF0::Initialize(): OpenForWrite failed!\n",
+			thread_id_);
+		return false;
+	}
 
 	// Setup automatic tracking of appended data.
 	char buff[100];
 	sprintf(buff, "(%03hu) EthernetF0", thread_id_);
 	std::string msg(buff);
-	SetupRowCountTracking(DEFAULT_BUFFER_SIZE_MULTIPLIER, true, msg);
+	SetupRowCountTracking(DEFAULT_ROW_GROUP_COUNT, DEFAULT_BUFFER_SIZE_MULTIPLIER, true, msg);
+	if (!ReadyForRowCountTracking())
+	{
+		printf("(%03hu) ParquetEthernetF0::Initialize(): Row count tracking not configured correctly!\n",
+			thread_id_);
+		return false;
+	}
 
+	return true;
 }
 
 void ParquetEthernetF0::Append(const uint64_t& time_stamp, const EthernetData* eth_data)
 {
-	time_stamp_[temp_element_count_] = time_stamp;
-	payload_size_[temp_element_count_] = eth_data->payload_size_;
-	dst_mac_addr_[temp_element_count_] = eth_data->dst_mac_addr_;
-	src_mac_addr_[temp_element_count_] = eth_data->src_mac_addr_;
-	payload_type_[temp_element_count_] = eth_data->payload_type_;
-	frame_format_[temp_element_count_] = eth_data->frame_format_;
-	dsap_[temp_element_count_] = eth_data->dsap_;
-	ssap_[temp_element_count_] = eth_data->ssap_;
-	snd_seq_number_[temp_element_count_] = eth_data->snd_seq_number_;
-	rcv_seq_number_[temp_element_count_] = eth_data->rcv_seq_number_;
-	dst_ip_addr_[temp_element_count_] = eth_data->dst_ip_addr_;
-	src_ip_addr_[temp_element_count_] = eth_data->src_ip_addr_;
-	id_[temp_element_count_] = eth_data->id_;
-	protocol_[temp_element_count_] = eth_data->protocol_;
-	offset_[temp_element_count_] = eth_data->offset_;
-	dst_port_[temp_element_count_] = eth_data->dst_port_;
-	src_port_[temp_element_count_] = eth_data->src_port_;
+	//printf("append_count_ is %zu\n", append_count_);
+	time_stamp_[append_count_] = time_stamp;
+	payload_size_[append_count_] = eth_data->payload_size_;
+	dst_mac_addr_[append_count_] = eth_data->dst_mac_addr_;
+	src_mac_addr_[append_count_] = eth_data->src_mac_addr_;
+	payload_type_[append_count_] = eth_data->payload_type_;
+	frame_format_[append_count_] = eth_data->frame_format_;
+	dsap_[append_count_] = eth_data->dsap_;
+	ssap_[append_count_] = eth_data->ssap_;
+	snd_seq_number_[append_count_] = eth_data->snd_seq_number_;
+	rcv_seq_number_[append_count_] = eth_data->rcv_seq_number_;
+	dst_ip_addr_[append_count_] = eth_data->dst_ip_addr_;
+	src_ip_addr_[append_count_] = eth_data->src_ip_addr_;
+	id_[append_count_] = eth_data->id_;
+	protocol_[append_count_] = eth_data->protocol_;
+	offset_[append_count_] = eth_data->offset_;
+	dst_port_[append_count_] = eth_data->dst_port_;
+	src_port_[append_count_] = eth_data->src_port_;
 
 	// Copy payload
-	std::copy(eth_data->payload_.begin(), eth_data->payload_.end(),
-		payload_ptr_ + temp_element_count_ * PAYLOAD_LIST_COUNT);
+	std::copy(eth_data->payload_ptr_, eth_data->payload_ptr_ + eth_data->payload_size_,
+		payload_ptr_ + append_count_ * PAYLOAD_LIST_COUNT);
 
 	// Increment the count variable and write data if row group(s) are filled.
 	if (IncrementAndWrite())

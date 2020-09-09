@@ -1,4 +1,3 @@
-
 #ifndef PARQUET_ETHERNETF0_H
 #define PARQUET_ETHERNETF0_H
 
@@ -12,11 +11,11 @@ private:
 	const size_t DEFAULT_BUFFER_SIZE_MULTIPLIER = 10;
 	const size_t PAYLOAD_LIST_COUNT;
 	const size_t MAX_TEMP_ELEMENT_COUNT;
-	size_t temp_element_count_;
 	uint16_t thread_id_;
 	uint8_t* payload_ptr_;
 
-	// Arrays of data to be written to the Parquet table.
+	// Arrays of data to be written to the Parquet table. See EthernetData for a 
+	// description of the columns.
 	std::vector<uint64_t> time_stamp_;  // save as int64
 	std::vector<uint8_t> payload_; // save as int16
 	std::vector<int64_t> payload_size_; // original type is uint32_t
@@ -38,7 +37,7 @@ private:
 
 public:
 	ParquetEthernetF0();
-	ParquetEthernetF0(const std::string& outfile, uint16_t thread_id);
+	bool Initialize(const std::string& outfile, uint16_t thread_id);
 	void Append(const uint64_t& time_stamp, const EthernetData* eth_data);
 };
 
