@@ -41,6 +41,8 @@ if [ -f deps/arrow_library_dependencies/lib/libarrow.a ] ; then
 else
 	echo "libarrow.a not found; building dependencies"
 	bash vendor/build.sh
+	rm -rf /app/deps
+	mv vendor/deps /app/
 fi
 
 BUILD_COMMAND="cd $BUILD_DIR \

@@ -345,5 +345,3 @@ cd $VENDOR
 tar czf $TIP_DEPS_TARBALL $(basename $TIP_DEPS_DIR)
 echo "Cached TIP dependencies in $TIP_DEPS_TARBALL"
 
-rm -rf $BASE_DIR/deps
-mv $TIP_DEPS_DIR $BASE_DIR
