@@ -90,7 +90,7 @@ private:
 		const int& offset);
 	
 	// Track the count of appended rows.
-	size_t temp_element_count_;
+	size_t appended_row_count_;
 
 	// Determine if row groups are ready to be written
 	// by comparing appended row count to buffer size.
@@ -102,6 +102,11 @@ private:
 
 
 public:
+
+	// User-available variable to access the current
+	// count of rows appended to buffers.
+	const size_t& append_count_ = appended_row_count_;
+
 	/*
 		Initializes parquet context with a default row
 		group size of 10000
@@ -301,7 +306,8 @@ public:
 	bool WriteColumns();
 
 	// Helper functions for tracking and writing rows.
-	void SetupRowCountTracking(size_t row_group_count_multiplier, bool print_activity,
+	void SetupRowCountTracking(size_t row_group_count, 
+		size_t row_group_count_multiplier, bool print_activity,
 		std::string print_msg = "");
 	bool ReadyForRowCountTracking();
 	bool IncrementAndWrite();
