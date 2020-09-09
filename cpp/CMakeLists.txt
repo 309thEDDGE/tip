@@ -71,6 +71,29 @@ target_compile_features(${pqctx_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${pqctx_lib_name} PUBLIC ${parquet_libs} ${linux_libs})
 
 #########################################################
+#      Build/link ethernet lib
+#########################################################
+if(libirig106 AND ethernet_data)
+
+    # Copy pcap dlls to bin dir.
+    configure_file(${pcap_dll1} ${out_bin_dir} COPYONLY)
+    configure_file(${pcap_dll2} ${out_bin_dir} COPYONLY)
+
+    # Build ch10ethernet add_library(${1:target_name} ${2:source_file}).
+    set(eth_lib_name "ch10ethernet")
+    set(eth_path "ethernet")
+    set(eth_inc_dir ${eth_path}/${include_dir_name})
+    set(eth_src_dir ${eth_path}/${source_dir_name})
+    message(STATUS "Building ethernet lib (using libtins): " "${eth_lib_name}")
+    add_library(${eth_lib_name} ${eth_src_dir}/network_packet_parser.cpp ${eth_inc_dir}/network_packet_parser.h
+                                ${eth_src_dir}/ethernet_data.cpp ${eth_inc_dir}/ethernet_data.h)
+    target_include_directories(${eth_lib_name} PUBLIC ${eth_inc_dir}
+                               ${all_tins_incs})
+    target_link_libraries(${eth_lib_name} PUBLIC ${all_tins_libs})
+    target_compile_features(${eth_lib_name} PUBLIC cxx_std_17)
+endif()
+
+#########################################################
 #            Build/link ch10_parquet lib
 #########################################################
 set(ch10pq_lib_name "ch10_parquet")
@@ -93,9 +116,10 @@ add_library(${ch10pq_lib_name}
 target_include_directories(${ch10pq_lib_name} PUBLIC 
                             ${ch10pq_inc_dir}
                             ${pqctx_inc_dir} 
+                            ${eth_inc_dir}
                             ${ch10_inc_dir}) # Ch10 format headers.
 target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)    
-target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${linux_libs})
+target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${eth_lib_name} ${linux_libs})
 
 #########################################################
 #                 Build/link metadata lib
@@ -175,28 +199,6 @@ add_library(${comp_lib_name} ${comp_src_dir}/comparator.cpp
             ${comp_src_dir}/parquet_manager.cpp)
 target_include_directories(${comp_lib_name} PUBLIC ${comp_inc_dir} ${parquet_inc_dirs})
 target_compile_features(${comp_lib_name} PUBLIC cxx_std_17)
-
-#########################################################
-#      Build/link ethernet lib
-#########################################################
-if(libirig106 AND ethernet_data)
-
-    # Copy pcap dlls to bin dir.
-    configure_file(${pcap_dll1} ${out_bin_dir} COPYONLY)
-    configure_file(${pcap_dll2} ${out_bin_dir} COPYONLY)
-
-    # Build ch10ethernet add_library(${1:target_name} ${2:source_file}).
-    set(eth_lib_name "ch10ethernet")
-    set(eth_path "ethernet")
-    set(eth_inc_dir ${eth_path}/${include_dir_name})
-    set(eth_src_dir ${eth_path}/${source_dir_name})
-    message(STATUS "Building ethernet lib (using libtins): " "${eth_lib_name}")
-    add_library(${eth_lib_name} ${eth_src_dir}/network_packet_parser.cpp)
-    target_include_directories(${eth_lib_name} PUBLIC ${eth_inc_dir}
-                               ${all_tins_incs})
-    target_link_libraries(${eth_lib_name} PUBLIC ${all_tins_libs})
-    target_compile_features(${eth_lib_name} PUBLIC cxx_std_17)
-endif()
 
 #########################################################
 #                   Install Libs
