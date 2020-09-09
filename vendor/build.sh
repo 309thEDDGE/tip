@@ -120,8 +120,8 @@ if [[ -f $FLEX_EXECUTABLE ]] ; then
 else
 	echo "Building Flex"
 	./configure
-	$MAKE
-	$MAKE install
+	make # must use regular make command
+	make install
 fi
 
 cd $VENDOR/$BISON_VERSION
@@ -136,8 +136,8 @@ if [[ -f $BISON_EXECUTABLE ]] ; then
 else
 	echo "Building Bison"
 	./configure
-	$MAKE
-	$MAKE install
+	make # must use regular make command
+	make install
 fi
 
 echo -n "Checking for Arrow..."
