@@ -110,7 +110,23 @@ void ParseManager::create_paths()
 		}
 	}
 #endif
-	// #ifdef ETHERNET
+#ifdef ETHERNET_DATA
+	std::filesystem::path parquet_eth_path = out_path / input_path.stem();
+	parquet_eth_path += std::filesystem::path("_ethernet.parquet");
+	printf("Parquet video output path: %s\n", parquet_eth_path.string().c_str());
+	fspath_map[Ch10DataType::ETHERNET_DATA_F0] = parquet_eth_path;
+
+	if (!std::filesystem::exists(parquet_eth_path))
+	{
+		bool create_dir_success = false;
+		create_dir_success = std::filesystem::create_directory(parquet_eth_path);
+		if (!create_dir_success)
+		{
+			error_set = true;
+			printf("Creation of directory %s failed\n", parquet_eth_path.string().c_str());
+		}
+	}
+#endif
 #endif
 }
 

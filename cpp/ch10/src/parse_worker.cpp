@@ -56,6 +56,7 @@ void ParseWorker::initialize(uint16_t ID,
 		found_tmats_ = false;
 	else
 		found_tmats_ = true;
+
 #endif
 }
 
@@ -377,6 +378,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		printf("(%03u) Absolute position: %llu\n", id, start_position);
 #endif
 
+	// Set complete = false; here?
 	first_tdp = false;
 	continue_parsing = true;
 	uint16_t n_milstd_messages = 0;
@@ -410,8 +412,15 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		video = new Ch10VideoDataF0(bb, id, tdata, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
 #endif
 #ifdef ETHERNET_DATA
-		printf("\n(%03u) ParseWorker parsing Ethernet packets\n", id);
-		i106_ethernetf0_.Initialize(id, &ch10md_);
+		printf("\n(%03hu) ParseWorker parsing Ethernet packets\n", id);
+		i106_ethernetf0_.Initialize(id, &ch10md_, 
+			output_file_names[Ch10DataType::ETHERNET_DATA_F0]);
+		if (!i106_ethernetf0_.InitializeWriter())
+		{
+			printf("\n(%03hu) ParseWorker failed to initialize Ethernet writer\n", id);
+			complete = true;
+			return;
+		}
 #endif
 		delete_alloc = true;
 	}
@@ -736,6 +745,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 
 				if (i106_ethernetf0_.Ingest(&i106_header_, temp_buffer_ptr) == 1)
 				{
+					printf("\n(%03hu) ParseWorker EthernetF0 Ingest failed!\n", id);
 					continue_parsing = false;
 					continue;
 				}
@@ -834,6 +844,9 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		printf("(%03hu) Closing Video Data Parquet database\n", id);
 		video->close();
 #endif 
+#ifdef ETHERNET_DATA
+		i106_ethernetf0_.Finalize();
+#endif
 	}
 #endif
 #endif
@@ -948,6 +961,12 @@ void ParseWorker::generate_parquet_file_names(std::map<Ch10DataType, std::filesy
 		outpath = dirpath / dirpath.stem();
 		outpath += std::filesystem::path(ext);
 		output_file_names[Ch10DataType::VIDEO_DATA_F0] = outpath.string();
+#endif
+#ifdef ETHERNET_DATA
+		dirpath = fsmap[Ch10DataType::ETHERNET_DATA_F0];
+		outpath = dirpath / dirpath.stem();
+		outpath += std::filesystem::path(ext);
+		output_file_names[Ch10DataType::ETHERNET_DATA_F0] = outpath.string();
 #endif
 
 	}
