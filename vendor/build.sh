@@ -81,10 +81,8 @@ ARROW_LIB_DEST=$TIP_DEPS_DIR/arrow_library_dependencies/lib
 
 FIND_LIBS_CMD="find . -type f -name \*.a -quit" # find at least one .a file
 
-cd $VENDOR
-NEWEST=`ls -1t *.tar.* | head -1`
-if [[ "$NEWEST" == "$TIP_DEPS_TARBALL" ]] ; then
-	echo "TIP dependencies cache is current"
+if [[ -f $VENDOR/$TIP_DEPS_TARBALL ]] ; then
+	echo "Found TIP dependencies cache"
 	cd $BASE_DIR
 	rm -rf deps
 	tar -xvzf $VENDOR/$TIP_DEPS_TARBALL
@@ -195,9 +193,6 @@ else
 	echo
 	echo "...Running $MAKE for Arrow"
 	sudo $CMAKE --build . --target install --config Release
-	##CMake doesn't return an exit code. Fail if libarrow.a wasn't built
-	# cd $VENDOR
-	# test -f $ARROW_LIB
 fi
 
 # echo
