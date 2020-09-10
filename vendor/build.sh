@@ -65,9 +65,6 @@ ARROW_BUILD_DIR=$VENDOR/$ARROW_VERSION/cpp/build
 TIP_DEPS_DIR=$VENDOR/deps
 TIP_DEPS_TARBALL=deps.tar.gz
 
-# command to check current directory for any built library
-FIND_LIBS_CMD="find . -type f -name \*.a -quit" # find at least one .a file
-
 #
 # Check for cached dependencies
 # Exit successfully if found
@@ -231,15 +228,11 @@ echo Running Arrow tests
 echo -n "Checking for Google Test..."
 GOOGLE_TEST_LIB=$VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/gtest
 mkdir -p $GOOGLE_TEST_LIB ; cd $GOOGLE_TEST_LIB
-if $FIND_LIBS_CMD ; then
-	echo "Google Test already built"
-else
-	echo Building Google Test
-	cd $VENDOR/$GOOGLE_TEST_VERSION
-	rm -rf build mkdir -p build ; cd build
-	$CMAKE ..
-	$MAKE
-fi
+echo Building Google Test
+cd $VENDOR/$GOOGLE_TEST_VERSION
+rm -rf build mkdir -p build ; cd build
+$CMAKE ..
+$MAKE
 
 #
 # Build yaml-cpp
@@ -248,18 +241,14 @@ fi
 echo -n "Checking for yaml-cpp..."
 YAML_CPP_LIB=$VENDOR/$YAML_CPP_VERSION/build
 mkdir -p $YAML_CPP_LIB ; cd $YAML_CPP_LIB 
-if $FIND_LIBS_CMD ; then
-	echo "yaml-cpp already built"
-else
-	echo "Building yaml-cpp"
-	cd $VENDOR/$YAML_CPP_VERSION
-	mkdir -p build/test/prefix/lib
-	cp -n $VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/libgmock.a build/test/prefix/lib
-	cd build
-	$CMAKE ..
-	$MAKE
-	test/run-tests
-fi
+echo "Building yaml-cpp"
+cd $VENDOR/$YAML_CPP_VERSION
+mkdir -p build/test/prefix/lib
+cp -n $VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/libgmock.a build/test/prefix/lib
+cd build
+$CMAKE ..
+$MAKE
+test/run-tests
 
 #
 # Build libirig106
@@ -268,13 +257,9 @@ fi
 echo -n "Checking for libirig106..."
 LIBIRIG106_LIB=$VENDOR/$LIBIRIG106_VERSION
 mkdir -p $LIBIRIG106_LIB ; cd $LIBIRIG106_LIB
-if $FIND_LIBS_CMD ; then
-	echo "libirig106 already built"
-else
-	echo Building libirig106
-	cd $VENDOR/$LIBIRIG106_VERSION
-	$MAKE
-fi
+echo Building libirig106
+cd $VENDOR/$LIBIRIG106_VERSION
+$MAKE
 
 #
 # Gather dependencies into one folder
