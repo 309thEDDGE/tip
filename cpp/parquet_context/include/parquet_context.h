@@ -305,11 +305,90 @@ public:
 	*/
 	bool WriteColumns();
 
-	// Helper functions for tracking and writing rows.
+	/*
+		Set the parameters used for automatic accounting of rows and 
+		writing row groups when necessary. Also handles the 
+		writing of remaining rows if the appended row count has not reached
+		the critical count required to trigger a write.
+
+		Used in conjunction with IncrementAndWrite and Finalize. The workflow is
+		1) setup the vectors/buffers for the parquet table
+		2) allocate the necessary memory in each
+		3) call AddField for each buffer/column
+		4) call SetMemoryLocation for each buffer/column
+		5) Use the append_count_ index to fill each row
+		6) call IncrementAndWrite after each row is filled at index append_count_
+		7) continue until the table is complete
+		8) call Finalize before exiting
+
+		Inputs: row_group_count            -> The count of rows in a Parquet row group.
+											  If the row count has been set via the constructor,
+											  this input will override that value. 
+
+				row_group_count_multiplier -> The count of row groups buffered prior to writing.
+											  If the row_group_count is 100 and this value is 10
+											  then 1000 elements shall have been allocated in the 
+											  buffer (a std::vector). Use value 1 if a row group
+											  shall be written each time it's buffer if filled.
+
+				print_activity             -> Boolean to turn on (true) and off (false) print statements
+											  when writing to parquet file is carried out. 
+
+				print_msg                  -> Message to included in the print statement when data
+											  are written to Parquet file. Default is an empty string.
+
+		Returns:			True if row_group_count and row_group_count_multiplier are valid and
+							false otherwise.
+	
+	*/
 	bool SetupRowCountTracking(size_t row_group_count, 
 		size_t row_group_count_multiplier, bool print_activity,
 		std::string print_msg = "");
+
+	/*
+	
+		Function to be called after the buffers are filled for the current row.
+		Use the protected member variable append_count_ as the index in the buffer. It is
+		incremented by this function and data are recorded if the parameters configured 
+		via SetupRowCountTracking are met. 
+
+		Ex: Simple Parquet file with time and data columns, with data buffered in time
+		and data vectors. After the vector size is allocated and AddField and SetMemoryLocation
+		are called for each, rows are appended via the following algorithm:
+		
+		AddData()
+		{
+			time[append_count_] = new time data
+			data[append_count_] = new data value
+			IncrementAndWrite();
+		}
+
+		If one of the columns is a list and you wish to zero all values, do
+			if(IncrementAndWrite())
+			{
+				fill(list_vec.begin(), list_vec.end(), 0);
+			}
+
+		Returns:
+			
+						True if the data row group(s) were written and false otherwise. Note
+						that for the example of 100 count row groups and a multiplier of 10,
+						this function will only return true every 1000th call.
+
+	*/
 	bool IncrementAndWrite();
+
+	/*
+	
+		Write the data remaining in the buffers to disk. Generally used prior to closing
+		the file. This function is called automatically by the destructor if automatic 
+		accounting of row group appending has been initiated via the SetupRowCountTracking
+		function. Nevertheless, it is a best practice to call Finalize() intentionally prior
+		to exiting the program. In that case, when it's called by the destructor, it will not
+		perform any action because data have already been written the counter will have been
+		zeroed.
+
+	*/
 	void Finalize();
 	//void ResetListBuffers();
 };
