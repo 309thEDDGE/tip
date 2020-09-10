@@ -1,19 +1,29 @@
+#
+# Set up error handling 
+# Exit on failure, showing which command failed
+#
+
 # exit when any command fails
 set -e
-
 # keep track of the last executed command
 trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
 trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
+#
+# Capture base directories
+# Allow script to start from within the vendor folder or its parent
+#
 
 if [[ "$(basename $PWD)" != "vendor" ]] ; then cd vendor ; fi
 VENDOR=$PWD
 cd ..
 BASE_DIR=$PWD
 
-ls -l $VENDOR
-
+#
+# Check for Ninja
+# Set up for ninja if available; otherwise use cmake
+#
 echo -n "Checking for ninja..."
 if [ -f /usr/local/bin/ninja ] ; then
 	echo "yes"
@@ -25,63 +35,43 @@ else
 	MAKE="make -j8"
 fi
 
+#
+# Variables
+#
+
 SCRIPT_NAME=$(basename $0)
+
+# source versions
 ARROW_VERSION=apache-arrow-0.14.0
 BISON_VERSION=bison-3.6
-BISON_EXECUTABLE=$VENDOR/$BISON_VERSION/src/bison
 FLEX_VERSION=flex-2.6.4
-FLEX_EXECUTABLE=$VENDOR/$FLEX_VERSION/src/flex
 BZIP2_VERSION=bzip2-1.0.8
 GOOGLE_TEST_VERSION=googletest-release-1.8.1
 YAML_CPP_VERSION=yaml-cpp-yaml-cpp-0.6.3
-
-PARQUET_TEST_DATA_SOURCE_PATH=$VENDOR/parquet-testing-master
-TIP_DEPS_DIR=$VENDOR/deps
-TIP_DEPS_TARBALL=deps.tar.gz
 LIBIRIG106_VERSION=libirig106-master
 
-GOOGLE_MOCK_INCLUDE=$VENDOR/$GOOGLE_TEST_VERSION/googlemock/include
-GOOGLE_MOCK_INC_DEST=$TIP_DEPS_DIR/gsuite/googlemock
-GOOGLE_MOCK_LIB=$VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/include
-GOOGLE_MOCK_LIB_DEST=$TIP_DEPS_DIR/gsuite/googlemock/lib
+# location of arrow test data
+PARQUET_TEST_DATA_SOURCE_PATH=$VENDOR/parquet-testing-master
 
-GOOGLE_TEST_INCLUDE=$VENDOR/$GOOGLE_TEST_VERSION/googletest/include/
-GOOGLE_TEST_INC_DEST=$TIP_DEPS_DIR/gsuite/googletest/include
-GOOGLE_TEST_LIB=$VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/gtest
-GOOGLE_TEST_LIB_DEST=$TIP_DEPS_DIR/gsuite/googletest/lib
+# locations to check for flex and bison executables 
+BISON_EXECUTABLE=$VENDOR/$BISON_VERSION/src/bison
+FLEX_EXECUTABLE=$VENDOR/$FLEX_VERSION/src/flex
 
-YAML_CPP_INCLUDE=$VENDOR/$YAML_CPP_VERSION/include
-YAML_CPP_INC_DEST=$TIP_DEPS_DIR/yaml-cpp/include
-YAML_CPP_LIB=$VENDOR/$YAML_CPP_VERSION/build
-YAML_CPP_LIB_DEST=$TIP_DEPS_DIR/yaml-cpp/lib
-
-LIBIRIG106_INCLUDE=$VENDOR/$LIBIRIG106_VERSION/src
-LIBIRIG106_INC_DEST=$TIP_DEPS_DIR/libirig106/include
-LIBIRIG106_LIB=$VENDOR/$LIBIRIG106_VERSION
-LIBIRIG106_LIB_DEST=$TIP_DEPS_DIR/libirig106/lib
-
-ARROW_INCLUDE="$VENDOR/$ARROW_VERSION/cpp/src $ARROW_BUILD_DIR/src"
-ARROW_INC_DEST=$TIP_DEPS_DIR/arrow_library_dependencies/src
+# location of arrow build
 ARROW_BUILD_DIR=$VENDOR/$ARROW_VERSION/cpp/build
-ARROW_LIBRARIES="$ARROW_BUILD_DIR/release/libarrow.a \
-	$ARROW_BUILD_DIR/boost_ep-prefix/src/boost_ep/stage/lib/libboost_filesystem.a \
-	$ARROW_BUILD_DIR/boost_ep-prefix/src/boost_ep/stage/lib/libboost_regex.a \
-	$ARROW_BUILD_DIR/boost_ep-prefix/src/boost_ep/stage/lib/libboost_system.a \
-	$ARROW_BUILD_DIR/brotli_ep/src/brotli_ep-install/lib/libbrotlicommon-static.a \
-	$ARROW_BUILD_DIR/brotli_ep/src/brotli_ep-install/lib/libbrotlidec-static.a \
-	$ARROW_BUILD_DIR/brotli_ep/src/brotli_ep-install/lib/libbrotlienc-static.a \
-	$ARROW_BUILD_DIR/double-conversion_ep/src/double-conversion_ep/lib/libdouble-conversion.a \
-	$ARROW_BUILD_DIR/glog_ep-prefix/src/glog_ep/lib/libglog.a \
-	$ARROW_BUILD_DIR/jemalloc_ep-prefix/src/jemalloc_ep/dist/lib/libjemalloc.a \
-	$ARROW_BUILD_DIR/lz4_ep-prefix/src/lz4_ep/lib/liblz4.a \
-	$ARROW_BUILD_DIR/release/libparquet.a \
-	$ARROW_BUILD_DIR/snappy_ep-prefix/src/snappy_ep/libsnappy.a \
-	$ARROW_BUILD_DIR/thrift_ep/src/thrift_ep-install/lib/libthrift.a \
-	$ARROW_BUILD_DIR/zlib_ep/src/zlib_ep-install/lib/libz.a \
-	$ARROW_BUILD_DIR/zstd_ep-install/lib64/libzstd.a"
-ARROW_LIB_DEST=$TIP_DEPS_DIR/arrow_library_dependencies/lib
 
+
+# where to store built dependencies
+TIP_DEPS_DIR=$VENDOR/deps
+TIP_DEPS_TARBALL=deps.tar.gz
+
+# command to check current directory for any built library
 FIND_LIBS_CMD="find . -type f -name \*.a -quit" # find at least one .a file
+
+#
+# Check for cached dependencies
+# Exit successfully if found
+#
 
 if [[ -f $VENDOR/$TIP_DEPS_TARBALL ]] ; then
 	echo "Found TIP dependencies cache"
@@ -90,58 +80,93 @@ if [[ -f $VENDOR/$TIP_DEPS_TARBALL ]] ; then
 	tar -xvzf $VENDOR/$TIP_DEPS_TARBALL
 	exit 0
 fi
+
+
 echo "Building TIP dependencies"
 
-cd $VENDOR
+#
+# Extract some source files
+# - Arrow, gtest, yaml-cpp, and libirig106 are required for TIP
+# - Flex and bison must be installed to build some arrow dependencies
+# - Arrow will extract its own dependencies
+#
 
+# extract source from tarballs if necessary
+cd $VENDOR
 test -d $ARROW_VERSION || ( echo extracting Arrow ; tar -xzf "$ARROW_VERSION.tar.gz" )
 test -d $BISON_VERSION || ( echo extracting Bison ; tar -xzf "$BISON_VERSION.tar.gz" )
 test -d $FLEX_VERSION || ( echo extracting Flex ; tar -xzf "$FLEX_VERSION.tar.gz" )
 test -d $GOOGLE_TEST_VERSION || (echo extracting gtest ; tar -xzf "$GOOGLE_TEST_VERSION.tar.gz")
 test -d $YAML_CPP_VERSION || (echo extracting yaml-cpp ; tar -xzf "$YAML_CPP_VERSION.tar.gz")
 if [ ! -d $LIBIRIG106_VERSION ] ; then
-	echo extracting libirig106
+	echo "extracting libirig106"
+	# extract either .tar.gz or .zip file
 	if [ -f $LIBIRIG106_VERSION.tar.gz ] ; then tar -xzf $LIBIRIG106_VERSION.tar.gz
 	else unzip $LIBIRIG106_VERSION.zip
 	fi
 fi
 
-which m4 >& /dev/null || dnf -y install m4
+#
+# Install m4 command
+# m4 is required to build XXXXXXXXXXXXXXXXXXX
+#
 
+#which m4 >& /dev/null || dnf -y install m4
+
+#
+# Build and install flex
+# flex is used to build XXXXXXXXXXXXXXXXXXX
+#
+
+# check if flex is built and installed
 echo -n "Checking for Flex..."
 cd $VENDOR/$FLEX_VERSION
 if [[ -f $FLEX_EXECUTABLE ]] ; then 
 	echo "Flex already built"
+	# if built but not installed, install flex
 	if [[ ! -f /usr/local/bin/flex ]] ; then
 		echo "Running '$MAKE install' for Flex"
 		make install
 		echo "Installed Flex"
 	fi
 else
+	# build and install flex
 	echo "Building Flex"
 	./configure
-	make # must use regular make command
+	make # must use regular make command (not ninja)
 	make install
 fi
 
+#
+# Build and install bison
+# bison is used to build XXXXXXXXXXXXXXXXXXX
+#
+
+# check if bison is built and installed
 cd $VENDOR/$BISON_VERSION
 echo -n "Checking for Bison..."
 if [[ -f $BISON_EXECUTABLE ]] ; then 
 	echo "Bison already built"
+	# if built but not installed, install bison
 	if [[ ! -f /usr/local/bin/bison ]] ; then
 		echo "Running '$MAKE install for Bison'"
 		make install
 		echo "Installed Bison"
 	fi
 else
+	# build and install bison
 	echo "Building Bison"
 	./configure
 	make # must use regular make command
 	make install
 fi
 
+#
+# Build arrow
+#
+
 echo -n "Checking for Arrow..."
-if [[ -f ${ARROW_LIBRARIES%% *} ]] ; then # Check for first file in library list
+if [[ -f $ARROW_BUILD_DIR/release/libarrow.a ]] ; then # Check for first file in library list
 	echo "Arrow already built"
 else
 	echo "Building Arrow"
@@ -175,7 +200,7 @@ else
 	export CXXFLAGS=-pthread
 
 	echo
-	echo "...Running $CMAKE for Arrow"
+	echo "...Running cmake for Arrow"
 	mkdir -p $ARROW_BUILD_DIR && cd $ARROW_BUILD_DIR
 
 	$CMAKE \
@@ -198,16 +223,16 @@ else
 	$MAKE
 fi
 
-# echo
-# echo Running Arrow tests
+# test arrow
+echo
+echo Running Arrow tests
 
-## Need to put data from https:/github.com/apache/parquet-testing (data dir and bad_data dir)
-## in a directory and link to that directory with the following env var.
-# export PARQUET_TEST_DATA=$ARROW_VERSION/cpp/submodules/parquet-testing/data
-# cp -rfn $PARQUET_TEST_DATA_SOURCE_PATH/* cpp/submodules/parquet-testing/data
-# ctest --output-on-failure -j2
+#
+# Build gtest
+#
 
 echo -n "Checking for Google Test..."
+GOOGLE_TEST_LIB=$VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/gtest
 mkdir -p $GOOGLE_TEST_LIB ; cd $GOOGLE_TEST_LIB
 if $FIND_LIBS_CMD ; then
 	echo "Google Test already built"
@@ -219,7 +244,12 @@ else
 	$MAKE
 fi
 
+#
+# Build yaml-cpp
+#
+
 echo -n "Checking for yaml-cpp..."
+YAML_CPP_LIB=$VENDOR/$YAML_CPP_VERSION/build
 mkdir -p $YAML_CPP_LIB ; cd $YAML_CPP_LIB 
 if $FIND_LIBS_CMD ; then
 	echo "yaml-cpp already built"
@@ -234,7 +264,12 @@ else
 	test/run-tests
 fi
 
+#
+# Build libirig106
+#
+
 echo -n "Checking for libirig106..."
+LIBIRIG106_LIB=$VENDOR/$LIBIRIG106_VERSION
 mkdir -p $LIBIRIG106_LIB ; cd $LIBIRIG106_LIB
 if $FIND_LIBS_CMD ; then
 	echo "libirig106 already built"
@@ -244,31 +279,67 @@ else
 	$MAKE
 fi
 
-# Gather dependencies into deps folder
-echo "Gathering dependencies"
+#
+# Gather dependencies into one folder
+#
 
+echo "Gathering dependencies"
+echo "...gmock"
 GOOGLE_MOCK_INCLUDE=$VENDOR/$GOOGLE_TEST_VERSION/googlemock/include
 GOOGLE_MOCK_INC_DEST=$TIP_DEPS_DIR/gsuite/googlemock/include
 GOOGLE_MOCK_LIB=$VENDOR/$GOOGLE_TEST_VERSION/build/googlemock
 GOOGLE_MOCK_LIB_DEST=$TIP_DEPS_DIR/gsuite/googlemock/lib
 
+cd $GOOGLE_MOCK_INCLUDE
+# find all .h files and copy them, preserving directory structure
+find . -type f -name \*.h -exec install -D {} $GOOGLE_MOCK_INC_DEST/{} \;
+cd $GOOGLE_MOCK_LIB
+find . -type f -name \*.a -exec install -D {} $GOOGLE_MOCK_LIB_DEST/{} \;
+
+echo "...gtest"
 GOOGLE_TEST_INCLUDE=$VENDOR/$GOOGLE_TEST_VERSION/googletest/include/
 GOOGLE_TEST_INC_DEST=$TIP_DEPS_DIR/gsuite/googletest/include
-GOOGLE_TEST_LIB=$VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/gtest
 GOOGLE_TEST_LIB_DEST=$TIP_DEPS_DIR/gsuite/googletest/lib
 
+cd $GOOGLE_TEST_INCLUDE
+find . -type f -name \*.h -exec install -D {} $GOOGLE_TEST_INC_DEST/{} \;
+cd $GOOGLE_TEST_LIB
+find . -type f -name \*.a -exec install -D {} $GOOGLE_TEST_LIB_DEST/{} \;
+
+echo "...yaml-cpp"
 YAML_CPP_INCLUDE=$VENDOR/$YAML_CPP_VERSION/include
 YAML_CPP_INC_DEST=$TIP_DEPS_DIR/yaml-cpp/include
-YAML_CPP_LIB=$VENDOR/$YAML_CPP_VERSION/build
 YAML_CPP_LIB_DEST=$TIP_DEPS_DIR/yaml-cpp/lib
 
+cd $YAML_CPP_INCLUDE
+find . -type f -name \*.h -exec install -D {} $YAML_CPP_INC_DEST/{} \;
+cd $YAML_CPP_LIB
+find . -type f -name \*.a -exec install -D {} $YAML_CPP_LIB_DEST/{} \;
+
+echo "...libirig106"
 LIBIRIG106_INCLUDE=$VENDOR/$LIBIRIG106_VERSION/src
 LIBIRIG106_INC_DEST=$TIP_DEPS_DIR/libirig106/include
-LIBIRIG106_LIB=$VENDOR/$LIBIRIG106_VERSION
 LIBIRIG106_LIB_DEST=$TIP_DEPS_DIR/libirig106/lib
 
+cd $LIBIRIG106_INCLUDE
+find . -type f -name \*.h -exec install -D {} $LIBIRIG106_INC_DEST/{} \;
+cd $LIBIRIG106_LIB
+find . -type f -name \*.a -exec install -D {} $LIBIRIG106_LIB_DEST/{} \;
+
+echo "...arrow include files"
+# Arrow include files are in cpp/src and cpp/build/src
+# (some are built by cmake)
 ARROW_INCLUDE="$VENDOR/$ARROW_VERSION/cpp/src $ARROW_BUILD_DIR/src"
 ARROW_INC_DEST=$TIP_DEPS_DIR/arrow_library_dependencies/src
+for source in $ARROW_INCLUDE; do
+	cd $source
+	find arrow -type f -name \*.h -exec install -D {} $ARROW_INC_DEST/{} \;
+	find arrow -type f -name \*.hpp -exec install -D {} $ARROW_INC_DEST/{} \;
+	find parquet -type f -name \*.h -exec install -D {} $ARROW_INC_DEST/{} \;
+done
+
+echo "...arrow libraries"
+# these are the arrow libraries required by TIP
 ARROW_LIBRARIES="$ARROW_BUILD_DIR/release/libarrow.a \
 	$ARROW_BUILD_DIR/boost_ep-prefix/src/boost_ep/stage/lib/libboost_filesystem.a \
 	$ARROW_BUILD_DIR/boost_ep-prefix/src/boost_ep/stage/lib/libboost_regex.a \
@@ -287,66 +358,14 @@ ARROW_LIBRARIES="$ARROW_BUILD_DIR/release/libarrow.a \
 	$ARROW_BUILD_DIR/zstd_ep-install/lib64/libzstd.a"
 ARROW_LIB_DEST=$TIP_DEPS_DIR/arrow_library_dependencies/lib
 
-
-
-echo "...gmock"
-cd $GOOGLE_MOCK_INCLUDE
-# find all .h files and copy them, preserving directory structure
-find . -type f -name \*.h -exec install -D {} $GOOGLE_MOCK_INC_DEST/{} \;
-cd $GOOGLE_MOCK_LIB
-find . -type f -name \*.a -exec install -D {} $GOOGLE_MOCK_LIB_DEST/{} \;
-
-echo "...gtest"
-cd $GOOGLE_TEST_INCLUDE
-find . -type f -name \*.h -exec install -D {} $GOOGLE_TEST_INC_DEST/{} \;
-cd $GOOGLE_TEST_LIB
-find . -type f -name \*.a -exec install -D {} $GOOGLE_TEST_LIB_DEST/{} \;
-
-
-echo "...yaml-cpp"
-cd $YAML_CPP_INCLUDE
-find . -type f -name \*.h -exec install -D {} $YAML_CPP_INC_DEST/{} \;
-cd $YAML_CPP_LIB
-find . -type f -name \*.a -exec install -D {} $YAML_CPP_LIB_DEST/{} \;
-
-echo "...libirig106"
-cd $LIBIRIG106_INCLUDE
-find . -type f -name \*.h -exec install -D {} $LIBIRIG106_INC_DEST/{} \;
-cd $LIBIRIG106_LIB
-find . -type f -name \*.a -exec install -D {} $LIBIRIG106_LIB_DEST/{} \;
-
-echo "...arrow include files"
-for source in $ARROW_INCLUDE; do
-	cd $source
-	find arrow -type f -name \*.h -exec install -D {} $ARROW_INC_DEST/{} \;
-	find arrow -type f -name \*.hpp -exec install -D {} $ARROW_INC_DEST/{} \;
-	find parquet -type f -name \*.h -exec install -D {} $ARROW_INC_DEST/{} \;
-done
-
-echo "...arrow libraries"
 mkdir -p $TIP_DEPS_DIR/arrow_library_dependencies/lib
-cp -f \
-	$ARROW_BUILD_DIR/release/libarrow.a \
-	$ARROW_BUILD_DIR/boost_ep-prefix/src/boost_ep/stage/lib/libboost_filesystem.a \
-	$ARROW_BUILD_DIR/boost_ep-prefix/src/boost_ep/stage/lib/libboost_regex.a \
-	$ARROW_BUILD_DIR/boost_ep-prefix/src/boost_ep/stage/lib/libboost_system.a \
-	$ARROW_BUILD_DIR/brotli_ep/src/brotli_ep-install/lib/libbrotlicommon-static.a \
-	$ARROW_BUILD_DIR/brotli_ep/src/brotli_ep-install/lib/libbrotlidec-static.a \
-	$ARROW_BUILD_DIR/brotli_ep/src/brotli_ep-install/lib/libbrotlienc-static.a \
-	$ARROW_BUILD_DIR/double-conversion_ep/src/double-conversion_ep/lib/libdouble-conversion.a \
-	$ARROW_BUILD_DIR/glog_ep-prefix/src/glog_ep/lib/libglog.a \
-	$ARROW_BUILD_DIR/jemalloc_ep-prefix/src/jemalloc_ep/dist/lib/libjemalloc.a \
-	$ARROW_BUILD_DIR/lz4_ep-prefix/src/lz4_ep/lib/liblz4.a \
-	$ARROW_BUILD_DIR/release/libparquet.a \
-	$ARROW_BUILD_DIR/snappy_ep-prefix/src/snappy_ep/libsnappy.a \
-	$ARROW_BUILD_DIR/thrift_ep/src/thrift_ep-install/lib/libthrift.a \
-	$ARROW_BUILD_DIR/zlib_ep/src/zlib_ep-install/lib/libz.a \
-	$ARROW_BUILD_DIR/zstd_ep-install/lib64/libzstd.a \
-	$TIP_DEPS_DIR/arrow_library_dependencies/lib
+cp -f $ARROW_LIBRARIES $TIP_DEPS_DIR/arrow_library_dependencies/lib
+
+#
+# Cache built dependencies
+#
 
 echo "Finished building TIP dependencies; caching results"
 cd $VENDOR
 tar czf $TIP_DEPS_TARBALL $(basename $TIP_DEPS_DIR)
 echo "Cached TIP dependencies in $TIP_DEPS_TARBALL"
-
-ls -l $VENDOR

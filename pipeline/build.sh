@@ -44,7 +44,7 @@ else
 	echo "libarrow.a not found; building dependencies"
 	bash vendor/build.sh
 	rm -rf $BASE_DIR/deps
-	mv $BASE_DIR/vendor/deps $BASE_DIR/
+	tar xf $BASE_DIR/vendor/deps.tar.gz
 fi
 
 echo "Running '$CMAKE' for TIP"
