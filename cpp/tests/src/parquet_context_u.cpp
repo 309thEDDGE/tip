@@ -38,6 +38,7 @@ protected:
 	{
 
 	}
+
 	~ParquetContextTest()
 	{
 		if (arrow_file_ != nullptr)
@@ -2310,4 +2311,225 @@ TEST_F(ParquetContextTest, Truncate)
 	// If truncate were fixed and worked properly this test would be replaced with
 	// ASSERT_THAT(input, ::testing::ElementsAre(16, 5, 4, 9, 8, 16, 5, 4, 9, 8));
 	ASSERT_THAT(input, ::testing::ElementsAre(16, 5, 4, 9, 8));
+}
+
+TEST(ParquetContextSimpleTest, SetupRowCountTrackingInvalidParams)
+{
+	ParquetContext pc;
+
+	// Must be greater than 0
+	size_t row_group_count = 0;
+
+	// Must be greater than 0
+	size_t row_group_count_multiplier = 1;
+
+	// Print statements controlled with print_activity and
+	// input string print_msg are not crucial. This functionality
+	// is not tested here.
+	bool doprint = false;
+
+	ASSERT_FALSE(pc.SetupRowCountTracking(row_group_count, row_group_count_multiplier, doprint));
+
+	row_group_count = 100;
+	row_group_count_multiplier = 0;
+	ASSERT_FALSE(pc.SetupRowCountTracking(row_group_count, row_group_count_multiplier, doprint));
+
+	row_group_count = 1000;
+	row_group_count_multiplier = 10;
+	ASSERT_TRUE(pc.SetupRowCountTracking(row_group_count, row_group_count_multiplier, doprint));
+}
+
+class ParquetContextRowCountTrackingTest : public ::testing::Test
+{
+protected:
+	std::string pq_file_;
+	ParquetContext pc_;
+	size_t rg_count_;
+	size_t mult_;
+	size_t max_count_;
+
+	std::vector<uint64_t> time_;
+	uint64_t time_begin_;
+	uint64_t time_incr_;
+
+	std::vector<float> data_;
+	float data_begin_;
+	float data_incr_;
+
+	ParquetContextRowCountTrackingTest() : pq_file_("temp.parquet"), pc_(), rg_count_(10),
+		mult_(2), max_count_(rg_count_ * mult_), time_begin_(0), data_begin_(0.3332),
+		time_incr_(1), data_incr_(2.81)
+	{
+
+	};
+
+	void TearDown() override
+	{
+		remove(pq_file_.c_str());
+	}
+
+	bool Initialize(size_t rg_count, size_t mult)
+	{
+		rg_count_ = rg_count;
+		mult_ = mult;
+		max_count_ = rg_count_ * mult_;
+
+		// time col
+		time_.resize(max_count_);
+		pc_.AddField(arrow::int64(), "time");
+		pc_.SetMemoryLocation(time_, "time");
+
+		// data col
+		data_.resize(max_count_);
+		pc_.AddField(arrow::float32(), "data");
+		pc_.SetMemoryLocation(data_, "data");
+
+		if (!pc_.OpenForWrite(pq_file_, true))
+		{
+			printf("Initialize(): OpenForWrite failed!\n");
+			return false;
+		}
+
+		std::string msg = "test";
+		return pc_.SetupRowCountTracking(rg_count_, mult_, true, msg);
+	}
+
+	bool AppendRows(size_t count)
+	{
+		bool did_write = false;
+		for (size_t i = 0; i < count; i++)
+		{
+			time_[pc_.append_count_] = time_begin_ + time_incr_ * i;
+			data_[pc_.append_count_] = data_begin_ + data_incr_ * i;
+
+			did_write = pc_.IncrementAndWrite();
+		}
+		return did_write;
+	}
+
+	void Done()
+	{
+		pc_.Finalize();
+		pc_.Close();
+	}
+
+	bool GetWrittenDataStats(size_t& rg_count, size_t& total_rows)
+	{
+		// Arrow variables.
+		arrow::Status st_;
+		arrow::MemoryPool* pool_ = arrow::default_memory_pool();
+		std::shared_ptr<arrow::io::ReadableFile> arrow_file_;
+		std::unique_ptr<parquet::arrow::FileReader> arrow_reader_;
+
+		// Open file reader.
+		st_ = arrow::io::ReadableFile::Open(pq_file_, pool_, &arrow_file_);
+		if (!st_.ok())
+		{
+			printf("arrow::io::ReadableFile::Open error (ID %s): %s\n",
+				st_.CodeAsString().c_str(), st_.message().c_str());
+			return false;
+		}
+		st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
+		if (!st_.ok())
+		{
+			printf("parquet::arrow::OpenFile error (ID %s): %s\n",
+				st_.CodeAsString().c_str(), st_.message().c_str());
+			arrow_file_->Close();
+			return false;
+		}
+
+		//arrow_reader_->set_use_threads(true);
+		//arrow_reader_->set_num_threads(2);
+
+		// Total count of row groups.
+		rg_count = size_t(arrow_reader_->num_row_groups());
+
+		// Total row count.
+		int64_t row_count = 0;
+		std::vector<int> col_inds({ 0, 1 });
+		st_ = arrow_reader_->ScanContents(col_inds, 1000, &row_count);
+		if (!st_.ok())
+		{
+			printf("parquet::arrow::FileReader::ScanContents error (ID %s): %s\n",
+				st_.CodeAsString().c_str(), st_.message().c_str());
+			arrow_file_->Close();
+			return false;
+		}
+		total_rows = size_t(row_count);
+		
+		arrow_file_->Close();
+		return true;
+	}
+
+};
+
+TEST_F(ParquetContextRowCountTrackingTest, IntegerMultRowGroups)
+{
+	// The use of test fixture ParquetContextRowCountTrackingTest
+	// tests, to some degree, SetupRowCountTracking, and more specifically,
+	// IncrementAndWrite and Finalize.
+
+	// Initialize with a row group count of ten and a buffer 
+	// multiplier of 1.
+	// This function also calls SetupRowCountTracking and returns the
+	// boolean result.
+	ASSERT_TRUE(Initialize(10, 1));
+	
+	// 10 row groups
+	ASSERT_TRUE(AppendRows(100)); 
+
+	// Write remaining and close.
+	Done();
+
+	size_t confirmed_rg_count = 0;
+	size_t confirmed_tot_count = 0;
+	
+	// Must return true to correctly acquire stats.
+	ASSERT_TRUE(GetWrittenDataStats(confirmed_rg_count, confirmed_tot_count));
+
+	EXPECT_EQ(confirmed_rg_count, 10);
+	ASSERT_EQ(confirmed_tot_count, 100);
+}
+
+TEST_F(ParquetContextRowCountTrackingTest, NonIntegerMultRowGroups)
+{
+	// The use of test fixture ParquetContextRowCountTrackingTest
+	// tests, to some degree, SetupRowCountTracking, and more specifically,
+	// IncrementAndWrite and Finalize.
+
+	// This test relies on Finalize to be operating correctly because
+	// there is a non-integer count of row groups.
+
+	// Initialize with a row group count of ten and a buffer 
+	// multiplier of 1.
+	// This function also calls SetupRowCountTracking and returns the
+	// boolean result.
+	ASSERT_TRUE(Initialize(15, 3));
+
+	// 110 rows: 2 writes of 3 row groups * 15 rows per row group = 90 rows
+	// Remaining is 1 row group + 5 rows (2 more row groups). 
+	// The remaining row group and 5 rows will not be written in the loop, 
+	// and therefore AppendRows will return false. 
+	//
+	// Note: if necessary this test could be improved by calling AppendRows
+	// multiple times and checking the return value for each call. Something
+	// like 
+	// AppendRows(15) --> false
+	// AppendRows(15) --> false
+	// AppendRows(15) --> true
+	// AppendRows(40) --> false
+	// AppendRows(5) --> true
+	ASSERT_FALSE(AppendRows(110));
+
+	// Write remaining and close.
+	Done();
+
+	size_t confirmed_rg_count = 0;
+	size_t confirmed_tot_count = 0;
+
+	// Must return true to correctly acquire stats.
+	ASSERT_TRUE(GetWrittenDataStats(confirmed_rg_count, confirmed_tot_count));
+
+	EXPECT_EQ(confirmed_rg_count, 8);
+	ASSERT_EQ(confirmed_tot_count, 110);
 }

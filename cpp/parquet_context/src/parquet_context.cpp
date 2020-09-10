@@ -40,6 +40,11 @@ ParquetContext::~ParquetContext()
 
 void ParquetContext::Close()
 {
+	if (ready_for_automatic_tracking_)
+	{
+		Finalize();
+	}
+
 	if (have_created_writer_)
 	{
 		writer_->Close();
@@ -834,21 +839,24 @@ bool ParquetContext::IncrementAndWrite()
 	return false;
 }
 
-void ParquetContext::SetupRowCountTracking(size_t row_group_count,
+bool ParquetContext::SetupRowCountTracking(size_t row_group_count,
 	size_t row_group_count_multiplier,
 	bool print_activity, std::string print_msg)
 {
+	if (row_group_count < 1 || row_group_count_multiplier < 1)
+	{
+		ready_for_automatic_tracking_ = false;
+		return ready_for_automatic_tracking_;
+	}
 	ROW_GROUP_COUNT_ = row_group_count;
 	row_group_count_multiplier_ = row_group_count_multiplier_;
 	max_temp_element_count_ = row_group_count_multiplier_ * ROW_GROUP_COUNT_;
 	print_activity_ = print_activity;
 	print_msg_ = print_msg;
 
+	// Reset appended row count if parameters are valid.
+	appended_row_count_ = 0;
 	ready_for_automatic_tracking_ = true;
-}
-
-bool ParquetContext::ReadyForRowCountTracking()
-{
 	return ready_for_automatic_tracking_;
 }
 

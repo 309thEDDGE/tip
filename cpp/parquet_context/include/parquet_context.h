@@ -306,10 +306,9 @@ public:
 	bool WriteColumns();
 
 	// Helper functions for tracking and writing rows.
-	void SetupRowCountTracking(size_t row_group_count, 
+	bool SetupRowCountTracking(size_t row_group_count, 
 		size_t row_group_count_multiplier, bool print_activity,
 		std::string print_msg = "");
-	bool ReadyForRowCountTracking();
 	bool IncrementAndWrite();
 	void Finalize();
 	//void ResetListBuffers();

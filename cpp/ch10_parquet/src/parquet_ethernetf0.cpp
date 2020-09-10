@@ -85,8 +85,7 @@ bool ParquetEthernetF0::Initialize(const std::string& outfile, uint16_t thread_i
 	char buff[100];
 	sprintf(buff, "(%03hu) EthernetF0", thread_id_);
 	std::string msg(buff);
-	SetupRowCountTracking(DEFAULT_ROW_GROUP_COUNT, DEFAULT_BUFFER_SIZE_MULTIPLIER, true, msg);
-	if (!ReadyForRowCountTracking())
+	if (!SetupRowCountTracking(DEFAULT_ROW_GROUP_COUNT, DEFAULT_BUFFER_SIZE_MULTIPLIER, true, msg))
 	{
 		printf("(%03hu) ParquetEthernetF0::Initialize(): Row count tracking not configured correctly!\n",
 			thread_id_);
