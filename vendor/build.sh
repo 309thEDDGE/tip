@@ -230,7 +230,7 @@ GOOGLE_TEST_LIB=$VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/gtest
 mkdir -p $GOOGLE_TEST_LIB ; cd $GOOGLE_TEST_LIB
 echo Building Google Test
 cd $VENDOR/$GOOGLE_TEST_VERSION
-rm -rf build mkdir -p build ; cd build
+mkdir -p build ; cd build
 $CMAKE ..
 $MAKE
 
