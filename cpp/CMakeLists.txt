@@ -199,6 +199,7 @@ message(STATUS "Building pq-to-pq comparator lib: " "${comp_lib_name}")
 add_library(${comp_lib_name} ${comp_src_dir}/comparator.cpp 
             ${comp_src_dir}/parquet_manager.cpp)
 target_include_directories(${comp_lib_name} PUBLIC ${comp_inc_dir} ${parquet_inc_dirs})
+target_link_libraries(${comp_lib_name} PUBLIC ${linux_libs})
 target_compile_features(${comp_lib_name} PUBLIC cxx_std_17)
 
 #########################################################
@@ -339,7 +340,8 @@ if(video_data)
                    ${video_inc_dir}/parquet_video_extraction.h ${video_src_dir}/parquet_video_extraction.cpp)
     target_include_directories(${video_exe_name} PUBLIC ${video_inc_dir}
                                ${parquet_inc_dirs})
-    target_link_libraries(${video_exe_name} ${parquet_libs})
+    target_compile_features(${video_exe_name} PUBLIC cxx_std_17)
+    target_link_libraries(${video_exe_name} ${parquet_libs} ${linux_libs})
 endif()
 
 #########################################################
@@ -349,6 +351,7 @@ set(comp_exe_name "pqcompare")
 message(STATUS "Building pq-to-pq comparator exe: " "${comp_exe_name}")
 add_executable(${comp_exe_name} ${comp_main_dir}/parquet_arrow_validator_main.cpp)
 target_include_directories(${comp_exe_name} PUBLIC ${comp_inc_dir} ${parquet_inc_dirs})
+target_compile_features(${comp_exe_name} PUBLIC cxx_std_17)
 target_link_libraries(${comp_exe_name} ${comp_lib_name} ${parquet_libs})
 
 #########################################################

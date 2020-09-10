@@ -84,7 +84,7 @@ private:
 		int& byteSize);
 
 	template<typename castToType> 
-	void CastTo(const void const* data,
+	void CastTo(const void * const data,
 		const CastFromType castFrom,
 		const int& size,
 		const int& offset);
@@ -417,7 +417,7 @@ void ParquetContext::Append(const bool& isList,
 }
 
 template<typename castToType>
-void ParquetContext::CastTo(const void const* data,
+void ParquetContext::CastTo(const void * const data,
 	const CastFromType castFrom,
 	const int& size,
 	const int& offset)

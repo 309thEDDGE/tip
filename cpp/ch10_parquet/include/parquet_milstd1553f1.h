@@ -4,6 +4,7 @@
 #include "parquet_context.h"
 #include "MilStd1553F1Format.h"
 #include <set>
+#include <cmath>
 
 const int DEFAULT_ROW_GROUP_COUNT = 10000;
 const int DEFAULT_BUFFER_SIZE_MULTIPLIER = 10;

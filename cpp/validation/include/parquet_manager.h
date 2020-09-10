@@ -1,3 +1,4 @@
+
 #ifndef PARQUET_MANAGER
 #define PARQUET_MANAGER
 
@@ -120,14 +121,20 @@ bool ParquetManager::GetNextRG(int col,
 
 	if(list)
 	{
+#ifdef NEWARROW
+		arrow::ListArray data_list_arr =
+			arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
+#else
 		arrow::ListArray data_list_arr =
 			arrow::ListArray(arrow_table->column(0)->data()->chunk(0)->data());
+#endif
 
 
 		A data_array =
 			A(data_list_arr.values()->data());
 
 		size = data_array.length();
+
 
 		if (data.size() < size)
 			data.resize(size);
@@ -138,8 +145,13 @@ bool ParquetManager::GetNextRG(int col,
 	}
 	else
 	{
+#ifdef NEWARROW
+		A data_array =
+			A(arrow_table->column(0)->chunk(0)->data());
+#else
 		A data_array =
 			A(arrow_table->column(0)->data()->chunk(0)->data());
+#endif
 
 		size = data_array.length();
 

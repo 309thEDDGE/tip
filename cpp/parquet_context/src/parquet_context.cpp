@@ -97,8 +97,16 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 	if (!have_created_writer_)
 	{
 #ifdef NEWARROW
-		PARQUET_ASSIGN_OR_THROW(ostream_,
-			arrow::io::FileOutputStream::Open(path));
+		try
+		{
+			PARQUET_ASSIGN_OR_THROW(ostream_,
+				arrow::io::FileOutputStream::Open(path));
+		}
+		catch (...)
+		{
+			printf("FileOutputStream::Open error\n");
+			return false;
+		}
 #else
 		st_ = arrow::io::FileOutputStream::Open(path,
 			!truncate_,
