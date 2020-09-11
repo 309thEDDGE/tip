@@ -2419,7 +2419,6 @@ protected:
 
 	void TearDown() override
 	{
-		printf("is teardown called?\n");
 		remove(pq_file_.c_str());
 	}
 
@@ -2460,7 +2459,7 @@ protected:
 			time_[pc_.append_count_] = time_begin_ + time_incr_ * i;
 			data_[pc_.append_count_] = data_begin_ + data_incr_ * i;
 			for (size_t ii = 0; ii < listdata_count_per_row_; ii++)
-				listdata_[i * listdata_count_per_row_ + ii] = (listdata_count_per_row_ * i
+				listdata_[pc_.append_count_ * listdata_count_per_row_ + ii] = (listdata_count_per_row_ * i
 					+ ii) * listdata_incr_;
 
 			did_write = pc_.IncrementAndWrite();
@@ -2606,4 +2605,6 @@ TEST_F(ParquetContextRowCountTrackingTest, IntegerMultRowGroupsRequestedExceeds)
 	// Request row count tracking that exceeds the buffer. Ought to return false.
 	ASSERT_FALSE(pc_.SetupRowCountTracking(100, 3, print_activity_, print_msg_));
 	ASSERT_FALSE(pc_.SetupRowCountTracking(250, 1, print_activity_, print_msg_));
+
+	Done();
 }
