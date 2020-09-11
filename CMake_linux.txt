@@ -73,7 +73,7 @@ if(container)
     #set(brotlienc_lib_name "libbrotlienc.so")
 else()
     set(arrow_path "${deps_dir}/arrow_library_dependencies")
-    set(arrow_inc_dir "${arrow_path}/src")
+    set(arrow_inc_dir "${arrow_path}/include")
     set(arrow_lib_dir "${arrow_path}/lib")
     
     set(arrow_lib_name "${arrow_lib_dir}/libarrow.a")

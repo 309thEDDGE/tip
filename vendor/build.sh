@@ -311,7 +311,7 @@ echo "...arrow include files"
 # Arrow include files are in cpp/src and cpp/build/src
 # (some are built by cmake)
 ARROW_INCLUDE="$VENDOR/$ARROW_VERSION/cpp/src $ARROW_BUILD_DIR/src"
-ARROW_INC_DEST=$TIP_DEPS_DIR/arrow_library_dependencies/src
+ARROW_INC_DEST=$TIP_DEPS_DIR/arrow_library_dependencies/include
 for source in $ARROW_INCLUDE; do
 	cd $source
 	find arrow -type f -name \*.h -exec install -D {} $ARROW_INC_DEST/{} \;
