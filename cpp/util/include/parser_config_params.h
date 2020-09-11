@@ -32,7 +32,7 @@ public:
 		std::set<bool> success;
 
 		// Add one parameter at a time with boundary conditions if required
-		success.insert(yr.GetParams("parse_chunk_bytes", parse_chunk_bytes_, 100, 1000, true));
+		success.insert(yr.GetParams("parse_chunk_bytes", parse_chunk_bytes_, 10, 1000, true));
 		success.insert(yr.GetParams("parse_thread_count", parse_thread_count_, 1, (int)(std::thread::hardware_concurrency() * 1.5), true));
 		success.insert(yr.GetParams("max_chunk_read_count", max_chunk_read_count_, 1, INT_MAX, true));
 		success.insert(yr.GetParams("worker_offset_wait_ms", worker_offset_wait_ms_, 1, INT_MAX, true));

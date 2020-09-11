@@ -39,7 +39,7 @@ private:
 	arrow::MemoryPool* pool_;
 	bool parquet_stop_;
 	std::unique_ptr<parquet::arrow::FileWriter> writer_;
-	int ROW_GROUP_COUNT_;
+	size_t ROW_GROUP_COUNT_;
 	int append_row_count_;
 	bool have_created_table_;
 	std::map<std::string, ColumnData> column_data_map_;
@@ -89,8 +89,24 @@ private:
 		const int& size,
 		const int& offset);
 	
+	// Track the count of appended rows.
+	size_t appended_row_count_;
+
+	// Determine if row groups are ready to be written
+	// by comparing appended row count to buffer size.
+	size_t max_temp_element_count_;
+	size_t row_group_count_multiplier_;
+	bool ready_for_automatic_tracking_;
+	bool print_activity_;
+	std::string print_msg_;
+
 
 public:
+
+	// User-available variable to access the current
+	// count of rows appended to buffers.
+	const size_t& append_count_ = appended_row_count_;
+
 	/*
 		Initializes parquet context with a default row
 		group size of 10000
@@ -288,6 +304,94 @@ public:
 						   False will be returned.
 	*/
 	bool WriteColumns();
+
+	/*
+		Set the parameters used for automatic accounting of rows and 
+		writing row groups when necessary. Also handles the 
+		writing of remaining rows if the appended row count has not reached
+		the critical count required to trigger a write.
+
+		Used in conjunction with IncrementAndWrite and Finalize. The workflow is
+		1) setup the vectors/buffers for the parquet table
+		2) allocate the necessary memory in each
+		3) call AddField for each buffer/column
+		4) call SetMemoryLocation for each buffer/column
+		5) call this function SetupRowCountTracking, if valid (= true) then
+		6) call OpenForWrite() to open the output file
+		7) Use the append_count_ index to fill each row
+		8) call IncrementAndWrite after each row is filled at index append_count_
+		9) continue until the table is complete
+		10) call Finalize before exiting
+
+		Inputs: row_group_count            -> The count of rows in a Parquet row group.
+											  If the row count has been set via the constructor,
+											  this input will override that value. 
+
+				row_group_count_multiplier -> The count of row groups buffered prior to writing.
+											  If the row_group_count is 100 and this value is 10
+											  then 1000 elements shall have been allocated in the 
+											  buffer (a std::vector). Use value 1 if a row group
+											  shall be written each time it's buffer if filled.
+
+				print_activity             -> Boolean to turn on (true) and off (false) print statements
+											  when writing to parquet file is carried out. 
+
+				print_msg                  -> Message to included in the print statement when data
+											  are written to Parquet file. Default is an empty string.
+
+		Returns:			True if row_group_count and row_group_count_multiplier are valid and
+							false otherwise.
+	
+	*/
+	bool SetupRowCountTracking(size_t row_group_count, 
+		size_t row_group_count_multiplier, bool print_activity,
+		std::string print_msg = "");
+
+	/*
+	
+		Function to be called after the buffers are filled for the current row.
+		Use the protected member variable append_count_ as the index in the buffer. It is
+		incremented by this function and data are recorded if the parameters configured 
+		via SetupRowCountTracking are met. 
+
+		Ex: Simple Parquet file with time and data columns, with data buffered in time
+		and data vectors. After the vector size is allocated and AddField and SetMemoryLocation
+		are called for each, rows are appended via the following algorithm:
+		
+		AddData()
+		{
+			time[append_count_] = new time data
+			data[append_count_] = new data value
+			IncrementAndWrite();
+		}
+
+		If one of the columns is a list and you wish to zero all values, do
+			if(IncrementAndWrite())
+			{
+				fill(list_vec.begin(), list_vec.end(), 0);
+			}
+
+		Returns:
+			
+						True if the data row group(s) were written and false otherwise. Note
+						that for the example of 100 count row groups and a multiplier of 10,
+						this function will only return true every 1000th call.
+
+	*/
+	bool IncrementAndWrite();
+
+	/*
+	
+		Write the data remaining in the buffers to disk. Generally used prior to closing
+		the file. This function is called automatically by the destructor if automatic 
+		accounting of row group appending has been initiated via the SetupRowCountTracking
+		function. Nevertheless, it is a best practice to call Finalize() intentionally prior
+		to exiting the program. In that case, when it's called by the destructor, it will not
+		perform any action because data have already been written the counter will have been
+		zeroed.
+
+	*/
+	void Finalize();
 };
 
 template<typename T, typename A>
@@ -400,49 +504,49 @@ void ParquetContext::CastTo(const void * const data,
 {
 	switch (castFrom)
 	{
-	case INT8:
+	case CastFromType::TypeINT8:
 		std::copy((int8_t*)data + offset,
 			(int8_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 
-	case UINT8:
+	case CastFromType::TypeUINT8:
 		std::copy((uint8_t*)data + offset,
 			(uint8_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 
-	case INT16:
+	case CastFromType::TypeINT16:
 		std::copy((int16_t*)data + offset,
 			(int16_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 
-	case UINT16:
+	case CastFromType::TypeUINT16:
 		std::copy((uint16_t*)data + offset,
 			(uint16_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 
-	case INT32:
+	case CastFromType::TypeINT32:
 		std::copy((int32_t*)data + offset,
 			(int32_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 	
-	case UINT32:
+	case CastFromType::TypeUINT32:
 		std::copy((uint32_t*)data + offset,
 			(uint32_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 
-	case INT64:
+	case CastFromType::TypeINT64:
 		std::copy((int64_t*)data + offset,
 			(int64_t*)data + offset + size,
 			(castToType*)cast_vec_.data());
 		break;
 
-	case UINT64:
+	case CastFromType::TypeUINT64:
 		std::copy((uint64_t*)data + offset,
 			(uint64_t*)data + offset + size,
 			(castToType*)cast_vec_.data());

@@ -71,6 +71,29 @@ target_compile_features(${pqctx_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${pqctx_lib_name} PUBLIC ${parquet_libs} ${linux_libs})
 
 #########################################################
+#      Build/link ethernet lib
+#########################################################
+if(libirig106 AND ethernet_data)
+
+    # Copy pcap dlls to bin dir.
+    configure_file(${pcap_dll1} ${out_bin_dir} COPYONLY)
+    configure_file(${pcap_dll2} ${out_bin_dir} COPYONLY)
+
+    # Build ch10ethernet add_library(${1:target_name} ${2:source_file}).
+    set(eth_lib_name "ch10ethernet")
+    set(eth_path "ethernet")
+    set(eth_inc_dir ${eth_path}/${include_dir_name})
+    set(eth_src_dir ${eth_path}/${source_dir_name})
+    message(STATUS "Building ethernet lib (using libtins): " "${eth_lib_name}")
+    add_library(${eth_lib_name} ${eth_src_dir}/network_packet_parser.cpp ${eth_inc_dir}/network_packet_parser.h
+                                ${eth_src_dir}/ethernet_data.cpp ${eth_inc_dir}/ethernet_data.h)
+    target_include_directories(${eth_lib_name} PUBLIC ${eth_inc_dir}
+                               ${all_tins_incs})
+    target_link_libraries(${eth_lib_name} PUBLIC ${all_tins_libs})
+    target_compile_features(${eth_lib_name} PUBLIC cxx_std_17)
+endif()
+
+#########################################################
 #            Build/link ch10_parquet lib
 #########################################################
 set(ch10pq_lib_name "ch10_parquet")
@@ -80,6 +103,7 @@ set(ch10pq_inc_dir ${ch10pq_lib_name}/${include_dir_name})
 add_library(${ch10pq_lib_name}
             ${ch10pq_src_dir}/parquet_milstd1553f1.cpp ${ch10pq_inc_dir}/parquet_milstd1553f1.h
             ${ch10pq_src_dir}/parquet_videodataf0.cpp  ${ch10pq_inc_dir}/parquet_videodataf0.h
+            ${ch10pq_src_dir}/parquet_ethernetf0.cpp ${ch10pq_inc_dir}/parquet_ethernetf0.h
     )
 
 #target_include_directories(${ch10pq_lib_name} PUBLIC 
@@ -93,9 +117,10 @@ add_library(${ch10pq_lib_name}
 target_include_directories(${ch10pq_lib_name} PUBLIC 
                             ${ch10pq_inc_dir}
                             ${pqctx_inc_dir} 
+                            ${eth_inc_dir}
                             ${ch10_inc_dir}) # Ch10 format headers.
 target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)    
-target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${linux_libs})
+target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${eth_lib_name} ${linux_libs})
 
 #########################################################
 #                 Build/link metadata lib
@@ -187,6 +212,7 @@ install(TARGETS ${util_lib_name}
                 ${trans_lib_name}
                 ${metadata_lib_name} 
                 ${comp_lib_name}
+                ${eth_lib_name}
         DESTINATION ${out_lib_dir}
 )
 
@@ -200,9 +226,20 @@ endif()
 
 set(temp_irig_lib_name "")
 set(temp_irig_inc_dir "")
+set(parse_ethernet_src "")
+set(temp_eth_lib_name "")
+set(temp_eth_inc_dir "")
+set(temp_tins_libs "")
 if(libirig106)
     set(temp_irig_lib_name ${irig_lib_name})
     set(temp_irig_inc_dir ${irig_inc_dir})
+    if(ethernet_data)
+        set(parse_ethernet_src ${ch10_inc_dir}/i106_parse_context.h ${ch10_src_dir}/i106_parse_context.cpp
+                         ${ch10_inc_dir}/i106_ch10_ethernetf0.h ${ch10_src_dir}/i106_ch10_ethernetf0.cpp)
+        set(temp_eth_lib_name ${eth_lib_name})
+        set(temp_eth_inc_dir ${eth_inc_dir})
+        set(temp_tins_libs ${all_tins_libs})
+    endif()
 endif()
 
 message(STATUS "Building exe: " "${ch10parse_exe_name}")
@@ -217,11 +254,12 @@ add_executable(${ch10parse_exe_name} ${ch10_main_dir}/ch10parse.cpp
     ${ch10_src_dir}/ch10_packet_header.cpp ${ch10_src_dir}/ch10_tdf1.cpp 
     ${ch10_src_dir}/ch10_videodataf0.cpp ${ch10_src_dir}/parse_manager.cpp ${ch10_src_dir}/parse_util.cpp
     ${ch10_src_dir}/parse_worker.cpp
+    ${parse_ethernet_src}
     )
 target_include_directories(${ch10parse_exe_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
                             ${metadata_inc_dir} ${tmats_inc_dir}
-                            ${temp_irig_inc_dir}
+                            ${temp_irig_inc_dir} ${temp_eth_inc_dir}
                             )
 target_compile_features(${ch10parse_exe_name} PUBLIC cxx_std_17)
 
@@ -234,6 +272,8 @@ target_link_libraries(${ch10parse_exe_name}
                         #${parquet_libs}
                         ${linux_libs}
                         ${temp_irig_lib_name}
+                        ${temp_tins_libs}
+                        ${temp_eth_lib_name}
     )
 
 #########################################################

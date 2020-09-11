@@ -5,7 +5,9 @@ have_created_table_(false), path_(""), have_created_writer_(false),
 pool_(nullptr), schema_(nullptr),
 append_row_count_(0), host_(""), user_(""), port_(-1),
 have_created_schema_(false), writer_(nullptr), parquet_stop_(false),
-truncate_(true)
+truncate_(true), appended_row_count_(0), max_temp_element_count_(0),
+row_group_count_multiplier_(1), ready_for_automatic_tracking_(false),
+print_activity_(false), print_msg_("")
 {}
 
 ParquetContext::ParquetContext(int rgSize) : ROW_GROUP_COUNT_(rgSize),
@@ -13,20 +15,36 @@ have_created_table_(false), path_(""), have_created_writer_(false),
 pool_(nullptr), schema_(nullptr),
 append_row_count_(0), host_(""), user_(""), port_(-1),
 have_created_schema_(false), writer_(nullptr), parquet_stop_(false),
-truncate_(true)
+truncate_(true), appended_row_count_(0), max_temp_element_count_(0),
+row_group_count_multiplier_(1), ready_for_automatic_tracking_(false),
+print_activity_(false), print_msg_("")
 {}
 
 ParquetContext::~ParquetContext()
 {
+	// If automatic row count tracking and writing
+	// has been turned on, write the data remaining in the 
+	// buffers.
+	if (ready_for_automatic_tracking_)
+	{
+		Finalize();
+	}
+
 	if (have_created_writer_)
 	{
 		writer_->Close();
 		ostream_->Close();
 	}
+
 }
 
 void ParquetContext::Close()
 {
+	if (ready_for_automatic_tracking_)
+	{
+		Finalize();
+	}
+
 	if (have_created_writer_)
 	{
 		writer_->Close();
@@ -350,7 +368,7 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 	
 	bool castRequired;
 
-	if (columnData.cast_from_ == NONE)
+	if (columnData.cast_from_ == CastFromType::TypeNONE)
 		castRequired = false;
 	else
 		castRequired = true;
@@ -799,3 +817,99 @@ void ParquetContext::FillStringVec(std::vector<std::string>* str_data_vec_ptr,
 		temp_string_vec_.data());
 }
 
+bool ParquetContext::IncrementAndWrite()
+{
+	// Increment appended row counter. 
+	appended_row_count_++;
+
+	// If the buffer is full, write the data to disk.
+	if (appended_row_count_ == max_temp_element_count_)
+	{
+		if (print_activity_)
+		{
+			printf("ParquetContext::IncrementAndWrite(): %s, Writing %zu rows\n",
+				print_msg_.c_str(), appended_row_count_);
+		}
+
+		// Write each of the row groups.
+		for (int i = 0; i < row_group_count_multiplier_; i++)
+		{
+			//printf("writecolumns(%zu, %zu)\n", ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+			WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+		}
+
+		// Reset
+		appended_row_count_ = 0;
+
+		// Return true to indicate that buffers were written.
+		return true;
+	}
+	return false;
+}
+
+bool ParquetContext::SetupRowCountTracking(size_t row_group_count,
+	size_t row_group_count_multiplier,
+	bool print_activity, std::string print_msg)
+{
+
+	// Do not allow unreasonable values.
+	if (row_group_count < 1 || row_group_count_multiplier < 1)
+	{
+		ready_for_automatic_tracking_ = false;
+		parquet_stop_ = true;
+		return ready_for_automatic_tracking_;
+	}
+
+	ROW_GROUP_COUNT_ = row_group_count;
+	row_group_count_multiplier_ = row_group_count_multiplier;
+	max_temp_element_count_ = row_group_count_multiplier_ * ROW_GROUP_COUNT_;
+	print_activity_ = print_activity;
+	print_msg_ = print_msg;
+
+	// Ensure that max_temp_element_count does not exceed the allocated
+	// size of the buffers, i.e., the allocated size of the vector that
+	// represents each column. Loop over the map of ColumnData objects
+	// and check that this is true for each.
+	for (std::map<std::string, ColumnData>::iterator it = column_data_map_.begin();
+		it != column_data_map_.end(); ++it)
+	{
+		if (max_temp_element_count_ > it->second.initial_max_row_size_)
+		{
+			parquet_stop_ = true;
+			ready_for_automatic_tracking_ = false;
+			return ready_for_automatic_tracking_;
+		}
+	}
+
+	// Reset appended row count if parameters are valid.
+	appended_row_count_ = 0;
+	ready_for_automatic_tracking_ = true;
+	return ready_for_automatic_tracking_;
+}
+
+void ParquetContext::Finalize()
+{
+	if(appended_row_count_ > 0)
+	{
+		if (print_activity_)
+		{
+			printf("ParquetContext::Finalize(): %s, Writing %zu rows\n",
+				print_msg_.c_str(), appended_row_count_);
+		}
+
+		int n_calls = int(std::ceil(double(appended_row_count_) / double(ROW_GROUP_COUNT_)));
+		for (int i = 0; i < n_calls; i++)
+		{
+			if (i == n_calls - 1)
+			{
+				WriteColumns(appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+			}
+			else
+			{
+				WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+			}
+		}
+
+		appended_row_count_ = 0;
+	}
+}

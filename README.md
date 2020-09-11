@@ -30,6 +30,8 @@ Use `markdown_to_html.py` in the tip_scripts directory to convert md file to htm
 	- yaml-cpp-yaml-cpp-0.6.0 (itself containing a subdirectory of the same name)
 	- googletest-release-1.8.1libs
 	- libirig106
+	- libtins
+	- npcap
 	
 #### CMake
 

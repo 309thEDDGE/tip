@@ -8,15 +8,15 @@
 
 enum CastFromType
 {
-	UINT64,
-	INT64,
-	UINT32,
-	INT32,
-	UINT16,
-	INT16,
-	UINT8,
-	INT8,
-	NONE,
+	TypeUINT64,
+	TypeINT64,
+	TypeUINT32,
+	TypeINT32,
+	TypeUINT16,
+	TypeINT16,
+	TypeUINT8,
+	TypeINT8,
+	TypeNONE,
 };
 
 class ColumnData
@@ -26,39 +26,39 @@ private:
 	{
 		if (name == typeid(int8_t).name())
 		{
-			cast_from_ = INT8;
+			cast_from_ = CastFromType::TypeINT8;
 		}
 		else if (name == typeid(uint8_t).name())
 		{
-			cast_from_ = UINT8;
+			cast_from_ = CastFromType::TypeUINT8;
 		}
 		else if (name == typeid(int16_t).name())
 		{
-			cast_from_ = INT16;
+			cast_from_ = CastFromType::TypeINT16;
 		}
 		else if (name == typeid(uint16_t).name())
 		{
-			cast_from_ = UINT16;
+			cast_from_ = CastFromType::TypeUINT16;
 		}
 		else if (name == typeid(int32_t).name())
 		{
-			cast_from_ = INT32;
+			cast_from_ = CastFromType::TypeINT32;
 		}
 		else if (name == typeid(uint32_t).name())
 		{
-			cast_from_ = UINT32;
+			cast_from_ = CastFromType::TypeUINT32;
 		}
 		else if (name == typeid(int64_t).name())
 		{
-			cast_from_ = INT64;
+			cast_from_ = CastFromType::TypeINT64;
 		}
 		else if (name == typeid(uint64_t).name())
 		{
-			cast_from_ = UINT64;
+			cast_from_ = CastFromType::TypeUINT64;
 		}
 		else
 		{
-			cast_from_ = NONE;
+			cast_from_ = CastFromType::TypeNONE;
 		}
 	}
 
@@ -79,12 +79,13 @@ public:
 	int byte_size_;
 	CastFromType cast_from_;
 
-	ColumnData() : type_(nullptr), pointer_set_(false), ready_for_write_(false), cast_from_(NONE),
+
+	ColumnData() : type_(nullptr), pointer_set_(false), ready_for_write_(false), cast_from_(CastFromType::TypeNONE),
 		builder_(), list_builder_(), initial_max_row_size_(0) {}
 
 	ColumnData(std::shared_ptr<arrow::DataType> type, std::string fieldName, std::string typeID ,
 		int byteSize, int listSize = NULL) : field_name_(fieldName), type_ID_(typeID), byte_size_(byteSize),
-		type_(type), pointer_set_(false), ready_for_write_(false), cast_from_(NONE), builder_(), 
+		type_(type), pointer_set_(false), ready_for_write_(false), cast_from_(CastFromType::TypeNONE), builder_(),
 		list_builder_(), initial_max_row_size_(0)
 	{
 		if (listSize == NULL)
@@ -126,7 +127,7 @@ public:
 	{
 		data_ = nullptr;
 		str_ptr_ = &data;
-		cast_from_ = NONE;
+		cast_from_ = CastFromType::TypeNONE;
 		field_name_ = name;
 		if (boolField == nullptr) {
 			null_values_ = nullptr;

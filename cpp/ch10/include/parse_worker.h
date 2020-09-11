@@ -19,6 +19,12 @@
 #endif
 
 #ifdef LIBIRIG106
+#include "i106_parse_context.h"
+
+#ifdef ETHERNET_DATA
+#include "i106_ch10_ethernetf0.h"
+#endif
+
 extern "C" {
 #include "i106_decode_tmats.h"
 #include "i106_decode_time.h"
@@ -42,6 +48,12 @@ class ParseWorker
 		std::vector<uint8_t> temp_buffer_vec_;
 		I106Time i106_time_;
 		MS1553F1_Message i106_1553msg_;
+
+		// Native TIP adaptation to LibIRIG106
+		Ch10MetaData ch10md_;
+#ifdef ETHERNET_DATA
+		I106Ch10EthernetF0 i106_ethernetf0_;
+#endif
 
 #endif
 	uint8_t retcode;
