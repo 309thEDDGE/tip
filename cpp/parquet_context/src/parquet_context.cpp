@@ -851,16 +851,35 @@ bool ParquetContext::SetupRowCountTracking(size_t row_group_count,
 	size_t row_group_count_multiplier,
 	bool print_activity, std::string print_msg)
 {
+
+	// Do not allow unreasonable values.
 	if (row_group_count < 1 || row_group_count_multiplier < 1)
 	{
 		ready_for_automatic_tracking_ = false;
+		parquet_stop_ = true;
 		return ready_for_automatic_tracking_;
 	}
+
 	ROW_GROUP_COUNT_ = row_group_count;
-	row_group_count_multiplier_ = row_group_count_multiplier_;
+	row_group_count_multiplier_ = row_group_count_multiplier;
 	max_temp_element_count_ = row_group_count_multiplier_ * ROW_GROUP_COUNT_;
 	print_activity_ = print_activity;
 	print_msg_ = print_msg;
+
+	// Ensure that max_temp_element_count does not exceed the allocated
+	// size of the buffers, i.e., the allocated size of the vector that
+	// represents each column. Loop over the map of ColumnData objects
+	// and check that this is true for each.
+	for (std::map<std::string, ColumnData>::iterator it = column_data_map_.begin();
+		it != column_data_map_.end(); ++it)
+	{
+		if (max_temp_element_count_ > it->second.initial_max_row_size_)
+		{
+			parquet_stop_ = true;
+			ready_for_automatic_tracking_ = false;
+			return ready_for_automatic_tracking_;
+		}
+	}
 
 	// Reset appended row count if parameters are valid.
 	appended_row_count_ = 0;

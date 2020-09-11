@@ -79,6 +79,7 @@ public:
 	int byte_size_;
 	CastFromType cast_from_;
 
+
 	ColumnData() : type_(nullptr), pointer_set_(false), ready_for_write_(false), cast_from_(CastFromType::TypeNONE),
 		builder_(), list_builder_(), initial_max_row_size_(0) {}
 

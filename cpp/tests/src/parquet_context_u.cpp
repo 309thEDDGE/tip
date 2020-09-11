@@ -2393,6 +2393,8 @@ protected:
 	size_t rg_count_;
 	size_t mult_;
 	size_t max_count_;
+	std::string print_msg_;
+	bool print_activity_;
 
 	std::vector<uint64_t> time_;
 	uint64_t time_begin_;
@@ -2402,9 +2404,15 @@ protected:
 	float data_begin_;
 	float data_incr_;
 
+	std::vector<uint16_t> listdata_;
+	uint16_t listdata_begin_;
+	uint16_t listdata_incr_;
+	size_t listdata_count_per_row_;
+
 	ParquetContextRowCountTrackingTest() : pq_file_("temp.parquet"), pc_(), rg_count_(10),
-		mult_(2), max_count_(rg_count_ * mult_), time_begin_(0), data_begin_(0.3332),
-		time_incr_(1), data_incr_(2.81)
+		mult_(2), max_count_(rg_count_* mult_), time_begin_(0), data_begin_(0.3332),
+		time_incr_(1), data_incr_(2.81), print_msg_("test"), print_activity_(true),
+		listdata_begin_(0), listdata_incr_(2), listdata_count_per_row_(10)
 	{
 
 	};
@@ -2430,14 +2438,17 @@ protected:
 		pc_.AddField(arrow::float32(), "data");
 		pc_.SetMemoryLocation(data_, "data");
 
+		// list col
+		listdata_.resize(max_count_ * listdata_count_per_row_);
+		pc_.AddField(arrow::int32(), "listdata", listdata_count_per_row_);
+		pc_.SetMemoryLocation(listdata_, "listdata");
+
 		if (!pc_.OpenForWrite(pq_file_, true))
 		{
 			printf("Initialize(): OpenForWrite failed!\n");
 			return false;
 		}
 
-		std::string msg = "test";
-		return pc_.SetupRowCountTracking(rg_count_, mult_, true, msg);
 	}
 
 	bool AppendRows(size_t count)
@@ -2447,6 +2458,9 @@ protected:
 		{
 			time_[pc_.append_count_] = time_begin_ + time_incr_ * i;
 			data_[pc_.append_count_] = data_begin_ + data_incr_ * i;
+			for (size_t ii = 0; ii < listdata_count_per_row_; ii++)
+				listdata_[i * listdata_count_per_row_ + ii] = (listdata_count_per_row_ * i
+					+ ii) * listdata_incr_;
 
 			did_write = pc_.IncrementAndWrite();
 		}
@@ -2517,9 +2531,8 @@ TEST_F(ParquetContextRowCountTrackingTest, IntegerMultRowGroups)
 
 	// Initialize with a row group count of ten and a buffer 
 	// multiplier of 1.
-	// This function also calls SetupRowCountTracking and returns the
-	// boolean result.
-	ASSERT_TRUE(Initialize(10, 1));
+	Initialize(10, 1);
+	ASSERT_TRUE(pc_.SetupRowCountTracking(10, 1, print_activity_, print_msg_));
 	
 	// 10 row groups
 	ASSERT_TRUE(AppendRows(100)); 
@@ -2548,9 +2561,8 @@ TEST_F(ParquetContextRowCountTrackingTest, NonIntegerMultRowGroups)
 
 	// Initialize with a row group count of ten and a buffer 
 	// multiplier of 1.
-	// This function also calls SetupRowCountTracking and returns the
-	// boolean result.
-	ASSERT_TRUE(Initialize(15, 3));
+	Initialize(15, 3);
+	ASSERT_TRUE(pc_.SetupRowCountTracking(15, 3, print_activity_, print_msg_));
 
 	// 110 rows: 2 writes of 3 row groups * 15 rows per row group = 90 rows
 	// Remaining is 1 row group + 5 rows (2 more row groups). 
@@ -2578,4 +2590,19 @@ TEST_F(ParquetContextRowCountTrackingTest, NonIntegerMultRowGroups)
 
 	EXPECT_EQ(confirmed_rg_count, 8);
 	ASSERT_EQ(confirmed_tot_count, 110);
+}
+
+TEST_F(ParquetContextRowCountTrackingTest, IntegerMultRowGroupsRequestedExceeds)
+{
+	// The use of test fixture ParquetContextRowCountTrackingTest
+	// tests, to some degree, SetupRowCountTracking, and more specifically,
+	// IncrementAndWrite and Finalize.
+
+	// Initialize with a row group count of 100 and a buffer 
+	// multiplier of 2.
+	Initialize(100, 2);
+
+	// Request row count tracking that exceeds the buffer. Ought to return false.
+	ASSERT_FALSE(pc_.SetupRowCountTracking(100, 3, print_activity_, print_msg_));
+	ASSERT_FALSE(pc_.SetupRowCountTracking(250, 1, print_activity_, print_msg_));
 }
