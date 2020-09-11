@@ -186,6 +186,7 @@ TEST_F(BinBuffTest, InitializeReadPositionGTFileSize)
 	requested_read_size_ = 10;
 	EXPECT_TRUE(bb_.Initialize(infile_, seek_file_size_,
 		requested_read_pos_, requested_read_size_) == UINT64_MAX);
+	infile_.close();
 
 }
 
@@ -200,6 +201,7 @@ TEST_F(BinBuffTest, InitializeActualReadLTExpected)
 	requested_read_size_ = 100;
 	EXPECT_EQ(bb_.Initialize(infile_, seek_file_size_,
 		requested_read_pos_, requested_read_size_), 20);
+	infile_.close();
 }
 
 TEST_F(BinBuffTest, InitializeBufferDataCorrect)
@@ -237,6 +239,7 @@ TEST_F(BinBuffTest, InitializeBufferDataCorrect)
 		requested_read_pos_, requested_read_size_), 50);
 	EXPECT_THAT(std::vector<uint8_t>(bb_.Data(), bb_.Data() + 50),
 		::testing::ElementsAreArray(expected_data));
+	infile_.close();
 }
 
 TEST_F(BinBuffTest, AdvanceReadPos)
@@ -254,6 +257,7 @@ TEST_F(BinBuffTest, AdvanceReadPos)
 	EXPECT_EQ(bb_.AdvanceReadPos(50), 0);
 	EXPECT_EQ(bb_.AdvanceReadPos(40), 0);
 	EXPECT_EQ(bb_.AdvanceReadPos(20), 1);
+	infile_.close();
 }
 
 TEST_F(BinBuffTest, SetReadPos)
@@ -271,6 +275,7 @@ TEST_F(BinBuffTest, SetReadPos)
 	EXPECT_EQ(bb_.SetReadPos(20), 0);
 	EXPECT_EQ(bb_.SetReadPos(49), 0);
 	EXPECT_EQ(bb_.SetReadPos(50), 1);
+	infile_.close();
 }
 
 TEST_F(BinBuffTest, BytesAvailable)
@@ -289,6 +294,7 @@ TEST_F(BinBuffTest, BytesAvailable)
 	EXPECT_EQ(bb_.SetReadPos(40), 0);
 	EXPECT_EQ(bb_.BytesAvailable(10), true);
 	EXPECT_EQ(bb_.BytesAvailable(11), false);
+	infile_.close();
 }
 
 TEST_F(BinBuffTest, FindPatternFirstOccurrenceDiffTypes)
@@ -326,6 +332,7 @@ TEST_F(BinBuffTest, FindPatternFirstOccurrenceDiffTypes)
 
 	float fval = 80021.345;
 	EXPECT_EQ(bb_.FindPattern(fval), 406);
+	infile_.close();
 }
 
 TEST_F(BinBuffTest, FindPattern2ndOccurrence)
@@ -357,7 +364,7 @@ TEST_F(BinBuffTest, FindPattern2ndOccurrence)
 
 	uint32_t ui32val = 66069;
 	EXPECT_EQ(bb_.FindPattern(ui32val), 336);
-	
+	infile_.close();
 }
 
 TEST_F(BinBuffTest, FindPatternCutOffLastValue)
@@ -374,6 +381,7 @@ TEST_F(BinBuffTest, FindPatternCutOffLastValue)
 
 	uint32_t ui32val = 66069;
 	EXPECT_EQ(bb_.FindPattern(ui32val), UINT64_MAX);
+	infile_.close();
 }
 
 TEST_F(BinBuffTest, FindPatternWithStartPos)
@@ -401,6 +409,7 @@ TEST_F(BinBuffTest, FindPatternWithStartPos)
 	search_pos = 540;
 	uint32_t ui32val = 66069;
 	EXPECT_EQ(bb_.FindPattern(ui32val, search_pos), 640);
+	infile_.close();
 }
 
 TEST_F(BinBuffTest, FindAllPatternI16)
@@ -425,6 +434,7 @@ TEST_F(BinBuffTest, FindAllPatternI16)
 	// No calls have been made to change the read position. Confirm it 
 	// hasn't changed.
 	EXPECT_EQ(bb_.position_, requested_read_pos_);
+	infile_.close();
 }
 
 TEST_F(BinBuffTest, FindAllPatternUI32)
@@ -449,6 +459,7 @@ TEST_F(BinBuffTest, FindAllPatternUI32)
 	// No calls have been made to change the read position. Confirm it 
 	// hasn't changed.
 	EXPECT_EQ(bb_.position_, requested_read_pos_);
+	infile_.close();
 }
 
 TEST_F(BinBuffTest, FindAllPatternFloat)
@@ -473,4 +484,5 @@ TEST_F(BinBuffTest, FindAllPatternFloat)
 	// No calls have been made to change the read position. Confirm it 
 	// hasn't changed.
 	EXPECT_EQ(bb_.position_, requested_read_pos_);
+	infile_.close();
 }
