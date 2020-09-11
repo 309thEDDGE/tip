@@ -392,7 +392,6 @@ public:
 
 	*/
 	void Finalize();
-	//void ResetListBuffers();
 };
 
 template<typename T, typename A>

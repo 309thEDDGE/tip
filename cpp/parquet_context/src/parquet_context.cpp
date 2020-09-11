@@ -913,16 +913,3 @@ void ParquetContext::Finalize()
 		appended_row_count_ = 0;
 	}
 }
-
-//void ParquetContext::ResetListBuffers()
-//{
-//	// Iterate over columns, fill all list buffers with zeros.
-//	for (std::map<std::string, ColumnData>::const_iterator it = column_data_map_.begin();
-//		it != column_data_map_.end(); ++it)
-//	{
-//		if (it->second.is_list_)
-//		{
-//			std::fill()
-//		}
-//	}
-//}
