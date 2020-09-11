@@ -316,10 +316,12 @@ public:
 		2) allocate the necessary memory in each
 		3) call AddField for each buffer/column
 		4) call SetMemoryLocation for each buffer/column
-		5) Use the append_count_ index to fill each row
-		6) call IncrementAndWrite after each row is filled at index append_count_
-		7) continue until the table is complete
-		8) call Finalize before exiting
+		5) call this function SetupRowCountTracking, if valid (= true) then
+		6) call OpenForWrite() to open the output file
+		7) Use the append_count_ index to fill each row
+		8) call IncrementAndWrite after each row is filled at index append_count_
+		9) continue until the table is complete
+		10) call Finalize before exiting
 
 		Inputs: row_group_count            -> The count of rows in a Parquet row group.
 											  If the row count has been set via the constructor,
