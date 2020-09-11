@@ -1,7 +1,7 @@
 #include "i106_ch10_ethernetf0.h"
 
 I106Ch10EthernetF0::I106Ch10EthernetF0() : I106ParseContext(), frame_index_(0),
-framelen_(0), framelen_ptr_((uint8_t*)&framelen_), typelen_ptr_(nullptr), 
+frame_len_(0), frame_len_ptr_((uint8_t*)&frame_len_), type_len_ptr_(nullptr), 
 i106_status_(I106Status::I106_OK), npp(), pq_eth_writer_()
 {
 
@@ -10,7 +10,6 @@ i106_status_(I106Status::I106_OK), npp(), pq_eth_writer_()
 bool I106Ch10EthernetF0::InitializeWriter()
 {
 	return pq_eth_writer_.Initialize(output_path_, id_);
-	//return true;
 }
 
 uint8_t I106Ch10EthernetF0::Ingest(I106C10Header* header, void* buffer)
@@ -18,7 +17,7 @@ uint8_t I106Ch10EthernetF0::Ingest(I106C10Header* header, void* buffer)
 	retcode_ = 0;
 	frame_index_ = 0;
 
-	i106_status_ = I106_Decode_FirstEthernetF0(header, buffer, &i106_ethmsg_);
+	i106_status_ = I106_Decode_FirstEthernetF0(header, buffer, &i106_eth_msg_);
 	if (i106_status_ != I106Status::I106_OK)
 	{
 		printf("\n(%03u) I106Ch10EthernetF0::Ingest(): I106_Decode_FirstEthernetF0: %s\n",
@@ -35,7 +34,7 @@ uint8_t I106Ch10EthernetF0::Ingest(I106C10Header* header, void* buffer)
 
 	// There is currently only one format possible, IEEE-802.3 given
 	// when Format = 0. Exit if otherwise.
-	if (i106_ethmsg_.CSDW->Format != 0)
+	if (i106_eth_msg_.CSDW->Format != 0)
 	{
 		printf("\n(%03u) I106Ch10EthernetF0::Ingest(): Ethernet Format NOT EQUAL 0!\n",
 			id_);
@@ -49,7 +48,7 @@ uint8_t I106Ch10EthernetF0::Ingest(I106C10Header* header, void* buffer)
 		return retcode_;
 	}
 
-	while ((i106_status_ = I106_Decode_NextEthernetF0(&i106_ethmsg_)) == I106Status::I106_OK)
+	while ((i106_status_ = I106_Decode_NextEthernetF0(&i106_eth_msg_)) == I106Status::I106_OK)
 	{
 		// Record the frame.
 		if (RecordFrame() == 1)
@@ -64,10 +63,10 @@ uint8_t I106Ch10EthernetF0::Ingest(I106C10Header* header, void* buffer)
 			id_, I106ErrorString(i106_status_));
 	}
 
-	if (frame_index_ != i106_ethmsg_.CSDW->Frames)
+	if (frame_index_ != i106_eth_msg_.CSDW->Frames)
 	{
 		printf("\n(%03u) I106Ch10EthernetF0::Ingest(): Read frame count (%u) NOT EQUAL to header frame count (%u)!\n",
-			id_, frame_index_, i106_ethmsg_.CSDW->Frames);
+			id_, frame_index_, i106_eth_msg_.CSDW->Frames);
 	}
 
 	return retcode_;
@@ -76,7 +75,7 @@ uint8_t I106Ch10EthernetF0::Ingest(I106C10Header* header, void* buffer)
 uint8_t I106Ch10EthernetF0::RecordFrame()
 {
 	// Set the IPH pointer and time stamp pointer.
-	i106_ethiph_ = i106_ethmsg_.IPH;
+	i106_ethiph_ = i106_eth_msg_.IPH;
 	ts_ptr_ = (const Ch10TimeStamp*)i106_ethiph_;
 
 	// Calculate the absolute time stamp for the current Ethernet frame.
@@ -86,7 +85,7 @@ uint8_t I106Ch10EthernetF0::RecordFrame()
 		return retcode_;
 	}
 
-	i106_ethframe_ = (const EthernetF0_Physical_FullMAC*)i106_ethmsg_.Data;
+	i106_eth_frame_ = (const EthernetF0_Physical_FullMAC*)i106_eth_msg_.Data;
 
 	// Calculate frame length.
 	CalculateFrameLength();
@@ -99,9 +98,9 @@ uint8_t I106Ch10EthernetF0::RecordFrame()
 	EthernetData ed;
 
 	// Ethernet II
-	if (framelen_ > 1500)
+	if (frame_len_ > 1500)
 	{
-		if (npp.ParseEthernetII(i106_ethmsg_.Data, i106_ethiph_->Length, &ed) == 1)
+		if (npp.ParseEthernetII(i106_eth_msg_.Data, i106_ethiph_->Length, &ed) == 1)
 		{
 			//printf("ParseEthernetII Error!\n");
 			frame_index_++;
@@ -111,7 +110,7 @@ uint8_t I106Ch10EthernetF0::RecordFrame()
 	}
 	else
 	{
-		if (npp.ParseEthernet(i106_ethmsg_.Data, i106_ethiph_->Length, &ed) == 1)
+		if (npp.ParseEthernet(i106_eth_msg_.Data, i106_ethiph_->Length, &ed) == 1)
 		{
 			//printf("ParseEthernet Error!\n");
 			frame_index_++;
@@ -129,9 +128,9 @@ uint8_t I106Ch10EthernetF0::RecordFrame()
 
 void I106Ch10EthernetF0::CalculateFrameLength()
 {
-	typelen_ptr_ = (const uint8_t*)&i106_ethframe_->TypeLen;
-	framelen_ptr_[0] = typelen_ptr_[1];
-	framelen_ptr_[1] = typelen_ptr_[0];
+	type_len_ptr_ = (const uint8_t*)&i106_eth_frame_->TypeLen;
+	frame_len_ptr_[0] = type_len_ptr_[1];
+	frame_len_ptr_[1] = type_len_ptr_[0];
 }
 
 void I106Ch10EthernetF0::CreateStringMACAddrs()
@@ -142,13 +141,13 @@ void I106Ch10EthernetF0::CreateStringMACAddrs()
 	{
 		if (ind < 5)
 		{
-			dest_mac_stream_ << std::hex << i106_ethframe_->Destination[ind] << ":";
-			src_mac_stream_ << std::hex << i106_ethframe_->Source[ind] << ":";
+			dest_mac_stream_ << std::hex << i106_eth_frame_->Destination[ind] << ":";
+			src_mac_stream_ << std::hex << i106_eth_frame_->Source[ind] << ":";
 		}
 		else
 		{
-			dest_mac_stream_ << std::hex << i106_ethframe_->Destination[ind];
-			src_mac_stream_ << std::hex << i106_ethframe_->Source[ind] << ":";
+			dest_mac_stream_ << std::hex << i106_eth_frame_->Destination[ind];
+			src_mac_stream_ << std::hex << i106_eth_frame_->Source[ind] << ":";
 		}
 	}
 

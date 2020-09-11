@@ -17,13 +17,13 @@ class I106Ch10EthernetF0 : public I106ParseContext
 private:
 	ParquetEthernetF0 pq_eth_writer_;
 	I106Status i106_status_;
-	EthernetF0_Message i106_ethmsg_;
+	EthernetF0_Message i106_eth_msg_;
 	const EthernetF0_IPH* i106_ethiph_;
-	const EthernetF0_Physical_FullMAC* i106_ethframe_;
+	const EthernetF0_Physical_FullMAC* i106_eth_frame_;
 	uint32_t frame_index_;
-	uint16_t framelen_;
-	uint8_t* framelen_ptr_;
-	const uint8_t* typelen_ptr_;
+	uint16_t frame_len_;
+	uint8_t* frame_len_ptr_;
+	const uint8_t* type_len_ptr_;
 	std::string dest_mac_addr_;
 	std::string src_mac_addr_;
 	std::stringstream dest_mac_stream_;
@@ -32,7 +32,7 @@ private:
 	NetworkPacketParser npp;
 
 public:
-	const uint16_t& frame_length_ = framelen_;
+	const uint16_t& frame_length_ = frame_len_;
 	I106Ch10EthernetF0();
 	bool InitializeWriter() override;
 	uint8_t Ingest(I106C10Header* header, void* buffer);
