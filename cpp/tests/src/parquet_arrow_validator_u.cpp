@@ -42,7 +42,8 @@ protected:
 	bool CreateParquetFile(std::shared_ptr<arrow::DataType> type, 
 		std::string directory, 
 		std::vector<std::vector<T>> output,
-		int row_group_count)
+		int row_group_count,
+		std::vector<uint8_t>* bool_fields = nullptr)
 	{
 		if (!std::filesystem::exists(directory))
 		{
@@ -64,7 +65,7 @@ protected:
 		for (int i = 0; i < output.size(); i++)
 		{
 			pc->AddField(type, "data" + std::to_string(i));
-			pc->SetMemoryLocation<T>(output[i], "data" + std::to_string(i));
+			pc->SetMemoryLocation<T>(output[i], "data" + std::to_string(i), bool_fields);
 		}
 
 		// Assume each vector is of the same size
@@ -1546,4 +1547,20 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareAllTotalCountInts)
 	EXPECT_EQ(comp.GetComparedCount(1), 6);
 	EXPECT_EQ(comp.GetComparedCount(2), 6);
 	EXPECT_EQ(comp.GetComparedCount(3), 0);
+}
+
+TEST_F(ParquetArrowValidatorTest, Int64Null)
+{
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+	std::vector<std::vector<int64_t>> file = { { 5,10,12,13,15,8, 9,1,3,4,5,7, 9,6 } };
+	std::vector<uint8_t> bool_fields = { 0, 1, 1, 1, 0,0, 0,0,1,1,0,0, 1,1 };
+
+	ASSERT_TRUE(CreateParquetFile(arrow::int64(), dirname1, file, 6, &bool_fields));
+	ASSERT_TRUE(CreateParquetFile(arrow::int64(), dirname2, file, 6, &bool_fields));
+
+	Comparator comp;
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+
+	ASSERT_TRUE(comp.CompareAll());
 }
