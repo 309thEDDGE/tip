@@ -10,6 +10,7 @@ enum class Ch10DataType: uint8_t
 	VIDEO_DATA_F0	 	= 0x40,
 	DISCRETE_DATA_F1	= 0x29,
 	ANALOG_DATA_F1		= 0x21,
+	ETHERNET_DATA_F0	= 0x68,
 };
 
 #endif 

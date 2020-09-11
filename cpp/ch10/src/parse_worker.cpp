@@ -56,6 +56,7 @@ void ParseWorker::initialize(uint16_t ID,
 		found_tmats_ = false;
 	else
 		found_tmats_ = true;
+
 #endif
 }
 
@@ -377,6 +378,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		printf("(%03u) Absolute position: %llu\n", id, start_position);
 #endif
 
+	// Set complete = false; here?
 	first_tdp = false;
 	continue_parsing = true;
 	uint16_t n_milstd_messages = 0;
@@ -406,8 +408,19 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 			milstd1553_msg_selection, milstd1553_sorted_selected_msgs);
 		milstd->set_channelid_remoteaddress_output(&chanid_remoteaddr1_map, &chanid_remoteaddr2_map);
 #ifdef VIDEO_DATA
-		printf("\n(%03u) ParseWorker parsing VIDEO\n", id);
+		printf("\n(%03u) ParseWorker parsing video packets\n", id);
 		video = new Ch10VideoDataF0(bb, id, tdata, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
+#endif
+#ifdef ETHERNET_DATA
+		printf("\n(%03hu) ParseWorker parsing Ethernet packets\n", id);
+		i106_ethernetf0_.Initialize(id, &ch10md_, 
+			output_file_names[Ch10DataType::ETHERNET_DATA_F0]);
+		if (!i106_ethernetf0_.InitializeWriter())
+		{
+			printf("\n(%03hu) ParseWorker failed to initialize Ethernet writer\n", id);
+			complete = true;
+			return;
+		}
 #endif
 		delete_alloc = true;
 	}
@@ -714,6 +727,31 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 
 				break;
 			}
+#ifdef ETHERNET_DATA
+			case I106CH10_DTYPE_ETHERNET_FMT_0:
+			{
+				// The following lines are a stop-gap during the transition to a cleaner
+				// LibIRIG106 integration. Here I record the data stored in Ch10TimeData and
+				// Ch10HeaderData in the Ch10MetaData object in preparation for passing it 
+				// to the I106Ch10EthernetF0::Ingest() method.
+				const Ch10TimeData* ch10td = tdf->GetCh10TimeDataPtr();
+				const Ch10HeaderData* ch10hd = pkthdr->GetCh10HeaderDataPtr();
+				ch10md_.timedatapkt_rtc_ = ch10td->timedatapkt_rtc_;
+				ch10md_.doy_ = ch10td->doy_;
+				ch10md_.timedatapkt_abstime_ = ch10td->timedatapkt_abstime_;
+				ch10md_.intrapkt_ts_source_ = ch10hd->intrapkt_ts_source_;
+				ch10md_.time_format_ = ch10hd->time_format_;
+				ch10md_.header_rtc_ = ch10hd->header_rtc_;
+
+				if (i106_ethernetf0_.Ingest(&i106_header_, temp_buffer_ptr) == 1)
+				{
+					printf("\n(%03hu) ParseWorker EthernetF0 Ingest failed!\n", id);
+					continue_parsing = false;
+					continue;
+				}
+				break;
+			}
+#endif
 #ifdef VIDEO_DATA
 			case I106CH10_DTYPE_VIDEO_FMT_0:
 			{
@@ -806,6 +844,9 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		printf("(%03hu) Closing Video Data Parquet database\n", id);
 		video->close();
 #endif 
+#ifdef ETHERNET_DATA
+		i106_ethernetf0_.Finalize();
+#endif
 	}
 #endif
 #endif
@@ -920,6 +961,12 @@ void ParseWorker::generate_parquet_file_names(std::map<Ch10DataType, std::filesy
 		outpath = dirpath / dirpath.stem();
 		outpath += std::filesystem::path(ext);
 		output_file_names[Ch10DataType::VIDEO_DATA_F0] = outpath.string();
+#endif
+#ifdef ETHERNET_DATA
+		dirpath = fsmap[Ch10DataType::ETHERNET_DATA_F0];
+		outpath = dirpath / dirpath.stem();
+		outpath += std::filesystem::path(ext);
+		output_file_names[Ch10DataType::ETHERNET_DATA_F0] = outpath.string();
 #endif
 
 	}
