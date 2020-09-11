@@ -2419,6 +2419,7 @@ protected:
 
 	void TearDown() override
 	{
+		printf("is teardown called?\n");
 		remove(pq_file_.c_str());
 	}
 
@@ -2448,7 +2449,7 @@ protected:
 			printf("Initialize(): OpenForWrite failed!\n");
 			return false;
 		}
-
+		return true;
 	}
 
 	bool AppendRows(size_t count)
@@ -2531,7 +2532,7 @@ TEST_F(ParquetContextRowCountTrackingTest, IntegerMultRowGroups)
 
 	// Initialize with a row group count of ten and a buffer 
 	// multiplier of 1.
-	Initialize(10, 1);
+	ASSERT_TRUE(Initialize(10, 1));
 	ASSERT_TRUE(pc_.SetupRowCountTracking(10, 1, print_activity_, print_msg_));
 	
 	// 10 row groups
@@ -2561,7 +2562,7 @@ TEST_F(ParquetContextRowCountTrackingTest, NonIntegerMultRowGroups)
 
 	// Initialize with a row group count of ten and a buffer 
 	// multiplier of 1.
-	Initialize(15, 3);
+	ASSERT_TRUE(Initialize(15, 3));
 	ASSERT_TRUE(pc_.SetupRowCountTracking(15, 3, print_activity_, print_msg_));
 
 	// 110 rows: 2 writes of 3 row groups * 15 rows per row group = 90 rows
@@ -2600,7 +2601,7 @@ TEST_F(ParquetContextRowCountTrackingTest, IntegerMultRowGroupsRequestedExceeds)
 
 	// Initialize with a row group count of 100 and a buffer 
 	// multiplier of 2.
-	Initialize(100, 2);
+	ASSERT_TRUE(Initialize(100, 2));
 
 	// Request row count tracking that exceeds the buffer. Ought to return false.
 	ASSERT_FALSE(pc_.SetupRowCountTracking(100, 3, print_activity_, print_msg_));
