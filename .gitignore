@@ -43,3 +43,4 @@ tip_scripts/__pycache__
 !CMake_linux.txt
 
 
+/cpp/out/build/x64-Debug (default)
