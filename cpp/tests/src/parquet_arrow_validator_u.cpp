@@ -1549,12 +1549,28 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareAllTotalCountInts)
 	EXPECT_EQ(comp.GetComparedCount(3), 0);
 }
 
-TEST_F(ParquetArrowValidatorTest, Int64Null)
+TEST_F(ParquetArrowValidatorTest, BoolNullMatch)
 {
 	std::string dirname1 = "file1.parquet";
 	std::string dirname2 = "file2.parquet";
-	std::vector<std::vector<int64_t>> file = { { 5,10,12,13,15,8, 9,1,3,4,5,7, 9,6 } };
-	std::vector<uint8_t> bool_fields = { 0, 1, 1, 1, 0,0, 0,0,1,1,0,0, 1,1 };
+	std::vector<std::vector<uint8_t>> file = { { 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1 } };
+	std::vector<uint8_t> bool_fields = {         0,1,1,1,0,0, 0,0,1,1,0,0, 1,1 };
+
+	ASSERT_TRUE(CreateParquetFile(arrow::boolean(), dirname1, file, 6, &bool_fields));
+	ASSERT_TRUE(CreateParquetFile(arrow::boolean(), dirname2, file, 6, &bool_fields));
+
+	Comparator comp;
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+
+	ASSERT_TRUE(comp.CompareAll());
+}
+
+TEST_F(ParquetArrowValidatorTest, Int64NullMatch)
+{
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+	std::vector<std::vector<int64_t>> file = { { 1,2,1,3,1,4, 5,6,8,9,1,2, 9,8 } };
+	std::vector<uint8_t> bool_fields = {         0,1,1,1,0,0, 0,0,1,1,0,0, 1,1 };
 
 	ASSERT_TRUE(CreateParquetFile(arrow::int64(), dirname1, file, 6, &bool_fields));
 	ASSERT_TRUE(CreateParquetFile(arrow::int64(), dirname2, file, 6, &bool_fields));
@@ -1563,4 +1579,104 @@ TEST_F(ParquetArrowValidatorTest, Int64Null)
 	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
 
 	ASSERT_TRUE(comp.CompareAll());
+}
+
+TEST_F(ParquetArrowValidatorTest, FloatNullMatch)
+{
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+	std::vector<std::vector<float>> file = { { 1.5,2,1,3,1,4, 5.5,6,-8.66,9,1,2, 9,8 } };
+	std::vector<uint8_t> bool_fields = {       0,  1,1,1,0,0, 0,  0, 1,   1,0,0, 1,1 };
+
+	ASSERT_TRUE(CreateParquetFile(arrow::float32(), dirname1, file, 6, &bool_fields));
+	ASSERT_TRUE(CreateParquetFile(arrow::float32(), dirname2, file, 6, &bool_fields));
+
+	Comparator comp;
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+
+	ASSERT_TRUE(comp.CompareAll());
+}
+
+TEST_F(ParquetArrowValidatorTest, StringNullMatch)
+{
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+	std::vector<std::vector<std::string>> file = { { "a","b","c","d","ee","ff","gg","h","i","jj","k" } };
+	std::vector<uint8_t> bool_fields = {              1,  0,  1,  0,  1,   1,   0,   1,  0,  1,   1 };
+
+	ASSERT_TRUE(CreateParquetFile(arrow::utf8(), dirname1, file, 6, &bool_fields));
+	ASSERT_TRUE(CreateParquetFile(arrow::utf8(), dirname2, file, 6, &bool_fields));
+
+	Comparator comp;
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+
+	ASSERT_TRUE(comp.CompareAll());
+}
+
+TEST_F(ParquetArrowValidatorTest, BoolNullMisMatch)
+{
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+	std::vector<std::vector<uint8_t>> file = { { 1,1,1,1,1,1, 1,1,1,1,1,1, 1,1 } };
+	std::vector<uint8_t> bool_fields1 = {         0,1,1,1,0,0, 0,0,1,1,0,0, 1,1 };
+	std::vector<uint8_t> bool_fields2 = {         0,1,1,1,0,0, 0,0,1,1,0,0, 1,0 };
+
+	ASSERT_TRUE(CreateParquetFile(arrow::boolean(), dirname1, file, 6, &bool_fields1));
+	ASSERT_TRUE(CreateParquetFile(arrow::boolean(), dirname2, file, 6, &bool_fields2));
+
+	Comparator comp;
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+
+	ASSERT_FALSE(comp.CompareAll());
+}
+
+TEST_F(ParquetArrowValidatorTest, Int64NullMisMatch)
+{
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+	std::vector<std::vector<int64_t>> file = { { 1,2,1,3,1,4, 5,6,8,9,1,2, 9,8 } };
+	std::vector<uint8_t> bool_fields1 = {         0,1,1,1,0,0, 0,0,1,1,0,0, 1,1 };
+	std::vector<uint8_t> bool_fields2 = {         0,1,1,1,0,0, 0,0,1,1,0,0, 1,0 };
+
+	ASSERT_TRUE(CreateParquetFile(arrow::int64(), dirname1, file, 6, &bool_fields1));
+	ASSERT_TRUE(CreateParquetFile(arrow::int64(), dirname2, file, 6, &bool_fields2));
+
+	Comparator comp;
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+
+	ASSERT_FALSE(comp.CompareAll());
+}
+
+TEST_F(ParquetArrowValidatorTest, FloatNullMisMatch)
+{
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+	std::vector<std::vector<float>> file = { { 1.5,2,1,3,1,4, 5.5,6,-8.66,9,1,2, 9,8 } };
+	std::vector<uint8_t> bool_fields1 = {       0, 1,1,1,0,0, 0,  0, 1,   1,0,0, 1,1 };
+	std::vector<uint8_t> bool_fields2 = {       0, 1,1,1,0,0, 0,  0, 1,   1,0,0, 1,0 };
+
+	ASSERT_TRUE(CreateParquetFile(arrow::float32(), dirname1, file, 6, &bool_fields1));
+	ASSERT_TRUE(CreateParquetFile(arrow::float32(), dirname2, file, 6, &bool_fields2));
+
+	Comparator comp;
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+
+	ASSERT_FALSE(comp.CompareAll());
+}
+
+TEST_F(ParquetArrowValidatorTest, StringNullMisMatch)
+{
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+	std::vector<std::vector<std::string>> file = { { "a","b","c","d","ee","ff","gg","h","i","jj","k" } };
+	std::vector<uint8_t> bool_fields1 = {              1,  0,  1,  0,  1,   1,   0,   1,  0,  1,   1 };
+	std::vector<uint8_t> bool_fields2 = {              1,  0,  1,  0,  1,   1,   0,   1,  0,  1,   0 };
+
+	ASSERT_TRUE(CreateParquetFile(arrow::utf8(), dirname1, file, 6, &bool_fields1));
+	ASSERT_TRUE(CreateParquetFile(arrow::utf8(), dirname2, file, 6, &bool_fields2));
+
+	Comparator comp;
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+
+	ASSERT_FALSE(comp.CompareAll());
 }

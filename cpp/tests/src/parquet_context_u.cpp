@@ -2103,6 +2103,44 @@ TEST_F(ParquetContextTest, Int64Null)
 	ASSERT_FALSE(ret_val);
 }
 
+TEST_F(ParquetContextTest, BoolNull)
+{
+	std::string file_name = "file.parquet";
+	std::vector<std::vector<uint8_t>> file = { { 1,1,0,1,1,1, 1,1,1,1,1,1, 1,0 } };
+	std::vector<uint8_t> bool_fields = {         0,1,1,1,0,0, 0,0,1,1,0,0, 1,1 };
+
+	ASSERT_TRUE(CreateParquetFile(arrow::boolean(), file_name, file, 6, true, &bool_fields));
+	std::vector<size_t> null_indicies;
+	ASSERT_TRUE(SetPQPath(file_name));
+
+	std::vector<bool> input;
+	bool ret_val = GetNextRGBool(0, input, false, &null_indicies);
+	ASSERT_TRUE(ret_val);
+	ASSERT_EQ(input[1], 1);
+	ASSERT_EQ(input[2], 0);
+	ASSERT_EQ(input[3], 1);
+	ASSERT_THAT(null_indicies, ::testing::ElementsAre(0, 4, 5));
+
+
+	input.clear();
+	ret_val = GetNextRGBool(0, input, false, &null_indicies);
+	ASSERT_TRUE(ret_val);
+	ASSERT_EQ(input[2], 1);
+	ASSERT_EQ(input[3], 1);
+	ASSERT_THAT(null_indicies, ::testing::ElementsAre(0, 1, 4, 5));
+
+	input.clear();
+	ret_val = GetNextRGBool(0, input, false, &null_indicies);
+	ASSERT_TRUE(ret_val);
+	ASSERT_THAT(input, ::testing::ElementsAre(1, 0));
+	ASSERT_EQ(null_indicies.size(), 0);
+
+	// Assert end of data
+	input.clear();
+	ret_val = GetNextRGBool(0, input, false, &null_indicies);
+	ASSERT_FALSE(ret_val);
+}
+
 TEST_F(ParquetContextTest, Int64NullWithCast)
 {
 	std::string file_name = "file.parquet";
@@ -2274,7 +2312,6 @@ TEST_F(ParquetContextTest, SetMemoryLocationBeforeField)
 	{ 1,2,3,4,5,6,7,8 };
 
 	file_name = "./" + file_name;
-
 	ParquetContext* pc = new ParquetContext(50);
 	ASSERT_FALSE(pc->SetMemoryLocation<int64_t>(file, "data"));
 
