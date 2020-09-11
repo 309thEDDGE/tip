@@ -240,6 +240,8 @@ uint8_t Ch10VideoDataF0::UseLibIRIG106(I106C10Header* i106_header, void* buffer)
 		
 		// Fill the first and only element of the TS time vector. 
 		transport_stream_TS[0] = msg_abstime_;
+
+		RecordLowestTimeStampPerChannelID();
 	}
 
 #ifdef DEBUG
@@ -294,6 +296,11 @@ uint8_t Ch10VideoDataF0::IngestLibIRIG106Msg()
 			return retcode_;
 		}
 		transport_stream_TS[subpkt_unit_index] = msg_abstime_;
+
+		// Only test if the timestamp is lowest in the
+		// first video packet in this ch10 video packet.
+		if (subpkt_unit_index == 0)
+			RecordLowestTimeStampPerChannelID();
 	}
 
 	transport_stream_pkt = (const video_datum*)i106_videomsg_.Data;
@@ -316,3 +323,19 @@ uint8_t Ch10VideoDataF0::IngestLibIRIG106Msg()
 	return retcode_;
 }
 #endif
+
+void Ch10VideoDataF0::RecordLowestTimeStampPerChannelID()
+{
+	if (channel_id_to_min_time_map_.count(ch10hd_ptr_->channel_id_) == 0)
+		channel_id_to_min_time_map_[ch10hd_ptr_->channel_id_] = msg_abstime_;
+	else
+	{
+		if (msg_abstime_ < channel_id_to_min_time_map_[ch10hd_ptr_->channel_id_])
+			channel_id_to_min_time_map_[ch10hd_ptr_->channel_id_] = msg_abstime_;
+	}
+}
+
+const std::map<uint16_t, uint64_t>& Ch10VideoDataF0::GetChannelIDToMinTimeStampMap()
+{
+	return channel_id_to_min_time_map_;
+}

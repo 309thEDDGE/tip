@@ -83,6 +83,14 @@ private:
 
 	void print_video_pkt_info();
 
+	std::map<uint16_t, uint64_t> channel_id_to_min_time_map_;
+
+	// If there is no entry in channel_id_to_min_time_map_ for the
+	// current channel ID then add it and the earliest time stamp in
+	// the packet to the map. Otherwise, replace the entry only if 
+	// the current time stamp is lower.
+	void RecordLowestTimeStampPerChannelID();
+
 #ifdef LOCALDB
 #ifdef PARQUET
 	ParquetVideoDataF0 db;
@@ -99,6 +107,7 @@ public:
 #ifdef LIBIRIG106
 	uint8_t UseLibIRIG106(I106C10Header* i106_header, void* buffer);
 	uint8_t IngestLibIRIG106Msg();
+	const std::map<uint16_t, uint64_t>& GetChannelIDToMinTimeStampMap();
 #endif
 };
 
