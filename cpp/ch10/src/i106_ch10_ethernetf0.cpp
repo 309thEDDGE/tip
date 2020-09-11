@@ -34,7 +34,7 @@ uint8_t I106Ch10EthernetF0::Ingest(I106C10Header* header, void* buffer)
 
 	// There is currently only one format possible, IEEE-802.3 given
 	// when Format = 0. Exit if otherwise.
-	if (i106_eth_msg_.CSDW->Format != 0)
+	if (i106_eth_msg_.CSDW->Format != Ch10EthernetF0CSDWFormat::Ethernet802p3MACFrame)
 	{
 		printf("\n(%03u) I106Ch10EthernetF0::Ingest(): Ethernet Format NOT EQUAL 0!\n",
 			id_);

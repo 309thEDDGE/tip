@@ -12,6 +12,12 @@ extern "C" {
 #include "i106_decode_ethernet.h"
 }
 
+class Ch10EthernetF0CSDWFormat
+{
+public:
+	static const uint8_t Ethernet802p3MACFrame = 0;
+};
+
 class I106Ch10EthernetF0 : public I106ParseContext
 {
 private:
