@@ -248,7 +248,6 @@ cp -n $VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/libgmock.a build/test/prefix
 cd build
 $CMAKE ..
 $MAKE
-test/run-tests
 
 #
 # Build libirig106
@@ -259,7 +258,7 @@ LIBIRIG106_LIB=$VENDOR/$LIBIRIG106_VERSION
 mkdir -p $LIBIRIG106_LIB ; cd $LIBIRIG106_LIB
 echo Building libirig106
 cd $VENDOR/$LIBIRIG106_VERSION
-$MAKE
+make # must use regular make
 
 #
 # Gather dependencies into one folder
