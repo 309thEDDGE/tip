@@ -451,9 +451,16 @@ public:
 		-name:			classification
 		-description:	Classification value as found 
 						in comet wrd tables.
-		-format/range:	[0, 255]
+
+						Classification is the classification level of the word. 
+						Classification options are:
+						0 - UNCLASSIFIED
+						1 - CONFIDENTIAL
+						2 - SECRET
+						9 - VENDOR_PROPRIETARY
+
+		-format/range:	0,1,2,9
 		-special cases:
-			1. not used for translation, if unsure set to 0
 		-examples:
 	*/
 	uint8_t classification_;
