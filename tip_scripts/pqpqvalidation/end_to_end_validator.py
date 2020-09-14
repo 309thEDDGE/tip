@@ -420,5 +420,5 @@ if __name__ == '__main__':
     if args.log_string is not None:
         log_desc = args.log_string
 
-    e = E2EValidator(sys.argv[1], sys.argv[2], sys.argv[3], log_desc=log_desc, video=args.video)
+    e = E2EValidator(args.truth_dir, args.test_dir, args.log_dir, log_desc=log_desc, video=args.video)
     e.validate()
