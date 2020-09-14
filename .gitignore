@@ -20,6 +20,8 @@ conf/*.conf
 conf/*.conf~
 !cpp
 !cpp/**
+cpp/CMakeFiles
+cpp/*.a
 !misc
 !misc/**
 !tip_scripts
