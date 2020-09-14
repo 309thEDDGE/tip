@@ -120,6 +120,10 @@ set(pcap_lib_name ${pcap_lib_dir}/wpcap.lib ${pcap_lib_dir}/Packet.lib)
 set(pcap_dll1 ${pcap_lib_dir}/wpcap.dll)
 set(pcap_dll2 ${pcap_lib_dir}/Packet.dll)
 
+# Copy pcap dlls to bin dir.
+configure_file(${pcap_dll1} ${out_bin_dir} COPYONLY)
+configure_file(${pcap_dll2} ${out_bin_dir} COPYONLY)
+
 # Other system libs necessary, ought to be found by compiler
 set(other_tins_lib_names Ws2_32.lib Iphlpapi.lib)
 
