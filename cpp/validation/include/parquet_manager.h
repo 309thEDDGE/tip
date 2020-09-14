@@ -158,9 +158,29 @@ bool ParquetManager::GetNextRG(int col,
 		if (data.size() < size)
 			data.resize(size);
 
-		std::copy(data_array.raw_values(), 
-			data_array.raw_values() + data_array.length(), 
-			data.data());
+		int null_count = data_array.null_count();
+
+		if (null_count > 0)
+		{
+			for (int i = 0; i < size; i++)
+			{
+				data[i] = data_array.Value(i);
+				// Arrow doesn't insert consistent
+				// data when a row is NULL
+				// The value in that row is overridden
+				// for this reason to ensure comparisons match
+				// later on down the road
+				if (data_array.IsNull(i))
+					data[i] = NULL;
+			}
+		}
+		else
+		{
+
+			std::copy(data_array.raw_values(),
+				data_array.raw_values() + data_array.length(),
+				data.data());
+		}
 	}
 	
 

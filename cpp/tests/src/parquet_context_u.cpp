@@ -167,7 +167,7 @@ protected:
 	bool GetNextRG(int col,
 		std::vector<T>& data,		
 		bool list = false,
-		std::vector<size_t>* null_indicies = nullptr)
+		std::vector<size_t>* null_indices = nullptr)
 	{
 		int size = 0;
 
@@ -226,13 +226,13 @@ protected:
 
 			size = data_array.length();
 
-			if (null_indicies != nullptr)
+			if (null_indices != nullptr)
 			{
-				null_indicies->clear();
+				null_indices->clear();
 				for (int i = 0; i < size; i++)
 				{
 					if (data_array.IsNull(i))
-						null_indicies->push_back(i);
+						null_indices->push_back(i);
 				}
 			}
 
@@ -252,7 +252,7 @@ protected:
 
 	bool GetNextRGBool(int col, std::vector<bool>& data,
 		bool list = false,
-		std::vector<size_t>* null_indicies = nullptr)
+		std::vector<size_t>* null_indices = nullptr)
 	{
 		int size = 0;
 
@@ -311,13 +311,13 @@ protected:
 
 			size = data_array.length();
 
-			if (null_indicies != nullptr)
+			if (null_indices != nullptr)
 			{
-				null_indicies->clear();
+				null_indices->clear();
 				for (int i = 0; i < size; i++)
 				{
 					if (data_array.IsNull(i))
-						null_indicies->push_back(i);
+						null_indices->push_back(i);
 				}
 			}
 
@@ -336,7 +336,7 @@ protected:
 
 	bool GetNextRGString(int col, std::vector<std::string>& data,
 		bool list = false,
-		std::vector<size_t>* null_indicies = nullptr)
+		std::vector<size_t>* null_indices = nullptr)
 	{
 		int size = 0;
 
@@ -395,13 +395,13 @@ protected:
 
 			size = data_array.length();
 
-			if (null_indicies != nullptr)
+			if (null_indices != nullptr)
 			{
-				null_indicies->clear();
+				null_indices->clear();
 				for (int i = 0; i < size; i++)
 				{
 					if (data_array.IsNull(i))
-						null_indicies->push_back(i);
+						null_indices->push_back(i);
 				}
 			}
 
@@ -2073,34 +2073,72 @@ TEST_F(ParquetContextTest, Int64Null)
 	std::vector<uint8_t> bool_fields =         { 0, 1, 1, 1, 0,0, 0,0,1,1,0,0, 1,1 };
 
 	ASSERT_TRUE(CreateParquetFile(arrow::int64(), file_name, file, 6, true, &bool_fields));
-	std::vector<size_t> null_indicies;
+	std::vector<size_t> null_indices;
 	ASSERT_TRUE(SetPQPath(file_name));
 
 	std::vector<int64_t> input;
-	bool ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, false, &null_indicies);
+	bool ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, false, &null_indices);
 	ASSERT_TRUE(ret_val);
 	ASSERT_EQ(input[1], 10);
 	ASSERT_EQ(input[2], 12);
 	ASSERT_EQ(input[3], 13);
-	ASSERT_THAT(null_indicies, ::testing::ElementsAre(0, 4, 5));
+	ASSERT_THAT(null_indices, ::testing::ElementsAre(0, 4, 5));
 
 
 	input.clear();
-	ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, false, &null_indicies);
+	ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, false, &null_indices);
 	ASSERT_TRUE(ret_val);
 	ASSERT_EQ(input[2], 3);
 	ASSERT_EQ(input[3], 4);
-	ASSERT_THAT(null_indicies, ::testing::ElementsAre(0, 1, 4, 5));
+	ASSERT_THAT(null_indices, ::testing::ElementsAre(0, 1, 4, 5));
 
 	input.clear();
-	ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, false, &null_indicies);
+	ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, false, &null_indices);
 	ASSERT_TRUE(ret_val);
 	ASSERT_THAT(input, ::testing::ElementsAre(9, 6));
-	ASSERT_EQ(null_indicies.size(), 0);
+	ASSERT_EQ(null_indices.size(), 0);
 
 	// Assert end of data
 	input.clear();
-	ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, false, &null_indicies);
+	ret_val = GetNextRG<int64_t, arrow::NumericArray<arrow::Int64Type>>(0, input, false, &null_indices);
+	ASSERT_FALSE(ret_val);
+}
+
+TEST_F(ParquetContextTest, BoolNull)
+{
+	std::string file_name = "file.parquet";
+	std::vector<std::vector<uint8_t>> file = { { 1,1,0,1,1,1, 1,1,1,1,1,1, 1,0 } };
+	std::vector<uint8_t> bool_fields = {         0,1,1,1,0,0, 0,0,1,1,0,0, 1,1 };
+
+	ASSERT_TRUE(CreateParquetFile(arrow::boolean(), file_name, file, 6, true, &bool_fields));
+	std::vector<size_t> null_indices;
+	ASSERT_TRUE(SetPQPath(file_name));
+
+	std::vector<bool> input;
+	bool ret_val = GetNextRGBool(0, input, false, &null_indices);
+	ASSERT_TRUE(ret_val);
+	ASSERT_EQ(input[1], 1);
+	ASSERT_EQ(input[2], 0);
+	ASSERT_EQ(input[3], 1);
+	ASSERT_THAT(null_indices, ::testing::ElementsAre(0, 4, 5));
+
+
+	input.clear();
+	ret_val = GetNextRGBool(0, input, false, &null_indices);
+	ASSERT_TRUE(ret_val);
+	ASSERT_EQ(input[2], 1);
+	ASSERT_EQ(input[3], 1);
+	ASSERT_THAT(null_indices, ::testing::ElementsAre(0, 1, 4, 5));
+
+	input.clear();
+	ret_val = GetNextRGBool(0, input, false, &null_indices);
+	ASSERT_TRUE(ret_val);
+	ASSERT_THAT(input, ::testing::ElementsAre(1, 0));
+	ASSERT_EQ(null_indices.size(), 0);
+
+	// Assert end of data
+	input.clear();
+	ret_val = GetNextRGBool(0, input, false, &null_indices);
 	ASSERT_FALSE(ret_val);
 }
 
@@ -2111,34 +2149,34 @@ TEST_F(ParquetContextTest, Int64NullWithCast)
 	std::vector<uint8_t> bool_fields = { 0, 1, 1, 1, 0,0, 0,0,1,1,0,0, 1,1 };
 
 	ASSERT_TRUE(CreateParquetFile(arrow::int32(), file_name, file, 6, true, &bool_fields));
-	std::vector<size_t> null_indicies;
+	std::vector<size_t> null_indices;
 	ASSERT_TRUE(SetPQPath(file_name));
 
 	std::vector<int32_t> input;
-	bool ret_val = GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, input, false, &null_indicies);
+	bool ret_val = GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, input, false, &null_indices);
 	ASSERT_TRUE(ret_val);
 	ASSERT_EQ(input[1], 10);
 	ASSERT_EQ(input[2], 12);
 	ASSERT_EQ(input[3], 13);
-	ASSERT_THAT(null_indicies, ::testing::ElementsAre(0, 4, 5));
+	ASSERT_THAT(null_indices, ::testing::ElementsAre(0, 4, 5));
 
 
 	input.clear();
-	ret_val = GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, input, false, &null_indicies);
+	ret_val = GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, input, false, &null_indices);
 	ASSERT_TRUE(ret_val);
 	ASSERT_EQ(input[2], 3);
 	ASSERT_EQ(input[3], 4);
-	ASSERT_THAT(null_indicies, ::testing::ElementsAre(0, 1, 4, 5));
+	ASSERT_THAT(null_indices, ::testing::ElementsAre(0, 1, 4, 5));
 
 	input.clear();
-	ret_val = GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, input, false, &null_indicies);
+	ret_val = GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, input, false, &null_indices);
 	ASSERT_TRUE(ret_val);
 	ASSERT_THAT(input, ::testing::ElementsAre(9, 6));
-	ASSERT_EQ(null_indicies.size(), 0);
+	ASSERT_EQ(null_indices.size(), 0);
 
 	// Assert end of data
 	input.clear();
-	ret_val = GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, input, false, &null_indicies);
+	ret_val = GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, input, false, &null_indices);
 	ASSERT_FALSE(ret_val);
 }
 
@@ -2159,26 +2197,26 @@ TEST_F(ParquetContextTest, StringNull)
 	ASSERT_TRUE(SetPQPath(file_name));
 
 	std::vector<std::string> input;
-	std::vector<size_t> null_indicies;
-	bool ret_val = GetNextRGString(0, input, false, &null_indicies);
+	std::vector<size_t> null_indices;
+	bool ret_val = GetNextRGString(0, input, false, &null_indices);
 	ASSERT_TRUE(ret_val);
 	ASSERT_EQ(input[0], "a");
 	ASSERT_EQ(input[2], "d");
 	ASSERT_EQ(input[5], "bell");
-	ASSERT_THAT(null_indicies, ::testing::ElementsAre(1,3,4));
+	ASSERT_THAT(null_indices, ::testing::ElementsAre(1,3,4));
 
 	input.clear();
-	ret_val = GetNextRGString(0, input, false, &null_indicies);
+	ret_val = GetNextRGString(0, input, false, &null_indices);
 	ASSERT_TRUE(ret_val);
 	ASSERT_EQ(input[0], "dale");
 	ASSERT_EQ(input[2], "cake");
 	ASSERT_EQ(input[4], "ee");
-	ASSERT_THAT(null_indicies, ::testing::ElementsAre(1, 3, 5));
+	ASSERT_THAT(null_indices, ::testing::ElementsAre(1, 3, 5));
 
 	input.clear();
-	ret_val = GetNextRGString(0, input, false, &null_indicies);
+	ret_val = GetNextRGString(0, input, false, &null_indices);
 	ASSERT_TRUE(ret_val);
-	ASSERT_EQ(null_indicies.size(), 0);
+	ASSERT_EQ(null_indices.size(), 0);
 	ASSERT_THAT(input, ::testing::ElementsAre("gg", "d2"));
 
 	// Assert end of data
@@ -2275,7 +2313,6 @@ TEST_F(ParquetContextTest, SetMemoryLocationBeforeField)
 	{ 1,2,3,4,5,6,7,8 };
 
 	file_name = "./" + file_name;
-
 	ParquetContext* pc = new ParquetContext(50);
 	ASSERT_FALSE(pc->SetMemoryLocation<int64_t>(file, "data"));
 

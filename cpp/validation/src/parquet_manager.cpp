@@ -191,9 +191,28 @@ bool ParquetManager::GetNextRGBool(int col, std::vector<uint8_t>& data,
 		if (data.size() < size)
 			data.resize(size);
 
-		for (int i = 0; i < size; i++)
+		int null_count = data_array.null_count();
+
+		if (null_count > 0)
 		{
-			data[i] = data_array.Value(i);
+			for (int i = 0; i < size; i++)
+			{
+				data[i] = data_array.Value(i);
+				// Arrow doesn't insert consistent
+				// data when a row is NULL
+				// The value in that row is overridden
+				// for this reason to ensure comparisons match
+				// later on down the road
+				if (data_array.IsNull(i))
+					data[i] = NULL;
+			}
+		}
+		else
+		{
+			for (int i = 0; i < size; i++)
+			{
+				data[i] = data_array.Value(i);
+			}
 		}
 	}
 
@@ -246,6 +265,11 @@ bool ParquetManager::GetNextRGString(int col, std::vector<std::string>& data,
 		if (data.size() < size)
 			data.resize(size);
 
+		// Unlike other data types arrow
+		// seems to insert null values consistently
+		// into string fields, null value
+		// override was not necessary for 
+		// strings
 		for (int i = 0; i < size; i++)
 		{
 			data[i] = data_array.GetString(i);
