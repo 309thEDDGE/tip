@@ -22,6 +22,7 @@ conf/*.conf~
 !cpp/**
 cpp/CMakeFiles
 cpp/*.a
+cpp/*.cmake
 !misc
 !misc/**
 !tip_scripts
