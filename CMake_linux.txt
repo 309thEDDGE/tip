@@ -191,3 +191,22 @@ get_filename_component(irig_path "${deps_dir}/${irig_dir_name}" ABSOLUTE)
 set(irig_inc_dir ${irig_path}/include)
 set(irig_lib_dir ${irig_path}/lib)
 set(irig_lib_name ${irig_lib_dir}/libirig106.a)
+
+#########################################################
+#                   libtins Paths
+#########################################################
+set(tins_dir_name "tins")
+set(tins_path "${deps_dir}/${tins_dir_name}")
+set(tins_inc_dir ${tins_path}/include)
+set(tins_lib_dir ${tins_path}/lib)
+set(tins_lib_name ${tins_lib_dir}/libtins.a)
+
+# pcap necessary to link for libtins
+set(pcap_dir_name "pcap")
+set(pcap_path ${deps_dir}/${pcap_dir_name})
+set(pcap_inc_dir ${pcap_path}/include)
+set(pcap_lib_dir ${pcap_path}/lib)
+set(pcap_lib_name ${pcap_lib_dir}/libpcap.a)
+
+set(all_tins_incs ${tins_inc_dir} ${pcap_inc_dir})
+set(all_tins_libs ${tins_lib_name} ${pcap_lib_name})
