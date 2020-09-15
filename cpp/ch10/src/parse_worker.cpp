@@ -127,7 +127,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		milstd->set_channelid_remoteaddress_output(&chanid_remoteaddr1_map, &chanid_remoteaddr2_map);
 #ifdef VIDEO_DATA
 		printf("\n(%03u) ParseWorker parsing VIDEO\n", id);
-		video = new Ch10VideoDataF0(bb, id, tdata, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
+		video = new Ch10VideoDataF0(bb, id, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
 #endif
 		delete_alloc = true;
 	}
@@ -408,7 +408,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		milstd->set_channelid_remoteaddress_output(&chanid_remoteaddr1_map, &chanid_remoteaddr2_map);
 #ifdef VIDEO_DATA
 		printf("\n(%03u) ParseWorker parsing video packets\n", id);
-		video = new Ch10VideoDataF0(bb, id, tdata, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
+		video = new Ch10VideoDataF0(bb, id, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
 #endif
 #ifdef ETHERNET_DATA
 		printf("\n(%03hu) ParseWorker parsing Ethernet packets\n", id);
