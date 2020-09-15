@@ -55,7 +55,8 @@ protected:
 		}
 	
 		std::filesystem::path pqt_path(directory);
-		pqt_path = pqt_path / std::filesystem::path(std::to_string(pq_file_count) + std::string(".parquet"));
+		pqt_path = pqt_path / std::filesystem::path(
+			std::to_string(pq_file_count) + std::string(".parquet"));
 		std::string path = pqt_path.string();
 
 		ParquetContext pc(row_group_count);
