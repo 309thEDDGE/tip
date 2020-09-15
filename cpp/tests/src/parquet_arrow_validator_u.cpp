@@ -881,7 +881,7 @@ TEST_F(ParquetArrowValidatorTest, ParquetManagerCompareListMatchUint16)
 
 	std::string dirname1 = "file1.parquet";
 	ASSERT_TRUE(CreateParquetFile(dirname1, data1, 3, 5));
-	/* ASSERT_TRUE(CreateParquetFile(dirname1, data2, 2, 5));
+	ASSERT_TRUE(CreateParquetFile(dirname1, data2, 2, 5));
 
 	std::string dirname2 = "file2.parquet";
 	ASSERT_TRUE(CreateParquetFile(dirname2, data1, 3, 5));
@@ -891,7 +891,7 @@ TEST_F(ParquetArrowValidatorTest, ParquetManagerCompareListMatchUint16)
 
 	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
 	EXPECT_TRUE(comp.CompareColumn(1));
-	EXPECT_EQ(comp.GetComparedCount(1), 35); */
+	EXPECT_EQ(comp.GetComparedCount(1), 35);
 }
 
 TEST_F(ParquetArrowValidatorTest, ParquetManagerCompareListMisMatchUint16)
