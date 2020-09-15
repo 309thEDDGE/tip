@@ -49,6 +49,8 @@ BZIP2_VERSION=bzip2-1.0.8
 GOOGLE_TEST_VERSION=googletest-release-1.8.1
 YAML_CPP_VERSION=yaml-cpp-yaml-cpp-0.6.3
 LIBIRIG106_VERSION=libirig106-master
+PCAP_VERSION=libpcap-1.9.1
+TINS_VERSION=libtins-4.2
 
 # location of arrow test data
 PARQUET_TEST_DATA_SOURCE_PATH=$VENDOR/parquet-testing-master
@@ -95,6 +97,8 @@ test -d $BISON_VERSION || ( echo extracting Bison ; tar -xzf "$BISON_VERSION.tar
 test -d $FLEX_VERSION || ( echo extracting Flex ; tar -xzf "$FLEX_VERSION.tar.gz" )
 test -d $GOOGLE_TEST_VERSION || (echo extracting gtest ; tar -xzf "$GOOGLE_TEST_VERSION.tar.gz")
 test -d $YAML_CPP_VERSION || (echo extracting yaml-cpp ; tar -xzf "$YAML_CPP_VERSION.tar.gz")
+test -d $PCAP_VERSION || (echo extracting pcap ; tar -xzf "$PCAP_VERSION.tar.gz" )
+test -d $TINS_VERSION || (echo extracting tins ; tar -xzf "$TINS_VERSION.tar.gz" )
 if [ ! -d $LIBIRIG106_VERSION ] ; then
 	echo "extracting libirig106"
 	# extract either .tar.gz or .zip file
@@ -106,6 +110,10 @@ fi
 #
 #
 
+#
+# Install m4
+# m4 is required to build flex and pcap
+which m4 >& /dev/null || dnf -y install m4
 
 #
 # Build and install flex
@@ -125,8 +133,6 @@ if [[ -f $FLEX_EXECUTABLE ]] ; then
 else
 	# build and install flex
 	echo "Building Flex"
-	# Install m4; m4 is required to build flex
-	which m4 >& /dev/null || dnf -y install m4
 	./configure
 	make # must use regular make command (not ninja)
 	make install
@@ -217,10 +223,6 @@ else
 	$MAKE
 fi
 
-# test arrow
-echo
-echo Running Arrow tests
-
 #
 # Build gtest
 #
@@ -259,6 +261,36 @@ mkdir -p $LIBIRIG106_LIB ; cd $LIBIRIG106_LIB
 echo Building libirig106
 cd $VENDOR/$LIBIRIG106_VERSION
 make # must use regular make
+
+#
+# Build PCAP
+#
+
+PCAP_LIB=$VENDOR/$PCAP_VERSION/build
+PCAP_INCLUDE=$VENDOR/$PCAP_VERSION
+mkdir -p $PCAP_LIB
+echo "Building pcap"
+cd $VENDOR/$PCAP_VERSION
+mkdir -p build ; cd build
+$CMAKE ..
+$MAKE
+
+#
+# Build TINS
+#
+
+TINS_LIB=$VENDOR/$TINS_VERSION/build/lib
+TINS_INCLUDE=$VENDOR/$TINS_VERSION/include
+mkdir -p $TINS_LIB
+echo "Building tins"
+cd $VENDOR/$TINS_VERSION
+mkdir -p build ; cd build
+$CMAKE -DLIBTINS_ENABLE_CXX11=1 \
+	-DLIBTINS_BUILD_SHARED=0 \
+	-DPCAP_LIBRARY=$PCAP_LIB/libpcap.a \
+	-DPCAP_INCLUDE_DIR=$PCAP_INCLUDE \
+	..
+$MAKE
 
 #
 # Gather dependencies into one folder
@@ -307,6 +339,26 @@ find . -type f -name \*.h -exec install -D {} $LIBIRIG106_INC_DEST/{} \;
 cd $LIBIRIG106_LIB
 find . -type f -name \*.a -exec install -D {} $LIBIRIG106_LIB_DEST/{} \;
 
+echo "...pcap"
+PCAP_INCLUDE_DEST=$TIP_DEPS_DIR/pcap/include
+PCAP_LIB_DEST=$TIP_DEPS_DIR/pcap/lib
+mkdir -p $PCAP_INCLUDE_DEST
+cd $PCAP_INCLUDE
+find . -type f -name \*.h -exec install -D {} $PCAP_INCLUDE_DEST/{} \;
+mkdir -p $PCAP_LIB_DEST
+cd $PCAP_LIB
+find . -type f -name \*.a -exec install -D {} $PCAP_LIB_DEST/{} \;
+
+echo ...tins
+TINS_INCLUDE_DEST=$TIP_DEPS_DIR/tins/include
+TINS_LIB_DEST=$TIP_DEPS_DIR/tins/lib
+mkdir -p $TINS_INCLUDE_DEST
+cd $TINS_INCLUDE
+find . -type f -name \*.h -exec install -D {} $TINS_INCLUDE_DEST/{} \;
+mkdir -p $TINS_LIB_DEST
+cd $TINS_LIB
+find . -type f -name \*.a -exec install -D {} $TINS_LIB_DEST/{} \;
+
 echo "...arrow include files"
 # Arrow include files are in cpp/src and cpp/build/src
 # (some are built by cmake)
@@ -341,6 +393,7 @@ ARROW_LIB_DEST=$TIP_DEPS_DIR/arrow_library_dependencies/lib
 
 mkdir -p $TIP_DEPS_DIR/arrow_library_dependencies/lib
 cp -f $ARROW_LIBRARIES $TIP_DEPS_DIR/arrow_library_dependencies/lib
+
 
 #
 # Cache built dependencies

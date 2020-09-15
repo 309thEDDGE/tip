@@ -54,27 +54,31 @@ protected:
 			}
 		}
 	
-
 		std::filesystem::path pqt_path(directory);
-		pqt_path = pqt_path / (std::to_string(pq_file_count) + ".parquet");
+		pqt_path = pqt_path / std::filesystem::path(
+			std::to_string(pq_file_count) + std::string(".parquet"));
 		std::string path = pqt_path.string();
 
-		ParquetContext* pc = new ParquetContext(row_group_count);
+		ParquetContext pc(row_group_count);
 		
 		// Add each vector as a column
 		for (int i = 0; i < output.size(); i++)
 		{
-			pc->AddField(type, "data" + std::to_string(i));
-			pc->SetMemoryLocation<T>(output[i], "data" + std::to_string(i), bool_fields);
+			pc.AddField(type, "data" + std::to_string(i));
+			pc.SetMemoryLocation<T>(output[i], "data" + std::to_string(i), bool_fields);
 		}
 
 		// Assume each vector is of the same size
 		int row_size = output[0].size();
 
-		pc->OpenForWrite(path, true);
+		if(!pc.OpenForWrite(path, true))
+		{
+			printf("failed to open parquet path %s\n", path.c_str());
+			return false;
+		}
 		for (int i = 0; i < row_size / row_group_count; i++)
 		{
-			pc->WriteColumns(row_group_count, i * row_group_count);
+			pc.WriteColumns(row_group_count, i * row_group_count);
 		}
 
 		// The the remaider rows if row_group_count is 
@@ -82,21 +86,20 @@ protected:
 		int remainder = row_size % row_group_count;
 		if (remainder > 0)
 		{
-			pc->WriteColumns(remainder,
+			pc.WriteColumns(remainder,
 				(row_size / row_group_count) * row_group_count);
 		}
 		
 		
-		pc->Close();
+		pc.Close();
 		pq_files.push_back(path);
 		pq_directories.push_back(directory);
-		delete pc;
 		pq_file_count++;
 		return true;
 	}
 
 	// Create parquet file with one list column
-	bool CreateParquetFile(std::string directory, std::vector<uint16_t> output, 
+	bool CreateParquetFile(std::string directory, std::vector<uint16_t>& output, 
 		int row_group_count, int list_size)
 	{
 
@@ -109,42 +112,47 @@ protected:
 			}
 		}
 
-
 		std::filesystem::path pqt_path(directory);
-		pqt_path = pqt_path / (std::to_string(pq_file_count) + ".parquet");
+		pqt_path = pqt_path / std::filesystem::path(
+			std::to_string(pq_file_count) + std::string(".parquet"));
 
 		std::string path = pqt_path.string();
 
-		ParquetContext* pc = new ParquetContext(row_group_count);
+		ParquetContext pc(row_group_count);
 
 		// Add the vector as a list column
-		pc->AddField(arrow::int32(), "data", list_size);
-		pc->SetMemoryLocation<uint16_t>(output, "data");
-
+		pc.AddField(arrow::int32(), "data", list_size);
+		pc.SetMemoryLocation<uint16_t>(output, "data");
 
 		// Assume each vector is of the same size
-		int row_size = output.size()/list_size;
-
-		pc->OpenForWrite(path, true);
-		for (int i = 0; i < row_size / row_group_count; i++)
+		int row_count = output.size()/list_size;
+		if(!pc.OpenForWrite(path, true))
 		{
-			pc->WriteColumns(row_group_count, i * row_group_count);
+			printf("failed to open parquet path %s\n", path.c_str());
+			return false;
+		}
+		
+		int tot_row_groups = row_count / row_group_count;
+		for (int i = 0; i < tot_row_groups; i++)
+		{
+			printf("in here?\n");
+			pc.WriteColumns(row_group_count, i * row_group_count);
 		}
 
 		// The the remaider rows if row_group_count is 
 		// not a multiple of the array size
-		int remainder = row_size % row_group_count;
+		int remainder = row_count % row_group_count;
+		int offset = tot_row_groups * row_group_count;
 		if (remainder > 0)
 		{
-			pc->WriteColumns(remainder,
-				(row_size / row_group_count) * row_group_count);
+			pc.WriteColumns(remainder, offset);
 		}
 
-		pc->Close();
+		pc.Close();
 		pq_files.push_back(path);
 		pq_directories.push_back(directory);
-		delete pc;
 		pq_file_count++;
+		return true;
 	}
 };
 
@@ -862,8 +870,12 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareTwoDifferentDataTypes)
 TEST_F(ParquetArrowValidatorTest, ParquetManagerCompareListMatchUint16)
 {
 	int size;
+	
+	// 10 values
 	std::vector<uint16_t> data1 = 
 	{ 1,5,1,9,1, 2,5,2,8,2 };
+	
+	// 35 values
 	std::vector<uint16_t> data2 = 
 	{ 3,3,3,3,3, 4,4,4,4,4, 5,5,5,5,5, 6,6,6,6,6, 7,7,7,7,7 };
 
