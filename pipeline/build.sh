@@ -2,8 +2,8 @@
 # When running from docker, the tip folder is mounted as /app
 test -d /app/cpp && cd /app # if /app/cpp exists cd to /app
 BASE_DIR=$PWD
-BUILD_DIR=$PWD/build
-DEPS_DIR=$BUILD_DIR/deps
+BUILD_DIR=$BASE_DIR/build-tip
+DEPS_DIR=$BASE_DIR/deps
 THIRD_PARTY=$BASE_DIR/vendor
 
 
@@ -30,6 +30,7 @@ trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
 ######################
 mkdir -p $DEPS_DIR
+echo $BUILD_DIR ; ls -lt $BUILD_DIR
 echo $DEPS_DIR ; ls -lt $DEPS_DIR
 echo $THIRD_PARTY ; ls -lt $THIRD_PARTY
 ######################
@@ -55,16 +56,19 @@ else
 	echo "Extracting cached dependencies"
 	mkdir -p $BUILD_DIR ; cd $BUILD_DIR
 	rm -rf $DEPS_DIR
-	tar xf $THIRD_PARTY/deps.tar.gz
+	cp $THIRD_PARTY/deps.tar.gz .
+	tar xf ./deps.tar.gz
 fi
 
 echo "Running '$CMAKE' for TIP"
-mkdir -p $BUILD_DIR ; cd $BUILD_DIR
+cd $BUILD_DIR
 $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
 echo "Running '$MAKE' for TIP"
 $MAKE
 
 ######################
+echo $BUILD_DIR ; ls -lt $BUILD_DIR
 echo $DEPS_DIR ; ls -lt $DEPS_DIR
+echo $THIRD_PARTY ; ls -lt $THIRD_PARTY
 ######################
