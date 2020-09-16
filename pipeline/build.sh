@@ -26,6 +26,13 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
 trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
+mkdir -p build ; cd build
+touch one
+ls -last
+find . -name \*.a
+
+exit 0
+
 echo -n "Checking for ninja..."
 if [ -f /usr/local/bin/ninja ] ; then
 	echo "yes"
