@@ -103,14 +103,14 @@ set(irig_lib_name ${irig_lib_dir}/irig106.lib)
 #                   libtins Paths
 #########################################################
 set(tins_dir_name "libtins")
-get_filename_component(tins_path "${deps_name}/${tins_dir_name}" ABSOLUTE)
+set(tins_path "${deps_dir}/${tins_dir_name}")
 set(tins_inc_dir ${tins_path}/include)
 set(tins_lib_dir ${tins_path}/lib)
 set(tins_lib_name ${tins_lib_dir}/tins.lib)
 
 # pcap necessary to link for libtins
 set(pcap_dir_name "npcap")
-get_filename_component(pcap_path "${deps_name}/${pcap_dir_name}" ABSOLUTE)
+set(pcap_path "${deps_dir}/${pcap_dir_name}")
 set(pcap_inc_dir ${pcap_path}/include)
 set(pcap_lib_dir ${pcap_path}/lib/x64)
 set(pcap_lib_name ${pcap_lib_dir}/wpcap.lib ${pcap_lib_dir}/Packet.lib)
