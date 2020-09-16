@@ -39,7 +39,7 @@ TEST_F(ParserConfigParamsTest, NonexistantFile)
 TEST_F(ParserConfigParamsTest, ValidEntries)
 {
 	uint64_t thread_count_estimate = std::thread::hardware_concurrency();
-	file << "parse_chunk_bytes : 100\n";
+	file << "parse_chunk_bytes : 150\n";
 	file << "parse_thread_count : " << thread_count_estimate << "\n";
 	file << "max_chunk_read_count : 5\n";
 	file << "worker_offset_wait_ms : 200\n";
@@ -49,7 +49,7 @@ TEST_F(ParserConfigParamsTest, ValidEntries)
 	bool status = config.Initialize(filepath);
 
 	ASSERT_TRUE(status);
-	ASSERT_EQ(config.parse_chunk_bytes_, 100);
+	ASSERT_EQ(config.parse_chunk_bytes_, 150);
 	ASSERT_EQ(config.parse_thread_count_, thread_count_estimate);
 	ASSERT_EQ(config.max_chunk_read_count_, 5);
 	ASSERT_EQ(config.worker_offset_wait_ms_, 200);
