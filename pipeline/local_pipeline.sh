@@ -10,4 +10,4 @@ fi
 
 # Start bash in a container based on the docker image used for the pipeline
 docker run -it --rm -v $PWD:/app $IMAGE bash /app/pipeline/build.sh \
-	&& docker run -it --rm -v $PWD:/app $IMAGE /app/build/cpp/tests
+	&& docker run -it --rm -v $PWD:/app $IMAGE /app/build/build-tip/cpp/tests

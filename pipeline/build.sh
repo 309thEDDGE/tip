@@ -2,8 +2,8 @@
 # When running from docker, the tip folder is mounted as /app
 test -d /app/cpp && cd /app # if /app/cpp exists cd to /app
 BASE_DIR=$PWD
-BUILD_DIR=$BASE_DIR/build-tip
-DEPS_DIR=$BASE_DIR/deps
+BUILD_DIR=$BASE_DIR/build/build-tip
+DEPS_DIR=$BASE_DIR/build/deps
 THIRD_PARTY=$BASE_DIR/vendor
 
 
@@ -62,7 +62,7 @@ fi
 
 echo "Running '$CMAKE' for TIP"
 cd $BUILD_DIR
-$CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
+$CMAKE -DLIBIRIG106=ON -DVIDEO=ON ../..
 
 echo "Running '$MAKE' for TIP"
 $MAKE
