@@ -31,10 +31,14 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
 ######################
+##TEMP:### remove old files
+cd $BASE_DIR/build
+rm -rf cpp CMake* cmake* *.ninja one two 
 mkdir -p $DEPS_DIR $BUILD_DIR
 echo $THIRD_PARTY ; ls -lt $THIRD_PARTY
 echo $BASE_DIR ; ls -lt $BASE_DIR
-echo $BUILD_DIR ; ls -ltR $BASE_DIR/build
+echo $BASE_DIR/build ; ls -lt $BASE_DIR/build
+ls -ltR $DEPS_DIR
 exit 0
 ######################
 
