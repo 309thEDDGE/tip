@@ -30,8 +30,8 @@ trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
 ######################
 mkdir -p $DEPS_DIR
-ls -lt $DEPS_DIR
-ls -lt $THIRD_PARTY
+echo $DEPS_DIR ; ls -lt $DEPS_DIR
+echo $THIRD_PARTY ; ls -lt $THIRD_PARTY
 ######################
 
 echo -n "Checking for ninja..."
@@ -51,18 +51,20 @@ if [ -f $DEPS_DIR/arrow_library_dependencies/lib/libarrow.a ] ; then
 else
 	echo "libarrow.a not found; building dependencies"
 	bash $THIRD_PARTY/build.sh
+	
+	echo "Extracting cached dependencies"
+	mkdir -p $BUILD_DIR ; cd $BUILD_DIR
 	rm -rf $DEPS_DIR
 	tar xf $THIRD_PARTY/deps.tar.gz
 fi
 
 echo "Running '$CMAKE' for TIP"
-mkdir -p $BUILD_DIR
-cd $BUILD_DIR
+mkdir -p $BUILD_DIR ; cd $BUILD_DIR
 $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
 echo "Running '$MAKE' for TIP"
 $MAKE
 
 ######################
-ls -lt $DEPS_DIR
+echo $DEPS_DIR ; ls -lt $DEPS_DIR
 ######################
