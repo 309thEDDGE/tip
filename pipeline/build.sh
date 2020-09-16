@@ -3,6 +3,8 @@
 test -d /app/cpp && cd /app # if /app/cpp exists cd to /app
 BASE_DIR=$PWD
 BUILD_DIR=$PWD/build
+DEPS_DIR=$BUILD_DIR/deps
+THIRD_PARTY=$BASE_DIR/vendor
 
 
 # custom build command which will run in the pipeline
@@ -26,12 +28,11 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
 trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
-mkdir -p $BUILD_DIR ; cd $BUILD_DIR ; pwd
-rm -f one two
-ls -lt $BUILD_DIR
-ls -lt vendor/deps
-cd $BASE_DIR
-exit 0
+######################
+mkdir -p $DEPS_DIR
+ls -lt $DEPS_DIR
+ls -lt $THIRD_PARTY
+######################
 
 echo -n "Checking for ninja..."
 if [ -f /usr/local/bin/ninja ] ; then
@@ -45,13 +46,13 @@ else
 fi
 
 echo -n "Checking for dependencies..."
-if [ -f deps/arrow_library_dependencies/lib/libarrow.a ] ; then 
-	echo "found deps/arrow_library_dependencies/lib/libarrow.a"
+if [ -f $DEPS_DIR/arrow_library_dependencies/lib/libarrow.a ] ; then 
+	echo "found $DEPS_DIR/arrow_library_dependencies/lib/libarrow.a"
 else
 	echo "libarrow.a not found; building dependencies"
-	bash vendor/build.sh
-	rm -rf $BASE_DIR/deps
-	tar xf $BASE_DIR/vendor/deps.tar.gz
+	bash $THIRD_PARTY/build.sh
+	rm -rf $DEPS_DIR
+	tar xf $THIRD_PARTY/deps.tar.gz
 fi
 
 echo "Running '$CMAKE' for TIP"
@@ -61,3 +62,7 @@ $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
 echo "Running '$MAKE' for TIP"
 $MAKE
+
+######################
+ls -lt $DEPS_DIR
+######################
