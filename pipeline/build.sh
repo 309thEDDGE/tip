@@ -27,10 +27,11 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
 mkdir -p $BUILD_DIR ; cd $BUILD_DIR ; pwd
-touch two
-ls -last
-find . -name \*.a
+rm -f one two
+ls -lt $BUILD_DIR
+ls -lt vendor/deps
 cd $BASE_DIR
+exit 0
 
 echo -n "Checking for ninja..."
 if [ -f /usr/local/bin/ninja ] ; then
