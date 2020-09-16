@@ -20,7 +20,9 @@ THIRD_PARTY=$BASE_DIR/vendor
 #   make -j ${CMAKE_BUILD_TARGETS} ${CMAKE_BUILD_ARGS} VERBOSE=1
 
 # exit when any command fails
-set -e
+#################################
+###########################set -e
+#################################
 
 
 # keep track of the last executed command
@@ -30,9 +32,10 @@ trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
 ######################
 mkdir -p $DEPS_DIR $BUILD_DIR
-echo $BUILD_DIR ; ls -lt $BUILD_DIR
-echo $DEPS_DIR ; ls -lt $DEPS_DIR
 echo $THIRD_PARTY ; ls -lt $THIRD_PARTY
+echo $BASE_DIR ; ls -lt $BASE_DIR
+echo $BUILD_DIR ; ls -ltR $BASE_DIR/build
+exit 0
 ######################
 
 echo -n "Checking for ninja..."
@@ -68,7 +71,6 @@ echo "Running '$MAKE' for TIP"
 $MAKE
 
 ######################
-echo $BUILD_DIR ; ls -lt $BUILD_DIR
-echo $DEPS_DIR ; ls -lt $DEPS_DIR
-echo $THIRD_PARTY ; ls -lt $THIRD_PARTY
+echo $BASE_DIR ; ls -lt $BASE_DIR
+echo $BUILD_DIR ; ls -ltR $BASE_DIR/build
 ######################

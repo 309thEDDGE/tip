@@ -108,9 +108,6 @@ if [ ! -d $LIBIRIG106_VERSION ] ; then
 fi
 
 #
-#
-
-#
 # Install m4
 # m4 is required to build flex and pcap
 which m4 >& /dev/null || dnf -y install m4
@@ -133,7 +130,7 @@ if [[ -f $FLEX_EXECUTABLE ]] ; then
 else
 	# build and install flex
 	echo "Building Flex"
-	./configure
+	./configure -C
 	make # must use regular make command (not ninja)
 	make install
 fi
@@ -156,7 +153,7 @@ if [[ -f $BISON_EXECUTABLE ]] ; then
 else
 	# build and install bison
 	echo "Building Bison"
-	./configure
+	./configure -C
 	make # must use regular make command
 	make install
 fi
