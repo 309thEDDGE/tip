@@ -78,7 +78,7 @@ echo "Running '$MAKE' for TIP"
 $MAKE
 
 # Define CMAKE_BUILD_DIR for use by tests
-CMAKE_BUILD_DIR=$BUILD_DIR/cpp
+export CMAKE_BUILD_DIR=$BUILD_DIR/cpp
 
 ######################
 echo $BASE_DIR ; ls -lt $BASE_DIR
