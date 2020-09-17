@@ -30,7 +30,7 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
 trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
-######################
+#########################
 mkdir -p $DEPS_DIR $BUILD_DIR
 echo $THIRD_PARTY ; ls -lt $THIRD_PARTY
 echo $BASE_DIR ; ls -lt $BASE_DIR
