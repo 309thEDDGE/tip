@@ -321,7 +321,8 @@ if(build_tests)
               ${linux_libs})
 
     # For Ctest
-    include(CTest)
+    #include(CTest)
+    enable_testing()
     
     # For gtest_discover_tests
     include(GoogleTest)

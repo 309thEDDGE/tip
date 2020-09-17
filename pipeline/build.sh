@@ -77,13 +77,9 @@ $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ../..
 echo "Running '$MAKE' for TIP"
 $MAKE
 
-# Define CMAKE_BUILD_DIR for use by tests
-export CMAKE_BUILD_DIR=$BUILD_DIR/cpp
-
 ######################
 echo $BASE_DIR ; ls -lt $BASE_DIR
 echo $BASE_DIR/build ; ls -lt $BASE_DIR/build
 echo $BUILD_DIR ; ls -lt $BUILD_DIR
-ls -ltR $DEPS_DIR
 echo $CMAKE_BUILD_DIR ; ls -lt $CMAKE_BUILD_DIR
 ######################
