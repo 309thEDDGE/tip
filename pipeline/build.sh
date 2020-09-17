@@ -58,12 +58,16 @@ else
 	bash $THIRD_PARTY/build.sh
 	
 	echo "Extracting cached dependencies"
-	mkdir -p $BUILD_DIR ; cd $BUILD_DIR
-	rm -rf $DEPS_DIR
+	#mkdir -p $BUILD_DIR ; cd $BUILD_DIR
+	#rm -rf $DEPS_DIR
 	#cp $THIRD_PARTY/deps.tar.gz .
 	#tar xf ./deps.tar.gz
-	cp $THIRD_PARTY/deps.tar.gz $BASE_DIR/build
-	tar xf $BASE_DIR/build/deps.tar.gz
+	mkdir -p $BUILD_DIR
+	cd $BASE_DIR/build
+	rm -rf $DEPS_DIR
+	cp $THIRD_PARTY/deps.tar.gz .
+	tar xf deps.tar.gz
+	cd $BUILD_DIR
 fi
 
 echo "Running '$CMAKE' for TIP"
