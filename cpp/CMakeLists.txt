@@ -319,6 +319,12 @@ if(build_tests)
                           ${pqctx_lib_name}
                           ${comp_lib_name}
               ${linux_libs})
+    
+    # For gtest_discover_tests
+    include(GoogleTest)
+
+    # Create ctest executable
+    gtest_discover_tests(${test_exe_name})
 endif()
 
 #########################################################
@@ -376,3 +382,4 @@ if(video_data)
     install(TARGETS ${video_exe_name}
             DESTINATION ${out_bin_dir})
 endif()
+
