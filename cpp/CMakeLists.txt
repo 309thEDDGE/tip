@@ -319,6 +319,9 @@ if(build_tests)
                           ${pqctx_lib_name}
                           ${comp_lib_name}
               ${linux_libs})
+
+    # For Ctest
+    include(CTest)
     
     # For gtest_discover_tests
     include(GoogleTest)

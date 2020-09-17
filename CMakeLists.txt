@@ -16,8 +16,6 @@ project(TIP
 set(CMAKE_PLATFORM_INDEPENDENT_CODE ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE true)
 
-
-
 #########################################################
 #                      Build Options
 #########################################################
@@ -89,7 +87,7 @@ endif()
 get_filename_component(deps_dir "../deps" ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 message(STATUS "Dependencies dir: " ${deps_dir})
 
-if(NOT CMAKE_BUILD_TYPE)
+if(NOT DEFINED CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
     message(STATUS "Not defined: Defining cmake_build_type: " ${CMAKE_BUILD_TYPE})
 elseif("${CMAKE_BUILD_TYPE}" MATCHES "")
