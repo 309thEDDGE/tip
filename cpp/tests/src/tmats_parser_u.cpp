@@ -84,6 +84,8 @@ TEST(CodeNameTest, RegexCorrect)
     CodeName *c = new CodeName(R"(R-x\DSI-n)");
 
     EXPECT_EQ("R-([0-9]+)\\\\DSI-([0-9]+)", c->regex_string);
+
+    delete c;
 }
 
 
@@ -100,6 +102,8 @@ TEST(TMATSParserTest, MapAttrsMatchesGroups)
     result = parser->MapAttrs("R-x\\DSI-n", "R-x\\TK1-n");
 
     EXPECT_EQ(expected, result);
+
+    delete parser;
 }
 
 
@@ -116,6 +120,8 @@ TEST(TMATSParserTest, MapAttrsSkipsMismatch)
     result = parser->MapAttrs("R-x\\DSI-n", "R-x\\TK1-n");
 
     EXPECT_EQ(expected, result);
+
+    delete parser;
 }
 
 
@@ -131,4 +137,6 @@ TEST(TMATSParserTest, MapAttrs3Subattrs)
     result = parser->MapAttrs("R-x\\ASN-n-m", "R-x\\ANM-n-m");
 
     EXPECT_EQ(expected, result);
+
+    delete parser;
 }

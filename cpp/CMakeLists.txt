@@ -200,27 +200,14 @@ target_link_libraries(${comp_lib_name} PUBLIC ${linux_libs})
 target_compile_features(${comp_lib_name} PUBLIC cxx_std_17)
 
 #########################################################
-#                   Install Libs
-#########################################################
-install(TARGETS ${util_lib_name} 
-                ${tmats_lib_name}
-                ${pqctx_lib_name} 
-                ${ch10pq_lib_name} 
-                ${trans_lib_name}
-                ${metadata_lib_name} 
-                ${comp_lib_name}
-                ${eth_lib_name}
-        DESTINATION ${out_lib_dir}
-)
-
-#########################################################
-#                Build/link ch10parse Exe
+#                Build/link ch10parse Lib
 #########################################################
 set(ch10parse_exe_name "tip_parse")
 if(video_data)
     set(ch10parse_exe_name "tip_parse_video")
 endif()
 
+set(ch10parse_lib_name "ch10parse_lib")
 set(temp_irig_lib_name "")
 set(temp_irig_inc_dir "")
 set(parse_ethernet_src "")
@@ -239,8 +226,7 @@ if(libirig106)
     endif()
 endif()
 
-message(STATUS "Building exe: " "${ch10parse_exe_name}")
-add_executable(${ch10parse_exe_name} ${ch10_main_dir}/ch10parse.cpp
+add_library(${ch10parse_lib_name} 
     ${ch10_inc_dir}/ch10.h ${ch10_inc_dir}/ch10_milstd1553f1.h ${ch10_inc_dir}/ch10_milstd1553f1stats.h
     ${ch10_inc_dir}/ch10_packet_header.h ${ch10_inc_dir}/ch10_packet_header_format.h
     ${ch10_inc_dir}/ch10_packet_stats.h ${ch10_inc_dir}/ch10_tdf1.h ${ch10_inc_dir}/ch10_videodataf0.h
@@ -253,14 +239,14 @@ add_executable(${ch10parse_exe_name} ${ch10_main_dir}/ch10parse.cpp
     ${ch10_src_dir}/parse_worker.cpp
     ${parse_ethernet_src}
     )
-target_include_directories(${ch10parse_exe_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
+target_include_directories(${ch10parse_lib_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
                             ${metadata_inc_dir} ${tmats_inc_dir}
                             ${temp_irig_inc_dir} ${temp_eth_inc_dir}
                             )
-target_compile_features(${ch10parse_exe_name} PUBLIC cxx_std_17)
+target_compile_features(${ch10parse_lib_name} PUBLIC cxx_std_17)
 
-target_link_libraries(${ch10parse_exe_name} 
+target_link_libraries(${ch10parse_lib_name} PUBLIC
                         #${util_lib_name}
                         ${tmats_lib_name}
                         #${pqctx_lib_name}
@@ -271,6 +257,45 @@ target_link_libraries(${ch10parse_exe_name}
                         ${temp_irig_lib_name}
                         ${temp_tins_libs}
                         ${temp_eth_lib_name}
+    )
+
+#########################################################
+#                   Install Libs
+#########################################################
+install(TARGETS ${util_lib_name} 
+                ${tmats_lib_name}
+                ${pqctx_lib_name} 
+                ${ch10pq_lib_name} 
+                ${trans_lib_name}
+                ${metadata_lib_name} 
+                ${comp_lib_name}
+                ${eth_lib_name}
+                ${ch10parse_lib_name}
+        DESTINATION ${out_lib_dir}
+)
+
+
+#########################################################
+#                Build/link ch10parse exe
+#########################################################
+set(ch10parse_exe_name "tip_parse")
+if(video_data)
+    set(ch10parse_exe_name "tip_parse_video")
+endif()
+
+message(STATUS "Building exe: " "${ch10parse_exe_name}")
+add_executable(${ch10parse_exe_name} ${ch10_main_dir}/ch10parse.cpp
+    )
+target_include_directories(${ch10parse_exe_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
+                            ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
+                            ${metadata_inc_dir} ${tmats_inc_dir}
+                            ${temp_irig_inc_dir} ${temp_eth_inc_dir}
+                            )
+target_compile_features(${ch10parse_exe_name} PUBLIC cxx_std_17)
+
+target_link_libraries(${ch10parse_exe_name} ${ch10parse_lib_name}
+                        
+
     )
 
 #########################################################
@@ -309,9 +334,11 @@ if(build_tests)
                    ${test_src_dir}/user_input_u.cpp ${test_src_dir}/yaml_reader_u.cpp
                    ${test_src_dir}/binbuff_u.cpp ${test_src_dir}/parse_context_u.cpp
                    ${test_src_dir}/parquet_arrow_validator_u.cpp ${test_src_dir}/parquet_context_u.cpp
-                   ${test_src_dir}/tmats_parser_u.cpp ${test_src_dir}/metadata_u.cpp)
+                   ${test_src_dir}/tmats_parser_u.cpp ${test_src_dir}/metadata_u.cpp 
+                   ${test_src_dir}/parse_manager_u.cpp)
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
-                               ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} ${comp_inc_dir})
+                               ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
+                               ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} )
     target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
     target_link_libraries(${test_exe_name}
                           ${gsuite_libs}
@@ -319,6 +346,7 @@ if(build_tests)
                           ${trans_lib_name}
                           ${pqctx_lib_name}
                           ${comp_lib_name}
+                          ${ch10parse_lib_name}
               ${linux_libs})
 endif()
 

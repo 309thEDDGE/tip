@@ -822,9 +822,37 @@ void ParseManager::record_msg_names()
 
 #endif
 
-#ifdef LIBIRIG106
 void ParseManager::ProcessTMATS()
 {
+	// if tmats doesn't exist return
+	if (tmats_body_vec_.size() == 0)
+	{
+		printf("\nNo TMATS Present\n");
+		return;
+	}
 
+	std::string full_TMATS_string;
+	for (int i = 0; i < tmats_body_vec_.size(); i++)
+	{
+		full_TMATS_string += tmats_body_vec_[i];
+	}
+
+	std::filesystem::path path;
+	path = fspath_map[Ch10DataType::MILSTD1553_DATA_F1] /
+		std::filesystem::path("_TMATS.txt");
+	std::ofstream tmats;
+	tmats.open(path.string());
+	if (tmats.good())
+	{
+		printf("\nWriting TMATS to %s\n", path.string().c_str());
+		tmats << full_TMATS_string;
+	}
+
+	tmats.close();
+
+	// Gather TMATs attributes of interest
+	// for metadata
+	TMATSParser tmats_parser = TMATSParser(full_TMATS_string);
+	TMATsChannelIDToSourceMap = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\DSI-n");
+	TMATsChannelIDToTypeMap = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n");
 }
-#endif
