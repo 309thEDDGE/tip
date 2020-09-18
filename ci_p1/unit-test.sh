@@ -6,19 +6,20 @@ pwd
 ls -al
 
 BASE_DIR=${PWD}
-# 
 if [ -z "${CMAKE_BUILD_DIR}" ] ; then 
+	# We are not in the pipeline; set vars for running locally
 	BASE_DIR=/app
 	CMAKE_BUILD_DIR=${BASE_DIR}/build
 	UNITTEST_REPORT_DIR=$BASE_DIR/reports
-else
-	echo "CMAKE_BUILD_DIR preset to '$CMAKE_BUILD_DIR'"
 fi
 TEST_DIR=${CMAKE_BUILD_DIR}/build-tip/cpp
 VENDOR_DIR=${BASE_DIR}/vendor
 
+# For now, run cpp/tests because it is much faster than plain ctest
+# In the future we might have to run ctest in order to get coverage statistics
+# If we do, try to make our tests compatible with the --parallel option of ctest
 cd ${TEST_DIR}
-ctest
+./tests
 cd ${BASE_DIR}
 
 # generate coverage

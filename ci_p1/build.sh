@@ -4,9 +4,11 @@
 # When running from docker, the tip folder is mounted as /app
 test -d /app/cpp && cd /app # if /app/cpp exists cd to /app
 BASE_DIR=$PWD
-BUILD_DIR=$BASE_DIR/build/build-tip
-DEPS_DIR=$BASE_DIR/build/deps
+BUILD_DIR=$BASE_DIR/build
+BUILD_TIP_DIR=$BUILD_DIR/build-tip
+DEPS_DIR=$BUILD_DIR/deps
 THIRD_PARTY=$BASE_DIR/vendor
+TIMESTAMP_FILE=$DEPS_DIR/.timestamp
 
 
 # custom build command which will run in the pipeline
@@ -41,28 +43,25 @@ else
 	MAKE="make -j8"
 fi
 
-echo -n "Checking for dependencies..."
-if [ -f $DEPS_DIR/arrow_library_dependencies/lib/libarrow.a ] ; then 
-	echo "found $DEPS_DIR/arrow_library_dependencies/lib/libarrow.a"
-else
-	echo "libarrow.a not found; building dependencies"
-	bash $THIRD_PARTY/build.sh
-	
-	echo "Extracting cached dependencies"
-	#mkdir -p $BUILD_DIR ; cd $BUILD_DIR
-	#rm -rf $DEPS_DIR
-	#cp $THIRD_PARTY/deps.tar.gz .
-	#tar xf ./deps.tar.gz
-	mkdir -p $BUILD_DIR
-	cd $BASE_DIR/build
+# Check whether newest library is newer than cached dependencies
+# use a timestamp file as a shortcut for speed
+echo -n "Checking for updated dependencies..."
+NEWEST=$(cd $THIRD_PARTY ; ls -1t *.gz *.zip *.bz2 | head -1)
+NEWEST=$THIRD_PARTY/$NEWEST
+if [ $NEWEST -nt $TIMESTAMP_FILE ] ; then 
+	echo "need to rebuild dependencies"
+	cd $THIRD_PARTY
+	./build.sh
 	rm -rf $DEPS_DIR
-	cp $THIRD_PARTY/deps.tar.gz .
-	tar xf deps.tar.gz
-	cd $BUILD_DIR
+	cp -rf $THIRD_PARTY/deps $(dirname "$DEPS_DIR")
+	touch $TIMESTAMP_FILE
+else
+	echo "cached dependencies are current"
 fi
 
 echo "Running '$CMAKE' for TIP"
-cd $BUILD_DIR
+mkdir -p $BUILD_TIP_DIR
+cd $BUILD_TIP_DIR
 $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ../..
 
 echo "Running '$MAKE' for TIP"
