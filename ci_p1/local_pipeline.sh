@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 ARTIFACTORY=artifactory.spacecamp.ninja
 IMAGE=$ARTIFACTORY/docker/platform/ubi8-gcc-gcov-cmake:1.0
 
@@ -8,6 +10,6 @@ if ! grep --silent -i microsoft /proc/version ; then
 	docker login $ARTIFACTORY
 fi
 
-# Start bash in a container based on the docker image used for the pipeline
-docker run -it --rm -v $PWD:/app $IMAGE bash /app/pipeline/build.sh \
-	&& docker run -it --rm -v $PWD:/app $IMAGE /app/build/build-tip/cpp/tests
+# Run build and test scripts in a container based on the docker image used for the pipeline
+docker run -it --rm -v $PWD:/app $IMAGE bash /app/ci_p1/build.sh \
+	&& docker run -it --rm -v $PWD:/app $IMAGE bash /app/ci_p1/unit-test.sh

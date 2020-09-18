@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Set up error handling 
 # Exit on failure, showing which command failed

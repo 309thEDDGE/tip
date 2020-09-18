@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # In the pipeline the working directory is the root of the project repository.
 # When running from docker, the tip folder is mounted as /app
 test -d /app/cpp && cd /app # if /app/cpp exists cd to /app
@@ -20,24 +22,13 @@ THIRD_PARTY=$BASE_DIR/vendor
 #   make -j ${CMAKE_BUILD_TARGETS} ${CMAKE_BUILD_ARGS} VERBOSE=1
 
 # exit when any command fails
-#################################
-###########################set -e
-#################################
+set -e
 
 
 # keep track of the last executed command
 trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
 trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
-
-#########################
-mkdir -p $DEPS_DIR $BUILD_DIR
-echo $THIRD_PARTY ; ls -lt $THIRD_PARTY
-echo $BASE_DIR ; ls -lt $BASE_DIR
-echo $BASE_DIR/build ; ls -lt $BASE_DIR/build
-echo $BUILD_DIR ; ls -lt $BUILD_DIR
-ls -ltR $DEPS_DIR
-######################
 
 echo -n "Checking for ninja..."
 if [ -f /usr/local/bin/ninja ] ; then
@@ -76,10 +67,3 @@ $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ../..
 
 echo "Running '$MAKE' for TIP"
 $MAKE
-
-######################
-echo $BASE_DIR ; ls -lt $BASE_DIR
-echo $BASE_DIR/build ; ls -lt $BASE_DIR/build
-echo $BUILD_DIR ; ls -lt $BUILD_DIR
-echo $CMAKE_BUILD_DIR ; ls -lt $CMAKE_BUILD_DIR
-######################
