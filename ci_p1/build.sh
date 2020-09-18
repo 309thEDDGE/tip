@@ -33,7 +33,7 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
 echo -n "Checking for ninja..."
-if [ -f /usr/local/bin/ninja ] ; then
+if [[ -f /usr/local/bin/ninja ]] ; then
 	echo "yes"
 	CMAKE="cmake -G Ninja"
 	MAKE=ninja
@@ -45,21 +45,24 @@ fi
 
 # Check whether newest library is newer than cached dependencies
 # use a timestamp file as a shortcut for speed
-echo -n "Checking for updated dependencies..."
-NEWEST=$(cd $THIRD_PARTY ; ls -1t *.gz *.zip *.bz2 | head -1)
-NEWEST=$THIRD_PARTY/$NEWEST
-ls -lt $NEWEST $TIMESTAMP_FILE
-if [ $NEWEST -nt $TIMESTAMP_FILE ] ; then 
-	echo "need to rebuild dependencies"
+echo "Checking for updated dependencies..."
+DEPS_TIME=$(cat $DEPS_DIR/.timestamp) \
+	|| DEPS_TIME="1900/01/01 00:00:00"
+DEPS_SRC_TIME=$(cat $THIRD_PARTY/.timestamp) \
+	|| DEPS_SRC_TIME="2500/12/31 23:59:59"
+echo "...libraries: ${DEPS_TIME}"
+echo "...source:    ${DEPS_SRC_TIME}"
+#    NOTE: Must use [[ ... ]] instead of [ ... ] or test ... to use '<'
+if [[ "$DEPS_TIME" < "$DEPS_SRC_TIME" ]] ; then 
+	echo "...need to rebuild dependencies"
 	cd $THIRD_PARTY
 	bash ./build.sh # use 'bash' command because of pipeline permissions
 	rm -rf $DEPS_DIR
 	cp -rf $THIRD_PARTY/deps $(dirname "$DEPS_DIR")
-	touch $TIMESTAMP_FILE
+	date --utc +"%Y-%m-%d %H:%M:%S" > $TIMESTAMP_FILE
 else
-	echo "cached dependencies are current"
+	echo "...cached dependencies are current"
 fi
-
 echo "Running '$CMAKE' for TIP"
 mkdir -p $BUILD_TIP_DIR
 cd $BUILD_TIP_DIR
