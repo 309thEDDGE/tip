@@ -29,6 +29,7 @@ add_library(${util_lib_name}
             ${util_src_dir}/user_input.cpp           ${util_inc_dir}/user_input.h
             ${util_src_dir}/yaml_reader.cpp          ${util_inc_dir}/yaml_reader.h
             ${util_src_dir}/tmats_parser.cpp         ${util_inc_dir}/tmats_parser.h
+            ${util_src_dir}/metadata.cpp             ${util_inc_dir}/metadata.h
  )
 
 target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} ${yaml_inc_dir})
@@ -308,7 +309,7 @@ if(build_tests)
                    ${test_src_dir}/user_input_u.cpp ${test_src_dir}/yaml_reader_u.cpp
                    ${test_src_dir}/binbuff_u.cpp ${test_src_dir}/parse_context_u.cpp
                    ${test_src_dir}/parquet_arrow_validator_u.cpp ${test_src_dir}/parquet_context_u.cpp
-                   ${test_src_dir}/tmats_parser_u.cpp)
+                   ${test_src_dir}/tmats_parser_u.cpp ${test_src_dir}/metadata_u.cpp)
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
                                ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} ${comp_inc_dir})
     target_compile_features(${test_exe_name} PUBLIC cxx_std_17)

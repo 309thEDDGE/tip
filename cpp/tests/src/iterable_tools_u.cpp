@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "iterable_tools.h"
+#include "yaml-cpp/eventhandler.h"
 
 class IterableToolsUniqueElementsTest : public ::testing::Test
 {
@@ -1336,4 +1337,186 @@ TEST(UserInputOutput, PrintMapWithHeader_KeyToValue)
 	std::string compare_output = "\n  map name\n (column1) | (column2) \n" + iterable_tools_.GetPrintBar() + "\n 1:\t4\n 2:\t5\n 3:\t6\n 4:\t7\n" + iterable_tools_.GetPrintBar() + "\n\n";
 
 	EXPECT_EQ(compare_output, output);
+}
+
+// Test fixture and NullEventHandler class stolen from yaml-cpp tests:
+// https://github.com/jbeder/yaml-cpp/blob/master/test/integration/emitter_test.cpp
+
+class NullEventHandler : public YAML::EventHandler {
+	virtual void OnDocumentStart(const YAML::Mark&) {}
+	virtual void OnDocumentEnd() {}
+
+	virtual void OnNull(const YAML::Mark&, YAML::anchor_t) {}
+	virtual void OnAlias(const YAML::Mark&, YAML::anchor_t) {}
+	virtual void OnScalar(const YAML::Mark&, const std::string&, YAML::anchor_t,
+		const std::string&) {}
+
+	virtual void OnSequenceStart(const YAML::Mark&, const std::string&, YAML::anchor_t,
+		YAML::EmitterStyle::value /* style */) {}
+	virtual void OnSequenceEnd() {}
+
+	virtual void OnMapStart(const YAML::Mark&, const std::string&, YAML::anchor_t,
+		YAML::EmitterStyle::value /* style */) {}
+	virtual void OnMapEnd() {}
+};
+
+class EmitterTest : public ::testing::Test {
+protected:
+
+	IterableTools it_;
+	YAML::Emitter out_;
+
+	void ExpectEmit(const std::string& expected, YAML::Emitter& out) {
+		EXPECT_EQ(expected, out.c_str());
+		EXPECT_TRUE(out.good()) << "Emitter raised: " << out.GetLastError();
+		if (expected == out.c_str()) {
+			std::stringstream stream(expected);
+			YAML::Parser parser;
+			NullEventHandler handler;
+			parser.HandleNextDocument(handler);
+		}
+	}
+	
+};
+
+TEST_F(EmitterTest, EmitKeyValuePairStrings)
+{
+	std::string key = "the_key_is";
+	std::string val = "GitLab Project Management Demo";
+	it_.EmitKeyValuePair(out_, key, val);
+
+	std::string expect = "the_key_is: GitLab Project Management Demo\n";
+	ExpectEmit(expect, out_);
+}
+
+TEST_F(EmitterTest, EmitKeyValuePairStringInt)
+{
+	std::string key = "integer for use";
+	int val = 1232;
+	it_.EmitKeyValuePair(out_, key, val);
+
+	std::string expect = "integer for use: 1232\n";
+	ExpectEmit(expect, out_);
+}
+
+TEST_F(EmitterTest, EmitKeyValuePairIntString)
+{
+	std::string val = "integer for use";
+	int key = 1232;
+	it_.EmitKeyValuePair(out_, key, val);
+
+	std::string expect = "1232: integer for use\n";
+	ExpectEmit(expect, out_);
+}
+
+TEST_F(EmitterTest, EmitKeyValuePairIntInt)
+{
+	uint16_t key = 80;
+	int val = -32;
+	it_.EmitKeyValuePair(out_, key, val);
+
+	std::string expect = "80: -32\n";
+	ExpectEmit(expect, out_);
+}
+
+TEST_F(EmitterTest, EmitSimpleMapStrings)
+{
+	std::map<std::string, std::string> test_map =
+		{ {"1", "big"}, {"22", "ten"}, {"fifty", "proton"} };
+	it_.EmitSimpleMap(out_, test_map, "my_map");
+
+	std::string expect = "my_map:\n  1: big\n  22: ten\n  fifty: proton\n";
+	ExpectEmit(expect, out_);
+}
+
+TEST_F(EmitterTest, EmitSimpleMapIntString)
+{
+	std::map<int, std::string> test_map =
+	{ {1, "big"}, {22, "ten"}, {-50, "proton"} };
+	it_.EmitSimpleMap(out_, test_map, "my map");
+
+	// Note the order of expected. Maps sort based on key type, apparently
+	// in ascending order for int.
+	std::string expect = "my map:\n  -50: proton\n  1: big\n  22: ten\n";
+	ExpectEmit(expect, out_);
+}
+
+TEST_F(EmitterTest, EmitSimpleMapIntInt)
+{
+	std::map<int, uint16_t> test_map =
+	{ {1, 55}, {22, 10}, {-50, 1380} };
+	it_.EmitSimpleMap(out_, test_map, "my map");
+
+	// Note the order of expected. Maps sort based on key type, apparently
+	// in ascending order for int.
+	std::string expect = "my map:\n  -50: 1380\n  1: 55\n  22: 10\n";
+	ExpectEmit(expect, out_);
+}
+
+// Handle both EmitCompoundMapToVector and EmitCompountMapToSet
+TEST_F(EmitterTest, EmitCompoundMapStringString)
+{
+	// Ensure that vector/set of strings are written in alphabetical
+	// order so we can use the same expect string for both the vector
+	// test, which will keep the order, and the set test, which will
+	// place the values in alphabetical order.
+	std::map<std::string, std::vector<std::string>> test_map =
+		{ 
+			{"1", {"big", "daddy"}}, 
+			{"22", {"hi", "speed", "ten"}}, 
+			{"fifty", {"bunch", "map", "proton"}} 
+		};
+	it_.EmitCompoundMapToVector(out_, test_map, "my_map");
+
+	std::string expect = "my_map:\n  1: [big, daddy]\n  22: [hi, speed, ten]\n  "
+		"fifty: [bunch, map, proton]\n";
+	ExpectEmit(expect, out_);
+
+	
+	// Create new emitter for second map.
+	YAML::Emitter e;
+	std::map<std::string, std::set<std::string>> test_map2;
+	for (std::map<std::string, std::vector<std::string>>::const_iterator it = test_map.begin();
+		it != test_map.end(); ++it)
+	{
+		std::set<std::string> add_set(it->second.begin(), it->second.end());
+		test_map2[it->first] = add_set;
+	}
+	it_.EmitCompoundMapToSet(e, test_map2, "my_map");
+	ExpectEmit(expect, e);
+	
+}
+
+// Handle both EmitCompoundMapToVector and EmitCompoundMapToSet
+TEST_F(EmitterTest, EmitCompoundMapIntInt)
+{
+	// Ensure that vector/set of strings are written in alphabetical
+	// order so we can use the same expect string for both the vector
+	// test, which will keep the order, and the set test, which will
+	// place the values in alphabetical order.
+	std::map<int, std::vector<int64_t>> test_map =
+	{
+		{-33, {3, 4, 5}},
+		{22, {-6, -2, 43}},
+		{634, {-1023, 1023, 5000}}
+	};
+	it_.EmitCompoundMapToVector(out_, test_map, "the other map");
+
+	std::string expect = "the other map:\n  -33: [3, 4, 5]\n  22: [-6, -2, 43]\n  "
+		"634: [-1023, 1023, 5000]\n";
+	ExpectEmit(expect, out_);
+
+
+	// Create new emitter for second map.
+	YAML::Emitter e;
+	std::map<int, std::set<int64_t>> test_map2;
+	for (std::map<int, std::vector<int64_t>>::const_iterator it = test_map.begin();
+		it != test_map.end(); ++it)
+	{
+		std::set<int64_t> add_set(it->second.begin(), it->second.end());
+		test_map2[it->first] = add_set;
+	}
+	it_.EmitCompoundMapToSet(e, test_map2, "the other map");
+	ExpectEmit(expect, e);
+
 }
