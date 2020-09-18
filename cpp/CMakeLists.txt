@@ -293,10 +293,7 @@ target_include_directories(${ch10parse_exe_name} PUBLIC ${ch10_inc_dir} ${yaml_i
                             )
 target_compile_features(${ch10parse_exe_name} PUBLIC cxx_std_17)
 
-target_link_libraries(${ch10parse_exe_name} ${ch10parse_lib_name}
-                        
-
-    )
+target_link_libraries(${ch10parse_exe_name} ${ch10parse_lib_name})
 
 #########################################################
 #               Build/link translator Exe
