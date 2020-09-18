@@ -127,7 +127,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		milstd->set_channelid_remoteaddress_output(&chanid_remoteaddr1_map, &chanid_remoteaddr2_map);
 #ifdef VIDEO_DATA
 		printf("\n(%03u) ParseWorker parsing VIDEO\n", id);
-		video = new Ch10VideoDataF0(bb, id, tdata, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
+		video = new Ch10VideoDataF0(bb, id, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
 #endif
 		delete_alloc = true;
 	}
@@ -357,7 +357,6 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 }
 
 #ifdef LIBIRIG106
-// This function for integrating LibIRIG106.
 void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd1553_word_count, bool milstd1553_msg_selection,
 	std::vector<std::string> milstd1553_sorted_selected_msgs, std::vector<std::string>& tmats_body_vec)
 {
@@ -409,7 +408,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		milstd->set_channelid_remoteaddress_output(&chanid_remoteaddr1_map, &chanid_remoteaddr2_map);
 #ifdef VIDEO_DATA
 		printf("\n(%03u) ParseWorker parsing video packets\n", id);
-		video = new Ch10VideoDataF0(bb, id, tdata, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
+		video = new Ch10VideoDataF0(bb, id, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
 #endif
 #ifdef ETHERNET_DATA
 		printf("\n(%03hu) ParseWorker parsing Ethernet packets\n", id);
@@ -1016,3 +1015,10 @@ void ParseWorker::append_chanid_remoteaddr_maps(std::map<uint32_t, std::set<uint
 		printf("\n");*/
 	}
 }
+
+#ifdef VIDEO_DATA
+const std::map<uint16_t, uint64_t>& ParseWorker::GetChannelIDToMinTimeStampMap()
+{
+	return video->GetChannelIDToMinTimeStampMap();
+}
+#endif

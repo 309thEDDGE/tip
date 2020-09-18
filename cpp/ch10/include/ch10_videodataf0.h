@@ -24,19 +24,6 @@ private:
 	I106Status i106_status_;
 	VideoF0_Message i106_videomsg_;
 #endif
-	//TMATS& tdata;
-
-	// Map of channel id to label if given in the TMATS preface.
-	// This may be an empty map if there are no TMATS data from
-	// which the map can be created.
-	std::map<uint32_t, std::string> chanid_to_label_map;
-
-	// Indicates if the map contains data.
-	bool have_chanid_to_label_map;
-
-	// Temporary string to which a label can be assigned in the
-	// absence of a TMATS-defined label.
-	std::string chanid_label;
 
 	// Pointer which is assigned to the position in the Ch10 which
 	// corresponds to the beginning of transport stream packet.
@@ -83,6 +70,14 @@ private:
 
 	void print_video_pkt_info();
 
+	std::map<uint16_t, uint64_t> channel_id_to_min_time_map_;
+
+	// If there is no entry in channel_id_to_min_time_map_ for the
+	// current channel ID then add it and the earliest time stamp in
+	// the packet to the map. Otherwise, replace the entry only if 
+	// the current time stamp is lower.
+	void RecordLowestTimeStampPerChannelID();
+
 #ifdef LOCALDB
 #ifdef PARQUET
 	ParquetVideoDataF0 db;
@@ -91,7 +86,7 @@ private:
 
 public:
 	~Ch10VideoDataF0();
-	Ch10VideoDataF0(BinBuff& buff, uint16_t ID, TMATS& tmats, std::string out_path);
+	Ch10VideoDataF0(BinBuff& buff, uint16_t ID, std::string out_path);
 	void Initialize(const Ch10TimeData* ch10td, const Ch10HeaderData* ch10hd) override;
 	uint8_t Parse() override;
 	void close();
@@ -99,6 +94,7 @@ public:
 #ifdef LIBIRIG106
 	uint8_t UseLibIRIG106(I106C10Header* i106_header, void* buffer);
 	uint8_t IngestLibIRIG106Msg();
+	const std::map<uint16_t, uint64_t>& GetChannelIDToMinTimeStampMap();
 #endif
 };
 

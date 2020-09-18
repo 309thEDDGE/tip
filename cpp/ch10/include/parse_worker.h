@@ -124,6 +124,9 @@ class ParseWorker
 	std::string output_file_path();
 	std::string output_file_path(Ch10DataType dt);
 	void append_chanid_remoteaddr_maps(std::map<uint32_t, std::set<uint16_t>>& out1, std::map<uint32_t, std::set<uint16_t>>& out2);
+#ifdef VIDEO_DATA
+	const std::map<uint16_t, uint64_t>& GetChannelIDToMinTimeStampMap();
+#endif
 };
 
 #endif 

@@ -4,7 +4,9 @@ ParserMetadata::ParserMetadata() : chanid_to_lruaddrs_metadata_string_(""),
 	output_path_(""), tmats_chanid_to_source_metadata_string_(""),
 	parse_text_(), chanid_to_lruaddrs_map_key_("chanid_to_lru_addrs"), 
 	tmats_chanid_to_source_map_key_("tmats_chanid_to_source"),
-	tmats_chanid_to_type_map_key_("tmats_chanid_to_type") {}
+	tmats_chanid_to_type_map_key_("tmats_chanid_to_type"),
+	video_chanid_to_min_timestamp_map_key_("chanid_to_first_timestamp") 
+{}
 
 void ParserMetadata::create_chanid_to_lruaddrs_metadata_strings(const std::map<uint32_t, std::set<uint16_t>>& map1,
 	const std::map<uint32_t, std::set<uint16_t>>& map2)
@@ -313,7 +315,7 @@ void ParserMetadata::write_metadata_to_parquet(std::filesystem::path parquet_dir
 }*/
 
 
-void ParserMetadata::write_metadata_to_yaml(std::filesystem::path parquet_dir)
+void ParserMetadata::Write1553metadataToYaml(std::filesystem::path parquet_dir)
 {
 	create_output_yaml_path(parquet_dir);
 
@@ -327,6 +329,21 @@ void ParserMetadata::write_metadata_to_yaml(std::filesystem::path parquet_dir)
 	emit_compound_map(emitter, chanid_to_lruaddrs_map_, chanid_to_lruaddrs_map_key_);
 	emit_simple_map(emitter, tmats_chanid_to_source_map_, tmats_chanid_to_source_map_key_);
 	emit_simple_map(emitter, tmats_chanid_to_type_map_, tmats_chanid_to_type_map_key_);
+	emitter << YAML::EndDoc;
+
+	std::ofstream fout(output_path_.c_str());
+	fout << emitter.c_str();
+	fout.close();
+}
+
+void ParserMetadata::WriteVideoMetadataToYaml(std::filesystem::path parquet_dir,
+	const std::map<uint16_t, uint64_t>& chanid_to_first_ts_map)
+{
+	create_output_yaml_path(parquet_dir);
+
+	YAML::Emitter emitter;
+	emitter << YAML::BeginDoc;
+	emit_simple_map(emitter, chanid_to_first_ts_map, video_chanid_to_min_timestamp_map_key_);
 	emitter << YAML::EndDoc;
 
 	std::ofstream fout(output_path_.c_str());
