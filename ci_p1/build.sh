@@ -30,6 +30,17 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
 trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
+##########
+for d in $BASE_DIR \
+		$BASE_DIR/build \
+		$BASE_DIR/build/build-tip \
+		$BASE_DIR/build/build-tip/cpp \
+		$BASE_DIR/vendor ; do
+    cd $d ; pwd ; ls -lt
+done
+exit 0
+##########
+
 echo -n "Checking for ninja..."
 if [ -f /usr/local/bin/ninja ] ; then
 	echo "yes"
