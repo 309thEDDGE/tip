@@ -48,6 +48,7 @@ fi
 echo -n "Checking for updated dependencies..."
 NEWEST=$(cd $THIRD_PARTY ; ls -1t *.gz *.zip *.bz2 | head -1)
 NEWEST=$THIRD_PARTY/$NEWEST
+ls -lt $NEWEST $TIMESTAMP_FILE
 if [ $NEWEST -nt $TIMESTAMP_FILE ] ; then 
 	echo "need to rebuild dependencies"
 	cd $THIRD_PARTY
@@ -68,4 +69,5 @@ echo "Running '$MAKE' for TIP"
 $MAKE
 
 #######################################
+rm -f $BUILD_DIR/deps.tar.gz $BUILD_DIR/.ninja* rm $BASE_DIR/.gitlab-ci.yml.deleteme
 ls -alt $BASE_DIR $BUILD_DIR $BUILD_TIP_DIR $DEPS_DIR
