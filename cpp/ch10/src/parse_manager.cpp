@@ -250,9 +250,36 @@ void ParseManager::start_workers()
 #else
 	collect_tmats_metadata();
 #endif
+#ifdef VIDEO_DATA
+	CollectVideoMetadata();
+#endif
 	write_metadata();
 
 }
+
+#ifdef VIDEO_DATA
+void ParseManager::CollectVideoMetadata()
+{
+	// Gather the maps from each worker and combine them into one, 
+	//keeping only the lowest time stamps for each channel ID.
+	std::map<uint16_t, uint64_t> final_map;
+	for (int i = 0; i < n_reads; i++)
+	{
+		std::map<uint16_t, uint64_t> temp_map = workers[i].GetChannelIDToMinTimeStampMap();
+		for (std::map<uint16_t, uint64_t>::const_iterator it = temp_map.begin();
+			it != temp_map.end(); ++it)
+		{
+			if (final_map.count(it->first) == 0)
+				final_map[it->first] = it->second;
+			else if (it->second < final_map[it->first])
+				final_map[it->first] = it->second;
+
+		}
+	}
+	parser_md_.WriteVideoMetadataToYaml(fspath_map[Ch10DataType::VIDEO_DATA_F0],
+		final_map);
+}
+#endif
 
 void ParseManager::collect_chanid_to_lruaddrs_metadata()
 {
@@ -274,7 +301,7 @@ void ParseManager::collect_tmats_metadata()
 
 void ParseManager::write_metadata()
 {
-	parser_md_.write_metadata_to_yaml(fspath_map[Ch10DataType::MILSTD1553_DATA_F1]);
+	parser_md_.Write1553metadataToYaml(fspath_map[Ch10DataType::MILSTD1553_DATA_F1]);
 
 	// Test reading metadata and reconstructing maps.
 	/*std::string parquet_dir = fspath_map[Ch10DataType::MILSTD1553_DATA_F1].string();

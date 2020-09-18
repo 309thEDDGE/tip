@@ -17,7 +17,6 @@ ParquetVideoDataF0::ParquetVideoDataF0(std::string outfile, uint16_t ID, bool tr
 		Storing the video payload as uint16, the vector needs to be of size 188/2 = 94
 	*/
 	video_data_.resize(max_temp_element_count_ * TransportStream_DATA_COUNT); 
-	label_.resize(max_temp_element_count_);
 	time_.resize(max_temp_element_count_);
 	channel_id_.resize(max_temp_element_count_);
 	
@@ -30,7 +29,6 @@ ParquetVideoDataF0::ParquetVideoDataF0(std::string outfile, uint16_t ID, bool tr
 	AddField(arrow::int16(), "PL");
 	AddField(arrow::boolean(), "SRS");
 	AddField(arrow::int32(), "data", TransportStream_DATA_COUNT);
-	AddField(arrow::utf8(), "label");
 	AddField(arrow::int64(), "time");
 	AddField(arrow::int32(), "channelid");
 	
@@ -42,7 +40,6 @@ ParquetVideoDataF0::ParquetVideoDataF0(std::string outfile, uint16_t ID, bool tr
 	SetMemoryLocation<uint8_t>(PL_, "PL");
 	SetMemoryLocation<uint8_t>(SRS_, "SRS");
 	SetMemoryLocation<video_datum>(video_data_, "data");
-	SetMemoryLocation<std::string>(label_, "label");
 	SetMemoryLocation<uint64_t>(time_, "time");
 	SetMemoryLocation<uint16_t>(channel_id_, "channelid");
 
@@ -78,8 +75,7 @@ void ParquetVideoDataF0::commit()
 }
 
 void ParquetVideoDataF0::append_data(const std::vector<uint64_t>& time_stamp, 
-	const uint8_t& doy, 
-	const std::string& label, 
+	const uint8_t& doy,
 	const uint32_t& channel_id, 
 	const VideoDataF0ChanSpecFormat* vid_flags, 
 	const uint32_t& transport_stream_pkt_count, 
@@ -99,7 +95,6 @@ void ParquetVideoDataF0::append_data(const std::vector<uint64_t>& time_stamp,
 		KLV_[temp_element_count_] = vid_flags->KLV;
 		PL_[temp_element_count_] = vid_flags->PL;
 		SRS_[temp_element_count_] = vid_flags->SRS;
-		label_[temp_element_count_] = label;
 
 		if (vid_flags->IPH)
 		{

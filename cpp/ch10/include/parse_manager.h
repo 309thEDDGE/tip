@@ -85,6 +85,9 @@ class ParseManager
 	void create_paths();
 	void collect_chanid_to_lruaddrs_metadata();
 	void collect_tmats_metadata();
+#ifdef VIDEO_DATA
+	void CollectVideoMetadata();
+#endif
 	void write_metadata();
 #ifdef XDAT
 	void create_milstd1553_sorted_msgs();

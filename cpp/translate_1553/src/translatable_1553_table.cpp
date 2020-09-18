@@ -556,15 +556,32 @@ uint8_t Translatable1553Table::configure_parquet_context(std::filesystem::path& 
 		// If the path doesn't exist as a directory, create it.
 		if (!std::filesystem::exists(parquet_path))
 		{
-			if (!std::filesystem::create_directory(parquet_path))
+			int create_dir_attempt_counter = 0;
+			int max_attempts = 2;
+			while (!std::filesystem::create_directory(parquet_path))
 			{
-				printf("Translatable1553Table::configure_parquet_context(): Failed to create directory %s\n",
-					parquet_path.string().c_str());
-				return 1;
+				create_dir_attempt_counter++;
+				printf("Translatable1553Table::configure_parquet_context(): "
+					"Failed to create directory %s, attempt %d\n",
+					parquet_path.string().c_str(), create_dir_attempt_counter);
+
+				// Sleep to give the OS some time before the next file is created.
+				std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+				if (std::filesystem::exists(parquet_path))
+					break;
+
+				if (create_dir_attempt_counter == max_attempts)
+				{
+					printf("Translatable1553Table::configure_parquet_context(): "
+						"Failed to create directory %s, max attempts %d -- exiting!\n",
+						parquet_path.string().c_str(), create_dir_attempt_counter);
+					return 1;
+				}
 			}
 
 			// Sleep to give the OS some time before the next file is created.
-			std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			//std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		}
 
 		// Create the output parquet file name based on the parquet_path file name.

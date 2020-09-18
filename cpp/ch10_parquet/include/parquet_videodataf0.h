@@ -66,12 +66,6 @@ private:
 	*/
 	std::vector<video_datum> video_data_;
 	std::vector<int8_t>* saved_video_data_;
-	
-	/*
-		label:
-		Name of video if found in TMATS
-	*/
-	std::vector<std::string> label_;
 
 	/*
 		time:
@@ -102,7 +96,6 @@ public:
 	*/
 	void append_data(const std::vector<uint64_t>& time_stamp,
 		const uint8_t& doy,
-		const std::string& label,
 		const uint32_t& channel_id,
 		const VideoDataF0ChanSpecFormat* vid_flags,
 		const uint32_t& transport_stream_pkt_count,

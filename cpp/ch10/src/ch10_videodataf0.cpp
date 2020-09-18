@@ -7,30 +7,15 @@ Ch10VideoDataF0::~Ch10VideoDataF0()
 
 #ifdef LOCALDB
 #ifdef PARQUET
-Ch10VideoDataF0::Ch10VideoDataF0(BinBuff& buff, uint16_t ID, TMATS& tmats, std::string out_path) : 
+Ch10VideoDataF0::Ch10VideoDataF0(BinBuff& buff, uint16_t ID, std::string out_path) : 
 	ParseContext(buff, ID),
 outpath(out_path), subpkt_unit_count(0), subpkt_unit_index(0),
 transport_stream_pkt(nullptr), subpkt_unit_size(0), transport_stream_data(MAX_DATA_COUNT, 0),
 transport_stream_TS(MAX_TransportStream_UNITS, 0), video_datum_it(transport_stream_data.begin()),
 db(outpath, ID, true),
-have_chanid_to_label_map(false), total_data_unit_count(0), chanid_label("")
+total_data_unit_count(0)
 {
-	// Use TMATS class to obtain a map of the channel id to the video source name.
-	// TODO: move creation of map to ParseManager and pass reference to map to all workers for speed.
-	chanid_to_label_map = tmats.map_channel_to_source_by_type(ChannelDataType::VIDIN);
-	if (chanid_to_label_map.size() > 0)
-		have_chanid_to_label_map = true;
-#ifdef DEBUG
-#if DEBUG > 1
-	std::map<uint32_t, std::string>::iterator it;
-	for (it = chanid_to_label_map.begin(); it != chanid_to_label_map.end(); ++it)
-	{
-		printf("video chanid_to_label_map: %04u --> %s\n", it->first, (it->second).c_str());
-	}
-#endif
-#endif
-	// TODO: create *.ts file name from out_path.
-
+	
 }
 #endif
 #endif
@@ -150,22 +135,12 @@ uint8_t Ch10VideoDataF0::Parse()
 		bb_ptr_->AdvanceReadPos(subpkt_unit_size);
 	}
 
-	/* Commit data to file. */
-	if (have_chanid_to_label_map)
-	{
-		chanid_label = chanid_to_label_map[ch10hd_ptr_->channel_id_];
-	}
-	else
-	{
-		chanid_label = std::to_string(ch10hd_ptr_->channel_id_);
-	}
-
 #ifdef PARQUET
 	if (!data_fmt_ptr_->IPH)
 	{
 		transport_stream_TS[0] = msg_abstime_;
 	}
-	db.append_data(transport_stream_TS, ch10td_ptr_->doy_, chanid_label, 
+	db.append_data(transport_stream_TS, ch10td_ptr_->doy_, 
 		ch10hd_ptr_->channel_id_, data_fmt_ptr_, subpkt_unit_count, transport_stream_data);
 #endif
 
@@ -240,6 +215,8 @@ uint8_t Ch10VideoDataF0::UseLibIRIG106(I106C10Header* i106_header, void* buffer)
 		
 		// Fill the first and only element of the TS time vector. 
 		transport_stream_TS[0] = msg_abstime_;
+
+		RecordLowestTimeStampPerChannelID();
 	}
 
 #ifdef DEBUG
@@ -260,7 +237,7 @@ uint8_t Ch10VideoDataF0::UseLibIRIG106(I106C10Header* i106_header, void* buffer)
 			return retcode_;
 	}
 
-	db.append_data(transport_stream_TS, ch10td_ptr_->doy_, chanid_label,
+	db.append_data(transport_stream_TS, ch10td_ptr_->doy_,
 		ch10hd_ptr_->channel_id_, data_fmt_ptr_, subpkt_unit_index, transport_stream_data);
 
 	// Under normal circumstances the only non-OK status occurs when the 
@@ -294,6 +271,11 @@ uint8_t Ch10VideoDataF0::IngestLibIRIG106Msg()
 			return retcode_;
 		}
 		transport_stream_TS[subpkt_unit_index] = msg_abstime_;
+
+		// Only test if the timestamp is lowest in the
+		// first video packet in this ch10 video packet.
+		if (subpkt_unit_index == 0)
+			RecordLowestTimeStampPerChannelID();
 	}
 
 	transport_stream_pkt = (const video_datum*)i106_videomsg_.Data;
@@ -302,17 +284,23 @@ uint8_t Ch10VideoDataF0::IngestLibIRIG106Msg()
 	std::copy(transport_stream_pkt, transport_stream_pkt + TransportStream_DATA_COUNT,
 		video_datum_it + (subpkt_unit_index * TransportStream_DATA_COUNT));
 
-	// Fill the channel ID label variable.
-	if (have_chanid_to_label_map)
-	{
-		chanid_label = chanid_to_label_map[ch10hd_ptr_->channel_id_];
-	}
-	else
-	{
-		chanid_label = std::to_string(ch10hd_ptr_->channel_id_);
-	}
-
 	subpkt_unit_index++;
 	return retcode_;
 }
 #endif
+
+void Ch10VideoDataF0::RecordLowestTimeStampPerChannelID()
+{
+	if (channel_id_to_min_time_map_.count(ch10hd_ptr_->channel_id_) == 0)
+		channel_id_to_min_time_map_[ch10hd_ptr_->channel_id_] = msg_abstime_;
+	else
+	{
+		if (msg_abstime_ < channel_id_to_min_time_map_[ch10hd_ptr_->channel_id_])
+			channel_id_to_min_time_map_[ch10hd_ptr_->channel_id_] = msg_abstime_;
+	}
+}
+
+const std::map<uint16_t, uint64_t>& Ch10VideoDataF0::GetChannelIDToMinTimeStampMap()
+{
+	return channel_id_to_min_time_map_;
+}
