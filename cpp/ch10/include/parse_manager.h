@@ -28,6 +28,7 @@
 #include <fstream>
 #include "parser_config_params.h"
 #include "parser_metadata.h"
+#include "metadata.h"
 
 class ParseManager
 {
@@ -83,10 +84,11 @@ class ParseManager
 	void worker_retire_queue();
 	bool file_exists(std::string&);
 	void create_paths();
-	void collect_chanid_to_lruaddrs_metadata();
+	void collect_chanid_to_lruaddrs_metadata(
+		std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map);
 	void collect_tmats_metadata();
 #ifdef VIDEO_DATA
-	void CollectVideoMetadata();
+	void CollectVideoMetadata(std::map<uint16_t, uint64_t>& channel_id_to_min_timestamp_map);
 #endif
 	void write_metadata();
 #ifdef XDAT

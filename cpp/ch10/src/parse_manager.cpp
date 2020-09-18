@@ -241,18 +241,57 @@ void ParseManager::start_workers()
 
 #ifdef PARQUET
 #endif
+	// Create metadata object and create output path name for metadata
+	// to be recorded in 1553 output directory.
+	Metadata md;
+	std::filesystem::path md_path = md.GetYamlMetadataPath(
+		fspath_map[Ch10DataType::MILSTD1553_DATA_F1],
+		"_metadata.yaml");
 
-	collect_chanid_to_lruaddrs_metadata();
-	collect_tmats_metadata();
+	// Obtain the tx and rx combined channel ID to LRU address map and
+	// record it to the Yaml writer.
+	std::map<uint32_t, std::set<uint16_t>> output_chanid_remoteaddr_map;
+	collect_chanid_to_lruaddrs_metadata(output_chanid_remoteaddr_map);
+	md.RecordCompoundMapToSet(output_chanid_remoteaddr_map, "chanid_to_lru_addrs");
+
+	// Record the TMATS channel ID to source map.
+	md.RecordSimpleMap(tmats.get_channel_source_map(), "tmats_chanid_to_source");
+
+	// Record the TMATS channel ID to type map.
+	md.RecordSimpleMap(tmats.get_channel_type_as_string_map(), "tmats_chanid_to_type");
+
+	// Write the complete Yaml record to the metadata file.
+	std::ofstream stream_1553_metadata(md_path.string(), 
+		std::ofstream::out | std::ofstream::trunc);
+	stream_1553_metadata << md.GetMetadataString();
+	stream_1553_metadata.close();
+
 #ifdef VIDEO_DATA
-	CollectVideoMetadata();
+	// Create metadata object for video metadata.
+	Metadata vmd;
+	md_path = vmd.GetYamlMetadataPath(
+		fspath_map[Ch10DataType::VIDEO_DATA_F0],
+		"_metadata.yaml");
+
+	// Get the channel ID to minimum time stamp map.
+	std::map<uint16_t, uint64_t> min_timestamp_map;
+	CollectVideoMetadata(min_timestamp_map);
+
+	// Record the map in the Yaml writer and write the 
+	// total yaml text to file.
+	vmd.RecordSimpleMap(min_timestamp_map, "chanid_to_first_timestamp");
+	std::ofstream stream_video_metadata(md_path.string(),
+		std::ofstream::out | std::ofstream::trunc);
+	stream_video_metadata << vmd.GetMetadataString();
+	stream_video_metadata.close();
 #endif
-	write_metadata();
+	//write_metadata();
 
 }
 
 #ifdef VIDEO_DATA
-void ParseManager::CollectVideoMetadata()
+void ParseManager::CollectVideoMetadata(
+	std::map<uint16_t, uint64_t>& channel_id_to_min_timestamp_map)
 {
 	// Gather the maps from each worker and combine them into one, 
 	//keeping only the lowest time stamps for each channel ID.
@@ -267,24 +306,29 @@ void ParseManager::CollectVideoMetadata()
 				final_map[it->first] = it->second;
 			else if (it->second < final_map[it->first])
 				final_map[it->first] = it->second;
-
 		}
 	}
-	parser_md_.WriteVideoMetadataToYaml(fspath_map[Ch10DataType::VIDEO_DATA_F0],
-		final_map);
+	/*parser_md_.WriteVideoMetadataToYaml(fspath_map[Ch10DataType::VIDEO_DATA_F0],
+		final_map);*/
 }
 #endif
 
-void ParseManager::collect_chanid_to_lruaddrs_metadata()
+void ParseManager::collect_chanid_to_lruaddrs_metadata(
+	std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map)
 {
+	// Collect and combine the channel ID to LRU address maps
+	// assembled by each worker.
 	std::map<uint32_t, std::set<uint16_t>> chanid_remoteaddr_map1;
 	std::map<uint32_t, std::set<uint16_t>> chanid_remoteaddr_map2;
 	for (uint16_t read_ind = 0; read_ind < n_reads; read_ind++)
 	{
 		workers[read_ind].append_chanid_remoteaddr_maps(chanid_remoteaddr_map1, chanid_remoteaddr_map2);
 	}
-	parser_md_.create_chanid_to_lruaddrs_metadata_strings(chanid_remoteaddr_map1, chanid_remoteaddr_map2);
 
+	// Combine the tx and rx maps into a single map.
+	IterableTools it;
+	output_chanid_remoteaddr_map = it.CombineCompoundMapsToSet(
+		chanid_remoteaddr_map1, chanid_remoteaddr_map2);
 }
 
 void ParseManager::collect_tmats_metadata()
