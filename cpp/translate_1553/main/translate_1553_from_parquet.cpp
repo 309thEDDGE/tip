@@ -2,7 +2,8 @@
 #include "translation_master.h"
 //#include "config_manager.h"
 //#include "platform.h"
-#include "parser_metadata.h"
+#include "yaml_reader.h"
+#include "metadata.h"
 #include "file_reader.h"
 #include "icd_data.h"
 #include "bus_map.h"
@@ -43,7 +44,7 @@ bool PrepareICDAndBusMap(ICDData& icd_data, const std::string& input_path,
 	int map_confidence_level, 
 	std::map<std::string, std::set<uint64_t>> bus_name_to_lruaddrs_set_map);
 bool PrepareICD(ICDData& icd_data, const std::string& icd_path);
-bool SynthesizeBusMap(ICDData& icd_data, ParserMetadata& md, bool prompt_user,
+bool SynthesizeBusMap(ICDData& icd_data, const std::string& input_path, bool prompt_user,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
 	int map_confidence_level, std::map<std::string, std::set<uint64_t>> comet_busmap_replacement);
 bool MTTranslate(std::string input_path, uint8_t thread_count, bool select_msgs,
@@ -142,12 +143,12 @@ bool PrepareICDAndBusMap(ICDData& icd_data, const std::string& input_path,
 	// within the object. Therefore the object will be passed around
 	// to subsequent functions. If the channel ID to LRU address metadata
 	// is not present, translation can't proceed.
-	ParserMetadata parser_md;
+	/*ParserMetadata parser_md;
 	if (!parser_md.read_yaml_metadata(input_path))
 	{
 		printf("Failed to read yaml metadata!\n");
 		return false;
-	}
+	}*/
 
 	// Read lines from ICD text file, ingest, and manipulate.
 	auto start_time = std::chrono::high_resolution_clock::now();
@@ -160,7 +161,7 @@ bool PrepareICDAndBusMap(ICDData& icd_data, const std::string& input_path,
 
 	// Generate the bus map from metadata and possibly user
 	// input.
-	if (!SynthesizeBusMap(icd_data, parser_md, prompt_user, 
+	if (!SynthesizeBusMap(icd_data, input_path, prompt_user, 
 		tmats_bus_name_corrections, map_confidence_level, 
 		bus_name_to_lruaddrs_set_map))
 	{
@@ -199,7 +200,7 @@ bool PrepareICD(ICDData& icd_data, const std::string& icd_path)
 	//return false;
 }
 
-bool SynthesizeBusMap(ICDData& icd_data, ParserMetadata& md, bool prompt_user,
+bool SynthesizeBusMap(ICDData& icd_data, const std::string& input_path, bool prompt_user,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
 	int map_confidence_level, std::map<std::string, std::set<uint64_t>> comet_busmap_replacement)
 {
@@ -219,19 +220,51 @@ bool SynthesizeBusMap(ICDData& icd_data, ParserMetadata& md, bool prompt_user,
 			return false;
 	}	
 
-	// Get the map of channel ID to LRU address sets from metadata -- REQUIRED
-	std::map<uint64_t, std::set<uint64_t>> chanid_to_lruaddrs_set_map =
-		md.get_chanid_to_lruaddrs_map();
-	if (chanid_to_lruaddrs_set_map.size() == 0)
+	// Create the metadata file path from the input raw parquet path.
+	Metadata input_md;
+	std::filesystem::path input_md_path = input_md.GetYamlMetadataPath(
+		std::filesystem::path(input_path), "_metadata");
+
+	// Use YamlReader to read the yaml metadata file.
+	YamlReader yr;
+	if (!yr.LinkFile(input_md_path.string()))
+	{
+		printf("Translate main: SynthesizeBusMap(): YamlReader failed to link file!\n");
+		return false;
+	}
+
+	// Get the map of channel ID to LRU address sets from metadata -- REQUIRED.
+	// Initially read in a map of uint64_t to vector of uint64_t because the 
+	// the YamlReader can't ready map of key to set of values. Convert the map
+	// of key to vector of values to map of key to set of values for passing
+	// to the BusMap class.
+	std::map<uint64_t, std::set<uint64_t>> chanid_to_lruaddrs_set_map;
+	std::map<uint64_t, std::vector<uint64_t>> chanid_to_lruaddrs_vec_map;
+	if (!yr.GetParams("chanid_to_lru_addrs", chanid_to_lruaddrs_vec_map, true))
+	{
+		printf("Translate main: SynthesizeBusMap(): Failed to get chanid_to_lru_addrs"
+			" map from metadata!\n");
+		return false;
+	}
+
+	if (chanid_to_lruaddrs_vec_map.size() == 0)
 		return false;
 
-	// Get the map of TMATS channel ID to source -- NOT REQUIRED.
-	std::map<uint64_t, std::string> tmats_chanid_to_source_map =
-		md.get_tmats_chanid_to_source_map();
+	for (std::map<uint64_t, std::vector<uint64_t>>::const_iterator it =
+		chanid_to_lruaddrs_vec_map.begin(); it != chanid_to_lruaddrs_vec_map.end();
+		++it)
+	{
+		chanid_to_lruaddrs_set_map[it->first] = std::set<uint64_t>(it->second.begin(),
+			it->second.end());
+	}
 
-	// Get the map of TMATS channel ID to type -- NOT REQUIRED.
-	std::map<uint64_t, std::string> tmats_chanid_to_type_map =
-		md.get_tmats_chanid_to_type_map();
+	// Get the map of TMATS channel ID to source -- NOT REQUIRED.
+	std::map<uint64_t, std::string> tmats_chanid_to_source_map;
+	yr.GetParams("tmats_chanid_to_source", tmats_chanid_to_source_map, false);
+
+	//// Get the map of TMATS channel ID to type -- NOT REQUIRED.
+	std::map<uint64_t, std::string> tmats_chanid_to_type_map;
+	yr.GetParams("tmats_chanid_to_type", tmats_chanid_to_type_map, false);
 
 	// Initialize the maps necessary to synthesize the channel ID to bus name map.
 	BusMap bm;

@@ -245,7 +245,7 @@ void ParseManager::start_workers()
 	Metadata md;
 	std::filesystem::path md_path = md.GetYamlMetadataPath(
 		fspath_map[Ch10DataType::MILSTD1553_DATA_F1],
-		"_metadata.yaml");
+		"_metadata");
 
 	// Obtain the tx and rx combined channel ID to LRU address map and
 	// record it to the Yaml writer.
@@ -270,7 +270,7 @@ void ParseManager::start_workers()
 	Metadata vmd;
 	md_path = vmd.GetYamlMetadataPath(
 		fspath_map[Ch10DataType::VIDEO_DATA_F0],
-		"_metadata.yaml");
+		"_metadata");
 
 	// Get the channel ID to minimum time stamp map.
 	std::map<uint16_t, uint64_t> min_timestamp_map;
