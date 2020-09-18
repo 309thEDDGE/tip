@@ -31,7 +31,7 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
 ##########
-rm -rf $BASE_DIR/build/deps.tar.gz
+rm -rf $BASE_DIR/build/deps*
 ##########
 
 echo -n "Checking for ninja..."
