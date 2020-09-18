@@ -4,7 +4,6 @@
 !pipeline/**
 !vendor
 !vendor/*.gz
-vendor/deps.tar.gz
 !vendor/*.sh
 !vendor/*.bz2
 !vendor/*.zip
