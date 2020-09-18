@@ -66,3 +66,6 @@ $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ../..
 
 echo "Running '$MAKE' for TIP"
 $MAKE
+
+#######################################
+ls -alt $BASE_DIR $BUILD_DIR $BUILD_TIP_DIR $DEPS_DIR
