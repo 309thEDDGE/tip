@@ -51,7 +51,7 @@ NEWEST=$THIRD_PARTY/$NEWEST
 if [ $NEWEST -nt $TIMESTAMP_FILE ] ; then 
 	echo "need to rebuild dependencies"
 	cd $THIRD_PARTY
-	./build.sh
+	bash ./build.sh # use 'bash' command because of pipeline permissions
 	rm -rf $DEPS_DIR
 	cp -rf $THIRD_PARTY/deps $(dirname "$DEPS_DIR")
 	touch $TIMESTAMP_FILE
