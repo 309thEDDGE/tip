@@ -204,6 +204,20 @@ public:
 	std::unordered_map<Key, Val> CombineMaps(const std::unordered_map<Key, Val>& input_map,
 		const std::unordered_map<Key, Val>& update_map);
 
+	// Adds key/set<value> pairs to the input map if a key found in 
+	// the update map is not present in the input map. If a key
+	// is present in the input map, update the input map value set by 
+	// inserting any new values in the update map value set. Return
+	// a new map by value.
+	//
+	// Ex: input_map = {{a, {1, 2, 3}}, {c, {2, 3}}}
+	//     update_map = {{a, {2, 4}}, {b, {1, 5}}}
+	//	   return = {{a, {1, 2, 3, 4}}, {b, {1, 5}}, {c, {2, 3}}}
+	template<typename Key, typename Val>
+	std::map<Key, std::set<Val>> CombineCompoundMapsToSet(
+		const std::map<Key, std::set<Val>>& input_map,
+		const std::map<Key, std::set<Val>>& update_map);
+
 	// Converts a vector to a set
 	//
 	template<typename T>
@@ -1184,6 +1198,33 @@ void IterableTools::EmitCompoundMapToVector(YAML::Emitter& e,
 	e << YAML::EndMap;
 	e << YAML::EndMap;
 	e << YAML::Newline;
+}
+
+template<typename Key, typename Val>
+std::map<Key, std::set<Val>> IterableTools::CombineCompoundMapsToSet(
+	const std::map<Key, std::set<Val>>& input_map,
+	const std::map<Key, std::set<Val>>& update_map)
+{
+	// Initialize the output map with the key/value pairs of
+	// the input map.
+	std::map<Key, std::set<Val>> out = input_map;
+	typename std::map<Key, std::set<Val>>::const_iterator it;
+
+	// Iterate over the update map
+	for (it = update_map.begin(); it != update_map.end(); ++it)
+	{
+		// If the current key is not present in the input map, 
+		// add the update map key/value pair to the input map.
+		if (out.count(it->first) == 0)
+			out[it->first] = it->second;
+		// Otherwise, insert elements from the update map set into
+		// the input map set. This will include any new elements
+		// from the update map set that are not present in the 
+		// input map set.
+		else
+			out[it->first].insert(it->second.begin(), it->second.end());
+	}
+	return out;
 }
 
 #endif
