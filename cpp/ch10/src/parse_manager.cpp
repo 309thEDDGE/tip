@@ -25,7 +25,6 @@ ParseManager::ParseManager(std::string fname, std::string output_path, const Par
 	tmats_present(false),
 	workers(nullptr), 
 	milstd1553_msg_selection(false)
-	,parser_md_()
 {
 #ifdef DEBUG
 #if DEBUG > 0
@@ -285,7 +284,6 @@ void ParseManager::start_workers()
 	stream_video_metadata << vmd.GetMetadataString();
 	stream_video_metadata.close();
 #endif
-	//write_metadata();
 
 }
 
@@ -295,21 +293,18 @@ void ParseManager::CollectVideoMetadata(
 {
 	// Gather the maps from each worker and combine them into one, 
 	//keeping only the lowest time stamps for each channel ID.
-	std::map<uint16_t, uint64_t> final_map;
 	for (int i = 0; i < n_reads; i++)
 	{
 		std::map<uint16_t, uint64_t> temp_map = workers[i].GetChannelIDToMinTimeStampMap();
 		for (std::map<uint16_t, uint64_t>::const_iterator it = temp_map.begin();
 			it != temp_map.end(); ++it)
 		{
-			if (final_map.count(it->first) == 0)
-				final_map[it->first] = it->second;
-			else if (it->second < final_map[it->first])
-				final_map[it->first] = it->second;
+			if (channel_id_to_min_timestamp_map.count(it->first) == 0)
+				channel_id_to_min_timestamp_map[it->first] = it->second;
+			else if (it->second < channel_id_to_min_timestamp_map[it->first])
+				channel_id_to_min_timestamp_map[it->first] = it->second;
 		}
 	}
-	/*parser_md_.WriteVideoMetadataToYaml(fspath_map[Ch10DataType::VIDEO_DATA_F0],
-		final_map);*/
 }
 #endif
 
@@ -329,21 +324,6 @@ void ParseManager::collect_chanid_to_lruaddrs_metadata(
 	IterableTools it;
 	output_chanid_remoteaddr_map = it.CombineCompoundMapsToSet(
 		chanid_remoteaddr_map1, chanid_remoteaddr_map2);
-}
-
-void ParseManager::collect_tmats_metadata()
-{
-	parser_md_.create_tmats_channel_source_metadata_string(tmats.get_channel_source_map());
-	parser_md_.create_tmats_channel_type_metadata_string(tmats.get_channel_type_as_string_map());
-}
-
-void ParseManager::write_metadata()
-{
-	parser_md_.Write1553metadataToYaml(fspath_map[Ch10DataType::MILSTD1553_DATA_F1]);
-
-	// Test reading metadata and reconstructing maps.
-	/*std::string parquet_dir = fspath_map[Ch10DataType::MILSTD1553_DATA_F1].string();
-	parser_md_.read_metadata(parquet_dir);*/
 }
 
 std::streamsize ParseManager::activate_worker(uint16_t binbuff_ind, uint16_t ID,
