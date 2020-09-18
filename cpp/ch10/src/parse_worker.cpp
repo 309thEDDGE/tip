@@ -975,45 +975,9 @@ void ParseWorker::generate_parquet_file_names(std::map<Ch10DataType, std::filesy
 void ParseWorker::append_chanid_remoteaddr_maps(std::map<uint32_t, std::set<uint16_t>>& out1,
 	std::map<uint32_t, std::set<uint16_t>>&out2)
 {
-	for (std::map<uint32_t, std::set<uint16_t>>::iterator it = chanid_remoteaddr1_map.begin(); it != chanid_remoteaddr1_map.end(); ++it)
-	{
-		// If the key is not present in the output map, insert the entire set. 
-		if (out1.count(it->first) == 0)
-		{
-			out1[it->first] = it->second;
-		}
-		// Otherwise attempt to insert each of the set elements.
-		else
-		{
-			out1[it->first].insert(it->second.begin(), it->second.end());
-		}
-		/*printf("Remote addresses1 found in packets with channel ID %02u:\n", it->first);
-		for (std::set<uint16_t>::iterator it2 = out1[it->first].begin(); it2 != out1[it->first].end(); ++it2)
-		{
-			printf("%02hu ", *it2);
-		}
-		printf("\n");*/
-	}
-
-	for (std::map<uint32_t, std::set<uint16_t>>::iterator it = chanid_remoteaddr2_map.begin(); it != chanid_remoteaddr2_map.end(); ++it)
-	{
-		// If the key is not present in the output map, insert the entire set. 
-		if (out2.count(it->first) == 0)
-		{
-			out2[it->first] = it->second;
-		}
-		// Otherwise attempt to insert each of the set elements.
-		else
-		{
-			out2[it->first].insert(it->second.begin(), it->second.end());
-		}
-		/*printf("Remote addresses2 found in packets with channel ID %02u:\n", it->first);
-		for (std::set<uint16_t>::iterator it2 = out2[it->first].begin(); it2 != out2[it->first].end(); ++it2)
-		{
-			printf("%02hu ", *it2);
-		}
-		printf("\n");*/
-	}
+	IterableTools it;
+	out1 = it.CombineCompoundMapsToSet(out1, chanid_remoteaddr1_map);
+	out2 = it.CombineCompoundMapsToSet(out2, chanid_remoteaddr2_map);
 }
 
 #ifdef VIDEO_DATA

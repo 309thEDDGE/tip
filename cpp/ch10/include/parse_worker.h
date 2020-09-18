@@ -14,6 +14,7 @@
 #include "ch10_packet_stats.h"
 #include "ch10_tdf1.h"
 #include "ch10_milstd1553f1.h"
+#include "iterable_tools.h"
 #ifdef VIDEO_DATA
 #include "ch10_videodataf0.h"
 #endif
