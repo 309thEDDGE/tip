@@ -92,7 +92,9 @@ class ParseManager
 #ifdef PARQUET
 	void record_msg_names();
 #endif
-	
+#ifdef LIBIRIG106
+	void ProcessTMATS();
+#endif
 
 	public:
 

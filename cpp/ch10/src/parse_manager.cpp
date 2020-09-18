@@ -59,9 +59,11 @@ ParseManager::ParseManager(std::string fname, std::string output_path, const Par
 				printf("File size: %llu MB\n\n", total_size / (1024 * 1024));
 #endif
 
-			// Parse TMATS.
-			bool use_default_bus_id_map = true;
-			error_set = parse_tmats(use_default_bus_id_map);
+#ifndef LIBIRIG106
+	// Parse TMATS.
+	bool use_default_bus_id_map = true;
+	error_set = parse_tmats(use_default_bus_id_map);
+#endif
 
 			// Create file output paths based on the input file name.
 			create_paths();
@@ -243,7 +245,11 @@ void ParseManager::start_workers()
 #endif
 
 	collect_chanid_to_lruaddrs_metadata();
+#ifdef LIBIRIG106
+	ProcessTMATS();
+#else
 	collect_tmats_metadata();
+#endif
 	write_metadata();
 
 }
@@ -785,5 +791,13 @@ void ParseManager::record_msg_names()
 	}
 	else
 		printf("Unable to open file: %s\n", msg_names_path.string().c_str());
+}
+
+#endif
+
+#ifdef LIBIRIG106
+void ParseManager::ProcessTMATS()
+{
+
 }
 #endif
