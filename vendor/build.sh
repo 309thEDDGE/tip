@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# File: vendor/build.sh
+# vendor/build.sh
 #
 # Compiles all dependencies for TIP.
 # Run from either the vendor/ directory or its parent.
