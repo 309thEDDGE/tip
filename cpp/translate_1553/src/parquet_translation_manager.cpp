@@ -67,7 +67,7 @@ uint8_t ParquetTranslationManager::setup_output_paths()
 				// sub-string "metadata" because that file contains only
 				// metadata and will have been already consumed in main().
 				find_result = temp_path.find("metadata");
-				if (find_result == std::string::npos)
+				if (find_result == std::string::npos && temp_path.find("_TMATS") == std::string::npos)
 				{
 #ifdef DEBUG
 #if DEBUG > 1
