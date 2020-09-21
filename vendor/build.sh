@@ -373,3 +373,6 @@ ARROW_LIB_DEST=$TIP_DEPS_DIR/arrow_library_dependencies/lib
 
 mkdir -p $TIP_DEPS_DIR/arrow_library_dependencies/lib
 cp -f $ARROW_LIBRARIES $TIP_DEPS_DIR/arrow_library_dependencies/lib
+
+cd $TIP_DEPS_DIR
+$VENDOR/save_timestamp.sh
