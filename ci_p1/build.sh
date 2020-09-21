@@ -59,7 +59,7 @@ if [[ "$DEPS_TIME" < "$DEPS_SRC_TIME" ]] ; then
 	bash ./build.sh # use 'bash' command because of pipeline permissions
 	rm -rf $DEPS_DIR
 	cp -rf $THIRD_PARTY/deps $(dirname "$DEPS_DIR")
-	date --utc +"%Y-%m-%d %H:%M:%S" > $TIMESTAMP_FILE
+	bash ./save_timestamp.sh
 else
 	echo "...cached dependencies are current"
 fi
@@ -70,7 +70,3 @@ $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ../..
 
 echo "Running '$MAKE' for TIP"
 $MAKE
-
-#######################################
-rm -f $BUILD_DIR/deps.tar.gz $BUILD_DIR/.ninja* rm $BASE_DIR/.gitlab-ci.yml.deleteme
-ls -alt $BASE_DIR $BUILD_DIR $BUILD_TIP_DIR $DEPS_DIR
