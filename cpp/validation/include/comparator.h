@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <map>
 #include <set>
-#include "parquet_manager.h"
+#include "parquet_reader.h"
 
 
 class Comparator {
@@ -17,8 +17,8 @@ private:
 	bool compare_vec_result_;
 	int begin_pos_1_;
 	int begin_pos_2_;
-	ParquetManager pm1_;
-	ParquetManager pm2_;
+	ParquetReader pm1_;
+	ParquetReader pm2_;
 	std::map<int, int> compared_count_;
 	std::map<int, bool> columns_passed_;
 	void InitializeStats();
