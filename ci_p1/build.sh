@@ -13,7 +13,7 @@ TIMESTAMP_FILE=$DEPS_DIR/.timestamp
 
 # custom build command which will run in the pipeline
 # in the pipeline the working directory is the root of the project repository
-#   # CPP_BUILD_TOOL: "cmake"
+# CPP_BUILD_TOOL: "cmake"
 # CC: gcc
 # CXX: g++
 # GCOV: gcov
