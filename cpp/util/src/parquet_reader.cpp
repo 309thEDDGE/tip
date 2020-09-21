@@ -1,6 +1,6 @@
-#include "parquet_manager.h"
+#include "parquet_reader.h"
 
-bool ParquetManager::OpenNextParquetFile()
+bool ParquetReader::OpenNextParquetFile()
 {
 	if (arrow_file_ != nullptr)
 	{
@@ -20,10 +20,10 @@ bool ParquetManager::OpenNextParquetFile()
 #ifdef NEWARROW
 	try
 	{
-	PARQUET_ASSIGN_OR_THROW(arrow_file_, 
-		arrow::io::ReadableFile::Open(file_path, pool_));     
+		PARQUET_ASSIGN_OR_THROW(arrow_file_,
+			arrow::io::ReadableFile::Open(file_path, pool_));
 	}
-	catch(...)
+	catch (...)
 	{
 		printf("arrow::io::ReadableFile::Open error\n");
 		return false;
@@ -45,7 +45,7 @@ bool ParquetManager::OpenNextParquetFile()
 		return false;
 	}
 
-	
+
 	arrow_reader_->set_use_threads(true);
 #ifndef NEWARROW
 	arrow_reader_->set_num_threads(2);
@@ -68,7 +68,7 @@ bool ParquetManager::OpenNextParquetFile()
 	return true;
 }
 
-bool ParquetManager::SetPQPath(std::string base_path)
+bool ParquetReader::SetPQPath(std::string base_path)
 {
 	current_row_group_ = 0;
 	current_file_ = 0;
@@ -115,7 +115,7 @@ bool ParquetManager::SetPQPath(std::string base_path)
 					input_parquet_paths_.push_back(temp_path);
 				}
 			}
-				
+
 		}
 	}
 
@@ -126,8 +126,8 @@ bool ParquetManager::SetPQPath(std::string base_path)
 }
 
 
-bool ParquetManager::GetNextRGBool(int col, std::vector<uint8_t>& data, 
-	int& size, 
+bool ParquetReader::GetNextRGBool(int col, std::vector<uint8_t>& data,
+	int& size,
 	bool list)
 {
 	size = 0;
@@ -220,8 +220,8 @@ bool ParquetManager::GetNextRGBool(int col, std::vector<uint8_t>& data,
 	return true;
 }
 
-bool ParquetManager::GetNextRGString(int col, std::vector<std::string>& data, 
-	int& size, 
+bool ParquetReader::GetNextRGString(int col, std::vector<std::string>& data,
+	int& size,
 	bool list)
 {
 	size = 0;

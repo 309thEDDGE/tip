@@ -1,6 +1,6 @@
 
-#ifndef PARQUET_MANAGER
-#define PARQUET_MANAGER
+#ifndef PARQUET_READER
+#define PARQUET_READER
 
 #include <arrow/api.h>
 #include <arrow/io/api.h>
@@ -11,8 +11,8 @@
 #include <vector>
 #include <filesystem>
 
-class ParquetManager {
-	
+class ParquetReader {
+
 private:
 	std::vector<std::string> input_parquet_paths_;
 
@@ -21,23 +21,23 @@ private:
 	arrow::MemoryPool* pool_ = arrow::default_memory_pool();
 	std::shared_ptr<arrow::io::ReadableFile> arrow_file_;
 	std::unique_ptr<parquet::arrow::FileReader> arrow_reader_;
-	
+
 
 	int row_group_count_;
 	int current_row_group_;
 	int current_file_;
 
 	bool OpenNextParquetFile();
-	
+
 
 public:
-	ParquetManager() 
+	ParquetReader()
 	{
 		row_group_count_ = 0;
 		current_row_group_ = 0;
 		current_file_ = 0;
 	};
-	~ParquetManager() 
+	~ParquetReader()
 	{
 		if (arrow_file_ != nullptr)
 		{
@@ -58,7 +58,7 @@ public:
 
 	/*
 		Gets the next row group for a given column
-		in the parquet folder and inserts it into 
+		in the parquet folder and inserts it into
 		the vector passed by reference.
 		Assigns the row group row count to the size
 		parameter passed by reference
@@ -67,18 +67,18 @@ public:
 				 True  -> If the row group was read successfully
 	*/
 	template<typename T, typename A>
-	bool GetNextRG(int col, std::vector<T>& data, 
+	bool GetNextRG(int col, std::vector<T>& data,
 		int& size,
 		bool list = false);
-	bool GetNextRGBool(int col, std::vector<uint8_t>& data, 
-		int& size, 
+	bool GetNextRGBool(int col, std::vector<uint8_t>& data,
+		int& size,
 		bool list = false);
-	bool GetNextRGString(int col, std::vector<std::string>& data, 
-		int& size, 
-		bool list = false);	
+	bool GetNextRGString(int col, std::vector<std::string>& data,
+		int& size,
+		bool list = false);
 
 	/*
-		Resets parquet file reads to the first 
+		Resets parquet file reads to the first
 		file in the parquet directory
 	*/
 	void Zeroize()
@@ -91,9 +91,9 @@ public:
 };
 
 template<typename T, typename A>
-bool ParquetManager::GetNextRG(int col, 
-	std::vector<T>& data, 
-	int& size, 
+bool ParquetReader::GetNextRG(int col,
+	std::vector<T>& data,
+	int& size,
 	bool list)
 {
 	size = 0;
@@ -119,7 +119,7 @@ bool ParquetManager::GetNextRG(int col,
 		return false;
 	}
 
-	if(list)
+	if (list)
 	{
 #ifdef NEWARROW
 		arrow::ListArray data_list_arr =
@@ -139,9 +139,9 @@ bool ParquetManager::GetNextRG(int col,
 		if (data.size() < size)
 			data.resize(size);
 
-		std::copy(data_array.raw_values(), 
-			data_array.raw_values() + data_array.length(), 
-			data.data());		
+		std::copy(data_array.raw_values(),
+			data_array.raw_values() + data_array.length(),
+			data.data());
 	}
 	else
 	{
@@ -182,7 +182,7 @@ bool ParquetManager::GetNextRG(int col,
 				data.data());
 		}
 	}
-	
+
 
 	current_row_group_++;
 	return true;
