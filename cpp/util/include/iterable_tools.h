@@ -9,6 +9,7 @@
 #include <vector>
 #include <set>
 #include <sstream>
+#include "yaml-cpp/yaml.h"
 
 class IterableTools
 {
@@ -331,6 +332,58 @@ public:
 	// Prints the string and returns the printed string (used for testing purposes)
 	//
 	std::string print(std::string print_string);
+
+	// Note for yaml emitter help functions below:
+	// a key type of uint8_t is interpreted as a char and will
+	// output a char representation. Avoid use of uint8_t.
+
+	// Emits a single key:value pair as a Yaml map object. This function
+	// is not intended to be used multiple times to accomplish emission
+	// of a multiple-key/value map. The pair emitted via this function
+	// is intended to be a standalone pairing, such as configuration
+	// key and value.
+	// 
+	// Inputs:
+	//	- YAML::Emitter e: Emitter to which Yaml is emitted
+	//	- input_key: Key to be emitted
+	//	- input_val: Value to be emitted
+	//
+	template<typename Key, typename Val>
+	void EmitKeyValuePair(YAML::Emitter& e, const Key& input_key,
+		const Val& input_value);
+
+	// Emits a key:value map to the Yaml emitter passed as an argument.
+	// 
+	// Inputs:
+	//	- YAML::Emitter e: Emitter to which Yaml is emitted
+	//	- input_map: Key:Value map which is emitted as Yaml
+	//	- map_name: name of map to be emitted
+	//
+	template<typename Key, typename Val>
+	void EmitSimpleMap(YAML::Emitter& e, const std::map<Key, Val>& input_map, 
+		const std::string& map_name);
+
+	// Emits a key:set<values> map to the Yaml emitter passed as an argument.
+	// 
+	// Inputs:
+	//	- YAML::Emitter e: Emitter to which Yaml is emitted
+	//	- input_map: Key:set<Value> map which is emitted as Yaml
+	//	- map_name: name of map to be emitted
+	//
+	template<typename Key, typename Val>
+	void EmitCompoundMapToSet(YAML::Emitter& e,
+		const std::map<Key, std::set<Val>>& input_map, const std::string& key);
+
+	// Emits a key:vector<values> map to the Yaml emitter passed as an argument.
+	// 
+	// Inputs:
+	//	- YAML::Emitter e: Emitter to which Yaml is emitted
+	//	- input_map: Key:vector<Value> map which is emitted as Yaml
+	//	- map_name: name of map to be emitted
+	//
+	template<typename Key, typename Val>
+	void EmitCompoundMapToVector(YAML::Emitter& e,
+		const std::map<Key, std::vector<Val>>& input_map, const std::string& key);
 };
 
 template<typename T>
@@ -1074,5 +1127,63 @@ std::string IterableTools::PrintMapWithHeader_KeyToValue(const std::map<Key, Val
 	return print(ss.str());
 }
 
+template<typename Key, typename Val>
+void IterableTools::EmitKeyValuePair(YAML::Emitter& e, const Key& input_key,
+	const Val& input_value)
+{
+	e << YAML::BeginMap;
+	// e << YAML::Flow; ??
+	e << YAML::Key << input_key;
+	e << YAML::Value << input_value;
+	e << YAML::EndMap;
+	e << YAML::Newline;
+}
+
+template<typename Key, typename Val>
+void IterableTools::EmitSimpleMap(YAML::Emitter& e,
+	const std::map<Key, Val>& input_map, const std::string& map_name)
+{
+	e << YAML::BeginMap;
+	e << YAML::Key << map_name;
+	e << YAML::Value << input_map;
+	e << YAML::EndMap;
+	e << YAML::Newline;
+}
+
+template<typename Key, typename Val>
+void IterableTools::EmitCompoundMapToSet(YAML::Emitter& e,
+	const std::map<Key, std::set<Val>>& input_map, const std::string& map_name)
+{
+	e << YAML::BeginMap;
+	e << YAML::Key << map_name;
+	e << YAML::Value << YAML::BeginMap;
+	typename std::map<Key, std::set<Val>>::const_iterator it;
+	for (it = input_map.cbegin(); it != input_map.cend(); ++it)
+	{
+		std::vector<Val> intermediate(it->second.begin(), it->second.end());
+		e << YAML::Key << it->first << YAML::Value << YAML::Flow << intermediate;
+	}
+	e << YAML::EndMap;
+	e << YAML::EndMap;
+	e << YAML::Newline;
+}
+
+template<typename Key, typename Val>
+void IterableTools::EmitCompoundMapToVector(YAML::Emitter& e,
+	const std::map<Key, std::vector<Val>>& input_map, const std::string& map_name)
+{
+	e << YAML::BeginMap;
+	e << YAML::Key << map_name;
+	e << YAML::Value << YAML::BeginMap;
+	typename std::map<Key, std::vector<Val>>::const_iterator it;
+	for (it = input_map.cbegin(); it != input_map.cend(); ++it)
+	{
+		std::vector<Val> intermediate(it->second.begin(), it->second.end());
+		e << YAML::Key << it->first << YAML::Value << YAML::Flow << intermediate;
+	}
+	e << YAML::EndMap;
+	e << YAML::EndMap;
+	e << YAML::Newline;
+}
 
 #endif
