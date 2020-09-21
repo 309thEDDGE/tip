@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 #
-# vendor/build.sh
+# File: vendor/build.sh
+#
 # Compiles all dependencies for TIP.
 # Run from either the vendor/ directory or its parent.
 # Source tarballs are expected to be in vendor/.
@@ -388,5 +389,5 @@ cp -f $ARROW_LIBRARIES $DEPS_DIR/arrow_library_dependencies/lib
 #
 # Save a timestamp to detect updated sources in pipeline
 #
-cd $DEPS_DIR $VENDOR/
+cd $DEPS_DIR
 $VENDOR/save_timestamp.sh
