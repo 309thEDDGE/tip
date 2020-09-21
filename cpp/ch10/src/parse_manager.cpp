@@ -841,7 +841,7 @@ void ParseManager::ProcessTMATS()
 	path = fspath_map[Ch10DataType::MILSTD1553_DATA_F1] /
 		std::filesystem::path("_TMATS.txt");
 	std::ofstream tmats;
-	tmats.open(path.string());
+	tmats.open(path.string(), std::ios::trunc | std::ios::binary);
 	if (tmats.good())
 	{
 		printf("\nWriting TMATS to %s\n", path.string().c_str());
