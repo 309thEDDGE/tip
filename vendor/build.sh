@@ -375,4 +375,4 @@ mkdir -p $TIP_DEPS_DIR/arrow_library_dependencies/lib
 cp -f $ARROW_LIBRARIES $TIP_DEPS_DIR/arrow_library_dependencies/lib
 
 cd $TIP_DEPS_DIR
-$VENDOR/save_timestamp.sh
+bash $VENDOR/save_timestamp.sh # use 'bash' command because of pipeline permissions
