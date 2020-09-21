@@ -81,9 +81,10 @@ const std::string TMATS =
 
 TEST(CodeNameTest, RegexCorrect)
 {
-    CodeName *c = new CodeName(R"(R-x\DSI-n)");
+    CodeName c = CodeName(R"(R-x\DSI-n)");
 
-    EXPECT_EQ("R-([0-9]+)\\\\DSI-([0-9]+)", c->regex_string);
+    EXPECT_EQ("R-([0-9]+)\\\\DSI-([0-9]+)", c.regex_string);
+
 }
 
 
@@ -96,10 +97,11 @@ TEST(TMATSParserTest, MapAttrsMatchesGroups)
     expected["UAR-1"] = "2";
     expected["UAR-2"] = "3";
 
-    TMATSParser *parser = new TMATSParser(TMATS);
-    result = parser->MapAttrs("R-x\\DSI-n", "R-x\\TK1-n");
+    TMATSParser parser = TMATSParser(TMATS);
+    result = parser.MapAttrs("R-x\\DSI-n", "R-x\\TK1-n");
 
     EXPECT_EQ(expected, result);
+
 }
 
 
@@ -112,10 +114,11 @@ TEST(TMATSParserTest, MapAttrsSkipsMismatch)
     expected["UAR-1"] = "2";
     expected["UAR-2"] = "3";
 
-    TMATSParser *parser = new TMATSParser(TMATS);
-    result = parser->MapAttrs("R-x\\DSI-n", "R-x\\TK1-n");
+    TMATSParser parser = TMATSParser(TMATS);
+    result = parser.MapAttrs("R-x\\DSI-n", "R-x\\TK1-n");
 
     EXPECT_EQ(expected, result);
+
 }
 
 
@@ -127,8 +130,9 @@ TEST(TMATSParserTest, MapAttrs3Subattrs)
     expected["7"] = "EEC4A";
     expected["8"] = "EEC4B";
 
-    TMATSParser *parser = new TMATSParser(TMATS);
-    result = parser->MapAttrs("R-x\\ASN-n-m", "R-x\\ANM-n-m");
+    TMATSParser parser = TMATSParser(TMATS);
+    result = parser.MapAttrs("R-x\\ASN-n-m", "R-x\\ANM-n-m");
 
     EXPECT_EQ(expected, result);
+
 }

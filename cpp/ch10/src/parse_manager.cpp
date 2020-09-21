@@ -58,9 +58,11 @@ ParseManager::ParseManager(std::string fname, std::string output_path, const Par
 				printf("File size: %llu MB\n\n", total_size / (1024 * 1024));
 #endif
 
-			// Parse TMATS.
-			bool use_default_bus_id_map = true;
-			error_set = parse_tmats(use_default_bus_id_map);
+#ifndef LIBIRIG106
+	// Parse TMATS.
+	bool use_default_bus_id_map = true;
+	error_set = parse_tmats(use_default_bus_id_map);
+#endif
 
 			// Create file output paths based on the input file name.
 			create_paths();
@@ -264,6 +266,10 @@ void ParseManager::start_workers()
 		std::ofstream::out | std::ofstream::trunc);
 	stream_1553_metadata << md.GetMetadataString();
 	stream_1553_metadata.close();
+	//collect_chanid_to_lruaddrs_metadata();
+#ifdef LIBIRIG106
+	ProcessTMATS();
+#endif
 
 #ifdef VIDEO_DATA
 	// Create metadata object for video metadata.
@@ -837,4 +843,40 @@ void ParseManager::record_msg_names()
 	else
 		printf("Unable to open file: %s\n", msg_names_path.string().c_str());
 }
+
 #endif
+
+void ParseManager::ProcessTMATS()
+{
+	// if tmats doesn't exist return
+	if (tmats_body_vec_.size() == 0)
+	{
+		printf("\nNo TMATS Present\n");
+		return;
+	}
+
+	std::string full_TMATS_string;
+	for (int i = 0; i < tmats_body_vec_.size(); i++)
+	{
+		full_TMATS_string += tmats_body_vec_[i];
+	}
+
+	std::filesystem::path path;
+	path = fspath_map[Ch10DataType::MILSTD1553_DATA_F1] /
+		std::filesystem::path("_TMATS.txt");
+	std::ofstream tmats;
+	tmats.open(path.string(), std::ios::trunc | std::ios::binary);
+	if (tmats.good())
+	{
+		printf("\nWriting TMATS to %s\n", path.string().c_str());
+		tmats << full_TMATS_string;
+	}
+
+	tmats.close();
+
+	// Gather TMATs attributes of interest
+	// for metadata
+	TMATSParser tmats_parser = TMATSParser(full_TMATS_string);
+	TMATsChannelIDToSourceMap = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\DSI-n");
+	TMATsChannelIDToTypeMap = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n");
+}
