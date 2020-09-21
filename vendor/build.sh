@@ -1,18 +1,6 @@
 #!/usr/bin/env bash
 
 #
-# vendor/build.sh
-#
-# Compiles all dependencies for TIP.
-# Run from either the vendor/ directory or its parent.
-# Source tarballs are expected to be in vendor/.
-# On successful completion, the dependencies required for TIP are in
-#      vendor/deps/
-# This deps/ directory can then be moved into the TIP build folder after this 
-# script runs.
-#
-
-#
 # Set up error handling 
 # Exit on failure, showing which command failed
 #
@@ -74,7 +62,7 @@ FLEX_EXECUTABLE=$VENDOR/$FLEX_VERSION/src/flex
 # location of arrow build
 ARROW_BUILD_DIR=$VENDOR/$ARROW_VERSION/cpp/build
 # where to store built dependencies
-DEPS_DIR=$VENDOR/deps
+TIP_DEPS_DIR=$VENDOR/deps
 
 echo "Building TIP dependencies"
 
@@ -291,9 +279,9 @@ $MAKE
 echo "Gathering dependencies"
 echo "...gmock"
 GOOGLE_MOCK_INCLUDE=$VENDOR/$GOOGLE_TEST_VERSION/googlemock/include
-GOOGLE_MOCK_INC_DEST=$DEPS_DIR/gsuite/googlemock/include
+GOOGLE_MOCK_INC_DEST=$TIP_DEPS_DIR/gsuite/googlemock/include
 GOOGLE_MOCK_LIB=$VENDOR/$GOOGLE_TEST_VERSION/build/googlemock
-GOOGLE_MOCK_LIB_DEST=$DEPS_DIR/gsuite/googlemock/lib
+GOOGLE_MOCK_LIB_DEST=$TIP_DEPS_DIR/gsuite/googlemock/lib
 
 cd $GOOGLE_MOCK_INCLUDE
 # find all .h files and copy them, preserving directory structure
@@ -303,8 +291,8 @@ find . -type f -name \*.a -exec install -D {} $GOOGLE_MOCK_LIB_DEST/{} \;
 
 echo "...gtest"
 GOOGLE_TEST_INCLUDE=$VENDOR/$GOOGLE_TEST_VERSION/googletest/include/
-GOOGLE_TEST_INC_DEST=$DEPS_DIR/gsuite/googletest/include
-GOOGLE_TEST_LIB_DEST=$DEPS_DIR/gsuite/googletest/lib
+GOOGLE_TEST_INC_DEST=$TIP_DEPS_DIR/gsuite/googletest/include
+GOOGLE_TEST_LIB_DEST=$TIP_DEPS_DIR/gsuite/googletest/lib
 
 cd $GOOGLE_TEST_INCLUDE
 find . -type f -name \*.h -exec install -D {} $GOOGLE_TEST_INC_DEST/{} \;
@@ -313,8 +301,8 @@ find . -type f -name \*.a -exec install -D {} $GOOGLE_TEST_LIB_DEST/{} \;
 
 echo "...yaml-cpp"
 YAML_CPP_INCLUDE=$VENDOR/$YAML_CPP_VERSION/include
-YAML_CPP_INC_DEST=$DEPS_DIR/yaml-cpp/include
-YAML_CPP_LIB_DEST=$DEPS_DIR/yaml-cpp/lib
+YAML_CPP_INC_DEST=$TIP_DEPS_DIR/yaml-cpp/include
+YAML_CPP_LIB_DEST=$TIP_DEPS_DIR/yaml-cpp/lib
 
 cd $YAML_CPP_INCLUDE
 find . -type f -name \*.h -exec install -D {} $YAML_CPP_INC_DEST/{} \;
@@ -323,8 +311,8 @@ find . -type f -name \*.a -exec install -D {} $YAML_CPP_LIB_DEST/{} \;
 
 echo "...libirig106"
 LIBIRIG106_INCLUDE=$VENDOR/$LIBIRIG106_VERSION/src
-LIBIRIG106_INC_DEST=$DEPS_DIR/libirig106/include
-LIBIRIG106_LIB_DEST=$DEPS_DIR/libirig106/lib
+LIBIRIG106_INC_DEST=$TIP_DEPS_DIR/libirig106/include
+LIBIRIG106_LIB_DEST=$TIP_DEPS_DIR/libirig106/lib
 
 cd $LIBIRIG106_INCLUDE
 find . -type f -name \*.h -exec install -D {} $LIBIRIG106_INC_DEST/{} \;
@@ -332,8 +320,8 @@ cd $LIBIRIG106_LIB
 find . -type f -name \*.a -exec install -D {} $LIBIRIG106_LIB_DEST/{} \;
 
 echo "...pcap"
-PCAP_INCLUDE_DEST=$DEPS_DIR/pcap/include
-PCAP_LIB_DEST=$DEPS_DIR/pcap/lib
+PCAP_INCLUDE_DEST=$TIP_DEPS_DIR/pcap/include
+PCAP_LIB_DEST=$TIP_DEPS_DIR/pcap/lib
 mkdir -p $PCAP_INCLUDE_DEST
 cd $PCAP_INCLUDE
 find . -type f -name \*.h -exec install -D {} $PCAP_INCLUDE_DEST/{} \;
@@ -342,8 +330,8 @@ cd $PCAP_LIB
 find . -type f -name \*.a -exec install -D {} $PCAP_LIB_DEST/{} \;
 
 echo ...tins
-TINS_INCLUDE_DEST=$DEPS_DIR/tins/include
-TINS_LIB_DEST=$DEPS_DIR/tins/lib
+TINS_INCLUDE_DEST=$TIP_DEPS_DIR/tins/include
+TINS_LIB_DEST=$TIP_DEPS_DIR/tins/lib
 mkdir -p $TINS_INCLUDE_DEST
 cd $TINS_INCLUDE
 find . -type f -name \*.h -exec install -D {} $TINS_INCLUDE_DEST/{} \;
@@ -355,7 +343,7 @@ echo "...arrow include files"
 # Arrow include files are in cpp/src and cpp/build/src
 # (some are built by cmake)
 ARROW_INCLUDE="$VENDOR/$ARROW_VERSION/cpp/src $ARROW_BUILD_DIR/src"
-ARROW_INC_DEST=$DEPS_DIR/arrow_library_dependencies/include
+ARROW_INC_DEST=$TIP_DEPS_DIR/arrow_library_dependencies/include
 for source in $ARROW_INCLUDE; do
 	cd $source
 	find arrow -type f -name \*.h -exec install -D {} $ARROW_INC_DEST/{} \;
@@ -381,13 +369,7 @@ ARROW_LIBRARIES="$ARROW_BUILD_DIR/release/libarrow.a \
 	$ARROW_BUILD_DIR/thrift_ep/src/thrift_ep-install/lib/libthrift.a \
 	$ARROW_BUILD_DIR/zlib_ep/src/zlib_ep-install/lib/libz.a \
 	$ARROW_BUILD_DIR/zstd_ep-install/lib64/libzstd.a"
-ARROW_LIB_DEST=$DEPS_DIR/arrow_library_dependencies/lib
+ARROW_LIB_DEST=$TIP_DEPS_DIR/arrow_library_dependencies/lib
 
-mkdir -p $DEPS_DIR/arrow_library_dependencies/lib
-cp -f $ARROW_LIBRARIES $DEPS_DIR/arrow_library_dependencies/lib
-
-#
-# Save a timestamp to detect updated sources in pipeline
-#
-cd $DEPS_DIR
-$VENDOR/save_timestamp.sh
+mkdir -p $TIP_DEPS_DIR/arrow_library_dependencies/lib
+cp -f $ARROW_LIBRARIES $TIP_DEPS_DIR/arrow_library_dependencies/lib
