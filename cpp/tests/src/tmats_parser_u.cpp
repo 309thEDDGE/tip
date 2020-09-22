@@ -137,7 +137,7 @@ TEST(TMATSParserTest, MapAttrs3Subattrs)
 
 }
 
-TEST(TMATSParserTest, MapAttrsHandleRepeat)
+TEST(TMATSParserTest, MapAttrsHandleRepeatData)
 {
     // Note about creating test lines from a tmats text file: 
     // 1) Read in with Python via with open(...), a = f.readlines();
