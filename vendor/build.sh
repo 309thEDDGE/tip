@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Set up error handling 
 # Exit on failure, showing which command failed
@@ -54,32 +56,13 @@ TINS_VERSION=libtins-4.2
 
 # location of arrow test data
 PARQUET_TEST_DATA_SOURCE_PATH=$VENDOR/parquet-testing-master
-
 # locations to check for flex and bison executables 
 BISON_EXECUTABLE=$VENDOR/$BISON_VERSION/src/bison
 FLEX_EXECUTABLE=$VENDOR/$FLEX_VERSION/src/flex
-
 # location of arrow build
 ARROW_BUILD_DIR=$VENDOR/$ARROW_VERSION/cpp/build
-
-
 # where to store built dependencies
 TIP_DEPS_DIR=$VENDOR/deps
-TIP_DEPS_TARBALL=deps.tar.gz
-
-#
-# Check for cached dependencies
-# Exit successfully if found
-#
-
-if [[ -f $VENDOR/$TIP_DEPS_TARBALL ]] ; then
-	echo "Found TIP dependencies cache"
-	cd $BASE_DIR
-	rm -rf deps
-	tar -xvzf $VENDOR/$TIP_DEPS_TARBALL
-	exit 0
-fi
-
 
 echo "Building TIP dependencies"
 
@@ -108,9 +91,6 @@ if [ ! -d $LIBIRIG106_VERSION ] ; then
 fi
 
 #
-#
-
-#
 # Install m4
 # m4 is required to build flex and pcap
 which m4 >& /dev/null || dnf -y install m4
@@ -133,7 +113,7 @@ if [[ -f $FLEX_EXECUTABLE ]] ; then
 else
 	# build and install flex
 	echo "Building Flex"
-	./configure
+	./configure -C
 	make # must use regular make command (not ninja)
 	make install
 fi
@@ -156,7 +136,7 @@ if [[ -f $BISON_EXECUTABLE ]] ; then
 else
 	# build and install bison
 	echo "Building Bison"
-	./configure
+	./configure -C
 	make # must use regular make command
 	make install
 fi
@@ -394,12 +374,5 @@ ARROW_LIB_DEST=$TIP_DEPS_DIR/arrow_library_dependencies/lib
 mkdir -p $TIP_DEPS_DIR/arrow_library_dependencies/lib
 cp -f $ARROW_LIBRARIES $TIP_DEPS_DIR/arrow_library_dependencies/lib
 
-
-#
-# Cache built dependencies
-#
-
-echo "Finished building TIP dependencies; caching results"
-cd $VENDOR
-tar czf $TIP_DEPS_TARBALL $(basename $TIP_DEPS_DIR)
-echo "Cached TIP dependencies in $TIP_DEPS_TARBALL"
+cd $TIP_DEPS_DIR
+bash $VENDOR/save_timestamp.sh # use 'bash' command because of pipeline permissions
