@@ -62,17 +62,17 @@ protected:
 
 		file_name = "./" + file_name;
 
-		ParquetContext* pc = new ParquetContext(row_group_count);
+		ParquetContext pc = ParquetContext(row_group_count);
 
 		bool ret_value = true;
 
 		// Add each vector as a column
 		for (int i = 0; i < output.size(); i++)
 		{
-			ret_value = pc->AddField(type, "data" + std::to_string(i));
+			ret_value = pc.AddField(type, "data" + std::to_string(i));
 			if (!ret_value)
 				return false;
-			ret_value = pc->SetMemoryLocation<T>(output[i], "data" + std::to_string(i), bool_fields);
+			ret_value = pc.SetMemoryLocation<T>(output[i], "data" + std::to_string(i), bool_fields);
 			if (!ret_value)
 				return false;
 		}
@@ -80,11 +80,11 @@ protected:
 		// Assume each vector is of the same size
 		int row_size = output[0].size();
 
-		if(!pc->OpenForWrite(file_name, truncate))
+		if(!pc.OpenForWrite(file_name, truncate))
 			return false;
 		for (int i = 0; i < row_size / row_group_count; i++)
 		{
-			ret_value = pc->WriteColumns(row_group_count, i * row_group_count);
+			ret_value = pc.WriteColumns(row_group_count, i * row_group_count);
 			if (!ret_value)
 				return false;
 		}
@@ -94,16 +94,15 @@ protected:
 		int remainder = row_size % row_group_count;
 		if (remainder > 0)
 		{
-			ret_value = pc->WriteColumns(remainder,
+			ret_value = pc.WriteColumns(remainder,
 				(row_size / row_group_count) * row_group_count);
 			if (!ret_value)
 				return false;
 		}
 
 
-		pc->Close();
+		pc.Close();
 		pq_file = file_name;
-		delete pc;
 		return true;
 	}
 
@@ -117,17 +116,17 @@ protected:
 		bool truncate = true, 
 		std::vector<uint8_t>* bool_fields = nullptr)
 	{
-		ParquetContext* pc = new ParquetContext(row_group_count);
+		ParquetContext pc = ParquetContext(row_group_count);
 
 		file_name = "./" + file_name;
 
 		bool ret_value = true;
 
 		// Add the vector as a list column
-		ret_value = pc->AddField(type, "data", list_size);
+		ret_value = pc.AddField(type, "data", list_size);
 		if (!ret_value)
 			return false;
-		ret_value = pc->SetMemoryLocation<T>(output, "data", bool_fields);
+		ret_value = pc.SetMemoryLocation<T>(output, "data", bool_fields);
 		if (!ret_value)
 			return false;
 
@@ -136,11 +135,11 @@ protected:
 		int row_size = output.size() / list_size;
 		
 
-		if(!pc->OpenForWrite(file_name, truncate))
+		if(!pc.OpenForWrite(file_name, truncate))
 			return false;
 		for (int i = 0; i < row_size / row_group_count; i++)
 		{
-			ret_value = pc->WriteColumns(row_group_count, i * row_group_count);
+			ret_value = pc.WriteColumns(row_group_count, i * row_group_count);
 			if (!ret_value)
 				return false;
 		}
@@ -151,15 +150,14 @@ protected:
 		int remainder = row_size % row_group_count;
 		if (remainder > 0)
 		{
-			ret_value = pc->WriteColumns(remainder,
+			ret_value = pc.WriteColumns(remainder,
 				(row_size / row_group_count) * row_group_count);
 			if (!ret_value)
 				return false;
 		}
 
-		pc->Close();
+		pc.Close();
 		pq_file = file_name;
-		delete pc;
 		return true;
 	}
 

@@ -28,6 +28,7 @@
 #include <fstream>
 #include "parser_config_params.h"
 #include "parser_metadata.h"
+#include "tmats_parser.h"
 
 class ParseManager
 {
@@ -36,9 +37,8 @@ class ParseManager
 #ifdef PARQUET
 	std::set<std::string> name_set;
 #endif
-#ifdef LIBIRIG106
+
 	std::vector<std::string> tmats_body_vec_;
-#endif
 	std::string input_fname;
 	std::string output_path;
 	std::string comet_input_fname;
@@ -66,6 +66,10 @@ class ParseManager
 	std::vector<std::string> milstd1553_sorted_msg_selection;
 	std::string chanid_to_lruaddrs_metadata_string_;
 
+	std::map<std::string, std::string> TMATsChannelIDToSourceMap;
+	std::map<std::string, std::string> TMATsChannelIDToTypeMap;
+
+
 	bool parse_tmats(bool);
 	std::string worker_outfile_name(uint16_t worker_ind);
 	std::string final_outfile_name();
@@ -85,6 +89,9 @@ class ParseManager
 	void create_paths();
 	void collect_chanid_to_lruaddrs_metadata();
 	void collect_tmats_metadata();
+#ifdef VIDEO_DATA
+	void CollectVideoMetadata();
+#endif
 	void write_metadata();
 #ifdef XDAT
 	void create_milstd1553_sorted_msgs();
@@ -92,7 +99,7 @@ class ParseManager
 #ifdef PARQUET
 	void record_msg_names();
 #endif
-	
+	void ProcessTMATS();
 
 	public:
 
@@ -102,6 +109,15 @@ class ParseManager
 	void start_workers();
 	void concatenate_data_files();
 	~ParseManager();
+
+	// Used for unit tests
+	void ProcessTMATsTest(const std::vector<std::string>& input)
+	{
+		tmats_body_vec_ = input;
+		ProcessTMATS();
+	};
+	std::map<std::string, std::string> GetTMATsChannelIDToSourceMap() { return TMATsChannelIDToSourceMap; };
+	std::map<std::string, std::string> GetTMATsChannelIDToTypeMap() { return TMATsChannelIDToTypeMap; };
 };
 
 #endif

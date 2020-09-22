@@ -26,6 +26,7 @@ private:
 	std::string chanid_to_lruaddrs_map_key_;
 	std::string tmats_chanid_to_source_map_key_;
 	std::string tmats_chanid_to_type_map_key_;
+	std::string video_chanid_to_min_timestamp_map_key_;
 	std::string output_path_;
 	void print_chanid_to_lruaddrs_map();
 	void print_tmats_chanid_to_source_map();
@@ -61,7 +62,9 @@ public:
 	std::map<uint64_t, std::string> get_tmats_chanid_to_type_map();
 
 	//void write_metadata_to_parquet(std::filesystem::path parquet_dir);
-	void write_metadata_to_yaml(std::filesystem::path parquet_dir);
+	void Write1553metadataToYaml(std::filesystem::path parquet_dir);
+	void WriteVideoMetadataToYaml(std::filesystem::path parquet_dir,
+		const std::map<uint16_t, uint64_t>& chanid_to_first_ts_map);
 	//bool read_parquet_metadata(const std::string& parquet_dir);
 	bool read_yaml_metadata(const std::string& parquet_dir);
 };
