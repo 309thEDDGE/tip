@@ -37,10 +37,11 @@ class ParseManager
 #endif
 #ifdef LIBIRIG106
 	std::vector<std::string> tmats_body_vec_;
-	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
-	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
 	void ProcessTMATS();
 #endif
+	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
+	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
+
 	std::string input_fname;
 	std::string output_path;
 	uint32_t read_size;
