@@ -1592,55 +1592,6 @@ TEST_F(BusMapTest, AddLinesToBusnameLRUAddressMapDoNotAddNonIntegerLRUAddresses)
 	ASSERT_TRUE(map_compare(b.GetBusName_ToLRUAddressesCometMap(), comet_compare_map));
 }
 
-
-TEST_F(BusMapTest, PrepareUniqueElementMap)
-{
-	// Fill ICD lines.
-	std::vector<std::string> temp_lines = {
-		"msg_name,elem_name,xmit_word,dest_word,msg_word_count,bus_name,xmit_lru_name,xmit_lru_addr,dest_lru_name,dest_lru_addr,xmit_subaddr,dest_subaddr,rate,offset,elem_word_count,schema,isbit,ismulti,bitmsb,bitlsb,bitcount,classification,description,msbval,uom\n",
-		"DG6_N,DG6_N-01,00000,39043,03,Bus1,MIVU,23,ORT,19,00,04,1.00,00,02,05,0,0,01,00,00,0,description,21474348.000000000000,SECONDS",
-		"DG6_N,DG6_N-0301,00000,39043,03,Bus2,MIVU,23,ORT,19,00,04,1.00,02,01,12,1,0,01,09,09,0,description description,1.000000000000,DAY",
-		"DG6_N,DG6_N-0310,00000,39043,03,Bus3,MIVU,23,ORT,19,00,04,1.00,02,01,12,1,0,10,15,06,0,description,3.000000000000,YEAR",
-		"LL3_MD09,LL3_MD09-20@09,48192,55360,32,Bus3,MIVU,23,UDTU,27,02,02,0.00,19,02,03,0,1,02,00,00,0,description,17374824.000000000000,FEET",
-		"LL3_MD09,LL3_MD09-21@07,48192,55360,32,Bus4,MIVU,23,UDTU,27,02,02,0.00,20,02,05,0,1,01,00,00,0,description,21474348.000000000000,NONE\n",
-		"LL3_MD09,LL3_MD09-22@03,48192,55360,32,Bus5,MIVU,23,UDTU,27,02,02,0.00,21,02,03,0,1,02,00,00,0,description description,0.500000000000,SC",
-		"DTI_14G,DTI_14G-04@02,00000,55360,32,Bus1,CDU,22,UDTU,27,00,02,0.00,03,01,04,0,1,01,00,00,0,description,37.000000000000,NONE",
-		"DTI_14G,DTI_14G-05@01,00000,55360,32,Bus2,CDU,22,UDTU,27,00,02,0.00,04,01,04,0,1,01,00,00,0,description description,37.000000000000,MVOLT",
-		"GG01_H,GG01_H-0211,28894,00000,30,Bus1,MIVU,23,BLATS,14,00,06,0.00,01,01,12,1,0,11,11,01,0,description description,1.000000000000,NONE\n",
-		"GG01_H,GG01_H-0212,28894,00000,30,Bus1,MIVU,23,BLATS,14,00,06,0.00,01,01,12,1,0,12,12,01,0,description description,1.000000000000,NONE\n",
-		"GG01_H,GG01_H-0213,28894,00000,30,Bus2,MIVU,23,BLATS,14,00,06,0.00,01,01,12,1,0,13,13,01,0,description description,1.000000000000,NONE",
-		"RPG4_I,RPG4_I-01,00000,39043,20,Bus4,MIVU,23,ORT,19,00,04,1.00,00,02,05,0,0,01,00,00,0,description description,21474348.000000000000,SECONDS"
-	};
-
-	ICDData icd;
-	ASSERT_TRUE(icd.PrepareICDQuery(temp_lines, false));
-
-	BusMap bm;
-	bm.InitializeMaps(icd);
-	std::unordered_map<uint64_t, UniqueKeyData> unique_key_map = bm.GetUniqueKeyMap();
-	int64_t key1 = 39043;
-	int64_t key2 = 48192 << 16 | 55360;
-	int64_t key3 = 55360;
-	int64_t key4 = 28894 << 16;
-
-	std::set<size_t> truth_keys;
-	truth_keys.insert(key1);
-	truth_keys.insert(key2);
-	truth_keys.insert(key3);
-	truth_keys.insert(key4);
-
-	//ASSERT_EQ(iterable_tools_.GetKeys(unique_key_map), truth_keys);
-	ASSERT_THAT(iterable_tools_.GetKeys(unique_key_map), ::testing::ElementsAre(key1, key2, key3, key4));
-
-	ASSERT_THAT(unique_key_map[key1] = UniqueKeyData(std::set<size_t>(), std::set<std::string>({ "Bus1", "Bus2", "Bus3", "Bus4" }));
-
-	unique_key_map[key] = UniqueKeyData(std::set<size_t>(), std::set<std::string>({ "Bus3", "Bus4", "Bus5" }));
-
-	unique_key_map[key] = UniqueKeyData(std::set<size_t>(), std::set<std::string>({ "Bus1", "Bus2" }));
-
-	unique_key_map[key] = UniqueKeyData(std::set<size_t>(), std::set<std::string>({ "Bus1", "Bus2" }));
-}
-
 /*
 //// OLD TMATS type tests
 

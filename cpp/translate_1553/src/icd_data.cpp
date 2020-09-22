@@ -182,6 +182,29 @@ bool ICDData::PrepareICDQuery(const std::vector<std::string>& lines, bool is_yam
 	return true;
 }
 
+void ICDData::PrepareMessageKeyMap(std::unordered_map<uint64_t, std::set<std::string>>& message_key_map)
+{
+	for (int i = 0; i < icd_elements_.size(); i++)
+	{
+		// The message key consists of the transmit command word
+		// left shifted 16 bits and bitwise ORd with the recieve 
+		// command word
+		uint64_t message_key = icd_elements_[i].xmit_word_ << 16 |
+			icd_elements_[i].dest_word_;
+
+		if (message_key_map.count(message_key) == 0)
+		{
+			std::set<std::string> temp_set;
+			temp_set.insert(icd_elements_[i].bus_name_);
+			message_key_map[message_key] = temp_set;
+		}
+		else
+		{
+			message_key_map[message_key].insert(icd_elements_[i].bus_name_);
+		}
+	}
+}
+
 std::vector<std::vector<size_t>> ICDData::GetTableOrganizationIndices()
 {
 	return tables_;

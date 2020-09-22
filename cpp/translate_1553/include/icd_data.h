@@ -70,6 +70,7 @@ public:
 	ICDData();
 	~ICDData();
 	bool PrepareICDQuery(const std::vector<std::string>& lines, bool is_yaml_file=false);
+	void PrepareMessageKeyMap(std::unordered_map<uint64_t, std::set<std::string>>& message_key_map);
 	std::vector<std::vector<size_t>> GetTableOrganizationIndices();
 	std::set<size_t> TempLookupTableIndex(const std::string& bus_name, uint8_t xmit_lru_addr, 
 		uint8_t dest_lru_addr, uint8_t xmit_lru_subaddr, uint8_t dest_lru_subaddr);

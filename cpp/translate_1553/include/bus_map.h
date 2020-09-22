@@ -13,14 +13,6 @@
 #include "iterable_tools.h"
 #include "user_input.h"
 
-class UniqueKeyData
-{
-public:
-	UniqueKeyData(std::set<size_t> channel_ids_, std::set<std::string> bus_names) : channel_ids_(channel_ids_), bus_names_(bus_names_)  {};
-	std::set<std::string> bus_names_;
-	std::set<size_t> channel_ids_;
-};
-
 class BusMap
 {
 private:
