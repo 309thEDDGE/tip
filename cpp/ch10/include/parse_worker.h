@@ -8,7 +8,6 @@
 #include "binbuff.h"
 #include <atomic>
 #include <filesystem>
-#include "tmats.h"
 #include "ch10.h"
 #include "ch10_packet_header.h"
 #include "ch10_packet_stats.h"
@@ -61,7 +60,6 @@ class ParseWorker
 	bool continue_parsing;
 	bool delete_alloc;
 	bool first_tdp;
-	bool use_comet_comm_wrd;
 	bool final_worker;
 	bool is_scan_worker;
 	uint16_t id;
@@ -77,7 +75,6 @@ class ParseWorker
 	uint32_t first_TDP_loc;
 	std::vector<Ch10PacketHeaderStatus> hdr_err;
 	uint32_t pkt_count;
-	TMATS tdata;
 	Ch10PacketHeader* pkthdr;
 	Ch10TDF1* tdf;
 	Ch10MilStd1553F1* milstd;
@@ -104,8 +101,7 @@ class ParseWorker
 #ifdef PARQUET
 	void initialize(uint16_t ID,
 		uint64_t start_pos, uint32_t read, uint16_t binbuff_ind,
-		std::map<Ch10DataType, std::filesystem::path>& fsmap, 
-		TMATS& tmatsdata, bool use_comet_command_words, bool is_final_worker);
+		std::map<Ch10DataType, std::filesystem::path>& fsmap, bool is_final_worker);
 	void get_msg_names(std::set<std::string>& output_name_set);
 #endif
 	void append_mode_initialize(uint32_t read, uint16_t binbuff_ind, uint64_t start_pos);

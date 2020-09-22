@@ -18,7 +18,6 @@
 #include <vector>
 #include <set>
 #include <filesystem>
-#include "tmats.h"
 #include "parse_worker.h"
 #include "ch10.h"
 #include "ch10_milstd1553f1stats.h"
@@ -27,12 +26,8 @@
 #include <chrono>
 #include <fstream>
 #include "parser_config_params.h"
-<<<<<<< HEAD
 #include "metadata.h"
-=======
-#include "parser_metadata.h"
 #include "tmats_parser.h"
->>>>>>> 06990d431323d0960a893bc971ef9b153776e785
 
 class ParseManager
 {
@@ -40,11 +35,14 @@ class ParseManager
 #ifdef PARQUET
 	std::set<std::string> name_set;
 #endif
-
+#ifdef LIBIRIG106
 	std::vector<std::string> tmats_body_vec_;
+	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
+	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
+	void ProcessTMATS();
+#endif
 	std::string input_fname;
 	std::string output_path;
-	std::string comet_input_fname;
 	uint32_t read_size;
 	uint32_t append_read_size;
 	uint64_t total_size;
@@ -54,9 +52,6 @@ class ParseManager
 	//bool tmats_present;
 	bool error_set;
 	bool check_word_count;
-	bool use_comet_command_words;
-	bool tmats_present;
-	TMATS tmats;
 	std::ifstream ifile;
 	ParseWorker* workers;
 	BinBuff* binary_buffers;
@@ -68,10 +63,6 @@ class ParseManager
 	bool milstd1553_msg_selection;
 	std::vector<std::string> milstd1553_sorted_msg_selection;
 	std::string chanid_to_lruaddrs_metadata_string_;
-
-	std::map<std::string, std::string> TMATsChannelIDToSourceMap;
-	std::map<std::string, std::string> TMATsChannelIDToTypeMap;
-
 
 	bool parse_tmats(bool);
 	std::string worker_outfile_name(uint16_t worker_ind);
@@ -101,7 +92,7 @@ class ParseManager
 #ifdef PARQUET
 	void record_msg_names();
 #endif
-	void ProcessTMATS();
+	
 
 	public:
 
@@ -118,8 +109,9 @@ class ParseManager
 		tmats_body_vec_ = input;
 		ProcessTMATS();
 	};
-	std::map<std::string, std::string> GetTMATsChannelIDToSourceMap() { return TMATsChannelIDToSourceMap; };
-	std::map<std::string, std::string> GetTMATsChannelIDToTypeMap() { return TMATsChannelIDToTypeMap; };
+	std::map<std::string, std::string> GetTMATsChannelIDToSourceMap() { return TMATsChannelIDToSourceMap_; };
+	std::map<std::string, std::string> GetTMATsChannelIDToTypeMap() { return TMATsChannelIDToTypeMap_; };
+
 };
 
 #endif

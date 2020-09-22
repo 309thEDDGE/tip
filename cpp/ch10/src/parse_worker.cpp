@@ -23,9 +23,9 @@ ParseWorker::ParseWorker() : start_position(0),
 	last_position(0), id(UINT16_MAX), complete(false),
 	bb_ind(UINT16_MAX), output_fname(""), first_TDP_loc(UINT32_MAX),
 	pkt_count(0),
-	tdata(), packet_ledger(), packet_error_ledger(),
+	packet_ledger(), packet_error_ledger(),
 	tdf(nullptr), milstd(nullptr), delete_alloc(false), continue_parsing(false),
-	first_tdp(false), pkthdr(nullptr), read_size(0), retcode(0), use_comet_comm_wrd(false),
+	first_tdp(false), pkthdr(nullptr), read_size(0), retcode(0),
 	have_generated_file_names(false), final_worker(false), is_scan_worker(false)
 #ifdef LIBIRIG106
 	, i106_handle_(0), i106_status_(I106Status::I106_OK), i106_offset_(0), found_tmats_(false),
@@ -41,14 +41,12 @@ ParseWorker::ParseWorker() : start_position(0),
 void ParseWorker::initialize(uint16_t ID,
 	uint64_t start_pos, uint32_t read, uint16_t binbuff_ind,
 	std::map<Ch10DataType, std::filesystem::path>& fsmap,
-	TMATS& tmatsdata, bool use_comet_command_words, bool is_final_worker)
+	bool is_final_worker)
 {
 	id = ID;
 	start_position = start_pos;
 	read_size = read;
 	bb_ind = binbuff_ind;
-	tdata = tmatsdata;
-	use_comet_comm_wrd = use_comet_command_words;
 	final_worker = is_final_worker;
 	generate_parquet_file_names(fsmap);
 #ifdef LIBIRIG106
@@ -121,8 +119,8 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 	{
 		pkthdr = new Ch10PacketHeader(bb, id);
 		tdf = new Ch10TDF1(bb, id);
-		milstd = new Ch10MilStd1553F1(bb, id, tdata, check_milstd1553_word_count,
-			use_comet_comm_wrd, output_file_names[Ch10DataType::MILSTD1553_DATA_F1],
+		milstd = new Ch10MilStd1553F1(bb, id, check_milstd1553_word_count,
+			output_file_names[Ch10DataType::MILSTD1553_DATA_F1],
 			milstd1553_msg_selection, milstd1553_sorted_selected_msgs);
 		milstd->set_channelid_remoteaddress_output(&chanid_remoteaddr1_map, &chanid_remoteaddr2_map);
 #ifdef VIDEO_DATA
@@ -402,8 +400,8 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 	{
 		pkthdr = new Ch10PacketHeader(bb, id);
 		tdf = new Ch10TDF1(bb, id);
-		milstd = new Ch10MilStd1553F1(bb, id, tdata, check_milstd1553_word_count,
-			use_comet_comm_wrd, output_file_names[Ch10DataType::MILSTD1553_DATA_F1],
+		milstd = new Ch10MilStd1553F1(bb, id, check_milstd1553_word_count,
+			output_file_names[Ch10DataType::MILSTD1553_DATA_F1],
 			milstd1553_msg_selection, milstd1553_sorted_selected_msgs);
 		milstd->set_channelid_remoteaddress_output(&chanid_remoteaddr1_map, &chanid_remoteaddr2_map);
 #ifdef VIDEO_DATA
