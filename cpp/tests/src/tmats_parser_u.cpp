@@ -136,3 +136,74 @@ TEST(TMATSParserTest, MapAttrs3Subattrs)
     EXPECT_EQ(expected, result);
 
 }
+
+TEST(TMATSParserTest, MapAttrsHandleRepeat)
+{
+    // Note about creating test lines from a tmats text file: 
+    // 1) Read in with Python via with open(...), a = f.readlines();
+    // 2) b = ['R\"(' + x.rstrip('\n') + ')\" \"\\r\\n\"\n' for x in a]
+    // 3) Write to temp output file via with open(...), f.writelines(b)
+    // 4) paste into C++ file
+    //
+    std::string custom_tmats =
+        R"(G\COM:********************** Time Channel ************************;)" "\r\n"
+        R"(G\COM:************************************************************;)" "\r\n"
+        R"(R-1\CDT-1:TIMEIN;)" "\r\n"
+        R"(R-1\TK1-1:1;)" "\r\n"
+        R"()" "\r\n"
+        R"(G\COM:************************************************************;)" "\r\n"
+        R"(G\COM:********************* Video Channels ***********************;)" "\r\n"
+        R"(G\COM:************************************************************;)" "\r\n"
+        R"()" "\r\n"
+        R"(R-1\DSI-2:VIDEO_1;)" "\r\n"
+        R"(R-1\CDT-2:VIDIN;)" "\r\n"
+        R"(R-1\TK1-2:2;)" "\r\n"
+        R"()" "\r\n"
+        R"(R-1\DSI-3:VIDEO_2;)" "\r\n"
+        R"(R-1\CDT-3:VIDIN;)" "\r\n"
+        R"(R-1\TK1-3:3;)" "\r\n"
+        R"()" "\r\n"
+        R"(R-1\DSI-4:VIDEO_3;)" "\r\n"
+        R"(R-1\CDT-4:VIDIN;)" "\r\n"
+        R"(R-1\TK1-4:4;)" "\r\n"
+        R"()" "\r\n"
+        R"(R-1\DSI-5:VIDEO_4;)" "\r\n"
+        R"(R-1\CDT-5:VIDIN;)" "\r\n"
+        R"(R-1\TK1-5:5;)" "\r\n"
+        R"()" "\r\n"
+        R"(G\COM:************************************************************;)" "\r\n"
+        R"(G\COM:***************** MIL-STD-1553B Channels *******************;)" "\r\n"
+        R"(G\COM:************************************************************;)" "\r\n"
+        R"(R-1\DSI-6:1553_1;)" "\r\n"
+        R"(R-1\CDT-6:1553IN;)" "\r\n"
+        R"(R-1\TK1-6:6;)" "\r\n"
+        R"()" "\r\n"
+        R"(R-1\DSI-7:1553_2;)" "\r\n"
+        R"(R-1\CDT-7:1553IN;)" "\r\n"
+        R"(R-1\TK1-7:7;)" "\r\n"
+        R"()" "\r\n"
+        R"(R-1\DSI-8:1553_3;)" "\r\n"
+        R"(R-1\CDT-8:1553IN;)" "\r\n"
+        R"(R-1\TK1-8:8;)" "\r\n"
+        R"()" "\r\n"
+        R"(R-1\DSI-9:1553_4;)" "\r\n"
+        R"(R-1\CDT-9:1553IN;)" "\r\n"
+        R"(R-1\TK1-9:9;)" "\r\n";
+
+        std::map<std::string, std::string> expected = {
+            {"1", "TIMEIN"},
+            {"2", "VIDIN"},
+            {"3", "VIDIN"},
+            {"4", "VIDIN"},
+            {"5", "VIDIN"},
+            {"6", "1553IN"},
+            {"7", "1553IN"},
+            {"8", "1553IN"},
+            {"9", "1553IN"}
+        };
+        std::map<std::string, std::string> result;
+
+        TMATSParser parser = TMATSParser(custom_tmats, false);
+        result = parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n");
+        EXPECT_EQ(expected, result);
+}
