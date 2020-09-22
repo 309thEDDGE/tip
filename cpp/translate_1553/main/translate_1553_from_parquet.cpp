@@ -23,34 +23,26 @@ bool GetArguments(int argc, char* argv[], std::string& input_path,
 bool GetArguments(int argc, char* argv[], std::string& input_path,
 	uint8_t& thread_count, std::string& icd_path);
 
-//bool PrepareConfigFiles(ConfigManager& cm_parse, ConfigManager& cm_translate,
-//	ConfigManager& cm_platform, ACPlatform& platform);
-//bool GetConfigParams(ConfigManager& cm_parse, ConfigManager& cm_translate,
-//	ConfigManager& cm_platform, std::string& comet_path,
-//	bool& select_msgs,
-//	std::vector<std::string>& select_msg_names,
-//	std::map<std::string, std::string>& tmats_bus_name_corrections,
-//	std::vector<std::vector<std::string>>& degenerate_messages,
-//	bool& exit_after_table,
-//	bool& stop_after_bus_map,
-//	bool& prompt_user,
-//	int& comet_debug,
-//	int& map_confidence_level);
-
-//bool GetParquetMetadata(const std::string& parquet_path);
 bool PrepareICDAndBusMap(ICDData& icd_data, const std::string& input_path,
 	const std::string& icd_path, bool stop_after_bus_map, bool prompt_user,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
 	int map_confidence_level, 
-	std::map<std::string, std::set<uint64_t>> bus_name_to_lruaddrs_set_map);
+	std::map<std::string, std::set<uint64_t>> bus_name_to_lruaddrs_set_map,
+	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
 bool PrepareICD(ICDData& icd_data, const std::string& icd_path);
 bool SynthesizeBusMap(ICDData& icd_data, const std::string& input_path, bool prompt_user,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	int map_confidence_level, std::map<std::string, std::set<uint64_t>> comet_busmap_replacement);
+	int map_confidence_level, 
+	std::map<std::string, std::set<uint64_t>> comet_busmap_replacement,
+	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
 bool MTTranslate(std::string input_path, uint8_t thread_count, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData& icd);
+	std::vector<std::string> select_msg_names, ICDData& icd, const std::string& icd_path,
+	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
 bool Translate(std::string input_path, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData& icd);
+	std::vector<std::string> select_msg_names, ICDData& icd, const std::string& icd_path,
+	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
+bool RecordMetadata(const std::filesystem::path translated_data_dir,
+	const std::string& icd_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map);
 
 int main(int argc, char* argv[])
 {
@@ -66,33 +58,32 @@ int main(int argc, char* argv[])
 	if (!config.Initialize(file_path.string()))
 		return 0;
 	thread_count = config.translate_thread_count_;
-	ICDData icd_data;
-	if (!PrepareICDAndBusMap(icd_data, input_path, icd_path, config.stop_after_bus_map_,
-		config.prompt_user_, config.tmats_busname_corrections_, config.bus_map_confidence_level_,
-		config.comet_busmap_replacement_))
-	{
-		return 0;
-	}
-	printf("prepare icd and bus map\n");
-	
+
 	printf("ICD path: %s\n", icd_path.c_str());
-
-	
-
 	printf("Input: %s\n", input_path.c_str());
 	printf("Thread count: %hhu\n", thread_count);
 
+	ICDData icd_data;
+	std::map<uint64_t, std::string> chanid_to_bus_name_map;
+	if (!PrepareICDAndBusMap(icd_data, input_path, icd_path, config.stop_after_bus_map_,
+		config.prompt_user_, config.tmats_busname_corrections_, config.bus_map_confidence_level_,
+		config.comet_busmap_replacement_, chanid_to_bus_name_map))
+	{
+		return 0;
+	}
+	
 	// Start translation routine for multi-threaded use case (or single-threaded using the threading framework
 	// if thread_count = 1 is specified).
 	if (thread_count > 0)
 	{
 		MTTranslate(input_path, thread_count, !config.select_specific_messages_.empty(),
-			config.select_specific_messages_, icd_data);
+			config.select_specific_messages_, icd_data, icd_path, chanid_to_bus_name_map);
 	}
 	// Start the translation routine that doesn't use threading.
 	else
 	{
-		Translate(input_path, !config.select_specific_messages_.empty(), config.select_specific_messages_, icd_data);
+		Translate(input_path, !config.select_specific_messages_.empty(), 
+			config.select_specific_messages_, icd_data, icd_path, chanid_to_bus_name_map);
 	}
 
 	//system("pause");
@@ -134,7 +125,8 @@ bool PrepareICDAndBusMap(ICDData& icd_data, const std::string& input_path,
 	const std::string& icd_path, bool stop_after_bus_map, bool prompt_user,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
 	int map_confidence_level, 
-	std::map<std::string, std::set<uint64_t>> bus_name_to_lruaddrs_set_map)
+	std::map<std::string, std::set<uint64_t>> bus_name_to_lruaddrs_set_map,
+	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 	// Read metadata from raw Parquet file. The important output from
 	// this step are a map of TMATS data, bus name to channel ID,
@@ -163,7 +155,7 @@ bool PrepareICDAndBusMap(ICDData& icd_data, const std::string& input_path,
 	// input.
 	if (!SynthesizeBusMap(icd_data, input_path, prompt_user, 
 		tmats_bus_name_corrections, map_confidence_level, 
-		bus_name_to_lruaddrs_set_map))
+		bus_name_to_lruaddrs_set_map, chanid_to_bus_name_map))
 	{
 		return false;
 	}
@@ -202,7 +194,9 @@ bool PrepareICD(ICDData& icd_data, const std::string& icd_path)
 
 bool SynthesizeBusMap(ICDData& icd_data, const std::string& input_path, bool prompt_user,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	int map_confidence_level, std::map<std::string, std::set<uint64_t>> comet_busmap_replacement)
+	int map_confidence_level, 
+	std::map<std::string, std::set<uint64_t>> comet_busmap_replacement,
+	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 	// If comet_busmap_replacement is given in the config file
 	// use that for bus_name_to_lruaddrs_set_map instead of the ICD
@@ -271,9 +265,8 @@ bool SynthesizeBusMap(ICDData& icd_data, const std::string& input_path, bool pro
 	bm.InitializeMaps(bus_name_to_lruaddrs_set_map, chanid_to_lruaddrs_set_map,
 		tmats_chanid_to_source_map, tmats_bus_name_corrections);
 
-	// Create the channel ID to bus name map.
+	// Fill the channel ID to bus name map.
 	// Note: will also need to pass prompt_user in future vresion of this function.
-	std::map<uint64_t, std::string> chanid_to_bus_name_map;
 	if (!bm.PerformBusMapping(chanid_to_bus_name_map, map_confidence_level, 
 		prompt_user))
 	{
@@ -310,13 +303,15 @@ bool SynthesizeBusMap(ICDData& icd_data, const std::string& input_path, bool pro
 }
 
 bool MTTranslate(std::string input_path, uint8_t thread_count, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData& icd)
+	std::vector<std::string> select_msg_names, ICDData& icd, const std::string& icd_path,
+	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
-	auto start_time = std::chrono::high_resolution_clock::now();
 	TranslationMaster tm(input_path, thread_count, select_msgs,
 		select_msg_names, icd);
 
-	//return true;
+	RecordMetadata(tm.GetTranslatedDataDirectory(), icd_path, chanid_to_bus_name_map);
+
+	auto start_time = std::chrono::high_resolution_clock::now();
 	uint8_t ret_val = tm.translate();
 	if (ret_val != 0)
 	{
@@ -324,20 +319,58 @@ bool MTTranslate(std::string input_path, uint8_t thread_count, bool select_msgs,
 		return false;
 	}
 	auto stop_time = std::chrono::high_resolution_clock::now();
-	printf("Duration: %zd sec\n", std::chrono::duration_cast<std::chrono::seconds>(stop_time - start_time).count());
+	printf("Duration: %zd sec\n", std::chrono::duration_cast<std::chrono::seconds>(
+		stop_time - start_time).count());
 	return true;
 }
 
 bool Translate(std::string input_path, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData& icd)
+	std::vector<std::string> select_msg_names, ICDData& icd, const std::string& icd_path,
+	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 	ParquetTranslationManager ptm(input_path, icd);
 	ptm.set_select_msgs_list(select_msgs, select_msg_names);
+
+	RecordMetadata(ptm.GetTranslatedDataDirectory(), icd_path, chanid_to_bus_name_map);
+
+	auto start_time = std::chrono::high_resolution_clock::now();
 	ptm.translate();
 	if (ptm.get_status() < 0)
 	{
 		printf("Translation error\n");
 		return false;
 	}
+	auto stop_time = std::chrono::high_resolution_clock::now();
+	printf("Duration: %zd sec\n", std::chrono::duration_cast<std::chrono::seconds>(
+		stop_time - start_time).count());
+	return true;
+}
+
+bool RecordMetadata(const std::filesystem::path translated_data_dir,
+	const std::string& icd_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map)
+{
+	// Use Metadata class to create the output metadata file path.
+	Metadata md;
+	std::filesystem::path md_path = md.GetYamlMetadataPath(translated_data_dir,
+		"_metadata");
+
+	// Record the final bus map used for translation.
+	md.RecordSimpleMap(chanid_to_bus_name_map, "chanid_to_bus_name_map");
+
+	// Record the ICD path.
+	md.RecordSingleKeyValuePair("icd_path", icd_path);
+
+	// Get a string containing the complete metadata output and
+	// and write it to the yaml file.
+	std::ofstream stream_translation_metadata(md_path.string(),
+		std::ofstream::out | std::ofstream::trunc);
+	if (!(stream_translation_metadata.good() && stream_translation_metadata.is_open()))
+	{
+		printf("RecordMetadata(): Failed to open metadata file for writing, %s\n",
+			md_path.string().c_str());
+		return false;
+	}
+	stream_translation_metadata << md.GetMetadataString();
+	stream_translation_metadata.close();
 	return true;
 }
