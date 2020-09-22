@@ -30,11 +30,12 @@ add_library(${util_lib_name}
             ${util_src_dir}/yaml_reader.cpp          ${util_inc_dir}/yaml_reader.h
             ${util_src_dir}/tmats_parser.cpp         ${util_inc_dir}/tmats_parser.h
             ${util_src_dir}/metadata.cpp             ${util_inc_dir}/metadata.h
+            ${util_src_dir}/parquet_reader.cpp       ${util_inc_dir}/parquet_reader.h
  )
 
-target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} ${yaml_inc_dir})
+target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} ${yaml_inc_dir} ${parquet_inc_dirs})
 target_compile_features(${util_lib_name} PUBLIC cxx_std_17)
-target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} ${linux_libs})
+target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} ${parquet_libs} ${linux_libs})
 
 #########################################################
 #              Build/link parquet_context lib
@@ -55,6 +56,8 @@ target_link_libraries(${pqctx_lib_name} PUBLIC ${parquet_libs} ${linux_libs})
 #########################################################
 #      Build/link ethernet lib
 #########################################################
+set(eth_lib_name "")
+set(eth_inc_dir "")
 if(libirig106 AND ethernet_data)
 
     # Build ch10ethernet add_library(${1:target_name} ${2:source_file}).
@@ -78,11 +81,19 @@ set(ch10pq_lib_name "ch10_parquet")
 message(STATUS "Building lib: " "${ch10pq_lib_name}")
 set(ch10pq_src_dir ${ch10pq_lib_name}/${source_dir_name})
 set(ch10pq_inc_dir ${ch10pq_lib_name}/${include_dir_name})
-add_library(${ch10pq_lib_name}
-            ${ch10pq_src_dir}/parquet_milstd1553f1.cpp ${ch10pq_inc_dir}/parquet_milstd1553f1.h
-            ${ch10pq_src_dir}/parquet_videodataf0.cpp  ${ch10pq_inc_dir}/parquet_videodataf0.h
-            ${ch10pq_src_dir}/parquet_ethernetf0.cpp ${ch10pq_inc_dir}/parquet_ethernetf0.h
-    )
+
+if(ethernet_data)
+    add_library(${ch10pq_lib_name}
+                ${ch10pq_src_dir}/parquet_milstd1553f1.cpp ${ch10pq_inc_dir}/parquet_milstd1553f1.h
+                ${ch10pq_src_dir}/parquet_videodataf0.cpp  ${ch10pq_inc_dir}/parquet_videodataf0.h
+                ${ch10pq_src_dir}/parquet_ethernetf0.cpp ${ch10pq_inc_dir}/parquet_ethernetf0.h
+        )
+else()
+    add_library(${ch10pq_lib_name}
+                ${ch10pq_src_dir}/parquet_milstd1553f1.cpp ${ch10pq_inc_dir}/parquet_milstd1553f1.h
+                ${ch10pq_src_dir}/parquet_videodataf0.cpp  ${ch10pq_inc_dir}/parquet_videodataf0.h
+        )
+endif()
 
 #target_include_directories(${ch10pq_lib_name} PUBLIC 
 #                           ${ch10pq_inc_dir}
@@ -137,10 +148,9 @@ set(comp_inc_dir ${comp_path}/${include_dir_name})
 set(comp_src_dir ${comp_path}/${source_dir_name})
 set(comp_main_dir ${comp_path}/${main_dir_name})
 message(STATUS "Building pq-to-pq comparator lib: " "${comp_lib_name}")
-add_library(${comp_lib_name} ${comp_src_dir}/comparator.cpp 
-            ${comp_src_dir}/parquet_manager.cpp)
-target_include_directories(${comp_lib_name} PUBLIC ${comp_inc_dir} ${parquet_inc_dirs})
-target_link_libraries(${comp_lib_name} PUBLIC ${linux_libs})
+add_library(${comp_lib_name} ${comp_src_dir}/comparator.cpp )
+target_include_directories(${comp_lib_name} PUBLIC ${comp_inc_dir} ${parquet_inc_dirs} ${util_inc_dir})
+target_link_libraries(${comp_lib_name} PUBLIC ${util_lib_name} ${linux_libs})
 target_compile_features(${comp_lib_name} PUBLIC cxx_std_17)
 
 #########################################################
@@ -271,10 +281,11 @@ if(build_tests)
                    ${test_src_dir}/binbuff_u.cpp ${test_src_dir}/parse_context_u.cpp
                    ${test_src_dir}/parquet_arrow_validator_u.cpp ${test_src_dir}/parquet_context_u.cpp
                    ${test_src_dir}/tmats_parser_u.cpp ${test_src_dir}/metadata_u.cpp 
-                   ${test_src_dir}/parse_manager_u.cpp)
+                   ${test_src_dir}/parse_manager_u.cpp ${test_src_dir}/parquet_reader_u.cpp)
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
-                               ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
-                               ${temp_irig_inc_dir} ${ch10_inc_dir} )
+                               ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
+                               ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} )
+
     target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
     target_link_libraries(${test_exe_name}
                           ${gsuite_libs}
@@ -283,6 +294,7 @@ if(build_tests)
                           ${pqctx_lib_name}
                           ${comp_lib_name}
                           ${ch10parse_lib_name}
+                          ${parquet_libs}
               ${linux_libs})
 endif()
 

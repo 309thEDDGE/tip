@@ -93,8 +93,9 @@ public:
 #ifdef LIBIRIG106
 	uint8_t UseLibIRIG106(I106C10Header* i106_header, void* buffer);
 	uint8_t IngestLibIRIG106Msg();
-	const std::map<uint16_t, uint64_t>& GetChannelIDToMinTimeStampMap();
 #endif
+	const std::map<uint16_t, uint64_t>& GetChannelIDToMinTimeStampMap();
+
 };
 
 #endif
