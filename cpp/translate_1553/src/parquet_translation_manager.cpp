@@ -56,7 +56,8 @@ uint8_t ParquetTranslationManager::setup_output_paths()
 		this translation algorithm needs to loop over and consume the 
 		contents of each file in that directory.
 		*/
-		size_t find_result = std::string::npos;
+		size_t metadata_find_result = std::string::npos;
+		size_t tmats_find_result = std::string::npos;
 		std::string temp_path = "";
 		for (auto& p : std::filesystem::directory_iterator(input_parquet_path))
 		{
@@ -66,8 +67,11 @@ uint8_t ParquetTranslationManager::setup_output_paths()
 				// Do not add the path of the current file if it has the
 				// sub-string "metadata" because that file contains only
 				// metadata and will have been already consumed in main().
-				find_result = temp_path.find("metadata");
-				if (find_result == std::string::npos && temp_path.find("_TMATS") == std::string::npos)
+				// Also ignore _TMATS.txt file.
+				metadata_find_result = temp_path.find("metadata");
+				tmats_find_result = temp_path.find("TMATS");
+				if ((metadata_find_result == std::string::npos) &&
+					(tmats_find_result == std::string::npos))
 				{
 #ifdef DEBUG
 #if DEBUG > 1
@@ -127,6 +131,11 @@ uint8_t ParquetTranslationManager::setup_output_paths()
 	printf("Output directory: %s\n", output_dir_.string().c_str());
 
 	return 0;
+}
+
+std::filesystem::path ParquetTranslationManager::GetTranslatedDataDirectory()
+{
+	return output_dir_;
 }
 
 
