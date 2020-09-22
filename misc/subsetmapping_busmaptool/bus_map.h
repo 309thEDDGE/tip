@@ -13,13 +13,6 @@
 #include "iterable_tools.h"
 #include "user_input.h"
 
-class BusMapData
-{
-public:
-	std::set<std::string> bus_names_;
-	std::set<size_t> channel_ids_;
-};
-
 class BusMap
 {
 private:
