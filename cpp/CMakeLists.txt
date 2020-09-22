@@ -217,7 +217,6 @@ install(TARGETS ${util_lib_name}
                 ${pqctx_lib_name} 
                 ${ch10pq_lib_name} 
                 ${trans_lib_name}
-                ${metadata_lib_name} 
                 ${comp_lib_name}
                 ${eth_lib_name}
                 ${ch10parse_lib_name}
@@ -238,7 +237,6 @@ add_executable(${ch10parse_exe_name} ${ch10_main_dir}/ch10parse.cpp
     )
 target_include_directories(${ch10parse_exe_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
-                            ${metadata_inc_dir}
                             ${temp_irig_inc_dir} ${temp_eth_inc_dir}
                             )
 target_compile_features(${ch10parse_exe_name} PUBLIC cxx_std_17)
