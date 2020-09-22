@@ -296,6 +296,16 @@ if(build_tests)
                           ${ch10parse_lib_name}
                           ${parquet_libs}
               ${linux_libs})
+
+    # For Ctest
+    #include(CTest)
+    enable_testing()
+    
+    # For gtest_discover_tests
+    include(GoogleTest)
+
+    # Create ctest executable
+    gtest_discover_tests(${test_exe_name})
 endif()
 
 #########################################################
@@ -353,3 +363,4 @@ if(video_data)
     install(TARGETS ${video_exe_name}
             DESTINATION ${out_bin_dir})
 endif()
+

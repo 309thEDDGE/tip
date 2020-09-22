@@ -84,7 +84,10 @@ if(ethernet_data AND NOT libirig106)
     message(FATAL_ERROR "LIBIRIG106 (default ON) must be ON if ETHERNET (default ON) is ON")
 endif()
 
-if(NOT CMAKE_BUILD_TYPE)
+get_filename_component(deps_dir "../deps" ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
+message(STATUS "Dependencies dir: " ${deps_dir})
+
+if(NOT DEFINED CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
     message(STATUS "Not defined: Defining cmake_build_type: " ${CMAKE_BUILD_TYPE})
 elseif("${CMAKE_BUILD_TYPE}" MATCHES "")
