@@ -35,10 +35,10 @@ class ParseManager
 #ifdef PARQUET
 	std::set<std::string> name_set;
 #endif
-#ifdef LIBIRIG106
+
+	// TMATS processing
 	std::vector<std::string> tmats_body_vec_;
 	void ProcessTMATS();
-#endif
 	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
 	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
 
@@ -65,7 +65,6 @@ class ParseManager
 	std::vector<std::string> milstd1553_sorted_msg_selection;
 	std::string chanid_to_lruaddrs_metadata_string_;
 
-	bool parse_tmats(bool);
 	std::string worker_outfile_name(uint16_t worker_ind);
 	std::string final_outfile_name();
 	std::streamsize activate_worker(uint16_t binbuff_ind, uint16_t ID,

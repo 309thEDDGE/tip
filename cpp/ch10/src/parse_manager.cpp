@@ -55,12 +55,6 @@ ParseManager::ParseManager(std::string fname, std::string output_path, const Par
 				printf("File size: %llu MB\n\n", total_size / (1024 * 1024));
 #endif
 
-#ifndef LIBIRIG106
-	// Parse TMATS.
-	bool use_default_bus_id_map = true;
-	error_set = parse_tmats(use_default_bus_id_map);
-#endif
-
 			// Create file output paths based on the input file name.
 			create_paths();
 		}
@@ -69,8 +63,6 @@ ParseManager::ParseManager(std::string fname, std::string output_path, const Par
 
 void ParseManager::create_paths()
 {
-
-#ifdef PARQUET
 	// Create parquet output file directory.
 	std::filesystem::path input_path(input_fname);
 	std::filesystem::path out_path(output_path);
@@ -124,7 +116,6 @@ void ParseManager::create_paths()
 			printf("Creation of directory %s failed\n", parquet_eth_path.string().c_str());
 		}
 	}
-#endif
 #endif
 }
 
@@ -803,7 +794,6 @@ void ParseManager::record_msg_names()
 
 #endif
 
-#ifdef LIBIRIG106
 void ParseManager::ProcessTMATS()
 {
 	// if tmats doesn't exist return
@@ -838,4 +828,3 @@ void ParseManager::ProcessTMATS()
 	TMATsChannelIDToSourceMap_ = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\DSI-n");
 	TMATsChannelIDToTypeMap_ = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n");
 }
-#endif
