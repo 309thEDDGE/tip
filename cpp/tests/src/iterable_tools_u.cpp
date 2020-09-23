@@ -1520,3 +1520,74 @@ TEST_F(EmitterTest, EmitCompoundMapIntInt)
 	ExpectEmit(expect, e);
 
 }
+
+TEST(IterableTools, CombineCompoundMapsToSetEmptyUpdateMap)
+{
+	IterableTools it;
+	using maptype = std::map<std::string, std::set<int>>;
+	maptype input_map = {
+		{"hi", {3, 6, 88}},
+		{"test", {3, 55, 78, 88}}
+	};
+	maptype update_map;
+	maptype result_map = it.CombineCompoundMapsToSet(input_map, update_map);
+	EXPECT_THAT(result_map["hi"], ::testing::ElementsAreArray(input_map["hi"]));
+	EXPECT_THAT(result_map["test"], ::testing::ElementsAreArray(input_map["test"]));
+}
+
+TEST(IterableTools, CombineCompoundMapsToSetEmptyInputMap)
+{
+	IterableTools it;
+	using maptype = std::map<std::string, std::set<int>>;
+	maptype update_map = {
+		{"hi", {3, 6, 88}},
+		{"test", {3, 55, 78, 88}}
+	};
+	maptype input_map;
+	maptype result_map = it.CombineCompoundMapsToSet(input_map, update_map);
+	EXPECT_THAT(result_map["hi"], ::testing::ElementsAreArray(update_map["hi"]));
+	EXPECT_THAT(result_map["test"], ::testing::ElementsAreArray(update_map["test"]));
+}
+
+TEST(IterableTools, CombineCompoundMapsToSetMergeSets)
+{
+	IterableTools it;
+	using maptype = std::map<std::string, std::set<int>>;
+	maptype input_map = {
+		{"hi", {3, 6, 88}},
+		{"test", {3, 55, 78, 88}}
+	};
+	maptype update_map = {
+		{"hi", {3, 23, 88}}
+	};
+	maptype expected_map = {
+		{"hi", {3, 6, 23, 88}},
+		{"test", {3, 55, 78, 88}}
+	};
+	maptype result_map = it.CombineCompoundMapsToSet(input_map, update_map);
+	EXPECT_THAT(result_map["hi"], ::testing::ElementsAreArray(expected_map["hi"]));
+	EXPECT_THAT(result_map["test"], ::testing::ElementsAreArray(expected_map["test"]));
+}
+
+TEST(IterableTools, CombineCompoundMapsToSetNewKeyValPair)
+{
+	IterableTools it;
+	using maptype = std::map<std::string, std::set<int>>;
+	maptype input_map = {
+		{"hi", {3, 6, 88}},
+		{"test", {3, 55, 78, 88}}
+	};
+	maptype update_map = {
+		{"hi", {3, 23, 88}},
+		{"dude", {12, 44}}
+	};
+	maptype expected_map = {
+		{"hi", {3, 6, 23, 88}},
+		{"test", {3, 55, 78, 88}},
+		{"dude", {12, 44}}
+	};
+	maptype result_map = it.CombineCompoundMapsToSet(input_map, update_map);
+	EXPECT_THAT(result_map["hi"], ::testing::ElementsAreArray(expected_map["hi"]));
+	EXPECT_THAT(result_map["test"], ::testing::ElementsAreArray(expected_map["test"]));
+	EXPECT_THAT(result_map["dude"], ::testing::ElementsAreArray(expected_map["dude"]));
+}

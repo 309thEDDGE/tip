@@ -11,21 +11,17 @@ ParseManager::ParseManager(std::string fname, std::string output_path, const Par
 	total_size(0), 
 	total_read_pos(0),
 	n_threads(1), 
-	tmats(), 
 	error_set(false),
 	workers_allocated(false),
 	worker_wait(config->worker_shift_wait_ms_),
 	worker_start_offset(config->worker_offset_wait_ms_), 
 	ifile(),
-	use_comet_command_words(false), 
 	binary_buffers(nullptr), 
 	check_word_count(true),
 	n_reads(0), 
 	threads(nullptr), 
-	tmats_present(false),
 	workers(nullptr), 
 	milstd1553_msg_selection(false)
-	,parser_md_()
 {
 #ifdef DEBUG
 #if DEBUG > 0
@@ -59,12 +55,6 @@ ParseManager::ParseManager(std::string fname, std::string output_path, const Par
 				printf("File size: %llu MB\n\n", total_size / (1024 * 1024));
 #endif
 
-#ifndef LIBIRIG106
-	// Parse TMATS.
-	bool use_default_bus_id_map = true;
-	error_set = parse_tmats(use_default_bus_id_map);
-#endif
-
 			// Create file output paths based on the input file name.
 			create_paths();
 		}
@@ -73,8 +63,6 @@ ParseManager::ParseManager(std::string fname, std::string output_path, const Par
 
 void ParseManager::create_paths()
 {
-
-#ifdef PARQUET
 	// Create parquet output file directory.
 	std::filesystem::path input_path(input_fname);
 	std::filesystem::path out_path(output_path);
@@ -129,39 +117,11 @@ void ParseManager::create_paths()
 		}
 	}
 #endif
-#endif
 }
 
 bool ParseManager::error_state()
 {
 	return error_set;
-}
-
-bool ParseManager::parse_tmats(bool use_def_bus_map)
-{
-	uint32_t tmats_eof = UINT32_MAX;
-	tmats_eof = tmats.parse(ifile, total_size, use_def_bus_map);
-	if(tmats_eof == 0)
-	{
-		#ifdef DEBUG
-		if (DEBUG > 2)
-			printf("TMATS not present\n");
-		#endif
-		tmats_present = false;
-	}
-	else if(tmats_eof < UINT32_MAX)
-	{
-		#ifdef DEBUG
-		if (DEBUG > 2)
-			printf("TMATS EOF at %d\n", tmats_eof);
-		#endif
-		tmats_present = true;
-	}
-	else if (tmats_eof == UINT32_MAX)
-	{
-		return true;
-	}
-	return false;
 }
 
 void ParseManager::start_workers()
@@ -191,18 +151,6 @@ void ParseManager::start_workers()
 		printf("Created %u binary buffers\n", n_reads);
 	}
 #endif	
-
-	// Advance the total read position by the tmats end position.
-	uint32_t tmats_end = tmats.post_tmats_location();
-
-	// If libirig106 is defined, let the value of total_read_pos remain
-	// at its initialization value of 0. Do this so libirig106 can 
-	// parse the TMATS Ch10 packet. Otherwise, assume that TMATS has 
-	// already been found and read, and set the total_read_pos to 
-	// the end of TMATS to skip it.
-#ifndef LIBIRIG106
-	total_read_pos = tmats_end;
-#endif
 
 	// Start queue to activate all workers, limiting the quantity of 
 	// concurrent threads to n_threads.
@@ -240,72 +188,96 @@ void ParseManager::start_workers()
 #ifdef COLLECT_STATS
 	collect_stats();
 #endif
-
+	
 #ifdef PARQUET
-#endif
+	// Create metadata object and create output path name for metadata
+	// to be recorded in 1553 output directory.
+	Metadata md;
+	std::filesystem::path md_path = md.GetYamlMetadataPath(
+		fspath_map[Ch10DataType::MILSTD1553_DATA_F1],
+		"_metadata");
 
-	collect_chanid_to_lruaddrs_metadata();
+	// Obtain the tx and rx combined channel ID to LRU address map and
+	// record it to the Yaml writer.
+	std::map<uint32_t, std::set<uint16_t>> output_chanid_remoteaddr_map;
+	collect_chanid_to_lruaddrs_metadata(output_chanid_remoteaddr_map);
+	md.RecordCompoundMapToSet(output_chanid_remoteaddr_map, "chanid_to_lru_addrs");
+
 #ifdef LIBIRIG106
 	ProcessTMATS();
-#else
-	collect_tmats_metadata();
-#endif
-#ifdef VIDEO_DATA
-	CollectVideoMetadata();
-#endif
-	write_metadata();
 
+	// Record the TMATS channel ID to source map.
+	md.RecordSimpleMap(TMATsChannelIDToSourceMap_, "tmats_chanid_to_source");
+
+	// Record the TMATS channel ID to type map.
+	md.RecordSimpleMap(TMATsChannelIDToTypeMap_, "tmats_chanid_to_type");
+#endif
+
+	// Write the complete Yaml record to the metadata file.
+	std::ofstream stream_1553_metadata(md_path.string(), 
+		std::ofstream::out | std::ofstream::trunc);
+	stream_1553_metadata << md.GetMetadataString();
+	stream_1553_metadata.close();
+
+#ifdef VIDEO_DATA
+	// Create metadata object for video metadata.
+	Metadata vmd;
+	md_path = vmd.GetYamlMetadataPath(
+		fspath_map[Ch10DataType::VIDEO_DATA_F0],
+		"_metadata");
+
+	// Get the channel ID to minimum time stamp map.
+	std::map<uint16_t, uint64_t> min_timestamp_map;
+	CollectVideoMetadata(min_timestamp_map);
+
+	// Record the map in the Yaml writer and write the 
+	// total yaml text to file.
+	vmd.RecordSimpleMap(min_timestamp_map, "chanid_to_first_timestamp");
+	std::ofstream stream_video_metadata(md_path.string(),
+		std::ofstream::out | std::ofstream::trunc);
+	stream_video_metadata << vmd.GetMetadataString();
+	stream_video_metadata.close();
+#endif
+#endif
 }
 
 #ifdef VIDEO_DATA
-void ParseManager::CollectVideoMetadata()
+void ParseManager::CollectVideoMetadata(
+	std::map<uint16_t, uint64_t>& channel_id_to_min_timestamp_map)
 {
 	// Gather the maps from each worker and combine them into one, 
 	//keeping only the lowest time stamps for each channel ID.
-	std::map<uint16_t, uint64_t> final_map;
 	for (int i = 0; i < n_reads; i++)
 	{
 		std::map<uint16_t, uint64_t> temp_map = workers[i].GetChannelIDToMinTimeStampMap();
 		for (std::map<uint16_t, uint64_t>::const_iterator it = temp_map.begin();
 			it != temp_map.end(); ++it)
 		{
-			if (final_map.count(it->first) == 0)
-				final_map[it->first] = it->second;
-			else if (it->second < final_map[it->first])
-				final_map[it->first] = it->second;
-
+			if (channel_id_to_min_timestamp_map.count(it->first) == 0)
+				channel_id_to_min_timestamp_map[it->first] = it->second;
+			else if (it->second < channel_id_to_min_timestamp_map[it->first])
+				channel_id_to_min_timestamp_map[it->first] = it->second;
 		}
 	}
-	parser_md_.WriteVideoMetadataToYaml(fspath_map[Ch10DataType::VIDEO_DATA_F0],
-		final_map);
 }
 #endif
 
-void ParseManager::collect_chanid_to_lruaddrs_metadata()
+void ParseManager::collect_chanid_to_lruaddrs_metadata(
+	std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map)
 {
+	// Collect and combine the channel ID to LRU address maps
+	// assembled by each worker.
 	std::map<uint32_t, std::set<uint16_t>> chanid_remoteaddr_map1;
 	std::map<uint32_t, std::set<uint16_t>> chanid_remoteaddr_map2;
 	for (uint16_t read_ind = 0; read_ind < n_reads; read_ind++)
 	{
 		workers[read_ind].append_chanid_remoteaddr_maps(chanid_remoteaddr_map1, chanid_remoteaddr_map2);
 	}
-	parser_md_.create_chanid_to_lruaddrs_metadata_strings(chanid_remoteaddr_map1, chanid_remoteaddr_map2);
 
-}
-
-void ParseManager::collect_tmats_metadata()
-{
-	parser_md_.create_tmats_channel_source_metadata_string(tmats.get_channel_source_map());
-	parser_md_.create_tmats_channel_type_metadata_string(tmats.get_channel_type_as_string_map());
-}
-
-void ParseManager::write_metadata()
-{
-	parser_md_.Write1553metadataToYaml(fspath_map[Ch10DataType::MILSTD1553_DATA_F1]);
-
-	// Test reading metadata and reconstructing maps.
-	/*std::string parquet_dir = fspath_map[Ch10DataType::MILSTD1553_DATA_F1].string();
-	parser_md_.read_metadata(parquet_dir);*/
+	// Combine the tx and rx maps into a single map.
+	IterableTools it;
+	output_chanid_remoteaddr_map = it.CombineCompoundMapsToSet(
+		chanid_remoteaddr_map1, chanid_remoteaddr_map2);
 }
 
 std::streamsize ParseManager::activate_worker(uint16_t binbuff_ind, uint16_t ID,
@@ -319,7 +291,7 @@ std::streamsize ParseManager::activate_worker(uint16_t binbuff_ind, uint16_t ID,
 		is_final_worker = true;
 	}
 	workers[ID].initialize(ID, start_pos, n_read, binbuff_ind, fspath_map,
-		tmats, use_comet_command_words, is_final_worker);
+		is_final_worker);
 #endif
 
 	#ifdef DEBUG
@@ -853,6 +825,6 @@ void ParseManager::ProcessTMATS()
 	// Gather TMATs attributes of interest
 	// for metadata
 	TMATSParser tmats_parser = TMATSParser(full_TMATS_string);
-	TMATsChannelIDToSourceMap = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\DSI-n");
-	TMATsChannelIDToTypeMap = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n");
+	TMATsChannelIDToSourceMap_ = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\DSI-n");
+	TMATsChannelIDToTypeMap_ = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n");
 }

@@ -95,6 +95,31 @@ elseif("${CMAKE_BUILD_TYPE}" MATCHES "")
     message(STATUS "Empty string: Defining cmake_build_type: " ${CMAKE_BUILD_TYPE})
 endif()
 
+#########################################################
+#                      Build Parameters
+#########################################################
+set(include_dir_name "include")
+set(source_dir_name "src")
+set(main_dir_name "main")
+set(bin_dir_name "bin")
+get_filename_component(out_bin_dir ${bin_dir_name} ABSOLUTE)
+set(out_lib_dir ${out_bin_dir}/lib)
+message(STATUS "Install dir: " ${out_bin_dir})
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_STANDARD_REQUIRED true)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(container)
+    set(BUILD_SHARED_LIBS true)
+else()
+    set(BUILD_SHARED_LIBS false)
+endif()
+
+#########################################################
+#                      System Specific
+#########################################################
+
 message(STATUS "System name: " ${CMAKE_SYSTEM_NAME})
 if("${CMAKE_SYSTEM_NAME}" MATCHES "CYGWIN")
     message(STATUS "Setting system-specific options: " ${CMAKE_SYSTEM_NAME})
@@ -118,27 +143,6 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     include("CMake_linux.txt")
 else()
     message(FATAL_ERROR "No system-specific options: " ${CMAKE_SYSTEM_NAME})
-endif()
-
-#########################################################
-#                      Build Parameters
-#########################################################
-set(include_dir_name "include")
-set(source_dir_name "src")
-set(main_dir_name "main")
-set(bin_dir_name "bin")
-get_filename_component(out_bin_dir ${bin_dir_name} ABSOLUTE)
-set(out_lib_dir ${out_bin_dir}/lib)
-message(STATUS "Install dir: " ${out_bin_dir})
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_STANDARD_REQUIRED true)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-if(container)
-    set(BUILD_SHARED_LIBS true)
-else()
-    set(BUILD_SHARED_LIBS false)
 endif()
 
 #########################################################

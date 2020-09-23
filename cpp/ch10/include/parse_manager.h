@@ -18,7 +18,6 @@
 #include <vector>
 #include <set>
 #include <filesystem>
-#include "tmats.h"
 #include "parse_worker.h"
 #include "ch10.h"
 #include "ch10_milstd1553f1stats.h"
@@ -27,21 +26,24 @@
 #include <chrono>
 #include <fstream>
 #include "parser_config_params.h"
-#include "parser_metadata.h"
+#include "metadata.h"
 #include "tmats_parser.h"
 
 class ParseManager
 {
 	private:
-	ParserMetadata parser_md_;
 #ifdef PARQUET
 	std::set<std::string> name_set;
 #endif
 
+	// TMATS processing
 	std::vector<std::string> tmats_body_vec_;
+	void ProcessTMATS();
+	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
+	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
+
 	std::string input_fname;
 	std::string output_path;
-	std::string comet_input_fname;
 	uint32_t read_size;
 	uint32_t append_read_size;
 	uint64_t total_size;
@@ -51,9 +53,6 @@ class ParseManager
 	//bool tmats_present;
 	bool error_set;
 	bool check_word_count;
-	bool use_comet_command_words;
-	bool tmats_present;
-	TMATS tmats;
 	std::ifstream ifile;
 	ParseWorker* workers;
 	BinBuff* binary_buffers;
@@ -66,11 +65,6 @@ class ParseManager
 	std::vector<std::string> milstd1553_sorted_msg_selection;
 	std::string chanid_to_lruaddrs_metadata_string_;
 
-	std::map<std::string, std::string> TMATsChannelIDToSourceMap;
-	std::map<std::string, std::string> TMATsChannelIDToTypeMap;
-
-
-	bool parse_tmats(bool);
 	std::string worker_outfile_name(uint16_t worker_ind);
 	std::string final_outfile_name();
 	std::streamsize activate_worker(uint16_t binbuff_ind, uint16_t ID,
@@ -87,19 +81,18 @@ class ParseManager
 	void worker_retire_queue();
 	bool file_exists(std::string&);
 	void create_paths();
-	void collect_chanid_to_lruaddrs_metadata();
-	void collect_tmats_metadata();
+	void collect_chanid_to_lruaddrs_metadata(
+		std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map);
 #ifdef VIDEO_DATA
-	void CollectVideoMetadata();
+	void CollectVideoMetadata(std::map<uint16_t, uint64_t>& channel_id_to_min_timestamp_map);
 #endif
-	void write_metadata();
 #ifdef XDAT
 	void create_milstd1553_sorted_msgs();
 #endif
 #ifdef PARQUET
 	void record_msg_names();
 #endif
-	void ProcessTMATS();
+	
 
 	public:
 
@@ -116,8 +109,9 @@ class ParseManager
 		tmats_body_vec_ = input;
 		ProcessTMATS();
 	};
-	std::map<std::string, std::string> GetTMATsChannelIDToSourceMap() { return TMATsChannelIDToSourceMap; };
-	std::map<std::string, std::string> GetTMATsChannelIDToTypeMap() { return TMATsChannelIDToTypeMap; };
+	std::map<std::string, std::string> GetTMATsChannelIDToSourceMap() { return TMATsChannelIDToSourceMap_; };
+	std::map<std::string, std::string> GetTMATsChannelIDToTypeMap() { return TMATsChannelIDToTypeMap_; };
+
 };
 
 #endif

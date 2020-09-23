@@ -3,7 +3,8 @@
 TranslationMaster::TranslationMaster(std::string parquet_path, uint8_t n_threads, 
 	bool select_msgs, std::vector<std::string> select_msg_names, ICDData icd) :
 	n_threads_(n_threads), parquet_path_(parquet_path), worker_wait_(200),
-	worker_start_offset_(2000)
+	worker_start_offset_(2000), is_multithreaded_(true), output_base_path_(""),
+	output_base_name_(""), msg_list_path_(""), parquet_path_is_dir_(false)
 {
 	// Setup ParquetTranslationManager classes.
 	for (uint8_t i = 0; i < n_threads_; i++)
@@ -13,20 +14,23 @@ TranslationMaster::TranslationMaster(std::string parquet_path, uint8_t n_threads
 		ptm_vec_.push_back(std::make_unique<ParquetTranslationManager>(i, icd));
 		ptm_vec_[i]->set_select_msgs_list(select_msgs, select_msg_names);
 	}
+
+	// Determine paths using ParquetTranslationManager. Get paths now in order
+	// for call to GetTranslatedDataDir to be of use for metadata recording prior to
+	// translation. Metadata may be useful for debuggin.
+	ptm_vec_[0]->get_paths(parquet_path_, output_base_path_, output_base_name_, 
+		msg_list_path_, input_parquet_paths_, parquet_path_is_dir_);
+}
+
+std::filesystem::path TranslationMaster::GetTranslatedDataDirectory()
+{
+	return output_base_path_;
 }
 
 uint8_t TranslationMaster::translate()
 {
-	// Determine paths using ParquetTranslationManager.
-	std::filesystem::path output_base_path;
-	std::filesystem::path output_base_name;
-	std::filesystem::path msg_list_path;
-	std::vector<std::string> input_parquet_paths;
-	bool parquet_path_is_dir = false;
-	bool is_multithreaded = true;
-	ptm_vec_[0]->get_paths(parquet_path_, output_base_path, output_base_name, msg_list_path, input_parquet_paths,
-		parquet_path_is_dir);
-	if (input_parquet_paths.size() == 0)
+	
+	if (input_parquet_paths_.size() == 0)
 	{
 		printf("TranslationMaster::translate(): Failed to get input parquet paths\n");
 		return 1;
@@ -39,12 +43,12 @@ uint8_t TranslationMaster::translate()
 	//
 	// Also execute a single thread in the case that the parquet path is a directory
 	// with only one file. Otherwise, execute in multithreaded approach.
-	uint8_t input_path_count = input_parquet_paths.size();
+	uint8_t input_path_count = input_parquet_paths_.size();
 	if (input_path_count == 1 || n_threads_ == 1)
 	{
 		n_threads_ = 1;
-		threads_.push_back(std::thread(std::ref(*(ptm_vec_[0])), std::ref(output_base_path), 
-			std::ref(output_base_name), std::ref(input_parquet_paths), is_multithreaded));
+		threads_.push_back(std::thread(std::ref(*(ptm_vec_[0])), std::ref(output_base_path_), 
+			std::ref(output_base_name_), std::ref(input_parquet_paths_), is_multithreaded_));
 		while (!ptm_vec_[0]->completion_status())
 		{
 			std::this_thread::sleep_for(worker_wait_);
@@ -53,7 +57,7 @@ uint8_t TranslationMaster::translate()
 	}
 	else
 	{
-		is_multithreaded = true;
+		is_multithreaded_ = true;
 
 		if (input_path_count < n_threads_)
 			n_threads_ = input_path_count;
@@ -73,7 +77,7 @@ uint8_t TranslationMaster::translate()
 			for (int i = 0; i < files_per_thread; i++)
 			{
 				//printf("thread %d getting %s\n", thread_index, input_parquet_paths[counter].c_str());
-				thread_parquet_paths[thread_index].push_back(input_parquet_paths[counter]);
+				thread_parquet_paths[thread_index].push_back(input_parquet_paths_[counter]);
 				counter++;
 				if (counter == input_path_count)
 				{
@@ -104,8 +108,8 @@ uint8_t TranslationMaster::translate()
 			if (!debug)
 			{
 				threads_.push_back(std::thread(std::ref(*(ptm_vec_[thread_index])), 
-					std::ref(output_base_path), std::ref(output_base_name), 
-					std::ref(thread_parquet_paths[thread_index]), is_multithreaded));
+					std::ref(output_base_path_), std::ref(output_base_name_), 
+					std::ref(thread_parquet_paths[thread_index]), is_multithreaded_));
 			}
 			std::this_thread::sleep_for(worker_start_offset_);
 		}
