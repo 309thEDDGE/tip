@@ -38,25 +38,6 @@ target_compile_features(${util_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} ${parquet_libs} ${linux_libs})
 
 #########################################################
-#                   Build/link tmats lib
-#########################################################
-set(tmats_lib_name "tmats")
-set(tmats_src_dir "${tmats_lib_name}/${source_dir_name}")
-set(tmats_inc_dir "${tmats_lib_name}/${include_dir_name}")
-add_library(${tmats_lib_name}
-            ${tmats_src_dir}/tmats_item.cpp  ${tmats_inc_dir}/tmats_item.h
-            ${tmats_src_dir}/tmats.cpp       ${tmats_inc_dir}/tmats.h
- )
-
-#target_include_directories(${tmats_lib_name} PUBLIC ${tmats_inc_dir} ${util_inc_dir} ${yaml_inc_dir})
-#target_compile_features(${tmats_lib_name} PUBLIC cxx_std_17)
-#target_link_libraries(${tmats_lib_name} PUBLIC ${util_lib_name} ${yaml_lib_name})
-
-target_include_directories(${tmats_lib_name} PUBLIC ${tmats_inc_dir} ${util_inc_dir})
-target_compile_features(${tmats_lib_name} PUBLIC cxx_std_17)
-target_link_libraries(${tmats_lib_name} PUBLIC ${util_lib_name} ${linux_libs})
-
-#########################################################
 #              Build/link parquet_context lib
 #########################################################
 set(pqctx_lib_name "parquet_context")
@@ -131,38 +112,6 @@ target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${eth_lib_name} ${linux_libs})
 
 #########################################################
-#                 Build/link metadata lib
-#########################################################
-set(metadata_lib_name "metadata")
-message(STATUS "Building lib: " "${metadata_lib_name}")
-set(metadata_src_dir ${metadata_lib_name}/${source_dir_name})
-set(metadata_inc_dir ${metadata_lib_name}/${include_dir_name})
-add_library(${metadata_lib_name}
-            ${metadata_src_dir}/parser_metadata.cpp ${metadata_inc_dir}/parser_metadata.h
-    )
-
-#target_include_directories(${metadata_lib_name} PUBLIC 
-#                           ${metadata_inc_dir} 
-#                           ${parquet_inc_dirs}
-#                           ${ch10pq_inc_dir}
-#                           ${pqctx_inc_dir}
-#                           ${util_inc_dir}
-#                           ${yaml_inc_dir}
-#                           ${ch10_inc_dir})
-#target_compile_features(${metadata_lib_name} PUBLIC cxx_std_17)
-#target_link_libraries(${metadata_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_name} ${pqctx_lib_name}
-#                      ${yaml_lib_name} ${parquet_libs})
-
-target_include_directories(${metadata_lib_name} PUBLIC 
-                            ${metadata_inc_dir} 
-                            ${ch10pq_inc_dir}
-                            ${util_inc_dir}
-                            ${ch10_inc_dir})
-target_compile_features(${metadata_lib_name} PUBLIC cxx_std_17)
-target_link_libraries(${metadata_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_name} 
-                        ${linux_libs})
-
-#########################################################
 #             Build/link translate_1553 lib
 #########################################################
 set(trans_lib_name "translate_1553")
@@ -180,19 +129,14 @@ add_library(${trans_lib_name}
         ${trans_src_dir}/translation_master.cpp             ${trans_inc_dir}/translation_master.h
     )
 
-#target_include_directories(${trans_lib_name} PUBLIC ${trans_inc_dir} ${config_inc_dir} ${tmats_inc_dir} 
-#                           ${util_inc_dir} ${ch10pq_inc_dir} ${pqctx_inc_dir} ${metadata_inc_dir})
 target_include_directories(${trans_lib_name} PUBLIC ${trans_inc_dir}
                             ${util_inc_dir} ${ch10pq_inc_dir})
 
 target_include_directories(${trans_lib_name} PUBLIC  
-                            ${metadata_lib_name})
+                            )
 
-#target_link_libraries(${trans_lib_name} PUBLIC ${config_lib_name} ${tmats_lib_name}
-#                      ${util_lib_name} ${ch10pq_lib_name} ${pqctx_lib_name} ${metadata_lib_name})
 target_link_libraries(${trans_lib_name} PUBLIC
                         ${util_lib_name} ${ch10pq_lib_name} ${linux_libs})
-target_link_libraries(${trans_lib_name} PUBLIC ${metadata_lib_name})
 target_compile_features(${trans_lib_name} PUBLIC cxx_std_17)
 
 #########################################################
@@ -251,17 +195,14 @@ add_library(${ch10parse_lib_name}
     )
 target_include_directories(${ch10parse_lib_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
-                            ${metadata_inc_dir} ${tmats_inc_dir}
                             ${temp_irig_inc_dir} ${temp_eth_inc_dir}
                             )
 target_compile_features(${ch10parse_lib_name} PUBLIC cxx_std_17)
 
 target_link_libraries(${ch10parse_lib_name} PUBLIC
-                        #${util_lib_name}
-                        ${tmats_lib_name}
+                        ${util_lib_name}
                         #${pqctx_lib_name}
                         ${ch10pq_lib_name}
-                        ${metadata_lib_name}
                         #${parquet_libs}
                         ${linux_libs}
                         ${temp_irig_lib_name}
@@ -273,11 +214,9 @@ target_link_libraries(${ch10parse_lib_name} PUBLIC
 #                   Install Libs
 #########################################################
 install(TARGETS ${util_lib_name} 
-                ${tmats_lib_name}
                 ${pqctx_lib_name} 
                 ${ch10pq_lib_name} 
                 ${trans_lib_name}
-                ${metadata_lib_name} 
                 ${comp_lib_name}
                 ${eth_lib_name}
                 ${ch10parse_lib_name}
@@ -298,7 +237,6 @@ add_executable(${ch10parse_exe_name} ${ch10_main_dir}/ch10parse.cpp
     )
 target_include_directories(${ch10parse_exe_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
-                            ${metadata_inc_dir} ${tmats_inc_dir}
                             ${temp_irig_inc_dir} ${temp_eth_inc_dir}
                             )
 target_compile_features(${ch10parse_exe_name} PUBLIC cxx_std_17)
@@ -317,11 +255,10 @@ target_include_directories(${trans_exe_name} PUBLIC
                         ${trans_inc_dir} 
                         ${ch10pq_inc_dir} 
                         ${config_inc_dir}
-                        ${metadata_inc_dir})
+                        )
 target_link_libraries(${trans_exe_name} ${trans_lib_name} 
                     ${ch10pq_lib_name} 
                     ${config_lib_name}
-                    ${metadata_lib_name}
         ${linux_libs})
 
 #########################################################
@@ -346,6 +283,7 @@ if(build_tests)
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
                                ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
                                ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} )
+
     target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
     target_link_libraries(${test_exe_name}
                           ${gsuite_libs}
@@ -356,6 +294,16 @@ if(build_tests)
                           ${ch10parse_lib_name}
                           ${parquet_libs}
               ${linux_libs})
+
+    # For Ctest
+    #include(CTest)
+    enable_testing()
+    
+    # For gtest_discover_tests
+    include(GoogleTest)
+
+    # Create ctest executable
+    gtest_discover_tests(${test_exe_name})
 endif()
 
 #########################################################
@@ -413,3 +361,4 @@ if(video_data)
     install(TARGETS ${video_exe_name}
             DESTINATION ${out_bin_dir})
 endif()
+

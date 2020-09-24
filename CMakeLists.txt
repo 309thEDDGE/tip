@@ -84,13 +84,41 @@ if(ethernet_data AND NOT libirig106)
     message(FATAL_ERROR "LIBIRIG106 (default ON) must be ON if ETHERNET (default ON) is ON")
 endif()
 
-if(NOT CMAKE_BUILD_TYPE)
+get_filename_component(deps_dir "../deps" ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
+message(STATUS "Dependencies dir: " ${deps_dir})
+
+if(NOT DEFINED CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
     message(STATUS "Not defined: Defining cmake_build_type: " ${CMAKE_BUILD_TYPE})
 elseif("${CMAKE_BUILD_TYPE}" MATCHES "")
     set(CMAKE_BUILD_TYPE Release)
     message(STATUS "Empty string: Defining cmake_build_type: " ${CMAKE_BUILD_TYPE})
 endif()
+
+#########################################################
+#                      Build Parameters
+#########################################################
+set(include_dir_name "include")
+set(source_dir_name "src")
+set(main_dir_name "main")
+set(bin_dir_name "bin")
+get_filename_component(out_bin_dir ${bin_dir_name} ABSOLUTE)
+set(out_lib_dir ${out_bin_dir}/lib)
+message(STATUS "Install dir: " ${out_bin_dir})
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_STANDARD_REQUIRED true)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(container)
+    set(BUILD_SHARED_LIBS true)
+else()
+    set(BUILD_SHARED_LIBS false)
+endif()
+
+#########################################################
+#                      System Specific
+#########################################################
 
 message(STATUS "System name: " ${CMAKE_SYSTEM_NAME})
 if("${CMAKE_SYSTEM_NAME}" MATCHES "CYGWIN")
@@ -115,27 +143,6 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     include("CMake_linux.txt")
 else()
     message(FATAL_ERROR "No system-specific options: " ${CMAKE_SYSTEM_NAME})
-endif()
-
-#########################################################
-#                      Build Parameters
-#########################################################
-set(include_dir_name "include")
-set(source_dir_name "src")
-set(main_dir_name "main")
-set(bin_dir_name "bin")
-get_filename_component(out_bin_dir ${bin_dir_name} ABSOLUTE)
-set(out_lib_dir ${out_bin_dir}/lib)
-message(STATUS "Install dir: " ${out_bin_dir})
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_STANDARD_REQUIRED true)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-if(container)
-    set(BUILD_SHARED_LIBS true)
-else()
-    set(BUILD_SHARED_LIBS false)
 endif()
 
 #########################################################

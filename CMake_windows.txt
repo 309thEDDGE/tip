@@ -1,5 +1,4 @@
 add_compile_definitions(__WIN64)
-set(deps_name "deps")
 set(CMAKE_GENERATOR_PLATFORM x64)
 set(linux_libs "")
 
@@ -7,7 +6,7 @@ set(linux_libs "")
 #                     Yaml Lib Paths
 #########################################################
 
-get_filename_component(yaml_path "${deps_name}/yaml-cpp-yaml-cpp-0.6.0/yaml-cpp-yaml-cpp-0.6.0" ABSOLUTE)
+set(yaml_path "${deps_dir}/yaml-cpp-yaml-cpp-0.6.0/yaml-cpp-yaml-cpp-0.6.0")
 set(yaml_inc_dir "${yaml_path}/include")
 if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
     set(yaml_lib_dir "${yaml_path}/build/Debug")
@@ -25,8 +24,8 @@ endif()
 #########################################################
 
 set(arrow_path "arrow_library_dependencies")
-get_filename_component(arrow_inc_dir "${deps_name}/${arrow_path}/include" ABSOLUTE)
-get_filename_component(arrow_lib_dir "${deps_name}/${arrow_path}/lib" ABSOLUTE)
+set(arrow_inc_dir "${deps_dir}/${arrow_path}/include")
+set(arrow_lib_dir "${deps_dir}/${arrow_path}/lib")
  
 set(arrow_lib_name "${arrow_lib_dir}/arrow_static.lib")
 set(zlib_lib_name  "${arrow_lib_dir}/zlibstatic.lib")
@@ -43,8 +42,8 @@ set(parquet_lib_name  "${arrow_lib_dir}/parquet_static.lib")
 #########################################################
 #                Required Boost Lib Paths
 #########################################################
-#get_filename_component(boost_inc_dir "${deps_name}/${arrow_path}/boost_1_67_0/include" ABSOLUTE)
-get_filename_component(boost_lib_dir "${arrow_lib_dir}" ABSOLUTE)
+#set(boost_inc_dir "${deps_dir}/${arrow_path}/boost_1_67_0/include")
+set(boost_lib_dir "${arrow_lib_dir}")
 
 set(boostfs_lib_name "${boost_lib_dir}/libboost_filesystem-vc140-mt-x64-1_67.lib")
 set(boostsys_lib_name "${boost_lib_dir}/libboost_system-vc140-mt-x64-1_67.lib")
@@ -77,7 +76,7 @@ set(parquet_libs
 #             Googletest/Googlemock Lib Paths
 #########################################################
 set(gsuite_dir_name "googletest-release-1.8.1libs")
-get_filename_component(gsuite_path "${deps_name}/${gsuite_dir_name}" ABSOLUTE)
+set(gsuite_path "${deps_dir}/${gsuite_dir_name}")
 set(gtest_inc_dir "${gsuite_path}/googletest/include")
 set(gtest_lib_dir "${gsuite_path}/googletest/lib")
 set(gmock_inc_dir "${gsuite_path}/googlemock/include")
@@ -94,7 +93,7 @@ set(gsuite_libs ${gtest_lib_name} ${gmain_lib_name} ${gmock_lib_name})
 #                   LibIrig106 Paths
 #########################################################
 set(irig_dir_name "libirig106")
-get_filename_component(irig_path "${deps_name}/${irig_dir_name}" ABSOLUTE)
+set(irig_path "${deps_dir}/${irig_dir_name}")
 #message(STATUS "IRIG path: ${irig_path}")
 set(irig_inc_dir ${irig_path}/include)
 set(irig_lib_dir ${irig_path}/lib)
@@ -104,14 +103,14 @@ set(irig_lib_name ${irig_lib_dir}/irig106.lib)
 #                   libtins Paths
 #########################################################
 set(tins_dir_name "libtins")
-get_filename_component(tins_path "${deps_name}/${tins_dir_name}" ABSOLUTE)
+set(tins_path "${deps_dir}/${tins_dir_name}")
 set(tins_inc_dir ${tins_path}/include)
 set(tins_lib_dir ${tins_path}/lib)
 set(tins_lib_name ${tins_lib_dir}/tins.lib)
 
 # pcap necessary to link for libtins
 set(pcap_dir_name "npcap")
-get_filename_component(pcap_path "${deps_name}/${pcap_dir_name}" ABSOLUTE)
+set(pcap_path "${deps_dir}/${pcap_dir_name}")
 set(pcap_inc_dir ${pcap_path}/include)
 set(pcap_lib_dir ${pcap_path}/lib/x64)
 set(pcap_lib_name ${pcap_lib_dir}/wpcap.lib ${pcap_lib_dir}/Packet.lib)

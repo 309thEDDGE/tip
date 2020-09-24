@@ -1,5 +1,7 @@
 set(CMAKE_GENERATOR "Unix Makefiles")
 set(CMAKE_CXX_COMPILER "/usr/bin/g++")
+####################
+message(STATUS "deps_dir: ${deps_dir}")
 
 # If this is a container build, then the libs
 # are linked dynamically. Set the following
@@ -25,8 +27,6 @@ add_definitions(-D__linux__)
 if (container)
     set(inc_dir "/usr/include")
     set(lib_dir "/usr/lib64")
-else()
-    get_filename_component(deps_dir "deps" ABSOLUTE)
 endif()
 
 #########################################################
