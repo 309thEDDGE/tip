@@ -9,21 +9,27 @@ class BusMapTest : public ::testing::Test
 {
 protected:
 	
+	std::unordered_map<uint64_t, std::set<std::string>> icd_message_key_to_busnames_map;
+	std::unordered_map<uint64_t, std::set<uint64_t>> icd_message_key_to_channelids_map;
+	
+	std::map<uint64_t, std::string> tmats_chanid_to_source_map;
+	
+
 	BusMap b;
 	std::map<std::string, std::set<uint64_t>> comet_compare_map;
 	std::vector<std::string> term_mux_lines;
 	std::set<uint64_t> temp_set;
 	std::map<uint64_t, std::set<uint64_t>> ch10_scanned_compare_map;
-	std::map<uint64_t, std::string> tmats_1553_chanid_compare_map;
+	
 	std::map<uint64_t, std::string> chID_to_busname_compare_map;
 	std::map<std::string, std::set<uint64_t>> bus_name_to_lru_addresses_comet_map;
+	std::map<uint64_t, std::string> tmats_chanid_to_type_map;
+	std::map<uint64_t, std::string> tmats_1553_chanid_compare_map;
 	IterableTools iterable_tools_;
 	FileReader fr;
 
 	// inputs
 	std::map<uint64_t, std::set<uint64_t>> ch10_scanned_chanid_to_lruaddrs_map;
-	std::map<uint64_t, std::string> tmats_chanid_to_source_map;
-	std::map<uint64_t, std::string> tmats_chanid_to_type_map;
 
 	BusMapTest()
 	{
@@ -34,7 +40,8 @@ protected:
 	}
 
 	template <typename Map>
-	bool map_compare(Map const& lhs, Map const& rhs) {
+	bool map_compare(Map const& lhs, Map const& rhs) 
+	{
 		return lhs.size() == rhs.size()
 			&& std::equal(lhs.begin(), lhs.end(),
 				rhs.begin());
@@ -78,234 +85,6 @@ TEST_F(BusMapTest, TryOutUserInterface)
 	system("pause");
 }*/
 
-TEST_F(BusMapTest, InitializeMapsCometMapImport)
-{
-	// Empty Map
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map, 
-		ch10_scanned_chanid_to_lruaddrs_map, 
-		tmats_chanid_to_source_map);
-	EXPECT_TRUE(map_compare(b.GetBusName_ToLRUAddressesCometMap(), comet_compare_map));
-
-	std::map<uint64_t, std::string> res;
-	bool continue_translation = b.PerformBusMapping(res, 1, false);
-	EXPECT_EQ(res.size(), 0);
-
-	// Map with entries
-	bus_name_to_lru_addresses_comet_map["BUS1"] = std::set<uint64_t>({ 1,2,3 });
-	bus_name_to_lru_addresses_comet_map["BUS2"] = std::set<uint64_t>({ 1 });
-
-	comet_compare_map["BUS1"] = std::set<uint64_t>({ 1,2,3 });
-	comet_compare_map["BUS2"] = std::set<uint64_t>({ 1 });
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map, 
-		ch10_scanned_chanid_to_lruaddrs_map, 
-		tmats_chanid_to_source_map);
-	EXPECT_TRUE(map_compare(b.GetBusName_ToLRUAddressesCometMap(), comet_compare_map));
-}
-
-TEST_F(BusMapTest, InitializeMapsScannedChannedIDS)
-{	
-	// Empty input map
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map, 
-		ch10_scanned_chanid_to_lruaddrs_map, 
-		tmats_chanid_to_source_map);
-	EXPECT_TRUE(map_compare(b.GetCH10ScannedChanID_ToLRUAddressesMap(), ch10_scanned_compare_map));
-
-	temp_set.insert(1);
-	temp_set.insert(2);
-	temp_set.insert(3);
-	ch10_scanned_chanid_to_lruaddrs_map[1] = temp_set;
-	ch10_scanned_compare_map[1] = temp_set;
-
-	temp_set.insert(4);
-	temp_set.insert(5);
-	temp_set.insert(5);
-	ch10_scanned_chanid_to_lruaddrs_map[2] = temp_set;
-	ch10_scanned_compare_map[2] = temp_set;
-
-	// Non empty input
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map, 
-		ch10_scanned_chanid_to_lruaddrs_map, 
-		tmats_chanid_to_source_map);
-	ASSERT_TRUE(map_compare(b.GetCH10ScannedChanID_ToLRUAddressesMap(), ch10_scanned_compare_map));
-
-	// rewrite don't add
-	temp_set.clear();
-	temp_set.insert(1);
-	temp_set.insert(2);
-	temp_set.insert(3);
-	ch10_scanned_chanid_to_lruaddrs_map.clear();
-	ch10_scanned_compare_map.clear();
-	ch10_scanned_chanid_to_lruaddrs_map[1] = temp_set;
-	ch10_scanned_compare_map[1] = temp_set;
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map, 
-		ch10_scanned_chanid_to_lruaddrs_map, 
-		tmats_chanid_to_source_map);
-	EXPECT_TRUE(map_compare(b.GetCH10ScannedChanID_ToLRUAddressesMap(), ch10_scanned_compare_map));
-}
-
-// If tmats source map is empty, bus map is considered to be given no tmats data
-TEST_F(BusMapTest, InitializeMapsNoTMATSCheck)
-{
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map, 
-		ch10_scanned_chanid_to_lruaddrs_map);
-	EXPECT_FALSE(b.TmatsPresent());
-
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map, 
-		ch10_scanned_chanid_to_lruaddrs_map, 
-		tmats_chanid_to_source_map);
-	EXPECT_FALSE(b.TmatsPresent());
-
-	tmats_chanid_to_source_map[1] = "BUS1";
-
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map, 
-		ch10_scanned_chanid_to_lruaddrs_map, 
-		tmats_chanid_to_source_map);
-	EXPECT_TRUE(b.TmatsPresent());
-}
-
-// If the bus name in comet is a substring of a bus name in tmats, 
-// replace tmats bus name with comet bus name
-TEST_F(BusMapTest, CleanTmatsMapsRemoveExtraMapsFromTMATS)
-{
-	// Built comet input
-	bus_name_to_lru_addresses_comet_map["BUS1"] = std::set<uint64_t>();
-	bus_name_to_lru_addresses_comet_map["BUS2"] = std::set<uint64_t>();
-
-	// Build Input Maps
-	tmats_chanid_to_source_map[1] = "BUS1";  
-	tmats_chanid_to_source_map[2] = "BUS2";
-	tmats_chanid_to_source_map[3] = "BUS3"; 
-
-	ch10_scanned_chanid_to_lruaddrs_map[1] = std::set<uint64_t>();
-	ch10_scanned_chanid_to_lruaddrs_map[2] = std::set<uint64_t>();
-	ch10_scanned_chanid_to_lruaddrs_map[3] = std::set<uint64_t>();
-
-	// Build Expected Maps
-	tmats_1553_chanid_compare_map[1] = "BUS1"; 
-	tmats_1553_chanid_compare_map[2] = "BUS2";
-
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map, 
-		ch10_scanned_chanid_to_lruaddrs_map, 
-		tmats_chanid_to_source_map);
-
-	EXPECT_TRUE(map_compare(b.GetTmats1553ChanID_ToBusNameMap(), 
-		tmats_1553_chanid_compare_map));
-}
-
-TEST_F(BusMapTest, CleanTmatsMaps1553DoNotAddIfMatchesCometNameButChannelIDisNotInScannedMap)
-{
-	// Built comet input
-	bus_name_to_lru_addresses_comet_map["BUS1"] = std::set<uint64_t>();
-	bus_name_to_lru_addresses_comet_map["BUS2"] = std::set<uint64_t>();
-	bus_name_to_lru_addresses_comet_map["BUS3"] = std::set<uint64_t>();
-
-	// Build Input Maps
-	tmats_chanid_to_source_map[1] = "BUS1";
-	tmats_chanid_to_source_map[2] = "BUS2";
-	tmats_chanid_to_source_map[3] = "BUS3"; // should not add this
-
-	ch10_scanned_chanid_to_lruaddrs_map[1] = std::set<uint64_t>();
-	ch10_scanned_chanid_to_lruaddrs_map[2] = std::set<uint64_t>();
-
-	// Build Expected Maps
-	tmats_1553_chanid_compare_map[1] = "BUS1";
-	tmats_1553_chanid_compare_map[2] = "BUS2";
-
-
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map,
-		ch10_scanned_chanid_to_lruaddrs_map, 
-		tmats_chanid_to_source_map);
-	EXPECT_TRUE(map_compare(b.GetTmats1553ChanID_ToBusNameMap(), tmats_1553_chanid_compare_map));
-}
-
-TEST_F(BusMapTest, CleanTmatsMapsTmatsEmptyNoCorrectionMap)
-{
-	// Empty Correction Map
-	std::map<std::string, std::string> correction_map;
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map, 
-		ch10_scanned_chanid_to_lruaddrs_map,  
-		tmats_chanid_to_source_map, correction_map);
-	EXPECT_TRUE(map_compare(b.GetTmats1553ChanID_ToBusNameMap(), 
-		tmats_1553_chanid_compare_map));
-
-	// No Correction Map given
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map, 
-		ch10_scanned_chanid_to_lruaddrs_map, 
-		tmats_chanid_to_source_map);
-	EXPECT_TRUE(map_compare(b.GetTmats1553ChanID_ToBusNameMap(), tmats_1553_chanid_compare_map));
-}
-
-// Override tmats bus namesby specification from the config file
-TEST_F(BusMapTest, CleanTmatsMapsTmatsCorrectionMapGiven)
-{
-	// Built comet input
-	bus_name_to_lru_addresses_comet_map["RENAME1"] = std::set<uint64_t>();
-	bus_name_to_lru_addresses_comet_map["RENAME2"] = std::set<uint64_t>();
-
-	// Build Input Maps
-	tmats_chanid_to_source_map[1] = "JUNK_TMATS1"; 
-	tmats_chanid_to_source_map[2] = "JUNK_TMATS2";
-	tmats_chanid_to_source_map[3] = "JUNK_TMATS3";
-	tmats_chanid_to_source_map[4] = "JUNK_TMATS4";
-	tmats_chanid_to_source_map[5] = "JUNK_TMATS2"; // duplicate correction
-
-	ch10_scanned_chanid_to_lruaddrs_map[1] = std::set<uint64_t>();
-	ch10_scanned_chanid_to_lruaddrs_map[2] = std::set<uint64_t>();
-	ch10_scanned_chanid_to_lruaddrs_map[3] = std::set<uint64_t>();
-	ch10_scanned_chanid_to_lruaddrs_map[4] = std::set<uint64_t>();
-	ch10_scanned_chanid_to_lruaddrs_map[5] = std::set<uint64_t>();
-
-	// Build tmats correction vector
-	std::map<std::string, std::string> correction_map;
-	correction_map["JUNK_TMATS1"] = "RENAME1";
-	correction_map["JUNK_TMATS2"] = "RENAME2";
-
-	// Unfound correction
-	correction_map["JJ"] = "RENAME2";
-
-	// Build Expected Maps
-	tmats_1553_chanid_compare_map[1] = "RENAME1";
-	tmats_1553_chanid_compare_map[2] = "RENAME2"; 
-	tmats_1553_chanid_compare_map[5] = "RENAME2";
-
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map, 
-		ch10_scanned_chanid_to_lruaddrs_map, 
-		tmats_chanid_to_source_map, correction_map);
-	EXPECT_TRUE(map_compare(b.GetTmats1553ChanID_ToBusNameMap(), tmats_1553_chanid_compare_map));
-}
-
-// Extra tmats trimmed
-TEST_F(BusMapTest, CleanTmatsDuplicateTmatsBusses)
-{
-	// Built comet input
-	bus_name_to_lru_addresses_comet_map["BUS1"] = std::set<uint64_t>();
-	bus_name_to_lru_addresses_comet_map["BUS2"] = std::set<uint64_t>();
-
-	// Build Input Maps
-	tmats_chanid_to_source_map[1] = "JUNK_TMATS1";
-	tmats_chanid_to_source_map[2] = "BUS1";
-	tmats_chanid_to_source_map[3] = "BUS2";
-	tmats_chanid_to_source_map[4] = "JUNK_TMATS4";
-	tmats_chanid_to_source_map[5] = "JUNK_TMATS2"; 
-	tmats_chanid_to_source_map[6] = "BUS2";
-
-	ch10_scanned_chanid_to_lruaddrs_map[1] = std::set<uint64_t>();
-	ch10_scanned_chanid_to_lruaddrs_map[2] = std::set<uint64_t>();
-	ch10_scanned_chanid_to_lruaddrs_map[3] = std::set<uint64_t>();
-	ch10_scanned_chanid_to_lruaddrs_map[4] = std::set<uint64_t>();
-	ch10_scanned_chanid_to_lruaddrs_map[5] = std::set<uint64_t>();
-	ch10_scanned_chanid_to_lruaddrs_map[6] = std::set<uint64_t>();
-
-	// Build Expected Maps
-	tmats_1553_chanid_compare_map[2] = "BUS1";
-	tmats_1553_chanid_compare_map[3] = "BUS2";
-	tmats_1553_chanid_compare_map[6] = "BUS2";
-
-	b.InitializeMaps(bus_name_to_lru_addresses_comet_map, 
-		ch10_scanned_chanid_to_lruaddrs_map, 
-		tmats_chanid_to_source_map);
-	EXPECT_TRUE(map_compare(b.GetTmats1553ChanID_ToBusNameMap(), tmats_1553_chanid_compare_map));
-}
 
 TEST_F(BusMapTest, SubsetMappingMatchingSubset)
 {
@@ -1497,101 +1276,6 @@ TEST_F(BusMapTest, UserAdjustmentsEnsureNoMapInputDoesnotAllowChangesToFinalMap2
 	EXPECT_FALSE(continue_translation);
 }
 
-
-
-
-///// OLD term mux tests
-
-TEST_F(BusMapTest, AddLinesToBusnameLRUAddressMapRequiresThreeDelimiters)
-{
-	term_mux_lines.push_back("Non Delimiter Line");
-	b.AddLinesTo_BusnameLRUAddressMap(term_mux_lines);
-	ASSERT_TRUE(map_compare(b.GetBusName_ToLRUAddressesCometMap(), comet_compare_map));
-
-	// One Delimiter
-	term_mux_lines[0] ="A|";
-	b.AddLinesTo_BusnameLRUAddressMap(term_mux_lines);
-	ASSERT_TRUE(map_compare(b.GetBusName_ToLRUAddressesCometMap(), comet_compare_map));
-
-	// Three Delimiters
-	term_mux_lines[0] = "|B|B|";
-	b.AddLinesTo_BusnameLRUAddressMap(term_mux_lines);
-	ASSERT_TRUE(map_compare(b.GetBusName_ToLRUAddressesCometMap(), comet_compare_map));
-}
-
-TEST_F(BusMapTest, AddLinesToBusnameLRUAddressMapSkipsPound)
-{
-	term_mux_lines.push_back("# Comment Line");
-	b.AddLinesTo_BusnameLRUAddressMap(term_mux_lines);
-	ASSERT_TRUE(map_compare(b.GetBusName_ToLRUAddressesCometMap(), comet_compare_map));
-}
-
-TEST_F(BusMapTest, AddLinesToBusnameLRUAddressMapSkipsEmptyStringLine)
-{
-	term_mux_lines.push_back("");
-	b.AddLinesTo_BusnameLRUAddressMap(term_mux_lines);
-	ASSERT_TRUE(map_compare(b.GetBusName_ToLRUAddressesCometMap(), comet_compare_map));
-}
-
-TEST_F(BusMapTest, AddLinesToBusnameLRUAddressMapSkipsEmptyStringBusNameOrLRUAddress)
-{
-	term_mux_lines.push_back("AA|BB|");
-	term_mux_lines.push_back("AA||CC");
-	b.AddLinesTo_BusnameLRUAddressMap(term_mux_lines);
-	ASSERT_TRUE(map_compare(b.GetBusName_ToLRUAddressesCometMap(), comet_compare_map));
-}
-
-
-TEST_F(BusMapTest, AddLinesToBusnameLRUAddressMapDoesNotDuplicate)
-{
-	term_mux_lines.push_back("AA|B1|20");
-	term_mux_lines.push_back("AA|B1|20");
-	b.AddLinesTo_BusnameLRUAddressMap(term_mux_lines);
-	temp_set.insert(20);
-	comet_compare_map["B1"] = temp_set;
-	ASSERT_TRUE(map_compare(b.GetBusName_ToLRUAddressesCometMap(), comet_compare_map));
-}
-
-TEST_F(BusMapTest, AddLinesToBusnameLRUAddressMapAddMultiple)
-{
-	term_mux_lines.push_back("AA|B1|20");
-	term_mux_lines.push_back("AA|B1|21");
-	term_mux_lines.push_back("AA|B2|22");
-	term_mux_lines.push_back("AA|B2|20");
-	term_mux_lines.push_back("AA|B2|25");
-	term_mux_lines.push_back("AA|B3|20");
-	b.AddLinesTo_BusnameLRUAddressMap(term_mux_lines);
-	temp_set.insert(20);
-	temp_set.insert(21);
-	comet_compare_map["B1"] = temp_set;
-	temp_set.clear();
-	temp_set.insert(22);
-	temp_set.insert(20);
-	temp_set.insert(25);
-	comet_compare_map["B2"] = temp_set;
-	temp_set.clear();
-	temp_set.insert(20);
-	comet_compare_map["B3"] = temp_set;
-	ASSERT_TRUE(map_compare(b.GetBusName_ToLRUAddressesCometMap(), comet_compare_map));
-}
-
-
-TEST_F(BusMapTest, AddLinesToBusnameLRUAddressMapDoNotAddNegativeLRUAddress)
-{
-	term_mux_lines.push_back("AA|B1|-1");
-	b.AddLinesTo_BusnameLRUAddressMap(term_mux_lines);
-	ASSERT_TRUE(map_compare(b.GetBusName_ToLRUAddressesCometMap(), comet_compare_map));
-}
-
-TEST_F(BusMapTest, AddLinesToBusnameLRUAddressMapDoNotAddNonIntegerLRUAddresses)
-{
-	term_mux_lines.push_back("AA|B1|-1a");
-	term_mux_lines.push_back("AA|B1|-");
-	term_mux_lines.push_back("AA|B1|CC");
-	b.AddLinesTo_BusnameLRUAddressMap(term_mux_lines);
-	ASSERT_TRUE(map_compare(b.GetBusName_ToLRUAddressesCometMap(), comet_compare_map));
-}
-
 /*
 //// OLD TMATS type tests
 
@@ -1655,3 +1339,238 @@ TEST_F(BusMapTest, CleanTmatsMaps1553ChannelIDNotInSourceMap)
 }
 */
 
+
+
+
+TEST_F(BusMapTest, InitializeMapsInitialMapsAssigned)
+{
+	// Empty Map
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>(),
+		tmats_chanid_to_source_map);
+
+	EXPECT_EQ(b.GetICD_MessageKeyToBusNamesMap()->size(),0);
+
+	// Map with entries
+	icd_message_key_to_busnames_map[1] = std::set<std::string>({ "BusA", "BusB", "BusC" });
+	icd_message_key_to_busnames_map[2] = std::set<std::string>({ "BusA" });
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({5,6,7,8}),
+		tmats_chanid_to_source_map);
+	EXPECT_EQ(*b.GetICD_MessageKeyToBusNamesMap(), icd_message_key_to_busnames_map);
+	EXPECT_THAT(b.GetChannelIDs(), ::testing::ElementsAre(5, 6, 7, 8));
+}
+
+TEST_F(BusMapTest, InitializeMapsMessageKeyToChannelIDCreationAndUniqueBuses)
+{
+	// Map with entries
+	icd_message_key_to_busnames_map[1] = std::set<std::string>({ "BusA", "BusB", "BusC" });
+	icd_message_key_to_busnames_map[2] = std::set<std::string>({ "BusA" });
+	icd_message_key_to_busnames_map[3] = std::set<std::string>({ "BusD", "BusB" });
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>(),
+		tmats_chanid_to_source_map);
+
+	icd_message_key_to_channelids_map[1] = std::set<uint64_t>();
+	icd_message_key_to_channelids_map[2] = std::set<uint64_t>();
+	icd_message_key_to_channelids_map[3] = std::set<uint64_t>();
+
+	EXPECT_EQ(b.GetICD_MessageKeyToChannelIDSMap(), icd_message_key_to_channelids_map);
+	EXPECT_THAT(b.GetUniqueBuses(), ::testing::ElementsAre("BusA", "BusB", "BusC", "BusD"));
+}
+
+// If tmats source map is empty, bus map is considered to be given no tmats data
+TEST_F(BusMapTest, InitializeMapsTMATSCheck)
+{
+	// No tmats provided
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>());
+	EXPECT_FALSE(b.TmatsPresent());
+
+	// empty tmats provided
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>(),
+		tmats_chanid_to_source_map);
+	EXPECT_FALSE(b.TmatsPresent());
+
+	tmats_chanid_to_source_map[1] = "BUS1";
+	tmats_chanid_to_source_map[2] = "BUS2";
+	tmats_chanid_to_source_map[3] = "BUS3";
+	tmats_chanid_to_source_map[4] = "BUS4";
+
+	// tmats provided
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>(),
+		tmats_chanid_to_source_map);
+	EXPECT_TRUE(b.TmatsPresent());
+
+	EXPECT_EQ(b.GetTMATSchannelidToSourceMap(), tmats_chanid_to_source_map);
+}
+
+TEST_F(BusMapTest, InitializeMapsTMATSReplacements)
+{
+	// No tmats provided
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>());
+	EXPECT_FALSE(b.TmatsPresent());
+
+	// empty tmats provided
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>(),
+		tmats_chanid_to_source_map);
+	EXPECT_FALSE(b.TmatsPresent());
+
+	tmats_chanid_to_source_map[1] = "BUS1";
+	tmats_chanid_to_source_map[2] = "BUS2";
+	tmats_chanid_to_source_map[3] = "BUS3";
+	tmats_chanid_to_source_map[4] = "BUS4";
+
+	std::map<std::string, std::string> tmats_replacements;
+
+	tmats_replacements["BUS3"] = "BUS3Replacement";
+	tmats_replacements["BUS1"] = "BUS1Replacement";
+	tmats_replacements["BUSB"] = "NonExistantReplacement";
+
+	std::map<uint64_t, std::string> compare_map;
+	compare_map[1] = "BUS1Replacement";
+	compare_map[2] = "BUS2";
+	compare_map[3] = "BUS3Replacement";
+	compare_map[4] = "BUS4";
+
+	// tmats provided with tmats replacements
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>(),
+		tmats_chanid_to_source_map,
+		tmats_replacements);
+
+	EXPECT_TRUE(b.TmatsPresent());
+	EXPECT_EQ(b.GetTMATSchannelidToSourceMap(), compare_map);
+}
+
+
+TEST_F(BusMapTest, SubmitMessages)
+{
+	// Map with entries
+	// keys are transmit command word bit shifted left 16 bits
+	// followed by the recieve command word
+	icd_message_key_to_busnames_map[10 << 16 | 10] = std::set<std::string>();
+	icd_message_key_to_busnames_map[11 << 16 | 11] = std::set<std::string>();
+	icd_message_key_to_busnames_map[12 << 16 | 12] = std::set<std::string>();
+	icd_message_key_to_busnames_map[13 << 16 | 13] = std::set<std::string>();
+	icd_message_key_to_busnames_map[14 << 16 | 14] = std::set<std::string>();
+	icd_message_key_to_busnames_map[15 << 16 | 15] = std::set<std::string>();
+	icd_message_key_to_busnames_map[16 << 16 | 16] = std::set<std::string>();
+	icd_message_key_to_busnames_map[17 << 16 | 17] = std::set<std::string>();
+	icd_message_key_to_busnames_map[18 << 16 | 18] = std::set<std::string>();
+	icd_message_key_to_busnames_map[19 << 16 | 19] = std::set<std::string>();
+	icd_message_key_to_busnames_map[20 << 16 | 20] = std::set<std::string>();
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>());
+
+	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({10,10,11,12,13,14,15,16,17,18,19,20,20});
+	std::vector<uint64_t> recieve_cmds =  std::vector<uint64_t>({10,10,11,12,13,20,15,16,17,10,19,20,20});
+	std::vector<uint64_t> channel_ids  =  std::vector<uint64_t>({ 0, 1, 1, 2, 3, 4, 5, 5, 7, 8, 9,10,10});
+
+	std::unordered_map<uint64_t, std::set<uint64_t>> compare_map;
+	compare_map[10 << 16 | 10] = std::set<uint64_t>({0,1}); // multiple matches with different channel IDs
+	compare_map[11 << 16 | 11] = std::set<uint64_t>({1});
+	compare_map[12 << 16 | 12] = std::set<uint64_t>({2});
+	compare_map[13 << 16 | 13] = std::set<uint64_t>({3});
+	compare_map[14 << 16 | 14] = std::set<uint64_t>();      // missing from input
+	compare_map[15 << 16 | 15] = std::set<uint64_t>({5});
+	compare_map[16 << 16 | 16] = std::set<uint64_t>({5});   // duplicate channel ids with different keys
+	compare_map[17 << 16 | 17] = std::set<uint64_t>({7});
+	compare_map[18 << 16 | 18] = std::set<uint64_t>();      // missing from input
+	compare_map[19 << 16 | 19] = std::set<uint64_t>({9});
+	compare_map[20 << 16 | 20] = std::set<uint64_t>({10});   // duplicate channel ids with same keys
+
+	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
+	EXPECT_EQ(b.GetICD_MessageKeyToChannelIDSMap(), compare_map);
+}
+
+TEST_F(BusMapTest, SubmitMessagesNonEqualSizedVectors)
+{
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>());
+
+	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 10,10 });
+	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({ 10,10,11 });
+	std::vector<uint64_t> channel_ids = std::vector<uint64_t>({ 0, 1, 1, 2});
+
+	EXPECT_FALSE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
+}
+
+TEST_F(BusMapTest, VoteMappingNoMatches)
+{
+	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BusA","BusB" });
+	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BusB", "BusC" });
+	icd_message_key_to_busnames_map[12] = std::set<std::string>({ "BusC", "BusD" });
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>());
+
+	icd_message_key_to_channelids_map[10] = std::set<uint64_t>();
+	icd_message_key_to_channelids_map[11] = std::set<uint64_t>();
+	icd_message_key_to_channelids_map[12] = std::set<uint64_t>();
+
+	std::map<uint64_t, std::string> compare_map;
+
+	EXPECT_EQ(b.TestVoteMapping(icd_message_key_to_channelids_map), compare_map);
+}
+
+TEST_F(BusMapTest, VoteMappingMatchHighestVotes)
+{
+	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BusA","BusB" });
+	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BusB", "BusC" });
+	icd_message_key_to_busnames_map[12] = std::set<std::string>({ "BusC", "BusD" });
+	icd_message_key_to_busnames_map[13] = std::set<std::string>({ "BusD", "BusE" });
+	icd_message_key_to_busnames_map[14] = std::set<std::string>({ "BusD", "BusE" });
+	icd_message_key_to_busnames_map[15] = std::set<std::string>({ "BusE" });
+	icd_message_key_to_busnames_map[16] = std::set<std::string>({ "BusG" });
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({ 1,2,4 }));
+
+	icd_message_key_to_channelids_map[10] = std::set<uint64_t>({ 1});
+	icd_message_key_to_channelids_map[11] = std::set<uint64_t>({ 1 });
+	icd_message_key_to_channelids_map[12] = std::set<uint64_t>({ 2 });
+	icd_message_key_to_channelids_map[13] = std::set<uint64_t>({ 2, 4 });
+	icd_message_key_to_channelids_map[14] = std::set<uint64_t>({ 4 });
+	icd_message_key_to_channelids_map[15] = std::set<uint64_t>({ 4 });
+	icd_message_key_to_channelids_map[16] = std::set<uint64_t>({ });
+
+	std::map<uint64_t, std::string> compare_map;
+	compare_map[1] = "BusB";
+	compare_map[2] = "BusD";
+	compare_map[4] = "BusE";
+
+	EXPECT_EQ(b.TestVoteMapping(icd_message_key_to_channelids_map), compare_map);
+}
+
+TEST_F(BusMapTest, VoteMappingMatchNoMatchesWhenVoteCountIsTheSame)
+{
+	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BusA","BusB" });
+	// Bus A and B are a tie
+	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BusA", "BusB", "BusC" });
+	// Channel ID 2 will tie Bus C 
+	icd_message_key_to_busnames_map[12] = std::set<std::string>({ "BusC" });
+	// Channel ID 3 should break the tie with BusC
+	icd_message_key_to_busnames_map[13] = std::set<std::string>({ "BusC" });
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({ 1,2,4 }));
+
+	icd_message_key_to_channelids_map[10] = std::set<uint64_t>({ 1, 2, 3 });
+	icd_message_key_to_channelids_map[11] = std::set<uint64_t>({ 1, 2, 3 });
+	icd_message_key_to_channelids_map[12] = std::set<uint64_t>({ 2, 3 });
+	icd_message_key_to_channelids_map[13] = std::set<uint64_t>({ 3 });
+
+
+	std::map<uint64_t, std::string> compare_map;
+	compare_map[3] = "BusC";
+
+	EXPECT_EQ(b.TestVoteMapping(icd_message_key_to_channelids_map), compare_map);
+}

@@ -1,62 +1,6 @@
 #include "bus_map.h"
 
 
-void BusMap::AddLinesTo_BusnameLRUAddressMap(std::vector<std::string> term_mux_lines)
-{
-	for (int i = 0; i < term_mux_lines.size(); i++)
-	{
-		// If empty string, don't add to the map
-		if (term_mux_lines[i].length() == 0)
-			continue;
-		
-		// If the first character is a point character (comment line) don't add to map
-		if (term_mux_lines[i][0] == '#')
-			continue;
-
-		// Split on '|'
-		std::vector<std::string> split_return = parse_text_.Split(term_mux_lines[i],'|');
-		
-		// If there aren't three split elements continue
-		if (split_return.size() != 3)
-			continue;
-
-		std::string lru_name = split_return[0];
-		std::string bus_name = split_return[1];
-		std::string lru_address = split_return[2];
-
-		// If bus name or lru address are empty string don't add to map
-		if (bus_name == "" || lru_address == "")
-			continue;
-
-		// Convert lru address from string to int
-		int temp_int;
-
-		// Check if the lru_address is convertible to an integer
-		if (!parse_text_.ConvertInt(lru_address, temp_int))
-			continue;
-
-		// Make sure the lru address is positive
-		if (temp_int < 0)
-			continue;
-
-		// If the bus name is not already a key, create a new set and add it into the map
-		if (bus_name_to_lru_addresses_comet_map_.find(bus_name) 
-			== bus_name_to_lru_addresses_comet_map_.end())
-		{
-			std::set<uint64_t> temp_set;
-			temp_set.insert(temp_int);
-			bus_name_to_lru_addresses_comet_map_[bus_name] = temp_set;
-		}
-		else
-		{
-			bus_name_to_lru_addresses_comet_map_[bus_name].insert(temp_int);
-		}
-	}
-
-	if (tmats_present_)
-		CleanTmatsMaps();
-}
-
 /*
 	Consolide tmats_chanid_to_source_map from the tmats file
 	create tmats_1553_chanid_to_busname_map_
@@ -408,6 +352,40 @@ void BusMap::InitializeMaps(std::map<std::string, std::set<uint64_t>> comet_map,
 		CleanTmatsMaps();
 }
 
+void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::string>> * icd_message_keys, 
+	std::set<uint64_t> channel_ids,
+	std::map<uint64_t, std::string> tmats_chanid_to_source_map, 
+	std::map<std::string, std::string> tmats_busname_corrections)
+{
+	icd_message_key_to_busnames_map_ = icd_message_keys;
+	tmats_chanid_to_source_map_ = tmats_chanid_to_source_map;
+	channel_ids_ = channel_ids;
+
+	if (tmats_chanid_to_source_map.empty())
+		tmats_present_ = false;
+	else
+	{
+		tmats_present_ = true;
+		// update tmats bus names with bus name corrections
+		// found in the configuration file
+		tmats_chanid_to_source_map_ = 
+			iterable_tools_.UpdateMapVals<uint64_t, std::string>
+			(	tmats_chanid_to_source_map_,
+				tmats_busname_corrections);
+	}
+
+	// Create message_key_to_channel_ids_map_ and
+	// unique_bus_names_
+	for (std::unordered_map<uint64_t, std::set<std::string>>::const_iterator
+		it = icd_message_keys->begin();
+		it != icd_message_keys->end(); it++)
+	{
+		icd_message_key_to_channelids_map_[it->first] = std::set<uint64_t>();
+		for (auto bus : it->second)
+			unique_buses_.insert(bus);
+	}	
+}
+
 bool BusMap::PerformBusMapping(std::map<uint64_t, std::string>& final_map, 
 	uint64_t auto_map_confidence_level, 
 	bool user_input_if_not_complete,
@@ -667,4 +645,104 @@ bool BusMap::UserAdjustments(std::vector<std::string>* test_options)
 			PrintFinalBusMap();
 		}
 	}
+}
+
+bool BusMap::SubmitMessages(
+	const std::vector<uint64_t>& transmit_cmd, 
+	const std::vector<uint64_t>& recieve_cmd, 
+	const std::vector<uint64_t>& channel_ids
+)
+{
+	// ensure vectors are of the same size
+	if (transmit_cmd.size() != recieve_cmd.size() 
+		|| transmit_cmd.size() != channel_ids.size())
+		return false;
+
+	for (int i = 0; i < transmit_cmd.size(); i++)
+	{
+		key = transmit_cmd[i] << 16 | recieve_cmd[i];
+		if (icd_message_key_to_channelids_map_.count(key) == 1)
+			icd_message_key_to_channelids_map_[key].insert(channel_ids[i]);
+	}
+	return true;
+}
+
+
+std::map<uint64_t, std::string> BusMap::VoteMapping()
+{
+	std::map<uint64_t, std::string> vote_map;
+
+	// map of channel id -> busname -> vote count
+	std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>> votes;
+
+	// iterate over icd_message_key_to_channelids_map_ and extract 
+	// out votes, each channel id found in icd_message_key_to_channelids_map_
+	// votes once for all of the buses found in the corresponding
+	// icd_message_key_to_busnames_map_
+	for (std::unordered_map<uint64_t, std::set<uint64_t>>::iterator it =
+		icd_message_key_to_channelids_map_.begin();
+		it != icd_message_key_to_channelids_map_.end();
+		++it)
+	{
+		for (auto channel_id : it->second)
+		{
+			// if the channel ID does not exist yet
+			// in the vote map, initialize all the 
+			// bus vote counts to zero
+			if (votes.count(channel_id) == 0)
+			{
+				for (auto bus : unique_buses_)
+				{
+					votes[channel_id][bus] = 0;
+				}				
+			}
+
+			for (auto bus : icd_message_key_to_busnames_map_->at(it->first))
+			{
+				++votes[channel_id][bus];
+			}
+		}
+	}
+
+	// assign a bus to a channel id if it has the most votes
+	// but not if it has zero votes, and not if the number of
+	// votes is the same as another bus
+	int highest_vote = 0;
+	int find_count = 0;
+	std::string highest_voted_bus = "";
+	for (std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>>::iterator
+		it = votes.begin();
+		it != votes.end();
+		++it)
+	{
+		highest_vote = 0;
+		find_count = 0;
+		highest_voted_bus = "";
+		// iterate over the bus votes and determine the largest vote
+		for (std::unordered_map<std::string, uint64_t>::iterator
+			it2 = it->second.begin();
+			it2 != it->second.end();
+			++it2)
+		{
+			if (it2->second >= highest_vote)
+			{
+				++find_count;
+				// if the bus vote count is larger than
+				// the highest_vote found, reset the find
+				// count to 1
+				if (it2->second > highest_vote)
+				{
+					find_count = 1;
+				}	
+				highest_vote = it2->second;
+				highest_voted_bus = it2->first;
+			}
+		}
+
+		if (highest_vote != 0 && find_count == 1)
+			vote_map[it->first] = highest_voted_bus;
+
+	}
+
+	return vote_map;
 }

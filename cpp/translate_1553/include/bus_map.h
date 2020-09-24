@@ -16,11 +16,20 @@
 class BusMap
 {
 private:
-	/*
-		Pulled directly from metadata 
-		("sources" are bus name specifications in TMATS)
-	*/
-	std::map<uint64_t, std::string> tmats_chanid_to_source_map_;		
+	const std::unordered_map<uint64_t, std::set<std::string>> * icd_message_key_to_busnames_map_;
+	std::unordered_map<uint64_t, std::set<uint64_t>> icd_message_key_to_channelids_map_;
+	std::map<uint64_t, std::string> tmats_chanid_to_source_map_;
+	std::set<std::string> unique_buses_;
+	std::set<uint64_t> channel_ids_;
+	int64_t key;
+	
+
+	std::map<uint64_t, std::string> VoteMapping();
+
+
+
+
+	
 
 	/*
 		Pulled from comet flat files
@@ -99,6 +108,8 @@ private:
 		std::set<std::string> comet_skips = std::set<std::string>(), 
 		std::set<uint64_t> scanned_skips = std::set<uint64_t>());
 
+	
+
 	// Runs SubsetMapping in a loop with unique=false until it can not find any more matches
 	std::map<uint64_t, std::string> 
 		TrailingSubsetMapping(std::set<std::string> comet_skips = std::set<std::string>(), 
@@ -115,6 +126,27 @@ private:
 public:
 	BusMap() : tmats_present_(false) {};
 	~BusMap() {};
+
+	
+	void InitializeMaps(
+		const std::unordered_map<uint64_t, std::set<std::string>>* icd_message_keys_to_busnames,
+		std::set<uint64_t> channel_ids,
+		std::map<uint64_t, std::string> tmats_chanid_to_source_map
+		= std::map<uint64_t, std::string>(),
+		std::map<std::string, std::string> tmats_busname_corrections
+		= std::map<std::string, std::string>());
+
+	bool SubmitMessages(
+			const std::vector<uint64_t>& transmit_cmd,
+			const std::vector<uint64_t>& recieve_cmd,
+			const std::vector<uint64_t>& channel_ids);
+
+
+
+
+
+
+
 
 	/*
 	 Initialize bus map with required maps
@@ -139,6 +171,8 @@ public:
 		= std::map<uint64_t, std::string>(),
 		std::map<std::string, std::string> tmats_busname_corrections 
 		= std::map<std::string, std::string>());
+
+	
 
 	/*
 		 Perform Bus Mapping
@@ -175,27 +209,57 @@ public:
 		bool user_input_if_not_complete,
 		std::vector<std::string>* test_options = NULL);
 
-	/*
-		Old Function replaced by comet_map input in InitializeMaps
-		Adds a vector of strings with the format LRUNAME|BUSNAME|LRUADDRESS
-		to bus_name_to_lru_addresses_comet_map_, the format is consistent
-		with comet mux_term_addr files.
-	*/
-	void AddLinesTo_BusnameLRUAddressMap(std::vector<std::string> term_mux_lines);	
-
 
 
 
 	 
 	///////////////////////// Utilities used for unit tests
+
+	const std::unordered_map<uint64_t, std::set<std::string>> * GetICD_MessageKeyToBusNamesMap()
+	{ return icd_message_key_to_busnames_map_;}
+
+	std::unordered_map<uint64_t, std::set<uint64_t>> GetICD_MessageKeyToChannelIDSMap()
+	{ return icd_message_key_to_channelids_map_; }
+	
+	std::set<std::string> GetUniqueBuses()
+	{ return unique_buses_;}
+
+	std::set<uint64_t> GetChannelIDs()
+	{ return channel_ids_; }
+
+	bool TmatsPresent()
+	{
+		return tmats_present_;
+	}
+
+	const std::map<uint64_t, std::string>& GetTMATSchannelidToSourceMap()
+	{
+		return tmats_chanid_to_source_map_;
+	}
+	
+
+	std::map<uint64_t, std::string> TestVoteMapping(		
+		std::unordered_map<uint64_t, std::set<uint64_t>> icd_message_key_to_channelids_map)
+	{
+		icd_message_key_to_channelids_map_ = icd_message_key_to_channelids_map;
+		return VoteMapping();
+	}
+
+
+
+
+	const std::map<uint64_t, std::string>& GetTmats1553ChanID_ToBusNameMap()
+	{
+		return tmats_1553_chanid_to_busname_map_;
+	}
+
 	const std::map<std::string, std::set<uint64_t>>& GetBusName_ToLRUAddressesCometMap() 
 	{ return bus_name_to_lru_addresses_comet_map_; }
 
 	const std::map<uint64_t, std::set<uint64_t>>& GetCH10ScannedChanID_ToLRUAddressesMap() 
 	{ return ch10_scanned_chanid_to_lruaddrs_map_; }
 
-	const std::map<uint64_t, std::string>& GetTmats1553ChanID_ToBusNameMap() 
-	{ return tmats_1553_chanid_to_busname_map_; }
+	
 
 	const std::map<uint64_t, std::pair<std::string, std::string>>& GetBusSuggestionsMap() 
 	{ return bus_map_suggestions_; }
@@ -211,8 +275,7 @@ public:
 
 	bool UserAdjustments(std::vector<std::string>* test_options = NULL);
 
-	bool TmatsPresent()
-	{return tmats_present_;}
+	
 	/////////////////////////
 	
 	
