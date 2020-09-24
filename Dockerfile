@@ -1,6 +1,6 @@
 FROM registry.il2.dsop.io/platform-one/devops/pipeline-templates/hardened-ubi8-stigd-python3.8:8.2
 
-WORKDIR /app
+WORKDIR /app 
 
 ARG CMAKE_BUILD_DIR="build"
 
