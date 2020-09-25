@@ -219,3 +219,71 @@ public:
 };
 
 #endif
+
+/*-
+# bus_map_confidence_level
+#
+# Bus mapping must be done to match ch10 channel IDs to bus names found in the ICD.
+# Bus map confidence levels can be specified to restrict the final bus map to only
+# map buses within a certain confidence level. If prompt user is set to false, translation
+# will continue with the buses mapped within the confidence level, even if all chapter 10 
+# channel IDs from the chapter 10 are not mapped
+#
+# The bus map will always use the most reliable source of bus mapping first, and then will continue
+# to map other buses using other sources within the bus_map_confidence_level restriction set by the user.
+#
+# Bus mapping sources are as follows (in order of most reliable to least reliable):
+#	UniqueLRU		-> An LRU address in the chapter 10 exists on only ONE bus in the ICD. 
+#	UniqueSubset	-> A set of chapter 10 lru addresses for a given channel ID is a subset of only ONE set of LRUs in the ICD for a given bus. 
+#	TMATS			-> TMATS mapping is often provided by ch10 files containing channel IDs to bus names.
+#						If TMATS bus names are consistently different from ICD specifications, TMATS bus name
+#						corrections can be given in the platform specific configuration file
+#						using the parameter "mapped_tmats_bus"
+#	Subset 			-> LRU addresses are matched in order of largest to smallest LRU address sets.
+#						If the chapter 10 LRU address set for a given channel ID is a subset of an ICD LRU address set for a given bus, 
+#						a match is made	and the matches are removed from the search. The search will then continue to the next
+#						largest LRU address set looking for subsets. The search is iterated once and then stopped.
+#	TrailingSubset	-> Just like the Subset process, Trailing subsets are matched in order of largest to smallest LRU address sets.
+#						Matches are also removed from the search on each iteration. The difference is that the search 
+#						will continue looping until all possible subsets are matched. At the beginning of each iteration
+#						all ICD bus maps are added back into the search, while previously matched channel IDs are left out.
+# 	
+# The bus map will use the following order to select matches based off of the bus_map_confidence_level provided:
+#
+# 1: UniqueLRU -> UniqueSubset
+# 2: UniqueLRU -> UniqueSubset -> TMATS
+# 3: UniqueLRU -> UniqueSubset -> TMATS -> Subset
+# 4: UniqueLRU -> UniqueSubset -> TMATS -> Subset -> TrailingSubset
+# 
+# bus_map_confidence_level = 1 can be used with 100% confidence if the provided ICD is correct
+#
+bus_map_confidence_level: 1
+
+#
+# comet_busmap_replacement
+#
+# When the comet busname to lru address set cannot be deduced from the provided ICD,
+# a replacement can be provided through this config option.
+# 
+# Provide comet_busmap_replacement entries if you want the config
+# entries to be used instead of being drawn from the ICD.
+# Leave comet_busmap_replacement empty if you want the entries drawn
+# from the ICD.
+# Each entry consists of <bus name> : [<list of lru addresses>]
+#
+# Examples:
+# (Use comet_busmap_replacement instead of mappings drawn from the ICD)
+# comet_busmap_replacement:
+# {
+#  A: [1,2,3], 
+#  B: [2,5,8], 
+#  C: [1,3,4]
+# }
+#
+# (Use mappings drawn from ICD)
+# comet_busmap_replacement: 
+#   {}
+#
+comet_busmap_replacement:
+  {}
+*/

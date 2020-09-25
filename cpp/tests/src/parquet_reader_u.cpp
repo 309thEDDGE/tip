@@ -194,6 +194,64 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesSingleRowGroup)
 	EXPECT_EQ(out[0], 6);
 }
 
+TEST_F(ParquetReaderTest, GetNextRGManualIncrementInt32)
+{
+	int size;
+	std::vector<std::vector<int32_t>> data1 = { { 1, 2, 3 } };
+	std::vector<std::vector<int32_t>> data2 = { { 4, 5, 6 } };
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateParquetFile(arrow::int32(), dirname, data1, 1));
+	ASSERT_TRUE(CreateParquetFile(arrow::int32(), dirname, data2, 1));
+
+	ParquetReader pm;
+	ASSERT_TRUE(pm.SetPQPath(dirname));
+
+	pm.SetManualRowgroupIncrementMode();
+
+	std::vector<int32_t> out(100);
+	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_EQ(size, 1);
+	EXPECT_EQ(out[0], 1);
+
+	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_EQ(size, 1);
+	EXPECT_EQ(out[0], 1);
+
+	pm.IncrementRG();
+
+	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_EQ(size, 1);
+	EXPECT_EQ(out[0], 2);
+
+	pm.IncrementRG();
+
+	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_EQ(size, 1);
+	EXPECT_EQ(out[0], 3);
+
+	pm.IncrementRG();
+
+	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_EQ(size, 1);
+	EXPECT_EQ(out[0], 4);
+
+	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_EQ(size, 1);
+	EXPECT_EQ(out[0], 4);
+
+	pm.IncrementRG();
+
+	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_EQ(size, 1);
+	EXPECT_EQ(out[0], 5);
+
+	pm.IncrementRG();
+
+	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_EQ(size, 1);
+	EXPECT_EQ(out[0], 6);
+}
 
 TEST_F(ParquetReaderTest, GetNextRGMultipleFilesNonMultipleRowGroup)
 {
@@ -388,4 +446,19 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesListColumn)
 	EXPECT_EQ(out[3], 7);
 	EXPECT_EQ(out[4], 7);
 
+}
+
+TEST_F(ParquetReaderTest, GetColumnNumberFromName)
+{
+	std::vector<uint16_t> data =
+	{ 3,3,3,3,3, 4,4,4,4,4, 5,5,5,5,5, 6,6,6,6,6, 7,7,7,7,7 };
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateParquetFile(dirname, data, 1, 5));
+
+	ParquetReader pm;
+	ASSERT_TRUE(pm.SetPQPath(dirname));
+
+	ASSERT_EQ(pm.GetColumnNumberFromName("data"),0);
+	ASSERT_EQ(pm.GetColumnNumberFromName("junk"),-1);
 }
