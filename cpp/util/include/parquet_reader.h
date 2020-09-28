@@ -114,12 +114,14 @@ public:
 
 	/*
 		Called to manually increment row groups.
-		Usually called when manual_rowgroup_incement_mode_ 
-		is set to true
+		Only works when manual_rowgroup_incement_mode_ 
+		is set to true (call SetManualRowgroupIncrementMode() to
+		set to true)
 	*/
 	void IncrementRG()
 	{
-		++current_row_group_;
+		if(manual_rowgroup_increment_mode_)
+			++current_row_group_;
 	};
 
 	

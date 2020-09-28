@@ -151,6 +151,10 @@ bool PrepareICDAndBusMap(ICDData& icd_data, const std::string& input_path,
 	auto stop_time = std::chrono::high_resolution_clock::now();
 	printf("Duration: %zd sec\n", std::chrono::duration_cast<std::chrono::seconds>(stop_time - start_time).count());
 
+	printf("\nStarting Bus Map\n");
+	auto bus_map_start_time = std::chrono::high_resolution_clock::now();
+
+	
 	// Generate the bus map from metadata and possibly user
 	// input.
 	if (!SynthesizeBusMap(icd_data, input_path, prompt_user, 
@@ -159,6 +163,9 @@ bool PrepareICDAndBusMap(ICDData& icd_data, const std::string& input_path,
 	{
 		return false;
 	}
+
+	auto bus_map_end_time = std::chrono::high_resolution_clock::now();
+	printf("Bus Map Duration: %zd sec\n", std::chrono::duration_cast<std::chrono::seconds>(bus_map_end_time - bus_map_start_time).count());
 
 	// If the config file option stop_after_bus_map == true, 
 	// exit the program.

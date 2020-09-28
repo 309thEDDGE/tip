@@ -71,6 +71,7 @@ stop_after_bus_map: false
 #
 # If non empty list provided, only the list of messages given will be translated.
 # All other messages will be ignored. Provide empty list to translate all messages.
+# Only available when XDAT preprocessor definition is defined.
 # 
 # --examples-- 
 # select_specific_messages:

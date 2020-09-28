@@ -466,11 +466,14 @@ TEST_F(BusMapTest, SubmitMessages)
 
 	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
 
-	transmit_cmds = std::vector<uint64_t>({16,17,18,19,20,20 });
-	recieve_cmds = std::vector<uint64_t>({ 16,17,10,19,20,20 });
-	channel_ids = std::vector<uint64_t>({   5, 7, 8, 9,10,10 });
+	// last two elements should not be included in submission
+	// because a value of 6 was passed into as the submission size
+	transmit_cmds = std::vector<uint64_t>({16,17,18,19,20,20,100,200 });
+	recieve_cmds = std::vector<uint64_t>({ 16,17,10,19,20,20,100,200 });
+	channel_ids = std::vector<uint64_t>({   5, 7, 8, 9,10,10,100,200 });
 
-	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
+	// include submission size
+	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids, 6));
 
 	std::unordered_map<uint64_t, std::set<uint64_t>> compare_map;
 	compare_map[10 << 16 | 10] = std::set<uint64_t>({0,1}); // multiple matches with different channel IDs

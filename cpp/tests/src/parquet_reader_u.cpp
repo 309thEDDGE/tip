@@ -98,7 +98,8 @@ protected:
 	}
 
 	// Create parquet file with one list column
-	bool CreateParquetFile(std::string directory, std::vector<uint16_t>& output,
+	template <typename T>
+	bool CreateParquetFile(std::shared_ptr<arrow::DataType> type, std::string directory, std::vector<T>& output,
 		int row_group_count, int list_size)
 	{
 
@@ -120,8 +121,8 @@ protected:
 		ParquetContext pc(row_group_count);
 
 		// Add the vector as a list column
-		pc.AddField(arrow::int32(), "data", list_size);
-		pc.SetMemoryLocation<uint16_t>(output, "data");
+		pc.AddField(type, "data", list_size);
+		pc.SetMemoryLocation<T>(output, "data");
 
 		// Assume each vector is of the same size
 		int row_count = output.size() / list_size;
@@ -169,29 +170,32 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesSingleRowGroup)
 	ASSERT_TRUE(pm.SetPQPath(dirname));
 
 	std::vector<int32_t> out(100);
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 1);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 2);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 3);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 4);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 5);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 6);
+
+	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
+	ASSERT_EQ(size, 0);
 }
 
 TEST_F(ParquetReaderTest, GetNextRGManualIncrementInt32)
@@ -210,47 +214,85 @@ TEST_F(ParquetReaderTest, GetNextRGManualIncrementInt32)
 	pm.SetManualRowgroupIncrementMode();
 
 	std::vector<int32_t> out(100);
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 1);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 1);
 
 	pm.IncrementRG();
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 2);
 
 	pm.IncrementRG();
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 3);
 
 	pm.IncrementRG();
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 4);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 4);
 
 	pm.IncrementRG();
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 5);
 
 	pm.IncrementRG();
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 6);
+
+	pm.IncrementRG();
+
+	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
+	ASSERT_EQ(size, 0);
+}
+
+TEST_F(ParquetReaderTest, IncrementRGDoesNotIncrementWhenSetManualRowgroupIncrementModeIsNotCalled)
+{
+	int size;
+	std::vector<std::vector<int32_t>> data1 = { { 1, 2, 3 } };
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateParquetFile(arrow::int32(), dirname, data1, 1));
+
+	ParquetReader pm;
+	ASSERT_TRUE(pm.SetPQPath(dirname));
+
+	std::vector<int32_t> out(100);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
+	ASSERT_EQ(size, 1);
+	EXPECT_EQ(out[0], 1);
+
+	pm.IncrementRG();
+	pm.IncrementRG();
+	pm.IncrementRG();
+	pm.IncrementRG();
+
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
+	ASSERT_EQ(size, 1);
+	EXPECT_EQ(out[0], 2);	
+
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
+	ASSERT_EQ(size, 1);
+	EXPECT_EQ(out[0], 3);
+
+	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
+	ASSERT_EQ(size, 0);
 }
 
 TEST_F(ParquetReaderTest, GetNextRGMultipleFilesNonMultipleRowGroup)
@@ -267,26 +309,29 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesNonMultipleRowGroup)
 	ASSERT_TRUE(pm.SetPQPath(dirname));
 
 	std::vector<int32_t> out(100);
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 3);
 	EXPECT_EQ(out[0], 1);
 	EXPECT_EQ(out[1], 2);
 	EXPECT_EQ(out[2], 3);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 2);
 	EXPECT_EQ(out[0], 4);
 	EXPECT_EQ(out[1], 5);
 
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 2);
 	EXPECT_EQ(out[0], 6);
 	EXPECT_EQ(out[1], 7);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 8);
+
+	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
+	ASSERT_EQ(size, 0);
 }
 
 TEST_F(ParquetReaderTest, GetNextRGNoParquetFiles)
@@ -296,9 +341,7 @@ TEST_F(ParquetReaderTest, GetNextRGNoParquetFiles)
 	ASSERT_FALSE(pm.SetPQPath("."));
 
 	std::vector<int32_t> out(100);
-	bool return_val =
-		pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
-	ASSERT_FALSE(return_val);
+	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 }
 
 TEST_F(ParquetReaderTest, GetNextRGMultipleFilesReachesEnd)
@@ -315,29 +358,17 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesReachesEnd)
 	ASSERT_TRUE(pm.SetPQPath(dirname));
 
 	std::vector<int32_t> out(100);
-	bool return_val =
-		pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
-	ASSERT_TRUE(return_val);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 
-	return_val =
-		pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
-	ASSERT_TRUE(return_val);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 
-	return_val =
-		pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
-	ASSERT_TRUE(return_val);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 
-	return_val =
-		pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
-	ASSERT_TRUE(return_val);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 
-	return_val =
-		pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
-	ASSERT_FALSE(return_val);
+	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 
-	return_val =
-		pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size);
-	ASSERT_FALSE(return_val);
+	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 }
 
 TEST_F(ParquetReaderTest, GetNextRGMultipleFilesSecondColumn)
@@ -356,25 +387,28 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesSecondColumn)
 	ASSERT_TRUE(pm.SetPQPath(dirname));
 
 	std::vector<int32_t> out(100);
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(1, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(1, out, size)));
 	ASSERT_EQ(size, 3);
 	EXPECT_EQ(out[0], 1);
 	EXPECT_EQ(out[1], 2);
 	EXPECT_EQ(out[2], 3);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(1, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(1, out, size)));
 	ASSERT_EQ(size, 2);
 	EXPECT_EQ(out[0], 4);
 	EXPECT_EQ(out[1], 5);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(1, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(1, out, size)));
 	ASSERT_EQ(size, 2);
 	EXPECT_EQ(out[0], 6);
 	EXPECT_EQ(out[1], 7);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(1, out, size);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(1, out, size)));
 	ASSERT_EQ(size, 1);
 	EXPECT_EQ(out[0], 8);
+
+	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(1, out, size)));
+	ASSERT_EQ(size, 0);
 }
 
 TEST_F(ParquetReaderTest, GetNextRGMultipleFilesListColumn)
@@ -386,15 +420,15 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesListColumn)
 	{ 3,3,3,3,3, 4,4,4,4,4, 5,5,5,5,5, 6,6,6,6,6, 7,7,7,7,7 };
 
 	std::string dirname = "file1.parquet";
-	ASSERT_TRUE(CreateParquetFile(dirname, data1, 1, 5));
+	ASSERT_TRUE(CreateParquetFile<uint16_t>(arrow::int32(), dirname, data1, 1, 5));
 
-	ASSERT_TRUE(CreateParquetFile(dirname, data2, 2, 5));
+	ASSERT_TRUE(CreateParquetFile<uint16_t>(arrow::int32(), dirname, data2, 2, 5));
 
 	ParquetReader pm;
 	ASSERT_TRUE(pm.SetPQPath(dirname));
 
 	std::vector<int32_t> out(100);
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true)));
 
 	ASSERT_EQ(size, 5);
 	EXPECT_EQ(out[0], 1);
@@ -403,7 +437,7 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesListColumn)
 	EXPECT_EQ(out[3], 1);
 	EXPECT_EQ(out[4], 1);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true)));
 
 	ASSERT_EQ(size, 5);
 	EXPECT_EQ(out[0], 2);
@@ -412,7 +446,7 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesListColumn)
 	EXPECT_EQ(out[3], 2);
 	EXPECT_EQ(out[4], 2);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true)));
 	ASSERT_EQ(size, 10);
 	EXPECT_EQ(out[0], 3);
 	EXPECT_EQ(out[1], 3);
@@ -425,7 +459,7 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesListColumn)
 	EXPECT_EQ(out[8], 4);
 	EXPECT_EQ(out[9], 4);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true)));
 	ASSERT_EQ(size, 10);
 	EXPECT_EQ(out[0], 5);
 	EXPECT_EQ(out[1], 5);
@@ -438,7 +472,7 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesListColumn)
 	EXPECT_EQ(out[8], 6);
 	EXPECT_EQ(out[9], 6);
 
-	pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true);
+	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true)));
 	ASSERT_EQ(size, 5);
 	EXPECT_EQ(out[0], 7);
 	EXPECT_EQ(out[1], 7);
@@ -446,6 +480,8 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesListColumn)
 	EXPECT_EQ(out[3], 7);
 	EXPECT_EQ(out[4], 7);
 
+	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size, true)));
+	EXPECT_EQ(size, 0);
 }
 
 TEST_F(ParquetReaderTest, GetColumnNumberFromName)
@@ -454,11 +490,294 @@ TEST_F(ParquetReaderTest, GetColumnNumberFromName)
 	{ 3,3,3,3,3, 4,4,4,4,4, 5,5,5,5,5, 6,6,6,6,6, 7,7,7,7,7 };
 
 	std::string dirname = "file1.parquet";
-	ASSERT_TRUE(CreateParquetFile(dirname, data, 1, 5));
+	ASSERT_TRUE(CreateParquetFile<uint16_t>(arrow::int32(),dirname, data, 1, 5));
 
 	ParquetReader pm;
 	ASSERT_TRUE(pm.SetPQPath(dirname));
 
 	ASSERT_EQ(pm.GetColumnNumberFromName("data"),0);
 	ASSERT_EQ(pm.GetColumnNumberFromName("junk"),-1);
+}
+
+TEST_F(ParquetReaderTest, GetNextRGBool)
+{
+	int size;
+	std::vector<std::vector<uint8_t>> data1 = { { 0, 1, 0, 1, 1 } };
+	std::vector<std::vector<uint8_t>> data2 = { { 0, 0, 1} };
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateParquetFile(arrow::boolean(), dirname, data1, 3));
+	ASSERT_TRUE(CreateParquetFile(arrow::boolean(), dirname, data2, 2));
+
+	ParquetReader pm;
+	ASSERT_TRUE(pm.SetPQPath(dirname));
+
+	std::vector<uint8_t> out(100);
+	ASSERT_TRUE(pm.GetNextRGBool(0, out, size));
+	ASSERT_EQ(size, 3);
+	EXPECT_EQ(out[0], 0);
+	EXPECT_EQ(out[1], 1);
+	EXPECT_EQ(out[2], 0);
+
+	ASSERT_TRUE(pm.GetNextRGBool(0, out, size));
+	ASSERT_EQ(size, 2);
+	EXPECT_EQ(out[0], 1);
+	EXPECT_EQ(out[1], 1);
+
+	ASSERT_TRUE(pm.GetNextRGBool(0, out, size));
+	ASSERT_EQ(size, 2);
+	EXPECT_EQ(out[0], 0);
+	EXPECT_EQ(out[1], 0);
+
+	ASSERT_TRUE(pm.GetNextRGBool(0, out, size));
+	ASSERT_EQ(size, 1);
+	EXPECT_EQ(out[0], 1);
+
+	ASSERT_FALSE(pm.GetNextRGBool(0, out, size));
+	EXPECT_EQ(size, 0);
+}
+
+TEST_F(ParquetReaderTest, GetNextRGBoolManualIncrement)
+{
+	int size;
+	std::vector<std::vector<uint8_t>> data1 = { { 0, 1, 0, 1, 1 } };
+	std::vector<std::vector<uint8_t>> data2 = { { 0, 0, 1} };
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateParquetFile(arrow::boolean(), dirname, data1, 3));
+	ASSERT_TRUE(CreateParquetFile(arrow::boolean(), dirname, data2, 2));
+
+	ParquetReader pm;
+	ASSERT_TRUE(pm.SetPQPath(dirname));
+
+	pm.SetManualRowgroupIncrementMode();
+
+	std::vector<uint8_t> out(100);
+	ASSERT_TRUE(pm.GetNextRGBool(0, out, size));
+	ASSERT_EQ(size, 3);
+	EXPECT_EQ(out[0], 0);
+	EXPECT_EQ(out[1], 1);
+	EXPECT_EQ(out[2], 0);
+
+	ASSERT_TRUE(pm.GetNextRGBool(0, out, size));
+	ASSERT_EQ(size, 3);
+	EXPECT_EQ(out[0], 0);
+	EXPECT_EQ(out[1], 1);
+	EXPECT_EQ(out[2], 0);
+	
+	pm.IncrementRG();
+
+	ASSERT_TRUE(pm.GetNextRGBool(0, out, size));
+	ASSERT_EQ(size, 2);
+	EXPECT_EQ(out[0], 1);
+	EXPECT_EQ(out[1], 1);
+
+	pm.IncrementRG();
+
+	ASSERT_TRUE(pm.GetNextRGBool(0, out, size));
+	ASSERT_EQ(size, 2);
+	EXPECT_EQ(out[0], 0);
+	EXPECT_EQ(out[1], 0);
+
+	ASSERT_TRUE(pm.GetNextRGBool(0, out, size));
+	ASSERT_EQ(size, 2);
+	EXPECT_EQ(out[0], 0);
+	EXPECT_EQ(out[1], 0);
+
+	pm.IncrementRG();
+
+	ASSERT_TRUE(pm.GetNextRGBool(0, out, size));
+	ASSERT_EQ(size, 1);
+	EXPECT_EQ(out[0], 1);
+
+	pm.IncrementRG();
+
+	ASSERT_FALSE(pm.GetNextRGBool(0, out, size));
+	EXPECT_EQ(size, 0);
+}
+
+
+TEST_F(ParquetReaderTest, GetNextRGString)
+{
+	int size;
+	std::vector<std::vector<std::string>> data1 = { { "a","b","c","d","e" } };
+	std::vector<std::vector<std::string>> data2 = { { "Han Solo", "chewbacca"} };
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateParquetFile(arrow::utf8(), dirname, data1, 3));
+	ASSERT_TRUE(CreateParquetFile(arrow::utf8(), dirname, data2, 2));
+
+	ParquetReader pm;
+	ASSERT_TRUE(pm.SetPQPath(dirname));
+
+	std::vector<std::string> out(100);
+	ASSERT_TRUE(pm.GetNextRGString(0, out, size));
+	ASSERT_EQ(size, 3);
+	EXPECT_EQ(out[0], "a");
+	EXPECT_EQ(out[1], "b");
+	EXPECT_EQ(out[2], "c");
+
+	ASSERT_TRUE(pm.GetNextRGString(0, out, size));
+	ASSERT_EQ(size, 2);
+	EXPECT_EQ(out[0], "d");
+	EXPECT_EQ(out[1], "e");
+
+	ASSERT_TRUE(pm.GetNextRGString(0, out, size));
+	ASSERT_EQ(size, 2);
+	EXPECT_EQ(out[0], "Han Solo");
+	EXPECT_EQ(out[1], "chewbacca");
+
+	ASSERT_FALSE(pm.GetNextRGString(0, out, size));
+	EXPECT_EQ(size, 0);
+}
+
+TEST_F(ParquetReaderTest, GetNextRGStringManualIncrement)
+{
+	int size;
+	std::vector<std::vector<std::string>> data1 = { { "a","b","c","d","e" } };
+	std::vector<std::vector<std::string>> data2 = { { "Han Solo", "chewbacca"} };
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateParquetFile(arrow::utf8(), dirname, data1, 3));
+	ASSERT_TRUE(CreateParquetFile(arrow::utf8(), dirname, data2, 2));
+
+	ParquetReader pm;
+	ASSERT_TRUE(pm.SetPQPath(dirname));
+
+	pm.SetManualRowgroupIncrementMode();
+
+	std::vector<std::string> out(100);
+	ASSERT_TRUE(pm.GetNextRGString(0, out, size));
+	ASSERT_EQ(size, 3);
+	EXPECT_EQ(out[0], "a");
+	EXPECT_EQ(out[1], "b");
+	EXPECT_EQ(out[2], "c");
+
+	ASSERT_TRUE(pm.GetNextRGString(0, out, size));
+	ASSERT_EQ(size, 3);
+	EXPECT_EQ(out[0], "a");
+	EXPECT_EQ(out[1], "b");
+	EXPECT_EQ(out[2], "c");
+
+	pm.IncrementRG();
+
+	ASSERT_TRUE(pm.GetNextRGString(0, out, size));
+	ASSERT_EQ(size, 2);
+	EXPECT_EQ(out[0], "d");
+	EXPECT_EQ(out[1], "e");
+
+	ASSERT_TRUE(pm.GetNextRGString(0, out, size));
+	ASSERT_EQ(size, 2);
+	EXPECT_EQ(out[0], "d");
+	EXPECT_EQ(out[1], "e");
+
+	pm.IncrementRG();
+
+	ASSERT_TRUE(pm.GetNextRGString(0, out, size));
+	ASSERT_EQ(size, 2);
+	EXPECT_EQ(out[0], "Han Solo");
+	EXPECT_EQ(out[1], "chewbacca");
+
+	pm.IncrementRG();
+
+	ASSERT_FALSE(pm.GetNextRGString(0, out, size));
+	EXPECT_EQ(size, 0);
+}
+
+TEST_F(ParquetReaderTest, GetNextRGBoolListColumn)
+{
+	int size;
+	std::vector<uint8_t> data1 =
+	{ 1,1,1,1,1, 0,0,0,0,0 };
+	std::vector<uint8_t> data2 =
+	{ 0,1,0,1,0, 0,0,1,1,0, 1,1,0,0,0 };
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateParquetFile<uint8_t>(arrow::boolean(), dirname, data1, 1, 5));
+
+	ASSERT_TRUE(CreateParquetFile<uint8_t>(arrow::boolean(), dirname, data2, 2, 5));
+
+	ParquetReader pm;
+	ASSERT_TRUE(pm.SetPQPath(dirname));
+
+	std::vector<uint8_t> out(100);
+	ASSERT_TRUE((pm.GetNextRGBool(0, out, size, true)));
+
+	ASSERT_EQ(size, 5);
+	EXPECT_EQ(out[0], 1);
+	EXPECT_EQ(out[1], 1);
+	EXPECT_EQ(out[2], 1);
+	EXPECT_EQ(out[3], 1);
+	EXPECT_EQ(out[4], 1);
+
+	ASSERT_TRUE((pm.GetNextRGBool(0, out, size, true)));
+
+	ASSERT_EQ(size, 5);
+	EXPECT_EQ(out[0], 0);
+	EXPECT_EQ(out[1], 0);
+	EXPECT_EQ(out[2], 0);
+	EXPECT_EQ(out[3], 0);
+	EXPECT_EQ(out[4], 0);
+
+	ASSERT_TRUE((pm.GetNextRGBool(0, out, size, true)));
+	ASSERT_EQ(size, 10);
+	EXPECT_EQ(out[0], 0);
+	EXPECT_EQ(out[1], 1);
+	EXPECT_EQ(out[2], 0);
+	EXPECT_EQ(out[3], 1);
+	EXPECT_EQ(out[4], 0);
+	EXPECT_EQ(out[5], 0);
+	EXPECT_EQ(out[6], 0);
+	EXPECT_EQ(out[7], 1);
+	EXPECT_EQ(out[8], 1);
+	EXPECT_EQ(out[9], 0);
+
+	ASSERT_TRUE((pm.GetNextRGBool(0, out, size, true)));
+	ASSERT_EQ(size, 5);
+	EXPECT_EQ(out[0], 1);
+	EXPECT_EQ(out[1], 1);
+	EXPECT_EQ(out[2], 0);
+	EXPECT_EQ(out[3], 0);
+	EXPECT_EQ(out[4], 0);
+
+	ASSERT_FALSE((pm.GetNextRGBool(0, out, size, true)));
+	EXPECT_EQ(size, 0);
+}
+
+TEST_F(ParquetReaderTest, GetNextRGStringList)
+{
+	int size;
+	std::vector<std::string> data1 =
+	{ "hey", "jack"};
+	std::vector<std::string> data2 =
+	{ "ie", "chan", "yo", "whats up"};
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateParquetFile<std::string>(arrow::utf8(), dirname, data1, 1, 2));
+
+	ASSERT_TRUE(CreateParquetFile<std::string>(arrow::utf8(), dirname, data2, 1, 2));
+
+	ParquetReader pm;
+	ASSERT_TRUE(pm.SetPQPath(dirname));
+
+	std::vector<std::string> out(100);
+	ASSERT_TRUE((pm.GetNextRGString(0, out, size, true)));
+
+	ASSERT_EQ(size, 2);
+	EXPECT_EQ(out[0], "hey");
+	EXPECT_EQ(out[1], "jack");
+
+	ASSERT_TRUE((pm.GetNextRGString(0, out, size, true)));
+
+	ASSERT_EQ(size, 2);
+	EXPECT_EQ(out[0], "ie");
+	EXPECT_EQ(out[1], "chan");
+
+	ASSERT_TRUE((pm.GetNextRGString(0, out, size, true)));
+	ASSERT_EQ(size, 2);
+	EXPECT_EQ(out[0], "yo");
+	EXPECT_EQ(out[1], "whats up");
+
+	ASSERT_FALSE((pm.GetNextRGString(0, out, size, true)));
+	EXPECT_EQ(size, 0);
 }

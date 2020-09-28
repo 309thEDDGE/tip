@@ -16,7 +16,7 @@
 class BusMap
 {
 private:
-	const std::unordered_map<uint64_t, std::set<std::string>> * icd_message_key_to_busnames_map_;
+	const std::unordered_map<uint64_t, std::set<std::string>> *icd_message_key_to_busnames_map_;
 	std::unordered_map<uint64_t, std::set<uint64_t>> icd_message_key_to_channelids_map_;
 	std::map<uint64_t, std::string> tmats_chanid_to_source_map_;
 	std::set<std::string> unique_buses_;
@@ -42,7 +42,6 @@ private:
 	*/
 	std::map<std::string, std::string> tmats_busname_corrections_;	
 
-	ParseText parse_text_;
 	IterableTools iterable_tools_;
 	bool tmats_present_;
 	UserInput user_input_;
@@ -70,7 +69,7 @@ public:
 			const std::vector<uint64_t>& transmit_cmd,
 			const std::vector<uint64_t>& recieve_cmd,
 			const std::vector<uint64_t>& channel_ids,
-			size_t message_count = -1);
+			size_t submission_size = -1);
 
 	bool Finalize(std::map<uint64_t, std::string>& final_map,
 		bool use_tmats_busmap,

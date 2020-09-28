@@ -154,7 +154,7 @@ bool BusMap::SubmitMessages(
 	const std::vector<uint64_t>& transmit_cmd, 
 	const std::vector<uint64_t>& recieve_cmd, 
 	const std::vector<uint64_t>& channel_ids,
-	size_t message_count)
+	size_t submission_size)
 {
 	size_t count;
 
@@ -169,13 +169,13 @@ bool BusMap::SubmitMessages(
 
 	// if message_count is not the default value
 	// submit the number of rows passed
-	if (message_count == -1)
+	if (submission_size == -1)
 	{
 		count = transmit_cmd.size();
 	}
 	else
 	{
-		count = message_count;
+		count = submission_size;
 		if (count > transmit_cmd.size())
 		{
 			printf("message_count must be less than vector sizes ");
@@ -185,13 +185,12 @@ bool BusMap::SubmitMessages(
 	}
 	for (int i = 0; i < count; i++)
 	{
-		key = transmit_cmd[i] << 16 | recieve_cmd[i];
+		key = ((transmit_cmd[i] & 0b1111111111100000) << 16 ) 
+			| (recieve_cmd[i] & 0b1111111111100000);
 		if (icd_message_key_to_channelids_map_.count(key) == 1)
+		{
 			icd_message_key_to_channelids_map_[key].insert(channel_ids[i]);
-
-		/*
-		if (channel_ids[i] == 32)
-			return false;*/
+		}
 	}
 	return true;
 }
@@ -232,6 +231,25 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 			}
 		}
 	}
+
+	// print vote map
+	printf("\nChannel ID votes---\n");
+	for (std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>>::iterator
+		it = votes.begin();
+		it != votes.end();
+		++it)
+	{
+		printf("\n");
+		printf("Channel ID %i:\n", it->first);
+		for (std::unordered_map<std::string, uint64_t>::iterator
+			it2 = it->second.begin();
+			it2 != it->second.end();
+			++it2)
+		{
+			printf("%s=\t%i\n", it2->first.c_str(), it2->second);
+		}
+	}
+	printf("---\n\n");
 
 	// assign a bus to a channel id if it has the most votes
 	// but not if it has zero votes, and not if the number of
