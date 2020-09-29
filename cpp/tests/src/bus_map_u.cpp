@@ -5,36 +5,18 @@
 #include "icd_data.h"
 
 
-
-// print final map tests?
-
-
-
 class BusMapTest : public ::testing::Test
 {
 protected:
 	
 	std::unordered_map<uint64_t, std::set<std::string>> icd_message_key_to_busnames_map;
-	std::unordered_map<uint64_t, std::set<uint64_t>> icd_message_key_to_channelids_map;
-	
+	std::unordered_map<uint64_t, std::set<uint64_t>> icd_message_key_to_channelids_map;	
 	std::map<uint64_t, std::string> tmats_chanid_to_source_map;
-	
-
 	BusMap b;
-	std::map<std::string, std::set<uint64_t>> comet_compare_map;
-	std::vector<std::string> term_mux_lines;
-	std::set<uint64_t> temp_set;
-	std::map<uint64_t, std::set<uint64_t>> ch10_scanned_compare_map;
-	
-	std::map<uint64_t, std::string> chID_to_busname_compare_map;
-	std::map<std::string, std::set<uint64_t>> bus_name_to_lru_addresses_comet_map;
-	std::map<uint64_t, std::string> tmats_chanid_to_type_map;
 	std::map<uint64_t, std::string> tmats_1553_chanid_compare_map;
 	IterableTools iterable_tools_;
 	FileReader fr;
-
-	// inputs
-	std::map<uint64_t, std::set<uint64_t>> ch10_scanned_chanid_to_lruaddrs_map;
+	uint64_t mask = _UI64_MAX;
 
 	BusMapTest()
 	{
@@ -105,11 +87,12 @@ TEST_F(BusMapTest, UserAdjustmentsJunkInputThenAdjustThenQuit)
 // Adjust -> make a change to channel ID -> then quit
 TEST_F(BusMapTest, UserAdjustmentsAdjustThenValidChannelIDThenQuit)
 {
-	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUS1" });
-	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUS2" });
+	icd_message_key_to_busnames_map[10 & mask] = std::set<std::string>({ "BUS1" });
+	icd_message_key_to_busnames_map[11 & mask] = std::set<std::string>({ "BUS2" });
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,5 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -129,11 +112,12 @@ TEST_F(BusMapTest, UserAdjustmentsAdjustThenValidChannelIDThenQuit)
 // Adjust -> invalid channel id -> then quit
 TEST_F(BusMapTest, UserAdjustmentsAdjustThenInvalidChannelIDThenQuit)
 {
-	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUS1" });
-	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUS2" });
+	icd_message_key_to_busnames_map[10 & mask] = std::set<std::string>({ "BUS1" });
+	icd_message_key_to_busnames_map[11 & mask] = std::set<std::string>({ "BUS2" });
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,5 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -152,11 +136,12 @@ TEST_F(BusMapTest, UserAdjustmentsAdjustThenInvalidChannelIDThenQuit)
 // Adjust -> valid channel id -> invalid bus names -> then quit
 TEST_F(BusMapTest, UserAdjustmentsAdjustThenValidChannelIDThenInvalidBusNameThenQuit)
 {
-	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUS1" });
-	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUS2" });
+	icd_message_key_to_busnames_map[10 & mask] = std::set<std::string>({ "BUS1" });
+	icd_message_key_to_busnames_map[11 & mask] = std::set<std::string>({ "BUS2" });
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,5 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -174,12 +159,13 @@ TEST_F(BusMapTest, UserAdjustmentsAdjustThenValidChannelIDThenInvalidBusNameThen
 
 TEST_F(BusMapTest, UserAdjustmentsAdjustThenInvalidChannelIDThenValidChannelIDThenInvalidBusNameThenValidBusName)
 {
-	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUS1" });
-	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUS2" });
-	icd_message_key_to_busnames_map[12] = std::set<std::string>({ "BUS3" });
+	icd_message_key_to_busnames_map[10 & mask] = std::set<std::string>({ "BUS1" });
+	icd_message_key_to_busnames_map[11 & mask] = std::set<std::string>({ "BUS2" });
+	icd_message_key_to_busnames_map[12 & mask] = std::set<std::string>({ "BUS3" });
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,5 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -210,12 +196,13 @@ TEST_F(BusMapTest, UserAdjustmentsAdjustThenInvalidChannelIDThenValidChannelIDTh
 
 TEST_F(BusMapTest, UserAdjustmentsOverrideExistingWithNewNameAndSource)
 {
-	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUS1" });
-	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUS2" });
-	icd_message_key_to_busnames_map[12] = std::set<std::string>({ "BUS3" });
+	icd_message_key_to_busnames_map[10 & mask] = std::set<std::string>({ "BUS1" });
+	icd_message_key_to_busnames_map[11 & mask] = std::set<std::string>({ "BUS2" });
+	icd_message_key_to_busnames_map[12 & mask] = std::set<std::string>({ "BUS3" });
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,5 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -241,12 +228,13 @@ TEST_F(BusMapTest, UserAdjustmentsOverrideExistingWithNewNameAndSource)
 
 TEST_F(BusMapTest, UserAdjustmentsAddFromNonMappedToFinalMap)
 {
-	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUS1" });
-	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUS2" });
-	icd_message_key_to_busnames_map[12] = std::set<std::string>({ "BUS3" });
+	icd_message_key_to_busnames_map[10 & mask] = std::set<std::string>({ "BUS1" });
+	icd_message_key_to_busnames_map[11 & mask] = std::set<std::string>({ "BUS2" });
+	icd_message_key_to_busnames_map[12 & mask] = std::set<std::string>({ "BUS3" });
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });
@@ -275,12 +263,13 @@ TEST_F(BusMapTest, UserAdjustmentsAddFromNonMappedToFinalMap)
  
 TEST_F(BusMapTest, UserAdjustmentsMapMultipleAndContinueAdjustsFinalMap)
 {
-	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUS1" });
-	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUS2" });
-	icd_message_key_to_busnames_map[12] = std::set<std::string>({ "BUS3" });
+	icd_message_key_to_busnames_map[10 & mask] = std::set<std::string>({ "BUS1" });
+	icd_message_key_to_busnames_map[11 & mask] = std::set<std::string>({ "BUS2" });
+	icd_message_key_to_busnames_map[12 & mask] = std::set<std::string>({ "BUS3" });
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3,4 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });
@@ -318,6 +307,7 @@ TEST_F(BusMapTest, UserAdjustmentsEnsureNoMapInputDoesnotAllowChangesToFinalMap)
 {
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
+		mask,
 		tmats_chanid_to_source_map);
 
 	std::vector<std::string> adj_vec = { "2","invalid","q" };
@@ -337,9 +327,10 @@ TEST_F(BusMapTest, InitializeMapsInitialMapsAssigned)
 	// Empty Map
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
+		mask,
 		tmats_chanid_to_source_map);
 
-	EXPECT_EQ(b.GetICD_MessageKeyToBusNamesMap()->size(),0);
+	EXPECT_EQ(b.GetICD_MessageKeyToBusNamesMap().size(),0);
 
 	// Map with entries
 	icd_message_key_to_busnames_map[1] = std::set<std::string>({ "BusA", "BusB", "BusC" });
@@ -347,20 +338,43 @@ TEST_F(BusMapTest, InitializeMapsInitialMapsAssigned)
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({5,6,7,8}),
+		mask,
 		tmats_chanid_to_source_map);
-	EXPECT_EQ(*b.GetICD_MessageKeyToBusNamesMap(), icd_message_key_to_busnames_map);
+	EXPECT_EQ(b.GetICD_MessageKeyToBusNamesMap(), icd_message_key_to_busnames_map);
 	EXPECT_THAT(b.GetChannelIDs(), ::testing::ElementsAre(5, 6, 7, 8));
+}
+
+TEST_F(BusMapTest, InitializeMapsWithMask)
+{
+
+	// Map with entries
+	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BusA", "BusB", "BusC" });
+	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BusD" });
+	// 10 and 11 keys should be masked to be the same key (10)
+
+	uint64_t mask_input = 0b11111111110;
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({ 5,6,7,8 }),
+		mask_input,
+		tmats_chanid_to_source_map);
+
+	std::unordered_map<uint64_t, std::set<std::string>> compare_map;
+
+	compare_map[10] = std::set<std::string>({ "BusA","BusB","BusC","BusD" });
+
+	EXPECT_EQ(b.GetICD_MessageKeyToBusNamesMap(), compare_map);
 }
 
 TEST_F(BusMapTest, InitializeMapsMessageKeyToChannelIDCreationAndUniqueBuses)
 {
 	// Map with entries
-	icd_message_key_to_busnames_map[1] = std::set<std::string>({ "BusA", "BusB", "BusC" });
-	icd_message_key_to_busnames_map[2] = std::set<std::string>({ "BusA" });
-	icd_message_key_to_busnames_map[3] = std::set<std::string>({ "BusD", "BusB" });
+	icd_message_key_to_busnames_map[1 & mask] = std::set<std::string>({ "BusA", "BusB", "BusC" });
+	icd_message_key_to_busnames_map[2 & mask] = std::set<std::string>({ "BusA" });
+	icd_message_key_to_busnames_map[3 & mask] = std::set<std::string>({ "BusD", "BusB" });
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
+		mask,
 		tmats_chanid_to_source_map);
 
 	icd_message_key_to_channelids_map[1] = std::set<uint64_t>();
@@ -382,6 +396,7 @@ TEST_F(BusMapTest, InitializeMapsTMATSCheck)
 	// empty tmats provided
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
+		mask,
 		tmats_chanid_to_source_map);
 	EXPECT_FALSE(b.TmatsPresent());
 
@@ -393,6 +408,7 @@ TEST_F(BusMapTest, InitializeMapsTMATSCheck)
 	// tmats provided
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
+		mask,
 		tmats_chanid_to_source_map);
 	EXPECT_TRUE(b.TmatsPresent());
 
@@ -409,6 +425,7 @@ TEST_F(BusMapTest, InitializeMapsTMATSReplacements)
 	// empty tmats provided
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
+		mask,
 		tmats_chanid_to_source_map);
 	EXPECT_FALSE(b.TmatsPresent());
 
@@ -432,6 +449,7 @@ TEST_F(BusMapTest, InitializeMapsTMATSReplacements)
 	// tmats provided with tmats replacements
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
+		mask,
 		tmats_chanid_to_source_map,
 		tmats_replacements);
 
@@ -458,7 +476,8 @@ TEST_F(BusMapTest, SubmitMessages)
 	icd_message_key_to_busnames_map[20 << 16 | 20] = std::set<std::string>();
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
-		std::set<uint64_t>());
+		std::set<uint64_t>(),
+		mask);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({10,10,11,12,13,14,15});
 	std::vector<uint64_t> recieve_cmds =  std::vector<uint64_t>({10,10,11,12,13,20,15});
@@ -495,7 +514,8 @@ TEST_F(BusMapTest, SubmitMessages)
 TEST_F(BusMapTest, SubmitMessagesNonEqualSizedVectors)
 {
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
-		std::set<uint64_t>());
+		std::set<uint64_t>(),
+		mask);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 10,10 });
 	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({ 10,10,11 });
@@ -507,11 +527,12 @@ TEST_F(BusMapTest, SubmitMessagesNonEqualSizedVectors)
 TEST_F(BusMapTest, VoteMappingNoMatches)
 {
 	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BusA","BusB" });
-	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BusB", "BusC" });
-	icd_message_key_to_busnames_map[12] = std::set<std::string>({ "BusC", "BusD" });
+	icd_message_key_to_busnames_map[11 & mask] = std::set<std::string>({ "BusB", "BusC" });
+	icd_message_key_to_busnames_map[12 & mask] = std::set<std::string>({ "BusC", "BusD" });
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
-		std::set<uint64_t>());
+		std::set<uint64_t>(),
+		mask);
 
 	icd_message_key_to_channelids_map[10] = std::set<uint64_t>();
 	icd_message_key_to_channelids_map[11] = std::set<uint64_t>();
@@ -533,7 +554,8 @@ TEST_F(BusMapTest, VoteMappingMatchHighestVotes)
 	icd_message_key_to_busnames_map[16] = std::set<std::string>({ "BusG" });
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
-		std::set<uint64_t>({ 1,2,4 }));
+		std::set<uint64_t>({ 1,2,4 }),
+		mask);
 
 	icd_message_key_to_channelids_map[10] = std::set<uint64_t>({ 1});
 	icd_message_key_to_channelids_map[11] = std::set<uint64_t>({ 1 });
@@ -576,9 +598,31 @@ TEST_F(BusMapTest, VoteMappingMatchNoMatchesWhenVoteCountIsTheSame)
 	EXPECT_EQ(b.TestVoteMapping(icd_message_key_to_channelids_map), compare_map);
 }
 
+TEST_F(BusMapTest, MaskTest)
+{
+	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUSA" });
+	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUSB" });
+
+	uint64_t mask_input = 0b1111111111110;
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({ 1,2,4 }),
+		mask_input);
+
+	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });
+	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({ 10,11 });
+	//the mask should make the 10 and 11 recieve cmds the same
+	std::vector<uint64_t> channel_ids = std::vector<uint64_t>( {  1, 2 });
+
+	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
+
+	icd_message_key_to_channelids_map[10] = std::set<uint64_t>({ 1, 2 });
+
+	EXPECT_EQ(b.GetICD_MessageKeyToChannelIDSMap(), icd_message_key_to_channelids_map);
+}
+
 TEST_F(BusMapTest, FinalizeTMATSMoreChannelIDsThanNecessaryAndOverridesVoteMap)
 {
-
 	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BusA" });
 	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BusB" });
 	icd_message_key_to_busnames_map[12] = std::set<std::string>({ "BusC" });
@@ -593,6 +637,7 @@ TEST_F(BusMapTest, FinalizeTMATSMoreChannelIDsThanNecessaryAndOverridesVoteMap)
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());
@@ -606,6 +651,7 @@ TEST_F(BusMapTest, FinalizeTMATSMoreChannelIDsThanNecessaryAndOverridesVoteMap)
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,		
 		std::set<uint64_t>({ 1,2,3 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());	
@@ -647,6 +693,7 @@ TEST_F(BusMapTest, FinalizeTMATSFewerChannelIDsThanNecessaryAndOverridesVoteMap)
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());
@@ -692,6 +739,7 @@ TEST_F(BusMapTest, FinalizeVoteMappingMoreChannelIDsThanNecessaryAndOverridesTMA
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());
@@ -741,6 +789,7 @@ TEST_F(BusMapTest, FinalizeVoteMappingFewerChannelIDsThanNecessaryAndOverridesTM
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());
@@ -776,6 +825,7 @@ TEST_F(BusMapTest, FinalizeClearExistingMap)
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	std::map<uint64_t, std::string> res;
@@ -793,6 +843,7 @@ TEST_F(BusMapTest, FinalizeReturnsFalseIfNothingMappedAndUserStopIsFalse)
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });
@@ -814,6 +865,7 @@ TEST_F(BusMapTest, FinalizeReturnsTrueIfEverythingMatchedAndSkipsUserInput)
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2 }),
+		mask,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });

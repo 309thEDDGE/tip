@@ -190,8 +190,8 @@ void ICDData::PrepareMessageKeyMap(std::unordered_map<uint64_t, std::set<std::st
 		// The message key consists of the transmit command word
 		// left shifted 16 bits and bitwise ORd with the recieve 
 		// command word
-		uint64_t message_key = ((icd_elements_[i].xmit_word_ & 0b1111111111100000) << 16 )|
-			(icd_elements_[i].dest_word_ & 0b1111111111100000);
+		uint64_t message_key = (icd_elements_[i].xmit_word_ << 16 )|
+			icd_elements_[i].dest_word_;
 
 		if (message_key_map.count(message_key) == 0)
 		{

@@ -251,7 +251,17 @@ bool SynthesizeBusMap(ICDData& icd_data, const std::string& input_path, bool pro
 
 	// Initialize the maps necessary to synthesize the channel ID to bus name map.
 	BusMap bm;
-	bm.InitializeMaps(&message_key_to_busnames_map, chanid_to_lruaddrs_set,
+	// The mask will mask out word count/mode code from the transmit and 
+	// recieve command word portion of the key.
+	// The last 16 bits of the key represent the recieve command word
+	// and the second to last 16 bits of the key represent the transmit command word.
+	// The last five bits of the transmit and recieve command words represent
+	// word count/mode code. The word count/mode code portion is masked out
+	// because in the case where the command word is a mode code, the last five
+	// bits of the command word are the mode code bits and no longer match
+	// the command words found in the input icd file unless they are masked to zero.
+	uint64_t mask = 0b1111111111111111111111111111111111111111111000001111111111100000;
+	bm.InitializeMaps(&message_key_to_busnames_map, chanid_to_lruaddrs_set, mask,
 		tmats_chanid_to_source_map, tmats_bus_name_corrections);
 
 	ParquetReader pr;

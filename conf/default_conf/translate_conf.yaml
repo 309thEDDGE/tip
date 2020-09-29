@@ -95,14 +95,6 @@ select_specific_messages:
 # creation. Useful for debugging message table creation.
 #
 exit_after_table_creation: false
-
-#
-# comet_debug
-#
-# Debug level for print statements emanating from CometTranslationUnit.
-# 0 = none/limited, 1 = on, 2 = verbose, 3 = verbose+, ...
-#
-comet_debug: 0 
  
 
 

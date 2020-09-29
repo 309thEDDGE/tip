@@ -10,14 +10,15 @@ void BusMap::PrepareFinalMap()
 	}
 }
 
-void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::string>> * icd_message_keys, 
+void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::string>> *icd_message_keys, 
 	std::set<uint64_t> channel_ids,
+	uint64_t mask,
 	std::map<uint64_t, std::string> tmats_chanid_to_source_map, 
 	std::map<std::string, std::string> tmats_busname_corrections)
 {
-	icd_message_key_to_busnames_map_ = icd_message_keys;
 	tmats_chanid_to_source_map_ = tmats_chanid_to_source_map;
 	channel_ids_ = channel_ids;
+	mask_ = mask;
 
 	if (tmats_chanid_to_source_map.empty())
 		tmats_present_ = false;
@@ -34,11 +35,22 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 
 	// Create message_key_to_channel_ids_map_ and
 	// unique_bus_names_
+	uint64_t key;
 	for (std::unordered_map<uint64_t, std::set<std::string>>::const_iterator
 		it = icd_message_keys->begin();
 		it != icd_message_keys->end(); it++)
 	{
-		icd_message_key_to_channelids_map_[it->first] = std::set<uint64_t>();
+		key = it->first & mask;
+		if (icd_message_key_to_channelids_map_.count(key) == 0)
+		{
+			icd_message_key_to_channelids_map_[key] = std::set<uint64_t>();
+			icd_message_key_to_busnames_map_[key] = it->second;
+		}
+		else
+		{
+			for (auto bus : it->second)
+				icd_message_key_to_busnames_map_[key].insert(bus);
+		}
 		for (auto bus : it->second)
 			unique_buses_.insert(bus);
 	}	
@@ -151,8 +163,8 @@ bool BusMap::UserAdjustments(std::vector<std::string>* test_options)
 }
 
 bool BusMap::SubmitMessages(
-	const std::vector<uint64_t>& transmit_cmd, 
-	const std::vector<uint64_t>& recieve_cmd, 
+	const std::vector<uint64_t>& transmit_cmd,
+	const std::vector<uint64_t>& recieve_cmd,
 	const std::vector<uint64_t>& channel_ids,
 	size_t submission_size)
 {
@@ -185,8 +197,8 @@ bool BusMap::SubmitMessages(
 	}
 	for (int i = 0; i < count; i++)
 	{
-		key = ((transmit_cmd[i] & 0b1111111111100000) << 16 ) 
-			| (recieve_cmd[i] & 0b1111111111100000);
+		key = (transmit_cmd[i] << 16 ) 
+			| (recieve_cmd[i]) & mask_;
 		if (icd_message_key_to_channelids_map_.count(key) == 1)
 		{
 			icd_message_key_to_channelids_map_[key].insert(channel_ids[i]);
@@ -225,7 +237,7 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 				}				
 			}
 
-			for (auto bus : icd_message_key_to_busnames_map_->at(it->first))
+			for (auto bus : icd_message_key_to_busnames_map_[it->first])
 			{
 				++votes[channel_id][bus];
 			}

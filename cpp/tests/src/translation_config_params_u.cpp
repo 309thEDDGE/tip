@@ -51,7 +51,6 @@ TEST_F(TranslationConfigParamsTest, InitializeValidEntry)
 	file << "tmats_busname_corrections :\n  {\n  1553a: ABUS,\n  1553b: BBUS\n  }\n";
 	file << "select_specific_messages :\n  [\n   message1, \n   message2\n  ]\n";
 	file << "exit_after_table_creation : false\n";
-	file << "comet_debug : 0\n";
 	file << "stop_after_bus_map : false\n";
 	file << "prompt_user : false\n";
 	file << "translate_thread_count: 1\n";
@@ -67,7 +66,6 @@ TEST_F(TranslationConfigParamsTest, InitializeValidEntry)
 	EXPECT_TRUE(map_compare(expected_tmats_busname_corrections_, config.tmats_busname_corrections_));
 	EXPECT_THAT(config.select_specific_messages_, ::testing::ElementsAre("message1", "message2"));
 	EXPECT_EQ(config.exit_after_table_creation_, false);
-	EXPECT_EQ(config.comet_debug_, 0);
 	EXPECT_EQ(config.stop_after_bus_map_, false);
 	EXPECT_EQ(config.prompt_user_, false);
 	EXPECT_EQ(config.translate_thread_count_, 1);
@@ -79,7 +77,6 @@ TEST_F(TranslationConfigParamsTest, InitializeEmptyList)
 	file << "tmats_busname_corrections :\n  {}\n";
 	file << "select_specific_messages :\n  []\n";
 	file << "exit_after_table_creation : false\n";
-	file << "comet_debug : 0\n";
 	file << "stop_after_bus_map : false\n";
 	file << "prompt_user : false\n";
 	file << "comet_busmap_replacement :\n  {}\n";

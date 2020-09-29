@@ -18,7 +18,6 @@ public:
 	std::map<std::string, std::string> tmats_busname_corrections_;
 	std::vector<std::string> select_specific_messages_;
 	bool exit_after_table_creation_;
-	int comet_debug_;
 	bool stop_after_bus_map_;
 	bool prompt_user_;
 	int translate_thread_count_;
@@ -53,9 +52,6 @@ public:
 
 		success.insert(yr.GetParams("exit_after_table_creation", 
 			exit_after_table_creation_, true));
-
-		success.insert(yr.GetParams("comet_debug", comet_debug_, 
-			0, INT_MAX, true));
 
 		success.insert(yr.GetParams("stop_after_bus_map", 
 			stop_after_bus_map_, true));
