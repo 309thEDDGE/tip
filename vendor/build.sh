@@ -134,6 +134,7 @@ if [[ -f $BISON_EXECUTABLE ]] ; then
 		echo "Installed Bison"
 	fi
 else
+	which makeinfo >& /dev/null || dnf -y install texinfo
 	# build and install bison
 	echo "Building Bison"
 	./configure -C
