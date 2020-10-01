@@ -102,7 +102,6 @@ fi
 #
 # Install m4
 # m4 is required to build flex and pcap
-dnf -y update
 which m4 >& /dev/null || dnf -y install m4
 
 #
@@ -146,7 +145,7 @@ if [[ -f $BISON_EXECUTABLE ]] ; then
 else
 	# build and install bison
 	message "Building Bison"
-	which makeinfo >& /dev/null || dnf -y install texinfo
+	find . -name ".texi*" -exec touch -d "1/1/1900" {} \;
 	./configure -C
 	make # must use regular make command
 	make install
