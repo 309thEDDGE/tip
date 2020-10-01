@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+echo "Using image '${DOCKER_IMAGE_BUILD_JOB}'"
+exit
+
 #
 # Set up error handling 
 # Exit on failure, showing which command failed
