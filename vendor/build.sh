@@ -22,20 +22,6 @@ VENDOR=$PWD
 cd ..
 BASE_DIR=$PWD
 
-#
-# Check for Ninja
-# Set up for ninja if available; otherwise use cmake
-#
-echo -n "Checking for ninja..."
-if [ -f /usr/local/bin/ninja ] ; then
-	echo "yes"
-	CMAKE="cmake -G Ninja"
-	MAKE=ninja
-else
-	echo "no.  Using make"
-	CMAKE="cmake"
-	MAKE="make -j8"
-fi
 
 #
 # Variables
@@ -64,7 +50,29 @@ ARROW_BUILD_DIR=$VENDOR/$ARROW_VERSION/cpp/build
 # where to store built dependencies
 TIP_DEPS_DIR=$VENDOR/deps
 
-echo "Building TIP dependencies"
+#
+# MAIN
+#
+# Define a main function to be run at the end.  
+# Doing this allows us to define other functions later in the file
+function main {
+
+message "Building TIP dependencies"
+
+#
+# Check for Ninja
+# Set up for ninja if available; otherwise use cmake
+#
+start_message "Checking for ninja..."
+if [ -f /usr/local/bin/ninja ] ; then
+	end_message "yes"
+	CMAKE="cmake -G Ninja"
+	MAKE=ninja
+else
+	end_message "no.  Using make"
+	CMAKE="cmake"
+	MAKE="make -j8"
+fi
 
 #
 # Extract some source files
@@ -75,15 +83,16 @@ echo "Building TIP dependencies"
 
 # extract source from tarballs if necessary
 cd $VENDOR
-test -d $ARROW_VERSION || ( echo extracting Arrow ; tar -xzf "$ARROW_VERSION.tar.gz" )
-test -d $BISON_VERSION || ( echo extracting Bison ; tar -xzf "$BISON_VERSION.tar.gz" )
-test -d $FLEX_VERSION || ( echo extracting Flex ; tar -xzf "$FLEX_VERSION.tar.gz" )
-test -d $GOOGLE_TEST_VERSION || (echo extracting gtest ; tar -xzf "$GOOGLE_TEST_VERSION.tar.gz")
-test -d $YAML_CPP_VERSION || (echo extracting yaml-cpp ; tar -xzf "$YAML_CPP_VERSION.tar.gz")
-test -d $PCAP_VERSION || (echo extracting pcap ; tar -xzf "$PCAP_VERSION.tar.gz" )
-test -d $TINS_VERSION || (echo extracting tins ; tar -xzf "$TINS_VERSION.tar.gz" )
+test -d $ARROW_VERSION || ( message "extracting Arrow" ; tar -xzf "$ARROW_VERSION.tar.gz" )
+test -d $BISON_VERSION || ( message "extracting Bison" ; tar -xzf "$BISON_VERSION.tar.gz" )
+test -d $FLEX_VERSION || ( message "extracting Flex" ; tar -xzf "$FLEX_VERSION.tar.gz" )
+test -d $GOOGLE_TEST_VERSION || ( message "extracting gtest" ; tar -xzf "$GOOGLE_TEST_VERSION.tar.gz" )
+test -d $YAML_CPP_VERSION || ( message "extracting yaml-cpp" ; tar -xzf "$YAML_CPP_VERSION.tar.gz" )
+test -d $PCAP_VERSION || ( message "extracting pcap" ; tar -xzf "$PCAP_VERSION.tar.gz" )
+test -d $TINS_VERSION || ( message "extracting tins" ; tar -xzf "$TINS_VERSION.tar.gz" )
+
 if [ ! -d $LIBIRIG106_VERSION ] ; then
-	echo "extracting libirig106"
+	message "extracting libirig106"
 	# extract either .tar.gz or .zip file
 	if [ -f $LIBIRIG106_VERSION.tar.gz ] ; then tar -xzf $LIBIRIG106_VERSION.tar.gz
 	else unzip $LIBIRIG106_VERSION.zip
@@ -93,6 +102,7 @@ fi
 #
 # Install m4
 # m4 is required to build flex and pcap
+dnf -y update
 which m4 >& /dev/null || dnf -y install m4
 
 #
@@ -100,19 +110,19 @@ which m4 >& /dev/null || dnf -y install m4
 #
 
 # check if flex is built and installed
-echo -n "Checking for Flex..."
+start_message "Checking for Flex..."
 cd $VENDOR/$FLEX_VERSION
 if [[ -f $FLEX_EXECUTABLE ]] ; then 
-	echo "Flex already built"
+	end_message "Flex already built"
 	# if built but not installed, install flex
 	if [[ ! -f /usr/local/bin/flex ]] ; then
-		echo "Running '$MAKE install' for Flex"
+		message "Running '$MAKE install' for Flex"
 		make install
-		echo "Installed Flex"
+		message "Installed Flex"
 	fi
 else
 	# build and install flex
-	echo "Building Flex"
+	end_message "Building Flex"
 	./configure -C
 	make # must use regular make command (not ninja)
 	make install
@@ -124,19 +134,19 @@ fi
 
 # check if bison is built and installed
 cd $VENDOR/$BISON_VERSION
-echo -n "Checking for Bison..."
+start_message "Checking for Bison..."
 if [[ -f $BISON_EXECUTABLE ]] ; then 
-	echo "Bison already built"
+	end_message "Bison already built"
 	# if built but not installed, install bison
 	if [[ ! -f /usr/local/bin/bison ]] ; then
-		echo "Running '$MAKE install for Bison'"
+		message "Running '$MAKE install for Bison'"
 		make install
-		echo "Installed Bison"
+		message "Installed Bison"
 	fi
 else
-	which makeinfo >& /dev/null || dnf -y install texinfo
 	# build and install bison
-	echo "Building Bison"
+	message "Building Bison"
+	which makeinfo >& /dev/null || dnf -y install texinfo
 	./configure -C
 	make # must use regular make command
 	make install
@@ -146,11 +156,11 @@ fi
 # Build arrow
 #
 
-echo -n "Checking for Arrow..."
+start_message "Checking for Arrow..."
 if [[ -f $ARROW_BUILD_DIR/release/libarrow.a ]] ; then # Check for first file in library list
-	echo "Arrow already built"
+	end_message "Arrow already built"
 else
-	echo "Building Arrow"
+	end_message "Building Arrow"
 	# Specify locations of dependencies
 	export ARROW_BOOST_URL=$VENDOR/boost_1_67_0.tar.gz
 	export ARROW_BROTLI_URL=$VENDOR/brotli-1.0.7.tar.gz
@@ -181,7 +191,7 @@ else
 	export CXXFLAGS=-pthread
 
 	echo
-	echo "...Running cmake for Arrow"
+	message "...Running cmake for Arrow"
 	mkdir -p $ARROW_BUILD_DIR && cd $ARROW_BUILD_DIR
 
 	$CMAKE \
@@ -199,7 +209,7 @@ else
 		..
 
 	echo
-	echo "...Running $MAKE for Arrow"
+	message "...Running $MAKE for Arrow"
 #	sudo $CMAKE --build . --target install --config release
 	$MAKE
 fi
@@ -208,10 +218,10 @@ fi
 # Build gtest
 #
 
-echo -n "Checking for Google Test..."
+start_message "Checking for Google Test..."
 GOOGLE_TEST_LIB=$VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/gtest
 mkdir -p $GOOGLE_TEST_LIB ; cd $GOOGLE_TEST_LIB
-echo Building Google Test
+end_message "Building Google Test"
 cd $VENDOR/$GOOGLE_TEST_VERSION
 mkdir -p build ; cd build
 $CMAKE ..
@@ -221,10 +231,10 @@ $MAKE
 # Build yaml-cpp
 #
 
-echo -n "Checking for yaml-cpp..."
+start_message "Checking for yaml-cpp..."
 YAML_CPP_LIB=$VENDOR/$YAML_CPP_VERSION/build
 mkdir -p $YAML_CPP_LIB ; cd $YAML_CPP_LIB 
-echo "Building yaml-cpp"
+end_message "Building yaml-cpp"
 cd $VENDOR/$YAML_CPP_VERSION
 mkdir -p build/test/prefix/lib
 cp -n $VENDOR/$GOOGLE_TEST_VERSION/build/googlemock/libgmock.a build/test/prefix/lib
@@ -236,10 +246,10 @@ $MAKE
 # Build libirig106
 #
 
-echo -n "Checking for libirig106..."
+start_message "Checking for libirig106..."
 LIBIRIG106_LIB=$VENDOR/$LIBIRIG106_VERSION
 mkdir -p $LIBIRIG106_LIB ; cd $LIBIRIG106_LIB
-echo Building libirig106
+end_message "Building libirig106"
 cd $VENDOR/$LIBIRIG106_VERSION
 make # must use regular make
 
@@ -250,7 +260,7 @@ make # must use regular make
 PCAP_LIB=$VENDOR/$PCAP_VERSION/build
 PCAP_INCLUDE=$VENDOR/$PCAP_VERSION
 mkdir -p $PCAP_LIB
-echo "Building pcap"
+message "Building pcap"
 cd $VENDOR/$PCAP_VERSION
 mkdir -p build ; cd build
 $CMAKE ..
@@ -263,7 +273,7 @@ $MAKE
 TINS_LIB=$VENDOR/$TINS_VERSION/build/lib
 TINS_INCLUDE=$VENDOR/$TINS_VERSION/include
 mkdir -p $TINS_LIB
-echo "Building tins"
+message "Building tins"
 cd $VENDOR/$TINS_VERSION
 mkdir -p build ; cd build
 $CMAKE -DLIBTINS_ENABLE_CXX11=1 \
@@ -277,8 +287,8 @@ $MAKE
 # Gather dependencies into one folder
 #
 
-echo "Gathering dependencies"
-echo "...gmock"
+message "Gathering dependencies"
+message "...gmock"
 GOOGLE_MOCK_INCLUDE=$VENDOR/$GOOGLE_TEST_VERSION/googlemock/include
 GOOGLE_MOCK_INC_DEST=$TIP_DEPS_DIR/gsuite/googlemock/include
 GOOGLE_MOCK_LIB=$VENDOR/$GOOGLE_TEST_VERSION/build/googlemock
@@ -290,7 +300,7 @@ find . -type f -name \*.h -exec install -D {} $GOOGLE_MOCK_INC_DEST/{} \;
 cd $GOOGLE_MOCK_LIB
 find . -type f -name \*.a -exec install -D {} $GOOGLE_MOCK_LIB_DEST/{} \;
 
-echo "...gtest"
+message "...gtest"
 GOOGLE_TEST_INCLUDE=$VENDOR/$GOOGLE_TEST_VERSION/googletest/include/
 GOOGLE_TEST_INC_DEST=$TIP_DEPS_DIR/gsuite/googletest/include
 GOOGLE_TEST_LIB_DEST=$TIP_DEPS_DIR/gsuite/googletest/lib
@@ -300,7 +310,7 @@ find . -type f -name \*.h -exec install -D {} $GOOGLE_TEST_INC_DEST/{} \;
 cd $GOOGLE_TEST_LIB
 find . -type f -name \*.a -exec install -D {} $GOOGLE_TEST_LIB_DEST/{} \;
 
-echo "...yaml-cpp"
+message "...yaml-cpp"
 YAML_CPP_INCLUDE=$VENDOR/$YAML_CPP_VERSION/include
 YAML_CPP_INC_DEST=$TIP_DEPS_DIR/yaml-cpp/include
 YAML_CPP_LIB_DEST=$TIP_DEPS_DIR/yaml-cpp/lib
@@ -310,7 +320,7 @@ find . -type f -name \*.h -exec install -D {} $YAML_CPP_INC_DEST/{} \;
 cd $YAML_CPP_LIB
 find . -type f -name \*.a -exec install -D {} $YAML_CPP_LIB_DEST/{} \;
 
-echo "...libirig106"
+message "...libirig106"
 LIBIRIG106_INCLUDE=$VENDOR/$LIBIRIG106_VERSION/src
 LIBIRIG106_INC_DEST=$TIP_DEPS_DIR/libirig106/include
 LIBIRIG106_LIB_DEST=$TIP_DEPS_DIR/libirig106/lib
@@ -320,7 +330,7 @@ find . -type f -name \*.h -exec install -D {} $LIBIRIG106_INC_DEST/{} \;
 cd $LIBIRIG106_LIB
 find . -type f -name \*.a -exec install -D {} $LIBIRIG106_LIB_DEST/{} \;
 
-echo "...pcap"
+message "...pcap"
 PCAP_INCLUDE_DEST=$TIP_DEPS_DIR/pcap/include
 PCAP_LIB_DEST=$TIP_DEPS_DIR/pcap/lib
 mkdir -p $PCAP_INCLUDE_DEST
@@ -330,7 +340,7 @@ mkdir -p $PCAP_LIB_DEST
 cd $PCAP_LIB
 find . -type f -name \*.a -exec install -D {} $PCAP_LIB_DEST/{} \;
 
-echo ...tins
+message "...tins"
 TINS_INCLUDE_DEST=$TIP_DEPS_DIR/tins/include
 TINS_LIB_DEST=$TIP_DEPS_DIR/tins/lib
 mkdir -p $TINS_INCLUDE_DEST
@@ -340,7 +350,7 @@ mkdir -p $TINS_LIB_DEST
 cd $TINS_LIB
 find . -type f -name \*.a -exec install -D {} $TINS_LIB_DEST/{} \;
 
-echo "...arrow include files"
+message "...arrow include files"
 # Arrow include files are in cpp/src and cpp/build/src
 # (some are built by cmake)
 ARROW_INCLUDE="$VENDOR/$ARROW_VERSION/cpp/src $ARROW_BUILD_DIR/src"
@@ -352,7 +362,7 @@ for source in $ARROW_INCLUDE; do
 	find parquet -type f -name \*.h -exec install -D {} $ARROW_INC_DEST/{} \;
 done
 
-echo "...arrow libraries"
+message "...arrow libraries"
 # these are the arrow libraries required by TIP
 ARROW_LIBRARIES="$ARROW_BUILD_DIR/release/libarrow.a \
 	$ARROW_BUILD_DIR/boost_ep-prefix/src/boost_ep/stage/lib/libboost_filesystem.a \
@@ -377,3 +387,27 @@ cp -f $ARROW_LIBRARIES $TIP_DEPS_DIR/arrow_library_dependencies/lib
 
 cd $TIP_DEPS_DIR
 bash $VENDOR/save_timestamp.sh # use 'bash' command because of pipeline permissions
+
+} # main
+
+function incomplete_message {
+	echo
+	echo -n "$SCRIPT_NAME: $@"
+}
+
+function start_message {
+	incomplete_message "$@"
+	echo -n "..."
+}
+
+function end_message {
+	echo "$@"
+}
+
+function message {
+	incomplete_message "$@"
+	echo
+}
+
+echo RUNNING MAIN
+main $@
