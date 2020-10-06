@@ -12,8 +12,7 @@ if [ -z "${CMAKE_BUILD_DIR}" ] ; then
 	CMAKE_BUILD_DIR=${BASE_DIR}/build
 	UNITTEST_REPORT_DIR=$BASE_DIR/reports
 fi
-TEST_DIR=${CMAKE_BUILD_DIR}/build-tip/cpp
-VENDOR_DIR=${BASE_DIR}/vendor
+TEST_DIR=${CMAKE_BUILD_DIR}/cpp
 
 # For now, run cpp/tests because it is much faster than plain ctest
 # In the future we might have to run ctest in order to get coverage statistics
@@ -35,6 +34,5 @@ GCOV="${GCOV}" gcovr -j --verbose \
     --html ${UNITTEST_REPORT_DIR}/overall-coverage.html \
     --sonarqube ${UNITTEST_REPORT_DIR}/overall-coverage-sonar.xml \
     --filter "${CPP_COVERAGE_FILTER}" \
-	--exclude-directories "${VENDOR_DIR}" \
     $(if [ -n "${CPP_COVERAGE_EXCLUDE}" ]; then echo --exclude="${CPP_COVERAGE_EXCLUDE}"; fi)
 set +x
