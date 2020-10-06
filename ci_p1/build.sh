@@ -63,6 +63,11 @@ if [[ "$DEPS_TIME" < "$DEPS_SRC_TIME" ]] ; then
 else
 	echo "...cached dependencies are current"
 fi
+
+echo "Setting each file mod time to its respective last commit time"
+cd $BASE_DIR
+bash ./ci_p1/pull-last-commit-times.sh
+
 echo "Running '$CMAKE' for TIP"
 mkdir -p $BUILD_TIP_DIR
 cd $BUILD_TIP_DIR
