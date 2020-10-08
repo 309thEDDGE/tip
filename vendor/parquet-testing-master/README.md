@@ -1,1 +1,0 @@
-# Testing Data and Utilities for Apache Parquet

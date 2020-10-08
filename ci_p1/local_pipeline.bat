@@ -1,8 +1,8 @@
-set ARTIFACTORY=artifactory.spacecamp.ninja
-set IMAGE=%ARTIFACTORY%/docker/platform/ubi8-gcc-gcov-cmake:1.0
+set REGISTRY=registry.il2.dsop.io
+set IMAGE=%REGISTRY%/skicamp/project-opal/tip:tip-deps
 
 
-docker login %ARTIFACTORY%
+docker login %REGISTRY%
 
 @rem Run build and test scripts in a container based on the docker image used for the pipeline
 docker run -it --rm -v %cd%:/app %IMAGE% bash /app/ci_p1/build.sh
