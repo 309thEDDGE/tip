@@ -2,6 +2,8 @@ import os
 import sys
 import datetime
 import argparse
+import platform
+
 script_path = os.path.dirname(os.path.abspath(os.path.join(os.path.realpath(__file__), '../..')))
 sys.path.append(script_path)
 
@@ -20,6 +22,11 @@ class E2EValidator(object):
         else:
             self.run_tip = True 
 
+        self.exec_path = os.path.join(script_path, 'bin', 'pqcompare')
+        plat = platform.platform()
+        if plat.find('Windows') > -1:
+            self.exec_path += '.exe'
+        
         self.truth_set_dir = truth_set_dir
         self.test_set_dir = test_set_dir
         self.log_file_path = log_file_path
@@ -29,7 +36,6 @@ class E2EValidator(object):
         self.transl_validation_dict = {}
         self.total_validation_dict = {}
         self.validation_results_dict = {}
-        self.exec_path = 'bin/pqcompare.exe'
         self.print = print
         self.missing_raw_test_paths = []
         self.missing_transl_test_paths = []

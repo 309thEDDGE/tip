@@ -51,4 +51,4 @@ cd $BUILD_DIR
 $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
 echo "Running '$MAKE' for TIP"
-$MAKE
+$MAKE install

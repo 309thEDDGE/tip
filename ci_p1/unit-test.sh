@@ -14,14 +14,19 @@ if [ -z "${CMAKE_BUILD_DIR}" ] ; then
 fi
 TEST_DIR=${CMAKE_BUILD_DIR}/cpp
 
-# For now, run cpp/tests because it is much faster than plain ctest
+echo
+echo Unit Tests
+echo
+# For now, run cpp/tests because it is much faster than ctest
 # In the future we might have to run ctest in order to get coverage statistics
 # If we do, try to make our tests compatible with the --parallel option of ctest
 cd ${TEST_DIR}
 ./tests
 cd ${BASE_DIR}
 
-# generate coverage
+echo
+echo Test Coverage
+echo
 mkdir -p ${UNITTEST_REPORT_DIR}
 echo "Writing coverage reports in ${UNITTEST_REPORT_DIR}"
 GCOV=gcov
@@ -36,3 +41,18 @@ GCOV="${GCOV}" gcovr -j --verbose \
     --filter "${CPP_COVERAGE_FILTER}" \
     $(if [ -n "${CPP_COVERAGE_EXCLUDE}" ]; then echo --exclude="${CPP_COVERAGE_EXCLUDE}"; fi)
 set +x
+
+echo
+echo Parser validation
+echo
+cd $BASE_DIR
+python tip_scripts/pqpqvalidation/end_to_end_validator.py --video /test/truth /test/test /test/log
+LOG_FILE=$(ls -1t /test/log/ | head -1)
+echo "Log file: $LOG_FILE"
+
+if [[ grep "Raw:" $LOG_FILE | grep "FAIL" ]] ; then
+	echo "Parser validation failed"
+	exit 1
+else
+	exit 0
+fi

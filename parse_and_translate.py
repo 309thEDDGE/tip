@@ -87,15 +87,17 @@ if __name__ == '__main__':
 
     if active_plat == 'windows':
         parser_exe_name = 'tip_parse.exe'
+        parser_video_exe_name = 'tip_parse_video.exe'
         translator_exe_name = 'tip_translate.exe'
         #comet_exe_name = 'cometparse.exe'
         video_extr_exe_name = 'parquet_video_extractor.exe'
     elif active_plat == 'linux':
         parser_exe_name = 'tip_parse'
+        parser_video_exe_name = 'tip_parse_video'
         translator_exe_name = 'tip_translate'
         #comet_exe_name = 'cometparse'
         video_extr_exe_name = 'parquet_video_extractor'
-
+     
     rmcomet_parser_exe_name = parser_exe_name
     rmcomet_translator_exe_name = translator_exe_name
     use_parser_exe = ''
@@ -155,7 +157,7 @@ if __name__ == '__main__':
     args = aparse.parse_args()
 
     if args.video:
-        rmcomet_parser_exe_name = 'tip_parse_video.exe'
+        rmcomet_parser_exe_name = parser_video_exe_name
     else:
         rmcomet_parser_exe_name = parser_exe_name
 
