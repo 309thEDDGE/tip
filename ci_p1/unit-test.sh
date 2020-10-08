@@ -50,7 +50,7 @@ python tip_scripts/pqpqvalidation/end_to_end_validator.py --video /test/truth /t
 LOG_FILE=$(ls -1t /test/log/ | head -1)
 echo "Log file: $LOG_FILE"
 
-if [[ grep "Raw:" $LOG_FILE | grep "FAIL" ]] ; then
+if grep "Raw:" /test/log/$LOG_FILE | grep "FAIL" ; then
 	echo "Parser validation failed"
 	exit 1
 else
