@@ -72,7 +72,7 @@ private:
 	uint8_t id_;
 	std::atomic<bool> complete_;
 
-	// Private functions.
+	// Private functions
 	uint8_t setup_output_paths();
 	uint8_t open_raw_1553_parquet_file(std::string& current_path);
 	uint8_t close_raw_1553_parquet_file();
