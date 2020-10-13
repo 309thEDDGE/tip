@@ -3,7 +3,6 @@
 
 #include "parse_context.h"
 #include "VideoDataF0Format.h"
-#include "tmats.h"
 
 #ifdef LOCALDB
 #ifdef PARQUET

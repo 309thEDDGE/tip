@@ -216,7 +216,8 @@ bool ParquetReader::GetNextRGBool(int col, std::vector<uint8_t>& data,
 		}
 	}
 
-	current_row_group_++;
+	if (!manual_rowgroup_increment_mode_)
+		current_row_group_++;
 	return true;
 }
 
@@ -296,6 +297,12 @@ bool ParquetReader::GetNextRGString(int col, std::vector<std::string>& data,
 		}
 	}
 
-	current_row_group_++;
+	if (!manual_rowgroup_increment_mode_)
+		current_row_group_++;
 	return true;
+}
+
+int ParquetReader::GetColumnNumberFromName(std::string col_name)
+{
+	return schema_->GetFieldIndex(col_name);
 }

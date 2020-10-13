@@ -168,10 +168,11 @@ bool ICDData::PrepareICDQuery(const std::vector<std::string>& lines, bool is_yam
 		return false;
 	}
 
+	/*
 	if (!CreateBusNameToLRUAddressSetMap(icd_msg_elements_, bus_name_to_lru_addrs_map_))
 	{
 		return false;
-	}
+	}*/
 	
 	if (!CreateLookupMap())
 	{
@@ -189,7 +190,7 @@ void ICDData::PrepareMessageKeyMap(std::unordered_map<uint64_t, std::set<std::st
 		// The message key consists of the transmit command word
 		// left shifted 16 bits and bitwise ORd with the recieve 
 		// command word
-		uint64_t message_key = icd_elements_[i].xmit_word_ << 16 |
+		uint64_t message_key = (icd_elements_[i].xmit_word_ << 16 )|
 			icd_elements_[i].dest_word_;
 
 		if (message_key_map.count(message_key) == 0)

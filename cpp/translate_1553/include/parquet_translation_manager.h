@@ -105,6 +105,7 @@ public:
 		std::vector<std::string>& input_parquet_paths, std::filesystem::path& msg_list_path, 
 		std::vector<std::string>& msg_names_list, bool is_multithreaded);
 	std::atomic<bool>& completion_status();
+	std::filesystem::path GetTranslatedDataDirectory();
 };
 
 #endif 

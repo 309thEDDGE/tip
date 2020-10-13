@@ -12,7 +12,7 @@ IterableTools::~IterableTools()
 
 std::string IterableTools::print(std::string print_string)
 {
-	printf(print_string.c_str());
+	printf("%s", print_string.c_str());
 	return print_string;
 }
 
