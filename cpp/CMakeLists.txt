@@ -213,6 +213,9 @@ target_link_libraries(${ch10parse_lib_name} PUBLIC
 #########################################################
 #                   Install Libs
 #########################################################
+
+install(DIRECTORY DESTINATION ${out_lib_dir})
+
 install(TARGETS ${util_lib_name} 
                 ${pqctx_lib_name} 
                 ${ch10pq_lib_name} 
@@ -345,6 +348,8 @@ add_executable(${bincomp_exe_name} ${comp_main_dir}/binary_comparison.cpp)
 #########################################################
 #                   Install Exes
 #########################################################
+install(DIRECTORY DESTINATION ${out_bin_dir})
+
 install(TARGETS ${ch10parse_exe_name}
                 ${trans_exe_name}
                 ${comp_exe_name}
