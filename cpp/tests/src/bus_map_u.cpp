@@ -16,7 +16,7 @@ protected:
 	std::map<uint64_t, std::string> tmats_1553_chanid_compare_map;
 	IterableTools iterable_tools_;
 	FileReader fr;
-	uint64_t mask = _UI64_MAX;
+	uint64_t mask = UINT64_MAX;
 
 	BusMapTest()
 	{

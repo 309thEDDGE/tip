@@ -93,7 +93,7 @@ public:
 		const std::unordered_map<uint64_t, std::set<std::string>>* 
 		icd_message_keys_to_busnames,
 		std::set<uint64_t> channel_ids,
-		uint64_t mask = _UI64_MAX,
+		uint64_t mask = UINT64_MAX,
 		std::map<uint64_t, std::string> tmats_chanid_to_source_map
 		= std::map<uint64_t, std::string>(),
 		std::map<std::string, std::string> tmats_busname_corrections
