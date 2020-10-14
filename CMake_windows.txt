@@ -115,13 +115,21 @@ set(pcap_inc_dir ${pcap_path}/include)
 set(pcap_lib_dir ${pcap_path}/lib/x64)
 set(pcap_lib_name ${pcap_lib_dir}/wpcap.lib ${pcap_lib_dir}/Packet.lib)
 
-# Pcap dlls that must be installed next to tip_parse.exe.
-set(pcap_dll1 ${pcap_lib_dir}/wpcap.dll)
-set(pcap_dll2 ${pcap_lib_dir}/Packet.dll)
+# check if output bin directory exists
+# if not create it
+if(NOT EXISTS ${out_bin_dir})
+    file(MAKE_DIRECTORY ${out_bin_dir})
+endif()
+    
+if(ethernet_data)
+    # Pcap dlls that must be installed next to tip_parse.exe.
+    set(pcap_dll1 ${pcap_lib_dir}/wpcap.dll)
+    set(pcap_dll2 ${pcap_lib_dir}/Packet.dll)
 
-# Copy pcap dlls to bin dir.
-configure_file(${pcap_dll1} ${out_bin_dir} COPYONLY)
-configure_file(${pcap_dll2} ${out_bin_dir} COPYONLY)
+    # Copy pcap dlls to bin dir.
+    configure_file(${pcap_dll1} ${out_bin_dir} COPYONLY)
+    configure_file(${pcap_dll2} ${out_bin_dir} COPYONLY)
+endif()
 
 # Other system libs necessary, ought to be found by compiler
 set(other_tins_lib_names Ws2_32.lib Iphlpapi.lib)

@@ -21,6 +21,7 @@ private:
 	arrow::MemoryPool* pool_ = arrow::default_memory_pool();
 	std::shared_ptr<arrow::io::ReadableFile> arrow_file_;
 	std::unique_ptr<parquet::arrow::FileReader> arrow_reader_;
+	bool manual_rowgroup_increment_mode_;
 
 
 	int row_group_count_;
@@ -33,10 +34,12 @@ private:
 public:
 	ParquetReader()
 	{
+		manual_rowgroup_increment_mode_ = false;
 		row_group_count_ = 0;
 		current_row_group_ = 0;
 		current_file_ = 0;
 	};
+
 	~ParquetReader()
 	{
 		if (arrow_file_ != nullptr)
@@ -78,6 +81,15 @@ public:
 		bool list = false);
 
 	/*
+		GetColumnNumberFromName get the column number
+		from a column name
+
+		returns -> column number if found (0 for the first column) 
+				   and -1 if the column name does not exist
+	*/
+	int GetColumnNumberFromName(std::string col_name);
+
+	/*
 		Resets parquet file reads to the first
 		file in the parquet directory
 	*/
@@ -88,6 +100,31 @@ public:
 		current_file_ = 0;
 		OpenNextParquetFile();
 	};
+
+	/*
+		If set, row groups will need to be incremented
+		using IncrementRG(). If not set, row
+		groups will be incremented automatically 
+		every time GetNextRG() is called.
+	*/
+	void SetManualRowgroupIncrementMode()
+	{
+		manual_rowgroup_increment_mode_ = true;
+	}
+
+	/*
+		Called to manually increment row groups.
+		Only works when manual_rowgroup_incement_mode_ 
+		is set to true (call SetManualRowgroupIncrementMode() to
+		set to true)
+	*/
+	void IncrementRG()
+	{
+		if(manual_rowgroup_increment_mode_)
+			++current_row_group_;
+	};
+
+	
 };
 
 template<typename T, typename A>
@@ -183,8 +220,9 @@ bool ParquetReader::GetNextRG(int col,
 		}
 	}
 
+	if(!manual_rowgroup_increment_mode_)
+		current_row_group_++;
 
-	current_row_group_++;
 	return true;
 
 }
