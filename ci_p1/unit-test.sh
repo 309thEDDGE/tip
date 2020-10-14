@@ -49,13 +49,13 @@ set -x # Echo all commands
 cd $BASE_DIR
 mv build/bin .
 python tip_scripts/pqpqvalidation/end_to_end_validator.py --video /test/truth /test/test /test/log
-LOG_FILE=$(ls -1t /test/log/* | head -1)
+LOG_FILE="$(ls -1t /test/log/* | head -1)"
 set +x
 
 if [[ -z "$LOG_FILE" ]] ; then
 	echo "Check parsing command; no log files were found."
 	exit 1
-elif grep "All validation set result: PASS" $LOG_FILE ; then
+elif grep "All validation set result: PASS" "$LOG_FILE" ; then
 	echo "Parser validation succeeded"
 	exit 0
 else

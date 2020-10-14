@@ -55,4 +55,4 @@ $MAKE install
 
 # copy bin folder to build for use in later pipeline stages
 cd $BASE_DIR
-if [ -d bin ] ; then mv bin build/ ; fi
+if [ -d bin ] ; then mv -f bin build/ ; fi
