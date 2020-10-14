@@ -2,9 +2,6 @@
 # CMAKE_BUILD_DIR defined by pipeline
 # UNITTEST_REPORT_DIR defined by pipeline
 
-pwd
-ls -al
-
 BASE_DIR=${PWD}
 if [ -z "${CMAKE_BUILD_DIR}" ] ; then 
 	# We are not in the pipeline; set vars for running locally
