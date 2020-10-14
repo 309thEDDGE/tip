@@ -47,6 +47,7 @@ echo Parser validation
 echo ""
 set -x # Echo all commands
 cd $BASE_DIR
+mv build/bin .
 python tip_scripts/pqpqvalidation/end_to_end_validator.py --video /test/truth /test/test /test/log
 LOG_FILE=$(ls -1t /test/log/ | head -1)
 echo "Log file: $LOG_FILE"

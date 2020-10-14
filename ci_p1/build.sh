@@ -52,3 +52,7 @@ $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
 echo "Running '$MAKE' for TIP"
 $MAKE install
+
+# copy bin folder to build for use in later pipeline stages
+cd $BASE_DIR
+if [ -d bin ] ; then mv bin build/ ; fi
