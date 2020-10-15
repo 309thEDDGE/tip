@@ -182,8 +182,8 @@ if __name__ == '__main__':
     ch10_file_paths = []
     suff = ''
     if os.path.isfile(args.ch10_path):
-        suff = Path(args.ch10_path).suffix
-        if suff == '.ch10' or suff == '.Ch10':
+        suff = Path(args.ch10_path).suffix.lower()
+        if suff == '.ch10':
             ch10_file_paths.append(args.ch10_path)
         else:
             print('Input file for Ch10 path does not have \'.ch10\' or \'.Ch10\' suffix')
@@ -321,11 +321,12 @@ if __name__ == '__main__':
 
             # Execute translator.
             did_run = trans_call.run(args.dry_run, cwd=exe_dir)
-            if not args.dry_run:
-                if not did_run:
-                    sys.exit(0)
-                if trans_call.get_return_value() != 0 or not trans_call.have_output_success():
-                    sys.exit(0)
+            # Do not exit on translation failure so video extraction can occur.
+            #if not args.dry_run:
+                #if not did_run:
+                    #sys.exit(0)
+                #if trans_call.get_return_value() != 0 or not trans_call.have_output_success():
+                    #sys.exit(0)
 
 
         #
