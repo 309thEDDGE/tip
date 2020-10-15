@@ -802,8 +802,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		} // end switch (i106_header_.DataType)
 
 	} // end while(continue_parsing)
-
-	complete = true;
+	
 #ifdef DEBUG
 #if DEBUG > 0
 	printf("(%03u) End of worker's shift\n", id);
@@ -842,11 +841,14 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		video->close();
 #endif 
 #ifdef ETHERNET_DATA
+		printf("(%03hu) Closing Ethernet Data Parquet database\n", id);
 		i106_ethernetf0_.Finalize();
 #endif
 	}
 #endif
 #endif
+
+	complete = true;
 }
 #endif
 
