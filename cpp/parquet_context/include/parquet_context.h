@@ -241,7 +241,7 @@ public:
 	
 	// Specialization for string data.
 	template<>
-	bool SetMemoryLocation(std::vector<std::string>& strData, 
+	bool SetMemoryLocation<std::string>(std::vector<std::string>& strData, 
 		const std::string& fieldName, 
 		std::vector<uint8_t>* boolField);
 
@@ -726,7 +726,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 }
 
 template<>
-bool ParquetContext::SetMemoryLocation(std::vector<std::string>& strData,
+bool ParquetContext::SetMemoryLocation<std::string>(std::vector<std::string>& strData,
 	const std::string& fieldName,
 	std::vector<uint8_t>* boolField)
 {
