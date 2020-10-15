@@ -3,7 +3,8 @@
 
 #include <vector>
 #include <cstdint>
-#include <stdio.h>
+#include <cstdio>
+#include <cmath>
 #include <map>
 #include <arrow/api.h>
 #include <arrow/io/api.h>

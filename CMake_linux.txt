@@ -8,8 +8,12 @@ message(STATUS "deps_dir: ${deps_dir}")
 # var to build the exe with links to the
 # directory into which the libs are installed,
 # i.e., set the correct runtime path.
+#
+# Append "/usr/local/lib" for libtins, the default install
+# location.
+#
 if(container)
-    set(CMAKE_INSTALL_RPATH ${out_lib_dir})
+    set(CMAKE_INSTALL_RPATH ${out_lib_dir} "/usr/local/lib")
 endif()
 
 add_compile_options("-m64")
@@ -186,27 +190,45 @@ set(gsuite_libs ${gtest_lib_name} ${gtestmain_lib_name} ${gmock_lib_name})
 #########################################################
 #                   LibIrig106 Paths
 #########################################################
-set(irig_dir_name "libirig106")
-get_filename_component(irig_path "${deps_dir}/${irig_dir_name}" ABSOLUTE)
-set(irig_inc_dir ${irig_path}/include)
-set(irig_lib_dir ${irig_path}/lib)
-set(irig_lib_name ${irig_lib_dir}/libirig106.a)
+if(container)
+    set(irig_inc_dir ${inc_dir}/libirig106)
+    set(irig_lib_dir ${lib_dir})
+    set(irig_lib_name ${irig_lib_dir}/libirig106.so)
+else()
+    set(irig_dir_name "libirig106")
+    get_filename_component(irig_path "${deps_dir}/${irig_dir_name}" ABSOLUTE)
+    set(irig_inc_dir ${irig_path}/include)
+    set(irig_lib_dir ${irig_path}/lib)
+    set(irig_lib_name ${irig_lib_dir}/libirig106.a)
+endif()
 
 #########################################################
 #                   libtins Paths
 #########################################################
-set(tins_dir_name "tins")
-set(tins_path "${deps_dir}/${tins_dir_name}")
-set(tins_inc_dir ${tins_path}/include)
-set(tins_lib_dir ${tins_path}/lib)
-set(tins_lib_name ${tins_lib_dir}/libtins.a)
+if(container)
+    set(tins_inc_dir "/usr/local/include")
+    set(tins_lib_dir "/usr/local/lib")
+    set(tins_lib_name ${tins_lib_dir}/libtins.so)
+else()
+    set(tins_dir_name "tins")
+    set(tins_path "${deps_dir}/${tins_dir_name}")
+    set(tins_inc_dir ${tins_path}/include)
+    set(tins_lib_dir ${tins_path}/lib)
+    set(tins_lib_name ${tins_lib_dir}/libtins.a)
+endif()
 
 # pcap necessary to link for libtins
-set(pcap_dir_name "pcap")
-set(pcap_path ${deps_dir}/${pcap_dir_name})
-set(pcap_inc_dir ${pcap_path}/include)
-set(pcap_lib_dir ${pcap_path}/lib)
-set(pcap_lib_name ${pcap_lib_dir}/libpcap.a)
+if(container)
+    set(pcap_inc_dir "/usr/include/pcap")
+    set(pcap_lib_dir ${lib_dir})
+    set(pcap_lib_name ${pcap_lib_dir}/libpcap.so)
+else()
+    set(pcap_dir_name "pcap")
+    set(pcap_path ${deps_dir}/${pcap_dir_name})
+    set(pcap_inc_dir ${pcap_path}/include)
+    set(pcap_lib_dir ${pcap_path}/lib)
+    set(pcap_lib_name ${pcap_lib_dir}/libpcap.a)
+endif()
 
 set(all_tins_incs ${tins_inc_dir} ${pcap_inc_dir})
 set(all_tins_libs ${tins_lib_name} ${pcap_lib_name})

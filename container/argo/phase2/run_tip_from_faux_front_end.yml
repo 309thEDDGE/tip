@@ -1,0 +1,88 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: run-tip-
+spec:
+
+  # Start with the front end for gathering user input.
+  entrypoint: tipapp
+
+  # Default params
+  arguments:
+    parameters:
+    - name: ext_mnt
+      value: test argument!
+
+  templates:
+  
+  - name: tipapp
+    dag:
+      tasks:
+      - name: front-end
+        template: faux-front-end
+        arguments:
+          parameters: [{name: ext_mnt, value: "{{workflow.parameters.ext_mnt}}"}]
+      - name: tip-exe
+        dependencies: [front-end]
+        template: tip
+        arguments:
+          parameters: [{name: conf, value: "{{tasks.front-end.outputs.parameters.tip-configuration}}"}]
+
+  - name: faux-front-end
+    retryStrategy:
+      limit: 0
+    inputs:
+      parameters: 
+      - name: ext_mnt
+    outputs:
+      parameters:
+      - name: tip-configuration
+        valueFrom:
+          path: /app/data.yml
+    container: 
+      image: frontend:2
+      imagePullPolicy: Never
+      stdin: true
+      tty: true
+      livenessProbe:
+        initialDelaySeconds: 1
+        periodSeconds: 2
+        timeoutSeconds: 10
+        exec:
+          command: [cat, /app/healthy]
+      readinessProbe:
+        initialDelaySeconds: 15
+        periodSeconds: 2
+        timeoutSeconds: 300
+        exec:
+          command: [cat, /app/ready]
+      terminationMessagePath: /app/termination-log
+      args: ["{{inputs.parameters.ext_mnt}}"]
+      #status:
+
+  - name: tip
+    retryStrategy:
+      limit: 0
+    inputs:
+      parameters: 
+      - name: conf
+    container: 
+      image: runtip:1
+      imagePullPolicy: Never
+      stdin: true
+      tty: true
+      #livenessProbe:
+      #  initialDelaySeconds: 1
+      #  periodSeconds: 2
+      #  timeoutSeconds: 10
+      #  exec:
+      #    command: [cat, /app/healthy]
+      #readinessProbe:
+      #  initialDelaySeconds: 15
+      #  periodSeconds: 2
+      #  timeoutSeconds: 300
+      #  exec:
+      #    command: [cat, /app/ready]
+      #terminationMessagePath: /app/termination-log
+      args: ["{{inputs.parameters.conf}}"]
+
