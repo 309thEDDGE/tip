@@ -238,13 +238,6 @@ public:
 		const std::string& fieldName, 
 		std::vector<uint8_t>* boolField=nullptr);
 
-	
-	// Specialization for string data.
-	template<>
-	bool SetMemoryLocation<std::string>(std::vector<std::string>& strData, 
-		const std::string& fieldName, 
-		std::vector<uint8_t>* boolField);
-
 	/*
 		Creates the parquet file with an initial schema
 		specified by AddField calls. 
@@ -725,8 +718,9 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 	return false;
 }
 
+// Specialization for string data.
 template<>
-bool ParquetContext::SetMemoryLocation<std::string>(std::vector<std::string>& strData,
+inline bool ParquetContext::SetMemoryLocation<std::string>(std::vector<std::string>& data,
 	const std::string& fieldName,
 	std::vector<uint8_t>* boolField)
 {
@@ -758,13 +752,13 @@ bool ParquetContext::SetMemoryLocation<std::string>(std::vector<std::string>& st
 			if (it->second.is_list_)
 			{
 
-				if (strData.size() % it->second.list_size_ != 0)
+				if (data.size() % it->second.list_size_ != 0)
 				{
 					printf("Error!!!!!!!!!!!!  list size specified (%d)"
 						" is not a multiple of total data length (%d) "
 						"for column: %s\n",
 						it->second.list_size_,
-						strData.size(),
+						data.size(),
 						fieldName.c_str());
 					parquet_stop_ = true;
 					return false;
@@ -788,7 +782,7 @@ bool ParquetContext::SetMemoryLocation<std::string>(std::vector<std::string>& st
 			// data vector
 			if (boolField != nullptr)
 			{
-				if (boolField->size() != strData.size())
+				if (boolField->size() != data.size())
 				{
 					printf("Error!!!!!!!!!!!!  null field vector must be the "
 						"same size as data vector: %s\n",
@@ -803,7 +797,7 @@ bool ParquetContext::SetMemoryLocation<std::string>(std::vector<std::string>& st
 				fieldName.c_str());
 #endif
 #endif
-			it->second.SetColumnData(strData, fieldName, boolField);
+			it->second.SetColumnData(data, fieldName, boolField);
 			
 			return true;
 		}
