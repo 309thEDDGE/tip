@@ -239,11 +239,11 @@ public:
 		std::vector<uint8_t>* boolField=nullptr);
 
 	
-	// Overloaded function for strings. 
-	template<typename NativeType>
-	bool SetMemoryLocation(std::vector<std::string>& strVec, 
+	// Specialization for string data.
+	template<>
+	bool SetMemoryLocation(std::vector<std::string>& strData, 
 		const std::string& fieldName, 
-		std::vector<uint8_t>* boolField=nullptr);
+		std::vector<uint8_t>* boolField);
 
 	/*
 		Creates the parquet file with an initial schema
@@ -698,7 +698,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 #ifdef DEBUG
 #if DEBUG > 1
 				printf("Cast from %s planned for: %s, \n",
-					typeid(NativeType).name().c_str(),
+					typeid(NativeType).name(),
 					fieldName.c_str());
 #endif
 #endif
@@ -725,9 +725,8 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 	return false;
 }
 
-
-template<typename NativeType>
-bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
+template<>
+bool ParquetContext::SetMemoryLocation(std::vector<std::string>& strData,
 	const std::string& fieldName,
 	std::vector<uint8_t>* boolField)
 {
@@ -759,13 +758,13 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 			if (it->second.is_list_)
 			{
 
-				if (data.size() % it->second.list_size_ != 0)
+				if (strData.size() % it->second.list_size_ != 0)
 				{
 					printf("Error!!!!!!!!!!!!  list size specified (%d)"
 						" is not a multiple of total data length (%d) "
 						"for column: %s\n",
 						it->second.list_size_,
-						data.size(),
+						strData.size(),
 						fieldName.c_str());
 					parquet_stop_ = true;
 					return false;
@@ -789,7 +788,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 			// data vector
 			if (boolField != nullptr)
 			{
-				if (boolField->size() != data.size())
+				if (boolField->size() != strData.size())
 				{
 					printf("Error!!!!!!!!!!!!  null field vector must be the "
 						"same size as data vector: %s\n",
@@ -799,12 +798,12 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 				}
 			}
 #ifdef DEBUG
-#if DEBUG > 1
+#if DEBUG > 2
 			printf("setting field info for %s\n",
 				fieldName.c_str());
 #endif
 #endif
-			it->second.SetColumnData(data, fieldName, boolField);
+			it->second.SetColumnData(strData, fieldName, boolField);
 			
 			return true;
 		}
