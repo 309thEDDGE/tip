@@ -127,6 +127,7 @@ add_library(${trans_lib_name}
         ${trans_src_dir}/translatable_1553_table.cpp        ${trans_inc_dir}/translatable_1553_table.h
         ${trans_src_dir}/translatable_base.cpp              ${trans_inc_dir}/translatable_base.h
         ${trans_src_dir}/translation_master.cpp             ${trans_inc_dir}/translation_master.h
+        ${trans_src_dir}/dts1553.cpp                        ${trans_inc_dir}/dts1553.h
     )
 
 target_include_directories(${trans_lib_name} PUBLIC ${trans_inc_dir}
@@ -282,7 +283,8 @@ if(build_tests)
                    ${test_src_dir}/binbuff_u.cpp ${test_src_dir}/parse_context_u.cpp
                    ${test_src_dir}/parquet_arrow_validator_u.cpp ${test_src_dir}/parquet_context_u.cpp
                    ${test_src_dir}/tmats_parser_u.cpp ${test_src_dir}/metadata_u.cpp 
-                   ${test_src_dir}/parse_manager_u.cpp ${test_src_dir}/parquet_reader_u.cpp)
+                   ${test_src_dir}/parse_manager_u.cpp ${test_src_dir}/parquet_reader_u.cpp
+                   ${test_src_dir}/dts1553_u.cpp)
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
                                ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
                                ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} )
