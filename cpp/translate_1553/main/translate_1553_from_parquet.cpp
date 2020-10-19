@@ -297,11 +297,11 @@ bool SynthesizeBusMap(ICDData& icd_data, const std::string& input_path, bool pro
 		return false;
 	}
 	
-	// if use_tmats_busmap is defined, no need to submit votes for the bus map utility
+	// if use_tmats_busmap is true, no need to submit votes for the bus map utility
 	if (use_tmats_busmap)
 	{
-		if (!bm.Finalize(chanid_to_bus_name_map, use_tmats_busmap,
-			prompt_user))
+		if (!bm.Finalize(chanid_to_bus_name_map, true,
+			false))
 		{
 			printf("Bus mapping failed!\n");
 			return false;
@@ -341,8 +341,8 @@ bool SynthesizeBusMap(ICDData& icd_data, const std::string& input_path, bool pro
 
 			if (submission_count >= message_count_threshold)
 			{
-				if (!bm.Finalize(temp_bus_map, use_tmats_busmap,
-					prompt_user))
+				if (!bm.Finalize(temp_bus_map, false,
+					false))
 				{
 					printf("Bus mapping failed!\n");
 					return false;
@@ -367,6 +367,15 @@ bool SynthesizeBusMap(ICDData& icd_data, const std::string& input_path, bool pro
 		if (!successful_map)
 		{
 			chanid_to_bus_name_map.clear();
+		}
+
+		// If prompt user == true, finalize again with prompt
+		// user passed in 
+		if (!bm.Finalize(chanid_to_bus_name_map, use_tmats_busmap,
+			prompt_user))
+		{
+			printf("Bus mapping failed!\n");
+			return false;
 		}
 	}	
 
