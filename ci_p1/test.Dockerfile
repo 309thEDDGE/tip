@@ -13,5 +13,5 @@ RUN dnf install python3 ; alternatives --set python /usr/bin/python3
 RUN pip3 install numpy
 
 # Use the WORKDIR to create our destination directory
-WORKDIR /test/truth
+RUN mkdir -p /test/truth /test/test /test/log
 COPY ./truth /test/truth/

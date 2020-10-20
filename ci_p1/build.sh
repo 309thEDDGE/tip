@@ -41,11 +41,12 @@ else
 fi
 
 echo "Running '$CMAKE' for TIP"
-if [ -d $DEPS_DIR ] ;
-then 
-	mv $DEPS_DIR ${DEPS_DIR}_$(date "+%Y%m%d-%H%M%S")
+# the pipeline build image has a /deps directory
+# if there is a /deps directory then replace the local deps directory
+if [ -d $DEPS_SOURCE ] ; then
+	rm -rf $BASE_DIR/deps
+	mv $DEPS_SOURCE $BASE_DIR
 fi
-mv $DEPS_SOURCE $BASE_DIR
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
