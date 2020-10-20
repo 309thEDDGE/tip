@@ -130,26 +130,48 @@ std::vector<ICDElement> ICDData::GetICDElementVector()
 	return icd_elements_;
 }
 
-bool ICDData::PrepareICDQuery(const std::vector<std::string>& lines, bool is_yaml_file)
+bool ICDData::PrepareICDQuery(const std::vector<std::string>& lines)
 {
 	// Ingest ICD text.
-	if (is_yaml_file)
+	icd_ingest_success_ = IngestICDTextFileLines(lines, icd_elements_);
+	if (!icd_ingest_success_)
 	{
-		icd_ingest_success_ = IngestICDYamlFileLines(lines, icd_elements_);
-		if (!icd_ingest_success_)
-		{
-			printf("IngestICDYamlFileLines() failure. Cannot proceed to PrepareICDQuery()\n");
-			return false;
-		}
+		printf("IngestICDTextFileLines() failure. Cannot proceed to PrepareICDQuery()\n");
+		return false;
 	}
-	else
+
+	// Organize ICDElements into table --> column structure.
+	if (!CreateTables(icd_elements_, tables_))
 	{
-		icd_ingest_success_ = IngestICDTextFileLines(lines, icd_elements_);
-		if (!icd_ingest_success_)
-		{
-			printf("IngestICDTextFileLines() failure. Cannot proceed to PrepareICDQuery()\n");
-			return false;
-		}
+		return false;
+	}
+
+	if (!CollectMsgElementsFromTableInds(icd_elements_, tables_, icd_msg_elements_))
+	{
+		return false;
+	}
+
+	if (!CreateTableNameLookup(icd_msg_elements_, table_names_))
+	{
+		return false;
+	}
+	
+	if (!CreateLookupMap())
+	{
+		return false;
+	}
+
+	organize_icd_success_ = true;
+	return true;
+}
+
+bool ICDData::PrepareICDQuery(const YAML::Node& msg_defs_node)
+{
+	icd_ingest_success_ = IngestICDYamlNode(msg_defs_node, icd_elements_);
+	if (!icd_ingest_success_)
+	{
+		printf("IngestICDYamlFileLines() failure. Cannot proceed to PrepareICDQuery()\n");
+		return false;
 	}
 
 	// Organize ICDElements into table --> column structure.
@@ -168,12 +190,6 @@ bool ICDData::PrepareICDQuery(const std::vector<std::string>& lines, bool is_yam
 		return false;
 	}
 
-	/*
-	if (!CreateBusNameToLRUAddressSetMap(icd_msg_elements_, bus_name_to_lru_addrs_map_))
-	{
-		return false;
-	}*/
-	
 	if (!CreateLookupMap())
 	{
 		return false;
@@ -587,42 +603,9 @@ bool ICDData::IsYamlFile(const std::string& icd_path)
 		return false;
 }
 
-bool ICDData::IngestICDYamlFileLines(const std::vector<std::string>& lines,
+bool ICDData::IngestICDYamlNode(const YAML::Node& root_node,
 	std::vector<ICDElement>& icd_elems_output)
 {
-	// Bad if there are zero lines.
-	if (lines.size() == 0)
-	{
-		printf("ICDData::IngestICDYamlFileLines(): Input lines vector has size 0\n");
-		return false;
-	}
-
-	// Concatenate all lines into a single string. It is requisite to append
-	// to each line the newline character. Yaml loader must see new lines to
-	// understand context.
-	std::stringstream ss;
-	std::for_each(lines.begin(), lines.end(), 
-		[&ss](const std::string& s) { ss << s; ss << "\n"; });
-	std::string all_lines = ss.str();
-
-	//printf("all_lines:\n%s", all_lines.c_str());
-	YAML::Node root_node = YAML::Load(all_lines.c_str());
-	//printf("root_node type: %d\n", root_node.Type());
-
-	// Root node must have at least one entry.
-	if (root_node.size() == 0)
-	{
-		printf("ICDData::IngestICDYamlFileLines(): Root note has size 0\n");
-		return false;
-	}
-
-	// Root node must be a map because all root-level items are maps.
-	if (!root_node.IsMap())
-	{
-		printf("ICDData::IngestICDYamlFileLines(): Root node is not a map\n");
-		return false;
-	}
-
 	// Iterate over all root-level maps, where each map is a message name to the 
 	// the message body data.
 	size_t fill_count = 0;
