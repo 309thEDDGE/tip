@@ -43,11 +43,18 @@ private:
 		{"translatable_message_definitions", DTS1553Component::TRANSL_MESSAGE_DEFS}
 	};
 
+	// Fill with supplemental bus map command words data if present in the yaml file
+	std::map<std::string, std::set<uint64_t>> suppl_bus_name_to_message_key_map_;
+
 public:
 	DTS1553() : icd_data_(), icd_data_ptr_(&icd_data_) { }
 
 	ICDData GetICDData() { return icd_data_; }
 	ICDData* ICDDataPtr() { return icd_data_ptr_; }
+	std::map<std::string, std::set<uint64_t>> GetSupplBusNameToMessageKeyMap()
+	{
+		return suppl_bus_name_to_message_key_map_;
+	}
 
 	/*
 		IngestLines
@@ -82,7 +89,31 @@ public:
 		YAML::Node& transl_msg_defs_node,
 		YAML::Node& suppl_busmap_comm_words_node);
 
+	/*
+	
+		FillSupplBusNameToMsgKeyMap
 
+		suppl_busmap_comm_words_node:			Yaml node containing maps with
+												keys corresponding bus names and
+												values as sequences of pairs of
+												command words.
+
+		output_suppl_busname_to_msg_key_map:	Output maps the bus name to a set
+												of message keys, where a message 
+												key is an integer created from a 
+												uint16_t transmit command word 
+												upshifted by 16 bits added to a 
+												uint16_t receive command word.
+
+		return:									True if node is empty or has valid
+												structure (maps of strings to
+												sequences of sequences of two 
+												uint16_t values) and false otherwise.
+												Output map is empty if node is empty
+												or return value is false.
+	*/
+	bool FillSupplBusNameToMsgKeyMap(const YAML::Node& suppl_busmap_comm_words_node,
+		std::map<std::string, std::set<uint64_t>>& output_suppl_busname_to_msg_key_map);
 };
 
 

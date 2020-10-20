@@ -143,8 +143,6 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const std::string& input_path,
 	printf("\nStarting Bus Map\n");
 	auto bus_map_start_time = std::chrono::high_resolution_clock::now();
 
-	// Generate the message key to bus names map from the 
-	std::unordered_map<uint64_t, std::set<std::string>> message_key_to_busnames_map;
 	// Generate the bus map from metadata and possibly user
 	// input.
 	if (!SynthesizeBusMap(dts1553, input_path, prompt_user, 

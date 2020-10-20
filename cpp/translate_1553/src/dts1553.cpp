@@ -25,6 +25,14 @@ bool DTS1553::IngestLines(const std::string& dts_path, const std::vector<std::st
 			printf("DTS1553::IngestLines(): PrepareICDQuery failure!\n");
 			return false;
 		}
+
+		// If the supplemental bus map command words node has a size greater
+		// than zero, fill the private member map.
+		if (!FillSupplBusNameToMsgKeyMap(suppl_busmap, suppl_bus_name_to_message_key_map_))
+		{
+			printf("DTS1553::IngestLines(): Failed to generate bus name to message key map!\n");
+			return false;
+		}
 	}
 	else
 	{
@@ -101,5 +109,31 @@ bool DTS1553::ProcessLinesAsYaml(const std::vector<std::string>& lines,
 		return false;
 	}
 
+	return true;
+}
+
+bool DTS1553::FillSupplBusNameToMsgKeyMap(const YAML::Node& suppl_busmap_comm_words_node,
+	std::map<std::string, std::set<uint64_t>>& output_suppl_busname_to_msg_key_map)
+{
+	if (suppl_busmap_comm_words_node.size() == 0)
+		return true;
+
+	// Root node must be a map.
+	if (!suppl_busmap_comm_words_node.IsMap())
+	{
+		printf("DTS1553::FillSupplBusNameToMsgKeyMap(): Root node is not a map\n");
+		return false;
+	}
+
+	for (YAML::Node::const_iterator it = suppl_busmap_comm_words_node.begin();
+		it != suppl_busmap_comm_words_node.end(); ++it)
+	{
+		// Fail if the value part of each mapping is not a sequence.
+		if (!it->second.IsSequence())
+		{
+			printf("DTS1553::FillSupplBusNameToMsgKeyMap(): Value of mapping is not a sequence\n");
+			return false;
+		}
+	}
 	return true;
 }
