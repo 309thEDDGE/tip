@@ -103,7 +103,7 @@ void ParseManager::create_paths()
 #ifdef ETHERNET_DATA
 	std::filesystem::path parquet_eth_path = out_path / input_path.stem();
 	parquet_eth_path += std::filesystem::path("_ethernet.parquet");
-	printf("Parquet video output path: %s\n", parquet_eth_path.string().c_str());
+	printf("Parquet ethernet output path: %s\n", parquet_eth_path.string().c_str());
 	fspath_map[Ch10DataType::ETHERNET_DATA_F0] = parquet_eth_path;
 
 	if (!std::filesystem::exists(parquet_eth_path))

@@ -378,6 +378,13 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 	if (isList) 
 		listCount = columnData.list_size_;
 
+#ifdef DEBUG
+#if DEBUG > 1
+	printf("AppendColumn(): name %s, datatypename %s\n", columnData.field_name_,
+		columnData.type_->name().c_str());
+#endif
+#endif
+
 	append_row_count_ = rows;
 
 	if (rows + offset > columnData.initial_max_row_size_)
@@ -674,12 +681,18 @@ bool ParquetContext::WriteColumns(const int& rows,const int offset)
 			{
 				ret_val = AppendColumn(it->second, rows, offset);
 				if (!ret_val)
+				{
+					printf("ParquetContext::WriteColumns(): AppendColumn() failure!\n");
 					return false;
+				}
 			}
 		}
 
 		if (!WriteColsIfReady())
+		{
+			printf("ParquetContext::WriteColumns(): WriteColsIfReady() failure!\n");
 			return false;
+		}
 
 		// Reset the status of each column.
 		for (std::map<std::string, ColumnData>::iterator
@@ -694,6 +707,7 @@ bool ParquetContext::WriteColumns(const int& rows,const int offset)
 	
 	catch (...)
 	{
+		printf("ParquetContext::WriteColumns(): Caught Exception!\n");
 		return false;
 	}
 	
@@ -812,8 +826,8 @@ void ParquetContext::FillStringVec(std::vector<std::string>* str_data_vec_ptr,
 	if (temp_string_vec_.size() != count)
 		temp_string_vec_.resize(count);
 
-	std::copy((*str_data_vec_ptr).data() + offset, 
-		(*str_data_vec_ptr).data() + offset + count, 
+	std::copy(str_data_vec_ptr->data() + offset, 
+		str_data_vec_ptr->data() + offset + count, 
 		temp_string_vec_.data());
 }
 
@@ -898,15 +912,40 @@ void ParquetContext::Finalize()
 		}
 
 		int n_calls = int(std::ceil(double(appended_row_count_) / double(ROW_GROUP_COUNT_)));
+#ifdef DEBUG
+#if DEBUG > 1
+		printf("ParquetContext::Finalize(): n_calls = %d\n", n_calls);
+#endif
+#endif
 		for (int i = 0; i < n_calls; i++)
 		{
 			if (i == n_calls - 1)
 			{
-				WriteColumns(appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+#ifdef DEBUG
+#if DEBUG > 1
+				printf("ParquetContext::Finalize(): WriteColumns(count = %d, offset = %d)\n",
+					appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_,
+					i * ROW_GROUP_COUNT_);
+#endif
+#endif
+				if (!WriteColumns(appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
+				{
+					printf("ParquetContext::Finalize(): WriteColumns() failure!\n");
+				}
 			}
 			else
 			{
-				WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+#ifdef DEBUG
+#if DEBUG > 1
+				printf("ParquetContext::Finalize(): WriteColumns(count = %d, offset = %d)\n",
+					ROW_GROUP_COUNT_,
+					i * ROW_GROUP_COUNT_);
+#endif
+#endif
+				if (!WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
+				{
+					printf("ParquetContext::Finalize(): WriteColumns() failure!\n");
+				}
 			}
 		}
 

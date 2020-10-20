@@ -1,5 +1,6 @@
 *
 !*.Dockerfile
+!Dockerfile
 !ci_p1
 !ci_p1/**
 !vendor
@@ -39,10 +40,11 @@ cpp/*.cmake
 **/*.parquet
 **/.ipynb*
 **/dask-worker-space
+**/#*
 container/docker/centos/#*
 container/docker/rhel/#*
 container/docker/rhel/*~
-tip_scripts/.vs
+container/argotip_scripts/.vs
 tip_scripts/__pycache__
 !README.md
 !parse_and_translate.py

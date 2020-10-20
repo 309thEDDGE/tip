@@ -2517,6 +2517,20 @@ protected:
 		std::unique_ptr<parquet::arrow::FileReader> arrow_reader_;
 
 		// Open file reader.
+#ifdef NEWARROW
+		try
+		  {
+		    PARQUET_ASSIGN_OR_THROW(arrow_file_,
+					    arrow::io::ReadableFile::Open(
+									  pq_file_,
+									  pool_));
+		  }
+		catch (...)
+		  {
+		    printf("ReadableFile::Open error\n");
+		    return false;
+		  }
+#else
 		st_ = arrow::io::ReadableFile::Open(pq_file_, pool_, &arrow_file_);
 		if (!st_.ok())
 		{
@@ -2524,6 +2538,7 @@ protected:
 				st_.CodeAsString().c_str(), st_.message().c_str());
 			return false;
 		}
+#endif
 		st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
 		if (!st_.ok())
 		{

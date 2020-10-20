@@ -1,0 +1,203 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: run-tip-
+spec:
+
+  # Start with the front end for gathering user input.
+  entrypoint: tipapp
+
+  # Default params
+  arguments:
+    parameters:
+    - name: ext_ch10_mnt_point
+      value: /bad/ch10/mount/point
+    - name: ext_icd_mnt_point
+      value: /bad/icd/mount/point
+    - name: ch10_file_name
+      value: default ch10 file name
+    - name: icd_file_name
+      value: default icd file name
+    - name: overwrite
+      value: false
+    - name: video
+      value: false
+    - name: kill_switch
+      value: false
+
+  templates:
+  
+  - name: tipapp
+    # backoff field is apparently broken. RetryStrategy does not take effect if backoff if defined
+    # for this template with dag or a regular template, such as faux-front-end. RetryStrategy
+    # defined here allows the entire workflow to start limit times. Note that limit is actually
+    # the maximum value of a counter which begins at zero. A limit of 2 implies the entire workflow
+    # will be executed 3 times. This is likely a bug on the part of Argo devs. Same bug applies
+    # to other templates.
+    retryStrategy:
+      limit: 0
+    #  backoff:
+    #    duration: 10
+      retryPolicy: "Always"
+    dag:
+      tasks:
+      
+      - name: front-end
+        template: faux-front-end
+        arguments:
+          parameters: [
+	      {name: ext_ch10_mnt_point, value: "{{workflow.parameters.ext_ch10_mnt_point}}"},
+	      {name: ch10_file_name, value: "{{workflow.parameters.ch10_file_name}}"},
+	      {name: ext_icd_mnt_point, value: "{{workflow.parameters.ext_icd_mnt_point}}"},
+	      {name: icd_file_name, value: "{{workflow.parameters.icd_file_name}}"},
+	      {name: overwrite, value: "{{workflow.parameters.overwrite}}"},
+	      {name: video, value: "{{workflow.parameters.video}}"},
+	      {name: kill_switch, value: "{{workflow.parameters.kill_switch}}"}
+            ]
+
+      - name: arg-parser
+        dependencies: [front-end]
+        template: tip-exe-arg-parser
+        arguments:
+          parameters: [{name: allconf, value: "{{tasks.front-end.outputs.parameters.tip-configuration}}"}]
+
+      - name: tip-exe
+        dependencies: [arg-parser]
+        template: tip	
+        arguments:
+          parameters: [
+	      {name: conf, value: "{{item}}"},
+	      {name: ext_ch10_mnt_point, value: "{{item.ext_ch10_mnt_point}}"},
+	      {name: ext_icd_mnt_point, value: "{{item.ext_icd_mnt_point}}"}
+	      ]
+        withParam: "{{tasks.arg-parser.outputs.result}}"
+
+  - name: faux-front-end
+    # The retryStrategy defined here allows the step this template represents to reload and
+    # attempt execution limit times in a single workflow instance. For example, if the tipapp
+    # template has limit 2 and this template has limit 3 then the entire workflow will execute
+    # twice and the container defined by this template will make up to 3 attempts. Actually,
+    # it will make four attempts. See the comment in tipapp about the limit definition.
+    # In the scenario defined above, and presuming that this step fails every time, this step
+    # will have been executed (2+1) * (3+1) = 12 times. 
+    retryStrategy:
+      limit: 0   # limit is attempts total or after each container failure/error?
+      #backoff:
+      #  duration: "10"
+      retryPolicy: "Always"  # "Always", retry on errors AND failures. Also available: "OnFailure" (default), "OnError"
+    inputs:
+      parameters: 
+      - name: ext_ch10_mnt_point
+      - name: ext_icd_mnt_point
+      - name: ch10_file_name
+      - name: icd_file_name
+      - name: overwrite
+      - name: video
+      - name: kill_switch
+    outputs:
+      parameters:
+      - name: tip-configuration
+        valueFrom:
+          path: /app/data.json
+      - name: out_ch10_mnt_point
+        valueFrom:
+          path: /app/ext_ch10_mnt_point
+      - name: out_icd_mnt_point
+        valueFrom:
+          path: /app/ext_icd_mnt_point
+    container: 
+      image: frontend:4
+      imagePullPolicy: Never
+      stdin: true
+      tty: true
+      livenessProbe:
+        initialDelaySeconds: 1
+        periodSeconds: 2
+        timeoutSeconds: 10
+        exec:
+          command: [cat, /app/healthy]
+      readinessProbe:
+        initialDelaySeconds: 15
+        periodSeconds: 2
+        timeoutSeconds: 300
+        exec:
+          command: [cat, /app/ready]
+      terminationMessagePath: /app/termination-log
+      args: [
+        "{{inputs.parameters.ext_ch10_mnt_point}}",
+	"{{inputs.parameters.ch10_file_name}}",
+	"{{inputs.parameters.ext_icd_mnt_point}}",
+	"{{inputs.parameters.icd_file_name}}",
+	"{{inputs.parameters.overwrite}}",
+	"{{inputs.parameters.video}}",
+	"{{inputs.parameters.kill_switch}}"
+	]
+      #status:
+      
+  - name: tip-exe-arg-parser
+    inputs:
+      parameters:
+      - name: allconf
+    script:
+      image: python:alpine3.6
+      stdin: true
+      env: [{name: JSONDATA, value: "{{inputs.parameters.allconf}}"}]
+      command: [python]
+      source: |
+        import json
+        import os
+        input = os.environ['JSONDATA']
+        input_dict = json.loads(input)
+        res = [{} for x in range(len(input_dict['overwrite'].split(',')))]
+        for k,v in input_dict.items():
+            for i,arg in enumerate(v.split(',')):
+                res[i][k] = arg
+        result = []
+        for elem in res:
+            result.append(elem)
+        result = json.dumps(result)
+        print(result)
+
+
+  - name: tip
+    retryStrategy:
+      limit: 0
+    inputs:
+      parameters: 
+      - name: conf
+      - name: ext_ch10_mnt_point
+      - name: ext_icd_mnt_point
+    container: 
+      image: runtip:1
+      imagePullPolicy: Never
+      stdin: true
+      tty: true
+      #livenessProbe:
+      #  initialDelaySeconds: 1
+      #  periodSeconds: 2
+      #  timeoutSeconds: 10
+      #  exec:
+      #    command: [cat, /app/healthy]
+      #readinessProbe:
+      #  initialDelaySeconds: 15
+      #  periodSeconds: 2
+      #  timeoutSeconds: 300
+      #  exec:
+      #    command: [cat, /app/ready]
+      #terminationMessagePath: /app/termination-log
+      args: ["{{inputs.parameters.conf}}"]
+      volumeMounts:
+      - name: ch10mnt
+        mountPath: /ch10mnt
+      - name: icdmnt
+        mountPath: /icdmnt
+    volumes:
+    - name: ch10mnt
+      hostPath:
+        path: "{{inputs.parameters.ext_ch10_mnt_point}}"
+        type: Directory
+    - name: icdmnt
+      hostPath:
+        path: "{{inputs.parameters.ext_icd_mnt_point}}"
+        type: Directory
+
