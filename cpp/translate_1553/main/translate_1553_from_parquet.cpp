@@ -27,7 +27,7 @@ bool GetArguments(int argc, char* argv[], std::string& input_path,
 	uint8_t& thread_count, std::string& icd_path);
 
 bool PrepareICDAndBusMap(DTS1553& dts1553, const std::string& input_path,
-	const std::string& icd_path, bool stop_after_bus_map, bool prompt_user,
+	const std::string& dts_path, bool stop_after_bus_map, bool prompt_user,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
 	bool use_tmats_busmap,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
@@ -122,7 +122,7 @@ bool GetArguments(int argc, char* argv[], std::string& input_path,
 }
 
 bool PrepareICDAndBusMap(DTS1553& dts1553, const std::string& input_path,
-	const std::string& icd_path, bool stop_after_bus_map, bool prompt_user,
+	const std::string& dts_path, bool stop_after_bus_map, bool prompt_user,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
 	bool use_tmats_busmap, 
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
@@ -131,9 +131,14 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const std::string& input_path,
 	// Read lines from ICD text file, ingest, and manipulate.
 	auto start_time = std::chrono::high_resolution_clock::now();
 	FileReader fr;
-	if (fr.ReadFile(icd_path) == 1)
+	if (fr.ReadFile(dts_path) == 1)
 	{
-		printf("Failed to read ICD: %s\n", icd_path.c_str());
+		printf("Failed to read ICD: %s\n", dts_path.c_str());
+		return false;
+	}
+	if (!dts1553.IngestLines(dts_path, fr.GetLines()))
+	{
+		printf("Failed to ingest DTS1553 data\n");
 		return false;
 	}
 	auto stop_time = std::chrono::high_resolution_clock::now();
