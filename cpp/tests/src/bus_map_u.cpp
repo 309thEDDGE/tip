@@ -511,6 +511,31 @@ TEST_F(BusMapTest, SubmitMessages)
 	EXPECT_EQ(b.GetICD_MessageKeyToChannelIDSMap(), compare_map);
 }
 
+TEST_F(BusMapTest, SubmitMessagesWithMask)
+{
+	// Map with entries
+	icd_message_key_to_busnames_map[10 << 16] = std::set<std::string>({ "BusA", "BusB", "BusC" });
+	icd_message_key_to_busnames_map[(10 << 16) + 1] = std::set<std::string>({ "BusD" });
+
+	uint64_t mask_input = UINT64_MAX - 1;
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({ 0,1 }),
+		mask_input,
+		tmats_chanid_to_source_map);
+
+	// Both entries should map with the same key given the mask =  UINT64_MAX - 1
+	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({10,10});
+	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({  0, 1 });
+	std::vector<uint64_t> channel_ids = std::vector<uint64_t> ({  0, 1 });
+
+	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
+
+	std::unordered_map<uint64_t, std::set<uint64_t>> compare_map;
+	compare_map[10 << 16] = std::set<uint64_t>({ 0,1 }); 
+
+	EXPECT_EQ(b.GetICD_MessageKeyToChannelIDSMap(), compare_map);
+}
+
 TEST_F(BusMapTest, SubmitMessagesNonEqualSizedVectors)
 {
 	b.InitializeMaps(&icd_message_key_to_busnames_map,

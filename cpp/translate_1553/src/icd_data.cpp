@@ -199,14 +199,16 @@ bool ICDData::PrepareICDQuery(const YAML::Node& msg_defs_node)
 	return true;
 }
 
-void ICDData::PrepareMessageKeyMap(std::unordered_map<uint64_t, std::set<std::string>>& message_key_map)
+void ICDData::PrepareMessageKeyMap(std::unordered_map<uint64_t, std::set<std::string>>& message_key_map,
+	const std::map<std::string, std::set<uint64_t>>& supplemental_map)
 {
+	uint64_t message_key;
 	for (int i = 0; i < icd_elements_.size(); i++)
 	{
 		// The message key consists of the transmit command word
 		// left shifted 16 bits and bitwise ORd with the recieve 
 		// command word
-		uint64_t message_key = (icd_elements_[i].xmit_word_ << 16 )|
+		message_key = (icd_elements_[i].xmit_word_ << 16 )|
 			icd_elements_[i].dest_word_;
 
 		if (message_key_map.count(message_key) == 0)
@@ -219,6 +221,26 @@ void ICDData::PrepareMessageKeyMap(std::unordered_map<uint64_t, std::set<std::st
 		{
 			message_key_map[message_key].insert(icd_elements_[i].bus_name_);
 		}
+	}
+
+	// Append supplemental command words
+	for (std::map<std::string, std::set<uint64_t>>::const_iterator it = supplemental_map.begin();
+		it != supplemental_map.end(); 
+		++it)
+	{
+		for (auto key : it->second)
+		{
+			if (message_key_map.count(key) == 0)
+			{
+				std::set<std::string> temp_set;
+				temp_set.insert(it->first);
+				message_key_map[key] = temp_set;
+			}
+			else
+			{
+				message_key_map[key].insert(it->first);
+			}
+		}		
 	}
 }
 

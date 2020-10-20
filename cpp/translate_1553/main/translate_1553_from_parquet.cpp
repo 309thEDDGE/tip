@@ -174,7 +174,7 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 	bool use_tmats_busmap, std::map<uint64_t,std::string>& chanid_to_bus_name_map)
 {
 	std::unordered_map<uint64_t, std::set<std::string>> message_key_to_busnames_map;
-	dts1553.ICDDataPtr()->PrepareMessageKeyMap(message_key_to_busnames_map);
+	dts1553.ICDDataPtr()->PrepareMessageKeyMap(message_key_to_busnames_map, dts1553.GetSupplBusNameToMessageKeyMap());
 
 	// Create the metadata file path from the input raw parquet path.
 	Metadata input_md;

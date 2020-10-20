@@ -197,8 +197,8 @@ bool BusMap::SubmitMessages(
 	}
 	for (int i = 0; i < count; i++)
 	{
-		key = (transmit_cmd[i] << 16 ) 
-			| (recieve_cmd[i]) & mask_;
+		key = ((transmit_cmd[i] << 16 ) 
+			| (recieve_cmd[i])) & mask_;
 		if (icd_message_key_to_channelids_map_.count(key) == 1)
 		{
 			icd_message_key_to_channelids_map_[key].insert(channel_ids[i]);

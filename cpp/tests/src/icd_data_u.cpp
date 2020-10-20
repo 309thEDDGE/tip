@@ -254,14 +254,17 @@ TEST(ICDDataTest, PrepareMessageKeyMap)
 	ASSERT_TRUE(icd.PrepareICDQuery(temp_lines));
 
 	std::unordered_map<uint64_t, std::set<std::string>> message_key_map;
-	icd.PrepareMessageKeyMap(message_key_map);
+	std::map<std::string, std::set<uint64_t>> suppl_map;
+	suppl_map["BusA"] = std::set<uint64_t>({ 39043,999 });
+	suppl_map["BusB"] = std::set<uint64_t>({ 55360,888 });
+	icd.PrepareMessageKeyMap(message_key_map, suppl_map);
 	int64_t key1 = 39043;
 	int64_t key2 = 48192 << 16 | 55360;
 	int64_t key3 = 55360;
 	int64_t key4 = 28894 << 16;
 
 	// Ensure four keys were found
-	ASSERT_EQ(message_key_map.size(), 4);
+	ASSERT_EQ(message_key_map.size(), 6);
 	
 	// Ensure each key was found
 	ASSERT_EQ(message_key_map.count(key1), 1);
@@ -269,17 +272,28 @@ TEST(ICDDataTest, PrepareMessageKeyMap)
 	ASSERT_EQ(message_key_map.count(key3), 1);
 	ASSERT_EQ(message_key_map.count(key4), 1);
 
+	// Check for supplement map keys
+	ASSERT_EQ(message_key_map.count(999), 1);
+	ASSERT_EQ(message_key_map.count(888), 1);
+
+
 	ASSERT_THAT(message_key_map[key1], 
-		::testing::ElementsAre("Bus1", "Bus2", "Bus3", "Bus4" ));
+		::testing::ElementsAre("Bus1", "Bus2", "Bus3", "Bus4", "BusA" ));
 
 	ASSERT_THAT(message_key_map[key2], 
 		::testing::ElementsAre("Bus3", "Bus4", "Bus5" ));
 
 	ASSERT_THAT(message_key_map[key3], 
-		::testing::ElementsAre("Bus1", "Bus2" ));
+		::testing::ElementsAre("Bus1", "Bus2", "BusB" ));
 
 	ASSERT_THAT(message_key_map[key4], 
 		::testing::ElementsAre("Bus1", "Bus2" ));
+
+	ASSERT_THAT(message_key_map[999],
+		::testing::ElementsAre("BusA"));
+
+	ASSERT_THAT(message_key_map[888],
+		::testing::ElementsAre("BusB"));
 }
 
 //
