@@ -43,7 +43,11 @@ private:
 		{"translatable_message_definitions", DTS1553Component::TRANSL_MESSAGE_DEFS}
 	};
 
-	// Fill with supplemental bus map command words data if present in the yaml file
+	// Fill with supplemental bus map command words data if present in the
+	// yaml file. The message key is a integer created by upshifting the tx
+	// command word by 16 bits and adding the rx commmand word. The key is
+	// the bus name on which the tx and rx command words used to create the 
+	// mapped set occur.
 	std::map<std::string, std::set<uint64_t>> suppl_bus_name_to_message_key_map_;
 
 public:

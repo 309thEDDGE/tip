@@ -125,14 +125,57 @@ bool DTS1553::FillSupplBusNameToMsgKeyMap(const YAML::Node& suppl_busmap_comm_wo
 		return false;
 	}
 
-	for (YAML::Node::const_iterator it = suppl_busmap_comm_words_node.begin();
-		it != suppl_busmap_comm_words_node.end(); ++it)
+	std::string bus_name = "";
+	// Use uint64_t to avoid the need for casting prior to upshifting the original
+	// 16-bit value by 16 bits.
+	std::vector<uint64_t> tx_rx_comm_words;
+	for (YAML::Node::const_iterator busname_map = suppl_busmap_comm_words_node.begin();
+		busname_map != suppl_busmap_comm_words_node.end(); ++busname_map)
 	{
 		// Fail if the value part of each mapping is not a sequence.
-		if (!it->second.IsSequence())
+		if (!busname_map->second.IsSequence())
 		{
 			printf("DTS1553::FillSupplBusNameToMsgKeyMap(): Value of mapping is not a sequence\n");
 			return false;
+		}
+
+		// Iterate over the sequence in the bus name map.
+		YAML::Node comm_words_seq = busname_map->second;
+		for (int comm_words_set_ind = 0; comm_words_set_ind < comm_words_seq.size();
+			comm_words_set_ind++)
+		{
+			// Fail if the item in the sequence is itself not a sequence.
+			if (!comm_words_seq[comm_words_set_ind].IsSequence())
+			{
+				printf("DTS1553::FillSupplBusNameToMsgKeyMap(): "
+					"Sequence item is not itself a sequence\n");
+				return false;
+			}
+
+			tx_rx_comm_words = comm_words_seq[comm_words_set_ind].as<std::vector<uint64_t>>();
+
+
+			// Command words sequence must have two values.
+			if (tx_rx_comm_words.size() != 2)
+			{
+				printf("DTS1553::FillSupplBusNameToMsgKeyMap(): "
+					"Command words sequence does not have exactly two values\n");
+				return false;
+			}
+
+			// Build the output map.
+			bus_name = busname_map->first.as<std::string>();
+			if (output_suppl_busname_to_msg_key_map.count(bus_name) == 0)
+			{
+				std::set<uint64_t> temp_msg_key_set(
+					{ (tx_rx_comm_words[0] << 16) + tx_rx_comm_words[1] });
+				output_suppl_busname_to_msg_key_map[bus_name] = temp_msg_key_set;
+			}
+			else
+			{
+				output_suppl_busname_to_msg_key_map[bus_name].insert(
+					(tx_rx_comm_words[0] << 16) + tx_rx_comm_words[1]);
+			}
 		}
 	}
 	return true;
