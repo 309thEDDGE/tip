@@ -3,6 +3,16 @@
 # UNITTEST_REPORT_DIR defined by pipeline
 
 
+# exit when any command fails
+set -e
+
+
+# keep track of the last executed command
+trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
+# echo an error message before exiting
+trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
+
+
 BASE_DIR=${PWD}
 if [ -z "${CMAKE_BUILD_DIR}" ] ; then 
 	# We are not in the pipeline; set vars for running locally
@@ -43,7 +53,6 @@ set +x
 echo ""
 echo Parser validation
 echo ""
-set -x # Echo all commands
 cd $BASE_DIR
 mv build/bin .
 python tip_scripts/pqpqvalidation/end_to_end_validator.py --video /test/truth /test/test /test/log

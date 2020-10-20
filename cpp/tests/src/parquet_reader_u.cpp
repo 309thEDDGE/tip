@@ -779,5 +779,5 @@ TEST_F(ParquetReaderTest, GetNextRGStringList)
 	EXPECT_EQ(out[1], "whats up");
 
 	ASSERT_FALSE((pm.GetNextRGString(0, out, size, true)));
-	EXPECT_EQ(size, 0);
+	EXPECT_EQ(size, 50);
 }
