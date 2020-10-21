@@ -27,6 +27,16 @@ class E2EValidator(object):
         self.save_stdout = False
         self.raw_validation_dict = {}
         self.transl_validation_dict = {}
+
+        # Dictionary for holding validation objects for metadata, yaml, text, or
+        # other non-Parquet files that are found in a translated data directory
+        # (currently only 1553 translated data).
+        # Validation of non-Parquet files has not been implemented.
+        self.transl_misc_validation_dict = {}
+
+        # Non-parquet file names to be validated. Not implemented.
+        self.transl_misc_validation_fnames = ['_metadata.yaml']
+
         self.total_validation_dict = {}
         self.validation_results_dict = {}
         self.exec_path = 'bin/pqcompare.exe'
@@ -325,10 +335,11 @@ class E2EValidator(object):
     def _create_translated_validation_objects(self, truth_dir_name):
 
         self.transl_validation_dict[truth_dir_name] = []
+        self.transl_misc_validation_dict[truth_dir_name] = []
         truth_path = os.path.join(self.truth_set_dir, truth_dir_name)
         truth_dir_listing = os.listdir(truth_path)
         test_path = os.path.join(self.test_set_dir, truth_dir_name)
-        test_dir_listing = ""        
+        test_dir_listing = ""     
 
         if len(truth_dir_listing) == 0:
             self.missing_transl_truth_paths.append(truth_dir_name)
@@ -337,34 +348,44 @@ class E2EValidator(object):
 
         if os.path.isdir(test_path):
             test_dir_listing = os.listdir(test_path)       
-            for msg_pq_dir in truth_dir_listing:
-                msg_parquet_path = os.path.join(truth_path, msg_pq_dir)
-                if len(os.listdir(msg_parquet_path)) > 0:
-                    if msg_pq_dir in test_dir_listing:
-                        test_msg_parquet_path = os.path.join(test_path, msg_pq_dir)
-                        if len(os.listdir(test_msg_parquet_path)) > 0:
-                            self.transl_validation_dict[truth_dir_name].append(PqPqTranslatedDataValidation(
-                                msg_parquet_path, 
-                                test_msg_parquet_path, 
-                                self.exec_path))
-                        # Existing test message parquet directory with no parquet files inside
+            for fname in truth_dir_listing:
+                msg_parquet_path = os.path.join(truth_path, fname)
+                test_msg_parquet_path = os.path.join(test_path, fname)
+
+                # If msg_parquet_path is not a directory, then it is not a translated
+                # 1553 message Parquet dir and should be handled elsewhere. 
+                if os.path.isdir(msg_parquet_path):
+                    if len(os.listdir(msg_parquet_path)) > 0:
+                        if fname in test_dir_listing:
+                            
+                            if len(os.listdir(test_msg_parquet_path)) > 0:
+                                self.transl_validation_dict[truth_dir_name].append(PqPqTranslatedDataValidation(
+                                    msg_parquet_path, 
+                                    test_msg_parquet_path, 
+                                    self.exec_path))
+                            # Existing test message parquet directory with no parquet files inside
+                            else:
+                                self.transl_validation_dict[truth_dir_name].append(PqPqTranslatedDataValidation(
+                                    msg_parquet_path, 
+                                    None, 
+                                    self.exec_path))
+                                self.print('No files in translated msg TEST path {:s}'.format(test_msg_parquet_path))
+                        # Existing truth message parquet directory but missing test message parquet directory
                         else:
                             self.transl_validation_dict[truth_dir_name].append(PqPqTranslatedDataValidation(
-                                msg_parquet_path, 
-                                None, 
-                                self.exec_path))
-                            self.print('No files in translated msg TEST path {:s}'.format(test_msg_parquet_path))
-                    # Existing truth message parquet directory but missing test message parquet directory
+                                    msg_parquet_path, 
+                                    None, 
+                                    self.exec_path))
+                            self.missing_transl_msg_test_paths.append(os.path.join(test_path, fname))
+                            self.print('Missing translated msg TEST path {:s}'.format(os.path.join(test_path, fname)))
+                    # Existing truth message parquet directory with no parquet files inside
                     else:
-                        self.transl_validation_dict[truth_dir_name].append(PqPqTranslatedDataValidation(
-                                msg_parquet_path, 
-                                None, 
-                                self.exec_path))
-                        self.missing_transl_msg_test_paths.append(os.path.join(test_path, msg_pq_dir))
-                        self.print('Missing translated msg TEST path {:s}'.format(os.path.join(test_path, msg_pq_dir)))
-                # Existing truth message parquet directory with no parquet files inside
+                        self.print('No files in translated msg TRUTH path {:s}'.format(msg_parquet_path))
                 else:
-                    self.print('No files in translated msg TRUTH path {:s}'.format(msg_parquet_path))
+                    # There are no validation objects for non-Parquet files at this time. Store the full paths
+                    # to each non-Parquet object for now.
+                    if fname in self.transl_misc_validation_fnames:
+                        self.transl_misc_validation_dict[truth_dir_name] = [msg_parquet_path, test_msg_parquet_path]
         else:
             for msg_pq_dir in truth_dir_listing:
                 msg_parquet_path = os.path.join(truth_path, msg_pq_dir)
