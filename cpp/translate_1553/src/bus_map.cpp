@@ -54,6 +54,37 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 		for (auto bus : it->second)
 			unique_buses_.insert(bus);
 	}	
+
+	// Print out maps
+	printf("\nChannel IDs to Map----\n");
+	for (auto channel_id : channel_ids_)
+	{
+		printf("%i\n", channel_id);
+	}
+	printf("----\n");
+
+	// Only print tmats channel ids that are in the 
+	// channel id master list
+	std::map<uint64_t, std::string> tmats_print_map;
+	for (std::map<uint64_t, std::string>::iterator it =
+		tmats_chanid_to_source_map_.begin();
+		it != tmats_chanid_to_source_map_.end();
+		++it)
+	{
+		// if the tmats channel id exists in the set of 
+		// channel ids provided by initialize maps,
+		// add the channel id to the tmats print map
+		if (channel_ids_.count(it->first) == 1)
+		{
+			tmats_print_map[it->first] = it->second;
+		}
+	}
+
+	if (tmats_print_map.size() > 0)
+		iterable_tools_.PrintMapWithHeader_KeyToValue<uint64_t, std::string>
+		(tmats_print_map,
+			std::vector<std::string>({ "chID", "Bus" }),
+			"TMATS Map");
 }
 
 std::string BusMap::PrintFinalMap()
@@ -197,8 +228,8 @@ bool BusMap::SubmitMessages(
 	}
 	for (int i = 0; i < count; i++)
 	{
-		key = (transmit_cmd[i] << 16 ) 
-			| (recieve_cmd[i]) & mask_;
+		key = ((transmit_cmd[i] << 16 ) 
+			| (recieve_cmd[i])) & mask_;
 		if (icd_message_key_to_channelids_map_.count(key) == 1)
 		{
 			icd_message_key_to_channelids_map_[key].insert(channel_ids[i]);
@@ -212,8 +243,7 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 {
 	std::map<uint64_t, std::string> vote_map;
 
-	// map of channel id -> busname -> vote count
-	std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>> votes;
+	votes_.clear();
 
 	// iterate over icd_message_key_to_channelids_map_ and extract 
 	// out votes, each channel id found in icd_message_key_to_channelids_map_
@@ -229,39 +259,20 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 			// if the channel ID does not exist yet
 			// in the vote map, initialize all the 
 			// bus vote counts to zero
-			if (votes.count(channel_id) == 0)
+			if (votes_.count(channel_id) == 0)
 			{
 				for (auto bus : unique_buses_)
 				{
-					votes[channel_id][bus] = 0;
+					votes_[channel_id][bus] = 0;
 				}				
 			}
 
 			for (auto bus : icd_message_key_to_busnames_map_[it->first])
 			{
-				++votes[channel_id][bus];
+				++votes_[channel_id][bus];
 			}
 		}
 	}
-
-	// print vote map
-	printf("\nChannel ID votes---\n");
-	for (std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>>::iterator
-		it = votes.begin();
-		it != votes.end();
-		++it)
-	{
-		printf("\n");
-		printf("Channel ID %i:\n", it->first);
-		for (std::unordered_map<std::string, uint64_t>::iterator
-			it2 = it->second.begin();
-			it2 != it->second.end();
-			++it2)
-		{
-			printf("%s=\t%i\n", it2->first.c_str(), it2->second);
-		}
-	}
-	printf("---\n\n");
 
 	// assign a bus to a channel id if it has the most votes
 	// but not if it has zero votes, and not if the number of
@@ -270,8 +281,8 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 	int find_count = 0;
 	std::string highest_voted_bus = "";
 	for (std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>>::iterator
-		it = votes.begin();
-		it != votes.end();
+		it = votes_.begin();
+		it != votes_.end();
 		++it)
 	{
 		highest_vote = 0;
@@ -309,7 +320,7 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 
 bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 	bool use_tmats_busmap,
-	bool user_input_if_not_complete,
+	bool prompt_user,
 	std::vector<std::string>* user_test_input)
 {
 	final_map_ptr_ = &final_map;
@@ -320,36 +331,7 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 	// vote mapping
 	std::map<uint64_t, std::string> vote_mapping = VoteMapping();
 
-	// Print out maps
-	printf("\nChannel IDs to Map----\n");
-	for (auto channel_id : channel_ids_)
-	{
-		printf("%i\n", channel_id);
-	}
-	printf("----\n");
-
-	// Only print tmats channel ids that are in the 
-	// channel id master list
-	std::map<uint64_t, std::string> tmats_print_map;
-	for (std::map<uint64_t, std::string>::iterator it =
-		tmats_chanid_to_source_map_.begin();
-		it != tmats_chanid_to_source_map_.end();
-		++it)
-	{
-		// if the tmats channel id exists in the set of 
-		// channel ids provided by initialize maps,
-		// add the channel id to the tmats print map
-		if (channel_ids_.count(it->first) == 1)
-		{
-			tmats_print_map[it->first] = it->second;
-		}
-	}
-
-	if (tmats_print_map.size() > 0)
-		iterable_tools_.PrintMapWithHeader_KeyToValue<uint64_t, std::string>
-		(tmats_print_map,
-			std::vector<std::string>({ "chID", "Bus" }),
-			"TMATS Map");
+	
 
 
 	if (use_tmats_busmap)
@@ -359,23 +341,11 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 	else
 	{
 		SubmitToFinalBusMap(vote_mapping, "Vote Method");
-	}
+	}	
 
-	// Print Final Bus Map
-	PrintFinalMap();
-
-	// If final map contains all channel IDS return true
-	if (iterable_tools_.GetKeys(final_bus_map_with_sources_).size() ==
-		channel_ids_.size() &&
-		iterable_tools_.GetKeys(final_bus_map_with_sources_).size() > 0)
-	{
-		PrepareFinalMap();
-		return true;
-	}
-
-	// If user_input_if_not_complete is false
+	// If prompt_user is false
 	// If the final bus map has any mappings return true
-	if (!user_input_if_not_complete)
+	if (!prompt_user)
 	{
 		// Check if return map is > 1
 		if (iterable_tools_.GetKeys(final_bus_map_with_sources_).size() > 0)
@@ -386,9 +356,10 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 		else
 			return false;
 	}
-	// If user_input_if_not_complete is true, let the use make adjustments
+	// If prompt_user is true, let the use make adjustments
 	else
 	{
+		PrintFinalMap();
 		if (UserAdjustments(user_test_input))
 		{
 			PrepareFinalMap();
@@ -397,6 +368,30 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 		else
 			return false;
 	}
+}
+
+void BusMap::Print()
+{
+	// print vote map
+	printf("\nChannel ID votes---\n");
+	for (std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>>::iterator
+		it = votes_.begin();
+		it != votes_.end();
+		++it)
+	{
+		printf("\n");
+		printf("Channel ID %i:\n", it->first);
+		for (std::unordered_map<std::string, uint64_t>::iterator
+			it2 = it->second.begin();
+			it2 != it->second.end();
+			++it2)
+		{
+			printf("%s=\t%i\n", it2->first.c_str(), it2->second);
+		}
+	}
+	printf("---\n\n");
+
+	PrintFinalMap();
 }
 
 void BusMap::SubmitToFinalBusMap(const std::map<uint64_t,

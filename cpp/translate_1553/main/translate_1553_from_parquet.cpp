@@ -174,7 +174,9 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 	bool use_tmats_busmap, std::map<uint64_t,std::string>& chanid_to_bus_name_map)
 {
 	std::unordered_map<uint64_t, std::set<std::string>> message_key_to_busnames_map;
-	dts1553.ICDDataPtr()->PrepareMessageKeyMap(message_key_to_busnames_map);
+
+	dts1553.ICDDataPtr()->PrepareMessageKeyMap(message_key_to_busnames_map,
+		dts1553.GetSupplBusNameToMessageKeyMap());
 
 	// Create the metadata file path from the input raw parquet path.
 	Metadata input_md;
@@ -221,6 +223,7 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 
 	// Initialize the maps necessary to synthesize the channel ID to bus name map.
 	BusMap bm;
+
 	// The mask will mask out word count/mode code from the transmit and 
 	// recieve command word portion of the key.
 	// The last 16 bits of the key represent the recieve command word
@@ -265,19 +268,9 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 	{
 		printf("channelid doesn't exist in parquet table!\n");
 		return false;
-	}
-	
-	// if use_tmats_busmap is true, no need to submit votes for the bus map utility
-	if (use_tmats_busmap)
-	{
-		if (!bm.Finalize(chanid_to_bus_name_map, true,
-			false))
-		{
-			printf("Bus mapping failed!\n");
-			return false;
-		}
-	}
-	else
+	}	
+
+	if (!use_tmats_busmap)
 	{
 		// Loop over the parquet file row group by row group and submit
 		// entries for votes to the bus map tool
@@ -301,11 +294,18 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 		int message_count_threshold = 1500 * 40;
 		while (status.count(false) == 0)
 		{
-			status.insert(pr.GetNextRG<uint64_t, arrow::NumericArray<arrow::Int32Type>>(transmit_cmd_column, transmit_cmds, size));
-			status.insert(pr.GetNextRG<uint64_t, arrow::NumericArray<arrow::Int32Type>>(recieve_cmd_column, recieve_cmds, size));
-			status.insert(pr.GetNextRG<uint64_t, arrow::NumericArray<arrow::Int32Type>>(channel_id_column, channel_ids, size));
+			status.insert(pr.GetNextRG<uint64_t, 
+				arrow::NumericArray<arrow::Int32Type>>(transmit_cmd_column, transmit_cmds, size));
+
+			status.insert(pr.GetNextRG<uint64_t, 
+				arrow::NumericArray<arrow::Int32Type>>(recieve_cmd_column, recieve_cmds, size));
+
+			status.insert(pr.GetNextRG<uint64_t,
+				arrow::NumericArray<arrow::Int32Type>>(channel_id_column, channel_ids, size));
+
 			if(!bm.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids, size))
 				return false;
+
 			pr.IncrementRG();
 			submission_count += size;
 
@@ -333,21 +333,49 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 		}
 
 		// If the bus map was unsuccessful, clear any remaining
-		// bus map information the above while loop execution.
+		// bus map information from the above while loop execution.
 		if (!successful_map)
 		{
 			chanid_to_bus_name_map.clear();
 		}
 
 		// If prompt user == true, finalize again with prompt
-		// user passed in 
+		// user passed in to give the user a chance to edit
+		// the bus map if it isn't complete
+		if (prompt_user)
+		{
+			
+			if (!bm.Finalize(chanid_to_bus_name_map, false,
+				prompt_user))
+			{
+				printf("Bus mapping failed!\n");
+				return false;
+			}
+		}
+
+		// if chanid_to_bus_name_map is still empty after
+		// prompt user was potentially called
+		// return false, because nothing was mapped
+		if (chanid_to_bus_name_map.empty())
+		{
+			printf("Bus mapping failed!\n");
+			return false;
+		}
+
+	}
+
+	// Use TMATS busmap
+	else
+	{
 		if (!bm.Finalize(chanid_to_bus_name_map, use_tmats_busmap,
 			prompt_user))
 		{
 			printf("Bus mapping failed!\n");
 			return false;
 		}
-	}	
+	}
+	
+	bm.Print();
 
 	// Convert the chanid to bus name map to a map from 
 	// int to set of strings.
