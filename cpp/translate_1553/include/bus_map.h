@@ -42,6 +42,7 @@ private:
 	void SubmitToFinalBusMap(const std::map<uint64_t,
 		std::string>& insert_map,
 		std::string source);
+	std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>> votes_;
 
 public:
 	BusMap() : tmats_present_(false) {};
@@ -139,29 +140,31 @@ public:
 										If true, the tool will use the tmats mapping
 										else it will use the default vote method.
 
-		 user_input_if_not_complete	-> True: If all the channel_ids are not mapped
-												prompt the user for help with bus mapping
-									   False: Continue translation without user intervention
-												if at least one channel_id was mapped
+		 prompt_user				-> True:  Prompt the user for help with bus mapping
+									   False: Don't Prompt the user for help bus mapping
 
 		 user_test_input			-> Used to bypass user input for unit tests
 
-		 Returns: True -> If all channel_ids passed to Initialize Maps were mapped
+		 Returns: True -> If all channel_ids are mapped AND prompt_user = false
 						  |OR| at least one	channel id is mapped 
-							and user_input_if_not_complete is false
-						  |OR| user_input_if_not_complete is set to true and the user
-							selects option 1 to continue with bus map (user input is
-							available when mapping is incomplete and user_input_if_not_complete
-							is set to true)
+							AND prompt_user = false
+						  |OR| prompt_user is set to true and the user
+							selects option 1 to continue with bus map 
 				  False-> If zero channel_ids are
-							mapped and user_input_if_not_complete is false
-						  |OR| user_input_if_not_complete is set to true and the user
+							mapped and prompt_user is false
+						  |OR| prompt_user is set to true and the user
 							selects option "q" to quit translation		
 	*/
 	bool Finalize(std::map<uint64_t, std::string>& final_map,
 		bool use_tmats_busmap,
-		bool user_input_if_not_complete,
+		bool prompt_user,
 		std::vector<std::string>* test_options = NULL);
+
+	/*
+		Prints the current vote statistics along with
+		the final bus map
+	*/
+	void Print();
 	 
 	///////////////////////// Utilities used for unit tests
 

@@ -303,6 +303,44 @@ TEST_F(BusMapTest, UserAdjustmentsMapMultipleAndContinueAdjustsFinalMap)
 	EXPECT_TRUE(continue_translation);
 }
 
+TEST_F(BusMapTest, UserAdjustmentsMapMultipleAndContinueAdjustsFinalMapTMATS)
+{
+	icd_message_key_to_busnames_map[10 & mask] = std::set<std::string>({ "BUS1" });
+	icd_message_key_to_busnames_map[11 & mask] = std::set<std::string>({ "BUS2" });
+	icd_message_key_to_busnames_map[12 & mask] = std::set<std::string>({ "BUS3" });
+
+	tmats_chanid_to_source_map[1] = "BUSA";
+	tmats_chanid_to_source_map[2] = "BUS2";
+	tmats_chanid_to_source_map[3] = "BUSC";
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({ 1,2,3,4 }),
+		mask,
+		tmats_chanid_to_source_map);
+
+
+	std::vector<std::string> adj_vec = { "2","invalid_chid","3","invalid_bus",
+						  "BUS3","2","invalid_chid","1",
+						  "invalid_bus","BUS1","1" };
+	std::map<uint64_t, std::string> res;
+	bool continue_translation = b.Finalize(res, true, true, &adj_vec);
+
+	std::map<uint64_t, std::pair<std::string, std::string>> final_bus_map =
+		b.GetFinalBusMap_withSource();
+	EXPECT_TRUE(iterable_tools_.GetKeys(final_bus_map).size() == 3);
+	EXPECT_EQ(final_bus_map[1].first, "BUS1");
+	EXPECT_EQ(final_bus_map[1].second, "USER");
+	EXPECT_EQ(final_bus_map[2].first, "BUS2");
+	EXPECT_EQ(final_bus_map[2].second, "TMATS");
+	EXPECT_EQ(final_bus_map[3].first, "BUS3");
+	EXPECT_EQ(final_bus_map[3].second, "USER");
+	ASSERT_TRUE(iterable_tools_.GetKeys(res).size() == 3);
+	EXPECT_EQ(res[1], "BUS1");
+	EXPECT_EQ(res[2], "BUS2");
+	EXPECT_EQ(res[3], "BUS3");
+	EXPECT_TRUE(continue_translation);
+}
+
 TEST_F(BusMapTest, UserAdjustmentsEnsureNoMapInputDoesnotAllowChangesToFinalMap)
 {
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
@@ -881,28 +919,4 @@ TEST_F(BusMapTest, FinalizeReturnsFalseIfNothingMappedAndUserStopIsFalse)
 	bool continue_translation = b.Finalize(res, 0, false);
 	EXPECT_FALSE(continue_translation);
 	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 0);
-}
-
-TEST_F(BusMapTest, FinalizeReturnsTrueIfEverythingMatchedAndSkipsUserInput)
-{
-	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUSA" });
-	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUSB" });
-
-	b.InitializeMaps(&icd_message_key_to_busnames_map,
-		std::set<uint64_t>({ 1,2 }),
-		mask,
-		tmats_chanid_to_source_map);
-
-	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });
-	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({ 10,11 });
-	std::vector<uint64_t> channel_ids = std::vector<uint64_t>({   1, 2 });
-
-	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
-
-	std::map<uint64_t, std::string> res;
-	bool continue_translation = b.Finalize(res, 0, true);
-	EXPECT_TRUE(continue_translation);
-	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 2);
-	EXPECT_EQ(res[1], "BUSA");
-	EXPECT_EQ(res[2], "BUSB");
 }
