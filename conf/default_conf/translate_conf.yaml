@@ -51,10 +51,8 @@ tmats_busname_corrections:
 #
 # prompt_user
 #
-# True  ->  If all channel ids are NOT mapped, 
-#       prompt the user for help with bus mapping
-# False ->  Continue translation without user intervention if at least one chapter 10 channel ID 
-#       is mapped.
+# True  ->  prompt the user for help with bus mapping
+# False ->  don't prompt the user for help with bus mapping
 #
 prompt_user: false
 
