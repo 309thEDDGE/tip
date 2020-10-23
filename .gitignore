@@ -1,8 +1,8 @@
 *
 !*.Dockerfile
 !Dockerfile
-!pipeline
-!pipeline/**
+!ci_p1
+!ci_p1/**
 !vendor
 !vendor/*.gz
 !vendor/*.sh

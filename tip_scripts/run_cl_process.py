@@ -42,7 +42,7 @@ class RunCLProcess(Exec):
                 return False
         for d in self.dir_paths:
             if not os.path.isdir(d):
-                print('Directory path not present: \'{:s}\''.format(p))
+                print('Directory path not present: \'{:s}\''.format(d))
                 return False
         return True
 

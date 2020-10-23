@@ -2,8 +2,16 @@
 # CMAKE_BUILD_DIR defined by pipeline
 # UNITTEST_REPORT_DIR defined by pipeline
 
-pwd
-ls -al
+
+# exit when any command fails
+set -e
+
+
+# keep track of the last executed command
+trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
+# echo an error message before exiting
+trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
+
 
 BASE_DIR=${PWD}
 if [ -z "${CMAKE_BUILD_DIR}" ] ; then 
@@ -14,14 +22,19 @@ if [ -z "${CMAKE_BUILD_DIR}" ] ; then
 fi
 TEST_DIR=${CMAKE_BUILD_DIR}/cpp
 
-# For now, run cpp/tests because it is much faster than plain ctest
+echo ""
+echo Unit Tests
+echo ""
+# For now, run cpp/tests because it is much faster than ctest
 # In the future we might have to run ctest in order to get coverage statistics
 # If we do, try to make our tests compatible with the --parallel option of ctest
 cd ${TEST_DIR}
 ./tests
 cd ${BASE_DIR}
 
-# generate coverage
+echo ""
+echo Test Coverage
+echo ""
 mkdir -p ${UNITTEST_REPORT_DIR}
 echo "Writing coverage reports in ${UNITTEST_REPORT_DIR}"
 GCOV=gcov
@@ -36,3 +49,22 @@ GCOV="${GCOV}" gcovr -j --verbose \
     --filter "${CPP_COVERAGE_FILTER}" \
     $(if [ -n "${CPP_COVERAGE_EXCLUDE}" ]; then echo --exclude="${CPP_COVERAGE_EXCLUDE}"; fi)
 set +x
+
+echo ""
+echo Parser validation
+echo ""
+cd $BASE_DIR
+mv build/bin .
+python tip_scripts/pqpqvalidation/end_to_end_validator.py --video /test/truth /test/test /test/log
+LOG_FILE="$(ls -1t /test/log/* | head -1)"
+
+if [[ -z "$LOG_FILE" ]] ; then
+	echo "Check parsing command; no log files were found."
+	exit 1
+elif grep "All validation set result: PASS" "$LOG_FILE" ; then
+	echo "Parser validation succeeded"
+	exit 0
+else
+	echo "Parser validation failed"
+	exit 1
+fi
