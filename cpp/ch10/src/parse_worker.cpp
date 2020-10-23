@@ -375,7 +375,6 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		printf("(%03u) Absolute position: %llu\n", id, start_position);
 #endif
 
-	// Set complete = false; here?
 	first_tdp = false;
 	continue_parsing = true;
 	uint16_t n_milstd_messages = 0;
@@ -421,17 +420,6 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 #endif
 		delete_alloc = true;
 	}
-
-	//const uint8_t* buff_raw = bb.Data();
-	//const uint16_t* ui16val;
-	//for (int i = 0; i < (int)bb.Size(); i++)
-	//{
-	//	ui16val = (const uint16_t*)(buff_raw + i);
-
-	//	// Print if the uint16_t val is equal to the sync value.
-	//	if(*ui16val == 60197)
-	//		printf("offset %d, ui16 val %hu\n", i, *ui16val);
-	//}
 	
 	i106_status_ = I106C10OpenBuffer(&i106_handle_, (void*)bb.Data(), (int)bb.Size(), I106C10Mode::READ);
 	if (i106_status_ != I106Status::I106_OK)
@@ -441,14 +429,6 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		complete = true;
 		return;
 	}
-
-	// Find time data packet and collect locations of sync bytes.
-	// Note that in append_mode, this function only finds the sync 
-	// byte locations and returns when the first error free packet
-	// header is found, unlike the case when NOT in append_mode, when
-	// the function only returns a non UINT32_MAX when a time data
-	// packet is found. 
-	//first_TDP_loc = pkthdr->find_first_time_data_packet(append_mode);
 
 	// Iterate over packets, switch on packet type and parse. 
 	void* temp_buffer_ptr = (void*)temp_buffer_vec_.data();
@@ -524,7 +504,8 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 
 
 		//printf("after read next header, type = %hhu\n", i106_header_.DataType);
-		// Exit as soon as the first TDP is found. The assumption is that the previous
+		// In append mode, exit as soon as the first TDP is found. The assumption is 
+		// that the previous
 		// iteration of a worker in the part of the Ch10 file in which the buffer has been
 		// set already parsed all packets starting from the TDP and continuing to end
 		// of the buffer. 
@@ -553,11 +534,6 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 			else
 				continue;
 		}
-
-		// NOT READY YET!! -- Do the following instead of parsing the packet
-		// header using TIP-native classes. When this is ready. Remove the 
-		// call to SetReadPos that moves the BinBuff read position to the beginning
-		// of the header and the pkthdr->Parse() call. 
 
 		// No need to get the header length because ReadNextHeader sets
 		// its internal pointer to the end of the ch10 packet header. Now 
