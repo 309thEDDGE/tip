@@ -9,6 +9,7 @@ sys.path.append(script_path)
 
 from tip_scripts.pqpqvalidation.pqpq_raw_validation import PqPqRawValidation
 from tip_scripts.pqpqvalidation.pqpq_translated_data_validation import PqPqTranslatedDataValidation
+from tip_scripts.pqpqvalidation.pqpq_translated_data_dir_validation import PqPqTranslatedDataDirValidation
 import time
 
 class E2EValidator(object):
@@ -60,6 +61,37 @@ class E2EValidator(object):
         self.log_handle = None
         self.run_times = {}
 
+    def _read_files_under_test(self):
+
+        self.files_under_test = {}
+
+        # read in chapter ten names and associated ICDs from a provided csv
+        f = open(self.csv_path, "r")
+        lines = f.readlines()
+        
+        for line in lines:
+            temp = line.split(',')
+            basename = temp[0].rstrip('.Ch10').rstrip('.ch10')
+            self.files_under_test[temp[0].strip()] = {'icd': temp[1].strip(), 
+                                                      'basename': basename,
+                                                      'raw1553': basename + '_1553.parquet',
+                                                      'transl1553': basename + '_1553_translated'}
+        print(self.files_under_test)
+
+    def _is_raw1553_file_under_test(self, input_fname):
+        # Input is dir or file.
+        for testdict in self.files_under_test.values():
+            if testdict['raw1553'] == input_fname:
+                return True
+        return False
+
+    def _is_translated1553_file_under_test(self, input_fname):
+        # Input is dir or file.
+        for testdict in self.files_under_test.values():
+            if testdict['transl1553'] == input_fname:
+                return True
+        return False
+
     def _regenerate_test_set(self):
 
         print('Regenerating test set\n')
@@ -71,22 +103,28 @@ class E2EValidator(object):
         truth_dir = self.truth_set_dir # Directory in which ch10 files and ICDs reside
         test_dir = self.test_set_dir # Directory into which generated raw/translated data are placed
 
-        # read in chapter ten names and associated ICDs from a provided csv
-        f = open(self.csv_path, "r")
-        lines = f.readlines()
+        for ch10,testdict in self.files_under_test.items():
 
-        ch10_files_and_icds = {}
-        for line in lines:
-            temp = line.split(',')
-            ch10_files_and_icds[temp[0].strip()] = temp[1].strip() # strip leading and trailing white space
+            ch10_full_path = os.path.join(truth_dir, ch10)
+            icd_full_path = os.path.join(truth_dir, testdict['icd'])
 
-        for ch10,icd in ch10_files_and_icds.items():
+            # If either the icd or ch10 file do not exist in the truth 
+            # directory, then skip the call to parse_and_translate.py.
+            if not os.path.isfile(ch10_full_path):
+                msg = 'Truth ch10 file does not exist, not generating test data: {:s}\n!'.format(ch10_full_path)
+                print(msg)
+                continue
+            if not os.path.isfile(icd_full_path):
+                msg = '\nTruth icd file does not exist, not generating test data: {:s}\n!'.format(icd_full_path)
+                print(msg)
+                continue
+
             if self.video:
-                 call_list = ['python', script_path, os.path.join(truth_dir, ch10),
-                         os.path.join(truth_dir, icd), '-o', test_dir, '--video', '--no-ts']
+                 call_list = ['python', script_path, ch10_full_path,
+                         icd_full_path, '-o', test_dir, '--video', '--no-ts']
             else:
-                call_list = ['python', script_path, os.path.join(truth_dir, ch10),
-                        os.path.join(truth_dir, icd), '-o', test_dir]
+                call_list = ['python', script_path, ch10_full_path,
+                        icd_full_path, '-o', test_dir]
             call_string = ' '.join(call_list)
             print(call_string)
             start_time = time.time()
@@ -113,12 +151,14 @@ class E2EValidator(object):
 
 
     def validate(self):
+        self._read_files_under_test()
         if self.run_tip:
             self._regenerate_test_set()
         self._open_log()
-        self._create_validation_objects()
-        self._match_raw_and_translated_comparison_objects()
-        self._validate_objects_grouped_by_originating_ch10()
+        self._create_raw1553_validation_objects()
+        self._create_transl1553_validation_objects()
+        #self._match_raw_and_translated_comparison_objects()
+        self._validate_objects()
         self._assemble_validation_stats()
         self._present_stats()
 
@@ -153,6 +193,42 @@ class E2EValidator(object):
         for key, value in self.run_times.items():
             print('{}: {} seconds'.format(key,round(value,2)))
             self.print('{}: {} seconds'.format(key,round(value,2)))
+
+    def _assemble_validation_stats(self):
+
+        '''
+        For single_ch10_pass, all_transl_pass and all_ch10_pass:
+        If a single instance of False occurs, the value will be set to False forever.
+        If one or more None results are retrieved from the validation object, and no
+        False results, then the value will be None.
+        '''
+
+        all_ch10_pass = True
+        single_ch10_pass = True
+        transl_pass = True
+        raw_pass = True
+        all_transl_pass = True
+        for ch10name,d in self.files_under_test.items():
+            raw_pass = d['raw1553validation'].test_passed
+            all_transl_pass = d['transl1553validation'].all_passed
+            if raw_pass == True and all_transl_pass == True:
+                single_ch10_pass = True
+            else:
+                single_ch10_pass = False
+
+            self.validation_results_dict[ch10name] = {'ch10': single_ch10_pass, 'raw':raw_pass , 
+                                                      'translated': {}, 'all_translated': all_transl_pass}
+
+            transl_validation_obj_list = d['transl1553validation'].validation_objects
+            if transl_validation_obj_list is not None:
+                for obj in transl_validation_obj_list:
+                    base_name = os.path.basename(obj.truth_path)
+                    self.validation_results_dict[ch10name]['translated'][base_name] = obj.test_passed
+
+            if not single_ch10_pass:
+                all_ch10_pass = False
+
+        self.validation_results_dict['all_ch10'] = all_ch10_pass
 
     def _assemble_validation_stats(self):
 
@@ -246,6 +322,31 @@ class E2EValidator(object):
                         self.print('\nstderr:')
                         self.print(stderr)
 
+    def _validate_objects(self):
+
+        for ch10name,d in self.files_under_test.items():
+            self.print('\nValidating Ch10 with (presumed) name: {:s}'.format(ch10name))
+            print('\n---Validating Ch10 with (presumed) name: {:s}---\n\n'.format(ch10name))
+
+            raw_validation_obj = d['raw1553validation']
+            self.print('\n-- Raw Comparison --\n')
+            info = '\n' + str(raw_validation_obj)
+            self.print(info)
+            print(info)
+            rawresult = raw_validation_obj.validate()
+            self.print('Validated: {}'.format(rawresult))
+
+            # Get stderr/stdout as necessary and add to log.
+            if self.save_stdout:
+                stdout, stderr = raw_validation_obj.get_validation_output()
+                self.print('\nstdout:')
+                self.print(stdout)
+                self.print('\nstderr:')
+                self.print(stderr)
+
+            transl_validation_obj = d['transl1553validation']
+            self.print('\n--Translation Comparison--\n')
+            transl_validation_obj.validate(self.print, self.save_stdout)
 
     def _match_raw_and_translated_comparison_objects(self):
 
@@ -272,7 +373,7 @@ class E2EValidator(object):
             self.print('Zero entries in valdidation set. Exiting')
             sys.exit(0)
 
-    def _get_paths(self, input_path):
+    def _get_paths_old(self, input_path):
 
         paths_dict = {}
         if not os.path.isdir(input_path):
@@ -285,10 +386,14 @@ class E2EValidator(object):
         paths_dict['raw'] = set()
         paths_dict['translated'] = set()
         for d in dir_contents:
-            if d.find('_1553_translated') > 0:
-                paths_dict['translated'].add(d)
-            elif d.find('_1553.parquet') > 0:
-                paths_dict['raw'].add(d)
+            if self._is_relevant_to_file_under_test(d):
+                if d.find('_1553_translated') > 0:
+                    paths_dict['translated'].add(d)
+                elif d.find('_1553.parquet') > 0:
+                    paths_dict['raw'].add(d)
+            else:
+                pass
+                #print('{:s} is not relevant to files under test. See ch10list.csv.\n'.format(d))
 
         # Convert the sets to sorted lists such that 
         # the order of ch10s processed in e2e validation
@@ -297,7 +402,33 @@ class E2EValidator(object):
         paths_dict['translated'] = sorted(list(paths_dict['translated']))
         return paths_dict
 
-    def _create_validation_objects(self):
+    #def _get_1553_paths(self, input_path):
+    #    paths_dict = {}
+    #    if not os.path.isdir(input_path):
+    #        return paths_dict
+
+    #    dir_contents = os.listdir(input_path)
+
+    #    paths_dict['raw'] = set()
+    #    paths_dict['translated'] = set()
+    #    for d in dir_contents:
+    #        if self._is_raw1553_file_under_test(d):
+    #            if d.find('_1553_translated') > 0:
+    #                paths_dict['translated'].add(d)
+    #            elif d.find('_1553.parquet') > 0:
+    #                paths_dict['raw'].add(d)
+    #        else:
+    #            pass
+    #            #print('{:s} is not relevant to files under test. See ch10list.csv.\n'.format(d))
+
+    #    # Convert the sets to sorted lists such that 
+    #    # the order of ch10s processed in e2e validation
+    #    # remains the same from run to run.
+    #    paths_dict['raw'] = sorted(list(paths_dict['raw']))
+    #    paths_dict['translated'] = sorted(list(paths_dict['translated']))
+    #    return paths_dict
+
+    def _create_validation_objects_old(self):
 
         self.print('truth base dir: ' + self.truth_set_dir)
         self.print('test base dir: ' + self.test_set_dir)
@@ -338,6 +469,26 @@ class E2EValidator(object):
                                                                                                                  len(test_dirs_dict)))
             sys.exit(0)
 
+    def _create_raw1553_validation_objects(self):
+
+        self.print('truth base dir: ' + self.truth_set_dir)
+        self.print('test base dir: ' + self.test_set_dir)
+            
+        for ch10name,d in self.files_under_test.items():
+            rawname = d['raw1553']
+            self.files_under_test['raw1553validation'] = PqPqRawValidation(
+                os.path.join(self.truth_set_dir, rawname),
+                os.path.join(self.test_set_dir, rawname),
+                self.exec_path)
+
+    def _create_transl1553_validation_objects(self):
+
+        for ch10name,d in self.files_under_test.items():
+            translname = d['transl1553']
+            self.files_under_test['transl1553validation'] = PqPqTranslatedDataDirValidation(
+                self.truth_set_dir, self.test_set_dir, translname, self.exec_path)
+
+
     def _create_translated_validation_objects(self, truth_dir_name):
 
         self.transl_validation_dict[truth_dir_name] = []
@@ -345,7 +496,7 @@ class E2EValidator(object):
         truth_path = os.path.join(self.truth_set_dir, truth_dir_name)
         truth_dir_listing = os.listdir(truth_path)
         test_path = os.path.join(self.test_set_dir, truth_dir_name)
-        test_dir_listing = ""     
+        test_dir_listing = ""
 
         if len(truth_dir_listing) == 0:
             self.missing_transl_truth_paths.append(truth_dir_name)
