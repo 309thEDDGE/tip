@@ -1,5 +1,6 @@
 import sys, os
 import subprocess
+import time
 
 class Exec:
     def __init__(self, *args, **kwargs):
@@ -7,6 +8,7 @@ class Exec:
         self.stderr = ''
         self.command_str = ''
         self.command_list = []
+        self.exec_time = None
 
     def exec(self, command_string):
         self.command_str = command_string
@@ -26,6 +28,8 @@ class Exec:
         self.command_list = command_list
         if print_stdout:
             print('\nExecuting:\n\'{:s}\'\n'.format(' '.join(self.command_list)))
+
+        start_time = time.time()
         proc = subprocess.Popen(self.command_list, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, cwd=cwd)
         symbol_count = 20
@@ -51,6 +55,7 @@ class Exec:
                     print(decodestdout.strip())
                 sys.stdout.flush()
 
+        self.exec_time = time.time() - start_time
         rawstdout, rawstderr = proc.communicate()
         stderr = rawstderr.decode()
         if print_stdout:

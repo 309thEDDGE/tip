@@ -3,6 +3,7 @@ import sys
 import datetime
 import argparse
 import platform
+import json
 
 script_path = os.path.dirname(os.path.abspath(os.path.join(os.path.realpath(__file__), '../..')))
 sys.path.append(script_path)
@@ -10,6 +11,7 @@ sys.path.append(script_path)
 from tip_scripts.pqpqvalidation.pqpq_raw_validation import PqPqRawValidation
 from tip_scripts.pqpqvalidation.pqpq_translated_data_validation import PqPqTranslatedDataValidation
 from tip_scripts.pqpqvalidation.pqpq_translated_data_dir_validation import PqPqTranslatedDataDirValidation
+from tip_scripts.exec import Exec
 import time
 
 class E2EValidator(object):
@@ -36,7 +38,7 @@ class E2EValidator(object):
         self.raw_validation_dict = {}
         self.transl_validation_dict = {}
         self.all_validation_obj = {}
-        self.all_validation_res = {}
+        self.duration_data = {}
 
         # Dictionary for holding validation objects for metadata, yaml, text, or
         # other non-Parquet files that are found in a translated data directory
@@ -79,7 +81,6 @@ class E2EValidator(object):
                                                       'raw1553': basename + '_1553.parquet',
                                                       'transl1553': basename + '_1553_translated'}
             self.all_validation_obj[ch10name] = {}
-            self.all_validation_res[ch10name] = {}
 
         print(self.files_under_test)
 
@@ -99,7 +100,7 @@ class E2EValidator(object):
 
     def _regenerate_test_set(self):
 
-        print('Regenerating test set\n')
+        print('\n-- Regenerating test set --\n')
 
         #Duration: 87 sec
 
@@ -133,8 +134,35 @@ class E2EValidator(object):
             call_string = ' '.join(call_list)
             print(call_string)
             start_time = time.time()
-            os.system(call_string)
+            #os.system(call_string)
+            e = Exec()
+            retcode = e.exec_list(call_list, cwd=None, print_stdout=True)
             self.run_times[ch10] = time.time() - start_time
+
+            # Do something if retcode != 0?
+
+            # Find the javascript at the end of stdout, load the javascript
+            # and save the data.
+            stdout, stderr = e.get_output()
+            char_ind = stdout.find('json:')
+            if char_ind > 0:
+                # +5 to get past json:, +1 to get past the newline
+                json_body = stdout[char_ind+5:]
+                duration_data = json.loads(json_body)
+
+                # Add duration information to dict.
+                # Loaded duration dict must be one: key = ch10 path, val = duration info.
+                if len(duration_data) == 1:
+                    key = list(duration_data.keys())[0]
+                    self.duration_data[ch10] = duration_data[key]
+                else:
+                    print('Duration data does not have length 1!:\n', duration_data)
+                    sys.exit(0)
+
+            else:
+                print('!!! json data not found in parse_and_translate.py stdout. Exiting. !!!')
+                sys.exit(0)
+
 
 
     def _log_entry(self, entry_str):
@@ -198,9 +226,26 @@ class E2EValidator(object):
 
         print('\nTIP run time stats:')
         self.print('\nTIP run time stats:')
-        for key, value in self.run_times.items():
-            print('{}: {} seconds'.format(key,round(value,2)))
-            self.print('{}: {} seconds'.format(key,round(value,2)))
+        roundval = None
+        for ch10name in self.duration_data.keys():
+            print('\n{:s}:'.format(ch10name))
+            self.print('\n{:s}:'.format(ch10name))
+
+            rawdur = self.duration_data[ch10name]['raw']
+            if rawdur is None:
+                roundval = None
+            else:
+                roundval = round(rawdur,2)
+            print('raw: {} seconds'.format(roundval))
+            self.print('raw: {} seconds'.format(roundval))
+
+            transldur = self.duration_data[ch10name]['transl']
+            if transldur is None:
+                roundval = None
+            else:
+                roundval = round(transldur,2)
+            print('translation: {} seconds'.format(roundval))
+            self.print('translation: {} seconds'.format(roundval))
 
     def _assemble_validation_stats(self):
 
