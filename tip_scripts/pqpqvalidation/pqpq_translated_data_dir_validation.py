@@ -1,5 +1,5 @@
 import os
-from tip_scripts.pqpqvalidation import pqpq_translated_data_validation
+from tip_scripts.pqpqvalidation.pqpq_translated_data_validation import PqPqTranslatedDataValidation
 
 class PqPqTranslatedDataDirValidation:
 
@@ -48,7 +48,7 @@ class PqPqTranslatedDataDirValidation:
             self.top_level_dirs_validated = False
             return
 
-        #self.top_level_dirs_validated = True
+        self.top_level_dirs_validated = True
 
     def _create_validation_objects(self):
 
@@ -63,8 +63,8 @@ class PqPqTranslatedDataDirValidation:
                 continue
 
             self.validation_objects.append(PqPqTranslatedDataValidation(
-                os.path.join(self.truth_dir, truthfile),
-                os.path.join(self.test_dir, truthfile),
+                os.path.join(self.truth_dir_path, truthfile),
+                os.path.join(self.test_dir_path, truthfile),
                 self.exec_path))
 
     def validate(self, print_obj, save_stdout):

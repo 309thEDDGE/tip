@@ -68,11 +68,13 @@ class ValidationBase(object):
             if ret_val == 0 and output_success:
                 self.test_passed = True
             else:
-                self.test_passed = False
                 if ret_val != 0:
                     print('ValidationBase.do_validation(): ret_val = {:d}'.format(ret_val))
-                if not output_success:
+                    # Indicate test was not conducted.
+                    self.test_passed = None
+                elif not output_success:
                     print('ValidationBase.do_validation(): output_success = False'.format(ret_val))
+                    self.test_passed = False
 
         return self.test_passed
 
