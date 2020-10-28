@@ -14,7 +14,7 @@ class PqPqTranslatedDataDirValidation:
         self.truth_dir_list = []
         self.test_dir_list = []
         self.validation_objects = []
-        self.all_pass = None
+        self.all_passed = None
 
         self._validate_top_level_dirs()
         if self.top_level_dirs_validated:
@@ -48,6 +48,8 @@ class PqPqTranslatedDataDirValidation:
             self.top_level_dirs_validated = False
             return
 
+        #self.top_level_dirs_validated = True
+
     def _create_validation_objects(self):
 
         # Loop over msg-specific directories in truth list and create
@@ -66,10 +68,13 @@ class PqPqTranslatedDataDirValidation:
                 self.exec_path))
 
     def validate(self, print_obj, save_stdout):
+
+        none_count = 0
+        true_count = 0
+        false_count = 0
+
         if self.top_level_dirs_validated:
-            none_count = 0
-            true_count = 0
-            false_count = 0
+            
             for vobj in self.validation_objects:
 
                 info = '\n' + str(vobj)
@@ -85,16 +90,16 @@ class PqPqTranslatedDataDirValidation:
                     print_obj('\nstderr:')
                     print_obj(stderr)
 
-            if result is None:
-                none_count += 1
-            elif result:
-                true_count += 1
-            else:
-                false_count += 1
+                if result is None:
+                    none_count += 1
+                elif result:
+                    true_count += 1
+                else:
+                    false_count += 1
 
-        if none_count > 0:
-            self.all_pass = None
-        elif false_count == 0:
-            self.all_pass = True
-        else:
-            self.all_pass = False
+            if none_count > 0:
+                self.all_passed = None
+            elif false_count == 0:
+                self.all_passed = True
+            else:
+                self.all_passed = False

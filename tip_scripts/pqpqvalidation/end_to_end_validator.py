@@ -35,6 +35,8 @@ class E2EValidator(object):
         self.save_stdout = False
         self.raw_validation_dict = {}
         self.transl_validation_dict = {}
+        self.all_validation_obj = {}
+        self.all_validation_res = {}
 
         # Dictionary for holding validation objects for metadata, yaml, text, or
         # other non-Parquet files that are found in a translated data directory
@@ -45,7 +47,6 @@ class E2EValidator(object):
         # Non-parquet file names to be validated. Not implemented.
         self.transl_misc_validation_fnames = ['_metadata.yaml']
 
-        self.total_validation_dict = {}
         self.validation_results_dict = {}
         self.print = print
         self.missing_raw_test_paths = []
@@ -72,25 +73,29 @@ class E2EValidator(object):
         for line in lines:
             temp = line.split(',')
             basename = temp[0].rstrip('.Ch10').rstrip('.ch10')
-            self.files_under_test[temp[0].strip()] = {'icd': temp[1].strip(), 
+            ch10name = temp[0].strip()
+            self.files_under_test[ch10name] = {'icd': temp[1].strip(), 
                                                       'basename': basename,
                                                       'raw1553': basename + '_1553.parquet',
                                                       'transl1553': basename + '_1553_translated'}
+            self.all_validation_obj[ch10name] = {}
+            self.all_validation_res[ch10name] = {}
+
         print(self.files_under_test)
 
-    def _is_raw1553_file_under_test(self, input_fname):
-        # Input is dir or file.
-        for testdict in self.files_under_test.values():
-            if testdict['raw1553'] == input_fname:
-                return True
-        return False
+    #def _is_raw1553_file_under_test(self, input_fname):
+    #    # Input is dir or file.
+    #    for testdict in self.files_under_test.values():
+    #        if testdict['raw1553'] == input_fname:
+    #            return True
+    #    return False
 
-    def _is_translated1553_file_under_test(self, input_fname):
-        # Input is dir or file.
-        for testdict in self.files_under_test.values():
-            if testdict['transl1553'] == input_fname:
-                return True
-        return False
+    #def _is_translated1553_file_under_test(self, input_fname):
+    #    # Input is dir or file.
+    #    for testdict in self.files_under_test.values():
+    #        if testdict['transl1553'] == input_fname:
+    #            return True
+    #    return False
 
     def _regenerate_test_set(self):
 
@@ -155,16 +160,19 @@ class E2EValidator(object):
         if self.run_tip:
             self._regenerate_test_set()
         self._open_log()
+
+        self.print('truth base dir: ' + self.truth_set_dir)
+        self.print('test base dir: ' + self.test_set_dir)
+
         self._create_raw1553_validation_objects()
         self._create_transl1553_validation_objects()
-        #self._match_raw_and_translated_comparison_objects()
         self._validate_objects()
         self._assemble_validation_stats()
         self._present_stats()
 
     def _present_stats(self):
 
-        for ch10name in self.validation_results_dict.keys():
+        for ch10name in self.files_under_test.keys():
 
             msg = '\nValidation results for Ch10: {:s}'.format(ch10name)
             print(msg)
@@ -184,7 +192,7 @@ class E2EValidator(object):
             print(msg)
             self.print(msg)
 
-        msg = '\nAll validation set result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['all_ch10']))
+        msg = '\nAll validation set result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_ch10']))
         print(msg)
         self.print(msg)
 
@@ -208,127 +216,48 @@ class E2EValidator(object):
         transl_pass = True
         raw_pass = True
         all_transl_pass = True
-        for ch10name,d in self.files_under_test.items():
-            raw_pass = d['raw1553validation'].test_passed
-            all_transl_pass = d['transl1553validation'].all_passed
+        all_ch10_pass_is_set = False
+        for ch10name in self.files_under_test.keys():
+            raw_pass = self.all_validation_obj[ch10name]['raw1553'].test_passed
+            all_transl_pass = self.all_validation_obj[ch10name]['transl1553'].all_passed
             if raw_pass == True and all_transl_pass == True:
                 single_ch10_pass = True
+            elif raw_pass is None or all_transl_pass is None:
+                single_ch10_pass = None
             else:
                 single_ch10_pass = False
 
-            self.validation_results_dict[ch10name] = {'ch10': single_ch10_pass, 'raw':raw_pass , 
+            self.validation_results_dict[ch10name] = {'ch10': single_ch10_pass, 'raw': raw_pass, 
                                                       'translated': {}, 'all_translated': all_transl_pass}
 
-            transl_validation_obj_list = d['transl1553validation'].validation_objects
+            transl_validation_obj_list = self.all_validation_obj[ch10name]['transl1553'].validation_objects
             if transl_validation_obj_list is not None:
                 for obj in transl_validation_obj_list:
                     base_name = os.path.basename(obj.truth_path)
                     self.validation_results_dict[ch10name]['translated'][base_name] = obj.test_passed
 
-            if not single_ch10_pass:
-                all_ch10_pass = False
+            # Logic for the entire set:
+            # - all individual ch10 pass, set true
+            # - individual ch10 status mixed true and None, set None
+            # - single false indicates false for set
+            if not all_ch10_pass_is_set:
+                if single_ch10_pass is None:
+                    all_ch10_pass = None
+                elif single_ch10_pass == False:
+                    all_ch10_pass = False
+                    all_ch10_pass_is_set = True
 
         self.validation_results_dict['all_ch10'] = all_ch10_pass
 
-    def _assemble_validation_stats(self):
-
-        '''
-        For single_ch10_pass, all_transl_pass and all_ch10_pass:
-        If a single instance of False occurs, the value will be set to False forever.
-        If one or more None results are retrieved from the validation object, and no
-        False results, then the value will be None.
-        '''
-
-        all_ch10_pass = True
-        single_ch10_pass = True
-        transl_pass = True
-        raw_pass = True
-        all_transl_pass = True
-        for ch10name in self.total_validation_dict.keys():
-            raw_pass = True
-            single_ch10_pass = True
-            all_transl_pass = True
-
-            raw_validation_obj = self.total_validation_dict[ch10name]['raw']
-            raw_pass = raw_validation_obj.test_passed
-            if raw_pass == False or raw_pass is None:
-                if all_ch10_pass != False:
-                    all_ch10_pass = raw_pass
-                if single_ch10_pass != False:
-                    single_ch10_pass = raw_pass
-
-            self.validation_results_dict[ch10name] = {'ch10': None, 'raw':raw_pass , 'translated': {}, 'all_translated': None, 'all_ch10': None}
-
-            transl_validation_obj_list = self.total_validation_dict[ch10name]['translated']
-            if transl_validation_obj_list is not None:
-                for obj in transl_validation_obj_list:
-                    transl_pass = True
-                    base_name = os.path.basename(obj.truth_path)
-
-                    transl_pass = obj.test_passed
-                    if transl_pass == False or transl_pass is None:
-                        if all_ch10_pass != False:
-                            all_ch10_pass = transl_pass
-                        if single_ch10_pass != False:
-                            single_ch10_pass = transl_pass
-                        if all_transl_pass != False:
-                            all_transl_pass = transl_pass
-
-                    self.validation_results_dict[ch10name]['translated'][base_name] = transl_pass
-
-            self.validation_results_dict[ch10name]['all_translated'] = all_transl_pass
-            self.validation_results_dict[ch10name]['ch10'] = single_ch10_pass
-
-        self.validation_results_dict[ch10name]['all_ch10'] = all_ch10_pass
-
-
-    def _validate_objects_grouped_by_originating_ch10(self):
-
-        for ch10name in self.total_validation_dict.keys():
-            self.print('\nValidating Ch10 with (presumed) name: {:s}'.format(ch10name))
-            print('\n---Validating Ch10 with (presumed) name: {:s}---\n\n'.format(ch10name))
-
-            raw_validation_obj = self.total_validation_dict[ch10name]['raw']
-            self.print('\n-- Raw Comparison --\n')
-            info = '\n' + str(raw_validation_obj)
-            self.print(info)
-            print(info)
-            result = raw_validation_obj.validate()
-            self.print('Validated: {}'.format(result))
-
-            # Get stderr/stdout as necessary and add to log.
-            if self.save_stdout:
-                stdout, stderr = raw_validation_obj.get_validation_output()
-                self.print('\nstdout:')
-                self.print(stdout)
-                self.print('\nstderr:')
-                self.print(stderr)
-
-            transl_validation_obj_list = self.total_validation_dict[ch10name]['translated']
-            self.print('\n--Translation Comparison--\n')
-            if transl_validation_obj_list is not None:
-                for obj in transl_validation_obj_list:
-
-                    info = '\n' + str(obj)
-                    self.print(info)
-                    print(info)
-                    result = obj.validate()
-                    self.print('Validated: {}'.format(result))
-
-                    if self.save_stdout:
-                        stdout, stderr = obj.get_validation_output()
-                        self.print('\nstdout:')
-                        self.print(stdout)
-                        self.print('\nstderr:')
-                        self.print(stderr)
 
     def _validate_objects(self):
 
         for ch10name,d in self.files_under_test.items():
-            self.print('\nValidating Ch10 with (presumed) name: {:s}'.format(ch10name))
-            print('\n---Validating Ch10 with (presumed) name: {:s}---\n\n'.format(ch10name))
+            msg = '\n----- Validating Ch10: {:s} -----'.format(ch10name)
+            self.print(msg)
+            print(msg)
 
-            raw_validation_obj = d['raw1553validation']
+            raw_validation_obj = self.all_validation_obj[ch10name]['raw1553']
             self.print('\n-- Raw Comparison --\n')
             info = '\n' + str(raw_validation_obj)
             self.print(info)
@@ -344,216 +273,25 @@ class E2EValidator(object):
                 self.print('\nstderr:')
                 self.print(stderr)
 
-            transl_validation_obj = d['transl1553validation']
+            transl_validation_obj = self.all_validation_obj[ch10name]['transl1553']
             self.print('\n--Translation Comparison--\n')
             transl_validation_obj.validate(self.print, self.save_stdout)
 
-    def _match_raw_and_translated_comparison_objects(self):
-
-        transl_keys = self.transl_validation_dict.keys()
-        transl_obj_found = False
-        for rawk in self.raw_validation_dict.keys():
-            transl_obj_found = False
-
-            # Create the base name common to both raw and translated dirs.
-            base_name = rawk[:rawk.find('_1553.parquet')]
-            for transk in transl_keys:
-                if transk.find(base_name) > -1:
-                    self.total_validation_dict[base_name + '.ch10'] = {'raw': self.raw_validation_dict[rawk],
-                                                                       'translated': self.transl_validation_dict[transk]}
-                    transl_obj_found = True
-                    break
-
-            if not transl_obj_found:
-                self.total_validation_dict[base_name + '.ch10'] = {'raw': self.raw_validation_dict[rawk],
-                                                                       'translated': None}
-
-        #self.print('\nComplete validation set: ' + str(self.total_validation_dict))
-        if len(self.total_validation_dict) == 0:
-            self.print('Zero entries in valdidation set. Exiting')
-            sys.exit(0)
-
-    def _get_paths_old(self, input_path):
-
-        paths_dict = {}
-        if not os.path.isdir(input_path):
-            return paths_dict
-
-        dir_contents = os.listdir(input_path)
-        #dir_contents = [os.path.join(input_path, x) for x in dir_contents]
-        #print(dir_contents)
-
-        paths_dict['raw'] = set()
-        paths_dict['translated'] = set()
-        for d in dir_contents:
-            if self._is_relevant_to_file_under_test(d):
-                if d.find('_1553_translated') > 0:
-                    paths_dict['translated'].add(d)
-                elif d.find('_1553.parquet') > 0:
-                    paths_dict['raw'].add(d)
-            else:
-                pass
-                #print('{:s} is not relevant to files under test. See ch10list.csv.\n'.format(d))
-
-        # Convert the sets to sorted lists such that 
-        # the order of ch10s processed in e2e validation
-        # remains the same from run to run.
-        paths_dict['raw'] = sorted(list(paths_dict['raw']))
-        paths_dict['translated'] = sorted(list(paths_dict['translated']))
-        return paths_dict
-
-    #def _get_1553_paths(self, input_path):
-    #    paths_dict = {}
-    #    if not os.path.isdir(input_path):
-    #        return paths_dict
-
-    #    dir_contents = os.listdir(input_path)
-
-    #    paths_dict['raw'] = set()
-    #    paths_dict['translated'] = set()
-    #    for d in dir_contents:
-    #        if self._is_raw1553_file_under_test(d):
-    #            if d.find('_1553_translated') > 0:
-    #                paths_dict['translated'].add(d)
-    #            elif d.find('_1553.parquet') > 0:
-    #                paths_dict['raw'].add(d)
-    #        else:
-    #            pass
-    #            #print('{:s} is not relevant to files under test. See ch10list.csv.\n'.format(d))
-
-    #    # Convert the sets to sorted lists such that 
-    #    # the order of ch10s processed in e2e validation
-    #    # remains the same from run to run.
-    #    paths_dict['raw'] = sorted(list(paths_dict['raw']))
-    #    paths_dict['translated'] = sorted(list(paths_dict['translated']))
-    #    return paths_dict
-
-    def _create_validation_objects_old(self):
-
-        self.print('truth base dir: ' + self.truth_set_dir)
-        self.print('test base dir: ' + self.test_set_dir)
-
-        test_dirs_dict = self._get_paths(self.test_set_dir)
-        truth_dirs_dict = self._get_paths(self.truth_set_dir)
-        self.print('\nTruth set paths:')
-        self.print(str(truth_dirs_dict))
-        self.print('\nTest set paths:')
-        self.print(str(test_dirs_dict))
-
-        if len(test_dirs_dict) > 0 and (len(test_dirs_dict) == len(truth_dirs_dict)):
-            
-            # Raw dirs d = name of raw parquet directory
-            for d in truth_dirs_dict['raw']:
-                if d in test_dirs_dict['raw']:
-                    self.raw_validation_dict[d] = PqPqRawValidation(
-                        os.path.join(self.truth_set_dir, d),
-                        os.path.join(self.test_set_dir, d),
-                        self.exec_path)
-                else:
-                    self.raw_validation_dict[d] = PqPqRawValidation(
-                        os.path.join(self.truth_set_dir, d),
-                        None,
-                        self.exec_path)
-                    self.missing_raw_test_paths.append(d)
-                    self.print('No matching raw TEST path for TRUTH path {:s}'.format(d))
-
-            # Translated dirs d = name of translated parquet directory
-            for d in truth_dirs_dict['translated']:
-                self._create_translated_validation_objects(d)
-                if not (d in test_dirs_dict['translated']):
-                    self.missing_transl_test_paths.append(d)
-                    self.print('No matching translated TEST path for TRUTH path {:s}'.format(d))
-
-        else:
-            self.print('Count of directories in TRUTH set ({:d}) and TEST set ({:d}) not equal. Exiting.'.format(len(truth_dirs_dict),
-                                                                                                                 len(test_dirs_dict)))
-            sys.exit(0)
-
     def _create_raw1553_validation_objects(self):
-
-        self.print('truth base dir: ' + self.truth_set_dir)
-        self.print('test base dir: ' + self.test_set_dir)
-            
+        print("\n-- Create raw 1553 validation objects --\n")    
         for ch10name,d in self.files_under_test.items():
             rawname = d['raw1553']
-            self.files_under_test['raw1553validation'] = PqPqRawValidation(
+            self.all_validation_obj[ch10name]['raw1553'] = PqPqRawValidation(
                 os.path.join(self.truth_set_dir, rawname),
                 os.path.join(self.test_set_dir, rawname),
                 self.exec_path)
 
     def _create_transl1553_validation_objects(self):
-
+        print("\n-- Create translated 1553 validation objects --\n")
         for ch10name,d in self.files_under_test.items():
             translname = d['transl1553']
-            self.files_under_test['transl1553validation'] = PqPqTranslatedDataDirValidation(
+            self.all_validation_obj[ch10name]['transl1553'] = PqPqTranslatedDataDirValidation(
                 self.truth_set_dir, self.test_set_dir, translname, self.exec_path)
-
-
-    def _create_translated_validation_objects(self, truth_dir_name):
-
-        self.transl_validation_dict[truth_dir_name] = []
-        self.transl_misc_validation_dict[truth_dir_name] = []
-        truth_path = os.path.join(self.truth_set_dir, truth_dir_name)
-        truth_dir_listing = os.listdir(truth_path)
-        test_path = os.path.join(self.test_set_dir, truth_dir_name)
-        test_dir_listing = ""
-
-        if len(truth_dir_listing) == 0:
-            self.missing_transl_truth_paths.append(truth_dir_name)
-            self.print('No files in translated TRUTH path {:s}'.format(truth_dir_name))
-            return
-
-        if os.path.isdir(test_path):
-            test_dir_listing = os.listdir(test_path)       
-            for fname in truth_dir_listing:
-                msg_parquet_path = os.path.join(truth_path, fname)
-                test_msg_parquet_path = os.path.join(test_path, fname)
-
-                # If msg_parquet_path is not a directory, then it is not a translated
-                # 1553 message Parquet dir and should be handled elsewhere. 
-                if os.path.isdir(msg_parquet_path):
-                    if len(os.listdir(msg_parquet_path)) > 0:
-                        if fname in test_dir_listing:
-                            
-                            if len(os.listdir(test_msg_parquet_path)) > 0:
-                                self.transl_validation_dict[truth_dir_name].append(PqPqTranslatedDataValidation(
-                                    msg_parquet_path, 
-                                    test_msg_parquet_path, 
-                                    self.exec_path))
-                            # Existing test message parquet directory with no parquet files inside
-                            else:
-                                self.transl_validation_dict[truth_dir_name].append(PqPqTranslatedDataValidation(
-                                    msg_parquet_path, 
-                                    None, 
-                                    self.exec_path))
-                                self.print('No files in translated msg TEST path {:s}'.format(test_msg_parquet_path))
-                        # Existing truth message parquet directory but missing test message parquet directory
-                        else:
-                            self.transl_validation_dict[truth_dir_name].append(PqPqTranslatedDataValidation(
-                                    msg_parquet_path, 
-                                    None, 
-                                    self.exec_path))
-                            self.missing_transl_msg_test_paths.append(os.path.join(test_path, fname))
-                            self.print('Missing translated msg TEST path {:s}'.format(os.path.join(test_path, fname)))
-                    # Existing truth message parquet directory with no parquet files inside
-                    else:
-                        self.print('No files in translated msg TRUTH path {:s}'.format(msg_parquet_path))
-                else:
-                    # There are no validation objects for non-Parquet files at this time. Store the full paths
-                    # to each non-Parquet object for now.
-                    if fname in self.transl_misc_validation_fnames:
-                        self.transl_misc_validation_dict[truth_dir_name] = [msg_parquet_path, test_msg_parquet_path]
-        else:
-            for msg_pq_dir in truth_dir_listing:
-                msg_parquet_path = os.path.join(truth_path, msg_pq_dir)
-                if len(os.listdir(msg_parquet_path)) > 0:
-                    self.transl_validation_dict[truth_dir_name].append(PqPqTranslatedDataValidation(
-                            msg_parquet_path, 
-                            None, 
-                            self.exec_path))
-                # Existing truth message parquet directory with no parquet files inside
-                else:
-                    self.print('No files in translated msg TRUTH path {:s}'.format(msg_parquet_path))
 
     def __del__(self):
         if self.log_handle is not None:
