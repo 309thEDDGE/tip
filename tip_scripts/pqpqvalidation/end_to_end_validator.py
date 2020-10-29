@@ -17,7 +17,18 @@ import time
 class E2EValidator(object):
 
     def __init__(self, truth_set_dir, test_set_dir, log_file_path, log_desc='', video=False):
+        
         self.run_tip = False
+        self.truth_set_dir = truth_set_dir
+        self.test_set_dir = test_set_dir
+        self.log_file_path = log_file_path
+        self.video = video
+        self.save_stdout = False
+        self.all_validation_obj = {}
+        self.duration_data = {}
+        self.validation_results_dict = {}
+        self.print = print
+
         self.csv_path = os.path.join(truth_set_dir,'ch10list.csv')
         if not os.path.exists(self.csv_path):
             print('\nInvalid csv path {}, not regenerating test set'.format(self.csv_path))
@@ -30,31 +41,6 @@ class E2EValidator(object):
         if plat.find('Windows') > -1:
             self.exec_path += '.exe'
         
-        self.truth_set_dir = truth_set_dir
-        self.test_set_dir = test_set_dir
-        self.log_file_path = log_file_path
-        self.video = video
-        self.save_stdout = False
-        self.raw_validation_dict = {}
-        self.transl_validation_dict = {}
-        self.all_validation_obj = {}
-        self.duration_data = {}
-
-        # Dictionary for holding validation objects for metadata, yaml, text, or
-        # other non-Parquet files that are found in a translated data directory
-        # (currently only 1553 translated data).
-        # Validation of non-Parquet files has not been implemented.
-        self.transl_misc_validation_dict = {}
-
-        # Non-parquet file names to be validated. Not implemented.
-        self.transl_misc_validation_fnames = ['_metadata.yaml']
-
-        self.validation_results_dict = {}
-        self.print = print
-        self.missing_raw_test_paths = []
-        self.missing_transl_test_paths = []
-        self.missing_transl_truth_paths = []
-        self.missing_transl_msg_test_paths = []
         log_description = ''
         if log_desc != '':
             log_description = '{:s}_'.format(log_desc.replace(' ', '-'))
@@ -62,9 +48,16 @@ class E2EValidator(object):
         log_base_name = 'pqpqvalidation_' + log_description + time_stamp + '.txt'
         self.log_name = os.path.join(self.log_file_path, log_base_name)
         self.log_handle = None
-        self.run_times = {}
 
     def _read_files_under_test(self):
+
+        # The current version of this validator can handle the case in which
+        # either the truth ch10 or the icd specified for translation is not
+        # present. Specifically avoid checking for the presence of those 
+        # files here so that validation objects are created and allowed
+        # to fail and to record the results so in turn the complete 
+        # raw and translated data validation can be recorded at the end of
+        # the log. 
 
         self.files_under_test = {}
 
@@ -81,22 +74,10 @@ class E2EValidator(object):
                                                       'raw1553': basename + '_1553.parquet',
                                                       'transl1553': basename + '_1553_translated'}
             self.all_validation_obj[ch10name] = {}
+            self.validation_results_dict[ch10name] = {}
 
         print(self.files_under_test)
 
-    #def _is_raw1553_file_under_test(self, input_fname):
-    #    # Input is dir or file.
-    #    for testdict in self.files_under_test.values():
-    #        if testdict['raw1553'] == input_fname:
-    #            return True
-    #    return False
-
-    #def _is_translated1553_file_under_test(self, input_fname):
-    #    # Input is dir or file.
-    #    for testdict in self.files_under_test.values():
-    #        if testdict['transl1553'] == input_fname:
-    #            return True
-    #    return False
 
     def _regenerate_test_set(self):
 
@@ -133,11 +114,8 @@ class E2EValidator(object):
                         icd_full_path, '-o', test_dir]
             call_string = ' '.join(call_list)
             print(call_string)
-            start_time = time.time()
-            #os.system(call_string)
             e = Exec()
             retcode = e.exec_list(call_list, cwd=None, print_stdout=True)
-            self.run_times[ch10] = time.time() - start_time
 
             # Do something if retcode != 0?
 
@@ -184,17 +162,29 @@ class E2EValidator(object):
 
 
     def validate(self):
+
+        # Read csv with ch10 and icd pairings
         self._read_files_under_test()
+
+        # Run tip using parse_and_translate.py to generate
+        # test set.
         if self.run_tip:
             self._regenerate_test_set()
+
+        # Prepare comparison/validation log file
         self._open_log()
 
         self.print('truth base dir: ' + self.truth_set_dir)
         self.print('test base dir: ' + self.test_set_dir)
 
+        # Create validation objects for 1553 data
         self._create_raw1553_validation_objects()
         self._create_transl1553_validation_objects()
+
+        # Validate all objects 
         self._validate_objects()
+
+        # Aggregate and print results to stdout and log
         self._assemble_validation_stats()
         self._present_stats()
 
@@ -206,16 +196,19 @@ class E2EValidator(object):
             print(msg)
             self.print(msg)
 
-            msg = 'Raw: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['raw']))
+            ########## 1553 ############
+            msg = 'Raw 1553: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['raw1553']))
             print(msg)
             self.print(msg)
 
-            print('Translated data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['all_translated'])))
-            self.print('Translated data:')
+            print('Translated 1553 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['alltranslated1553'])))
+            self.print('Translated 1553 data:')
 
-            for transl_res_key in self.validation_results_dict[ch10name]['translated'].keys():
-                self.print('{:s}: {:s}'.format(transl_res_key, self.get_validation_result_string(self.validation_results_dict[ch10name]['translated'][transl_res_key])))
+            for transl_res_key in self.validation_results_dict[ch10name]['translated1553msg'].keys():
+                self.print('{:s}: {:s}'.format(transl_res_key, self.get_validation_result_string(self.validation_results_dict[ch10name]['translated1553msg'][transl_res_key])))
 
+
+            ########### super set ##########
             msg = 'Total Ch10 result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['ch10']))
             print(msg)
             self.print(msg)
@@ -231,55 +224,57 @@ class E2EValidator(object):
             print('\n{:s}:'.format(ch10name))
             self.print('\n{:s}:'.format(ch10name))
 
-            rawdur = self.duration_data[ch10name]['raw']
+            rawdur = self.duration_data[ch10name]['raw1553']
             if rawdur is None:
                 roundval = None
             else:
                 roundval = round(rawdur,2)
-            print('raw: {} seconds'.format(roundval))
-            self.print('raw: {} seconds'.format(roundval))
+            print('Parse: {} seconds'.format(roundval))
+            self.print('Parse: {} seconds'.format(roundval))
 
-            transldur = self.duration_data[ch10name]['transl']
+            transldur = self.duration_data[ch10name]['transl1553']
             if transldur is None:
                 roundval = None
             else:
                 roundval = round(transldur,2)
-            print('translation: {} seconds'.format(roundval))
-            self.print('translation: {} seconds'.format(roundval))
+            print('Translation 1553: {} seconds'.format(roundval))
+            self.print('Translation 1553: {} seconds'.format(roundval))
 
     def _assemble_validation_stats(self):
 
-        '''
-        For single_ch10_pass, all_transl_pass and all_ch10_pass:
-        If a single instance of False occurs, the value will be set to False forever.
-        If one or more None results are retrieved from the validation object, and no
-        False results, then the value will be None.
-        '''
-
         all_ch10_pass = True
         single_ch10_pass = True
-        transl_pass = True
-        raw_pass = True
-        all_transl_pass = True
+        transl1553_pass = True
+        raw1553_pass = True
+        all_transl1553_pass = True
         all_ch10_pass_is_set = False
         for ch10name in self.files_under_test.keys():
-            raw_pass = self.all_validation_obj[ch10name]['raw1553'].test_passed
-            all_transl_pass = self.all_validation_obj[ch10name]['transl1553'].all_passed
-            if raw_pass == True and all_transl_pass == True:
+
+            self.validation_results_dict[ch10name] = {'ch10': None, 'raw1553': None, 
+                                                      'translated1553msg': {}, 'alltranslated1553': None}
+
+            ########## 1553 ############
+            raw1553_pass = self.all_validation_obj[ch10name]['raw1553'].test_passed
+            all_transl1553_pass = self.all_validation_obj[ch10name]['transl1553'].all_passed
+
+            transl1553_validation_obj_list = self.all_validation_obj[ch10name]['transl1553'].validation_objects
+            if transl1553_validation_obj_list is not None:
+                for obj in transl1553_validation_obj_list:
+                    base_name = os.path.basename(obj.truth_path)
+                    self.validation_results_dict[ch10name]['translated1553msg'][base_name] = obj.test_passed
+
+            self.validation_results_dict[ch10name]['raw1553'] = raw1553_pass
+            self.validation_results_dict[ch10name]['alltranslated1553'] = all_transl1553_pass
+
+            ########### super set ##########
+            if raw1553_pass == True and all_transl1553_pass == True:
                 single_ch10_pass = True
-            elif raw_pass is None or all_transl_pass is None:
+            elif raw1553_pass is None or all_transl1553_pass is None:
                 single_ch10_pass = None
             else:
                 single_ch10_pass = False
 
-            self.validation_results_dict[ch10name] = {'ch10': single_ch10_pass, 'raw': raw_pass, 
-                                                      'translated': {}, 'all_translated': all_transl_pass}
-
-            transl_validation_obj_list = self.all_validation_obj[ch10name]['transl1553'].validation_objects
-            if transl_validation_obj_list is not None:
-                for obj in transl_validation_obj_list:
-                    base_name = os.path.basename(obj.truth_path)
-                    self.validation_results_dict[ch10name]['translated'][base_name] = obj.test_passed
+            self.validation_results_dict[ch10name]['ch10'] = single_ch10_pass
 
             # Logic for the entire set:
             # - all individual ch10 pass, set true
@@ -302,25 +297,29 @@ class E2EValidator(object):
             self.print(msg)
             print(msg)
 
-            raw_validation_obj = self.all_validation_obj[ch10name]['raw1553']
-            self.print('\n-- Raw Comparison --\n')
-            info = '\n' + str(raw_validation_obj)
+            ############# 1553 ##############
+            raw1553_validation_obj = self.all_validation_obj[ch10name]['raw1553']
+            self.print('\n-- Raw 1553 Comparison --\n')
+            info = '\n' + str(raw1553_validation_obj)
             self.print(info)
             print(info)
-            rawresult = raw_validation_obj.validate()
-            self.print('Validated: {}'.format(rawresult))
+            raw1553result = raw1553_validation_obj.validate()
+            self.print('Validated: {}'.format(raw1553result))
 
             # Get stderr/stdout as necessary and add to log.
             if self.save_stdout:
-                stdout, stderr = raw_validation_obj.get_validation_output()
+                stdout, stderr = raw1553_validation_obj.get_validation_output()
                 self.print('\nstdout:')
                 self.print(stdout)
                 self.print('\nstderr:')
                 self.print(stderr)
 
-            transl_validation_obj = self.all_validation_obj[ch10name]['transl1553']
-            self.print('\n--Translation Comparison--\n')
-            transl_validation_obj.validate(self.print, self.save_stdout)
+            transl1553_validation_obj = self.all_validation_obj[ch10name]['transl1553']
+            self.print('\n--Translation 1553 Comparison--\n')
+            transl1553_validation_obj.validate(self.print, self.save_stdout)
+
+
+            ########### other data . . . ##########
 
     def _create_raw1553_validation_objects(self):
         print("\n-- Create raw 1553 validation objects --\n")    

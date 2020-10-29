@@ -235,7 +235,7 @@ if __name__ == '__main__':
     #sys.exit(0)
     for ch10path in ch10_file_paths:
 
-        exec_duration[ch10path] = {'raw': None, 'transl': None}
+        exec_duration[ch10path] = {}
 
         did_run = False
 
@@ -303,7 +303,7 @@ if __name__ == '__main__':
                     sys.exit(0)
 
             # Parse duration value from stdout.
-            exec_duration[ch10path]['raw'] = parse_duration_from_stdout(parser_call.get_stdout_lines_matching('Duration:'))
+            exec_duration[ch10path]['raw1553'] = parse_duration_from_stdout(parser_call.get_stdout_lines_matching('Duration:'))
 
         #
         # Set up Translator call.
@@ -351,7 +351,7 @@ if __name__ == '__main__':
                     if trans_call.get_return_value() == 0 and trans_call.have_output_success():
 
                         # Parse duration value from stdout.
-                        exec_duration[ch10path]['transl'] = parse_duration_from_stdout(trans_call.get_stdout_lines_matching('Duration:'))
+                        exec_duration[ch10path]['transl1553'] = parse_duration_from_stdout(trans_call.get_stdout_lines_matching('Duration:'))
                 #if not did_run:
                     #sys.exit(0)
                 #if trans_call.get_return_value() != 0 or not trans_call.have_output_success():
