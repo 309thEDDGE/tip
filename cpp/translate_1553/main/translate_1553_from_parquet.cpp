@@ -279,18 +279,16 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 		int submission_count = 0;
 		bool successful_map = false;
 		std::map<uint64_t, std::string> temp_bus_map;
+		bool first_loop = true;
 
-		// Comet currently parses 3000 1553 packets from a chapter 10
+		// Comet currently parses at least 3000 1553 packets from a chapter 10
 		// to submit votes for bus mapping. For purposes of the method 
 		// below, each 1553 packet is estimated to contain on average
 		// 40 messages. The method requires that the final 
-		// busmap not change after submitting 1500 packets (1500 * 40 messages)
-		// Half of the comet threshold was used because the first 
-		// check for a bus map change should always denote a change 
-		// (unless after the first 1500 packets nothing was mapped at all)
-		// Thus, unless nothing is mapped after the first 1500
-		// packets, at least ~3000 packets will be used to submit votes
-		// for busmapping.
+		// busmap not change after submitting 1500 packets (1500 * 40 messages).
+		// The method also doesn't allow the busmap to be considered
+		// a success until the second loop to ensure that at least
+		// ~3000 packets were added to the vote system.
 		int message_count_threshold = 1500 * 40;
 		while (status.count(false) == 0)
 		{
@@ -311,23 +309,33 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 
 			if (submission_count >= message_count_threshold)
 			{
-				if (!bm.Finalize(temp_bus_map, false,
-					false))
+				// Only perform bus mapping after the first loop
+				// to ensure that at least ~3000 packets were
+				// added to the vote. Each loop is ~3000/2 
+				// packets.
+				if (first_loop == false)
 				{
-					printf("Bus mapping failed!\n");
-					return false;
+					if (!bm.Finalize(temp_bus_map, false,
+						false))
+					{
+						printf("Bus mapping failed!\n");
+						return false;
+					}
+
+					// If the bus map did not change from the 
+					// last bus map after at least message_count_threshold
+					// messages were submitted, consider the bus map
+					// a success and break out of the while loop.
+					if (temp_bus_map == chanid_to_bus_name_map)
+					{
+						successful_map = true;
+						break;
+					}
 				}
-				// If the bus map did not change from the 
-				// last bus map after at least message_count_threshold
-				// messages were submitted, consider the bus map
-				// a success and break out of the while loop.
-				if (temp_bus_map == chanid_to_bus_name_map)
-				{
-					successful_map = true;
-					break;
-				}
+
 				submission_count = 0;
 				chanid_to_bus_name_map = temp_bus_map;
+				first_loop = false;
 			}
 
 		}
@@ -336,6 +344,8 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 		// bus map information from the above while loop execution.
 		if (!successful_map)
 		{
+			printf("\nVote map method failure due to small chapter 10 or "
+				"zero channel ID mappings.\n");
 			chanid_to_bus_name_map.clear();
 		}
 
