@@ -192,6 +192,9 @@ class E2EValidator(object):
 
     def _present_stats(self):
 
+        print('\n---\n')
+        self.print('\n---\n')
+
         for ch10name in self.files_under_test.keys():
 
             msg = '\nValidation results for Ch10: {:s}'.format(ch10name)

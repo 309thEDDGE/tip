@@ -235,7 +235,7 @@ if __name__ == '__main__':
     #sys.exit(0)
     for ch10path in ch10_file_paths:
 
-        exec_duration[ch10path] = {}
+        exec_duration[ch10path] = {'raw1553': None, 'transl1553': None}
 
         did_run = False
 
