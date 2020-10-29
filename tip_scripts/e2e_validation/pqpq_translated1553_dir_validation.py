@@ -1,7 +1,7 @@
 import os
-from tip_scripts.pqpqvalidation.pqpq_translated_data_validation import PqPqTranslatedDataValidation
+from tip_scripts.e2e_validation.pqpq_translated1553_validation import PqPqTranslated1553Validation
 
-class PqPqTranslatedDataDirValidation:
+class PqPqTranslated1553DirValidation:
 
     def __init__(self, truth_dir, test_dir, expected_translation_dir_name, exec_path):
         self.truth_dir = truth_dir
@@ -62,7 +62,7 @@ class PqPqTranslatedDataDirValidation:
                 print('Skipping {:s}'.format(truthfile))
                 continue
 
-            self.validation_objects.append(PqPqTranslatedDataValidation(
+            self.validation_objects.append(PqPqTranslated1553Validation(
                 os.path.join(self.truth_dir_path, truthfile),
                 os.path.join(self.test_dir_path, truthfile),
                 self.exec_path))

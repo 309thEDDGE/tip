@@ -8,9 +8,9 @@ import json
 script_path = os.path.dirname(os.path.abspath(os.path.join(os.path.realpath(__file__), '../..')))
 sys.path.append(script_path)
 
-from tip_scripts.pqpqvalidation.pqpq_raw_validation import PqPqRawValidation
-from tip_scripts.pqpqvalidation.pqpq_translated_data_validation import PqPqTranslatedDataValidation
-from tip_scripts.pqpqvalidation.pqpq_translated_data_dir_validation import PqPqTranslatedDataDirValidation
+from tip_scripts.e2e_validation.pqpq_raw1553_validation import PqPqRaw1553Validation
+from tip_scripts.e2e_validation.pqpq_translated1553_validation import PqPqTranslated1553Validation
+from tip_scripts.e2e_validation.pqpq_translated1553_dir_validation import PqPqTranslated1553DirValidation
 from tip_scripts.exec import Exec
 import time
 
@@ -45,7 +45,7 @@ class E2EValidator(object):
         if log_desc != '':
             log_description = '{:s}_'.format(log_desc.replace(' ', '-'))
         time_stamp = str(datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-        log_base_name = 'pqpqvalidation_' + log_description + time_stamp + '.txt'
+        log_base_name = 'e2e_validation_' + log_description + time_stamp + '.txt'
         self.log_name = os.path.join(self.log_file_path, log_base_name)
         self.log_handle = None
 
@@ -75,8 +75,9 @@ class E2EValidator(object):
                                                       'transl1553': basename + '_1553_translated'}
             self.all_validation_obj[ch10name] = {}
             self.validation_results_dict[ch10name] = {}
+            self.duration_data[ch10name] = {'raw1553': None, 'transl1553': None}
 
-        print(self.files_under_test)
+        #print(self.files_under_test)
 
 
     def _regenerate_test_set(self):
@@ -132,7 +133,8 @@ class E2EValidator(object):
                 # Loaded duration dict must be one: key = ch10 path, val = duration info.
                 if len(duration_data) == 1:
                     key = list(duration_data.keys())[0]
-                    self.duration_data[ch10] = duration_data[key]
+                    if len(duration_data[key]) > 0:
+                        self.duration_data[ch10] = duration_data[key]
                 else:
                     print('Duration data does not have length 1!:\n', duration_data)
                     sys.exit(0)
@@ -325,7 +327,7 @@ class E2EValidator(object):
         print("\n-- Create raw 1553 validation objects --\n")    
         for ch10name,d in self.files_under_test.items():
             rawname = d['raw1553']
-            self.all_validation_obj[ch10name]['raw1553'] = PqPqRawValidation(
+            self.all_validation_obj[ch10name]['raw1553'] = PqPqRaw1553Validation(
                 os.path.join(self.truth_set_dir, rawname),
                 os.path.join(self.test_set_dir, rawname),
                 self.exec_path)
@@ -334,7 +336,7 @@ class E2EValidator(object):
         print("\n-- Create translated 1553 validation objects --\n")
         for ch10name,d in self.files_under_test.items():
             translname = d['transl1553']
-            self.all_validation_obj[ch10name]['transl1553'] = PqPqTranslatedDataDirValidation(
+            self.all_validation_obj[ch10name]['transl1553'] = PqPqTranslated1553DirValidation(
                 self.truth_set_dir, self.test_set_dir, translname, self.exec_path)
 
     def __del__(self):
