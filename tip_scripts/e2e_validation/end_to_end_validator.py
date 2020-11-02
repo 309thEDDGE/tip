@@ -201,7 +201,7 @@ class E2EValidator(object):
             self.print(msg)
 
             ########## 1553 ############
-            msg = 'Raw 1553: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['raw1553']))
+            msg = 'Raw 1553 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['raw1553']))
             print(msg)
             self.print(msg)
 
@@ -216,6 +216,13 @@ class E2EValidator(object):
             msg = 'Total Ch10 result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['ch10']))
             print(msg)
             self.print(msg)
+
+        msg = '\nTotal raw 1553 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_raw1553_pass']))
+        print(msg)
+        self.print(msg)
+        msg = 'Total translated 1553 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_transl1553_pass']))
+        print(msg)
+        self.print(msg)
 
         msg = '\nAll validation set result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_ch10']))
         print(msg)
@@ -244,22 +251,24 @@ class E2EValidator(object):
             print('Translation 1553: {} seconds'.format(roundval))
             self.print('Translation 1553: {} seconds'.format(roundval))
 
+        
+
     def _assemble_validation_stats(self):
 
         all_ch10_pass = True
         single_ch10_pass = True
-        transl1553_pass = True
-        raw1553_pass = True
-        all_transl1553_pass = True
-        all_ch10_pass_is_set = False
+        single_ch10_bulk_transl1553_pass = True
+        single_ch10_raw1553_pass = True
+        data1553_stats = {'raw1553_none_count': 0, 'raw1553_fail_count': 0, 'transl1553_none_count': 0,
+                          'transl1553_fail_count': 0}
         for ch10name in self.files_under_test.keys():
 
             self.validation_results_dict[ch10name] = {'ch10': None, 'raw1553': None, 
                                                       'translated1553msg': {}, 'alltranslated1553': None}
 
             ########## 1553 ############
-            raw1553_pass = self.all_validation_obj[ch10name]['raw1553'].test_passed
-            all_transl1553_pass = self.all_validation_obj[ch10name]['transl1553'].all_passed
+            single_ch10_raw1553_pass = self.all_validation_obj[ch10name]['raw1553'].test_passed
+            single_ch10_bulk_transl1553_pass = self.all_validation_obj[ch10name]['transl1553'].all_passed
 
             transl1553_validation_obj_list = self.all_validation_obj[ch10name]['transl1553'].validation_objects
             if transl1553_validation_obj_list is not None:
@@ -267,31 +276,53 @@ class E2EValidator(object):
                     base_name = os.path.basename(obj.truth_path)
                     self.validation_results_dict[ch10name]['translated1553msg'][base_name] = obj.test_passed
 
-            self.validation_results_dict[ch10name]['raw1553'] = raw1553_pass
-            self.validation_results_dict[ch10name]['alltranslated1553'] = all_transl1553_pass
+            self.validation_results_dict[ch10name]['raw1553'] = single_ch10_raw1553_pass
+            self.validation_results_dict[ch10name]['alltranslated1553'] = single_ch10_bulk_transl1553_pass
+
+            if single_ch10_raw1553_pass is None:
+                data1553_stats['raw1553_none_count'] += 1
+            elif single_ch10_raw1553_pass == False:
+                data1553_stats['raw1553_fail_count'] += 1
+
+            if single_ch10_bulk_transl1553_pass is None:
+                data1553_stats['transl1553_none_count'] += 1
+            elif single_ch10_bulk_transl1553_pass == False:
+                data1553_stats['transl1553_fail_count'] += 1
 
             ########### super set ##########
-            if raw1553_pass == True and all_transl1553_pass == True:
+            if single_ch10_raw1553_pass == True and single_ch10_bulk_transl1553_pass == True:
                 single_ch10_pass = True
-            elif raw1553_pass is None or all_transl1553_pass is None:
+            elif single_ch10_raw1553_pass is None or single_ch10_bulk_transl1553_pass is None:
                 single_ch10_pass = None
             else:
                 single_ch10_pass = False
 
             self.validation_results_dict[ch10name]['ch10'] = single_ch10_pass
 
-            # Logic for the entire set:
-            # - all individual ch10 pass, set true
-            # - individual ch10 status mixed true and None, set None
-            # - single false indicates false for set
-            if not all_ch10_pass_is_set:
-                if single_ch10_pass is None:
-                    all_ch10_pass = None
-                elif single_ch10_pass == False:
-                    all_ch10_pass = False
-                    all_ch10_pass_is_set = True
+        if data1553_stats['raw1553_none_count'] + data1553_stats['transl1553_none_count'] > 0:
+            all_ch10_pass = None
+        elif data1553_stats['raw1553_fail_count'] + data1553_stats['transl1553_fail_count'] == 0:
+            all_ch10_pass = True
+        else:
+            all_ch10_pass = False
 
         self.validation_results_dict['all_ch10'] = all_ch10_pass
+
+        if data1553_stats['raw1553_none_count'] == 0:
+            if data1553_stats['raw1553_fail_count'] == 0:
+                self.validation_results_dict['all_raw1553_pass'] = True
+            else:
+                self.validation_results_dict['all_raw1553_pass'] = False
+        else:
+            self.validation_results_dict['all_raw1553_pass'] = None
+
+        if data1553_stats['transl1553_none_count'] == 0:
+            if data1553_stats['transl1553_fail_count'] == 0:
+                self.validation_results_dict['all_transl1553_pass'] = True
+            else:
+                self.validation_results_dict['all_transl1553_pass'] = False
+        else:
+            self.validation_results_dict['all_transl1553_pass'] = None
 
 
     def _validate_objects(self):
