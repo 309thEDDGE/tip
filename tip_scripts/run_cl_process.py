@@ -46,6 +46,9 @@ class RunCLProcess(Exec):
                 return False
         return True
 
+    def get_exec_time(self):
+        return self.exec_time
+
     def add_dir_path_argument(self, new_arg):
         self._add_to_list(new_arg, self.dir_paths)
         self._add_to_list(new_arg, self.args)
@@ -88,7 +91,8 @@ class RunCLProcess(Exec):
 
     def _check_text_output(self, print_stdout=True):
             self.success = True
-            stdout, stderr = self.get_output()
+            stdout = self.stdout
+            stderr = self.stderr
 
             # Check for required stdout strings.
             find_list = [False] * len(self.stdout_must_contain)
@@ -149,15 +153,15 @@ class RunCLProcess(Exec):
         if not dry_run:
             self.ret_val = self.exec_list(command_list, cwd=cwd, print_stdout=print_stdout)
             if self.ret_val != 0:
-                print('{:s} failed: return value {:d}'.format(self.exec_path, int(self.ret_val)))
+                print('{:s}: return value {:d}'.format(self.exec_path, int(self.ret_val)))
                 return True
 
             self._check_text_output(print_stdout=print_stdout)
 
             if self.success:
-                print('SUCCESS')
+                print('RunCLProcess: check text output status = SUCCESS')
             else: 
-                print('FAILURE')
+                print('RunCLProcess: check text output status = FAILURE')
             
             return True
 
@@ -165,6 +169,14 @@ class RunCLProcess(Exec):
 
     def get_return_value(self):
         return self.ret_val
+
+    def get_stdout_lines_matching(self, match_str):
+
+        lines = []
+        for l in self.stdout.split('\n'):
+            if match_str in l:
+                lines.append(l)
+        return lines
 
     def have_output_success(self):
         return self.success

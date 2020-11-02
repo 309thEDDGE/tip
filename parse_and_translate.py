@@ -3,6 +3,7 @@ import os, sys
 import numpy as np
 from pathlib import Path
 import platform
+import json
 
 # Argument parser
 import argparse
@@ -61,6 +62,20 @@ def skip_message(skip_name):
 def ow_message(ov_name):
     print('\nOverwriting files with call to {:s}'.format(ov_name))
 
+def parse_duration_from_stdout(stdout_lines):
+
+    if len(stdout_lines) == 0:
+        print('parse_duration_from_stdout: input is empty')
+        return None
+
+    for l in stdout_lines:
+        parts = l.rstrip().split(':')
+        if parts[0] == 'Duration':
+            # -3 to ignore the 'sec' string at the end
+            return float(parts[1][:-3])
+
+    return None
+
 if __name__ == '__main__':
 
     # TODO:
@@ -104,6 +119,7 @@ if __name__ == '__main__':
     use_translator_exe = ''
     use_parse_conf = ''
     raw_1553_pq_dir = ''
+    exec_duration = {}
 
     #
     # Setup command line arguments
@@ -218,6 +234,9 @@ if __name__ == '__main__':
 
     #sys.exit(0)
     for ch10path in ch10_file_paths:
+
+        exec_duration[ch10path] = {'raw1553': None, 'transl1553': None}
+
         did_run = False
 
         # Create raw 1553 output dir.
@@ -276,12 +295,15 @@ if __name__ == '__main__':
             parser_call.set_stdout_must_contain('Duration: ')
 
             # Execute parser.
-            did_run = parser_call.run(args.dry_run, cwd=exe_dir)
+            did_run = parser_call.run(args.dry_run, cwd=exe_dir, print_stdout=True)
             if not args.dry_run:
                 if not did_run:
                     sys.exit(0)
                 if parser_call.get_return_value() != 0 or not parser_call.have_output_success():
                     sys.exit(0)
+
+            # Parse duration value from stdout.
+            exec_duration[ch10path]['raw1553'] = parse_duration_from_stdout(parser_call.get_stdout_lines_matching('Duration:'))
 
         #
         # Set up Translator call.
@@ -322,9 +344,14 @@ if __name__ == '__main__':
             trans_call.set_stdout_must_contain('Duration: ')
 
             # Execute translator.
-            did_run = trans_call.run(args.dry_run, cwd=exe_dir)
+            did_run = trans_call.run(args.dry_run, cwd=exe_dir, print_stdout=True)
             # Do not exit on translation failure so video extraction can occur.
-            #if not args.dry_run:
+            if not args.dry_run:
+                if did_run:
+                    if trans_call.get_return_value() == 0 and trans_call.have_output_success():
+
+                        # Parse duration value from stdout.
+                        exec_duration[ch10path]['transl1553'] = parse_duration_from_stdout(trans_call.get_stdout_lines_matching('Duration:'))
                 #if not did_run:
                     #sys.exit(0)
                 #if trans_call.get_return_value() != 0 or not trans_call.have_output_success():
@@ -369,5 +396,9 @@ if __name__ == '__main__':
                         sys.exit(0)
                     if video_extr.get_return_value() != 0 or not video_extr.have_output_success():
                         sys.exit(0)
+
+        print('\njson:')
+        json.dump(exec_duration, sys.stdout)
+
 
     sys.exit(0)
