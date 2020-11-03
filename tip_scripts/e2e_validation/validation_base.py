@@ -10,6 +10,7 @@ class ValidationBase(object):
         self.test_passed = None
         self.regex_translated_1553_msg_dir = re.compile(".+_1553_translated.+parquet")
         self.regex_raw_1553_dir = re.compile(".+_1553.parquet")
+        self.regex_raw_video_dir = re.compile(".+_video.parquet")
         self.ready_to_validate = False
         self.prefix = prefix
 
@@ -77,25 +78,36 @@ class ValidationBase(object):
 
         return True
 
-    def set_1553_paths(self, truth_path, test_path, is_translated_data_comp):
+    def set_1553_paths(self, truth_path, test_path, type_str):
 
         if not self.set_paths(truth_path, test_path):
             return False
 
-        if is_translated_data_comp:
+        if type == 'transl1553':
             if not self._is_translated_1553_msg_dir(self.truth_path):
                 print('{:s} - {:s} is not a translated 1553 msg dir!'.format(self.prefix, self.truth_path))
                 return False
             if not self._is_translated_1553_msg_dir(self.test_path):
                 print('{:s} - {:s} is not a translated 1553 msg dir!'.format(self.prefix, self.test_path))
                 return False
-        else:
+        elif type == 'raw1553':
             if not self._is_raw_1553_dir(self.truth_path):
                 print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.truth_path))
                 return False
             if not self._is_raw_1553_dir(self.test_path):
                 print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.test_path))
                 return False
+        elif type == 'rawvideo':
+            if not self._is_raw_video_dir(self.truth_path):
+                print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.truth_path))
+                return False
+            if not self._is_raw_video_dir(self.test_path):
+                print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.test_path))
+                return False
+        else:
+            print('ValidationBase.set_1553_paths(): type_str = {:s} not defined!'.format(type_str))
+            return False
+
         return True
 
     def _is_translated_1553_msg_dir(self, input_path):
@@ -111,6 +123,14 @@ class ValidationBase(object):
             return False
 
         if bool(re.match(self.regex_raw_1553_dir, input_path)):
+            return True
+        return False
+
+    def _is_raw_video_dir(self, input_path):
+        if not os.path.isdir(input_path):
+            return False
+
+        if bool(re.match(self.regex_raw_video_dir, input_path)):
             return True
         return False
 

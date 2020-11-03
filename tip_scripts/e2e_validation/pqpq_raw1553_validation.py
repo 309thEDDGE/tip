@@ -8,7 +8,7 @@ class PqPqRaw1553Validation(FileValidation):
         prefix = 'PqPqRaw1553Validation'
         FileValidation.__init__(self, prefix)
         self.pqcompare_exec_path = pqcompare_exec_path
-        self.ready_to_validate = self.set_1553_paths(truth_path, test_path, False)
+        self.ready_to_validate = self.set_1553_paths(truth_path, test_path, 'raw1553')
 
     def validate(self):
 

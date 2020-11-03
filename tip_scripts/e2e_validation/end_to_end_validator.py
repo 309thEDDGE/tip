@@ -74,7 +74,8 @@ class E2EValidator(object):
             self.files_under_test[ch10name] = {'icd': temp[1].strip(), 
                                                       'basename': basename,
                                                       'raw1553': basename + '_1553.parquet',
-                                                      'transl1553': basename + '_1553_translated'}
+                                                      'transl1553': basename + '_1553_translated',
+                                                      'rawvideo': basename + '_video.parquet'}
             self.all_validation_obj[ch10name] = {}
             self.validation_results_dict[ch10name] = {}
             self.duration_data[ch10name] = {'raw1553': None, 'transl1553': None}
@@ -183,6 +184,8 @@ class E2EValidator(object):
         # Create validation objects for 1553 data
         self._create_raw1553_validation_objects()
         self._create_transl1553_validation_objects()
+        if self.video:
+            self._create_rawvideo_validation_objects()
 
         # Validate all objects 
         self._validate_objects()
@@ -208,6 +211,10 @@ class E2EValidator(object):
             ########## 1553 ############
             self.all_validation_obj[ch10name]['raw1553'].print_results(self.print)
             self.all_validation_obj[ch10name]['transl1553'].print_results(self.print)
+
+            ########### video ###########
+            if self.video:
+                self.all_validation_obj[ch10name]['rawvideo'].print_results(self.print)
 
             ########### super set ##########
             msg = '\nTotal Ch10 result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['ch10']))
@@ -269,6 +276,7 @@ class E2EValidator(object):
         single_ch10_pass = True
         single_ch10_bulk_transl1553_pass = True
         single_ch10_raw1553_pass = True
+        single_ch10_video_pass = True
         data1553_stats = {'raw1553': [], 'transl1553': [], 'ch10': []}
         for ch10name in self.files_under_test.keys():
 
@@ -285,11 +293,17 @@ class E2EValidator(object):
             data1553_stats['raw1553'].append(single_ch10_raw1553_pass)
             data1553_stats['transl1553'].append(single_ch10_bulk_transl1553_pass)
 
+            ########### video ###########
+            if self.video:
+                single_ch10_video_pass = self.all_validation_obj[ch10name]['rawvideo'].get_test_result()
+
             ########### super set ##########
 
-            if single_ch10_raw1553_pass == True and single_ch10_bulk_transl1553_pass == True:
+            if (single_ch10_raw1553_pass == True and single_ch10_bulk_transl1553_pass == True
+                and single_ch10_video_pass == True):
                 single_ch10_pass = True
-            elif single_ch10_raw1553_pass is None or single_ch10_bulk_transl1553_pass is None:
+            elif (single_ch10_raw1553_pass is None or single_ch10_bulk_transl1553_pass is None
+                  or single_ch10_video_pass is None):
                 single_ch10_pass = None
             else:
                 single_ch10_pass = False
@@ -326,7 +340,11 @@ class E2EValidator(object):
             ################################
             #            video 
             ################################
-            # not implemented
+            if self.video:
+                video_validation_obj = self.all_validation_obj[ch10name]['rawvideo']
+                self.print('\n-- Raw Video Comparison --\n')
+                video_validation_obj.validate_dir(self.print)
+
 
     def _create_raw1553_validation_objects(self):
         print("\n-- Create raw 1553 validation objects --\n")    
@@ -345,6 +363,15 @@ class E2EValidator(object):
             self.all_validation_obj[ch10name]['transl1553'] = PqPqTranslated1553DirValidation(
                 os.path.join(self.truth_set_dir, translname), 
                 os.path.join(self.test_set_dir, translname), 
+                self.pqcompare_exec_path, self.bincompare_exec_path)
+
+    def _create_rawvideo_validation_objects(self):
+        print("\n-- Create raw video validation objects --\n")
+        for ch10name,d in self.files_under_test.items():
+            videoname = d['rawvideo']
+            self.all_validation_obj[ch10name]['rawvideo'] = PqPqVideoDirValidation(
+                os.path.join(self.truth_set_dir, videoname), 
+                os.path.join(self.test_set_dir, videoname), 
                 self.pqcompare_exec_path, self.bincompare_exec_path)
 
     def __del__(self):
