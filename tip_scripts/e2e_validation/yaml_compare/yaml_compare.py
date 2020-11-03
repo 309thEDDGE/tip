@@ -1,7 +1,7 @@
 import os, sys
 import yaml
 import json
-from deepdiff_compare import DeepDiffCompare
+from tip_scripts.e2e_validation.yaml_compare.deepdiff_compare import DeepDiffCompare
 
 '''
 YamlCompare
@@ -66,11 +66,11 @@ class YamlCompare:
             
         results_dict['total'] = total_result
         
-        updated_results = {}
-        for k,v in results_dict.items():
-            updated_results[k] = self._ret_string(v)
+        #updated_results = {}
+        #for k,v in results_dict.items():
+        #    updated_results[k] = self._ret_string(v)
             
-        return updated_results
+        return results_dict
 
 
     def _do_comparison(self, truth_dict, test_dict, v):
@@ -102,7 +102,8 @@ class YamlCompare:
         if not os.path.isfile(self.truth_fp):
             return False
         
-        # if not os.path.isfile(self.test_fp):
+        if not os.path.isfile(self.test_fp):
+            return False
         
         return True
         
