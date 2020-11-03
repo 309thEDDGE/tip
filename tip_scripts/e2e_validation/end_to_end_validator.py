@@ -5,10 +5,10 @@ import argparse
 import platform
 import json
 
-script_path = os.path.dirname(os.path.abspath(os.path.join(os.path.realpath(__file__), '../..')))
-sys.path.append(script_path)
+tip_root_path = os.path.dirname(os.path.abspath(os.path.join(os.path.realpath(__file__), '../..')))
+sys.path.append(tip_root_path)
 
-from tip_scripts.e2e_validation.pqpq_raw1553_validation import PqPqRaw1553Validation
+from tip_scripts.e2e_validation.pqpq_raw1553_dir_validation import PqPqRaw1553DirValidation
 from tip_scripts.e2e_validation.pqpq_translated1553_validation import PqPqTranslated1553Validation
 from tip_scripts.e2e_validation.pqpq_translated1553_dir_validation import PqPqTranslated1553DirValidation
 from tip_scripts.exec import Exec
@@ -36,10 +36,12 @@ class E2EValidator(object):
         else:
             self.run_tip = True 
 
-        self.exec_path = os.path.join(script_path, 'bin', 'pqcompare')
+        self.pqcompare_exec_path = os.path.join(tip_root_path, 'bin', 'pqcompare')
+        self.bincompare_exec_path = os.path.join(tip_root_path, 'bin', 'bincompare')
         plat = platform.platform()
         if plat.find('Windows') > -1:
-            self.exec_path += '.exe'
+            self.pqcompare_exec_path += '.exe'
+            self.bincompare_exec_path += '.exe'
         
         log_description = ''
         if log_desc != '':
@@ -201,9 +203,12 @@ class E2EValidator(object):
             self.print(msg)
 
             ########## 1553 ############
-            msg = 'Raw 1553 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['raw1553']))
+            msg = 'Raw 1553 data: {:s}'.format(self.get_validation_result_string(
+                self.all_validation_obj[ch10name]['raw1553'].pq_validation_object.test_passed))
             print(msg)
             self.print(msg)
+            for md_vobj in self.all_validation_obj[ch10name]['raw1553'].md_validation_objects:
+                md_vobj.print_results(self.print)
 
             print('Translated 1553 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['alltranslated1553'])))
             self.print('Translated 1553 data:')
@@ -267,7 +272,7 @@ class E2EValidator(object):
                                                       'translated1553msg': {}, 'alltranslated1553': None}
 
             ########## 1553 ############
-            single_ch10_raw1553_pass = self.all_validation_obj[ch10name]['raw1553'].test_passed
+            single_ch10_raw1553_pass = self.all_validation_obj[ch10name]['raw1553'].all_passed
             single_ch10_bulk_transl1553_pass = self.all_validation_obj[ch10name]['transl1553'].all_passed
 
             transl1553_validation_obj_list = self.all_validation_obj[ch10name]['transl1553'].validation_objects
@@ -335,11 +340,7 @@ class E2EValidator(object):
             ############# 1553 ##############
             raw1553_validation_obj = self.all_validation_obj[ch10name]['raw1553']
             self.print('\n-- Raw 1553 Comparison --\n')
-            info = '\n' + str(raw1553_validation_obj)
-            self.print(info)
-            print(info)
-            raw1553result = raw1553_validation_obj.validate()
-            self.print('Validated: {}'.format(raw1553result))
+            raw1553_validation_obj.validate(self.print)
 
             # Get stderr/stdout as necessary and add to log.
             if self.save_stdout:
@@ -360,17 +361,19 @@ class E2EValidator(object):
         print("\n-- Create raw 1553 validation objects --\n")    
         for ch10name,d in self.files_under_test.items():
             rawname = d['raw1553']
-            self.all_validation_obj[ch10name]['raw1553'] = PqPqRaw1553Validation(
+            self.all_validation_obj[ch10name]['raw1553'] = PqPqRaw1553DirValidation(
                 os.path.join(self.truth_set_dir, rawname),
                 os.path.join(self.test_set_dir, rawname),
-                self.exec_path)
+                self.pqcompare_exec_path,
+                self.bincompare_exec_path)
 
     def _create_transl1553_validation_objects(self):
         print("\n-- Create translated 1553 validation objects --\n")
         for ch10name,d in self.files_under_test.items():
             translname = d['transl1553']
             self.all_validation_obj[ch10name]['transl1553'] = PqPqTranslated1553DirValidation(
-                self.truth_set_dir, self.test_set_dir, translname, self.exec_path)
+                self.truth_set_dir, self.test_set_dir, 
+                translname, self.pqcompare_exec_path, self.bincompare_exec_path)
 
     def __del__(self):
         if self.log_handle is not None:

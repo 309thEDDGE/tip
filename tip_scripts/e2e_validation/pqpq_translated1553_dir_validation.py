@@ -3,11 +3,12 @@ from tip_scripts.e2e_validation.pqpq_translated1553_validation import PqPqTransl
 
 class PqPqTranslated1553DirValidation:
 
-    def __init__(self, truth_dir, test_dir, expected_translation_dir_name, exec_path):
+    def __init__(self, truth_dir, test_dir, expected_translation_dir_name, pqcompare_exec_path, bincompare_exec_path):
         self.truth_dir = truth_dir
         self.test_dir = test_dir
         self.expected_translation_dir_name = expected_translation_dir_name
-        self.exec_path = exec_path
+        self.pqcompare_exec_path = pqcompare_exec_path
+        self.bincompare_exec_path = bincompare_exec_path
         self.truth_dir_path = os.path.join(self.truth_dir, self.expected_translation_dir_name)
         self.test_dir_path = os.path.join(self.test_dir, self.expected_translation_dir_name)
         self.top_level_dirs_validated = False
@@ -18,7 +19,7 @@ class PqPqTranslated1553DirValidation:
 
         self._validate_top_level_dirs()
         if self.top_level_dirs_validated:
-            self._create_validation_objects()
+            self._create_pq_validation_objects()
 
     def _validate_top_level_dirs(self):
 
@@ -50,7 +51,7 @@ class PqPqTranslated1553DirValidation:
 
         self.top_level_dirs_validated = True
 
-    def _create_validation_objects(self):
+    def _create_pq_validation_objects(self):
 
         # Loop over msg-specific directories in truth list and create
         # validation objects.
@@ -59,13 +60,13 @@ class PqPqTranslated1553DirValidation:
             # Ignore if yaml or txt file.
             if (truthfile.find('.yaml') > 0 or truthfile.find('.yml') > 0 or
                 truthfile.find('.txt') > 0):
-                print('Skipping {:s}'.format(truthfile))
+                #print('Skipping {:s}'.format(truthfile))
                 continue
 
             self.validation_objects.append(PqPqTranslated1553Validation(
                 os.path.join(self.truth_dir_path, truthfile),
                 os.path.join(self.test_dir_path, truthfile),
-                self.exec_path))
+                self.pqcompare_exec_path))
 
     def validate(self, print_obj, save_stdout):
 

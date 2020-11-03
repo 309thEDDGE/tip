@@ -158,10 +158,10 @@ class RunCLProcess(Exec):
 
             self._check_text_output(print_stdout=print_stdout)
 
-            if self.success:
-                print('RunCLProcess: check text output status = SUCCESS')
-            else: 
-                print('RunCLProcess: check text output status = FAILURE')
+            #if self.success:
+            #    print('RunCLProcess: check text output status = SUCCESS')
+            #else: 
+            #    print('RunCLProcess: check text output status = FAILURE')
             
             return True
 

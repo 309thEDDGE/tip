@@ -1,13 +1,17 @@
-from tip_scripts.e2e_validation import validation_base
+from tip_scripts.e2e_validation.file_validation import FileValidation
+from tip_scripts.e2e_validation.ymlyml_validation import YmlYmlValidation
+from tip_scripts.e2e_validation.txttxt_validation import TxtTxtValidation
 
-class PqPqRaw1553Validation(validation_base.ValidationBase):
+class PqPqRaw1553Validation(FileValidation):
 
-    def __init__(self, truth_path, test_path, exec_path):
+    def __init__(self, truth_path, test_path, pqcompare_exec_path):
         prefix = 'PqPqRaw1553Validation'
-        validation_base.ValidationBase.__init__(self, prefix)
+        FileValidation.__init__(self, prefix)
+        self.pqcompare_exec_path = pqcompare_exec_path
         self.ready_to_validate = self.set_1553_paths(truth_path, test_path, False)
-        self.exec_path = exec_path
 
     def validate(self):
-        return self.do_validation(self.exec_path)
+
+       return self.do_validation(self.pqcompare_exec_path)
+
 
