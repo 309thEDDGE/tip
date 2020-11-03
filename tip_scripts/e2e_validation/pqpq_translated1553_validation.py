@@ -9,4 +9,4 @@ class PqPqTranslated1553Validation(FileValidation):
         self.exec_path = exec_path
 
     def validate(self):
-        return self.do_validation(self.exec_path)
+        return self.do_directory_validation(self.exec_path)

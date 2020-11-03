@@ -13,12 +13,26 @@ class ValidationBase(object):
         self.ready_to_validate = False
         self.prefix = prefix
 
+    def get_test_result(self):
+        return self.test_passed
+
+    def get_test_result_string(self):
+        return self.validation_result_string(self.test_passed)
+
+    def get_test_result_string_from_input(self, input_result):
+        return self.validation_result_string(input_result)
+
     def set_paths(self, truth_path, test_path):
 
         self.test_path = test_path
         self.truth_path = truth_path
 
-        if self.test_path is None or self.truth_path is None:
+        if self.truth_path is None:
+            print('{:s} - {:s} is None!'.format(self.prefix, self.truth_path))
+            return False
+           
+        if self.test_path is None:
+            print('{:s} - {:s} is None!'.format(self.prefix, self.test_path))
             return False
 
         return True
@@ -33,12 +47,32 @@ class ValidationBase(object):
         else:
             return 'BAD RESULT'
 
+    def set_directory_paths(self, truth_path, test_path):
+
+        if not self.set_paths(truth_path, test_path):
+            return False
+
+        if not os.path.isdir(self.truth_path):
+           print('{:s} - {:s} is not a directory!'.format(self.prefix, self.truth_path))
+           return False
+
+        if not os.path.isdir(self.test_path):
+            print('{:s} - {:s} is not a directory!'.format(self.prefix, self.test_path))
+            return False
+
+        return True
+
     def set_file_paths(self, truth_path, test_path):
 
         if not self.set_paths(truth_path, test_path):
             return False
 
-        if not os.path.isfile(self.truth_path) or not os.path.isfile(self.test_path):
+        if not os.path.isfile(self.truth_path):
+            print('{:s} - {:s} is not a file!'.format(self.prefix, self.truth_path))
+            return False
+           
+        if not os.path.isfile(self.test_path):
+            print('{:s} - {:s} is not a file!'.format(self.prefix, self.test_path))
             return False
 
         return True
@@ -49,14 +83,18 @@ class ValidationBase(object):
             return False
 
         if is_translated_data_comp:
-            if not self._is_translated_1553_msg_dir(self.test_path):
-                return False
             if not self._is_translated_1553_msg_dir(self.truth_path):
+                print('{:s} - {:s} is not a translated 1553 msg dir!'.format(self.prefix, self.truth_path))
+                return False
+            if not self._is_translated_1553_msg_dir(self.test_path):
+                print('{:s} - {:s} is not a translated 1553 msg dir!'.format(self.prefix, self.test_path))
                 return False
         else:
-            if not self._is_raw_1553_dir(self.test_path):
-                return False
             if not self._is_raw_1553_dir(self.truth_path):
+                print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.truth_path))
+                return False
+            if not self._is_raw_1553_dir(self.test_path):
+                print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.test_path))
                 return False
         return True
 

@@ -1,6 +1,6 @@
 from tip_scripts.e2e_validation.file_validation import FileValidation
-from tip_scripts.e2e_validation.ymlyml_validation import YmlYmlValidation
-from tip_scripts.e2e_validation.txttxt_validation import TxtTxtValidation
+#from tip_scripts.e2e_validation.ymlyml_validation import YmlYmlValidation
+#from tip_scripts.e2e_validation.txttxt_validation import TxtTxtValidation
 
 class PqPqRaw1553Validation(FileValidation):
 
@@ -12,6 +12,6 @@ class PqPqRaw1553Validation(FileValidation):
 
     def validate(self):
 
-       return self.do_validation(self.pqcompare_exec_path)
+       return self.do_directory_validation(self.pqcompare_exec_path)
 
 
