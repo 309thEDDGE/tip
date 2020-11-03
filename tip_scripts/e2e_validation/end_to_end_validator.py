@@ -198,43 +198,42 @@ class E2EValidator(object):
 
         for ch10name in self.files_under_test.keys():
 
-            msg = '\nValidation results for Ch10: {:s}'.format(ch10name)
+            msg = ('\n'
+                   +'-------------------------------------------------------------------------\n'
+                   +'Validation results for Ch10: {:s}\n'
+                   +'_________________________________________________________________________').format(ch10name)
             print(msg)
             self.print(msg)
 
             ########## 1553 ############
-            msg = 'Raw 1553 data: {:s}'.format(self.get_validation_result_string(
-                self.all_validation_obj[ch10name]['raw1553'].pq_validation_object.test_passed))
-            print(msg)
-            self.print(msg)
-            for md_vobj in self.all_validation_obj[ch10name]['raw1553'].md_validation_objects:
-                md_vobj.print_results(self.print)
-
-            print('Translated 1553 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['alltranslated1553'])))
-            self.print('Translated 1553 data:')
-
-            for transl_res_key in self.validation_results_dict[ch10name]['translated1553msg'].keys():
-                self.print('{:s}: {:s}'.format(transl_res_key, self.get_validation_result_string(self.validation_results_dict[ch10name]['translated1553msg'][transl_res_key])))
-
+            self.all_validation_obj[ch10name]['raw1553'].print_results(self.print)
+            self.all_validation_obj[ch10name]['transl1553'].print_results(self.print)
 
             ########### super set ##########
-            msg = 'Total Ch10 result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['ch10']))
+            msg = '\nTotal Ch10 result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['ch10']))
             print(msg)
             self.print(msg)
 
-        msg = '\nTotal raw 1553 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_raw1553_pass']))
+            msg = ('_________________________________________________________________________\n')
+            print(msg)
+            self.print(msg)
+
+        msg = 'Total raw 1553 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_raw1553_pass']))
         print(msg)
         self.print(msg)
         msg = 'Total translated 1553 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_transl1553_pass']))
         print(msg)
         self.print(msg)
 
-        msg = '\nAll validation set result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_ch10']))
+        msg = 'All validation set result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_ch10']))
         print(msg)
         self.print(msg)
 
-        print('\nTIP run time stats:')
-        self.print('\nTIP run time stats:')
+        print('\n---\n')
+        self.print('\n---\n')
+
+        print('TIP run time stats:')
+        self.print('TIP run time stats:')
         roundval = None
         for ch10name in self.duration_data.keys():
             print('\n{:s}:'.format(ch10name))
@@ -256,45 +255,38 @@ class E2EValidator(object):
             print('Translation 1553: {} seconds'.format(roundval))
             self.print('Translation 1553: {} seconds'.format(roundval))
 
-        
+    def _get_pass_fail_null(self, results_list):
+
+        if results_list.count(None) > 0:
+            return None
+        elif results_list.count(False) > 0:
+            return False
+        else:
+            return True
 
     def _assemble_validation_stats(self):
 
-        all_ch10_pass = True
         single_ch10_pass = True
         single_ch10_bulk_transl1553_pass = True
         single_ch10_raw1553_pass = True
-        data1553_stats = {'raw1553_none_count': 0, 'raw1553_fail_count': 0, 'transl1553_none_count': 0,
-                          'transl1553_fail_count': 0}
+        data1553_stats = {'raw1553': [], 'transl1553': [], 'ch10': []}
         for ch10name in self.files_under_test.keys():
 
             self.validation_results_dict[ch10name] = {'ch10': None, 'raw1553': None, 
-                                                      'translated1553msg': {}, 'alltranslated1553': None}
+                                                      'translated1553': None}
 
             ########## 1553 ############
-            single_ch10_raw1553_pass = self.all_validation_obj[ch10name]['raw1553'].all_passed
-            single_ch10_bulk_transl1553_pass = self.all_validation_obj[ch10name]['transl1553'].all_passed
-
-            transl1553_validation_obj_list = self.all_validation_obj[ch10name]['transl1553'].validation_objects
-            if transl1553_validation_obj_list is not None:
-                for obj in transl1553_validation_obj_list:
-                    base_name = os.path.basename(obj.truth_path)
-                    self.validation_results_dict[ch10name]['translated1553msg'][base_name] = obj.test_passed
+            single_ch10_raw1553_pass = self.all_validation_obj[ch10name]['raw1553'].get_test_result()
+            single_ch10_bulk_transl1553_pass = self.all_validation_obj[ch10name]['transl1553'].get_test_result()
 
             self.validation_results_dict[ch10name]['raw1553'] = single_ch10_raw1553_pass
-            self.validation_results_dict[ch10name]['alltranslated1553'] = single_ch10_bulk_transl1553_pass
+            self.validation_results_dict[ch10name]['translated1553'] = single_ch10_bulk_transl1553_pass
 
-            if single_ch10_raw1553_pass is None:
-                data1553_stats['raw1553_none_count'] += 1
-            elif single_ch10_raw1553_pass == False:
-                data1553_stats['raw1553_fail_count'] += 1
-
-            if single_ch10_bulk_transl1553_pass is None:
-                data1553_stats['transl1553_none_count'] += 1
-            elif single_ch10_bulk_transl1553_pass == False:
-                data1553_stats['transl1553_fail_count'] += 1
+            data1553_stats['raw1553'].append(single_ch10_raw1553_pass)
+            data1553_stats['transl1553'].append(single_ch10_bulk_transl1553_pass)
 
             ########### super set ##########
+
             if single_ch10_raw1553_pass == True and single_ch10_bulk_transl1553_pass == True:
                 single_ch10_pass = True
             elif single_ch10_raw1553_pass is None or single_ch10_bulk_transl1553_pass is None:
@@ -303,31 +295,11 @@ class E2EValidator(object):
                 single_ch10_pass = False
 
             self.validation_results_dict[ch10name]['ch10'] = single_ch10_pass
+            data1553_stats['ch10'].append(single_ch10_pass)
 
-        if data1553_stats['raw1553_none_count'] + data1553_stats['transl1553_none_count'] > 0:
-            all_ch10_pass = None
-        elif data1553_stats['raw1553_fail_count'] + data1553_stats['transl1553_fail_count'] == 0:
-            all_ch10_pass = True
-        else:
-            all_ch10_pass = False
-
-        self.validation_results_dict['all_ch10'] = all_ch10_pass
-
-        if data1553_stats['raw1553_none_count'] == 0:
-            if data1553_stats['raw1553_fail_count'] == 0:
-                self.validation_results_dict['all_raw1553_pass'] = True
-            else:
-                self.validation_results_dict['all_raw1553_pass'] = False
-        else:
-            self.validation_results_dict['all_raw1553_pass'] = None
-
-        if data1553_stats['transl1553_none_count'] == 0:
-            if data1553_stats['transl1553_fail_count'] == 0:
-                self.validation_results_dict['all_transl1553_pass'] = True
-            else:
-                self.validation_results_dict['all_transl1553_pass'] = False
-        else:
-            self.validation_results_dict['all_transl1553_pass'] = None
+        self.validation_results_dict['all_ch10'] = self._get_pass_fail_null(data1553_stats['ch10'])
+        self.validation_results_dict['all_raw1553_pass'] = self._get_pass_fail_null(data1553_stats['raw1553'])
+        self.validation_results_dict['all_transl1553_pass'] = self._get_pass_fail_null(data1553_stats['transl1553'])
 
 
     def _validate_objects(self):
@@ -337,25 +309,24 @@ class E2EValidator(object):
             self.print(msg)
             print(msg)
 
-            ############# 1553 ##############
+            ################################
+            #            1553 
+            ################################
+
+            ############# Raw ##############
             raw1553_validation_obj = self.all_validation_obj[ch10name]['raw1553']
             self.print('\n-- Raw 1553 Comparison --\n')
-            raw1553_validation_obj.validate(self.print)
+            raw1553_validation_obj.validate_dir(self.print)
 
-            # Get stderr/stdout as necessary and add to log.
-            if self.save_stdout:
-                stdout, stderr = raw1553_validation_obj.get_validation_output()
-                self.print('\nstdout:')
-                self.print(stdout)
-                self.print('\nstderr:')
-                self.print(stderr)
-
+            ############# Translated ##############
             transl1553_validation_obj = self.all_validation_obj[ch10name]['transl1553']
-            self.print('\n--Translation 1553 Comparison--\n')
-            transl1553_validation_obj.validate(self.print, self.save_stdout)
+            self.print('\n-- Translation 1553 Comparison --\n')
+            transl1553_validation_obj.validate_dir(self.print)
 
-
-            ########### other data . . . ##########
+            ################################
+            #            video 
+            ################################
+            # not implemented
 
     def _create_raw1553_validation_objects(self):
         print("\n-- Create raw 1553 validation objects --\n")    
@@ -372,8 +343,9 @@ class E2EValidator(object):
         for ch10name,d in self.files_under_test.items():
             translname = d['transl1553']
             self.all_validation_obj[ch10name]['transl1553'] = PqPqTranslated1553DirValidation(
-                self.truth_set_dir, self.test_set_dir, 
-                translname, self.pqcompare_exec_path, self.bincompare_exec_path)
+                os.path.join(self.truth_set_dir, translname), 
+                os.path.join(self.test_set_dir, translname), 
+                self.pqcompare_exec_path, self.bincompare_exec_path)
 
     def __del__(self):
         if self.log_handle is not None:
