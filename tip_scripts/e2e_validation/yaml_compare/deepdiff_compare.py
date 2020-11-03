@@ -1,3 +1,7 @@
+#
+# Install deepdiff:
+# pip install 'deepdiff[murmur]'
+#
 from deepdiff import DeepDiff
 
 '''
