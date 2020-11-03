@@ -49,20 +49,36 @@ GCOV="${GCOV}" gcovr -j --verbose \
     $(if [ -n "${CPP_COVERAGE_EXCLUDE}" ]; then echo --exclude="${CPP_COVERAGE_EXCLUDE}"; fi)
 
 echo ""
-echo Parser validation
+echo "--------------------Parser validation---------------------"
 echo ""
 cd $BASE_DIR
 if [ ! -d ./bin ] ; then mv build/bin . ; fi
-python tip_scripts/pqpqvalidation/end_to_end_validator.py --video /test/truth /test/test /test/log
+python tip_scripts/e2e_validation/end_to_end_validator.py --video /test/truth /test/test /test/log
+
+echo ""
+echo "--------------------End-to-end results------------------"
+echo ""
+# get newest log file
 LOG_FILE="$(ls -1t /test/log/* | head -1)"
 
 if [[ -z "$LOG_FILE" ]] ; then
-	echo "Check parsing command; no log files were found."
-	exit 1
-elif grep "All validation set result: PASS" "$LOG_FILE" ; then
-	echo "Parser validation succeeded"
-	exit 0
-else
-	echo "Parser validation failed"
+	echo "No log files were found."
 	exit 1
 fi
+
+EXIT_CODE=0 # Start by assuming success
+if grep "Total raw 1553 data: PASS" "$LOG_FILE" ; then
+	echo "Parser validation succeeded"
+else
+	echo "Parser validation failed"
+	EXIT_CODE=1
+fi
+
+if grep "Total translated 1553 data: PASS" "$LOG_FILE" ; then
+	echo "Translator validation succeeded"
+else
+	echo "Translator validation failed"
+	# Don't set EXIT_CODE; the pipeline doesn't expect translation to succeed at this point
+fi
+
+exit $EXIT_CODE
