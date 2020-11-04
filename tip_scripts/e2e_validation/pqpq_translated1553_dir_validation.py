@@ -49,37 +49,40 @@ class PqPqTranslated1553DirValidation(DirectoryValidation):
     def _create_validation_objects(self):
 
         # Custom override
-        extension_list = ['.txt', '.yml', '.yaml']
-        metadata_files = [] 
 
-        # Loop over msg-specific directories in truth list and create
-        # translated 1553 msg data validation objects.
-        truth_dir = Path(self.truth_path)
-        test_dir = Path(self.test_path)
-        for truthfile in os.listdir(self.truth_path):
+        if self.truth_dir_exists == True:
 
-            # Find metadata files, only if yaml or txt file.
-            truth_file_path = Path(truthfile)
-            if truth_file_path.suffix in extension_list:
-                metadata_files.append(truth_file_path)
-                continue
+            extension_list = ['.txt', '.yml', '.yaml']
+            metadata_files = [] 
 
-            if (truth_dir / truth_file_path).is_dir():
-                self.validation_objects.append(PqPqTranslated1553Validation(
-                    str(truth_dir / truth_file_path),
-                    str(test_dir / truth_file_path),
-                    self.pqcompare_exec_path))
+            # Loop over msg-specific directories in truth list and create
+            # translated 1553 msg data validation objects.
+            truth_dir = Path(self.truth_path)
+            test_dir = Path(self.test_path)
+            for truthfile in os.listdir(self.truth_path):
 
-        for truth_md_path in metadata_files:
+                # Find metadata files, only if yaml or txt file.
+                truth_file_path = Path(truthfile)
+                if truth_file_path.suffix in extension_list:
+                    metadata_files.append(truth_file_path)
+                    continue
 
-            if truth_md_path.suffix in ['.yml', '.yaml']:
-                self.validation_objects.append(YmlYmlValidation(
-                    str(truth_dir / truth_md_path),
-                    str(test_dir / truth_md_path)))
-            elif truth_md_path.suffix in ['.txt']:
-                self.validation_objects.append(TxtTxtValidation(
-                    str(truth_dir / truth_md_path),
-                    str(test_dir / truth_md_path),
-                    self.bincompare_exec_path))
+                if (truth_dir / truth_file_path).is_dir():
+                    self.validation_objects.append(PqPqTranslated1553Validation(
+                        str(truth_dir / truth_file_path),
+                        str(test_dir / truth_file_path),
+                        self.pqcompare_exec_path))
+
+            for truth_md_path in metadata_files:
+
+                if truth_md_path.suffix in ['.yml', '.yaml']:
+                    self.validation_objects.append(YmlYmlValidation(
+                        str(truth_dir / truth_md_path),
+                        str(test_dir / truth_md_path)))
+                elif truth_md_path.suffix in ['.txt']:
+                    self.validation_objects.append(TxtTxtValidation(
+                        str(truth_dir / truth_md_path),
+                        str(test_dir / truth_md_path),
+                        self.bincompare_exec_path))
 
 

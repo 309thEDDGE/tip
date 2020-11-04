@@ -1,4 +1,7 @@
-from tip_scripts.e2e_validation.pqpq_raw1553_validation import PqPqVideoValidation
+import os
+from pathlib import Path
+from tip_scripts.e2e_validation.directory_validation import DirectoryValidation
+from tip_scripts.e2e_validation.pqpq_video_validation import PqPqVideoValidation
 from tip_scripts.e2e_validation.ymlyml_validation import YmlYmlValidation
 from tip_scripts.e2e_validation.txttxt_validation import TxtTxtValidation
 
@@ -21,25 +24,27 @@ class PqPqVideoDirValidation(DirectoryValidation):
             PqPqVideoValidation(self.truth_path, self.test_path, self.pqcompare_exec_path))
 
         # Add metadata objects.
-        extension_list = ['.txt', '.yml', '.yaml']
-        # Search list of files for those with extension matching
-        # an entry in the extension_list, which includes the leading '.'
-        # (ex: ['.txt', '.yml']).
-        truth_metadata_files = [x for x in os.listdir(self.truth_path) if Path(x).suffix in extension_list]
+        if self.truth_dir_exists == True:
 
-        if len(extension_list) > 0:
+            extension_list = ['.txt', '.yml', '.yaml']
+            # Search list of files for those with extension matching
+            # an entry in the extension_list, which includes the leading '.'
+            # (ex: ['.txt', '.yml']).
+            truth_metadata_files = [x for x in os.listdir(self.truth_path) if Path(x).suffix in extension_list]
 
-            truth_dir = Path(self.truth_path)
-            test_dir = Path(self.test_path)
-            for truth_md_file in truth_metadata_files:
+            if len(extension_list) > 0:
 
-                truth_md_path = Path(truth_md_file)
-                if truth_md_path.suffix in ['.yml', '.yaml']:
-                    self.validation_objects.append(YmlYmlValidation(
-                        str(truth_dir / truth_md_path),
-                        str(test_dir / truth_md_path)))
-                elif truth_md_path.suffix in ['.txt']:
-                    self.validation_objects.append(TxtTxtValidation(
-                        str(truth_dir / truth_md_path),
-                        str(test_dir / truth_md_path),
-                        self.bincompare_exec_path))
+                truth_dir = Path(self.truth_path)
+                test_dir = Path(self.test_path)
+                for truth_md_file in truth_metadata_files:
+
+                    truth_md_path = Path(truth_md_file)
+                    if truth_md_path.suffix in ['.yml', '.yaml']:
+                        self.validation_objects.append(YmlYmlValidation(
+                            str(truth_dir / truth_md_path),
+                            str(test_dir / truth_md_path)))
+                    elif truth_md_path.suffix in ['.txt']:
+                        self.validation_objects.append(TxtTxtValidation(
+                            str(truth_dir / truth_md_path),
+                            str(test_dir / truth_md_path),
+                            self.bincompare_exec_path))

@@ -2,7 +2,7 @@ from tip_scripts.e2e_validation.file_validation import FileValidation
 #from tip_scripts.e2e_validation.ymlyml_validation import YmlYmlValidation
 #from tip_scripts.e2e_validation.txttxt_validation import TxtTxtValidation
 
-class PqPqRVideoValidation(FileValidation):
+class PqPqVideoValidation(FileValidation):
 
     def __init__(self, truth_path, test_path, pqcompare_exec_path):
         prefix = 'PqPqVideoValidation'

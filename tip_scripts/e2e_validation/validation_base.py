@@ -13,6 +13,10 @@ class ValidationBase(object):
         self.regex_raw_video_dir = re.compile(".+_video.parquet")
         self.ready_to_validate = False
         self.prefix = prefix
+        self.truth_dir_exists = None
+        self.test_dir_exists = None
+        self.truth_file_exists = None
+        self.test_file_exists = None
 
     def get_test_result(self):
         return self.test_passed
@@ -55,11 +59,15 @@ class ValidationBase(object):
 
         if not os.path.isdir(self.truth_path):
            print('{:s} - {:s} is not a directory!'.format(self.prefix, self.truth_path))
+           self.truth_dir_exists = False
            return False
+        self.truth_dir_exists = True
 
         if not os.path.isdir(self.test_path):
             print('{:s} - {:s} is not a directory!'.format(self.prefix, self.test_path))
+            self.test_dir_exists = False
             return False
+        self.test_dir_exists = True
 
         return True
 
@@ -70,11 +78,15 @@ class ValidationBase(object):
 
         if not os.path.isfile(self.truth_path):
             print('{:s} - {:s} is not a file!'.format(self.prefix, self.truth_path))
+            self.truth_file_exists = False
             return False
+        self.truth_file_exists = True
            
         if not os.path.isfile(self.test_path):
             print('{:s} - {:s} is not a file!'.format(self.prefix, self.test_path))
+            self.test_file_exists = False
             return False
+        self.test_file_exists = True
 
         return True
 
@@ -83,27 +95,39 @@ class ValidationBase(object):
         if not self.set_paths(truth_path, test_path):
             return False
 
-        if type == 'transl1553':
+        if type_str == 'transl1553':
             if not self._is_translated_1553_msg_dir(self.truth_path):
                 print('{:s} - {:s} is not a translated 1553 msg dir!'.format(self.prefix, self.truth_path))
+                self.truth_dir_exists = False
                 return False
+            self.truth_dir_exists = True
             if not self._is_translated_1553_msg_dir(self.test_path):
                 print('{:s} - {:s} is not a translated 1553 msg dir!'.format(self.prefix, self.test_path))
+                self.test_dir_exists = False
                 return False
-        elif type == 'raw1553':
+            self.test_dir_exists = True
+        elif type_str == 'raw1553':
             if not self._is_raw_1553_dir(self.truth_path):
                 print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.truth_path))
+                self.truth_dir_exists = False
                 return False
+            self.truth_dir_exists = True
             if not self._is_raw_1553_dir(self.test_path):
                 print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.test_path))
+                self.test_dir_exists = False
                 return False
-        elif type == 'rawvideo':
+            self.test_dir_exists = True
+        elif type_str == 'rawvideo':
             if not self._is_raw_video_dir(self.truth_path):
                 print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.truth_path))
+                self.truth_dir_exists = False
                 return False
+            self.truth_dir_exists = True
             if not self._is_raw_video_dir(self.test_path):
                 print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.test_path))
+                self.test_dir_exists = False
                 return False
+            self.test_dir_exists = True
         else:
             print('ValidationBase.set_1553_paths(): type_str = {:s} not defined!'.format(type_str))
             return False
