@@ -37,14 +37,10 @@ end_to_end_validator.py
 
 import os
 import sys
+import time
 import datetime
-import argparse
 import platform
 import json
-
-tip_root_path = os.path.dirname(os.path.abspath(os.path.join(os.path.realpath(__file__), '../..')))
-sys.path.append(tip_root_path)
-
 
 ######################################################################
 #                          YAML File Processing
@@ -55,14 +51,15 @@ sys.path.append(tip_root_path)
 # network access or software restrictions, set the config option below
 # to False.
 from tip_scripts.e2e_validation import config
-config.COMPARE_YAML = False
+#config.COMPARE_YAML = False
 ######################################################################
+
+tip_root_path = os.path.dirname(os.path.abspath(os.path.join(os.path.realpath(__file__), '../..')))
 
 from tip_scripts.e2e_validation.pqpq_raw1553_dir_validation import PqPqRaw1553DirValidation
 from tip_scripts.e2e_validation.pqpq_translated1553_dir_validation import PqPqTranslated1553DirValidation
 from tip_scripts.e2e_validation.pqpq_video_dir_validation import PqPqVideoDirValidation
 from tip_scripts.exec import Exec
-import time
 
 class E2EValidator(object):
 
@@ -100,6 +97,7 @@ class E2EValidator(object):
         log_base_name = 'e2e_validation_' + log_description + time_stamp + '.txt'
         self.log_name = os.path.join(self.log_file_path, log_base_name)
         self.log_handle = None
+
 
     def _read_files_under_test(self):
 
@@ -427,51 +425,3 @@ class E2EValidator(object):
     def __del__(self):
         if self.log_handle is not None:
             self.log_handle.close()
-
-
-if __name__ == '__main__':
-
-    #if len(sys.argv) < 4:
-    #    print('Not enough args')
-    #    sys.exit(0)
-
-    #desc = ''
-    #if len(sys.argv) == 5:
-    #    desc = sys.argv[4]
-
-    #e = E2EValidator(sys.argv[1], sys.argv[2], sys.argv[3], log_desc=desc, video=False)
-
-    aparse = argparse.ArgumentParser(description='Do end-to-end validation on a set of Ch10 files')
-    aparse.add_argument('truth_dir', metavar='<truth dir. path>', type=str, 
-                        help='Full path to directory containing source Ch10 files, '
-                        'previously generated parsed and translated output data, '
-                        'an ICD to be used during the 1553 translation step for each '
-                        'ch10 file and a ch10list.csv file which matches the ch10 name '
-                        'to the ICD to be used during translation. ch10list.csv format:\n'
-                        '<ch10 name 1> <icd name for ch10 1> # both present in the truth direcotry\n'
-                        '<ch10 name 2> <icd name for ch10 2>\n'
-                        '...')
-    aparse.add_argument('test_dir', metavar='<test dir. path>', type=str, 
-                        help='Full path to directory in which freshly generated output data shall be '
-                        'placed. TIP parse and translate routines will be applied to each of the ch10 '
-                        'files found in the truth directory and placed in the test dir.')
-    aparse.add_argument('log_dir', metavar='<log output dir. path>', type=str, 
-                         help='Full path to directory in which logs shall be written')
-    aparse.add_argument('-l', '--log-string', type=str, default=None,
-                        help='Provide a string to be inserted into the log name')
-    aparse.add_argument('-v', '--video', action='store_true', default=False,
-                        help='Generate raw video parquet files (validation not implemented)')
-    aparse.add_argument('--no-yaml', action='store_true', default=False, 
-                        help='Turn off Yaml dependency import (deepdiff) and do not compare yaml files')
-
-    args = aparse.parse_args()
-    log_desc = ''
-    if args.log_string is not None:
-        log_desc = args.log_string
-
-    config.COMPARE_YAML = True
-    if args.no_yaml:
-        config.COMPARE_YAML = False
-
-    e = E2EValidator(args.truth_dir, args.test_dir, args.log_dir, log_desc=log_desc, video=args.video)
-    e.validate()
