@@ -34,6 +34,7 @@ components which are compared individually, in which case the logic given above 
 end_to_end_validator.py
 '''
 
+
 import os
 import sys
 import datetime
@@ -43,6 +44,19 @@ import json
 
 tip_root_path = os.path.dirname(os.path.abspath(os.path.join(os.path.realpath(__file__), '../..')))
 sys.path.append(tip_root_path)
+
+
+######################################################################
+#                          YAML File Processing
+######################################################################
+# YAML processing requires the yaml_compare module, which is local to 
+# this code base. That module relies on the third-party package DeepDiff.
+# If DeepDiff ("pip install 'deepdiff[murmur]'") can't be downloaded due
+# network access or software restrictions, set the config option below
+# to False.
+from tip_scripts.e2e_validation import config
+config.COMPARE_YAML = False
+######################################################################
 
 from tip_scripts.e2e_validation.pqpq_raw1553_dir_validation import PqPqRaw1553DirValidation
 from tip_scripts.e2e_validation.pqpq_translated1553_dir_validation import PqPqTranslated1553DirValidation
@@ -447,11 +461,17 @@ if __name__ == '__main__':
                         help='Provide a string to be inserted into the log name')
     aparse.add_argument('-v', '--video', action='store_true', default=False,
                         help='Generate raw video parquet files (validation not implemented)')
+    aparse.add_argument('--no-yaml', action='store_true', default=False, 
+                        help='Turn off Yaml dependency import (deepdiff) and do not compare yaml files')
 
     args = aparse.parse_args()
     log_desc = ''
     if args.log_string is not None:
         log_desc = args.log_string
+
+    config.COMPARE_YAML = True
+    if args.no_yaml:
+        config.COMPARE_YAML = False
 
     e = E2EValidator(args.truth_dir, args.test_dir, args.log_dir, log_desc=log_desc, video=args.video)
     e.validate()

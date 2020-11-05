@@ -1,8 +1,10 @@
 import os
 from pathlib import Path
+from tip_scripts.e2e_validation import config
 from tip_scripts.e2e_validation.directory_validation import DirectoryValidation
 from tip_scripts.e2e_validation.pqpq_video_validation import PqPqVideoValidation
-from tip_scripts.e2e_validation.ymlyml_validation import YmlYmlValidation
+if config.COMPARE_YAML:
+    from tip_scripts.e2e_validation.ymlyml_validation import YmlYmlValidation
 from tip_scripts.e2e_validation.txttxt_validation import TxtTxtValidation
 
 class PqPqVideoDirValidation(DirectoryValidation):
@@ -40,9 +42,10 @@ class PqPqVideoDirValidation(DirectoryValidation):
 
                     truth_md_path = Path(truth_md_file)
                     if truth_md_path.suffix in ['.yml', '.yaml']:
-                        self.validation_objects.append(YmlYmlValidation(
-                            str(truth_dir / truth_md_path),
-                            str(test_dir / truth_md_path)))
+                        if config.COMPARE_YAML:
+                            self.validation_objects.append(YmlYmlValidation(
+                                str(truth_dir / truth_md_path),
+                                str(test_dir / truth_md_path)))
                     elif truth_md_path.suffix in ['.txt']:
                         self.validation_objects.append(TxtTxtValidation(
                             str(truth_dir / truth_md_path),
