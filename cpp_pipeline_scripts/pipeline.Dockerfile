@@ -3,5 +3,5 @@ FROM registry.il2.dsop.io/platform-one/devops/pipeline-templates/ubi8-gcc-bundle
 #
 # Import tip dependencies
 #
-WORKDIR /deps
-COPY . /
+RUN mkdir /deps
+ADD . /deps
