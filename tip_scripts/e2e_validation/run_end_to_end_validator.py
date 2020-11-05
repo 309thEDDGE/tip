@@ -9,16 +9,6 @@ from tip_scripts.e2e_validation import config
 
 if __name__ == '__main__':
 
-    #if len(sys.argv) < 4:
-    #    print('Not enough args')
-    #    sys.exit(0)
-
-    #desc = ''
-    #if len(sys.argv) == 5:
-    #    desc = sys.argv[4]
-
-    #e = E2EValidator(sys.argv[1], sys.argv[2], sys.argv[3], log_desc=desc, video=False)
-
     aparse = argparse.ArgumentParser(description='Do end-to-end validation on a set of Ch10 files')
     aparse.add_argument('truth_dir', metavar='<truth dir. path>', type=str, 
                         help='Full path to directory containing source Ch10 files, '
