@@ -1,8 +1,8 @@
 *
 !*.Dockerfile
 !Dockerfile
-!ci_p1
-!ci_p1/**
+!cpp_pipeline_scripts
+!cpp_pipeline_scripts/**
 !vendor
 !vendor/*.gz
 !vendor/*.sh
@@ -12,7 +12,6 @@
 !vendor/.timestamp
 !.gitignore
 !bin
-!deps
 !conf
 !conf/**
 conf/*.yaml
