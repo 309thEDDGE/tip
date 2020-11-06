@@ -65,6 +65,37 @@ prompt_user: false
 stop_after_bus_map: false
 
 #
+# vote_threshold 
+#
+# Bus mapping is used to associate a 1553 channel ID recorded in 
+# the chapter 10 to a bus name found in the 1553 DTS file.
+# One method is to use tmats, if it is correct, by setting 
+# use_tmats_busmap: True, or by using a voting method by setting
+# use_tmats_busmap: False.
+#
+# The bus map vote method uses the transmit/recieve command words
+# off the 1553 bus and matches them to a transmit/recieve command
+# word in the 1553 DTS file. If a transmit/recieve command word
+# from a given channel ID matches a transmit/recieve command word
+# from the 1553 DTS file, the channel ID votes for the bus/buses associated
+# with the transmit/recieve command word from the 1553 DTS file. 
+# (Note: word count is ignored from transmit/recieve command word matching)
+# IF there are a lot of different 1553 buses recorded in the chapter 10 
+# and not enough command words provided through the 1553 DTS file AND
+# not a lot of traffic exists on one of the buses, there is a chance
+# that the channel ID with lower traffic could be mapped to the wrong bus.
+# vote_threshold can be used to help prevent this issue. To create a final 
+# channel ID -> bus name mapping, the bus votes from a given channel ID
+# must be >= vote_threshold.
+#
+# A good threshold can be found from trial and error. It greatly depends
+# on how complete the 1553 DTS file is and the amount of bus traffic
+# on each bus. The vote_threshold is not used when use_tmats_busmap = true
+# Valid ranges are [1, INT_MAX].
+#
+vote_threshold: 5
+
+#
 # select_specific_messages
 #
 # If non empty list provided, only the list of messages given will be translated.

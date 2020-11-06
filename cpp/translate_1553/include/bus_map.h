@@ -25,7 +25,7 @@ private:
 	std::map<uint64_t, std::string> tmats_chanid_to_source_map_;
 	std::set<std::string> unique_buses_;
 	std::set<uint64_t> channel_ids_;
-	int64_t key;
+	int64_t key_;
 	uint64_t mask_;		
 	std::map<uint64_t, std::pair<std::string, std::string>> 
 		final_bus_map_with_sources_;
@@ -35,6 +35,7 @@ private:
 	bool tmats_present_;
 	UserInput user_input_;
 	std::map<uint64_t, std::string>* final_map_ptr_;
+	uint64_t vote_threshold_;
 
 	void PrepareFinalMap();
 	std::map<uint64_t, std::string> VoteMapping();
@@ -45,7 +46,7 @@ private:
 	std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>> votes_;
 
 public:
-	BusMap() : tmats_present_(false) {};
+	BusMap() : tmats_present_(false), mask_(UINT64_MAX), vote_threshold_(1){};
 	~BusMap() {};
 	
 	/*
@@ -81,6 +82,8 @@ public:
 										bits in every bit postition besides the word count
 										portions will be considered as the same key.
 
+	 vote_threshold				  -> for a mapping to be made, votes must be >= vote_threshold
+
 	 tmats_chanid_to_source_map	  -> non required map of channel ids to source(bus name)
 										from tmats. The information is in metadata
 										inside the parsed ch10 parquet file.
@@ -95,6 +98,7 @@ public:
 		icd_message_keys_to_busnames,
 		std::set<uint64_t> channel_ids,
 		uint64_t mask = UINT64_MAX,
+		uint64_t vote_threshold = 1,
 		std::map<uint64_t, std::string> tmats_chanid_to_source_map
 		= std::map<uint64_t, std::string>(),
 		std::map<std::string, std::string> tmats_busname_corrections
@@ -106,8 +110,9 @@ public:
 		Should be called each time new messages are submitted for  
 		voting. This is specific to 1553 bus mapping. It will iterate
 		over each vector entry, recreate a key and attempt to match the key
-		with one found in the icd_message_keys_to_busnames after applying
-		the mask. Each vector should be the same length.
+		with one found in the icd_message_key_to_busnames_map after applying
+		the mask. The key = transmit_cmd << 16 | recieve_cmd.
+		Each vector should be the same length.
 
 		transmit_cmd	-> vector of transmit command words
 
@@ -129,6 +134,29 @@ public:
 			const std::vector<uint64_t>& recieve_cmd,
 			const std::vector<uint64_t>& channel_ids,
 			size_t submission_size = -1);
+
+	/*
+		SubmitMessage
+
+		Used to submit one message at a time for voting. 
+		This is specific to 1553 bus mapping. It will use the 
+		transmit and recieve command word and recreate a key. 
+		The key = transmit_cmd << 16 | recieve_cmd.
+		It will then attempt to match the key with one found
+		in the icd_message_key_to_busnames_map after applying
+		the mask. 
+
+		transmit_cmd	-> transmit command word
+
+		recieve_cmd		-> recieve command word
+
+		channel_id		-> channel id associated with the
+							transmit and recieve command word
+	*/
+	void SubmitMessage(
+		const uint64_t& transmit_cmd,
+		const uint64_t& recieve_cmd,
+		const uint64_t& channel_id);
 
 	/*
 		 Finalize

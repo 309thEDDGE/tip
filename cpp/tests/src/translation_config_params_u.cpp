@@ -52,6 +52,7 @@ TEST_F(TranslationConfigParamsTest, InitializeValidEntry)
 	file << "select_specific_messages :\n  [\n   message1, \n   message2\n  ]\n";
 	file << "exit_after_table_creation : false\n";
 	file << "stop_after_bus_map : false\n";
+	file << "vote_threshold : 1\n";
 	file << "prompt_user : false\n";
 	file << "translate_thread_count: 1\n";
 	file.close();
@@ -78,6 +79,7 @@ TEST_F(TranslationConfigParamsTest, InitializeEmptyList)
 	file << "select_specific_messages :\n  []\n";
 	file << "exit_after_table_creation : false\n";
 	file << "stop_after_bus_map : false\n";
+	file << "vote_threshold : 1\n";
 	file << "prompt_user : false\n";
 	file << "comet_busmap_replacement :\n  {}\n";
 	file << "translate_thread_count: 1\n";
