@@ -75,6 +75,15 @@ public:
 		Note!!! if the column is a list, it will assume
 		that the list type is INT32. 
 
+		If compare_schema_only is set True, then the
+		count, type and name of columns are compared only.
+		None of the data in those columns are compared.
+		This is particularly useful when two empty parquet 
+		files with the schema are compared. If compare_schema_only
+		is set true, then the comparison result will indicate
+		equality. If compare_schema_only is to false, the result
+		will be inequality.
+
 		Returns: False -> If columns don't match
 				 True  -> If columns match
 	*/
