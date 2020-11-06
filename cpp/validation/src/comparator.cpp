@@ -78,8 +78,7 @@ bool Comparator::CompareColumn(int column, bool compare_schema_only)
 	}
 
 	// Start the comparison at the first parquet file in the folder
-	if(!compare_schema_only)
-		ZeroRG();	
+	ZeroRG();	
 
 	// reset stats for the column
 	compared_count_[column] = 0;
