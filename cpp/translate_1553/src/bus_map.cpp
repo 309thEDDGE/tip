@@ -13,9 +13,11 @@ void BusMap::PrepareFinalMap()
 void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::string>> *icd_message_keys, 
 	std::set<uint64_t> channel_ids,
 	uint64_t mask,
+	uint64_t vote_threshold,
 	std::map<uint64_t, std::string> tmats_chanid_to_source_map, 
 	std::map<std::string, std::string> tmats_busname_corrections)
 {
+	vote_threshold_ = vote_threshold;
 	tmats_chanid_to_source_map_ = tmats_chanid_to_source_map;
 	channel_ids_ = channel_ids;
 	mask_ = mask;
@@ -228,14 +230,26 @@ bool BusMap::SubmitMessages(
 	}
 	for (int i = 0; i < count; i++)
 	{
-		key = ((transmit_cmd[i] << 16 ) 
+		key_ = ((transmit_cmd[i] << 16 ) 
 			| (recieve_cmd[i])) & mask_;
-		if (icd_message_key_to_channelids_map_.count(key) == 1)
+		if (icd_message_key_to_channelids_map_.count(key_) == 1)
 		{
-			icd_message_key_to_channelids_map_[key].insert(channel_ids[i]);
+			icd_message_key_to_channelids_map_[key_].insert(channel_ids[i]);
 		}
 	}
 	return true;
+}
+
+void BusMap::SubmitMessage(const uint64_t& transmit_cmd, 
+	const uint64_t& recieve_cmd, 
+	const uint64_t& channel_id)
+{
+	key_ = ((transmit_cmd << 16)
+		| (recieve_cmd)) & mask_;
+	if (icd_message_key_to_channelids_map_.count(key_) == 1)
+	{
+		icd_message_key_to_channelids_map_[key_].insert(channel_id);
+	}
 }
 
 
@@ -275,7 +289,8 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 	}
 
 	// assign a bus to a channel id if it has the most votes
-	// but not if it has zero votes, and not if the number of
+	// but not if the vote count is not >=
+	// vote_threshold, and not if the number of
 	// votes is the same as another bus
 	int highest_vote = 0;
 	int find_count = 0;
@@ -309,7 +324,7 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 			}
 		}
 
-		if (highest_vote != 0 && find_count == 1)
+		if (highest_vote >= vote_threshold_ && find_count == 1)
 			vote_map[it->first] = highest_voted_bus;
 
 	}
@@ -330,9 +345,6 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 
 	// vote mapping
 	std::map<uint64_t, std::string> vote_mapping = VoteMapping();
-
-	
-
 
 	if (use_tmats_busmap)
 	{

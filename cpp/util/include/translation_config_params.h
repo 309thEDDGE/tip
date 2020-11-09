@@ -19,6 +19,7 @@ public:
 	std::vector<std::string> select_specific_messages_;
 	bool exit_after_table_creation_;
 	bool stop_after_bus_map_;
+	int vote_threshold_;
 	bool prompt_user_;
 	int translate_thread_count_;
 
@@ -55,6 +56,9 @@ public:
 
 		success.insert(yr.GetParams("stop_after_bus_map", 
 			stop_after_bus_map_, true));
+
+		success.insert(yr.GetParams("vote_threshold",
+			vote_threshold_, 1, INT_MAX, true));
 
 		success.insert(yr.GetParams("prompt_user", 
 			prompt_user_, true));
