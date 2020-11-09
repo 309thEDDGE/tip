@@ -78,7 +78,7 @@ public:
 		Returns: False -> If columns don't match
 				 True  -> If columns match
 	*/
-	bool CompareColumn(int column, bool compare_schema_only=false);
+	bool CompareColumn(int column);
 
 	/*
 		Retrieve the amount of rows compared in a given column

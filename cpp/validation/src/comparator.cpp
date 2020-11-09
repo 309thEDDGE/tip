@@ -44,7 +44,7 @@ void Comparator::InitializeStats()
 		columns_passed_[(i + 1)] = false;
 	}
 }
-bool Comparator::CompareColumn(int column, bool compare_schema_only)
+bool Comparator::CompareColumn(int column)
 {
 	printf("\n ---Comparing Column %d--- \n", column);
 	bool is_list = false;
@@ -78,8 +78,25 @@ bool Comparator::CompareColumn(int column, bool compare_schema_only)
 	}
 
 	// Start the comparison at the first parquet file in the folder
-	if(!compare_schema_only)
-		ZeroRG();	
+	ZeroRG();	
+
+	bool compare_col_schema_only = false;
+	// Check for case in which both parquet files were created and zero
+	// rows/row groups were added. If both truth and test parquet
+	// directories contain files with zero rows
+	// then the comparison ought to result in equality. 
+	// This can occur, for example, when 
+	// ethernet or video packets are intended to be parsed by TIP
+	// and the ch10 does not contain either of those packet types.
+	// TIP creates the pq file in preparation to add data because
+	// the content of the ch10 is not known a priori. 
+	if (pm1_.GetRowGroupCount() == 0 && pm2_.GetRowGroupCount() == 0)
+	{
+		printf("\n\nThe current files from the truth and test sets each "
+			"have zero row groups.\nConclusion: Both truth and test files "
+			"are empty. Comparing column schema only.");
+		compare_col_schema_only = true;
+	}
 
 	// reset stats for the column
 	compared_count_[column] = 0;
@@ -97,7 +114,7 @@ bool Comparator::CompareColumn(int column, bool compare_schema_only)
 		return false;
 	}
 
-	if (compare_schema_only)
+	if (compare_col_schema_only)
 		return true;
 
 	// If it is a list, assume the data type is Int32Type
@@ -201,27 +218,6 @@ bool Comparator::CheckPassed(int column)
 
 bool Comparator::CompareAll()
 {
-	bool compare_col_schema_only = false;
-	// Check for case in which both parquet files were created and zero
-	// rows/row groups were added. If both truth and test parquet
-	// directories contain a single parquet file with zero rows
-	// then the comparison ought result in equality. 
-	// This can occur, for example, when 
-	// ethernet or video packets are intended to be parsed by TIP
-	// and the ch10 does not contain either of those packet types.
-	// TIP creates the pq file in preparation to add data because
-	// the content of the ch10 is not known a priori. 
-	if (pm1_.GetInputParquetPathsCount() == 1 &&
-		pm2_.GetInputParquetPathsCount() == 1)
-	{
-		if (pm1_.GetRowGroupCount() == 0 && pm2_.GetRowGroupCount() == 0)
-		{
-			printf("\n\nEach input directory has only a single file and each file "
-				"has zero row groups.\nConclusion: Both truth and test files "
-				"are empty. Comparing column schema only.");
-			compare_col_schema_only = true;
-		}
-	}
 
 	InitializeStats();
 
@@ -233,7 +229,7 @@ bool Comparator::CompareAll()
 
 	for (int i = 0; i < max_fields; i++)
 	{
-		columns_passed_[i + 1] = CompareColumn(i + 1, compare_col_schema_only);
+		columns_passed_[i + 1] = CompareColumn(i + 1);
 	}
 
 
