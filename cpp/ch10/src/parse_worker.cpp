@@ -844,6 +844,14 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 		printf("(%03hu) Closing Ethernet Data Parquet database\n", id);
 		i106_ethernetf0_.Finalize();
 #endif
+
+		// Close I106 Buffer
+		i106_status_ = I106C10Close(i106_handle_);
+		if (i106_status_ != I106Status::I106_OK)
+		{
+			printf("\n(%03u) I106C10Close failure: %s\n",
+				id, I106ErrorString(i106_status_));
+		}	
 	}
 #endif
 #endif
