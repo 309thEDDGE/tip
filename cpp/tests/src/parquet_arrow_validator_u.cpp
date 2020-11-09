@@ -98,7 +98,7 @@ protected:
 	}
 
 	// Generate Parquet file with two
-	// columns with differenct schemas
+	// columns with different schemas
 	template <typename T1, typename T2>
 	bool CreateTwoColParquetFile(std::string directory,
 		std::shared_ptr<arrow::DataType> type1,

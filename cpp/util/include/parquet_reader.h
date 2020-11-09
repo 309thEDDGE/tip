@@ -23,13 +23,17 @@ private:
 	std::unique_ptr<parquet::arrow::FileReader> arrow_reader_;
 	bool manual_rowgroup_increment_mode_;
 
+	std::vector<std::shared_ptr<arrow::Field>> initial_fields_ =
+		std::vector<std::shared_ptr<arrow::Field>>();
+
 
 	int row_group_count_;
 	int current_row_group_;
 	int current_file_;
+	bool data_found_;
+	std::shared_ptr<arrow::Schema> schema_;
 
 	bool OpenNextParquetFile();
-
 
 public:
 	ParquetReader()
@@ -38,6 +42,8 @@ public:
 		row_group_count_ = 0;
 		current_row_group_ = 0;
 		current_file_ = 0;
+		data_found_ = false;
+		schema_ = arrow::schema(initial_fields_);
 	};
 
 	~ParquetReader()
@@ -49,7 +55,7 @@ public:
 		}
 	};
 
-	std::shared_ptr<arrow::Schema> schema_;
+	
 
 	/*
 		Initializes the parquet folder
@@ -136,6 +142,11 @@ public:
 		such as row_group_count_ is stored as int.
 	*/
 	int GetInputParquetPathsCount() { return int(input_parquet_paths_.size()); }
+
+	/*
+		Return the schema for the parquet file
+	*/
+	std::shared_ptr<arrow::Schema> GetSchema() { return schema_; }
 	
 };
 
@@ -146,6 +157,9 @@ bool ParquetReader::GetNextRG(int col,
 	bool list)
 {
 	size = 0;
+
+	if (col >= schema_->num_fields())
+		return false;
 
 	if (current_row_group_ >= row_group_count_)
 	{
