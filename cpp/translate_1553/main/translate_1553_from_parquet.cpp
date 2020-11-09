@@ -28,11 +28,11 @@ bool GetArguments(int argc, char* argv[], std::string& input_path,
 
 bool PrepareICDAndBusMap(DTS1553& dts1553, const std::string& input_path,
 	const std::string& dts_path, bool stop_after_bus_map, bool prompt_user,
-	std::map<std::string, std::string>& tmats_bus_name_corrections,
+	uint64_t vote_threshold, std::map<std::string, std::string>& tmats_bus_name_corrections,
 	bool use_tmats_busmap,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
 bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prompt_user,
-	std::map<std::string, std::string>& tmats_bus_name_corrections,
+	uint64_t vote_threshold, std::map<std::string, std::string>& tmats_bus_name_corrections,
 	bool use_tmats_busmap,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
 bool MTTranslate(std::string input_path, uint8_t thread_count, bool select_msgs,
@@ -66,7 +66,8 @@ int main(int argc, char* argv[])
 	DTS1553 dts1553;
 	std::map<uint64_t, std::string> chanid_to_bus_name_map;
 	if (!PrepareICDAndBusMap(dts1553, input_path, dts_path, config.stop_after_bus_map_,
-		config.prompt_user_, config.tmats_busname_corrections_, config.use_tmats_busmap_, 
+		config.prompt_user_, config.vote_threshold_, 
+		config.tmats_busname_corrections_, config.use_tmats_busmap_, 
 		chanid_to_bus_name_map))
 	{
 		return 0;
@@ -123,7 +124,7 @@ bool GetArguments(int argc, char* argv[], std::string& input_path,
 
 bool PrepareICDAndBusMap(DTS1553& dts1553, const std::string& input_path,
 	const std::string& dts_path, bool stop_after_bus_map, bool prompt_user,
-	std::map<std::string, std::string>& tmats_bus_name_corrections,
+	uint64_t vote_threshold, std::map<std::string, std::string>& tmats_bus_name_corrections,
 	bool use_tmats_busmap, 
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
@@ -150,7 +151,7 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const std::string& input_path,
 
 	// Generate the bus map from metadata and possibly user
 	// input.
-	if (!SynthesizeBusMap(dts1553, input_path, prompt_user, 
+	if (!SynthesizeBusMap(dts1553, input_path, prompt_user, vote_threshold,
 		tmats_bus_name_corrections, use_tmats_busmap, 
 		chanid_to_bus_name_map))
 	{
@@ -170,7 +171,7 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const std::string& input_path,
 }
 
 bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prompt_user,
-	std::map<std::string, std::string>& tmats_bus_name_corrections,
+	uint64_t vote_threshold, std::map<std::string, std::string>& tmats_bus_name_corrections,
 	bool use_tmats_busmap, std::map<uint64_t,std::string>& chanid_to_bus_name_map)
 {
 	std::unordered_map<uint64_t, std::set<std::string>> message_key_to_busnames_map;
@@ -234,8 +235,12 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 	// bits of the command word are the mode code bits and no longer match
 	// the command words found in the input icd file unless they are masked to zero.
 	uint64_t mask = 0b1111111111111111111111111111111111111111111000001111111111100000;
-	bm.InitializeMaps(&message_key_to_busnames_map, chanid_to_lruaddrs_set, mask,
-		tmats_chanid_to_source_map, tmats_bus_name_corrections);
+	bm.InitializeMaps(&message_key_to_busnames_map, 
+		chanid_to_lruaddrs_set, 
+		mask,
+		vote_threshold,
+		tmats_chanid_to_source_map, 
+		tmats_bus_name_corrections);
 
 	ParquetReader pr;
 	pr.SetManualRowgroupIncrementMode();
