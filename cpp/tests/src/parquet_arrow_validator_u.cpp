@@ -1525,6 +1525,7 @@ TEST_F(ParquetArrowValidatorTest, CompareEmptyFilesSameSchema)
 	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
 
 	ASSERT_TRUE(comp.CompareAll());
+	ASSERT_TRUE(comp.CompareColumn(1));
 }
 
 TEST_F(ParquetArrowValidatorTest, CompareEmptyFilesDifferentNames)
@@ -1545,6 +1546,8 @@ TEST_F(ParquetArrowValidatorTest, CompareEmptyFilesDifferentNames)
 	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
 
 	ASSERT_FALSE(comp.CompareAll());
+	ASSERT_TRUE(comp.CompareColumn(1));
+	ASSERT_FALSE(comp.CompareColumn(2));
 }
 
 TEST_F(ParquetArrowValidatorTest, CompareSameDataDifferentColNames)
@@ -1554,7 +1557,7 @@ TEST_F(ParquetArrowValidatorTest, CompareSameDataDifferentColNames)
 
 	// Zero data rows configured.
 	std::vector<float> col0data = { 1.0, 2., 3., 4., 5., 6., 7., 8., 9., 0. };
-	std::vector<int16_t> col1data = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
+	std::vector<int16_t> col1data = { 1, 2,  3,  4,  5,  6,  7,  8,  9,  0 };
 
 	ASSERT_TRUE(CreateTwoColParquetFile(dirname1, arrow::float32(), col0data, "col1",
 		arrow::int16(), col1data, "col2", 5));
@@ -1565,4 +1568,7 @@ TEST_F(ParquetArrowValidatorTest, CompareSameDataDifferentColNames)
 	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
 
 	ASSERT_FALSE(comp.CompareAll());
+	ASSERT_TRUE(comp.CompareColumn(1));
+	ASSERT_FALSE(comp.CompareColumn(2));
 }
+

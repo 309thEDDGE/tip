@@ -21,6 +21,7 @@ private:
 	ParquetReader pm2_;
 	std::map<int, int> compared_count_;
 	std::map<int, bool> columns_passed_;
+	bool failure_;
 	void InitializeStats();
 	
 	template<typename A, typename T>
@@ -40,6 +41,7 @@ public:
 		begin_pos_1_ = 0;
 		begin_pos_2_ = 0;
 		compare_vec_result_ = false;
+		failure_ = false;
 	};
 
 	~Comparator() {};

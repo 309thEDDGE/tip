@@ -61,6 +61,12 @@ public:
 		Initializes the parquet folder
 
 		Returns: False -> If invalid parquet folder
+							1. Non existent base_path
+							2. Empty parquet folder
+							3. Invalid parquet files
+							4. Column count not consistent
+							5. Schema types not consistent
+							6. Column names not consistent
 				 True  -> If valid parquet folder
 	*/
 	bool SetPQPath(std::string base_path);

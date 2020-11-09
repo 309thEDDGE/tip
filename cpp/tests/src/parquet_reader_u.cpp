@@ -419,6 +419,8 @@ TEST_F(ParquetReaderTest, EmptyParquetFile)
 
 	std::vector<int32_t> out(100);
 	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
+	ASSERT_EQ(size, 0);
+	ASSERT_EQ(pm.GetSchema()->num_fields(), 0);
 
 	ASSERT_TRUE(std::filesystem::remove_all(dir));
 }
@@ -532,6 +534,7 @@ TEST_F(ParquetReaderTest, InvalidParquetFile)
 	ASSERT_FALSE((pm.GetNextRG<int16_t, arrow::NumericArray<arrow::Int16Type>>(0, out, size)));
 
 	ASSERT_EQ(size, 0);
+	ASSERT_EQ(pm.GetSchema()->num_fields(), 0);
 }
 
 TEST_F(ParquetReaderTest, NonExistantParquetFile)
@@ -545,6 +548,9 @@ TEST_F(ParquetReaderTest, NonExistantParquetFile)
 
 	std::vector<int32_t> out(100);
 	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
+
+	ASSERT_EQ(size, 0);
+	ASSERT_EQ(pm.GetSchema()->num_fields(), 0);
 }
 
 TEST_F(ParquetReaderTest, GetNextRGMultipleFilesReachesEnd)
