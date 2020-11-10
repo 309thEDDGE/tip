@@ -1533,12 +1533,13 @@ TEST_F(EmitterTest, EmitSequenceOfVectors)
 		{22, -2, 43},
 		{-1023, 1023, 5000}
 	};
-	it_.EmitSequenceOfVectors(out_, test_vec, "the other map");
 
-	std::string expect = "the other map:\n"
-		"  - [-33, 3, 4, 5]\n"
-		"  - [22, -2, 43]\n"
-		"  - [-1023, 1023, 5000]\n";
+	it_.EmitSequenceOfVectors(out_, test_vec);
+
+	std::string expect =
+		"- [-33, 3, 4, 5]\n"
+		"- [22, -2, 43]\n"
+		"- [-1023, 1023, 5000]";
 	ExpectEmit(expect, out_);
 }
 
