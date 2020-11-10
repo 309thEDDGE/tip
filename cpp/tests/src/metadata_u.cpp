@@ -173,3 +173,47 @@ TEST_F(MetadataTest, GetMetadataStringAllRecordTypes)
 		"...\n";
 	EXPECT_EQ(md_.GetMetadataString(), expected_md_string_);
 }
+
+TEST_F(MetadataTest, GetMetadataStringCompoundMapToVectorOfSet)
+{
+	std::string map_name("this is the map name");
+	std::map<uint16_t, std::vector<std::set<int>>> input_map = {
+		{33, {{123, 80}, {-10, -12, 13}}},
+		{9, {{10000, 981}, {-11, 233, 3}, {50, 55}}}
+	};
+	md_.RecordCompoundMapToVectorOfSet(input_map, map_name);
+
+	expected_md_string_ =
+		"---\n"
+		"this is the map name:\n"
+		"  9:\n"
+		"    - [981, 10000]\n"
+		"    - [-11, 3, 233]\n"
+		"    - [50, 55]\n"
+		"  33:\n"
+		"    - [80, 123]\n"
+		"    - [-12, -10, 13]\n"
+		"...\n";
+
+	YAML::Node node = YAML::Load(expected_md_string_);
+
+	// Check map name
+	EXPECT_TRUE(node[map_name]);
+
+	// Check sub map names.
+	YAML::Node input_map_node = node[map_name];
+	EXPECT_TRUE(input_map_node["9"] && input_map_node["33"]);
+
+	// Check vector of sets.
+	EXPECT_THAT(input_map_node["9"][0].as<std::vector<int>>(), 
+		::testing::UnorderedElementsAreArray(input_map[9][0]));
+	EXPECT_THAT(input_map_node["9"][1].as<std::vector<int>>(),
+		::testing::UnorderedElementsAreArray(input_map[9][1]));
+	EXPECT_THAT(input_map_node["9"][2].as<std::vector<int>>(),
+		::testing::UnorderedElementsAreArray(input_map[9][2]));
+
+	EXPECT_THAT(input_map_node["33"][0].as<std::vector<int>>(),
+		::testing::UnorderedElementsAreArray(input_map[33][0]));
+	EXPECT_THAT(input_map_node["33"][1].as<std::vector<int>>(),
+		::testing::UnorderedElementsAreArray(input_map[33][1]));
+}
