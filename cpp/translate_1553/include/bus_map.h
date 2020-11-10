@@ -38,6 +38,7 @@ private:
 	uint64_t vote_threshold_;
 
 	void PrepareFinalMap();
+	void PrintVoteMap();
 	std::map<uint64_t, std::string> VoteMapping();
 	std::string PrintFinalMap();
 	void SubmitToFinalBusMap(const std::map<uint64_t,

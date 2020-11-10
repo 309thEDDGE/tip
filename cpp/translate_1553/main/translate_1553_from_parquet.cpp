@@ -196,19 +196,19 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 	// Initially read in a map of uint64_t to vector of uint64_t 
 	// and then get channel IDs from the map keys
 	std::set<uint64_t> chanid_to_lruaddrs_set;
-	std::map<uint64_t, std::vector<uint64_t>> chanid_to_lruaddrs_vec_map;
-	if (!yr.GetParams("chanid_to_lru_addrs", chanid_to_lruaddrs_vec_map, true))
+	std::map<uint64_t, std::vector<std::vector<uint16_t>>> chanid_to_comm_words_map;
+	if (!yr.GetParams("chanid_to_comm_words", chanid_to_comm_words_map, true))
 	{
-		printf("Translate main: SynthesizeBusMap(): Failed to get chanid_to_lru_addrs"
+		printf("Translate main: SynthesizeBusMap(): Failed to get chanid_to_comm_words"
 			" map from metadata!\n");
 		return false;
 	}
 
-	if (chanid_to_lruaddrs_vec_map.size() == 0)
+	if (chanid_to_comm_words_map.size() == 0)
 		return false;
 
-	for (std::map<uint64_t, std::vector<uint64_t>>::const_iterator it =
-		chanid_to_lruaddrs_vec_map.begin(); it != chanid_to_lruaddrs_vec_map.end();
+	for (std::map<uint64_t, std::vector<std::vector<uint16_t>>>::const_iterator it =
+		chanid_to_comm_words_map.begin(); it != chanid_to_comm_words_map.end();
 		++it)
 	{
 		chanid_to_lruaddrs_set.insert(it->first);
@@ -275,121 +275,29 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 		return false;
 	}	
 
-	if (!use_tmats_busmap)
+	// Submit votes for each transmit/recieve command word from each 
+	// channel ID found in metadata from parameter chanid_to_comm_words 
+	for (std::map<uint64_t, std::vector<std::vector<uint16_t>>>::const_iterator it =
+		chanid_to_comm_words_map.begin(); it != chanid_to_comm_words_map.end();
+		++it)
 	{
-		// Loop over the parquet file row group by row group and submit
-		// entries for votes to the bus map tool
-		std::set<bool> status;
-		int size = 0;
-		int submission_count = 0;
-		bool successful_map = false;
-		std::map<uint64_t, std::string> temp_bus_map;
-		bool first_loop = true;
-
-		// Comet currently parses at least 3000 1553 packets from a chapter 10
-		// to submit votes for bus mapping. For purposes of the method 
-		// below, each 1553 packet is estimated to contain on average
-		// 40 messages. The method requires that the final 
-		// busmap not change after submitting 1500 packets (1500 * 40 messages).
-		// The method also doesn't allow the busmap to be considered
-		// a success until the second loop to ensure that at least
-		// ~3000 packets were added to the vote system.
-		int message_count_threshold = 1500 * 40;
-		while (status.count(false) == 0)
+		for (int i = 0; i < it->second.size(); i++)
 		{
-			status.insert(pr.GetNextRG<uint64_t, 
-				arrow::NumericArray<arrow::Int32Type>>(transmit_cmd_column, transmit_cmds, size));
-
-			status.insert(pr.GetNextRG<uint64_t, 
-				arrow::NumericArray<arrow::Int32Type>>(recieve_cmd_column, recieve_cmds, size));
-
-			status.insert(pr.GetNextRG<uint64_t,
-				arrow::NumericArray<arrow::Int32Type>>(channel_id_column, channel_ids, size));
-
-			if(!bm.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids, size))
-				return false;
-
-			pr.IncrementRG();
-			submission_count += size;
-
-			if (submission_count >= message_count_threshold)
+			if (it->second[i].size() == 2)
 			{
-				// Only perform bus mapping after the first loop
-				// to ensure that at least ~3000 packets were
-				// added to the vote. Each loop is ~3000/2 
-				// packets.
-				if (first_loop == false)
-				{
-					if (!bm.Finalize(temp_bus_map, false,
-						false))
-					{
-						printf("Bus mapping failed!\n");
-						return false;
-					}
-
-					// If the bus map did not change from the 
-					// last bus map after at least message_count_threshold
-					// messages were submitted, consider the bus map
-					// a success and break out of the while loop.
-					if (temp_bus_map == chanid_to_bus_name_map)
-					{
-						successful_map = true;
-						break;
-					}
-				}
-
-				submission_count = 0;
-				chanid_to_bus_name_map = temp_bus_map;
-				first_loop = false;
-			}
-
-		}
-
-		// If the bus map was unsuccessful, clear any remaining
-		// bus map information from the above while loop execution.
-		if (!successful_map)
-		{
-			printf("\nVote map method failure due to small chapter 10 or "
-				"zero channel ID mappings.\n");
-			chanid_to_bus_name_map.clear();
-		}
-
-		// If prompt user == true, finalize again with prompt
-		// user passed in to give the user a chance to edit
-		// the bus map if it isn't complete
-		if (prompt_user)
-		{
-			
-			if (!bm.Finalize(chanid_to_bus_name_map, false,
-				prompt_user))
-			{
-				printf("Bus mapping failed!\n");
-				return false;
+				bm.SubmitMessage(it->second[i][0], it->second[i][1], it->first);
 			}
 		}
-
-		// if chanid_to_bus_name_map is still empty after
-		// prompt user was potentially called
-		// return false, because nothing was mapped
-		if (chanid_to_bus_name_map.empty())
-		{
-			printf("Bus mapping failed!\n");
-			return false;
-		}
-
+		
 	}
 
-	// Use TMATS busmap
-	else
+	if (!bm.Finalize(chanid_to_bus_name_map, use_tmats_busmap,
+		prompt_user))
 	{
-		if (!bm.Finalize(chanid_to_bus_name_map, use_tmats_busmap,
-			prompt_user))
-		{
-			printf("Bus mapping failed!\n");
-			return false;
-		}
+		printf("Bus mapping failed!\n");
+		return false;
 	}
-	
+
 	bm.Print();
 
 	// Convert the chanid to bus name map to a map from 
