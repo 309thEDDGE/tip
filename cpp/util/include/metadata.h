@@ -125,20 +125,14 @@ void Metadata::RecordCompoundMapToVectorOfVector(
 	emitter_ << YAML::Value << YAML::BeginMap;
 
 	// Iterate over map and use iterable tools to display the vector of sets.
-	/*std::vector<std::vector<Val>> temp_vec;*/
 	std::string chan_id_string = "";
 	typename std::map<Key, std::vector<std::vector<Val>>>::const_iterator it;
 	for (it = input_map.cbegin(); it != input_map.cend(); ++it)
 	{
-		//temp_vec.clear();
-		/*for (std::vector<std::vector<Val>>::const_iterator it2 = it->second.cbegin();
-			it2 != it->second.cend(); ++it2)
-		{
-			std::vector<Val> set_as_vec(it2->cbegin(), it2->cend());
-			temp_vec.push_back(set_as_vec);
-		}*/
-		chan_id_string = std::to_string(it->first);
-		iterable_tools_.EmitSequenceOfVectors<Val>(emitter_, it->second, chan_id_string);
+		emitter_ << YAML::Key << it->first;
+		emitter_ << YAML::Value;
+		//chan_id_string = std::to_string(it->first);
+		iterable_tools_.EmitSequenceOfVectors<Val>(emitter_, it->second);
 	}
 
 	emitter_ << YAML::EndMap;
