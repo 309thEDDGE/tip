@@ -355,6 +355,8 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 		SubmitToFinalBusMap(vote_mapping, "Vote Method");
 	}	
 
+	Print();
+
 	// If prompt_user is false
 	// If the final bus map has any mappings return true
 	if (!prompt_user)
@@ -371,18 +373,20 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 	// If prompt_user is true, let the use make adjustments
 	else
 	{
-		PrintFinalMap();
+		
 		if (UserAdjustments(user_test_input))
 		{
 			PrepareFinalMap();
 			return true;
 		}
 		else
+		{
 			return false;
+		}
 	}
 }
 
-void BusMap::Print()
+void BusMap::PrintVoteMap()
 {
 	// print vote map
 	printf("\nChannel ID votes---\n");
@@ -402,7 +406,10 @@ void BusMap::Print()
 		}
 	}
 	printf("---\n\n");
-
+}
+void BusMap::Print()
+{
+	PrintVoteMap();
 	PrintFinalMap();
 }
 
