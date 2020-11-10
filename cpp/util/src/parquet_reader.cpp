@@ -104,6 +104,7 @@ bool ParquetReader::SetPQPath(std::string base_path)
 				filled in temp_path below. Inclusion of this prefix allow Arrow to process long
 				path lengths without issue.
 				*/
+#ifdef __WIN64
 				if (temp_path.size() > 259)
 				{
 					std::filesystem::path modified_path("\\\\?\\");
@@ -114,6 +115,11 @@ bool ParquetReader::SetPQPath(std::string base_path)
 				{
 					input_parquet_paths_.push_back(temp_path);
 				}
+#elif defined __linux__
+				input_parquet_paths_.push_back(temp_path);
+#else
+#error Neither __WIN64 or __linux__ defined!
+#endif
 			}
 
 		}
