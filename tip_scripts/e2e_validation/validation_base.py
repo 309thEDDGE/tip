@@ -1,6 +1,6 @@
 import os
 import re
-from tip_scripts.run_cl_process import RunCLProcess
+from pathlib import Path
 
 class ValidationBase(object):
 
@@ -8,33 +8,130 @@ class ValidationBase(object):
         self.test_path = None
         self.truth_path = None
         self.test_passed = None
-        self.dry_run = False
-        self.cl_process = RunCLProcess(debug=debug)
-        self.is_translated_data_comp = False
         self.regex_translated_1553_msg_dir = re.compile(".+_1553_translated.+parquet")
         self.regex_raw_1553_dir = re.compile(".+_1553.parquet")
+        self.regex_raw_video_dir = re.compile(".+_video.parquet")
         self.ready_to_validate = False
         self.prefix = prefix
+        self.truth_dir_exists = None
+        self.test_dir_exists = None
+        self.truth_file_exists = None
+        self.test_file_exists = None
 
-    def set_1553_paths(self, truth_path, test_path, is_translated_data_comp):
-        self.is_translated_data_comp = is_translated_data_comp
+    def get_test_result(self):
+        return self.test_passed
+
+    def get_test_result_string(self):
+        return self.validation_result_string(self.test_passed)
+
+    def get_test_result_string_from_input(self, input_result):
+        return self.validation_result_string(input_result)
+
+    def set_paths(self, truth_path, test_path):
 
         self.test_path = test_path
         self.truth_path = truth_path
 
-        if self.test_path is None or self.truth_path is None:
+        if self.truth_path is None:
+            print('{:s} - {:s} is None!'.format(self.prefix, self.truth_path))
+            return False
+           
+        if self.test_path is None:
+            print('{:s} - {:s} is None!'.format(self.prefix, self.test_path))
             return False
 
-        if self.is_translated_data_comp:
-            if not self._is_translated_1553_msg_dir(self.test_path):
-                return False
-            if not self._is_translated_1553_msg_dir(self.truth_path):
-                return False
+        return True
+
+    def validation_result_string(self, test_passed):
+        if test_passed:
+            return 'PASS'
+        elif test_passed is None:
+            return 'NULL'
+        elif not test_passed:
+            return 'FAIL'
         else:
-            if not self._is_raw_1553_dir(self.test_path):
+            return 'BAD RESULT'
+
+    def set_directory_paths(self, truth_path, test_path):
+
+        if not self.set_paths(truth_path, test_path):
+            return False
+
+        if not os.path.isdir(self.truth_path):
+           print('{:s} - {:s} is not a directory!'.format(self.prefix, self.truth_path))
+           self.truth_dir_exists = False
+           return False
+        self.truth_dir_exists = True
+
+        if not os.path.isdir(self.test_path):
+            print('{:s} - {:s} is not a directory!'.format(self.prefix, self.test_path))
+            self.test_dir_exists = False
+            return False
+        self.test_dir_exists = True
+
+        return True
+
+    def set_file_paths(self, truth_path, test_path):
+
+        if not self.set_paths(truth_path, test_path):
+            return False
+
+        if not os.path.isfile(self.truth_path):
+            print('{:s} - {:s} is not a file!'.format(self.prefix, self.truth_path))
+            self.truth_file_exists = False
+            return False
+        self.truth_file_exists = True
+           
+        if not os.path.isfile(self.test_path):
+            print('{:s} - {:s} is not a file!'.format(self.prefix, self.test_path))
+            self.test_file_exists = False
+            return False
+        self.test_file_exists = True
+
+        return True
+
+    def set_1553_paths(self, truth_path, test_path, type_str):
+
+        if not self.set_paths(truth_path, test_path):
+            return False
+
+        if type_str == 'transl1553':
+            if not self._is_translated_1553_msg_dir(self.truth_path):
+                print('{:s} - {:s} is not a translated 1553 msg dir!'.format(self.prefix, self.truth_path))
+                self.truth_dir_exists = False
                 return False
+            self.truth_dir_exists = True
+            if not self._is_translated_1553_msg_dir(self.test_path):
+                print('{:s} - {:s} is not a translated 1553 msg dir!'.format(self.prefix, self.test_path))
+                self.test_dir_exists = False
+                return False
+            self.test_dir_exists = True
+        elif type_str == 'raw1553':
             if not self._is_raw_1553_dir(self.truth_path):
+                print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.truth_path))
+                self.truth_dir_exists = False
                 return False
+            self.truth_dir_exists = True
+            if not self._is_raw_1553_dir(self.test_path):
+                print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.test_path))
+                self.test_dir_exists = False
+                return False
+            self.test_dir_exists = True
+        elif type_str == 'rawvideo':
+            if not self._is_raw_video_dir(self.truth_path):
+                print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.truth_path))
+                self.truth_dir_exists = False
+                return False
+            self.truth_dir_exists = True
+            if not self._is_raw_video_dir(self.test_path):
+                print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.test_path))
+                self.test_dir_exists = False
+                return False
+            self.test_dir_exists = True
+        else:
+            print('ValidationBase.set_1553_paths(): type_str = {:s} not defined!'.format(type_str))
+            return False
+
         return True
 
     def _is_translated_1553_msg_dir(self, input_path):
@@ -53,34 +150,13 @@ class ValidationBase(object):
             return True
         return False
 
-    def do_validation(self, executable_path):
-        if not self.ready_to_validate:
-            print('ValidationBase.do_validation(): Not ready to validate.')
-            return self.test_passed
+    def _is_raw_video_dir(self, input_path):
+        if not os.path.isdir(input_path):
+            return False
 
-        self.cl_process.set_executable_path(executable_path)
-        self.cl_process.add_dir_path_argument(self.truth_path)
-        self.cl_process.add_dir_path_argument(self.test_path)
-        self.cl_process.set_stdout_must_contain('Overall -> Pass')
-        did_run = self.cl_process.run(self.dry_run, cwd=os.path.dirname(executable_path), print_stdout=False)
-        if did_run:
-            ret_val = self.cl_process.get_return_value()
-            output_success = self.cl_process.have_output_success()
-            if ret_val == 0 and output_success:
-                self.test_passed = True
-            else:
-                if ret_val != 0:
-                    print('ValidationBase.do_validation(): ret_val = {:d}'.format(ret_val))
-                    # Indicate test was not conducted.
-                    self.test_passed = None
-                elif not output_success:
-                    print('ValidationBase.do_validation(): output_success = False'.format(ret_val))
-                    self.test_passed = False
-
-        return self.test_passed
-
-    def get_validation_output(self):
-        return self.cl_process.get_output()
+        if bool(re.match(self.regex_raw_video_dir, input_path)):
+            return True
+        return False
 
     def __repr__(self):
         r = '{:s}\ntruth: {:s}\ntest: {:s}'.format(self.prefix,

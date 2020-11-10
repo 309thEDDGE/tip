@@ -97,6 +97,70 @@ protected:
 		return true;
 	}
 
+	// Generate Parquet file with two
+	// columns with differenct schemas
+	template <typename T1, typename T2>
+	bool CreateTwoColParquetFile(std::string directory,
+		std::shared_ptr<arrow::DataType> type1,
+		std::vector<T1> output1,
+		std::string colname1,
+		std::shared_ptr<arrow::DataType> type2,
+		std::vector<T2> output2,
+		std::string colname2,
+		int row_group_count)
+	{
+		if (!std::filesystem::exists(directory))
+		{
+			if (!std::filesystem::create_directory(directory))
+			{
+				printf("failed to create directory %s: \n", directory.c_str());
+				return false;
+			}
+		}
+
+		std::filesystem::path pqt_path(directory);
+		pqt_path = pqt_path / std::filesystem::path(
+			std::to_string(pq_file_count) + std::string(".parquet"));
+		std::string path = pqt_path.string();
+
+		ParquetContext pc(row_group_count);
+
+		// Add each column
+		pc.AddField(type1, colname1);
+		pc.SetMemoryLocation(output1, colname1, nullptr);
+		pc.AddField(type2, colname2);
+		pc.SetMemoryLocation(output2, colname2, nullptr);
+
+		// Assume each vector is of the same size
+		int row_size = output1.size();
+
+		if (!pc.OpenForWrite(path, true))
+		{
+			printf("failed to open parquet path %s\n", path.c_str());
+			return false;
+		}
+		for (int i = 0; i < row_size / row_group_count; i++)
+		{
+			pc.WriteColumns(row_group_count, i * row_group_count);
+		}
+
+		// The the remaider rows if row_group_count is 
+		// not a multiple of the array size
+		int remainder = row_size % row_group_count;
+		if (remainder > 0)
+		{
+			pc.WriteColumns(remainder,
+				(row_size / row_group_count) * row_group_count);
+		}
+
+
+		pc.Close();
+		pq_files.push_back(path);
+		pq_directories.push_back(directory);
+		pq_file_count++;
+		return true;
+	}
+
 	// Create parquet file with one list column
 	bool CreateParquetFile(std::string directory, std::vector<uint16_t>& output, 
 		int row_group_count, int list_size)
@@ -1436,6 +1500,66 @@ TEST_F(ParquetArrowValidatorTest, StringNullMisMatch)
 
 	ASSERT_TRUE(CreateParquetFile(arrow::utf8(), dirname1, file, 6, &bool_fields1));
 	ASSERT_TRUE(CreateParquetFile(arrow::utf8(), dirname2, file, 6, &bool_fields2));
+
+	Comparator comp;
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+
+	ASSERT_FALSE(comp.CompareAll());
+}
+
+TEST_F(ParquetArrowValidatorTest, CompareEmptyFilesSameSchema)
+{
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+
+	// Zero data rows configured.
+	std::vector<float> col0data;
+	std::vector<int16_t> col1data;
+
+	ASSERT_TRUE(CreateTwoColParquetFile(dirname1, arrow::float32(), col0data, "col1",
+		arrow::int16(), col1data, "col2", 5));
+	ASSERT_TRUE(CreateTwoColParquetFile(dirname2, arrow::float32(), col0data, "col1", 
+		arrow::int16(), col1data, "col2", 5));
+
+	Comparator comp;
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+
+	ASSERT_TRUE(comp.CompareAll());
+}
+
+TEST_F(ParquetArrowValidatorTest, CompareEmptyFilesDifferentNames)
+{
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+
+	// Zero data rows configured.
+	std::vector<float> col0data;
+	std::vector<int16_t> col1data;
+
+	ASSERT_TRUE(CreateTwoColParquetFile(dirname1, arrow::float32(), col0data, "col1",
+		arrow::int16(), col1data, "col2", 5));
+	ASSERT_TRUE(CreateTwoColParquetFile(dirname2, arrow::float32(), col0data, "col1",
+		arrow::int16(), col1data, "colA", 5));
+
+	Comparator comp;
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+
+	ASSERT_FALSE(comp.CompareAll());
+}
+
+TEST_F(ParquetArrowValidatorTest, CompareSameDataDifferentColNames)
+{
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+
+	// Zero data rows configured.
+	std::vector<float> col0data = { 1.0, 2., 3., 4., 5., 6., 7., 8., 9., 0. };
+	std::vector<int16_t> col1data = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
+
+	ASSERT_TRUE(CreateTwoColParquetFile(dirname1, arrow::float32(), col0data, "col1",
+		arrow::int16(), col1data, "col2", 5));
+	ASSERT_TRUE(CreateTwoColParquetFile(dirname2, arrow::float32(), col0data, "col1",
+		arrow::int16(), col1data, "colA", 5));
 
 	Comparator comp;
 	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
