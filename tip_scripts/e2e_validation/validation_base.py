@@ -4,7 +4,7 @@ from tip_scripts.run_cl_process import RunCLProcess
 
 class ValidationBase(object):
 
-    def __init__(self, debug=0):
+    def __init__(self, prefix, debug=0):
         self.test_path = None
         self.truth_path = None
         self.test_passed = None
@@ -14,8 +14,9 @@ class ValidationBase(object):
         self.regex_translated_1553_msg_dir = re.compile(".+_1553_translated.+parquet")
         self.regex_raw_1553_dir = re.compile(".+_1553.parquet")
         self.ready_to_validate = False
+        self.prefix = prefix
 
-    def set_paths(self, truth_path, test_path, is_translated_data_comp):
+    def set_1553_paths(self, truth_path, test_path, is_translated_data_comp):
         self.is_translated_data_comp = is_translated_data_comp
 
         self.test_path = test_path
@@ -68,11 +69,13 @@ class ValidationBase(object):
             if ret_val == 0 and output_success:
                 self.test_passed = True
             else:
-                self.test_passed = False
                 if ret_val != 0:
                     print('ValidationBase.do_validation(): ret_val = {:d}'.format(ret_val))
-                if not output_success:
+                    # Indicate test was not conducted.
+                    self.test_passed = None
+                elif not output_success:
                     print('ValidationBase.do_validation(): output_success = False'.format(ret_val))
+                    self.test_passed = False
 
         return self.test_passed
 
@@ -80,12 +83,9 @@ class ValidationBase(object):
         return self.cl_process.get_output()
 
     def __repr__(self):
-        prefix = 'PqPqRawValidation'
-        if self.is_translated_data_comp:
-            prefix = 'PqPqTranslatedDataValidation'
-        r = '{:s}\ntruth: {:s}\ntest: {:s}'.format(prefix,
-                                                                      str(self.truth_path),
-                                                                      str(self.test_path))
+        r = '{:s}\ntruth: {:s}\ntest: {:s}'.format(self.prefix,
+                                                   str(self.truth_path),
+                                                   str(self.test_path))
         return r
 
 

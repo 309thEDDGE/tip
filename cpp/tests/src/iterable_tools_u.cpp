@@ -1521,6 +1521,27 @@ TEST_F(EmitterTest, EmitCompoundMapIntInt)
 
 }
 
+TEST_F(EmitterTest, EmitSequenceOfVectors)
+{
+	// Ensure that vector/set of strings are written in alphabetical
+	// order so we can use the same expect string for both the vector
+	// test, which will keep the order, and the set test, which will
+	// place the values in alphabetical order.
+	std::vector<std::vector<int16_t>> test_vec =
+	{
+		{-33, 3, 4, 5},
+		{22, -2, 43},
+		{-1023, 1023, 5000}
+	};
+	it_.EmitSequenceOfVectors(out_, test_vec, "the other map");
+
+	std::string expect = "the other map:\n"
+		"  - [-33, 3, 4, 5]\n"
+		"  - [22, -2, 43]\n"
+		"  - [-1023, 1023, 5000]\n";
+	ExpectEmit(expect, out_);
+}
+
 TEST(IterableTools, CombineCompoundMapsToSetEmptyUpdateMap)
 {
 	IterableTools it;

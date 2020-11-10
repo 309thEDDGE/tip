@@ -17,6 +17,7 @@ protected:
 	IterableTools iterable_tools_;
 	FileReader fr;
 	uint64_t mask = UINT64_MAX;
+	uint64_t vote_threshold = 0;
 
 	BusMapTest()
 	{
@@ -93,6 +94,7 @@ TEST_F(BusMapTest, UserAdjustmentsAdjustThenValidChannelIDThenQuit)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,5 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -118,6 +120,7 @@ TEST_F(BusMapTest, UserAdjustmentsAdjustThenInvalidChannelIDThenQuit)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,5 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -142,6 +145,7 @@ TEST_F(BusMapTest, UserAdjustmentsAdjustThenValidChannelIDThenInvalidBusNameThen
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,5 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -166,6 +170,7 @@ TEST_F(BusMapTest, UserAdjustmentsAdjustThenInvalidChannelIDThenValidChannelIDTh
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,5 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -203,6 +208,7 @@ TEST_F(BusMapTest, UserAdjustmentsOverrideExistingWithNewNameAndSource)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,5 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -235,6 +241,7 @@ TEST_F(BusMapTest, UserAdjustmentsAddFromNonMappedToFinalMap)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });
@@ -270,6 +277,7 @@ TEST_F(BusMapTest, UserAdjustmentsMapMultipleAndContinueAdjustsFinalMap)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3,4 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });
@@ -316,6 +324,7 @@ TEST_F(BusMapTest, UserAdjustmentsMapMultipleAndContinueAdjustsFinalMapTMATS)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3,4 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 
@@ -346,6 +355,7 @@ TEST_F(BusMapTest, UserAdjustmentsEnsureNoMapInputDoesnotAllowChangesToFinalMap)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	std::vector<std::string> adj_vec = { "2","invalid","q" };
@@ -366,6 +376,7 @@ TEST_F(BusMapTest, InitializeMapsInitialMapsAssigned)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	EXPECT_EQ(b.GetICD_MessageKeyToBusNamesMap().size(),0);
@@ -377,6 +388,7 @@ TEST_F(BusMapTest, InitializeMapsInitialMapsAssigned)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({5,6,7,8}),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 	EXPECT_EQ(b.GetICD_MessageKeyToBusNamesMap(), icd_message_key_to_busnames_map);
 	EXPECT_THAT(b.GetChannelIDs(), ::testing::ElementsAre(5, 6, 7, 8));
@@ -394,6 +406,7 @@ TEST_F(BusMapTest, InitializeMapsWithMask)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 5,6,7,8 }),
 		mask_input,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	std::unordered_map<uint64_t, std::set<std::string>> compare_map;
@@ -413,6 +426,7 @@ TEST_F(BusMapTest, InitializeMapsMessageKeyToChannelIDCreationAndUniqueBuses)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	icd_message_key_to_channelids_map[1] = std::set<uint64_t>();
@@ -435,6 +449,7 @@ TEST_F(BusMapTest, InitializeMapsTMATSCheck)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 	EXPECT_FALSE(b.TmatsPresent());
 
@@ -447,6 +462,7 @@ TEST_F(BusMapTest, InitializeMapsTMATSCheck)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 	EXPECT_TRUE(b.TmatsPresent());
 
@@ -464,6 +480,7 @@ TEST_F(BusMapTest, InitializeMapsTMATSReplacements)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 	EXPECT_FALSE(b.TmatsPresent());
 
@@ -488,6 +505,7 @@ TEST_F(BusMapTest, InitializeMapsTMATSReplacements)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>(),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map,
 		tmats_replacements);
 
@@ -549,6 +567,46 @@ TEST_F(BusMapTest, SubmitMessages)
 	EXPECT_EQ(b.GetICD_MessageKeyToChannelIDSMap(), compare_map);
 }
 
+TEST_F(BusMapTest, SubmitMessage)
+{
+	// Map with entries
+	// keys are transmit command word bit shifted left 16 bits
+	// followed by the recieve command word
+	icd_message_key_to_busnames_map[10 << 16 | 10] = std::set<std::string>();
+	icd_message_key_to_busnames_map[11 << 16 | 11] = std::set<std::string>();
+	icd_message_key_to_busnames_map[12 << 16 | 12] = std::set<std::string>();
+	icd_message_key_to_busnames_map[13 << 16 | 13] = std::set<std::string>();
+	icd_message_key_to_busnames_map[14 << 16 | 14] = std::set<std::string>();
+	icd_message_key_to_busnames_map[15 << 16 | 15] = std::set<std::string>();
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>(),
+		mask);
+
+	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 10,10,11,12,13,14,15 });
+	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({ 10,10,11,12,13,20,15 });
+	std::vector<uint64_t> channel_ids = std::vector<uint64_t>({ 0, 1, 1, 2, 3, 4, 5 });
+
+	b.SubmitMessage(10, 10, 0);
+	b.SubmitMessage(10, 10, 1);
+	b.SubmitMessage(11, 11, 1);
+	b.SubmitMessage(12, 12, 2);
+	b.SubmitMessage(13, 13, 3);
+	b.SubmitMessage(14, 20, 4);
+	b.SubmitMessage(15, 15, 5);
+
+	std::unordered_map<uint64_t, std::set<uint64_t>> compare_map;
+	compare_map[10 << 16 | 10] = std::set<uint64_t>({ 0,1 }); // multiple matches with different channel IDs
+	compare_map[11 << 16 | 11] = std::set<uint64_t>({ 1 });
+	compare_map[12 << 16 | 12] = std::set<uint64_t>({ 2 });
+	compare_map[13 << 16 | 13] = std::set<uint64_t>({ 3 });
+	compare_map[14 << 16 | 14] = std::set<uint64_t>();      // missing from input
+	compare_map[15 << 16 | 15] = std::set<uint64_t>({ 5 });
+
+
+	EXPECT_EQ(b.GetICD_MessageKeyToChannelIDSMap(), compare_map);
+}
+
 TEST_F(BusMapTest, SubmitMessagesWithMask)
 {
 	// Map with entries
@@ -559,6 +617,7 @@ TEST_F(BusMapTest, SubmitMessagesWithMask)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 0,1 }),
 		mask_input,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	// Both entries should map with the same key given the mask =  UINT64_MAX - 1
@@ -636,7 +695,7 @@ TEST_F(BusMapTest, VoteMappingMatchHighestVotes)
 	EXPECT_EQ(b.TestVoteMapping(icd_message_key_to_channelids_map), compare_map);
 }
 
-TEST_F(BusMapTest, VoteMappingMatchNoMatchesWhenVoteCountIsTheSame)
+TEST_F(BusMapTest, VoteMappingNoMatchesWhenVoteCountIsTheSame)
 {
 	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BusA","BusB" });
 	// Bus A and B are a tie
@@ -701,6 +760,7 @@ TEST_F(BusMapTest, FinalizeTMATSMoreChannelIDsThanNecessaryAndOverridesVoteMap)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());
@@ -715,6 +775,7 @@ TEST_F(BusMapTest, FinalizeTMATSMoreChannelIDsThanNecessaryAndOverridesVoteMap)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,		
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());	
@@ -757,6 +818,7 @@ TEST_F(BusMapTest, FinalizeTMATSFewerChannelIDsThanNecessaryAndOverridesVoteMap)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());
@@ -803,6 +865,7 @@ TEST_F(BusMapTest, FinalizeVoteMappingMoreChannelIDsThanNecessaryAndOverridesTMA
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());
@@ -853,6 +916,7 @@ TEST_F(BusMapTest, FinalizeVoteMappingFewerChannelIDsThanNecessaryAndOverridesTM
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());
@@ -882,6 +946,57 @@ TEST_F(BusMapTest, FinalizeVoteMappingFewerChannelIDsThanNecessaryAndOverridesTM
 	EXPECT_EQ(final_bus_map_with_source[2].second, "Vote Method");
 }
 
+
+TEST_F(BusMapTest, VoteThreshold)
+{
+	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUSB" });
+	icd_message_key_to_busnames_map[12] = std::set<std::string>({ "BUSC" });
+	icd_message_key_to_busnames_map[13] = std::set<std::string>({ "BUSC" });
+
+	uint64_t threshold = 2;
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({ 1,2 }),
+		mask,
+		threshold);
+
+	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });
+	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({ 11,12 });
+	std::vector<uint64_t> channel_ids = std::vector<uint64_t>({   1, 2 });
+
+	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
+
+	std::map<uint64_t, std::string> res;
+
+	// Even though votes were made, the votes did not 
+	// meet the threshold of >= 2 votes
+	bool continue_translation = b.Finalize(res, 0, false);
+	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 0);
+
+	// add another vote for channel ID 2 and expect
+	// a map for that channel ID 2 but not for channel
+	// ID 1
+	std::vector<uint64_t> transmit_cmds2 = std::vector<uint64_t>({ 0 });
+	std::vector<uint64_t> recieve_cmds2 = std::vector<uint64_t>({ 13 });
+	std::vector<uint64_t> channel_ids2 = std::vector<uint64_t>({   2 });
+
+	EXPECT_TRUE(b.SubmitMessages(transmit_cmds2, recieve_cmds2, channel_ids2));
+
+	continue_translation = b.Finalize(res, 0, false);
+	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 1);
+	EXPECT_TRUE(continue_translation);
+	EXPECT_EQ(res[2], "BUSC");
+
+	// Also check the source
+	std::map<uint64_t, std::pair<std::string, std::string>> final_bus_map_with_source =
+		b.GetFinalBusMap_withSource();
+
+	EXPECT_TRUE(iterable_tools_.GetKeys(final_bus_map_with_source).size() == 1);
+	EXPECT_EQ(final_bus_map_with_source[2].first, "BUSC");
+	EXPECT_EQ(final_bus_map_with_source[2].second, "Vote Method");
+
+}
+
 TEST_F(BusMapTest, FinalizeClearExistingMap)
 {
 	tmats_chanid_to_source_map[1] = "BUS1";
@@ -889,6 +1004,7 @@ TEST_F(BusMapTest, FinalizeClearExistingMap)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	std::map<uint64_t, std::string> res;
@@ -907,6 +1023,7 @@ TEST_F(BusMapTest, FinalizeReturnsFalseIfNothingMappedAndUserStopIsFalse)
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
+		vote_threshold,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });

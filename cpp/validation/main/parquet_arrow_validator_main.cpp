@@ -21,7 +21,14 @@ int main(int argc, char* argv[]) {
 
 	if (!valid_path)
 	{
-		return 0;
+		// Indicate a NULL comparison result. Ought to occur if the
+		// the program is in error state, either file1 or file2 does
+		// not exist, or a .parquet directory does not contain any 
+		// parquet files. It looks like Comparator.Initialize()
+		// (via OpenNextParquetFile(), called by SetPQPath())
+		// returns false when either file1 or file2 does not contain
+		// .parquet files.
+		return 1;
 	}
 
 	comp.CompareAll();
