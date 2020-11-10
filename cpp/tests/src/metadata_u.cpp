@@ -177,11 +177,11 @@ TEST_F(MetadataTest, GetMetadataStringAllRecordTypes)
 TEST_F(MetadataTest, GetMetadataStringCompoundMapToVectorOfSet)
 {
 	std::string map_name("this is the map name");
-	std::map<uint16_t, std::vector<std::set<int>>> input_map = {
+	std::map<uint16_t, std::vector<std::vector<int>>> input_map = {
 		{33, {{123, 80}, {-10, -12, 13}}},
 		{9, {{10000, 981}, {-11, 233, 3}, {50, 55}}}
 	};
-	md_.RecordCompoundMapToVectorOfSet<uint16_t, int>(input_map, map_name);
+	md_.RecordCompoundMapToVectorOfVector<uint16_t, int>(input_map, map_name);
 
 	YAML::Node node = YAML::Load(md_.GetMetadataString());
 

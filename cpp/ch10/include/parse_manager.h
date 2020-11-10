@@ -84,7 +84,7 @@ class ParseManager
 	void collect_chanid_to_lruaddrs_metadata(
 		std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map);
 	void collect_chanid_to_commwords_metadata(
-		std::map<uint32_t, std::vector<std::set<uint32_t>>>& output_chanid_commwords_map);
+		std::map<uint32_t, std::vector<std::vector<uint32_t>>>& output_chanid_commwords_map);
 	
 #ifdef VIDEO_DATA
 	void CollectVideoMetadata(std::map<uint16_t, uint64_t>& channel_id_to_min_timestamp_map);

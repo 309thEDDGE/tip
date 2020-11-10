@@ -204,9 +204,9 @@ void ParseManager::start_workers()
 	md.RecordCompoundMapToSet(output_chanid_remoteaddr_map, "chanid_to_lru_addrs");
 
 	// Obtain the channel ID to command words set map.
-	std::map<uint32_t, std::vector<std::set<uint32_t>>> output_chanid_commwords_map;
+	std::map<uint32_t, std::vector<std::vector<uint32_t>>> output_chanid_commwords_map;
 	collect_chanid_to_commwords_metadata(output_chanid_commwords_map);
-	md.RecordCompoundMapToVectorOfSet(output_chanid_commwords_map, "chanid_to_comm_words");
+	md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
 
 #ifdef LIBIRIG106
 	ProcessTMATS();
@@ -286,7 +286,7 @@ void ParseManager::collect_chanid_to_lruaddrs_metadata(
 }
 
 void ParseManager::collect_chanid_to_commwords_metadata(
-	std::map<uint32_t, std::vector<std::set<uint32_t>>>& output_chanid_commwords_map)
+	std::map<uint32_t, std::vector<std::vector<uint32_t>>>& output_chanid_commwords_map)
 {
 	// Collect maps into one.
 	std::map<uint32_t, std::set<uint32_t>> chanid_commwords_map;
@@ -301,14 +301,15 @@ void ParseManager::collect_chanid_to_commwords_metadata(
 	for (std::map<uint32_t, std::set<uint32_t>>::const_iterator it = chanid_commwords_map.cbegin();
 		it != chanid_commwords_map.cend(); ++it)
 	{
-		std::vector<std::set<uint32_t>> temp_vec;
+		std::vector<std::vector<uint32_t>> temp_vec_of_vec;
 		for (std::set<uint32_t>::const_iterator it2 = it->second.cbegin();
 			it2 != it->second.cend(); ++it2)
 		{
-			std::set<uint32_t> temp_set = { *it2 >> 16, *it2 & mask_val };
-			temp_vec.push_back(temp_set);
+			// Vector needed here to retain order.
+			std::vector<uint32_t> pair_vec = { *it2 >> 16, *it2 & mask_val };
+			temp_vec_of_vec.push_back(pair_vec);
 		}
-		output_chanid_commwords_map[it->first] = temp_vec;
+		output_chanid_commwords_map[it->first] = temp_vec_of_vec;
 	}
 }
 

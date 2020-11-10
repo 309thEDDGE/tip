@@ -73,14 +73,14 @@ public:
 	void RecordCompoundMapToSet(const std::map<Key, std::set<Val>>& input_map, 
 		const std::string& map_name);
 
-	// Emit a named map of a single key to a map of key/vector<set> values.
+	// Emit a named map of a single key to a map of key/vector<vector> values.
 	// See IterableTools::EmitSequenceOfVectors,
 	// which is the backbone of this function.
 	//
 	// Note: Data are not written with this function. Use ::GetMetadataString()
 	// function to record all emitted records.
 	template<typename Key, typename Val>
-	void RecordCompoundMapToVectorOfSet(const std::map<Key, std::vector<std::set<Val>>>& input_map,
+	void RecordCompoundMapToVectorOfVector(const std::map<Key, std::vector<std::vector<Val>>>& input_map,
 		const std::string& map_name);
 
 	// Get a std::string containing the complete Yaml document
@@ -116,7 +116,8 @@ void Metadata::RecordCompoundMapToSet(const std::map<Key, std::set<Val>>& input_
 }
 
 template<typename Key, typename Val>
-void Metadata::RecordCompoundMapToVectorOfSet(const std::map<Key, std::vector<std::set<Val>>>& input_map,
+void Metadata::RecordCompoundMapToVectorOfVector(
+	const std::map<Key, std::vector<std::vector<Val>>>& input_map,
 	const std::string& map_name)
 {
 	emitter_ << YAML::BeginMap;
@@ -124,20 +125,20 @@ void Metadata::RecordCompoundMapToVectorOfSet(const std::map<Key, std::vector<st
 	emitter_ << YAML::Value << YAML::BeginMap;
 
 	// Iterate over map and use iterable tools to display the vector of sets.
-	std::vector<std::vector<Val>> temp_vec;
+	/*std::vector<std::vector<Val>> temp_vec;*/
 	std::string chan_id_string = "";
-	typename std::map<Key, std::vector<std::set<Val>>>::const_iterator it;
+	typename std::map<Key, std::vector<std::vector<Val>>>::const_iterator it;
 	for (it = input_map.cbegin(); it != input_map.cend(); ++it)
 	{
-		temp_vec.clear();
-		for (std::vector<std::set<Val>>::const_iterator it2 = it->second.cbegin();
+		//temp_vec.clear();
+		/*for (std::vector<std::vector<Val>>::const_iterator it2 = it->second.cbegin();
 			it2 != it->second.cend(); ++it2)
 		{
 			std::vector<Val> set_as_vec(it2->cbegin(), it2->cend());
 			temp_vec.push_back(set_as_vec);
-		}
+		}*/
 		chan_id_string = std::to_string(it->first);
-		iterable_tools_.EmitSequenceOfVectors<Val>(emitter_, temp_vec, chan_id_string);
+		iterable_tools_.EmitSequenceOfVectors<Val>(emitter_, it->second, chan_id_string);
 	}
 
 	emitter_ << YAML::EndMap;
