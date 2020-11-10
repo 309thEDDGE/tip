@@ -298,8 +298,6 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 		return false;
 	}
 
-	bm.Print();
-
 	// Convert the chanid to bus name map to a map from 
 	// int to set of strings.
 	std::map<uint64_t, std::set<std::string>> chanid_to_bus_name_set_map;

@@ -128,9 +128,6 @@ bool BusMap::UserAdjustments(std::vector<std::string>* test_options)
 	std::set<std::uint64_t> valid_channel_ids = channel_ids_;
 	std::set<std::string> valid_bus_names = unique_buses_;
 
-	PrintVoteMap();
-	PrintFinalMap();
-
 	std::string user_input = "3";
 	bool continue_execution = true;
 
@@ -358,6 +355,8 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 		SubmitToFinalBusMap(vote_mapping, "Vote Method");
 	}	
 
+	Print();
+
 	// If prompt_user is false
 	// If the final bus map has any mappings return true
 	if (!prompt_user)
@@ -382,7 +381,6 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 		}
 		else
 		{
-			PrintFinalMap();
 			return false;
 		}
 	}
