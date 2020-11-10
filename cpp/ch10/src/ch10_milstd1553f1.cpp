@@ -27,6 +27,11 @@ void Ch10MilStd1553F1::set_channelid_remoteaddress_output(std::map<uint32_t, std
 	chanid_remoteaddr2_ptr = map_remoteaddr2;
 }
 
+void Ch10MilStd1553F1::set_channelid_commwords_output(std::map<uint32_t, std::set<uint32_t>>* map_chanid_commwords)
+{
+	chanid_commwords_ptr_ = map_chanid_commwords;
+}
+
 uint8_t Ch10MilStd1553F1::Parse()
 {
 	retcode_ = 0;
@@ -75,7 +80,9 @@ uint8_t Ch10MilStd1553F1::Parse()
 			chanid_remoteaddr2_ptr->at(ch10hd_ptr_->channel_id_).insert(msg_commword->remote_addr2);
 		}
 		else
+		{
 			chanid_remoteaddr1_ptr->at(ch10hd_ptr_->channel_id_).insert(msg_commword->remote_addr1);
+		}
 
 		// Advance read position to beginning of payload.
 		// Note the msg_hdr_size is the time stamp (8 bytes) 
@@ -295,9 +302,23 @@ uint8_t Ch10MilStd1553F1::IngestLibIRIG106Msg()
 	{
 		chanid_remoteaddr1_ptr->at(ch10hd_ptr_->channel_id_).insert(msg_commword->remote_addr1);
 		chanid_remoteaddr2_ptr->at(ch10hd_ptr_->channel_id_).insert(msg_commword->remote_addr2);
+		chanid_commwords_ptr_->at(ch10hd_ptr_->channel_id_).insert(
+			(i106_1553msg_.CommandWord2->Raw << 16) + i106_1553msg_.CommandWord1->Raw);
 	}
 	else
+	{
 		chanid_remoteaddr1_ptr->at(ch10hd_ptr_->channel_id_).insert(msg_commword->remote_addr1);
+		if (msg_commword->tx1)
+		{
+			chanid_commwords_ptr_->at(ch10hd_ptr_->channel_id_).insert(
+				(i106_1553msg_.CommandWord1->Raw << 16));
+		}
+		else
+		{
+			chanid_commwords_ptr_->at(ch10hd_ptr_->channel_id_).insert(
+				i106_1553msg_.CommandWord1->Raw);
+		}
+	}
 
 	return retcode_;
 }

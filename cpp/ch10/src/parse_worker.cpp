@@ -404,6 +404,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 			output_file_names[Ch10DataType::MILSTD1553_DATA_F1],
 			milstd1553_msg_selection, milstd1553_sorted_selected_msgs);
 		milstd->set_channelid_remoteaddress_output(&chanid_remoteaddr1_map, &chanid_remoteaddr2_map);
+		milstd->set_channelid_commwords_output(&chanid_commwords_map);
 #ifdef VIDEO_DATA
 		printf("\n(%03u) ParseWorker parsing video packets\n", id);
 		video = new Ch10VideoDataF0(bb, id, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
@@ -701,6 +702,9 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 					std::set<uint16_t> temp_set;
 					chanid_remoteaddr1_map[i106_header_.ChannelID] = temp_set;
 					chanid_remoteaddr2_map[i106_header_.ChannelID] = temp_set;
+
+					std::set<uint32_t> temp_set2;
+					chanid_commwords_map[i106_header_.ChannelID] = temp_set2;
 				}
 
 				// This is the new way to initialize a ch10 packet parser that inherits
@@ -846,12 +850,12 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 #endif
 
 		// Close I106 Buffer
-		i106_status_ = I106C10Close(i106_handle_);
+		/*i106_status_ = I106C10Close(i106_handle_);
 		if (i106_status_ != I106Status::I106_OK)
 		{
 			printf("\n(%03u) I106C10Close failure: %s\n",
 				id, I106ErrorString(i106_status_));
-		}	
+		}	*/
 	}
 #endif
 #endif
@@ -986,6 +990,12 @@ void ParseWorker::append_chanid_remoteaddr_maps(std::map<uint32_t, std::set<uint
 	IterableTools it;
 	out1 = it.CombineCompoundMapsToSet(out1, chanid_remoteaddr1_map);
 	out2 = it.CombineCompoundMapsToSet(out2, chanid_remoteaddr2_map);
+}
+
+void ParseWorker::append_chanid_comwmwords_map(std::map<uint32_t, std::set<uint32_t>>& out)
+{
+	IterableTools it;
+	out = it.CombineCompoundMapsToSet(out, chanid_commwords_map);
 }
 
 #ifdef VIDEO_DATA
