@@ -121,7 +121,7 @@ void Metadata::RecordCompoundMapToVectorOfSet(const std::map<Key, std::vector<st
 {
 	emitter_ << YAML::BeginMap;
 	emitter_ << YAML::Key << map_name;
-	emitter_ << YAML::Value;
+	emitter_ << YAML::Value << YAML::BeginMap;
 
 	// Iterate over map and use iterable tools to display the vector of sets.
 	std::vector<std::vector<Val>> temp_vec;
@@ -137,9 +137,10 @@ void Metadata::RecordCompoundMapToVectorOfSet(const std::map<Key, std::vector<st
 			temp_vec.push_back(set_as_vec);
 		}
 		chan_id_string = std::to_string(it->first);
-		iterable_tools_.EmitSequenceOfVectors(emitter_, temp_vec, chan_id_string);
+		iterable_tools_.EmitSequenceOfVectors<Val>(emitter_, temp_vec, chan_id_string);
 	}
 
+	emitter_ << YAML::EndMap;
 	emitter_ << YAML::EndMap;
 	emitter_ << YAML::Newline;
 }

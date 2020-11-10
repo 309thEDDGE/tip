@@ -1216,7 +1216,6 @@ template<typename Val>
 void IterableTools::EmitSequenceOfVectors(YAML::Emitter& e,
 	const std::vector<std::vector<Val>>& input_vec, const std::string& map_name)
 {
-	e << YAML::BeginMap;
 	e << YAML::Key << map_name;
 	e << YAML::Value << YAML::BeginSeq;
 
@@ -1227,8 +1226,6 @@ void IterableTools::EmitSequenceOfVectors(YAML::Emitter& e,
 	}
 
 	e << YAML::EndSeq;
-	e << YAML::EndMap;
-	//e << YAML::Newline;
 }
 
 template<typename Key, typename Val>

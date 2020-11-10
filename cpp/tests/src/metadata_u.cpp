@@ -181,21 +181,9 @@ TEST_F(MetadataTest, GetMetadataStringCompoundMapToVectorOfSet)
 		{33, {{123, 80}, {-10, -12, 13}}},
 		{9, {{10000, 981}, {-11, 233, 3}, {50, 55}}}
 	};
-	md_.RecordCompoundMapToVectorOfSet(input_map, map_name);
+	md_.RecordCompoundMapToVectorOfSet<uint16_t, int>(input_map, map_name);
 
-	expected_md_string_ =
-		"---\n"
-		"this is the map name:\n"
-		"  9:\n"
-		"    - [981, 10000]\n"
-		"    - [-11, 3, 233]\n"
-		"    - [50, 55]\n"
-		"  33:\n"
-		"    - [80, 123]\n"
-		"    - [-12, -10, 13]\n"
-		"...\n";
-
-	YAML::Node node = YAML::Load(expected_md_string_);
+	YAML::Node node = YAML::Load(md_.GetMetadataString());
 
 	// Check map name
 	EXPECT_TRUE(node[map_name]);
