@@ -35,6 +35,7 @@ add_library(${util_lib_name}
 
 target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} ${yaml_inc_dir} ${parquet_inc_dirs})
 target_compile_features(${util_lib_name} PUBLIC cxx_std_17)
+#target_compile_options(${util_lib_name} PRIVATE -fPIE)
 target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} ${parquet_libs} ${linux_libs})
 
 #########################################################
@@ -51,6 +52,7 @@ add_library(${pqctx_lib_name}
 
 target_include_directories(${pqctx_lib_name} PUBLIC ${pqctx_inc_dir} ${parquet_inc_dirs})
 target_compile_features(${pqctx_lib_name} PUBLIC cxx_std_17)
+#target_compile_options(${pqctx_lib_name} PRIVATE -fPIE)
 target_link_libraries(${pqctx_lib_name} PUBLIC ${parquet_libs} ${linux_libs})
 
 #########################################################
@@ -72,6 +74,7 @@ if(libirig106 AND ethernet_data)
                                ${all_tins_incs})
     target_link_libraries(${eth_lib_name} PUBLIC ${all_tins_libs})
     target_compile_features(${eth_lib_name} PUBLIC cxx_std_17)
+#    target_compile_options(${eth_lib_name} PRIVATE -fPIE)
 endif()
 
 #########################################################
@@ -108,7 +111,8 @@ target_include_directories(${ch10pq_lib_name} PUBLIC
                             ${pqctx_inc_dir} 
                             ${eth_inc_dir}
                             ${ch10_inc_dir}) # Ch10 format headers.
-target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)    
+target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)
+#target_compile_options(${ch10pq_lib_name} PRIVATE -fPIE)
 target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${eth_lib_name} ${linux_libs})
 
 #########################################################
@@ -139,6 +143,7 @@ target_include_directories(${trans_lib_name} PUBLIC
 target_link_libraries(${trans_lib_name} PUBLIC
                         ${util_lib_name} ${ch10pq_lib_name} ${linux_libs})
 target_compile_features(${trans_lib_name} PUBLIC cxx_std_17)
+#target_compile_options(${trans_lib_name} PRIVATE -fPIE)
 
 #########################################################
 #      Build/link Parquet-to-Parquet Comparator Lib
@@ -153,6 +158,7 @@ add_library(${comp_lib_name} ${comp_src_dir}/comparator.cpp )
 target_include_directories(${comp_lib_name} PUBLIC ${comp_inc_dir} ${parquet_inc_dirs} ${util_inc_dir})
 target_link_libraries(${comp_lib_name} PUBLIC ${util_lib_name} ${linux_libs})
 target_compile_features(${comp_lib_name} PUBLIC cxx_std_17)
+#target_compile_options(${comp_lib_name} PRIVATE -fPIE)
 
 #########################################################
 #                Build/link ch10parse Lib
@@ -199,7 +205,7 @@ target_include_directories(${ch10parse_lib_name} PUBLIC ${ch10_inc_dir} ${yaml_i
                             ${temp_irig_inc_dir} ${temp_eth_inc_dir}
                             )
 target_compile_features(${ch10parse_lib_name} PUBLIC cxx_std_17)
-
+#target_compile_options(${ch10parse_lib_name} PRIVATE -fPIE)
 target_link_libraries(${ch10parse_lib_name} PUBLIC
                         ${util_lib_name}
                         #${pqctx_lib_name}
@@ -248,12 +254,12 @@ endif()
 message(STATUS "Building exe: " "${ch10parse_exe_name}")
 add_executable(${ch10parse_exe_name} ${ch10_main_dir}/ch10parse.cpp
     )
+#set_property(TARGET ${ch10parse_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(${ch10parse_exe_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
                             ${temp_irig_inc_dir} ${temp_eth_inc_dir}
                             )
 target_compile_features(${ch10parse_exe_name} PUBLIC cxx_std_17)
-
 target_link_libraries(${ch10parse_exe_name} ${ch10parse_lib_name})
 
 #########################################################
@@ -264,6 +270,7 @@ set(trans_exe_name "tip_translate")
 message(STATUS "Building exe: " "${trans_exe_name}")
 set(trans_main_dir ${trans_lib_name}/${main_dir_name})
 add_executable(${trans_exe_name} ${trans_main_dir}/translate_1553_from_parquet.cpp)
+#set_property(TARGET ${trans_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(${trans_exe_name} PUBLIC 
                         ${trans_inc_dir} 
                         ${ch10pq_inc_dir} 
@@ -294,6 +301,7 @@ if(build_tests)
                    ${test_src_dir}/tmats_parser_u.cpp ${test_src_dir}/metadata_u.cpp 
                    ${test_src_dir}/parse_manager_u.cpp ${test_src_dir}/parquet_reader_u.cpp
                    ${test_src_dir}/dts1553_u.cpp)
+#    set_property(TARGET ${test_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
                                ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
                                ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} )
@@ -332,7 +340,8 @@ if(video_data)
     set(video_main_dir ${video_path}/${main_dir_name})
     message(STATUS "Building video extraction exe: " "${video_exe_name}")
     add_executable(${video_exe_name} ${video_main_dir}/parquet_video_extractor.cpp
-                   ${video_inc_dir}/parquet_video_extraction.h ${video_src_dir}/parquet_video_extraction.cpp)
+      ${video_inc_dir}/parquet_video_extraction.h ${video_src_dir}/parquet_video_extraction.cpp)
+#    set_property(TARGET ${video_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${video_exe_name} PUBLIC ${video_inc_dir}
                                ${parquet_inc_dirs})
     target_compile_features(${video_exe_name} PUBLIC cxx_std_17)
@@ -345,6 +354,7 @@ endif()
 set(comp_exe_name "pqcompare")
 message(STATUS "Building pq-to-pq comparator exe: " "${comp_exe_name}")
 add_executable(${comp_exe_name} ${comp_main_dir}/parquet_arrow_validator_main.cpp)
+#set_property(TARGET ${comp_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(${comp_exe_name} PUBLIC ${comp_inc_dir} ${parquet_inc_dirs})
 target_compile_features(${comp_exe_name} PUBLIC cxx_std_17)
 target_link_libraries(${comp_exe_name} ${comp_lib_name} ${parquet_libs})
@@ -355,6 +365,7 @@ target_link_libraries(${comp_exe_name} ${comp_lib_name} ${parquet_libs})
 set(bincomp_exe_name "bincompare")
 message(STATUS "Building binary comparator exe: " "${bincomp_exe_name}")
 add_executable(${bincomp_exe_name} ${comp_main_dir}/binary_comparison.cpp)
+#set_property(TARGET ${bincomp_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 #########################################################
 #                   Install Exes

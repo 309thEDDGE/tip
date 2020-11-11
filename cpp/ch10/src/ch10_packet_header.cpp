@@ -119,8 +119,7 @@ void Ch10PacketHeader::UseLibIRIG106PktHdrStruct(const I106C10Header* i106_heade
 
 	data_fmt_ptr_ = (const Ch10PacketHeaderFormat*)i106_header_ptr;
 
-	// Calculate the relative time counter (RTC). This function automatically
-	// fills the Ch10HeaderData::header_rtc_ field.
+	// Calculate the relative time counter (RTC).
 	CalcRtc(data_fmt_ptr_->rtc1, data_fmt_ptr_->rtc2);
 	ch10hd_.header_rtc_ = calculated_rtc_ref_;
 

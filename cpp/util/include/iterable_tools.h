@@ -406,11 +406,10 @@ public:
 	// Inputs:
 	//	- YAML::Emitter e: Emitter to which Yaml is emitted
 	//	- input_vec: vector<vector<Value>> map which is emitted as Yaml
-	//	- map_name: name of map to be emitted
 	//
 	template<typename Val>
 	void EmitSequenceOfVectors(YAML::Emitter& e,
-		const std::vector<std::vector<Val>>& input_vec, const std::string& map_name);
+		const std::vector<std::vector<Val>>& input_vec);
 };
 
 template<typename T>
@@ -1214,10 +1213,9 @@ void IterableTools::EmitCompoundMapToVector(YAML::Emitter& e,
 
 template<typename Val>
 void IterableTools::EmitSequenceOfVectors(YAML::Emitter& e,
-	const std::vector<std::vector<Val>>& input_vec, const std::string& map_name)
+	const std::vector<std::vector<Val>>& input_vec)
 {
-	e << YAML::Key << map_name;
-	e << YAML::Value << YAML::BeginSeq;
+	e << YAML::BeginSeq;
 
 	typename std::vector<std::vector<Val>>::const_iterator it;
 	for (it = input_vec.cbegin(); it != input_vec.cend(); ++it)

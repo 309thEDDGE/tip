@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <string>
 #include <algorithm> // copy
-//#include <map>
+#include <map>
 #include "tins/tins.h"
 #include "ethernet_data.h"
 
