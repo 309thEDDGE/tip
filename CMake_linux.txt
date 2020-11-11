@@ -232,3 +232,18 @@ endif()
 
 set(all_tins_incs ${tins_inc_dir} ${pcap_inc_dir})
 set(all_tins_libs ${tins_lib_name} ${pcap_lib_name})
+
+#########################################################
+#                   liblfr Paths
+#########################################################
+if(container)
+    set(lfr_inc_dir "/usr/local/include")
+    set(lfr_lib_dir "/usr/local/lib")
+    set(lfr_lib_name ${lfr_lib_dir}/liblfr.so)
+else()
+    set(lfr_dir_name "alkemist-lfr")
+    set(lfr_path "${deps_dir}/${lfr_dir_name}")
+    set(lfr_inc_dir ${lfr_path}/include)
+    set(lfr_lib_dir ${lfr_path}/lib)
+    set(lfr_lib_name ${lfr_lib_dir}/liblfr.so)
+endif()

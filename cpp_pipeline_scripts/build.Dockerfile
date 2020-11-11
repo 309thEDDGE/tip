@@ -1,6 +1,11 @@
+FROM runsafesecurity-docker-alkemist-lfr.jfrog.io/centos:7 AS lfr-files
+
 FROM registry.access.redhat.com/ubi8/ubi
 
 ENV YUMOPT="dnf install -y"
+
+ENV LFR_ROOT_PATH=/lfr
+COPY --from=lfr-files /usr/src/lfr ${LFR_ROOT_PATH}
 
 # 
 # Setup repos and update package manager.
@@ -43,9 +48,12 @@ ADD . /usr/local/tip
 #
 # Build tip and install
 #
-RUN cd /usr/local/tip/build && cmake .. -DCONTAINER=ON \
-    && make -j8 && make install \
-    && cd .. && rm -rf /usr/local/tip/build
+RUN cd /usr/local/tip/build \
+    && cmake .. -DCONTAINER=ON \
+    && ${LFR_ROOT_PATH}/scripts/lfr-helper.sh make -j8 \
+    && ${LFR_ROOT_PATH}/scripts/lfr-helper.sh make install \
+    && cd .. \
+    && rm -rf /usr/local/tip/build
 
 #
 # Setup default entrypoint

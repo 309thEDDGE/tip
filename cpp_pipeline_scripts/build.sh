@@ -1,4 +1,26 @@
 #!/usr/bin/env bash
+tee /etc/yum.repos.d/appstream.repo> /dev/null <<- EOM
+[AppStream]
+name=AppStream
+baseurl=http://mirror.centos.org/centos/8/AppStream/x86_64/os
+enabled=1
+gpgcheck=0
+repo_gpgcheck=0
+EOM
+
+# Add RunSafe repo to list of those yum will check for packages
+tee /etc/yum.repos.d/runsafesecurity.repo> /dev/null <<- EOM
+[RunSafeSecurity]
+name=RunSafeSecurity
+baseurl=https://runsafesecurity.jfrog.io/artifactory/rpm-alkemist-lfr
+enabled=1
+gpgcheck=0
+gpgkey=https://runsafesecurity.jfrog.io/artifactory/rpm-alkemist-lfr/repodata/repomd.xml.key
+repo_gpgcheck=1
+EOM
+# Install alkemist-lfr
+yum -y install alkemist-lfr
+source /etc/profile.d/alkemist-lfr.sh
 
 # In the pipeline the working directory is the root of the project repository.
 # When running from docker, the tip folder is mounted as /app
@@ -52,10 +74,14 @@ cd $BUILD_DIR
 $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
 echo "Running '$MAKE' for TIP"
-$MAKE install
+ALKEMIST_LICENSE_KEY=${ALKEMIST_LICENSE_KEY} lfr-helper $MAKE install
 # move bin folder to build for use in later pipeline stages
 cd $BASE_DIR
 if [ -d bin ] ; then 
 	rm -rf build/bin
 	mv bin build/
+	cp ${LFR_ROOT_PATH}/lib/run/* ${BUILD_DIR}/cpp
+	cp ${LFR_ROOT_PATH}/lib/run/* ${BUILD_DIR}/bin/lib
 fi
+
+# SB Note: tip_parse_video

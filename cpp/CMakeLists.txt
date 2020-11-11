@@ -212,6 +212,14 @@ target_link_libraries(${ch10parse_lib_name} PUBLIC
     )
 
 #########################################################
+#                   Link LFR Lib
+#########################################################
+# target_include_directories(${lfr_inc_dir})
+# add_library(${lfr_dir_name} SHARED IMPORTED)
+# set_target_properties(${lfr_dir_name} PROPERTIES IMPORTED_LOCATION ${lfr_lib_name})
+# target_link_libraries(${lfr_dir_name} PUBLIC)
+
+#########################################################
 #                   Install Libs
 #########################################################
 
@@ -224,6 +232,7 @@ install(TARGETS ${util_lib_name}
                 ${comp_lib_name}
                 ${eth_lib_name}
                 ${ch10parse_lib_name}
+#                ${lfr_dir_name}
         DESTINATION ${out_lib_dir}
 )
 

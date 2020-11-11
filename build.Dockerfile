@@ -7,7 +7,8 @@ ENV YUMOPT="dnf install -y"
 #
 RUN dnf update -y \
     && $YUMOPT dnf-plugins-core \
-    && subscription-manager register --username ${RHEL_SUB_USERNAME} --password ${RHEL_SUB_PASSWORD} --auto-attach \
+    && subscription-manager register --org=12650966 --activationkey Test \
+    && subscription-manager attach \
     && subscription-manager repos --enable "codeready-builder-for-rhel-8-x86_64-rpms" \
     && $YUMOPT https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
     && dnf update -y && dnf clean all && rm -r /var/cache/dnf && dnf upgrade -y
@@ -43,7 +44,8 @@ ADD . /usr/local/tip
 #
 # Build tip and install
 #
-RUN cd /usr/local/tip/build && cmake .. -DCONTAINER=ON \
+RUN mkdir -p /usr/local/tip/build \
+    && cd /usr/local/tip/build && cmake .. -DCONTAINER=ON \
     && make -j8 && make install \
     && cd .. && rm -rf /usr/local/tip/build
 

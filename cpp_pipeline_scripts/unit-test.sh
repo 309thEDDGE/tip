@@ -29,7 +29,7 @@ echo ""
 # In the future we might have to run ctest in order to get coverage statistics
 # If we do, try to make our tests compatible with the --parallel option of ctest
 cd ${TEST_DIR}
-./tests
+LD_LIBRARY_PATH=".:${LD_LIBRARY_PATH}" ./tests
 cd ${BASE_DIR}
 
 echo ""
@@ -55,7 +55,7 @@ echo Parser validation
 echo ""
 cd $BASE_DIR
 mv build/bin .
-python tip_scripts/pqpqvalidation/end_to_end_validator.py --video /test/truth /test/test /test/log
+python tip_scripts/e2e_validation/end_to_end_validator.py --video /test/truth /test/test /test/log
 LOG_FILE="$(ls -1t /test/log/* | head -1)"
 
 if [[ -z "$LOG_FILE" ]] ; then
