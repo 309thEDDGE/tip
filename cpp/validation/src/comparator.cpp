@@ -57,23 +57,46 @@ bool Comparator::CompareColumn(int column)
 			column, pm1_.schema_->num_fields());
 		return false;
 	}
-
-	// print column name
-	printf("File 1 Col Name: %s \n", 
-		pm1_.schema_->fields()[column - 1]->name().c_str());
+	std::string file1_col_name = pm1_.schema_->fields()[column - 1]->name();
+	
 	if (column > pm2_.schema_->num_fields() || column < 1)
 	{
 		printf("\nERROR!! Column %d not within range 0 -> %d \n", 
 			column, pm2_.schema_->num_fields());
 		return false;
 	}
+	std::string file2_col_name = pm2_.schema_->fields()[column - 1]->name();
 
-	// print column name
-	printf("File 2 Col Name: %s \n",
-		pm2_.schema_->fields()[column - 1]->name().c_str());
+	printf("File 1 Col Name: %s \n", file1_col_name.c_str());
+	printf("File 2 Col Name: %s \n", file2_col_name.c_str());
+
+	// Compare column names
+	if (file1_col_name != file2_col_name)
+	{
+		printf("\nERROR!! Column names do not match\n");
+		return false;
+	}
 
 	// Start the comparison at the first parquet file in the folder
-	ZeroRG();
+	ZeroRG();	
+
+	bool compare_col_schema_only = false;
+	// Check for case in which both parquet files were created and zero
+	// rows/row groups were added. If both truth and test parquet
+	// directories contain files with zero rows
+	// then the comparison ought to result in equality. 
+	// This can occur, for example, when 
+	// ethernet or video packets are intended to be parsed by TIP
+	// and the ch10 does not contain either of those packet types.
+	// TIP creates the pq file in preparation to add data because
+	// the content of the ch10 is not known a priori. 
+	if (pm1_.GetRowGroupCount() == 0 && pm2_.GetRowGroupCount() == 0)
+	{
+		printf("\n\nThe current files from the truth and test sets each "
+			"have zero row groups.\nConclusion: Both truth and test files "
+			"are empty. Comparing column schema only.");
+		compare_col_schema_only = true;
+	}
 
 	// reset stats for the column
 	compared_count_[column] = 0;
@@ -90,6 +113,9 @@ bool Comparator::CompareColumn(int column)
 			(column));
 		return false;
 	}
+
+	if (compare_col_schema_only)
+		return true;
 
 	// If it is a list, assume the data type is Int32Type
 	if (dtype1 == arrow::ListType::type_id)
@@ -192,6 +218,7 @@ bool Comparator::CheckPassed(int column)
 
 bool Comparator::CompareAll()
 {
+
 	InitializeStats();
 
 	int max_fields = 0;

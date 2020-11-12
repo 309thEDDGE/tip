@@ -14,7 +14,7 @@ project(TIP
 )
 
 set(CMAKE_PLATFORM_INDEPENDENT_CODE ON)
-set(CMAKE_POSITION_INDEPENDENT_CODE true)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 #########################################################
 #                      Build Options

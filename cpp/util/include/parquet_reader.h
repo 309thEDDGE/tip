@@ -124,6 +124,18 @@ public:
 			++current_row_group_;
 	};
 
+	/*
+		Return the current file row_group_count_
+		by value.
+	*/
+	int GetRowGroupCount() { return row_group_count_; }
+
+	/*
+		Return the count of input_parquet_paths_
+		by value. Cast to int since other counts,
+		such as row_group_count_ is stored as int.
+	*/
+	int GetInputParquetPathsCount() { return int(input_parquet_paths_.size()); }
 	
 };
 
