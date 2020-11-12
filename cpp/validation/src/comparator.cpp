@@ -5,26 +5,27 @@ bool Comparator::Initialize(std::string file1, std::string file2)
 	if (!std::filesystem::exists(file1))
 	{
 		printf("\nERROR!! parquet directory %s doesn't exist: \n", file1.c_str());
-		return false;
+		failure_ = true;
 	}
 
 	if (!std::filesystem::exists(file2))
 	{
 		printf("\nERROR!! parquet directory %s doesn't exist: \n", file2.c_str());
-		return false;
+		failure_ = true;
 	}
 
 	bool return_status = false;
 	return_status = pm1_.SetPQPath(file1);
 	if (!return_status)
-		return false;
+		failure_ = true;
 	return_status = pm2_.SetPQPath(file2);
 	if (!return_status)
-		return false;
+		failure_ = true;
 	
-	InitializeStats();
+	if (!failure_)
+		InitializeStats();
 
-	return return_status;
+	return !failure_;
 }
 
 void Comparator::InitializeStats()
@@ -33,10 +34,10 @@ void Comparator::InitializeStats()
 	columns_passed_.clear();
 
 	int max_fields = 0;
-	if (pm2_.schema_->num_fields() > pm1_.schema_->num_fields())
-		max_fields = pm2_.schema_->num_fields();
+	if (pm2_.GetSchema()->num_fields() > pm1_.GetSchema()->num_fields())
+		max_fields = pm2_.GetSchema()->num_fields();
 	else
-		max_fields = pm1_.schema_->num_fields();
+		max_fields = pm1_.GetSchema()->num_fields();
 
 	for (int i = 0; i < max_fields; i++)
 	{
@@ -46,26 +47,29 @@ void Comparator::InitializeStats()
 }
 bool Comparator::CompareColumn(int column)
 {
+	if (failure_)
+		return false;
+
 	printf("\n ---Comparing Column %d--- \n", column);
 	bool is_list = false;
 
 	// Make sure the column does not exceed the total number
 	// of columns for either parquet file
-	if (column > pm1_.schema_->num_fields() || column < 1)
+	if (column > pm1_.GetSchema()->num_fields() || column < 1)
 	{
 		printf("\nERROR!! Column %d not within range 0 -> %d \n", 
-			column, pm1_.schema_->num_fields());
+			column, pm1_.GetSchema()->num_fields());
 		return false;
 	}
-	std::string file1_col_name = pm1_.schema_->fields()[column - 1]->name();
+	std::string file1_col_name = pm1_.GetSchema()->fields()[column - 1]->name();
 	
-	if (column > pm2_.schema_->num_fields() || column < 1)
+	if (column > pm2_.GetSchema()->num_fields() || column < 1)
 	{
 		printf("\nERROR!! Column %d not within range 0 -> %d \n", 
-			column, pm2_.schema_->num_fields());
+			column, pm2_.GetSchema()->num_fields());
 		return false;
 	}
-	std::string file2_col_name = pm2_.schema_->fields()[column - 1]->name();
+	std::string file2_col_name = pm2_.GetSchema()->fields()[column - 1]->name();
 
 	printf("File 1 Col Name: %s \n", file1_col_name.c_str());
 	printf("File 2 Col Name: %s \n", file2_col_name.c_str());
@@ -81,19 +85,14 @@ bool Comparator::CompareColumn(int column)
 	ZeroRG();	
 
 	bool compare_col_schema_only = false;
-	// Check for case in which both parquet files were created and zero
-	// rows/row groups were added. If both truth and test parquet
-	// directories contain files with zero rows
-	// then the comparison ought to result in equality. 
-	// This can occur, for example, when 
-	// ethernet or video packets are intended to be parsed by TIP
-	// and the ch10 does not contain either of those packet types.
-	// TIP creates the pq file in preparation to add data because
-	// the content of the ch10 is not known a priori. 
-	if (pm1_.GetRowGroupCount() == 0 && pm2_.GetRowGroupCount() == 0)
+	
+	// Only parquet files with data are added to the parquet paths list
+	// in parquet reader. Thus, if they are both empty then only
+	// schema should be compared.
+	if (pm1_.GetInputParquetPathsCount() == 0 && pm2_.GetInputParquetPathsCount() == 0)
 	{
 		printf("\n\nThe current files from the truth and test sets each "
-			"have zero row groups.\nConclusion: Both truth and test files "
+			"have zero data.\nConclusion: Both truth and test files "
 			"are empty. Comparing column schema only.");
 		compare_col_schema_only = true;
 	}
@@ -103,9 +102,9 @@ bool Comparator::CompareColumn(int column)
 	columns_passed_[column] = false;
 
 	int dtype1 = 
-		pm1_.schema_->fields()[column - 1]->type()->id();
+		pm1_.GetSchema()->fields()[column - 1]->type()->id();
 	int dtype2 = 
-		pm2_.schema_->fields()[column - 1]->type()->id();
+		pm2_.GetSchema()->fields()[column - 1]->type()->id();
 
 	if (dtype1 != dtype2)
 	{
@@ -218,14 +217,16 @@ bool Comparator::CheckPassed(int column)
 
 bool Comparator::CompareAll()
 {
+	if (failure_)
+		return false;
 
 	InitializeStats();
 
 	int max_fields = 0;
-	if (pm2_.schema_->num_fields() > pm1_.schema_->num_fields())
-		max_fields = pm2_.schema_->num_fields();
+	if (pm2_.GetSchema()->num_fields() > pm1_.GetSchema()->num_fields())
+		max_fields = pm2_.GetSchema()->num_fields();
 	else
-		max_fields = pm1_.schema_->num_fields();
+		max_fields = pm1_.GetSchema()->num_fields();
 
 	for (int i = 0; i < max_fields; i++)
 	{
@@ -237,13 +238,15 @@ bool Comparator::CompareAll()
 	bool pass = true;
 
 	// if the parquet files don't have the same column count return false
-	if (pm2_.schema_->num_fields() != pm1_.schema_->num_fields())
+	if (pm2_.GetSchema()->num_fields() != pm1_.GetSchema()->num_fields())
 		pass = false;
 	
 	std::vector<int> passed_cols;
 	std::vector<int> failed_cols;
 	// if any of the column mismatched return false
-	for (std::map<int, bool>::iterator it = columns_passed_.begin(); it != columns_passed_.end(); ++it)
+	for (std::map<int, bool>::iterator it = columns_passed_.begin(); 
+		it != columns_passed_.end(); 
+		++it)
 	{
 		if (!it->second)
 		{
