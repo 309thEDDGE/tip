@@ -50,6 +50,10 @@ bool Comparator::CompareColumn(int column)
 	if (failure_)
 		return false;
 
+	// Reset beginning vector positions to 0
+	begin_pos_1_ = 0;
+	begin_pos_2_ = 0;
+
 	printf("\n ---Comparing Column %d--- \n", column);
 	bool is_list = false;
 
