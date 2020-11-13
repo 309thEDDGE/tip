@@ -47,8 +47,12 @@ void Comparator::InitializeStats()
 }
 bool Comparator::CompareColumn(int column)
 {
+	// Reset beginning vector positions to 0
+	begin_pos_1_ = 0;
+	begin_pos_2_ = 0;
+
 	if (failure_)
-		return false;
+		return false;	
 
 	printf("\n ---Comparing Column %d--- \n", column);
 	bool is_list = false;

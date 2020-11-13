@@ -273,6 +273,7 @@ bool Comparator::Compare(int column, bool is_list)
 		if (buffer1[i] != buffer2[i])
 			printf("buffers at position %d aren't equivalent: buffer1 = %d, buffer2 = %d\n", buffer1[i], buffer2[i]);
 	}*/
+
 	while (size1 > 0 || size2 > 0)
 	{
 		if (!CompareVecs(buffer1, size1, buffer2, size2, (column + 1)))

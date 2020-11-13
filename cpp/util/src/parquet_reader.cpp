@@ -145,6 +145,11 @@ bool ParquetReader::SetPQPath(std::string base_path)
 				catch (...)
 				{
 					printf("arrow::io::ReadableFile::Open error\n");
+					if (arrow_file != nullptr)
+					{
+						if (!arrow_file->closed())
+							arrow_file->Close();
+					}
 					return false;
 				}
 #else
@@ -153,6 +158,11 @@ bool ParquetReader::SetPQPath(std::string base_path)
 				{
 					printf("arrow::io::ReadableFile::Open error (ID %s): %s\n",
 						st.CodeAsString().c_str(), st.message().c_str());
+					if (arrow_file != nullptr)
+					{
+						if (!arrow_file->closed())
+							arrow_file->Close();
+					}
 					return false;
 				}
 #endif
@@ -161,6 +171,11 @@ bool ParquetReader::SetPQPath(std::string base_path)
 				{
 					printf("parquet::arrow::OpenFile error (ID %s): %s\n",
 						st.CodeAsString().c_str(), st.message().c_str());
+					if (arrow_file != nullptr)
+					{
+						if (!arrow_file->closed())
+							arrow_file->Close();
+					}
 					return false;
 				}
 
@@ -186,6 +201,11 @@ bool ParquetReader::SetPQPath(std::string base_path)
 				{
 					printf("GetSchema() error (ID %s): %s\n",
 						st.CodeAsString().c_str(), st.message().c_str());
+					if (arrow_file != nullptr)
+					{
+						if (!arrow_file->closed())
+							arrow_file->Close();
+					}
 					return false;
 				}
 
@@ -202,6 +222,11 @@ bool ParquetReader::SetPQPath(std::string base_path)
 					{
 						printf("Error!!! Inconsistent column sizes\n");
 						input_parquet_paths_.clear();
+						if (arrow_file != nullptr)
+						{
+							if (!arrow_file->closed())
+								arrow_file->Close();
+						}
 						return false;
 					}
 
@@ -215,6 +240,11 @@ bool ParquetReader::SetPQPath(std::string base_path)
 								i, schema_->fields()[i]->type()->name().c_str(),
 								compare_schema->fields()[i]->type()->name().c_str());
 							input_parquet_paths_.clear();
+							if (arrow_file != nullptr)
+							{
+								if (!arrow_file->closed())
+									arrow_file->Close();
+							}
 							return false;
 						}
 
@@ -226,6 +256,11 @@ bool ParquetReader::SetPQPath(std::string base_path)
 								i, schema_->fields()[i]->name().c_str(),
 								compare_schema->fields()[i]->name().c_str());
 							input_parquet_paths_.clear();
+							if (arrow_file != nullptr)
+							{
+								if (!arrow_file->closed())
+									arrow_file->Close();
+							}
 							return false;
 						}
 					}
@@ -236,7 +271,13 @@ bool ParquetReader::SetPQPath(std::string base_path)
 
 				// only add the parquet file if the row group count is > 0
 				if(row_group_count > 0)
-					input_parquet_paths_.push_back(temp_path);				
+					input_parquet_paths_.push_back(temp_path);		
+
+				if (arrow_file != nullptr)
+				{
+					if (!arrow_file->closed())
+						arrow_file->Close();
+				}
 							
 			}
 		}
@@ -249,7 +290,9 @@ bool ParquetReader::SetPQPath(std::string base_path)
 	// first_iteration will = false. If first_iteration
 	// was never set to false, no valid parquet files were found
 	if (first_iteration)
+	{
 		return false;
+	}
 
 	// SetPQPath should return true if there was a valid parquet
 	// file even if the file didn't have data. If a parquet file
