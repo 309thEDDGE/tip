@@ -117,7 +117,7 @@ class E2EValidator(object):
         
         for line in lines:
             temp = line.split(',')
-            basename = temp[0].rstrip('Cch10')[:-1]
+            basename = temp[0].rstrip('CHch10')[:-1]
             ch10name = temp[0].strip()
             self.files_under_test[ch10name] = {'icd': temp[1].strip(), 
                                                       'basename': basename,
