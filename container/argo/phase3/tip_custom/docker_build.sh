@@ -1,0 +1,1 @@
+docker build -t runtip:1 .

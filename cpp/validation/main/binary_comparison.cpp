@@ -9,11 +9,13 @@ std::streamsize ReadBytes(std::ifstream& ifs, std::streamsize read_count, char* 
 
 int main(int argc, char* argv[])
 {
-	std::streamsize read_size = int(100e6);
+	std::streamsize read_size = int(1e6);
 	if (argc < 3)
 	{
 		printf("Requires two arguments, absolute path to two files to be compared.\n");
-		return 0;
+
+		// Indicate a null result
+		return 1;
 	}
 
 	char* file1_path = argv[1];
@@ -21,6 +23,8 @@ int main(int argc, char* argv[])
 	std::ifstream ifile1;
 	std::ifstream ifile2;
 
+	// If either file can't be opened, return 1 to indicate a 
+	// null comparison.
 	if (!OpenFile(file1_path, ifile1))
 		return 0;
 	if (!OpenFile(file2_path, ifile2))

@@ -3,7 +3,8 @@
 
 #include <vector>
 #include <cstdint>
-#include <stdio.h>
+#include <cstdio>
+#include <cmath>
 #include <map>
 #include <arrow/api.h>
 #include <arrow/io/api.h>
@@ -234,13 +235,6 @@ public:
 	*/
 	template<typename NativeType> 
 	bool SetMemoryLocation(std::vector<NativeType>& data, 
-		const std::string& fieldName, 
-		std::vector<uint8_t>* boolField=nullptr);
-
-	
-	// Overloaded function for strings. 
-	template<typename NativeType>
-	bool SetMemoryLocation(std::vector<std::string>& strVec, 
 		const std::string& fieldName, 
 		std::vector<uint8_t>* boolField=nullptr);
 
@@ -697,7 +691,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 #ifdef DEBUG
 #if DEBUG > 1
 				printf("Cast from %s planned for: %s, \n",
-					typeid(NativeType).name().c_str(),
+					typeid(NativeType).name(),
 					fieldName.c_str());
 #endif
 #endif
@@ -724,9 +718,9 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 	return false;
 }
 
-
-template<typename NativeType>
-bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
+// Specialization for string data.
+template<>
+inline bool ParquetContext::SetMemoryLocation<std::string>(std::vector<std::string>& data,
 	const std::string& fieldName,
 	std::vector<uint8_t>* boolField)
 {
@@ -798,7 +792,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
 				}
 			}
 #ifdef DEBUG
-#if DEBUG > 1
+#if DEBUG > 2
 			printf("setting field info for %s\n",
 				fieldName.c_str());
 #endif

@@ -58,6 +58,7 @@ private:
 	std::vector<std::string>::iterator msg_names_itr;
 	std::map<uint32_t, std::set<uint16_t>>* chanid_remoteaddr1_ptr;
 	std::map<uint32_t, std::set<uint16_t>>* chanid_remoteaddr2_ptr;
+	std::map<uint32_t, std::set<uint32_t>>* chanid_commwords_ptr_;
 	void debug_info();
 	void msg_debug_info2();
 	uint8_t parse_payload_new();
@@ -108,6 +109,7 @@ public:
 	//uint8_t parse_minimal();
 	void set_channelid_remoteaddress_output(std::map<uint32_t, std::set<uint16_t>>* map_remoteaddr1, 
 		std::map<uint32_t, std::set<uint16_t>>* map_remoteaddr2);
+	void set_channelid_commwords_output(std::map<uint32_t, std::set<uint32_t>>* map_chanid_commwords);
 	void set_truncate(bool state);
 	void close();
 	Ch10MilStd1553F1Stats& get_stats();

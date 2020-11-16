@@ -103,7 +103,7 @@ void ParseManager::create_paths()
 #ifdef ETHERNET_DATA
 	std::filesystem::path parquet_eth_path = out_path / input_path.stem();
 	parquet_eth_path += std::filesystem::path("_ethernet.parquet");
-	printf("Parquet video output path: %s\n", parquet_eth_path.string().c_str());
+	printf("Parquet ethernet output path: %s\n", parquet_eth_path.string().c_str());
 	fspath_map[Ch10DataType::ETHERNET_DATA_F0] = parquet_eth_path;
 
 	if (!std::filesystem::exists(parquet_eth_path))
@@ -203,6 +203,11 @@ void ParseManager::start_workers()
 	collect_chanid_to_lruaddrs_metadata(output_chanid_remoteaddr_map);
 	md.RecordCompoundMapToSet(output_chanid_remoteaddr_map, "chanid_to_lru_addrs");
 
+	// Obtain the channel ID to command words set map.
+	std::map<uint32_t, std::vector<std::vector<uint32_t>>> output_chanid_commwords_map;
+	collect_chanid_to_commwords_metadata(output_chanid_commwords_map);
+	md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
+
 #ifdef LIBIRIG106
 	ProcessTMATS();
 
@@ -278,6 +283,34 @@ void ParseManager::collect_chanid_to_lruaddrs_metadata(
 	IterableTools it;
 	output_chanid_remoteaddr_map = it.CombineCompoundMapsToSet(
 		chanid_remoteaddr_map1, chanid_remoteaddr_map2);
+}
+
+void ParseManager::collect_chanid_to_commwords_metadata(
+	std::map<uint32_t, std::vector<std::vector<uint32_t>>>& output_chanid_commwords_map)
+{
+	// Collect maps into one.
+	std::map<uint32_t, std::set<uint32_t>> chanid_commwords_map;
+	for (uint16_t read_ind = 0; read_ind < n_reads; read_ind++)
+	{
+		workers[read_ind].append_chanid_comwmwords_map(chanid_commwords_map);
+	}
+
+	// Break compound command words each into a set of two command words,
+	// a transmit and receive value.
+	uint32_t mask_val = (1 << 16) - 1;
+	for (std::map<uint32_t, std::set<uint32_t>>::const_iterator it = chanid_commwords_map.cbegin();
+		it != chanid_commwords_map.cend(); ++it)
+	{
+		std::vector<std::vector<uint32_t>> temp_vec_of_vec;
+		for (std::set<uint32_t>::const_iterator it2 = it->second.cbegin();
+			it2 != it->second.cend(); ++it2)
+		{
+			// Vector needed here to retain order.
+			std::vector<uint32_t> pair_vec = { *it2 >> 16, *it2 & mask_val };
+			temp_vec_of_vec.push_back(pair_vec);
+		}
+		output_chanid_commwords_map[it->first] = temp_vec_of_vec;
+	}
 }
 
 std::streamsize ParseManager::activate_worker(uint16_t binbuff_ind, uint16_t ID,

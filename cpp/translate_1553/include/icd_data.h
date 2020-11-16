@@ -69,7 +69,10 @@ private:
 public:
 	ICDData();
 	~ICDData();
-	bool PrepareICDQuery(const std::vector<std::string>& lines, bool is_yaml_file=false);
+	bool PrepareICDQuery(const std::vector<std::string>& lines);
+	bool PrepareICDQuery(const YAML::Node& msg_defs_node);
+	void PrepareMessageKeyMap(std::unordered_map<uint64_t, std::set<std::string>>& message_key_map,
+		const std::map<std::string, std::set<uint64_t>>& supplemental_map);
 	std::vector<std::vector<size_t>> GetTableOrganizationIndices();
 	std::set<size_t> TempLookupTableIndex(const std::string& bus_name, uint8_t xmit_lru_addr, 
 		uint8_t dest_lru_addr, uint8_t xmit_lru_subaddr, uint8_t dest_lru_subaddr);
@@ -116,7 +119,7 @@ public:
 	// as those immediately above, with the exception that the following
 	// are related specifically to processing of yaml ICD input.
 	bool IsYamlFile(const std::string& icd_path);
-	bool IngestICDYamlFileLines(const std::vector<std::string>& lines,
+	bool IngestICDYamlNode(const YAML::Node& root_node,
 		std::vector<ICDElement>& icd_elems_output);
 	bool MapNodeHasRequiredKeys(const YAML::Node& node, 
 		const std::vector<std::string>& required_keys);

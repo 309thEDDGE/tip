@@ -17,13 +17,7 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-	bool valid_path = comp.Initialize(argv[1], argv[2]);
-
-	if (!valid_path)
-	{
-		return 0;
-	}
-
+	comp.Initialize(argv[1], argv[2]);
 	comp.CompareAll();
 	
 	auto t2 = Clock::now();

@@ -21,22 +21,31 @@ private:
 	arrow::MemoryPool* pool_ = arrow::default_memory_pool();
 	std::shared_ptr<arrow::io::ReadableFile> arrow_file_;
 	std::unique_ptr<parquet::arrow::FileReader> arrow_reader_;
+	bool manual_rowgroup_increment_mode_;
+
+	std::vector<std::shared_ptr<arrow::Field>> initial_fields_ =
+		std::vector<std::shared_ptr<arrow::Field>>();
 
 
 	int row_group_count_;
 	int current_row_group_;
 	int current_file_;
+	bool data_found_;
+	std::shared_ptr<arrow::Schema> schema_;
 
 	bool OpenNextParquetFile();
-
 
 public:
 	ParquetReader()
 	{
+		manual_rowgroup_increment_mode_ = false;
 		row_group_count_ = 0;
 		current_row_group_ = 0;
 		current_file_ = 0;
+		data_found_ = false;
+		schema_ = arrow::schema(initial_fields_);
 	};
+
 	~ParquetReader()
 	{
 		if (arrow_file_ != nullptr)
@@ -46,12 +55,18 @@ public:
 		}
 	};
 
-	std::shared_ptr<arrow::Schema> schema_;
+	
 
 	/*
 		Initializes the parquet folder
 
 		Returns: False -> If invalid parquet folder
+							1. Non existent base_path
+							2. Empty parquet folder
+							3. Invalid parquet files
+							4. Column count not consistent
+							5. Schema types not consistent
+							6. Column names not consistent
 				 True  -> If valid parquet folder
 	*/
 	bool SetPQPath(std::string base_path);
@@ -78,6 +93,15 @@ public:
 		bool list = false);
 
 	/*
+		GetColumnNumberFromName get the column number
+		from a column name
+
+		returns -> column number if found (0 for the first column) 
+				   and -1 if the column name does not exist
+	*/
+	int GetColumnNumberFromName(std::string col_name);
+
+	/*
 		Resets parquet file reads to the first
 		file in the parquet directory
 	*/
@@ -88,6 +112,48 @@ public:
 		current_file_ = 0;
 		OpenNextParquetFile();
 	};
+
+	/*
+		If set, row groups will need to be incremented
+		using IncrementRG(). If not set, row
+		groups will be incremented automatically 
+		every time GetNextRG() is called.
+	*/
+	void SetManualRowgroupIncrementMode()
+	{
+		manual_rowgroup_increment_mode_ = true;
+	}
+
+	/*
+		Called to manually increment row groups.
+		Only works when manual_rowgroup_incement_mode_ 
+		is set to true (call SetManualRowgroupIncrementMode() to
+		set to true)
+	*/
+	void IncrementRG()
+	{
+		if(manual_rowgroup_increment_mode_)
+			++current_row_group_;
+	};
+
+	/*
+		Return the current file row_group_count_
+		by value.
+	*/
+	int GetRowGroupCount() { return row_group_count_; }
+
+	/*
+		Return the count of input_parquet_paths_
+		by value. Cast to int since other counts,
+		such as row_group_count_ is stored as int.
+	*/
+	int GetInputParquetPathsCount() { return int(input_parquet_paths_.size()); }
+
+	/*
+		Return the schema for the parquet file
+	*/
+	std::shared_ptr<arrow::Schema> GetSchema() { return schema_; }
+	
 };
 
 template<typename T, typename A>
@@ -97,6 +163,9 @@ bool ParquetReader::GetNextRG(int col,
 	bool list)
 {
 	size = 0;
+
+	if (col >= schema_->num_fields())
+		return false;
 
 	if (current_row_group_ >= row_group_count_)
 	{
@@ -183,8 +252,9 @@ bool ParquetReader::GetNextRG(int col,
 		}
 	}
 
+	if(!manual_rowgroup_increment_mode_)
+		current_row_group_++;
 
-	current_row_group_++;
 	return true;
 
 }
