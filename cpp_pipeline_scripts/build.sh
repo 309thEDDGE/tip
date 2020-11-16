@@ -68,20 +68,21 @@ echo "Running '$CMAKE' for TIP"
 if [ -d $DEPS_SOURCE ] ; then
 	rm -rf $BASE_DIR/deps
 	mv $DEPS_SOURCE $BASE_DIR
+#	mv ${LFR_ROOT_PATH}/lib/run/* ${BUILD_DIR}/bin/lib
+	mkdir -p ${DEPS_DIR}/alkemist-lfr/lib
+	mv ${LFR_ROOT_PATH}/lib/run/* ${DEPS_DIR}/alkemist-lfr/lib
 fi
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
 echo "Running '$MAKE' for TIP"
-ALKEMIST_LICENSE_KEY=${ALKEMIST_LICENSE_KEY} lfr-helper $MAKE install
+ALKEMIST_LICENSE_KEY=${ALKEMIST_LICENSE_KEY} TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr" lfr-helper $MAKE install
 # move bin folder to build for use in later pipeline stages
 cd $BASE_DIR
 if [ -d bin ] ; then 
 	rm -rf build/bin
 	mv bin build/
-	cp ${LFR_ROOT_PATH}/lib/run/* ${BUILD_DIR}/cpp
-	cp ${LFR_ROOT_PATH}/lib/run/* ${BUILD_DIR}/bin/lib
 fi
 
 # SB Note: tip_parse_video

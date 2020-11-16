@@ -308,6 +308,7 @@ if(build_tests)
 
     target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
     target_link_libraries(${test_exe_name}
+                          ${alkemist_lfr_libs}
                           ${gsuite_libs}
                           ${util_lib_name}
                           ${trans_lib_name}

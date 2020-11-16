@@ -50,8 +50,8 @@ ADD . /usr/local/tip
 #
 RUN cd /usr/local/tip/build \
     && cmake .. -DCONTAINER=ON \
-    && ${LFR_ROOT_PATH}/scripts/lfr-helper.sh make -j8 \
-    && ${LFR_ROOT_PATH}/scripts/lfr-helper.sh make install \
+    && TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr" ${LFR_ROOT_PATH}/scripts/lfr-helper.sh make -j8 \
+    && TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr" ${LFR_ROOT_PATH}/scripts/lfr-helper.sh make install \
     && cd .. \
     && rm -rf /usr/local/tip/build
 
