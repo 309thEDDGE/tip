@@ -53,7 +53,7 @@ echo "--------------------Parser validation---------------------"
 echo ""
 cd $BASE_DIR
 if [ ! -d ./bin ] ; then mv build/bin . ; fi
-python tip_scripts/e2e_validation/end_to_end_validator.py --video /test/truth /test/test /test/log
+python tip_scripts/e2e_validation/run_end_to_end_validator.py --video /test/truth /test/test /test/log
 
 echo ""
 echo "--------------------End-to-end results------------------"
