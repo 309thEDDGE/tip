@@ -98,7 +98,7 @@ protected:
 	}
 
 	// Generate Parquet file with two
-	// columns with differenct schemas
+	// columns with different schemas
 	template <typename T1, typename T2>
 	bool CreateTwoColParquetFile(std::string directory,
 		std::shared_ptr<arrow::DataType> type1,
@@ -1113,6 +1113,73 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareFloatMisMatch)
 	EXPECT_FALSE(comp.CompareColumn(2));
 }
 
+/*
+	The next two tests are to protect against the beginning postions
+	of each vector not being initialized to 0 at each call of CompareColumn.
+	One possible route that a vector position would be left at some
+	other location is if the row group sizes for each file were 
+	different and non matching for the first column. This would
+	leave the beginning postion of one of the vectors at a location
+	other than the beginning of the vector when CompareColumn is called
+	on the next column.
+*/
+TEST_F(ParquetArrowValidatorTest, ComparatorEnsureVectorBeginningPosition1Reset)
+{
+	//												column1				column2
+	std::vector<std::vector<float>> file1 = { {-16.54,5.34,4.24,
+												9.14,8.11,
+												-20.2,101.1},		{7.1,8.2,20.3,50.4,60.5,51.6,50.7} };
+
+	std::vector<std::vector<float>> file2 = { {16.54,5.34,4.24,
+												9.14,8.11,
+												-20.2,101.1},		{7.1,8.2,20.3,50.4,60.5,51.6,50.7} };
+
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+	// file 1
+	ASSERT_TRUE(CreateParquetFile(arrow::float32(), dirname1, file1, 5));
+
+	// file 2 - Note that the only change from ComparatorEnsureVectorBeginningPosition2Reset is
+	// that the row group size flipped, this should expose begin_pos_1_ if it were not initialize
+	// back to 0 at CompareColumn(2)
+	ASSERT_TRUE(CreateParquetFile(arrow::float32(), dirname2, file2, 2));
+
+	Comparator comp;
+
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+	EXPECT_FALSE(comp.CompareColumn(1));
+	EXPECT_TRUE(comp.CompareColumn(2));
+}
+
+TEST_F(ParquetArrowValidatorTest, ComparatorEnsureVectorBeginningPosition2Reset)
+{
+	//												column1				column2
+	std::vector<std::vector<float>> file1 = { {-16.54,5.34,4.24,
+												9.14,8.11,
+												-20.2,101.1},		{7.1,8.2,20.3,50.4,60.5,51.6,50.7} };
+
+	std::vector<std::vector<float>> file2 = { {16.54,5.34,4.24,
+												9.14,8.11,
+												-20.2,101.1},		{7.1,8.2,20.3,50.4,60.5,51.6,50.7} };
+
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+	// file 1
+	ASSERT_TRUE(CreateParquetFile(arrow::float32(), dirname1, file1, 2));
+	
+	
+	// file 2  - Note that the only change from ComparatorEnsureVectorBeginningPosition1Reset is
+	// that the row group size flipped, this should expose begin_pos_2_ if it were not initialize
+	// back to 0 at CompareColumn(2)
+	ASSERT_TRUE(CreateParquetFile(arrow::float32(), dirname2, file2, 5));
+
+	Comparator comp;
+
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+	EXPECT_FALSE(comp.CompareColumn(1));
+	EXPECT_TRUE(comp.CompareColumn(2));
+}
+
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareFloatNaN)
 {
 	//												column1				
@@ -1525,6 +1592,7 @@ TEST_F(ParquetArrowValidatorTest, CompareEmptyFilesSameSchema)
 	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
 
 	ASSERT_TRUE(comp.CompareAll());
+	ASSERT_TRUE(comp.CompareColumn(1));
 }
 
 TEST_F(ParquetArrowValidatorTest, CompareEmptyFilesDifferentNames)
@@ -1545,6 +1613,8 @@ TEST_F(ParquetArrowValidatorTest, CompareEmptyFilesDifferentNames)
 	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
 
 	ASSERT_FALSE(comp.CompareAll());
+	ASSERT_TRUE(comp.CompareColumn(1));
+	ASSERT_FALSE(comp.CompareColumn(2));
 }
 
 TEST_F(ParquetArrowValidatorTest, CompareSameDataDifferentColNames)
@@ -1554,7 +1624,7 @@ TEST_F(ParquetArrowValidatorTest, CompareSameDataDifferentColNames)
 
 	// Zero data rows configured.
 	std::vector<float> col0data = { 1.0, 2., 3., 4., 5., 6., 7., 8., 9., 0. };
-	std::vector<int16_t> col1data = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
+	std::vector<int16_t> col1data = { 1, 2,  3,  4,  5,  6,  7,  8,  9,  0 };
 
 	ASSERT_TRUE(CreateTwoColParquetFile(dirname1, arrow::float32(), col0data, "col1",
 		arrow::int16(), col1data, "col2", 5));
@@ -1565,4 +1635,7 @@ TEST_F(ParquetArrowValidatorTest, CompareSameDataDifferentColNames)
 	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
 
 	ASSERT_FALSE(comp.CompareAll());
+	ASSERT_TRUE(comp.CompareColumn(1));
+	ASSERT_FALSE(comp.CompareColumn(2));
 }
+

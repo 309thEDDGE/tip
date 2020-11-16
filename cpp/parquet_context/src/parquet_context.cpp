@@ -380,7 +380,7 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 
 #ifdef DEBUG
 #if DEBUG > 1
-	printf("AppendColumn(): name %s, datatypename %s\n", columnData.field_name_,
+	printf("AppendColumn(): name %s, datatypename %s\n", columnData.field_name_.c_str(),
 		columnData.type_->name().c_str());
 #endif
 #endif
