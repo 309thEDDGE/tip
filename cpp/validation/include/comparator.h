@@ -21,6 +21,7 @@ private:
 	ParquetReader pm2_;
 	std::map<int, int> compared_count_;
 	std::map<int, bool> columns_passed_;
+	bool failure_;
 	void InitializeStats();
 	
 	template<typename A, typename T>
@@ -40,6 +41,7 @@ public:
 		begin_pos_1_ = 0;
 		begin_pos_2_ = 0;
 		compare_vec_result_ = false;
+		failure_ = false;
 	};
 
 	~Comparator() {};
@@ -271,6 +273,7 @@ bool Comparator::Compare(int column, bool is_list)
 		if (buffer1[i] != buffer2[i])
 			printf("buffers at position %d aren't equivalent: buffer1 = %d, buffer2 = %d\n", buffer1[i], buffer2[i]);
 	}*/
+
 	while (size1 > 0 || size2 > 0)
 	{
 		if (!CompareVecs(buffer1, size1, buffer2, size2, (column + 1)))

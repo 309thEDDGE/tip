@@ -1,6 +1,8 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <fstream>
+#include <iostream>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "parquet_context.h"
@@ -33,6 +35,11 @@ protected:
 		{
 			std::filesystem::remove_all(pq_directories[i]);
 		}
+	}
+	
+	void TearDown()
+	{
+		
 	}
 
 	// Generate Parquet file with single value
@@ -99,7 +106,9 @@ protected:
 
 	// Create parquet file with one list column
 	template <typename T>
-	bool CreateParquetFile(std::shared_ptr<arrow::DataType> type, std::string directory, std::vector<T>& output,
+	bool CreateParquetFile(std::shared_ptr<arrow::DataType> type, 
+		std::string directory, 
+		std::vector<T>& output,
 		int row_group_count, int list_size)
 	{
 
@@ -146,6 +155,70 @@ protected:
 		{
 			pc.WriteColumns(remainder, offset);
 		}
+
+		pc.Close();
+		pq_files.push_back(path);
+		pq_directories.push_back(directory);
+		pq_file_count++;
+		return true;
+	}
+
+	// Generate Parquet file with two
+	// columns with different schemas
+	template <typename T1, typename T2>
+	bool CreateTwoColParquetFile(std::string directory,
+		std::shared_ptr<arrow::DataType> type1,
+		std::vector<T1> output1,
+		std::string colname1,
+		std::shared_ptr<arrow::DataType> type2,
+		std::vector<T2> output2,
+		std::string colname2,
+		int row_group_count)
+	{
+		if (!std::filesystem::exists(directory))
+		{
+			if (!std::filesystem::create_directory(directory))
+			{
+				printf("failed to create directory %s: \n", directory.c_str());
+				return false;
+			}
+		}
+
+		std::filesystem::path pqt_path(directory);
+		pqt_path = pqt_path / std::filesystem::path(
+			std::to_string(pq_file_count) + std::string(".parquet"));
+		std::string path = pqt_path.string();
+
+		ParquetContext pc(row_group_count);
+
+		// Add each column
+		pc.AddField(type1, colname1);
+		pc.SetMemoryLocation(output1, colname1, nullptr);
+		pc.AddField(type2, colname2);
+		pc.SetMemoryLocation(output2, colname2, nullptr);
+
+		// Assume each vector is of the same size
+		int row_size = output1.size();
+
+		if (!pc.OpenForWrite(path, true))
+		{
+			printf("failed to open parquet path %s\n", path.c_str());
+			return false;
+		}
+		for (int i = 0; i < row_size / row_group_count; i++)
+		{
+			pc.WriteColumns(row_group_count, i * row_group_count);
+		}
+
+		// The the remaider rows if row_group_count is 
+		// not a multiple of the array size
+		int remainder = row_size % row_group_count;
+		if (remainder > 0)
+		{
+			pc.WriteColumns(remainder,
+				(row_size / row_group_count) * row_group_count);
+		}
+
 
 		pc.Close();
 		pq_files.push_back(path);
@@ -334,14 +407,150 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesNonMultipleRowGroup)
 	ASSERT_EQ(size, 0);
 }
 
-TEST_F(ParquetReaderTest, GetNextRGNoParquetFiles)
+TEST_F(ParquetReaderTest, EmptyParquetFile)
 {
 	int size;
 	ParquetReader pm;
-	ASSERT_FALSE(pm.SetPQPath("."));
+
+	std::string dir = "empty_parquet.parquet";
+	ASSERT_TRUE(std::filesystem::create_directory(dir));
+	
+	ASSERT_FALSE(pm.SetPQPath(dir));
 
 	std::vector<int32_t> out(100);
 	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
+	ASSERT_EQ(size, 0);
+	ASSERT_EQ(pm.GetSchema()->num_fields(), 0);
+
+	ASSERT_TRUE(std::filesystem::remove_all(dir));
+}
+
+TEST_F(ParquetReaderTest, ParquetFolderWithParquetAndNonParquetFiles)
+{
+	std::string directory = "directory.parquet";
+
+	if (std::filesystem::exists(directory))
+	{
+		ASSERT_TRUE(std::filesystem::remove_all(directory));
+	}
+
+	ASSERT_TRUE(std::filesystem::create_directory(directory));
+
+
+	std::filesystem::path pqt_path(directory);
+	pqt_path = pqt_path / std::filesystem::path(
+		std::to_string(pq_file_count) + std::string(".parquet"));
+	std::string path = pqt_path.string();
+
+	// create text file that should be ignored
+	std::filesystem::path text_path_(directory);
+	text_path_ = pqt_path / std::filesystem::path(
+		std::to_string(pq_file_count) + std::string(".txt"));
+	std::string text_path = text_path_.string();
+
+	std::ofstream file;
+	file.open(text_path);
+	file << "yo";
+	file.close();
+
+	int row_group_count = 3;
+
+	ParquetContext pc(row_group_count);
+
+	// Add each vector as a column
+	pc.AddField(arrow::int16(), "data");
+
+	std::vector<int16_t> output{ 1,2,3 };
+	pc.SetMemoryLocation<int16_t>(output, "data");
+
+	int row_size = output.size();
+
+	ASSERT_TRUE(pc.OpenForWrite(path, true));
+	
+	for (int i = 0; i < row_size / row_group_count; i++)
+	{
+		pc.WriteColumns(row_group_count, i * row_group_count);
+	}
+
+	// The the remaider rows if row_group_count is 
+	// not a multiple of the array size
+	int remainder = row_size % row_group_count;
+	if (remainder > 0)
+	{
+		pc.WriteColumns(remainder,
+			(row_size / row_group_count) * row_group_count);
+	}
+
+	pc.Close();
+	pq_files.push_back(path);
+	pq_files.push_back(text_path);
+	pq_directories.push_back(directory);
+	pq_file_count++;
+	
+	ParquetReader pm;
+	ASSERT_TRUE(pm.SetPQPath(directory));
+
+	std::vector<int16_t> out(100);
+	int size = 0;
+	ASSERT_TRUE((pm.GetNextRG<int16_t, arrow::NumericArray<arrow::Int16Type>>(0, out, size)));
+
+	ASSERT_EQ(size, 3);
+
+	ASSERT_FALSE((pm.GetNextRG<int16_t, arrow::NumericArray<arrow::Int16Type>>(0, out, size)));
+}
+
+
+TEST_F(ParquetReaderTest, InvalidParquetFile)
+{
+	std::string directory = "directory.parquet";
+
+	if (std::filesystem::exists(directory))
+	{
+		ASSERT_TRUE(std::filesystem::remove_all(directory));
+	}
+
+	ASSERT_TRUE(std::filesystem::create_directory(directory));
+
+
+	std::filesystem::path pqt_path(directory);
+	pqt_path = pqt_path / std::filesystem::path(
+		std::to_string(pq_file_count) + std::string(".parquet"));
+	std::string path = pqt_path.string();
+
+	std::ofstream file;
+	file.open(path);
+	file << "yo";
+	file.close();
+
+	pq_files.push_back(path);
+	pq_directories.push_back(directory);
+	pq_file_count++;
+
+	ParquetReader pm;
+	ASSERT_FALSE(pm.SetPQPath(directory));
+
+	std::vector<int16_t> out(100);
+	int size = 0;
+	ASSERT_FALSE((pm.GetNextRG<int16_t, arrow::NumericArray<arrow::Int16Type>>(0, out, size)));
+
+	ASSERT_EQ(size, 0);
+	ASSERT_EQ(pm.GetSchema()->num_fields(), 0);
+}
+
+TEST_F(ParquetReaderTest, NonExistantParquetFile)
+{
+	int size;
+	ParquetReader pm;
+
+	std::string dir = "non_existant_parquet.parquet";
+
+	ASSERT_FALSE(pm.SetPQPath(dir));
+
+	std::vector<int32_t> out(100);
+	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
+
+	ASSERT_EQ(size, 0);
+	ASSERT_EQ(pm.GetSchema()->num_fields(), 0);
 }
 
 TEST_F(ParquetReaderTest, GetNextRGMultipleFilesReachesEnd)
@@ -358,6 +567,10 @@ TEST_F(ParquetReaderTest, GetNextRGMultipleFilesReachesEnd)
 	ASSERT_TRUE(pm.SetPQPath(dirname));
 
 	std::vector<int32_t> out(100);
+	// out of bounds column
+	ASSERT_FALSE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(1, out, size)));
+	ASSERT_EQ(size, 0);
+
 	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 
 	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
@@ -513,6 +726,11 @@ TEST_F(ParquetReaderTest, GetNextRGBool)
 	ASSERT_TRUE(pm.SetPQPath(dirname));
 
 	std::vector<uint8_t> out(100);
+
+	// out of bounds column
+	ASSERT_FALSE(pm.GetNextRGBool(1, out, size));
+	ASSERT_EQ(size, 0);
+
 	ASSERT_TRUE(pm.GetNextRGBool(0, out, size));
 	ASSERT_EQ(size, 3);
 	EXPECT_EQ(out[0], 0);
@@ -611,6 +829,11 @@ TEST_F(ParquetReaderTest, GetNextRGString)
 	ASSERT_TRUE(pm.SetPQPath(dirname));
 
 	std::vector<std::string> out(100);
+
+	// out of bounds
+	ASSERT_FALSE(pm.GetNextRGString(1, out, size));
+	ASSERT_EQ(size, 0);
+
 	ASSERT_TRUE(pm.GetNextRGString(0, out, size));
 	ASSERT_EQ(size, 3);
 	EXPECT_EQ(out[0], "a");
@@ -780,4 +1003,124 @@ TEST_F(ParquetReaderTest, GetNextRGStringList)
 
 	ASSERT_FALSE((pm.GetNextRGString(0, out, size, true)));
 	EXPECT_EQ(size, 0);
+}
+
+TEST_F(ParquetReaderTest, GetNextRGEmptyFiles)
+{
+	int size;
+	std::vector<std::vector<int16_t>> data1 = { {},{} };
+	std::vector<std::vector<int16_t>> data2 = { {},{} };
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateParquetFile(arrow::int16(), dirname, data1, 3));
+	ASSERT_TRUE(CreateParquetFile(arrow::int16(), dirname, data2, 2));
+
+	ParquetReader pm;
+	ASSERT_TRUE(pm.SetPQPath(dirname));
+
+	std::vector<int16_t> out(100);
+	ASSERT_FALSE((pm.GetNextRG<int16_t, arrow::NumericArray<arrow::Int16Type>>(0, out, size)));
+	ASSERT_EQ(size, 0);
+}
+
+TEST_F(ParquetReaderTest, GetNextRGEmptyFilesBetweenData)
+{
+	int size;
+	std::vector<std::vector<int16_t>> data1 = { {} };
+	std::vector<std::vector<int16_t>> data2 = { {1,5} };
+	std::vector<std::vector<int16_t>> data3 = { {} };
+	std::vector<std::vector<int16_t>> data4 = { {8,2,6} };
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateParquetFile(arrow::int16(), dirname, data1, 3));
+	ASSERT_TRUE(CreateParquetFile(arrow::int16(), dirname, data2, 3));
+	ASSERT_TRUE(CreateParquetFile(arrow::int16(), dirname, data3, 2));
+	ASSERT_TRUE(CreateParquetFile(arrow::int16(), dirname, data4, 2));
+
+	ParquetReader pm;
+	ASSERT_TRUE(pm.SetPQPath(dirname));
+
+	std::vector<int16_t> out(100);
+	ASSERT_TRUE((pm.GetNextRG<int16_t, arrow::NumericArray<arrow::Int16Type>>(0, out, size)));
+	ASSERT_EQ(size, 2);
+	ASSERT_EQ(out[0], 1);
+	ASSERT_EQ(out[1], 5);
+
+	out.clear();
+	ASSERT_TRUE((pm.GetNextRG<int16_t, arrow::NumericArray<arrow::Int16Type>>(0, out, size)));
+	ASSERT_EQ(size, 2);
+	ASSERT_EQ(out[0], 8);
+	ASSERT_EQ(out[1], 2);
+
+	out.clear();
+	ASSERT_TRUE((pm.GetNextRG<int16_t, arrow::NumericArray<arrow::Int16Type>>(0, out, size)));
+	ASSERT_EQ(size, 1);
+	ASSERT_EQ(out[0], 6);
+
+	out.clear();
+	ASSERT_FALSE((pm.GetNextRG<int16_t, arrow::NumericArray<arrow::Int16Type>>(0, out, size)));
+	ASSERT_EQ(size, 0);
+}
+
+TEST_F(ParquetReaderTest, SetPQPathChecksForConsistentSchemaType)
+{
+	int size;
+
+	std::vector<int16_t> data1 = { 1,5 };
+	std::vector<int32_t> data2 = { 8,2 };
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateTwoColParquetFile(dirname, arrow::int16(), data1, "col1", 
+		arrow::int16(), data1, "col2", 2));
+	ASSERT_TRUE(CreateTwoColParquetFile(dirname, arrow::int16(), data1, "col1",
+		arrow::int32(), data2, "col2", 2));
+
+	ParquetReader pm;
+	ASSERT_FALSE(pm.SetPQPath(dirname));
+
+	std::vector<int16_t> out(100);
+	ASSERT_FALSE((pm.GetNextRG<int16_t, arrow::NumericArray<arrow::Int16Type>>(0, out, size)));
+	ASSERT_EQ(size, 0);
+	ASSERT_EQ(pm.GetInputParquetPathsCount(), 0);
+}
+
+TEST_F(ParquetReaderTest, SetPQPathMoreColumnsInSecondFile)
+{
+	int size;
+
+	std::vector<std::vector<int16_t>> data1 = { {1,5} };
+	std::vector<std::vector<int16_t>> data2 = { {8,2,6}, {1,2,3} };
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateParquetFile(arrow::int16(), dirname, data1, 3));
+	ASSERT_TRUE(CreateParquetFile(arrow::int16(), dirname, data2, 3));
+
+	ParquetReader pm;
+	ASSERT_FALSE(pm.SetPQPath(dirname));
+
+	std::vector<int16_t> out(100);
+	ASSERT_FALSE((pm.GetNextRG<int16_t, arrow::NumericArray<arrow::Int16Type>>(0, out, size)));
+	ASSERT_EQ(size, 0);
+	ASSERT_EQ(pm.GetInputParquetPathsCount(), 0);
+}
+
+TEST_F(ParquetReaderTest, SetPQPathChecksForConsistentSchemaNames)
+{
+	int size;
+
+	std::vector<int16_t> data1 = { 1,5 };
+
+	std::string dirname = "file1.parquet";
+	ASSERT_TRUE(CreateTwoColParquetFile(dirname, arrow::int16(), data1, "col1",
+		arrow::int16(), data1, "col2", 2));
+	ASSERT_TRUE(CreateTwoColParquetFile(dirname, arrow::int16(), data1, "col1",
+		arrow::int16(), data1, "col_INCONSISTENT", 2));
+
+	ParquetReader pm;
+	ASSERT_FALSE(pm.SetPQPath(dirname));
+
+	std::vector<int16_t> out(100);
+	ASSERT_FALSE((pm.GetNextRG<int16_t, arrow::NumericArray<arrow::Int16Type>>(0, out, size)));
+	ASSERT_EQ(size, 0);
+	ASSERT_EQ(pm.GetInputParquetPathsCount(), 0);
 }
