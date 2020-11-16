@@ -40,6 +40,17 @@ else
 	MAKE="make -j8"
 fi
 
+echo "Setting each source file mod time to its last commit time"
+cd $BASE_DIR
+for FILE in $(git ls-files | grep -e "\.cpp$\|\.h$")
+do
+    TIME=$(git log --pretty=format:%cd -n 1 --date=iso -- "$FILE")
+    TIME=$(date -d "$TIME" +%Y%m%d%H%M.%S)
+    touch -m -t "$TIME" "$FILE"
+	echo -n .
+done
+echo " done."
+
 echo "Running '$CMAKE' for TIP"
 # the pipeline build image has a /deps directory
 # if there is a /deps directory then replace the local deps directory
@@ -48,16 +59,11 @@ if [ -d $DEPS_SOURCE ] ; then
 	mv $DEPS_SOURCE $BASE_DIR
 fi
 
-echo "Setting each file mod time to its respective last commit time"
-cd $BASE_DIR
-bash ./ci_p1/pull-last-commit-times.sh
-
-echo "Running '$CMAKE' for TIP"
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
-echo "Running '$MAKE' for TIP"
+echo "Installing TIP"
 $MAKE install
 # move bin folder to build for use in later pipeline stages
 cd $BASE_DIR
