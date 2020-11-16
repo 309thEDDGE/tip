@@ -1,6 +1,6 @@
 set REGISTRY=registry.il2.dsop.io
 set BUILD_IMAGE=%REGISTRY%/skicamp/project-opal/tip:tip-deps
-set TEST_IMAGE=%REGISTRY%/skicamp/project-opal/tip:tip-test
+set TEST_IMAGE=%REGISTRY%/skicamp/project-opal/tip/test:1.0
 
 
 docker login %REGISTRY%
