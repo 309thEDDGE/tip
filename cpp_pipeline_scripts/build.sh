@@ -53,7 +53,7 @@ mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
-echo "Installing TIP"
+echo "Running '$MAKE' for TIP"
 $MAKE install
 # move bin folder to build for use in later pipeline stages
 cd $BASE_DIR
