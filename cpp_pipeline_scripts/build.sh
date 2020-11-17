@@ -10,15 +10,6 @@ DEPS_SOURCE=/deps
 
 # custom build command which will run in the pipeline
 # in the pipeline the working directory is the root of the project repository
-# CPP_BUILD_TOOL: "cmake"
-# CC: gcc
-# CXX: g++
-# GCOV: gcov
-# CMAKE_ARGS: -DBUILD_SSL=OFF -DBUILD_TESTS=ON
-# CMAKE_BUILD_TARGETS: all
-# CMAKE_BUILD_ARGS: ''
-#   CC=${CC} CXX=${CXX} cmake ${CMAKE_ARGS} -DCMAKE_MAKE_PROGRAM=make ..
-#   make -j ${CMAKE_BUILD_TARGETS} ${CMAKE_BUILD_ARGS} VERBOSE=1
 
 # exit when any command fails
 set -e
@@ -40,6 +31,15 @@ else
 	MAKE="make -j8"
 fi
 
+####
+echo "-------------------------------------------"
+echo "-------------------------------------------"
+echo "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+find . -iname "*.cpp" -o -iname "*.h" -o -iname "*.a" | xargs ls -lt 
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "-------------------------------------------"
+echo "-------------------------------------------"
+####
 echo "Setting each source file mod time to its last commit time"
 cd $BASE_DIR
 for FILE in $(git ls-files | grep -e "\.cpp$\|\.h$")
@@ -50,6 +50,16 @@ do
 	echo -n .
 done
 echo " done."
+####
+echo "-------------------------------------------"
+echo "-------------------------------------------"
+echo "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+find . -iname "*.cpp" -o -iname "*.h" -o -iname "*.a" | xargs ls -lt 
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "-------------------------------------------"
+echo "-------------------------------------------"
+exit 1
+####
 
 echo "Running '$CMAKE' for TIP"
 # the pipeline build image has a /deps directory
