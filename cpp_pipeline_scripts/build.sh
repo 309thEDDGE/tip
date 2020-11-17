@@ -31,15 +31,6 @@ else
 	MAKE="make -j8"
 fi
 
-####
-echo "-------------------------------------------"
-echo "-------------------------------------------"
-echo "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
-find . -iname "*.cpp" -o -iname "*.h" -o -iname "*.a" | xargs ls -lt 
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-echo "-------------------------------------------"
-echo "-------------------------------------------"
-####
 echo "Setting each source file mod time to its last commit time"
 cd $BASE_DIR
 for FILE in $(git ls-files | grep -e "\.cpp$\|\.h$")
@@ -49,17 +40,6 @@ do
     touch -m -t "$TIME" "$FILE"
 	echo -n .
 done
-echo " done."
-####
-echo "-------------------------------------------"
-echo "-------------------------------------------"
-echo "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
-find . -iname "*.cpp" -o -iname "*.h" -o -iname "*.a" | xargs ls -lt 
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-echo "-------------------------------------------"
-echo "-------------------------------------------"
-exit 1
-####
 
 echo "Running '$CMAKE' for TIP"
 # the pipeline build image has a /deps directory
