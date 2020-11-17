@@ -70,14 +70,16 @@ if [ -d $DEPS_SOURCE ] ; then
 	mv $DEPS_SOURCE $BASE_DIR
 #	mv ${LFR_ROOT_PATH}/lib/run/* ${BUILD_DIR}/bin/lib
 	mkdir -p ${DEPS_DIR}/alkemist-lfr/lib
-	mv ${LFR_ROOT_PATH}/lib/run/* ${DEPS_DIR}/alkemist-lfr/lib
+	mv ${LFR_ROOT_PATH}/lib/run/liblfr.a ${DEPS_DIR}/alkemist-lfr/lib
+	rm ${LFR_ROOT_PATH}/lib/run/liblfr.so
+	touch ${LFR_ROOT_PATH}/lib/run/liblfr.so
 fi
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
-$CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
+ALKEMIST_LICENSE_KEY=${ALKEMIST_LICENSE_KEY} TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L/app/deps/alkemist-lfr/lib" lfr-helper $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
 echo "Running '$MAKE' for TIP"
-ALKEMIST_LICENSE_KEY=${ALKEMIST_LICENSE_KEY} TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr" lfr-helper $MAKE install
+ALKEMIST_LICENSE_KEY=${ALKEMIST_LICENSE_KEY} TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L/app/deps/alkemist-lfr/lib" lfr-helper $MAKE install
 # move bin folder to build for use in later pipeline stages
 cd $BASE_DIR
 if [ -d bin ] ; then 

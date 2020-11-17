@@ -248,12 +248,12 @@ else()
     set(lfr_lib_dir ${lfr_path}/lib)
 	set(alkemist_lfr_libs
 		${lfr_lib_dir}/liblfr.a
-		${lfr_lib_dir}/libtrapheader.a
-		${lfr_lib_dir}/librandoentry_exec.a
-		${lfr_lib_dir}/librandoentry_so.a
-		${lfr_lib_dir}/libtrapfooter.a
-		${lfr_lib_dir}/libtrapfooter_nopage.a
-		${lfr_lib_dir}/libtrapfooter_page.a
-		${lfr_lib_dir}/libtrapheader_page.a
+#		${lfr_lib_dir}/libtrapheader.a
+#		${lfr_lib_dir}/librandoentry_exec.a
+#		${lfr_lib_dir}/librandoentry_so.a
+#		${lfr_lib_dir}/libtrapfooter.a
+#		${lfr_lib_dir}/libtrapfooter_nopage.a
+#		${lfr_lib_dir}/libtrapfooter_page.a
+#		${lfr_lib_dir}/libtrapheader_page.a
 	)
 endif()
