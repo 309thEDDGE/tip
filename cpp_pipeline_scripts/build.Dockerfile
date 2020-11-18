@@ -49,7 +49,7 @@ ADD . /usr/local/tip
 # Build tip and install
 #
 RUN cd /usr/local/tip/build \
-    && cmake .. -DCONTAINER=ON \
+    && TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr" ${LFR_ROOT_PATH}/scripts/lfr-helper.sh cmake .. -DCONTAINER=ON \
     && TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr" ${LFR_ROOT_PATH}/scripts/lfr-helper.sh make -j8 \
     && TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr" ${LFR_ROOT_PATH}/scripts/lfr-helper.sh make install \
     && cd .. \
