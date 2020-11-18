@@ -197,6 +197,9 @@ void ParseManager::start_workers()
 		fspath_map[Ch10DataType::MILSTD1553_DATA_F1],
 		"_metadata");
 
+	// Record the input ch10 path.
+	md.RecordSingleKeyValuePair("ch10_input_file_path", input_fname);
+
 	// Obtain the tx and rx combined channel ID to LRU address map and
 	// record it to the Yaml writer.
 	std::map<uint32_t, std::set<uint16_t>> output_chanid_remoteaddr_map;
