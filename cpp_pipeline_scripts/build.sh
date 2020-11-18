@@ -31,6 +31,8 @@ DEPS_DIR=$BASE_DIR/deps
 DEPS_SOURCE=/deps
 
 export TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L${DEPS_DIR}/alkemist-lfr/lib"
+OLDPATH="${PATH}"
+export PATH="${LFR_ROOT_PATH}/scripts:${PATH}"
 
 # custom build command which will run in the pipeline
 # in the pipeline the working directory is the root of the project repository
@@ -70,18 +72,15 @@ echo "Running '$CMAKE' for TIP"
 if [ -d $DEPS_SOURCE ] ; then
 	rm -rf $BASE_DIR/deps
 	mv $DEPS_SOURCE $BASE_DIR
-#	mv ${LFR_ROOT_PATH}/lib/run/* ${BUILD_DIR}/bin/lib
 	mkdir -p ${DEPS_DIR}/alkemist-lfr/lib
 	mv ${LFR_ROOT_PATH}/lib/run/liblfr.a ${DEPS_DIR}/alkemist-lfr/lib
-	rm ${LFR_ROOT_PATH}/lib/run/liblfr.so
-	touch ${LFR_ROOT_PATH}/lib/run/liblfr.so
 fi
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
-lfr-helper $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
+$CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
 echo "Running '$MAKE' for TIP"
-lfr-helper $MAKE install
+$MAKE install
 # move bin folder to build for use in later pipeline stages
 cd $BASE_DIR
 if [ -d bin ] ; then 
@@ -89,4 +88,5 @@ if [ -d bin ] ; then
 	mv bin build/
 fi
 
+export PATH=${OLDPATH}
 # SB Note: tip_parse_video
