@@ -89,4 +89,3 @@ if [ -d bin ] ; then
 fi
 
 export PATH=${OLDPATH}
-# SB Note: tip_parse_video
