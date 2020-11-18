@@ -30,6 +30,8 @@ BUILD_DIR=$BASE_DIR/build
 DEPS_DIR=$BASE_DIR/deps
 DEPS_SOURCE=/deps
 
+export TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L${DEPS_DIR}/alkemist-lfr/lib"
+
 # custom build command which will run in the pipeline
 # in the pipeline the working directory is the root of the project repository
 # CPP_BUILD_TOOL: "cmake"
@@ -76,10 +78,10 @@ if [ -d $DEPS_SOURCE ] ; then
 fi
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
-ALKEMIST_LICENSE_KEY=${ALKEMIST_LICENSE_KEY} TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L/app/deps/alkemist-lfr/lib" lfr-helper $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
+lfr-helper $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
 echo "Running '$MAKE' for TIP"
-ALKEMIST_LICENSE_KEY=${ALKEMIST_LICENSE_KEY} TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L/app/deps/alkemist-lfr/lib" lfr-helper $MAKE install
+lfr-helper $MAKE install
 # move bin folder to build for use in later pipeline stages
 cd $BASE_DIR
 if [ -d bin ] ; then 
