@@ -47,6 +47,8 @@ Use `markdown_to_html.py` in the tip_scripts directory to convert md file to htm
 	- Turn off tests (`-DNOTESTS=ON`) - without this option tests are built by default
 	- Container mode (`-DCONTAINER=ON`) - use shared libs in Linux-standard lib directories
 		- linux standard builds outside of a container are in progress
+	- Ethernet Off (`-DETHERNET=OFF`) - turn ethernet parsing off, default ON
+		- Ethernet parsing requires npcap and libtins dependencies
 * build according to platform (see "Platform-Specific" below)
 * Executables are placed in `tip/bin`
 * Libraries are placed in `tip/bin/lib`
