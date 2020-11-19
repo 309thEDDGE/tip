@@ -1,12 +1,4 @@
 #!/usr/bin/env bash
-tee /etc/yum.repos.d/appstream.repo> /dev/null <<- EOM
-[AppStream]
-name=AppStream
-baseurl=http://mirror.centos.org/centos/8/AppStream/x86_64/os
-enabled=1
-gpgcheck=0
-repo_gpgcheck=0
-EOM
 
 # Add RunSafe repo to list of those yum will check for packages
 tee /etc/yum.repos.d/runsafesecurity.repo> /dev/null <<- EOM
@@ -30,6 +22,7 @@ BUILD_DIR=$BASE_DIR/build
 DEPS_DIR=$BASE_DIR/deps
 DEPS_SOURCE=/deps
 
+# TODO: Explain how to remove this later
 export TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L${DEPS_DIR}/alkemist-lfr/lib"
 OLDPATH="${PATH}"
 export PATH="${LFR_ROOT_PATH}/scripts:${PATH}"
