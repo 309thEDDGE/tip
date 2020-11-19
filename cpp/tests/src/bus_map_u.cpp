@@ -1037,3 +1037,43 @@ TEST_F(BusMapTest, FinalizeReturnsFalseIfNothingMappedAndUserStopIsFalse)
 	EXPECT_FALSE(continue_translation);
 	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 0);
 }
+
+TEST_F(BusMapTest, FinalizeReturnsFalseIfEmptyChannelIDs)
+{
+	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUSA" });
+	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUSB" });
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>(),
+		mask,
+		vote_threshold,
+		tmats_chanid_to_source_map);
+
+	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });
+	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({ 10,11 });
+	std::vector<uint64_t> channel_ids = std::vector<uint64_t>({ 5, 8 });
+
+	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
+
+	std::map<uint64_t, std::string> res;
+	bool continue_translation = b.Finalize(res, 0, false);
+	EXPECT_FALSE(continue_translation);
+	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 0);
+}
+
+TEST_F(BusMapTest, FinalizeReturnsFalseIfNoVotes)
+{
+	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUSA" });
+	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUSB" });
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({ 1,4,8 }),
+		mask,
+		vote_threshold,
+		tmats_chanid_to_source_map);
+
+	std::map<uint64_t, std::string> res;
+	bool continue_translation = b.Finalize(res, 0, false);
+	EXPECT_FALSE(continue_translation);
+	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 0);
+}
