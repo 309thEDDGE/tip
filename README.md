@@ -42,11 +42,13 @@ Use `markdown_to_html.py` in the tip_scripts directory to convert md file to htm
 	- no video output
 	- build tests
 * Options given with `-D<option>=<value>`, multiple options with `-D<option1>=<val1> -D<option2>=<val2> ...`: 
-	- Video (`-DVIDEO=ON`) - extract video from Ch10 and build video extractor executable 
+	- Video (`-DVIDEO=ON`) - extract video from Ch10 and build video extractor executable , default OFF
 		- must be set if --video argument is passed to `parse_and_translate.py` (see "Helper Script" below)
 	- Turn off tests (`-DNOTESTS=ON`) - without this option tests are built by default
-	- Container mode (`-DCONTAINER=ON`) - use shared libs in Linux-standard lib directories
+	- Container mode (`-DCONTAINER=ON`) - use shared libs in Linux-standard lib directories, default OFF
 		- linux standard builds outside of a container are in progress
+	- Ethernet Off (`-DETHERNET=OFF`) - turn ethernet parsing off, default ON
+		- Ethernet parsing requires npcap and libtins dependencies
 * build according to platform (see "Platform-Specific" below)
 * Executables are placed in `tip/bin`
 * Libraries are placed in `tip/bin/lib`

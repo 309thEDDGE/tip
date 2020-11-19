@@ -204,9 +204,6 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 		return false;
 	}
 
-	if (chanid_to_comm_words_map.size() == 0)
-		return false;
-
 	for (std::map<uint64_t, std::vector<std::vector<uint16_t>>>::const_iterator it =
 		chanid_to_comm_words_map.begin(); it != chanid_to_comm_words_map.end();
 		++it)
