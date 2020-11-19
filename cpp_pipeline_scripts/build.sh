@@ -10,15 +10,6 @@ DEPS_SOURCE=/deps
 
 # custom build command which will run in the pipeline
 # in the pipeline the working directory is the root of the project repository
-# CPP_BUILD_TOOL: "cmake"
-# CC: gcc
-# CXX: g++
-# GCOV: gcov
-# CMAKE_ARGS: -DBUILD_SSL=OFF -DBUILD_TESTS=ON
-# CMAKE_BUILD_TARGETS: all
-# CMAKE_BUILD_ARGS: ''
-#   CC=${CC} CXX=${CXX} cmake ${CMAKE_ARGS} -DCMAKE_MAKE_PROGRAM=make ..
-#   make -j ${CMAKE_BUILD_TARGETS} ${CMAKE_BUILD_ARGS} VERBOSE=1
 
 # exit when any command fails
 set -e
@@ -40,6 +31,18 @@ else
 	MAKE="make -j8"
 fi
 
+echo "Setting each source file mod time to its last commit time"
+cd $BASE_DIR
+for FILE in $(git ls-files | grep -e "\.cpp$\|\.h$")
+do
+    TIME=$(git log --pretty=format:%cd -n 1 --date=iso -- "$FILE")
+    TIME=$(date -d "$TIME" +%Y%m%d%H%M.%S)
+    touch -m -t "$TIME" "$FILE"
+	echo -n .
+done
+echo ""
+echo "Done"
+
 echo "Running '$CMAKE' for TIP"
 # the pipeline build image has a /deps directory
 # if there is a /deps directory then replace the local deps directory
@@ -47,6 +50,7 @@ if [ -d $DEPS_SOURCE ] ; then
 	rm -rf $BASE_DIR/deps
 	mv $DEPS_SOURCE $BASE_DIR
 fi
+
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
