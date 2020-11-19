@@ -1,19 +1,5 @@
 #!/usr/bin/env bash
 
-# Add RunSafe repo to list of those yum will check for packages
-tee /etc/yum.repos.d/runsafesecurity.repo> /dev/null <<- EOM
-[RunSafeSecurity]
-name=RunSafeSecurity
-baseurl=https://runsafesecurity.jfrog.io/artifactory/rpm-alkemist-lfr
-enabled=1
-gpgcheck=0
-gpgkey=https://runsafesecurity.jfrog.io/artifactory/rpm-alkemist-lfr/repodata/repomd.xml.key
-repo_gpgcheck=1
-EOM
-# Install alkemist-lfr
-yum -y install alkemist-lfr
-source /etc/profile.d/alkemist-lfr.sh
-
 # In the pipeline the working directory is the root of the project repository.
 # When running from docker, the tip folder is mounted as /app
 test -d /app/cpp && cd /app # if /app/cpp exists cd to /app
@@ -65,8 +51,6 @@ echo "Running '$CMAKE' for TIP"
 if [ -d $DEPS_SOURCE ] ; then
 	rm -rf $BASE_DIR/deps
 	mv $DEPS_SOURCE $BASE_DIR
-	mkdir -p ${DEPS_DIR}/alkemist-lfr/lib
-	mv ${LFR_ROOT_PATH}/lib/run/liblfr.a ${DEPS_DIR}/alkemist-lfr/lib
 fi
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
