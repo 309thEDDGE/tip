@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 
 		// Get stop time and print duration.
 		auto stop_time = std::chrono::high_resolution_clock::now();
-		printf("Duration: %zd sec\n", std::chrono::duration_cast<std::chrono::seconds>(stop_time - start_time).count());
+		printf("Duration: %.3f sec\n", (stop_time - start_time).count() / 1.0e9);
 	}
 	
 	return 0;
