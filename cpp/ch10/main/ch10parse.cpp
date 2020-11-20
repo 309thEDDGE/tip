@@ -23,7 +23,7 @@
 
 #include "parse_manager.h"
 #include "parser_config_params.h"
-#include "path_manager.h"
+#include "managed_path.h"
 
 int main(int argc, char* argv[])
 {	
@@ -39,35 +39,42 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	PathManager conf_path;
 	ParserConfigParams config;
-	bool settings_validated = config.Initialize(conf_path.Parent().Join(
-		"conf/parse_conf.yaml").AsString());
+	ManagedPath conf_path;
+	printf("before assignment\n");
+	conf_path = conf_path.parent_path() / 
+		ManagedPath(std::string("conf/parse_conf.yaml"));
+	printf("Configuration file path: %s\n", conf_path.RawString().c_str());
+	//bool settings_validated = config.Initialize(conf_path.string());
+
+	bool settings_validated = true;
+	printf("before return\n");
+	return 0;
 
 	// Get path to ch10 file. 
 	std::string arg_path = argv[1];
-	PathManager input_path(arg_path);
-	if (!input_path.IsFile())
+	ManagedPath input_path(arg_path);
+	if (!input_path.is_regular_file())
 	{
-		printf("User-defined input path is not a directory: %s\n", input_path.AsString().c_str());
+		printf("User-defined input path is not a directory: %s\n", input_path.RawString().c_str());
 		return 0;
 	}
-	std::string ch10_path = input_path.AsString();
+	std::string ch10_path = input_path.string();
 	printf("Ch10 file path: %s\n", ch10_path.c_str());
 
 	// Check for a second argument. If present, this path specifies the output
 	// path. If not present, the output path is the same as the input path.
-	PathManager output_path = input_path.Parent();
+	ManagedPath output_path = input_path.parent_path();
 	if (argc == 3)
 	{
-		output_path = PathManager(std::string(argv[2]));
-		if (!output_path.IsDirectory())
+		output_path = ManagedPath(std::string(argv[2]));
+		if (!output_path.is_directory())
 		{
-			printf("User-defined output path is not a directory: %s\n", output_path.AsString().c_str());
+			printf("User-defined output path is not a directory: %s\n", output_path.RawString().c_str());
 			return 0;
 		}
 	}
-	std::string output_dir = output_path.AsString();
+	std::string output_dir = output_path.string();
 	printf("Output path: %s\n", output_dir.c_str());
 
 	if (settings_validated)
