@@ -31,6 +31,7 @@ add_library(${util_lib_name}
             ${util_src_dir}/tmats_parser.cpp         ${util_inc_dir}/tmats_parser.h
             ${util_src_dir}/metadata.cpp             ${util_inc_dir}/metadata.h
             ${util_src_dir}/parquet_reader.cpp       ${util_inc_dir}/parquet_reader.h
+            ${util_src_dir}/path_manager.cpp         ${util_inc_dir}/path_manager.h
  )
 
 target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} ${yaml_inc_dir} ${parquet_inc_dirs})
@@ -291,7 +292,7 @@ if(build_tests)
                    ${test_src_dir}/parquet_arrow_validator_u.cpp ${test_src_dir}/parquet_context_u.cpp
                    ${test_src_dir}/tmats_parser_u.cpp ${test_src_dir}/metadata_u.cpp 
                    ${test_src_dir}/parse_manager_u.cpp ${test_src_dir}/parquet_reader_u.cpp
-                   ${test_src_dir}/dts1553_u.cpp)
+                   ${test_src_dir}/dts1553_u.cpp ${test_src_dir}/path_manager_u.cpp)
 #    set_property(TARGET ${test_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
                                ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
