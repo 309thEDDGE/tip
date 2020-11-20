@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "path_manager.h"
+#include <fstream>
 
 TEST(PathManagerTest, AmendPathInsertsPrefix)
 {
@@ -81,4 +82,60 @@ TEST(PathManagerTest, Parent)
 	PathManager pm1(init_path);
 	EXPECT_EQ(pm1.Parent().AsString(), expected_path);
 
+}
+
+TEST(PathManagerTest, IsDirectory)
+{
+
+	// Confirm non-existent directory fails.
+	std::string false_dir = "C:\\This_does\\not\\exist";
+	PathManager pm(false_dir);
+	EXPECT_FALSE(pm.IsDirectory());
+
+	// Partial path of directory to create
+	std::string temp_dir_name = "test_dir";
+	
+	// Create path at cwd
+	pm = PathManager();
+
+	// Join the temp dir
+	pm.Join(temp_dir_name);
+
+	// Create the directory using std::filesystem native functions
+	fs::path temp_dir_path(pm.AsString());
+	EXPECT_TRUE(fs::create_directory(temp_dir_path));
+
+	// Confirm directory exists
+	EXPECT_TRUE(pm.IsDirectory());
+
+	// Delete directory
+	fs::remove(temp_dir_path);
+}
+
+TEST(PathManagerTest, IsFile)
+{
+
+	// Confirm non-existent file fails.
+	std::string false_file = "C:\\This_does\\not\\exist\\my_file.txt";
+	PathManager pm(false_file);
+	EXPECT_FALSE(pm.IsFile());
+
+	// File name to create
+	std::string temp_file_name = "test_file.out";
+
+	// Create path at cwd
+	pm = PathManager();
+
+	// Join the temp file
+	pm.Join(temp_file_name);
+
+	// Create the file using std::filesystem native functions
+	fs::path temp_file_path(pm.AsString());
+	std::ofstream(temp_file_path).put('a');
+
+	// Confirm file exists
+	EXPECT_TRUE(pm.IsFile());
+
+	// Delete file
+	fs::remove(temp_file_path);
 }

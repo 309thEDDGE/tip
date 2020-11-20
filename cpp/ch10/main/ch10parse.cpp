@@ -45,7 +45,8 @@ int main(int argc, char* argv[])
 		"conf/parse_conf.yaml").AsString());
 
 	// Get path to ch10 file. 
-	PathManager input_path(std::string(argv[1]));
+	std::string arg_path = argv[1];
+	PathManager input_path(arg_path);
 	if (!input_path.IsFile())
 	{
 		printf("User-defined input path is not a directory: %s\n", input_path.AsString().c_str());

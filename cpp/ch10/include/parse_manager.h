@@ -28,6 +28,7 @@
 #include "parser_config_params.h"
 #include "metadata.h"
 #include "tmats_parser.h"
+#include "path_manager.h"
 
 class ParseManager
 {

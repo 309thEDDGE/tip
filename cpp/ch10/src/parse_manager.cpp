@@ -63,13 +63,16 @@ ParseManager::ParseManager(std::string fname, std::string output_path, const Par
 
 void ParseManager::create_paths()
 {
-	// Create parquet output file directory.
-	std::filesystem::path input_path(input_fname);
 	std::filesystem::path out_path(output_path);
-	std::filesystem::path parquet_1553_path = out_path / input_path.stem();
-	parquet_1553_path += std::filesystem::path("_1553.parquet");
-	printf("Parquet 1553 output path: %s\n", parquet_1553_path.string().c_str());
+	std::filesystem::path in_path(input_fname);
 
+	// Create parquet output file directory.
+	std::filesystem::path parquet_1553_path = out_path / 
+		in_path.replace_extension("_1553.parquet");
+	printf("Parquet 1553 output path: %s\n", parquet_1553_path.string().c_str());
+	/*PathManager managed_pq_1553_path(parquet_1553_path);
+	if (!managed_pq_1553_path.CreateDirectory())
+		error_set = true;*/
 	if (!std::filesystem::exists(parquet_1553_path))
 	{
 		//printf("parquet path DOES NOT EXIST!\n");
@@ -84,7 +87,7 @@ void ParseManager::create_paths()
 	fspath_map[Ch10DataType::MILSTD1553_DATA_F1] = parquet_1553_path;
 
 #ifdef VIDEO_DATA
-	std::filesystem::path parquet_vid_path = out_path / input_path.stem();
+	std::filesystem::path parquet_vid_path = out_path / in_path.stem();
 	parquet_vid_path += std::filesystem::path("_video.parquet");
 	printf("Parquet video output path: %s\n", parquet_vid_path.string().c_str());
 	fspath_map[Ch10DataType::VIDEO_DATA_F0] = parquet_vid_path;
@@ -101,7 +104,7 @@ void ParseManager::create_paths()
 	}
 #endif
 #ifdef ETHERNET_DATA
-	std::filesystem::path parquet_eth_path = out_path / input_path.stem();
+	std::filesystem::path parquet_eth_path = out_path / in_path.stem();
 	parquet_eth_path += std::filesystem::path("_ethernet.parquet");
 	printf("Parquet ethernet output path: %s\n", parquet_eth_path.string().c_str());
 	fspath_map[Ch10DataType::ETHERNET_DATA_F0] = parquet_eth_path;

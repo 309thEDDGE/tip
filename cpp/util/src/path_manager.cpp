@@ -18,6 +18,17 @@ fs::path PathManager::AmendPath(const fs::path& input_path)
 #endif
 }
 
+fs::path PathManager::AsPath()
+{
+	return AmendPath(path_);
+}
+
+PathManager& PathManager::operator = (const PathManager& c)
+{
+	path_ = c.path_;
+	return *this;
+}
+
 std::string PathManager::AsString()
 {
 	return AmendPath(path_).string();
@@ -41,4 +52,18 @@ bool PathManager::IsDirectory()
 	fs::path temp_path = AmendPath(path_);
 
 	return fs::is_directory(temp_path);
+}
+
+bool PathManager::IsFile()
+{
+	fs::path temp_path = AmendPath(path_);
+
+	return fs::is_regular_file(temp_path);
+}
+
+bool PathManager::CreateDirectory()
+{
+	fs::path temp_path = AmendPath(path_);
+
+	return fs::create_directory(temp_path);
 }
