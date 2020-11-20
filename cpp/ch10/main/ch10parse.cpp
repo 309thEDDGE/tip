@@ -23,6 +23,7 @@
 
 #include "parse_manager.h"
 #include "parser_config_params.h"
+#include "path_manager.h"
 
 int main(int argc, char* argv[])
 {	
@@ -38,29 +39,35 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	
-	std::filesystem::path conf_path("../conf/parse_conf.yaml");
+	PathManager conf_path;
 	ParserConfigParams config;
-	bool settings_validated = config.Initialize(conf_path.string());
+	bool settings_validated = config.Initialize(conf_path.Parent().Join(
+		"conf/parse_conf.yaml").AsString());
 
 	// Get path to ch10 file. 
-	std::string input_path = argv[1];
-	printf("Ch10 file path: %s\n", input_path.c_str());
+	PathManager input_path(std::string(argv[1]));
+	if (!input_path.IsFile())
+	{
+		printf("User-defined input path is not a directory: %s\n", input_path.AsString().c_str());
+		return 0;
+	}
+	std::string ch10_path = input_path.AsString();
+	printf("Ch10 file path: %s\n", ch10_path.c_str());
 
 	// Check for a second argument. If present, this path specifies the output
 	// path. If not present, the output path is the same as the input path.
-	std::filesystem::path inpath(input_path);
-	std::string output_path = inpath.parent_path().string();
+	PathManager output_path = input_path.Parent();
 	if (argc == 3)
 	{
-		output_path = argv[2];
-		if (!std::filesystem::is_directory(std::filesystem::path(output_path)))
+		output_path = PathManager(std::string(argv[2]));
+		if (!output_path.IsDirectory())
 		{
-			printf("User-defined output path is not a directory: %s\n", output_path.c_str());
+			printf("User-defined output path is not a directory: %s\n", output_path.AsString().c_str());
 			return 0;
 		}
-		printf("Output path: %s\n", output_path.c_str());
 	}
+	std::string output_dir = output_path.AsString();
+	printf("Output path: %s\n", output_dir.c_str());
 
 	if (settings_validated)
 	{
@@ -68,7 +75,7 @@ int main(int argc, char* argv[])
 		auto start_time = std::chrono::high_resolution_clock::now();
 
 		// Initialization includes parsing of TMATS data.
-		ParseManager pm(input_path, output_path, &config);
+		ParseManager pm(ch10_path, output_dir, &config);
 		
 		if (pm.error_state())
 			return 0;
