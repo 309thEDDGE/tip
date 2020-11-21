@@ -19,7 +19,7 @@ if __name__ == '__main__':
 	if len(sys.argv) < 4:
 		sys.exit('three arguments required!')
 
-	datafiles_path = sys.argv[1] #xml path
+	datafiles_path = sys.argv[1] # xml path
 	output_path = sys.argv[2] # base path for parquet output
 	dts_base_path = sys.argv[3]
 
@@ -28,19 +28,19 @@ if __name__ == '__main__':
 	translator_executable_path = os.path.join(tip_root_path,'bin','tip_translate.exe')
 
 
-	# Check if output path exists
+	# check if output path exists
 	if not os.path.isdir(output_path):
 		sys.exit('output path {} does not exist\n'.format(output_path))
 
 	parser_output_path = os.path.join(output_path,'parquet_data')
 	translator_output_path = os.path.join(output_path,'parquet_data')
 
-	# If the parser_data directory doesn't exist, create it
+	# if the parser_data directory doesn't exist, create it
 	if not os.path.isdir(parser_output_path):
 		print('creating directory {}'.format(parser_output_path))
 		os.mkdir(parser_output_path)
 
-	# check if executables exist
+	# check if executables exists
 	if not os.path.isfile(parser_executable_path):
 		sys.exit('parser exe does not exist {}\n'.format(parser_executable_path))
 
@@ -82,8 +82,6 @@ if __name__ == '__main__':
 			print('\n\n--Parser Failure!!\nch10 path {} does not exist'.format(ch10path))
 			continue
 
-
-
 		print('---Parse {}'.format(ch10path))
 		execParse = Exec()
 		execParse.exec_list([str(parser_executable_path), str(ch10path), str(parser_output_path)])
@@ -100,10 +98,12 @@ if __name__ == '__main__':
 			
 		print('SUCCESS')
 		parser_success = True
+
 		# initialize set
 		combined_metadata.append({'ch10path': ch10path,  
 								'1553_parquet_path': parsed_path, 
 								'1553_translated_path': '', 
+								'ch10name': chapter10name,
 								'Date': datafile.attributes['Date'].value, 
 								'Size': datafile.attributes['Size'].value, 
 								'TimeOfDay': datafile.attributes['TimeOfDay'].value, 
@@ -120,7 +120,7 @@ if __name__ == '__main__':
 		print('Parser Success:\n {}\n\n'.format(parsed_path))
 
 
-		# Start Translation routine
+		# start translation routine
 		DTS_path_yaml = os.path.join(dts_base_path,datafile.attributes['AircraftCometName'].value + '_ICD.yaml')
 		DTS_path_txt = os.path.join(dts_base_path,datafile.attributes['AircraftCometName'].value + '_ICD.txt')
 		DTS_path = Path('')
@@ -133,7 +133,6 @@ if __name__ == '__main__':
 		else:
 			print('Neither txt nor yaml DTS paths does not exist\ntxt: {}\nyaml: {}\n'.format(DTS_path_txt,DTS_path_yaml))
 			continue
-
 
 		execTranslate = Exec()
 		arg_list = [str(translator_executable_path), str(parsed_path), str(DTS_path)]
@@ -164,12 +163,15 @@ if __name__ == '__main__':
 		pq_directory = file_level_metadata['1553_parquet_path']
 		if os.path.isdir(pq_directory):
 			yaml_path = os.path.join(pq_directory,'file_portion_metadata.yaml');
+
 			# delete unnecessary keys for file level metadata
 			if '1553_parquet_path' in file_level_metadata: del file_level_metadata['1553_parquet_path']
+			if '1553_translated_path' in file_level_metadata: del file_level_metadata['1553_translated_path']			
 			if 'Translated' in file_level_metadata: del file_level_metadata['Translated']
 			if 'Parsed' in file_level_metadata: del file_level_metadata['Parsed']
+
 			with open(yaml_path, 'w') as file:
-				print('\nWriting file_portion_metadata: \n{}\n\n'.format(pq_directory))
+				print('\nWriting file_portion_metadata: \n{}\n'.format(pq_directory))
 				yaml.dump(file_level_metadata,file)
 		else:
 			print('Failed to write file_portion_metadata:\n{}\n'.format(pq_directory))
