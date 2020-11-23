@@ -22,6 +22,7 @@ public:
 	int vote_threshold_;
 	bool prompt_user_;
 	int translate_thread_count_;
+	std::vector<std::string> bus_exclusions_;
 
 
 	bool Initialize(std::string file_path)
@@ -59,6 +60,9 @@ public:
 
 		success.insert(yr.GetParams("vote_threshold",
 			vote_threshold_, 1, INT_MAX, true));
+
+		success.insert(yr.GetParams("bus_name_exclusions",
+			bus_exclusions_, true));
 
 		success.insert(yr.GetParams("prompt_user", 
 			prompt_user_, true));
