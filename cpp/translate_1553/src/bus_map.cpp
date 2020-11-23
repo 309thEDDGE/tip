@@ -48,7 +48,7 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 				tmats_busname_corrections);
 
 		// Exclude channel IDs when the bus_exclusion set contains
-		// a bus name that is a subset of a bus name in TMATs
+		// a bus name that is a subset of a bus name in TMATs.
 		// The matches should not be case sensitive
 		for (std::map<uint64_t, std::string>::iterator it = tmats_chanid_to_source_map_.begin();
 			it != tmats_chanid_to_source_map_.end();
