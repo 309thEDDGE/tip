@@ -15,10 +15,14 @@ private:
 protected:
 
 public:
+	
+	//
+	// User functions
+	//
 
 	// Initialize with string path
 	ManagedPath(std::string input_path) : fs::path(input_path), windows_prefix_("\\\\?\\") { }
-	
+
 	// Initialize with cwd
 	ManagedPath() : fs::path(fs::current_path()), windows_prefix_("\\\\?\\") { }
 
@@ -27,10 +31,11 @@ public:
 
 	// Assignment
 	ManagedPath& operator = (const ManagedPath& c);
-	
-	//
-	// User functions
-	//
+
+	// Concatenate, Append
+	ManagedPath& operator /= (const ManagedPath& rhs);
+	ManagedPath operator / (const ManagedPath& rhs);
+	ManagedPath& operator += (const ManagedPath& rhs);
 
 	// Hide, not override these fs::path functions.
 	std::string string();

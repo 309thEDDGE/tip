@@ -25,6 +25,27 @@ ManagedPath& ManagedPath::operator = (const ManagedPath& c)
 	return *this;
 }
 
+ManagedPath& ManagedPath::operator /= (const ManagedPath& rhs)
+{
+	fs::path temp_path = this->append(rhs.fs::path::string());
+	this->assign(temp_path.string());
+	return *this;
+}
+
+ManagedPath ManagedPath::operator / (const ManagedPath& rhs)
+{
+	ManagedPath temp_path = *this;
+	return temp_path /= rhs;
+}
+
+ManagedPath& ManagedPath::operator += (const ManagedPath& rhs)
+{
+	fs::path temp_path(this->fs::path::string());
+	temp_path += fs::path(rhs.fs::path::string());
+	this->assign(temp_path.string());
+	return *this;
+}
+
 std::string ManagedPath::string()
 {
 	fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));

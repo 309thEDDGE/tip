@@ -41,15 +41,9 @@ int main(int argc, char* argv[])
 
 	ParserConfigParams config;
 	ManagedPath conf_path;
-	printf("before assignment\n");
-	conf_path = conf_path.parent_path() / 
-		ManagedPath(std::string("conf/parse_conf.yaml"));
+	conf_path = conf_path.parent_path() / "conf" / "parse_conf.yaml";
 	printf("Configuration file path: %s\n", conf_path.RawString().c_str());
-	//bool settings_validated = config.Initialize(conf_path.string());
-
-	bool settings_validated = true;
-	printf("before return\n");
-	return 0;
+	bool settings_validated = config.Initialize(conf_path.string());
 
 	// Get path to ch10 file. 
 	std::string arg_path = argv[1];

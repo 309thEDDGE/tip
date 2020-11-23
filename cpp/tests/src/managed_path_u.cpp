@@ -112,3 +112,72 @@ TEST(ManagedPathTest, string)
 	EXPECT_EQ(mp.string(), test_path_str);
 #endif
 }
+
+#ifdef __WIN64
+TEST(ManagedPathTest, AppendOperator)
+{
+	// /=
+	std::string s1 = "C:\\Users\\my";
+	std::string s2 = "in\\here-you-go";
+	ManagedPath mp1(s1);
+	ManagedPath mp2(s2);
+	mp1 /= mp2;
+	EXPECT_EQ(mp1.RawString(), s1 + "\\" + s2);
+}
+
+TEST(ManagedPathTest, ConcatenateOperator)
+{
+	// /
+	std::string s1 = "C:\\Users\\my";
+	std::string s2 = "in\\here-you-go";
+	ManagedPath mp1(s1);
+	ManagedPath mp2(s2);
+	ManagedPath mp = mp1 / mp2;
+	EXPECT_EQ(mp.RawString(), s1 + "\\" + s2);
+}
+
+TEST(ManagedPathTest, AppendNoSeparator)
+{
+	// /
+	std::string s1 = "C:\\Users\\my";
+	std::string s2 = "in\\here-you-go";
+	ManagedPath mp1(s1);
+	ManagedPath mp2(s2);
+	mp1 += mp2;
+	EXPECT_EQ(mp1.RawString(), s1 + s2);
+}
+
+#elif defined __linux__
+TEST(ManagedPathTest, AppendOperator)
+{
+	// /=
+	std::string s1 = "/Users/my";
+	std::string s2 = "in/here-you-go";
+	ManagedPath mp1(s1);
+	ManagedPath mp2(s2);
+	mp1 /= mp2;
+	EXPECT_EQ(mp1.RawString(), s1 + "/" + s2);
+}
+
+TEST(ManagedPathTest, ConcatenateOperator)
+{
+	// /
+	std::string s1 = "/Users/my";
+	std::string s2 = "in/here-you-go";
+	ManagedPath mp1(s1);
+	ManagedPath mp2(s2);
+	ManagedPath mp = mp1 / mp2;
+	EXPECT_EQ(mp.RawString(), s1 + "/" + s2);
+}
+
+TEST(ManagedPathTest, AppendNoSeparator)
+{
+	// /
+	std::string s1 = "/Users/my";
+	std::string s2 = "in/here-you-go";
+	ManagedPath mp1(s1);
+	ManagedPath mp2(s2);
+	mp1 += mp2;
+	EXPECT_EQ(mp1.RawString(), s1 + s2);
+}
+#endif
