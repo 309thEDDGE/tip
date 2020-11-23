@@ -171,6 +171,10 @@ TEST_F(BusMapTest, UserAdjustmentsAdjustThenInvalidChannelIDThenValidChannelIDTh
 	icd_message_key_to_busnames_map[11 & mask] = std::set<std::string>({ "BUS2" });
 	icd_message_key_to_busnames_map[12 & mask] = std::set<std::string>({ "BUS3" });
 
+	// bus name exclusions should not limit the user from 
+	// manual selection
+	bus_name_exclusions.insert("BUS3");
+
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,5 }),
 		mask,
