@@ -290,6 +290,8 @@ class E2EValidator(object):
         print('TIP run time stats:')
         self.print('TIP run time stats:')
         roundval = None
+        total_parse_time = 0.0
+        total_transl_time = 0.0
         for ch10name in self.duration_data.keys():
             print('\n{:s}:'.format(ch10name))
             self.print('\n{:s}:'.format(ch10name))
@@ -297,18 +299,49 @@ class E2EValidator(object):
             rawdur = self.duration_data[ch10name]['raw1553']
             if rawdur is None:
                 roundval = None
+                total_parse_time = None
             else:
                 roundval = round(rawdur,2)
+                if total_parse_time != None: 
+                    total_parse_time += roundval
             print('Parse: {} seconds'.format(roundval))
             self.print('Parse: {} seconds'.format(roundval))
 
             transldur = self.duration_data[ch10name]['transl1553']
             if transldur is None:
                 roundval = None
+                total_transl_time = None
             else:
                 roundval = round(transldur,2)
+                if total_transl_time != None: 
+                    total_transl_time += roundval
             print('Translation 1553: {} seconds'.format(roundval))
             self.print('Translation 1553: {} seconds'.format(roundval))
+
+        if total_parse_time is None:
+            roundval = None
+        else:
+            roundval = round(total_parse_time, 2)
+        msg = '\nTotal parse time: {} seconds'.format(roundval)
+        print(msg)
+        self.print(msg)
+        
+        if total_transl_time is None:
+            roundval = None
+        else:
+            roundval = roundval(total_transl_time, 2)
+        msg = 'Total translated 1553 time: {} seconds'.format(roundval)
+        print(msg)
+        self.print(msg)
+
+        if total_parse_time is None or total_transl_time is None:
+            roundval = None
+        else:
+            total_time = total_parse_time + total_transl_time
+            roundval = roundval(total_time, 2)
+        msg = 'All validation set time: {} seconds'.format(roundval)
+        print(msg)
+        self.print(msg)
 
     def _get_pass_fail_null(self, results_list):
 
