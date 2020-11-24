@@ -73,3 +73,58 @@ ManagedPath ManagedPath::parent_path()
 {
 	return ManagedPath(this->fs::path::parent_path());
 }
+
+bool ManagedPath::CreateDir()
+{
+	fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));
+
+	// If the directory exists, return true.
+	if (fs::is_directory(amended_path))
+	{
+		printf("ManagedPath::CreateDir(): Directory already exists - %s\n", 
+			this->RawString().c_str());
+		return true;
+	}
+
+	// The parent directory must exist.
+	ManagedPath parent = this->parent_path();
+	if (!parent.is_directory())
+	{
+		printf("ManagedPath::CreateDir(): Parent directory does not exist - %s\n",
+			parent.RawString().c_str());
+		return false;
+	}
+
+	// Multiple directory creation attempts for busy media and/or
+	// file systems.
+	for (int i = 0; i < max_create_dir_attempts_; i++)
+	{
+		// Create the directory using the amended path.
+		if (fs::create_directory(amended_path))
+		{
+			break;
+		}
+		else
+		{
+			printf("ManagedPath::CreateDir(): Failed to created dir (attempt %d) - %s\n",
+				i + 1, this->RawString().c_str());
+		}
+
+		// Sleep to give the OS some time before the next file is created.
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+		// If the directory exists now, then break, otherwise try again.
+		if (fs::is_directory(amended_path))
+			break;
+		else if(i == max_create_dir_attempts_ - 1)
+		{
+			printf("ManagedPath::CreateDir(): Failed to created dir after %d attemps - %s\n",
+				max_create_dir_attempts_, this->RawString().c_str());
+			return false;
+		}
+	}
+
+
+
+	return true;
+}

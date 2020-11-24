@@ -113,6 +113,58 @@ TEST(ManagedPathTest, string)
 #endif
 }
 
+TEST(ManagedPathTest, CreateDirAlreadyExists)
+{
+	fs::path temp_path("test_dir");
+	EXPECT_TRUE(fs::create_directory(temp_path));
+
+	ManagedPath mp;
+	mp /= ManagedPath(temp_path);
+
+	EXPECT_TRUE(mp.CreateDir());
+
+	// Remove test dir.
+	EXPECT_TRUE(fs::remove(temp_path));
+}
+
+TEST(ManagedPathTest, CreateDirParentMustExist)
+{
+	ManagedPath mp;
+	mp = mp / "test_dir" / "second-dir";
+
+	ASSERT_FALSE(mp.CreateDir());
+}
+
+TEST(ManagedPathTest, CreateDirLongPath)
+{
+	ManagedPath mp;
+	std::string root_dir_name = "test_dir";
+
+	// Create the part of the path that's less than 261 chars using std::filesystem.
+	mp /= ManagedPath(root_dir_name);
+	mp = mp / "this_is_part_of_a_very_long_path_section00" / "this_is_part_of_a_very_long_path_section01";
+	mp = mp / "this_is_part_of_a_very_long_path_section02" / "this_is_part_of_a_very_long_path_section03";
+	EXPECT_TRUE(mp.RawString().size() < 261);
+
+	fs::path small_path(mp.RawString());
+	EXPECT_TRUE(fs::create_directories(small_path));
+
+	// Extend the path beyond 260 and create the final path.
+	mp = mp / "this_is_part_of_a_very_long_path_section04";
+
+	// Code below fails with an exception on Windows.
+	/*fs::path long_path(mp.RawString());
+	EXPECT_TRUE(fs::create_directory(long_path));*/
+	// end section of failing code
+
+	EXPECT_TRUE(mp.CreateDir());
+
+	// Remove directories.
+	fs::path root_path(root_dir_name);
+	EXPECT_TRUE(fs::remove_all(root_path));
+}
+
+
 #ifdef __WIN64
 TEST(ManagedPathTest, AppendOperator)
 {
@@ -146,6 +198,8 @@ TEST(ManagedPathTest, AppendNoSeparator)
 	mp1 += mp2;
 	EXPECT_EQ(mp1.RawString(), s1 + s2);
 }
+
+
 
 #elif defined __linux__
 TEST(ManagedPathTest, AppendOperator)
