@@ -2,10 +2,10 @@ import yaml
 import os
 from pathlib import Path
 
-base_path = Path(r'parquet_database_basepath')
+base_path = Path(r'C:\Users\A10\Documents\Source\locker\mutli_file_manipulation\multi_files')
 
 ################ metadata search  ################
-yaml_path = os.path.join(base_path, 'combined_metadata.yaml')
+yaml_path = os.path.join(base_path, '_combined_metadata.yaml')
 file_data = []
 
 with open(yaml_path) as file:
@@ -13,7 +13,7 @@ with open(yaml_path) as file:
 
 translated_paths = []
 
-message_name = 'MSG_name'
+message_name = 'MessageName'
 
 for metadata in file_data:
 	# check if the chapter 10 has translation data
@@ -39,7 +39,7 @@ for path in translated_paths:
 	df = spark.read.parquet(path)
 
 	# Check if a column is in a specific range
-	df_alt_filter = df.filter((f.col('Column1') < 2230) & (f.col('Column2') > 2226))
+	df_alt_filter = df.filter((f.col('MessageName-1') < 2230) & (f.col('MessageName-1') > 2226))
 	if df_alt_filter.count() > 1:
 		ch10_matches.append(path)
 

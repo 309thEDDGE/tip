@@ -153,7 +153,7 @@ if __name__ == '__main__':
 		print('Translator Success:\n {}\n\n'.format(translated_path))
 
 	# write combined meta_data to yaml
-	yaml_path = os.path.join(output_path,'combined_metadata.yaml');
+	yaml_path = os.path.join(output_path,'_combined_metadata.yaml');
 	with open(yaml_path, 'w') as file:
 		print('\n--Writing combined yaml meta_data: \n{}\n\n'.format(yaml_path))
 		yaml.dump(combined_metadata,file)
@@ -162,7 +162,7 @@ if __name__ == '__main__':
 	for file_level_metadata in combined_metadata:
 		pq_directory = file_level_metadata['1553_parquet_path']
 		if os.path.isdir(pq_directory):
-			yaml_path = os.path.join(pq_directory,'file_portion_metadata.yaml');
+			yaml_path = os.path.join(pq_directory,'_file_portion_metadata.yaml');
 
 			# delete unnecessary keys for file level metadata
 			if '1553_parquet_path' in file_level_metadata: del file_level_metadata['1553_parquet_path']
