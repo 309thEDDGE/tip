@@ -70,7 +70,7 @@ void ParseManager::create_paths()
 	ManagedPath parquet_1553_path = out_path / in_path;
 	parquet_1553_path.replace_extension() += "_1553.parquet";
 	printf("Parquet 1553 output path: %s\n", parquet_1553_path.RawString().c_str());
-	if (!parquet_1553_path.CreateDir())
+	if (!parquet_1553_path.create_directory())
 		error_set = true;
 	error_set = true;
 	//if (!std::filesystem::exists(parquet_1553_path))

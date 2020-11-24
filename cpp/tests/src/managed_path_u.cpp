@@ -113,7 +113,7 @@ TEST(ManagedPathTest, string)
 #endif
 }
 
-TEST(ManagedPathTest, CreateDirAlreadyExists)
+TEST(ManagedPathTest, CreateDirectoryAlreadyExists)
 {
 	fs::path temp_path("test_dir");
 	EXPECT_TRUE(fs::create_directory(temp_path));
@@ -121,22 +121,26 @@ TEST(ManagedPathTest, CreateDirAlreadyExists)
 	ManagedPath mp;
 	mp /= ManagedPath(temp_path);
 
-	EXPECT_TRUE(mp.CreateDir());
+	EXPECT_TRUE(mp.create_directory());
 
 	// Remove test dir.
 	EXPECT_TRUE(fs::remove(temp_path));
 }
 
-TEST(ManagedPathTest, CreateDirParentMustExist)
+TEST(ManagedPathTest, CreateDirectoryParentMustExist)
 {
 	ManagedPath mp;
 	mp = mp / "test_dir" / "second-dir";
 
-	ASSERT_FALSE(mp.CreateDir());
+	ASSERT_FALSE(mp.create_directory());
 }
 
-TEST(ManagedPathTest, CreateDirLongPath)
+TEST(ManagedPathTest, CreateDirectoryLongPath)
 {
+	/*
+	This test was created using TDD. See the comments below that
+	describe how failures were initially observed.
+	*/
 	ManagedPath mp;
 	std::string root_dir_name = "test_dir";
 
@@ -155,14 +159,62 @@ TEST(ManagedPathTest, CreateDirLongPath)
 	// Code below fails with an exception on Windows.
 	/*fs::path long_path(mp.RawString());
 	EXPECT_TRUE(fs::create_directory(long_path));*/
-	// end section of failing code
+	
+	// This code, created to handle long paths, must succeed
+	// for the test to pass.
+	EXPECT_TRUE(mp.create_directory());
 
-	EXPECT_TRUE(mp.CreateDir());
+	// Remove long directory using ManagedPath remove function.
+	// Note that if this function is not called to take the 
+	// full path length to below 261 chars, the following call
+	// to std::filesystem::remove_all will fail.
+	// This test also tests ManagedPath::remove.
+	EXPECT_TRUE(mp.remove());
 
-	// Remove directories.
+	// Remove all remaining dirs using std::filesystem::remove_all.
 	fs::path root_path(root_dir_name);
 	EXPECT_TRUE(fs::remove_all(root_path));
 }
+
+//TEST(ManagedPathTest, CreateDirectoryMultipleRapidCalls)
+//{
+//	std::string root_dir_name = "test_dir";
+//	
+//	// Create current working directory ManagedPath object
+//	ManagedPath root_dir;
+//
+//	// Append the test root dir.
+//	root_dir /= root_dir_name;
+//
+//	// Create the base dir.
+//	EXPECT_TRUE(root_dir.create_directory());
+//
+//	// Create a bunch of ManagedPath objects in preparation for
+//	// rapid directory creation.
+//	std::vector<ManagedPath> sub_dirs;
+//	std::string sub_dir_base_name = "subdir";
+//	int subdir_count = 500;
+//	for (int i = 0; i < subdir_count; i++)
+//	{
+//		sub_dirs.push_back(root_dir / (sub_dir_base_name + std::to_string(i)));
+//	}
+//
+//	// Create directories
+//	for (int i = 0; i < subdir_count; i++)
+//	{
+//		// I expected this to fail, but it didn't
+//		EXPECT_TRUE(fs::create_directory(fs::path(sub_dirs[i].RawString())));
+//
+//		// I expected that this call would not fail only if the 
+//		// code in ManagedPath::create_directory that allows multiple
+//		// fs::create_directory attempts is uncommented. This is not the case.
+//		//EXPECT_TRUE(sub_dirs[i].create_directory());
+//	}
+//
+//	// Remove all remaining dirs using std::filesystem::remove_all.
+//	fs::path root_path(root_dir_name);
+//	EXPECT_TRUE(fs::remove_all(root_path));
+//}
 
 
 #ifdef __WIN64

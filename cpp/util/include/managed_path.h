@@ -6,25 +6,23 @@
 #include <filesystem>
 #include <string>
 #include <cstdio>
-
-
-static const std::string WINDOWS_PREFIX("\\\\?\\");
+#include <cstdint>
 
 namespace fs = std::filesystem;
 
 class ManagedPath : public fs::path
 {
 private:
-	static const inline fs::path windows_prefix_ = WINDOWS_PREFIX;
+	static const inline fs::path windows_prefix_ = "\\\\?\\";
 	static const int max_create_dir_attempts_ = 5;
 
 protected:
 
 public:
 	
-	//
+	//////////////////////////////////////////
 	// User functions
-	//
+	//////////////////////////////////////////
 
 	// Initialize with string path
 	ManagedPath(std::string input_path) : fs::path(input_path){ }
@@ -43,22 +41,83 @@ public:
 	ManagedPath operator / (const ManagedPath& rhs);
 	ManagedPath& operator += (const ManagedPath& rhs);
 
+	//
 	// Hide, not override these fs::path functions.
+	//
+
+	/*
+	Get a string that is formatted with special characters
+	necessary for long paths in windows, if necessary. 
+
+	Returns: std::string
+	*/
 	std::string string();
+
+	/*
+	Get the parent path. Same functionality as the 
+	std::filesystem::path::parent_path function.
+
+	Returns: A ManagedPath object containing the parent
+	path.
+	*/
 	ManagedPath parent_path();
+
+	/*
+	Check whether the current object is a regular file.
+	Same functionality as the std::filesystem::path::is_regular_file
+	function.
+
+	Returns: true if is regular file, false otherwise
+	*/
 	bool is_regular_file();
+
+	/*
+	Check whether the current object is a directory.
+	Same functionality as the std::filesystem::path::is_directory
+	function.
+
+	Returns: true if is directory, false otherwise
+	*/
 	bool is_directory();
 
-	// Use instead of std::filesystem::create_directory().
-	bool CreateDir();
-
-	// Get un-amended raw string. Use for print statements.
-	std::string RawString();
-	
-
-	// 
-	// Functions below not intended to be utilized directly.
 	//
+	// Mimic other std::filesystem functions.
+	//
+
+	/*
+	Create a directory that is represented by the current
+	object, similar to std::filesystem::create_directory.
+
+	Returns: true if the directory does not exist and the 
+	directory is successfully created, false otherwise.
+	*/
+	bool create_directory();
+
+	/*
+	Remove a file or directory, similar to std::filesystem::remove.
+
+	Returns: true if file/dir is removed, false otherwise.
+	*/
+	bool remove();
+
+	/*
+	Get an un-amended raw string. Useful for print statements.
+	Does not include the windows magic sequence, even if applicable.
+
+	Returns: the objects representation of the path as a std::string.
+	*/
+	std::string RawString();
+
+	//////////////////////////////////////////
+	// Functions below not intended to be utilized directly.
+	//////////////////////////////////////////
+
+	/*
+	Get a std:filesystem::path object amended to include
+	the windows magic characters if necessary.
+
+	Returns: fs::path object
+	*/
 	fs::path AmendPath(fs::path input_path);
 };
 

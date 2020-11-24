@@ -74,7 +74,7 @@ ManagedPath ManagedPath::parent_path()
 	return ManagedPath(this->fs::path::parent_path());
 }
 
-bool ManagedPath::CreateDir()
+bool ManagedPath::create_directory()
 {
 	fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));
 
@@ -97,34 +97,39 @@ bool ManagedPath::CreateDir()
 
 	// Multiple directory creation attempts for busy media and/or
 	// file systems.
-	for (int i = 0; i < max_create_dir_attempts_; i++)
-	{
-		// Create the directory using the amended path.
-		if (fs::create_directory(amended_path))
-		{
-			break;
-		}
-		else
-		{
-			printf("ManagedPath::CreateDir(): Failed to created dir (attempt %d) - %s\n",
-				i + 1, this->RawString().c_str());
-		}
+	//for (int i = 0; i < max_create_dir_attempts_; i++)
+	//{
+	//	// Create the directory using the amended path.
+	//	if (fs::create_directory(amended_path))
+	//	{
+	//		break;
+	//	}
+	//	else
+	//	{
+	//		printf("ManagedPath::CreateDir(): Failed to created dir (attempt %d) - %s\n",
+	//			i + 1, this->RawString().c_str());
+	//	}
 
-		// Sleep to give the OS some time before the next file is created.
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	//	// Sleep to give the OS some time before the next file is created.
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-		// If the directory exists now, then break, otherwise try again.
-		if (fs::is_directory(amended_path))
-			break;
-		else if(i == max_create_dir_attempts_ - 1)
-		{
-			printf("ManagedPath::CreateDir(): Failed to created dir after %d attemps - %s\n",
-				max_create_dir_attempts_, this->RawString().c_str());
-			return false;
-		}
-	}
+	//	// If the directory exists now, then break, otherwise try again.
+	//	if (fs::is_directory(amended_path))
+	//		break;
+	//	else if(i == max_create_dir_attempts_ - 1)
+	//	{
+	//		printf("ManagedPath::CreateDir(): Failed to created dir after %d attemps - %s\n",
+	//			max_create_dir_attempts_, this->RawString().c_str());
+	//		return false;
+	//	}
+	//}
 
+	//return true;
+	return fs::create_directory(amended_path);
+}
 
-
-	return true;
+bool ManagedPath::remove()
+{
+	fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));
+	return fs::remove(amended_path);
 }
