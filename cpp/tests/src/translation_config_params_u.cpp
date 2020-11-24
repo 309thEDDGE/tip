@@ -53,6 +53,7 @@ TEST_F(TranslationConfigParamsTest, InitializeValidEntry)
 	file << "exit_after_table_creation : false\n";
 	file << "stop_after_bus_map : false\n";
 	file << "vote_threshold : 1\n";
+	file << "bus_name_exclusions :\n  [\n   BusA, \n   BusB\n  ]\n";
 	file << "prompt_user : false\n";
 	file << "translate_thread_count: 1\n";
 	file.close();
@@ -69,6 +70,7 @@ TEST_F(TranslationConfigParamsTest, InitializeValidEntry)
 	EXPECT_EQ(config.exit_after_table_creation_, false);
 	EXPECT_EQ(config.stop_after_bus_map_, false);
 	EXPECT_EQ(config.prompt_user_, false);
+	EXPECT_THAT(config.bus_exclusions_, ::testing::ElementsAre("BusA", "BusB"));
 	EXPECT_EQ(config.translate_thread_count_, 1);
 }
 
@@ -81,6 +83,7 @@ TEST_F(TranslationConfigParamsTest, InitializeEmptyList)
 	file << "stop_after_bus_map : false\n";
 	file << "vote_threshold : 1\n";
 	file << "prompt_user : false\n";
+	file << "bus_name_exclusions :\n  [\n   BusA, \n   BusB\n  ]\n";
 	file << "comet_busmap_replacement :\n  {}\n";
 	file << "translate_thread_count: 1\n";
 	file.close();

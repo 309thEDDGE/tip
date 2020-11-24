@@ -95,6 +95,26 @@ stop_after_bus_map: false
 #
 vote_threshold: 5
 
+# 
+# bus_name_exclusions
+#
+# If a bus name exists in the final bus map that also
+# exists in the bus_name_exclusions list. It will be removed 
+# from the final bus map. Removals include the case when 
+# a bus from the bus_name_exclusions list is a subset of the full bus name
+# found in either the DTS file or TMATS. 
+# Example: TMATs/DTS = "BUSAMUX",  
+# bus_name_exclusion = "BUSA", will result in removal
+# of BUSAMUX from the final bus map 
+#
+# Removals are also not case sensitive 
+# Example: TMATs/DTS -> "BusA",  
+# bus_name_exclusion -> "BUSA", will result in removal
+# of BusA from the final bus map 
+# 
+bus_name_exclusions: 
+  []
+
 #
 # select_specific_messages
 #
