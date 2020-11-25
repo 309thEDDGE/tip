@@ -9,21 +9,15 @@
 #define PARSEMANAGER_H
 
 #include <cstdint>
-#include <cstdlib>
 #include <cstdio>
-#include <cmath>
 #include <string>
-#include <cctype>
 #include <thread>
 #include <vector>
-#include <set>
 #include "parse_worker.h"
 #include "ch10.h"
 #include "ch10_milstd1553f1stats.h"
 #include "ch10_packet_stats.h"
-#include <atomic>
 #include <chrono>
-#include <fstream>
 #include "parser_config_params.h"
 #include "metadata.h"
 #include "tmats_parser.h"
@@ -95,7 +89,6 @@ class ParseManager
 	ParseManager(ManagedPath fname, ManagedPath output_path, const ParserConfigParams * const config);
 	bool error_state();
 	void start_workers();
-	void concatenate_data_files();
 	~ParseManager();
 
 	// Used for unit tests

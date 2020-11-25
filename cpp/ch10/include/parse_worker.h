@@ -1,13 +1,11 @@
 #ifndef PARSEWORKER_H
 #define PARSEWORKER_H
 
-//#include <thread>
 #include <string>
 #include <cstdio>
 #include <set>
 #include "binbuff.h"
 #include <atomic>
-#include <filesystem>
 #include "ch10.h"
 #include "ch10_packet_header.h"
 #include "ch10_packet_stats.h"
@@ -71,7 +69,6 @@ class ParseWorker
 	uint32_t read_size;
 	//BinBuff* bb;
 	uint16_t bb_ind;
-	std::string output_fname;
 	std::map<Ch10DataType, ManagedPath> output_file_paths_;
 	uint32_t first_TDP_loc;
 	std::vector<Ch10PacketHeaderStatus> hdr_err;
@@ -88,7 +85,6 @@ class ParseWorker
 	PacketStats packet_ledger;
 	PacketStats packet_error_ledger;
 	void parse_and_validate_header();
-	bool have_generated_file_names;
 	
 	public:
 	ParseWorker();

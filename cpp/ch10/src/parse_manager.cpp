@@ -714,16 +714,6 @@ void ParseManager::collect_stats()
 	milstdstats->print_msg_stats();
 }
 
-#ifdef PARQUET
-// Concatenate data files which contain multiple data types.
-// Not implemented yet, but I expect this to modified for use
-// with Parquet or ORC files output.
-void ParseManager::concatenate_data_files()
-{
-
-}
-#endif
-
 ParseManager::~ParseManager()
 {
 	ifile.close();

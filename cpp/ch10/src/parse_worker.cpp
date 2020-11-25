@@ -21,12 +21,12 @@ ParseWorker::~ParseWorker()
 
 ParseWorker::ParseWorker() : start_position(0), 
 	last_position(0), id(UINT16_MAX), complete(false),
-	bb_ind(UINT16_MAX), output_fname(""), first_TDP_loc(UINT32_MAX),
+	bb_ind(UINT16_MAX), first_TDP_loc(UINT32_MAX),
 	pkt_count(0),
 	packet_ledger(), packet_error_ledger(),
 	tdf(nullptr), milstd(nullptr), delete_alloc(false), continue_parsing(false),
 	first_tdp(false), pkthdr(nullptr), read_size(0), retcode(0),
-	have_generated_file_names(false), final_worker(false), is_scan_worker(false)
+	final_worker(false), is_scan_worker(false)
 #ifdef LIBIRIG106
 	, i106_handle_(0), i106_status_(I106Status::I106_OK), i106_offset_(0), found_tmats_(false),
 	temp_buffer_vec_(temp_buffer_size_)
