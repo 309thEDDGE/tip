@@ -200,7 +200,7 @@ void ParseManager::start_workers()
 	// to be recorded in 1553 output directory.
 	Metadata md;
 	std::filesystem::path md_path = md.GetYamlMetadataPath(
-		std::filesystem::path(output_dir_map_[Ch10DataType::MILSTD1553_DATA_F1].RawString()),
+		output_dir_map_[Ch10DataType::MILSTD1553_DATA_F1],
 		"_metadata");
 
 	// Record the input ch10 path.
