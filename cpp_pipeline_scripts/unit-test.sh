@@ -176,7 +176,7 @@ for type in ${!MAX_TIMES[@]} ; do
 	echo -n "$type time: "
 	if ! check_time $LOG_FILE $type ${MAX_TIMES[$type]} ; then
 		# For now, do not fail for translate time
-		if [ "$type" != "Translate" ]; then
+		if [ "${type,,}" != "translate" ]; then  # compare lower-case
 			EXIT_CODE=1
 		fi
 	fi
