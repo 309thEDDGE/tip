@@ -2,6 +2,7 @@
 #include "gmock/gmock.h"
 #include "managed_path.h"
 #include <fstream>
+#include <iostream>
 
 bool HasWindowsPrefix(std::string input_str)
 {
@@ -238,7 +239,7 @@ TEST(ManagedPathTest, AppendNoSeparator)
 	EXPECT_EQ(mp1.RawString(), p1.string());
 }
 
-TEST(ManagedPathTest, CreateOutputFilePathNoExtReplacement)
+TEST(ManagedPathTest, CreatePathObjectNoExtReplacement)
 {
 	std::string base_path = "base-path";
 	ManagedPath mp_base(base_path);
@@ -249,7 +250,7 @@ TEST(ManagedPathTest, CreateOutputFilePathNoExtReplacement)
 	ManagedPath mp_file(file_path1);
 	mp_file /= file_path2;
 
-	ManagedPath mp_result = mp_base.CreateOutputFilePath(mp_file);
+	ManagedPath mp_result = mp_base.CreatePathObject(mp_file);
 
 	std::filesystem::path p_base(base_path);
 	std::filesystem::path p_file(file_path1);
@@ -260,12 +261,12 @@ TEST(ManagedPathTest, CreateOutputFilePathNoExtReplacement)
 
 	// single-component file path
 	mp_file = ManagedPath(file_path2);
-	mp_result = mp_base.CreateOutputFilePath(mp_file);
+	mp_result = mp_base.CreatePathObject(mp_file);
 	p_result = p_base / std::filesystem::path(file_path2);
 	EXPECT_EQ(mp_result.RawString(), p_result.string());
 }
 
-TEST(ManagedPathTest, CreateOutputFilePathWithExtReplacement)
+TEST(ManagedPathTest, CreatePathObjectWithExtReplacement)
 {
 	std::string base_path = "base-path";
 	ManagedPath mp_base(base_path);
@@ -277,7 +278,7 @@ TEST(ManagedPathTest, CreateOutputFilePathWithExtReplacement)
 	ManagedPath mp_file(file_path1);
 	mp_file /= file_path2;
 
-	ManagedPath mp_result = mp_base.CreateOutputFilePath(mp_file, ext_repl);
+	ManagedPath mp_result = mp_base.CreatePathObject(mp_file, ext_repl);
 
 	std::filesystem::path p_base(base_path);
 	std::filesystem::path p_file(file_path1);
@@ -288,7 +289,100 @@ TEST(ManagedPathTest, CreateOutputFilePathWithExtReplacement)
 
 	// single-component file path
 	mp_file = ManagedPath(file_path2);
-	mp_result = mp_base.CreateOutputFilePath(mp_file, ext_repl);
+	mp_result = mp_base.CreatePathObject(mp_file, ext_repl);
 	p_result = p_base / (std::filesystem::path(file_path2).stem() += ext_repl);
 	EXPECT_EQ(mp_result.RawString(), p_result.string());
+}
+
+TEST(ManagedPathTest, CreatePathObjectDirsNoExtReplacement)
+{
+	std::string base_path = "base-path";
+	ManagedPath mp_base(base_path);
+
+	// multi-component file path
+	std::string file_path1 = "input_base_path";
+	std::string file_path2 = "final_input_path";
+	ManagedPath mp_file(file_path1);
+	mp_file /= file_path2;
+
+	ManagedPath mp_result = mp_base.CreatePathObject(mp_file);
+
+	std::filesystem::path p_base(base_path);
+	std::filesystem::path p_file(file_path1);
+	p_file /= file_path2;
+	std::filesystem::path p_result = p_base / p_file.filename();
+	EXPECT_EQ(mp_result.RawString(), p_result.string());
+}
+
+TEST(ManagedPathTest, CreatePathObjectDirsWithExtReplacement)
+{
+	std::string base_path = "base-path";
+	ManagedPath mp_base(base_path);
+
+	// multi-component file path
+	std::string file_path1 = "input_base_path";
+	std::string file_path2 = "final_input_path";
+	std::string ext_repl = "_modified";
+	ManagedPath mp_file(file_path1);
+	mp_file /= file_path2;
+
+	ManagedPath mp_result = mp_base.CreatePathObject(mp_file, ext_repl);
+
+	std::filesystem::path p_base(base_path);
+	std::filesystem::path p_file(file_path1);
+	p_file /= file_path2;
+	std::filesystem::path p_result = p_base / (p_file.filename() += ext_repl);
+	EXPECT_EQ(mp_result.RawString(), p_result.string());
+}
+
+TEST(ManagedPathTest, GetFileSize)
+{
+	// Create relative path and simple file.
+	std::string test_fname = "my_file.data";
+	ManagedPath mp;
+	mp /= test_fname;
+
+	uint64_t n_bytes = 5;
+	char c[] = "blah blah blah";
+	std::ofstream(mp.RawString()).write(c, n_bytes);
+
+	bool success = false;
+	uint64_t result = 100;
+	mp.GetFileSize(success, result);
+	EXPECT_TRUE(success);
+	EXPECT_EQ(result, n_bytes);
+
+	EXPECT_TRUE(std::filesystem::remove(std::filesystem::path(test_fname)));
+}
+
+TEST(ManagedPathTest, GetFileSizeNonExistentFile)
+{
+	// Create relative path and simple file.
+	std::string test_fname = "my_file.data";
+	ManagedPath mp;
+	mp /= test_fname;
+
+	bool success = true;
+	uint64_t result = 100;
+	mp.GetFileSize(success, result);
+	EXPECT_FALSE(success);
+	EXPECT_EQ(result, 0);
+}
+
+TEST(ManagedPathTest, GetFileSizeNonFile)
+{
+	// Create relative path and simple file.
+	std::string test_fname = "my_dir";
+	ManagedPath mp;
+	mp /= test_fname;
+
+	EXPECT_TRUE(mp.create_directory());
+
+	bool success = true;
+	uint64_t result = 100;
+	mp.GetFileSize(success, result);
+	EXPECT_FALSE(success);
+	EXPECT_EQ(result, 0);
+
+	EXPECT_TRUE(std::filesystem::remove(std::filesystem::path(test_fname)));
 }

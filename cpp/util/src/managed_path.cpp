@@ -147,7 +147,7 @@ ManagedPath ManagedPath::stem() const
 }
 
 
-ManagedPath ManagedPath::CreateOutputFilePath(const ManagedPath& output_fname,
+ManagedPath ManagedPath::CreatePathObject(const ManagedPath& output_fname,
 	const std::string& extension_replacement)
 {
 	if (extension_replacement == "")
@@ -163,5 +163,27 @@ ManagedPath ManagedPath::CreateOutputFilePath(const ManagedPath& output_fname,
 		ManagedPath mp = *this;
 		ManagedPath mp_file = output_fname.stem() += extension_replacement;
 		return mp /= mp_file;
+	}
+}
+
+void ManagedPath::GetFileSize(bool& success, uint64_t& result)
+{
+	success = false;
+	result = 0;
+	
+	if (this->is_regular_file())
+	{
+		fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));
+		try
+		{
+			result = (uint64_t)fs::file_size(amended_path);
+			success = true;
+		}
+		catch (fs::filesystem_error& e) 
+		{
+			printf("ManagedPath::GetFileSize Error: %s\n", e.what());
+			success = false;
+			result = 0;
+		}
 	}
 }

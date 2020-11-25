@@ -4,7 +4,7 @@ I106ParseContext::I106ParseContext() : id_(UINT16_MAX),
 retcode_(0), rtc_to_ns_(100), ts_ptr_(nullptr),
 msg_abstime_(0), ts_size_(sizeof(*ts_ptr_)),
 ch10md_ptr_(nullptr), calculated_rtc_(0),
-calculated_rtc_ref_(calculated_rtc_), output_path_("")
+calculated_rtc_ref_(calculated_rtc_), output_path_(std::string(""))
 {
 #ifdef DEBUG
 	if (DEBUG > 2)
@@ -13,7 +13,7 @@ calculated_rtc_ref_(calculated_rtc_), output_path_("")
 }
 
 void I106ParseContext::Initialize(uint16_t ID, const Ch10MetaData* ch10md_ptr,
-	const std::string& outpath)
+	const ManagedPath& outpath)
 {
 	id_ = ID;
 	ch10md_ptr_ = ch10md_ptr;

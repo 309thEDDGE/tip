@@ -17,7 +17,6 @@
 #include <thread>
 #include <vector>
 #include <set>
-#include <filesystem>
 #include "parse_worker.h"
 #include "ch10.h"
 #include "ch10_milstd1553f1stats.h"
@@ -43,8 +42,8 @@ class ParseManager
 	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
 	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
 
-	std::string input_fname;
-	std::string output_path;
+	ManagedPath input_path;
+	ManagedPath output_path;
 	uint32_t read_size;
 	uint32_t append_read_size;
 	uint64_t total_size;
@@ -61,13 +60,12 @@ class ParseManager
 	bool workers_allocated;
 	const ParserConfigParams * const config_;
 	
-	std::map<Ch10DataType, std::filesystem::path> fspath_map;
+	std::map<Ch10DataType, ManagedPath> output_dir_map_;
+	std::vector<std::map<Ch10DataType, ManagedPath>> output_file_path_vec_;
 	bool milstd1553_msg_selection;
 	std::vector<std::string> milstd1553_sorted_msg_selection;
 	std::string chanid_to_lruaddrs_metadata_string_;
 
-	std::string worker_outfile_name(uint16_t worker_ind);
-	std::string final_outfile_name();
 	std::streamsize activate_worker(uint16_t binbuff_ind, uint16_t ID,
 		uint64_t start_pos, uint32_t n_read);
 	std::streamsize activate_append_mode_worker(uint16_t binbuff_ind, uint16_t ID,
@@ -80,8 +78,8 @@ class ParseManager
 	std::chrono::milliseconds worker_start_offset;
 	void worker_queue(bool append_mode);
 	void worker_retire_queue();
-	bool file_exists(std::string&);
-	void create_paths();
+	void create_output_dirs();
+	void create_output_file_paths();
 	void collect_chanid_to_lruaddrs_metadata(
 		std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map);
 	void collect_chanid_to_commwords_metadata(
@@ -90,18 +88,11 @@ class ParseManager
 #ifdef VIDEO_DATA
 	void CollectVideoMetadata(std::map<uint16_t, uint64_t>& channel_id_to_min_timestamp_map);
 #endif
-#ifdef XDAT
-	void create_milstd1553_sorted_msgs();
-#endif
-#ifdef PARQUET
-	void record_msg_names();
-#endif
-	
 
 	public:
 
 	//ParseManager(ACPlatform plat, std::string fname, std::string output_path, ConfigManager& cm_parse, ConfigManager& cm_1553);
-	ParseManager(std::string fname, std::string output_path, const ParserConfigParams * const config);
+	ParseManager(ManagedPath fname, ManagedPath output_path, const ParserConfigParams * const config);
 	bool error_state();
 	void start_workers();
 	void concatenate_data_files();

@@ -7,7 +7,7 @@ Ch10VideoDataF0::~Ch10VideoDataF0()
 
 #ifdef LOCALDB
 #ifdef PARQUET
-Ch10VideoDataF0::Ch10VideoDataF0(BinBuff& buff, uint16_t ID, std::string out_path) : 
+Ch10VideoDataF0::Ch10VideoDataF0(BinBuff& buff, uint16_t ID, ManagedPath out_path) :
 	ParseContext(buff, ID),
 outpath(out_path), subpkt_unit_count(0), subpkt_unit_index(0),
 transport_stream_pkt(nullptr), subpkt_unit_size(0), transport_stream_data(MAX_DATA_COUNT, 0),

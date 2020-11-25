@@ -129,9 +129,17 @@ public:
 	std::string RawString();
 
 	/*
-	Create a file path using the current object path and the file name 
-	component of an input ManagedPath object. Replace the extension if 
-	the extension_replacement argument is not the default value.
+	Create a file/dir path using the current object path and the final
+	component of an input ManagedPath object. If the input object is 
+	is a file path, then the full file name will be used unless 
+	the extension_replacement argument is not the default value, in which
+	case the file name will be modifed by the extension replacement.
+
+	If the input object is a directory path, then the final component 
+	of the input path will be used and the extension_replacement argument 
+	will be concatenated without a file path separator to the final component.
+
+	This function creates a directory path if the 
 
 	Input: 
 
@@ -140,11 +148,29 @@ public:
 
 		extension_replacement	- String to replace the extension,
 		ex: if extension_replacement = "_abc.123", "a.txt" --> "a_abc.123"
+		ex: extension_replacement = "_append-this", "/a/b/base" --> "a/b/base_append-this"
 
 	Return: ManagedPath object representative of the new file path
 	*/
-	ManagedPath CreateOutputFilePath(const ManagedPath& output_fname,
+	ManagedPath CreatePathObject(const ManagedPath& output_fname,
 		const std::string& extension_replacement = "");
+
+
+	/*
+	Get the size of the file represented by the current object.
+
+	Input: 
+
+		success	- Output bool indicator if the file size was
+		correctly obtained. Set to false if the current object
+		is a path to a file that does not exist or the file does
+		exist but cannot be opened.
+
+		result	- Output result indicating file size in bytes.
+		Set to 0 if success is false.
+	*/
+	void GetFileSize(bool& success, uint64_t& result);
+
 
 	//////////////////////////////////////////
 	// Functions below not intended to be utilized directly.

@@ -54,8 +54,7 @@ int main(int argc, char* argv[])
 		printf("User-defined input path is not a directory: %s\n", input_path.RawString().c_str());
 		return 0;
 	}
-	std::string ch10_path = input_path.string();
-	printf("Ch10 file path: %s\n", ch10_path.c_str());
+	printf("Ch10 file path: %s\n", input_path.RawString().c_str());
 
 	// Check for a second argument. If present, this path specifies the output
 	// path. If not present, the output path is the same as the input path.
@@ -69,8 +68,7 @@ int main(int argc, char* argv[])
 			return 0;
 		}
 	}
-	std::string output_dir = output_path.string();
-	printf("Output path: %s\n", output_dir.c_str());
+	printf("Output path: %s\n", output_path.RawString().c_str());
 
 	if (settings_validated)
 	{
@@ -78,7 +76,7 @@ int main(int argc, char* argv[])
 		auto start_time = std::chrono::high_resolution_clock::now();
 
 		// Initialization includes parsing of TMATS data.
-		ParseManager pm(ch10_path, output_dir, &config);
+		ParseManager pm(input_path, output_path, &config);
 		
 		if (pm.error_state())
 			return 0;

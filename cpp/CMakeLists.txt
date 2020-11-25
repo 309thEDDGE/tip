@@ -111,10 +111,12 @@ target_include_directories(${ch10pq_lib_name} PUBLIC
                             ${ch10pq_inc_dir}
                             ${pqctx_inc_dir} 
                             ${eth_inc_dir}
-                            ${ch10_inc_dir}) # Ch10 format headers.
+                            ${ch10_inc_dir} # Ch10 format headers.
+                            ${util_inc_dir})
 target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${ch10pq_lib_name} PRIVATE -fPIE)
-target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${eth_lib_name} ${linux_libs})
+target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${eth_lib_name} ${linux_libs}
+                      ${util_lib_name})
 
 #########################################################
 #             Build/link translate_1553 lib
