@@ -32,7 +32,9 @@ else
 fi
 
 declare -A MAX_TIMES
-MAX_TIMES=([parse]=0.0 [translate]=0.0)
+[ -n "$PARSE_THRESHOLD" ] || PARSE_THRESHOLD=0.0
+[ -n "$TRANSLATE_THRESHOLD" ] || TRANSLATE_THRESHOLD=0.0
+MAX_TIMES=([parse]="$PARSE_THRESHOLD" [translate]="$TRANSLATE_THRESHOLD")
 
 
 BASE_DIR=${PWD}
