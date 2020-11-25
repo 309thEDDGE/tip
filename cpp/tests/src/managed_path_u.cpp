@@ -237,3 +237,58 @@ TEST(ManagedPathTest, AppendNoSeparator)
 	p1 += p2;
 	EXPECT_EQ(mp1.RawString(), p1.string());
 }
+
+TEST(ManagedPathTest, CreateOutputFilePathNoExtReplacement)
+{
+	std::string base_path = "base-path";
+	ManagedPath mp_base(base_path);
+
+	// multi-component file path
+	std::string file_path1 = "file_base_path";
+	std::string file_path2 = "actual_FileName.ext";
+	ManagedPath mp_file(file_path1);
+	mp_file /= file_path2;
+
+	ManagedPath mp_result = mp_base.CreateOutputFilePath(mp_file);
+
+	std::filesystem::path p_base(base_path);
+	std::filesystem::path p_file(file_path1);
+	p_file /= file_path2;
+	std::filesystem::path p_result = p_base / p_file.filename();
+
+	EXPECT_EQ(mp_result.RawString(), p_result.string());
+
+	// single-component file path
+	mp_file = ManagedPath(file_path2);
+	mp_result = mp_base.CreateOutputFilePath(mp_file);
+	p_result = p_base / std::filesystem::path(file_path2);
+	EXPECT_EQ(mp_result.RawString(), p_result.string());
+}
+
+TEST(ManagedPathTest, CreateOutputFilePathWithExtReplacement)
+{
+	std::string base_path = "base-path";
+	ManagedPath mp_base(base_path);
+
+	// multi-component file path
+	std::string file_path1 = "file_base_path";
+	std::string file_path2 = "actual_FileName.ext";
+	std::string ext_repl = ".int";
+	ManagedPath mp_file(file_path1);
+	mp_file /= file_path2;
+
+	ManagedPath mp_result = mp_base.CreateOutputFilePath(mp_file, ext_repl);
+
+	std::filesystem::path p_base(base_path);
+	std::filesystem::path p_file(file_path1);
+	p_file /= file_path2;
+	std::filesystem::path p_result = p_base / (p_file.stem() += ext_repl);
+
+	EXPECT_EQ(mp_result.RawString(), p_result.string());
+
+	// single-component file path
+	mp_file = ManagedPath(file_path2);
+	mp_result = mp_base.CreateOutputFilePath(mp_file, ext_repl);
+	p_result = p_base / (std::filesystem::path(file_path2).stem() += ext_repl);
+	EXPECT_EQ(mp_result.RawString(), p_result.string());
+}

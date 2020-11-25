@@ -80,6 +80,26 @@ public:
 	*/
 	bool is_directory();
 
+	/*
+	Get the filename component of the current object.
+	Same functionality as the std::filesystem::path::filename
+	function.
+
+	Returns: A ManagedPath object containing the filename portion
+	of the current object.
+	*/
+	ManagedPath filename() const;
+
+	/*
+	Get the stem component of the current object.
+	Same functionality as the std::filesystem::path::stem
+	function.
+
+	Returns: A ManagedPath object containing the stem portion
+	of the current object.
+	*/
+	ManagedPath stem() const;
+
 	//
 	// Mimic other std::filesystem functions.
 	//
@@ -107,6 +127,24 @@ public:
 	Returns: the objects representation of the path as a std::string.
 	*/
 	std::string RawString();
+
+	/*
+	Create a file path using the current object path and the file name 
+	component of an input ManagedPath object. Replace the extension if 
+	the extension_replacement argument is not the default value.
+
+	Input: 
+
+		output_fname			- ManagedPath object from which the file name
+		will be used to construct the output file name
+
+		extension_replacement	- String to replace the extension,
+		ex: if extension_replacement = "_abc.123", "a.txt" --> "a_abc.123"
+
+	Return: ManagedPath object representative of the new file path
+	*/
+	ManagedPath CreateOutputFilePath(const ManagedPath& output_fname,
+		const std::string& extension_replacement = "");
 
 	//////////////////////////////////////////
 	// Functions below not intended to be utilized directly.
