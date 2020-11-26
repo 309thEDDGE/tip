@@ -1,6 +1,6 @@
 #include "translation_master.h"
 
-TranslationMaster::TranslationMaster(std::string parquet_path, uint8_t n_threads, 
+TranslationMaster::TranslationMaster(const ManagedPath& parquet_path, uint8_t n_threads,
 	bool select_msgs, std::vector<std::string> select_msg_names, ICDData icd) :
 	n_threads_(n_threads), parquet_path_(parquet_path), worker_wait_(200),
 	worker_start_offset_(2000), is_multithreaded_(true), output_base_path_(""),
@@ -22,7 +22,7 @@ TranslationMaster::TranslationMaster(std::string parquet_path, uint8_t n_threads
 		msg_list_path_, input_parquet_paths_, parquet_path_is_dir_);
 }
 
-std::filesystem::path TranslationMaster::GetTranslatedDataDirectory()
+ManagedPath TranslationMaster::GetTranslatedDataDirectory()
 {
 	return output_base_path_;
 }

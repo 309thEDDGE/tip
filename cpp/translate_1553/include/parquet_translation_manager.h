@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <chrono>
 #include <atomic>
+#include "managed_path.h"
 #include "data_organization.h"
 #include <vector>
 #include <set>
@@ -26,11 +27,11 @@ class ParquetTranslationManager
 private:
 	DataOrg data_org_;
 	int status_;
-	std::string parquet_path_;
+	ManagedPath parquet_path_;
 	bool parquet_path_is_dir_;
-	std::vector<std::string> input_parquet_paths_;
-	std::filesystem::path output_dir_;
-	std::filesystem::path output_base_name_;
+	std::vector<ManagedPath> input_parquet_paths_;
+	ManagedPath output_dir_;
+	ManagedPath output_base_name_;
 	bool select_msgs_;
 	std::vector<std::string> select_msg_vec_;
 	bool have_created_reader_;
@@ -85,8 +86,8 @@ private:
 	
 
 public:
-	ParquetTranslationManager(std::string parquet_path, ICDData icd);
-	ParquetTranslationManager(uint8_t id, ICDData icd);
+	ParquetTranslationManager(const ManagedPath& parquet_path, const ICDData& icd);
+	ParquetTranslationManager(uint8_t id, const ICDData& icd);
 	~ParquetTranslationManager();
 	int get_status();
 	void translate();

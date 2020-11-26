@@ -1,6 +1,6 @@
 #include "parquet_translation_manager.h"
 
-ParquetTranslationManager::ParquetTranslationManager(uint8_t id, ICDData icd) :
+ParquetTranslationManager::ParquetTranslationManager(uint8_t id, const ICDData& icd) :
 	parquet_path_(""), icd_(icd), iter_tools_(),
 	pool_(arrow::default_memory_pool()), have_created_reader_(false), status_(1),
 	table_count_(0), have_consumed_all_row_groups_(false), row_group_index_(0), raw_table_row_group_count_(0),
@@ -13,7 +13,8 @@ ParquetTranslationManager::ParquetTranslationManager(uint8_t id, ICDData icd) :
 
 }
 
-ParquetTranslationManager::ParquetTranslationManager(std::string parquet_path, ICDData icd) :
+ParquetTranslationManager::ParquetTranslationManager(const ManagedPath& parquet_path, 
+	const ICDData& icd) :
 	parquet_path_(parquet_path), pool_(arrow::default_memory_pool()), have_created_reader_(false), status_(1),
 	table_count_(0), have_consumed_all_row_groups_(false), row_group_index_(0), raw_table_row_group_count_(0),
 	raw_table_data_col_index_(0), data_org_(), output_dir_(), output_base_name_(),
@@ -41,12 +42,11 @@ void ParquetTranslationManager::set_select_msgs_list(bool select_msgs, std::vect
 uint8_t ParquetTranslationManager::setup_output_paths()
 {
 	// Determine if parquet_path is a directory.
-	std::filesystem::path input_parquet_path(parquet_path_);
-	parquet_path_is_dir_ = std::filesystem::is_directory(input_parquet_path);
+	parquet_path_is_dir_ = parquet_path_.is_directory();
 
 	if (parquet_path_is_dir_)
 	{
-		printf("Input path IS a directory: %s\n", parquet_path_.c_str());
+		printf("Input path IS a directory: %s\n", parquet_path_.RawString().c_str());
 
 		/*
 		If input path is a directory, then the Parquet "file" represented 
@@ -58,24 +58,27 @@ uint8_t ParquetTranslationManager::setup_output_paths()
 		*/
 		size_t metadata_find_result = std::string::npos;
 		size_t tmats_find_result = std::string::npos;
-		std::string temp_path = "";
-		for (auto& p : std::filesystem::directory_iterator(input_parquet_path))
+		std::string temp_path_str = "";
+		ManagedPath temp_path;
+		for (auto& p : std::filesystem::directory_iterator(parquet_path_))
 		{
-			temp_path = p.path().string();
-			if (!p.is_directory())
+			temp_path = ManagedPath(p.path());
+			temp_path_str = p.path().string();
+			if (!temp_path.is_directory())
 			{
 				// Do not add the path of the current file if it has the
 				// sub-string "metadata" because that file contains only
 				// metadata and will have been already consumed in main().
 				// Also ignore _TMATS.txt file.
-				metadata_find_result = temp_path.find("metadata");
-				tmats_find_result = temp_path.find("TMATS");
+				metadata_find_result = temp_path_str.find("metadata");
+				tmats_find_result = temp_path_str.find("TMATS");
 				if ((metadata_find_result == std::string::npos) &&
 					(tmats_find_result == std::string::npos))
 				{
 #ifdef DEBUG
 #if DEBUG > 1
-					printf("input path: %s\n", temp_path.c_str());
+					printf("ParquetTranslationManager::setup_output_paths(): input path: %s\n", 
+						temp_path_str.c_str());
 #endif
 #endif
 					input_parquet_paths_.push_back(temp_path);
