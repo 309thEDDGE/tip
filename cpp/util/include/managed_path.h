@@ -171,6 +171,35 @@ public:
 	*/
 	void GetFileSize(bool& success, uint64_t& result);
 
+	/*
+	Fill the output_list vector with ManagedPath objects corresponding
+	to the contents of the directory of the current object. If the current
+	object is not a directory or does not exist, the output_list will be empty
+	and the success bool will be false.
+
+	Optionally pass a vector of strings which are used to exclude files found
+	in the directory if one of the exclude_matching strings is a sub-string of
+	the filename() component.
+
+	Sort the objects in the output_list alphanumerically by the string paths
+	represented by each object.
+
+	Input:
+
+		success				- Output bool is true if the current object represents a 
+		directory and contents can be successfully iterated over using 
+		std::filesystem::directory_iterator. Otherwise false.
+
+		output_list			- Vector of ManagedPath objects representative of the
+		directory contents.
+
+		exclude_matching	- Vector of strings used to exclude files from 
+		the output_list which contain sub-strings matching any of the files
+		in this list.
+	*/
+	void GetListOfFiles(bool& success, std::vector<ManagedPath>& output_list,
+		const std::vector<std::string>& exclude_matching = std::vector<std::string>());
+
 
 	//////////////////////////////////////////
 	// Functions below not intended to be utilized directly.

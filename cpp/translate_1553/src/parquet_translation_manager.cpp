@@ -41,12 +41,17 @@ void ParquetTranslationManager::set_select_msgs_list(bool select_msgs, std::vect
 
 uint8_t ParquetTranslationManager::setup_output_paths()
 {
+
 	// Determine if parquet_path is a directory.
 	parquet_path_is_dir_ = parquet_path_.is_directory();
 
 	if (parquet_path_is_dir_)
 	{
 		printf("Input path IS a directory: %s\n", parquet_path_.RawString().c_str());
+
+		/*bool success = false;
+		std::vector<std::string> file_exclusion_substrings({ "metadata", "TMATS" });
+		parquet_path_.GetListOfFiles(success, input_parquet_paths_, file_exclusion_substrings);*/
 
 		/*
 		If input path is a directory, then the Parquet "file" represented 
