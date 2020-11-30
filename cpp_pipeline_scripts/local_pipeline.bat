@@ -1,5 +1,5 @@
 set REGISTRY=registry.il2.dsop.io
-set BUILD_IMAGE=%REGISTRY%/skicamp/project-opal/tip:tip-deps
+set BUILD_IMAGE=%REGISTRY%/skicamp/project-opal/tip/build:MR57
 set TEST_IMAGE=%REGISTRY%/skicamp/project-opal/tip/test:1.0
 
 
