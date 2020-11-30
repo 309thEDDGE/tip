@@ -27,11 +27,13 @@ bool GetArguments(int argc, char* argv[], ManagedPath& input_path,
 
 bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
 	const ManagedPath& dts_path, bool stop_after_bus_map, bool prompt_user,
-	uint64_t vote_threshold, std::map<std::string, std::string>& tmats_bus_name_corrections,
+	uint64_t vote_threshold, std::vector<std::string> bus_exclusions, 
+	std::map<std::string, std::string>& tmats_bus_name_corrections,
 	bool use_tmats_busmap,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
 bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prompt_user,
-	uint64_t vote_threshold, std::map<std::string, std::string>& tmats_bus_name_corrections,
+	uint64_t vote_threshold, std::vector<std::string> bus_exclusions,
+	std::map<std::string, std::string>& tmats_bus_name_corrections,
 	bool use_tmats_busmap,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
 bool MTTranslate(const ManagedPath& input_path, uint8_t thread_count, bool select_msgs,
@@ -66,7 +68,7 @@ int main(int argc, char* argv[])
 	DTS1553 dts1553;
 	std::map<uint64_t, std::string> chanid_to_bus_name_map;
 	if (!PrepareICDAndBusMap(dts1553, input_path, dts_path, config.stop_after_bus_map_,
-		config.prompt_user_, config.vote_threshold_, 
+		config.prompt_user_, config.vote_threshold_, config.bus_exclusions_,
 		config.tmats_busname_corrections_, config.use_tmats_busmap_, 
 		chanid_to_bus_name_map))
 	{
@@ -108,8 +110,9 @@ bool GetArguments(int argc, char* argv[], ManagedPath& input_path,
 
 bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
 	const ManagedPath& dts_path, bool stop_after_bus_map, bool prompt_user,
-	uint64_t vote_threshold, std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap, 
+	uint64_t vote_threshold, std::vector<std::string> bus_exclusions,
+	std::map<std::string, std::string>& tmats_bus_name_corrections,
+	bool use_tmats_busmap,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 
@@ -136,7 +139,7 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
 	// Generate the bus map from metadata and possibly user
 	// input.
 	if (!SynthesizeBusMap(dts1553, input_path, prompt_user, vote_threshold,
-		tmats_bus_name_corrections, use_tmats_busmap, 
+		bus_exclusions, tmats_bus_name_corrections, use_tmats_busmap, 
 		chanid_to_bus_name_map))
 	{
 		return false;
@@ -155,8 +158,10 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
 }
 
 bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prompt_user,
-	uint64_t vote_threshold, std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap, std::map<uint64_t,std::string>& chanid_to_bus_name_map)
+	uint64_t vote_threshold, std::vector<std::string> bus_exclusions,
+	std::map<std::string, std::string>& tmats_bus_name_corrections,
+	bool use_tmats_busmap,
+	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 	std::unordered_map<uint64_t, std::set<std::string>> message_key_to_busnames_map;
 
@@ -206,6 +211,10 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 	// Initialize the maps necessary to synthesize the channel ID to bus name map.
 	BusMap bm;
 
+	// convert vector to set
+	IterableTools it;
+	std::set<std::string> bus_exclusions_set = it.VecToSet(bus_exclusions);
+
 	// The mask will mask out word count/mode code from the transmit and 
 	// recieve command word portion of the key.
 	// The last 16 bits of the key represent the recieve command word
@@ -220,6 +229,7 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 		chanid_to_lruaddrs_set, 
 		mask,
 		vote_threshold,
+		bus_exclusions_set,
 		tmats_chanid_to_source_map, 
 		tmats_bus_name_corrections);
 
@@ -291,7 +301,6 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 	}
 
 	// Reverse the map that is populated in the previous step.
-	IterableTools it;
 	std::map<std::string, std::set<uint64_t>> bus_name_to_chanid_map =
 		it.ReverseMapSet(chanid_to_bus_name_set_map);
 
