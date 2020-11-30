@@ -7,6 +7,7 @@
 #include <string>
 #include <cstdio>
 #include <cstdint>
+#include "iterable_tools.h"
 
 namespace fs = std::filesystem;
 
@@ -51,7 +52,7 @@ public:
 
 	Returns: std::string
 	*/
-	std::string string();
+	std::string string() const;
 
 	/*
 	Get the parent path. Same functionality as the 
@@ -126,7 +127,7 @@ public:
 
 	Returns: the objects representation of the path as a std::string.
 	*/
-	std::string RawString();
+	std::string RawString() const;
 
 	/*
 	Create a file/dir path using the current object path and the final
@@ -139,8 +140,6 @@ public:
 	of the input path will be used and the extension_replacement argument 
 	will be concatenated without a file path separator to the final component.
 
-	This function creates a directory path if the 
-
 	Input: 
 
 		output_fname			- ManagedPath object from which the file name
@@ -150,7 +149,7 @@ public:
 		ex: if extension_replacement = "_abc.123", "a.txt" --> "a_abc.123"
 		ex: extension_replacement = "_append-this", "/a/b/base" --> "a/b/base_append-this"
 
-	Return: ManagedPath object representative of the new file path
+	Return: ManagedPath object representative of the new path
 	*/
 	ManagedPath CreatePathObject(const ManagedPath& output_fname,
 		const std::string& extension_replacement = "");
@@ -211,7 +210,7 @@ public:
 
 	Returns: fs::path object
 	*/
-	fs::path AmendPath(fs::path input_path);
+	fs::path AmendPath(fs::path input_path) const;
 };
 
 #endif

@@ -3,8 +3,8 @@
 TranslationMaster::TranslationMaster(const ManagedPath& parquet_path, uint8_t n_threads,
 	bool select_msgs, std::vector<std::string> select_msg_names, ICDData icd) :
 	n_threads_(n_threads), parquet_path_(parquet_path), worker_wait_(200),
-	worker_start_offset_(2000), is_multithreaded_(true), output_base_path_(""),
-	output_base_name_(""), msg_list_path_(""), parquet_path_is_dir_(false)
+	worker_start_offset_(2000), is_multithreaded_(true), output_base_path_(),
+	output_base_name_(), msg_list_path_(), parquet_path_is_dir_(false)
 {
 	// Setup ParquetTranslationManager classes.
 	for (uint8_t i = 0; i < n_threads_; i++)
@@ -67,12 +67,12 @@ uint8_t TranslationMaster::translate()
 		//printf("files_per_thread: %hhu\n", files_per_thread);
 
 		// Assign files to each thread.
-		std::vector<std::vector<std::string>> thread_parquet_paths;
+		std::vector<std::vector<ManagedPath>> thread_parquet_paths;
 		uint8_t counter = 0;
 		bool should_break = false;
 		for (int thread_index = 0; thread_index < n_threads_; thread_index++)
 		{
-			std::vector<std::string> temp_vec;
+			std::vector<ManagedPath> temp_vec;
 			thread_parquet_paths.push_back(temp_vec);
 			for (int i = 0; i < files_per_thread; i++)
 			{

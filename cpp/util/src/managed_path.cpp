@@ -1,6 +1,6 @@
 #include "managed_path.h"
 
-fs::path ManagedPath::AmendPath(fs::path input_path)
+fs::path ManagedPath::AmendPath(fs::path input_path) const
 {
 #ifdef __WIN64
 	if (input_path.string().size() > 260)
@@ -46,13 +46,13 @@ ManagedPath& ManagedPath::operator += (const ManagedPath& rhs)
 	return *this;
 }
 
-std::string ManagedPath::string()
+std::string ManagedPath::string() const
 {
 	fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));
 	return amended_path.fs::path::string();
 }
 
-std::string ManagedPath::RawString()
+std::string ManagedPath::RawString() const
 {
 	return this->fs::path::string();
 }
@@ -185,5 +185,65 @@ void ManagedPath::GetFileSize(bool& success, uint64_t& result)
 			success = false;
 			result = 0;
 		}
+	}
+}
+
+void ManagedPath::GetListOfFiles(bool& success, std::vector<ManagedPath>& output_list,
+	const std::vector<std::string>& exclude_matching)
+{
+	output_list.clear();
+
+	if (this->is_directory())
+	{
+		std::string temp_path_str = "";
+		ManagedPath temp_path;
+		bool skip_entry = false;
+		std::vector<ManagedPath> temp_output_list;
+		std::vector<std::string> filenames_list;
+		std::vector<std::string>::const_iterator it;
+		fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));
+		for (auto& p : std::filesystem::directory_iterator(amended_path))
+		{
+			temp_path = ManagedPath(p.path());
+			temp_path_str = temp_path.RawString();
+			skip_entry = false;
+			if (!temp_path.is_directory())
+			{
+				// If the current entry contains as a sub-string any of the
+				// strings int the exclude_matching vector, do not include 
+				// it in output_list.
+				for (it = exclude_matching.cbegin(); it != exclude_matching.cend(); ++it)
+				{
+					if (temp_path_str.find(*it) != std::string::npos)
+					{
+						skip_entry = true;
+						break;
+					}
+				}
+
+				if (skip_entry)
+					continue;
+
+				temp_output_list.push_back(temp_path);
+				filenames_list.push_back(temp_path.filename().RawString());
+			}
+		}
+
+		// Get the vector of indices that sorts the filenames vector.
+		IterableTools iter_tools;
+		std::vector<size_t> sorted_inds = iter_tools.ArgSortAscending(filenames_list);
+
+		// Fill the output_list with the objects, sorted by the file names.
+		output_list.resize(temp_output_list.size());
+		for (int i = 0; i < sorted_inds.size(); i++)
+			output_list[i] = temp_output_list[sorted_inds[i]];
+
+		success = true;
+	}
+	else
+	{
+		printf("ManagedPath::GetListOfFiles(): Object represents path that does not exist or "
+			"is not a directory (%s)\n", this->RawString().c_str());
+		success = false;
 	}
 }

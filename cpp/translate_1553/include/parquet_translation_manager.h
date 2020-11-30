@@ -75,7 +75,7 @@ private:
 
 	// Private functions
 	uint8_t setup_output_paths();
-	uint8_t open_raw_1553_parquet_file(std::string& current_path);
+	uint8_t open_raw_1553_parquet_file(const ManagedPath& current_path);
 	uint8_t close_raw_1553_parquet_file();
 	uint8_t consume_row_group();
 	uint8_t finalize_translation();
@@ -96,11 +96,11 @@ public:
 	
 
 	// Functions for use with multithreaded parsing only.
-	void operator()(std::filesystem::path& output_base_path, std::filesystem::path& output_base_name,
-		std::vector<std::string>& input_parquet_paths, bool is_multithreaded);
-	void get_paths(std::string parquet_path, std::filesystem::path& output_base_path, 
-		std::filesystem::path& output_base_name, std::filesystem::path& msg_list_path,
-		std::vector<std::string>& input_parquet_paths, bool& parquet_path_is_dir);
+	void operator()(const ManagedPath& output_base_path, const ManagedPath& output_base_name,
+		std::vector<ManagedPath>& input_parquet_paths, bool is_multithreaded);
+	void get_paths(ManagedPath parquet_path, ManagedPath& output_base_path,
+		ManagedPath& output_base_name, ManagedPath& msg_list_path,
+		std::vector<ManagedPath>& input_parquet_paths, bool& parquet_path_is_dir);
 	void get_message_list(std::vector<std::string>& msg_names_list, bool& message_list_exists);
 	void operator()(std::filesystem::path& output_base_path, std::filesystem::path& output_base_name,
 		std::vector<std::string>& input_parquet_paths, std::filesystem::path& msg_list_path, 

@@ -305,8 +305,8 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 	return true;
 }
 
-bool MTTranslate(std::string input_path, uint8_t thread_count, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData icd, const std::string& dts_path,
+bool MTTranslate(const ManagedPath& input_path, uint8_t thread_count, bool select_msgs,
+	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 	TranslationMaster tm(input_path, thread_count, select_msgs,
@@ -327,8 +327,8 @@ bool MTTranslate(std::string input_path, uint8_t thread_count, bool select_msgs,
 	return true;
 }
 
-bool Translate(std::string input_path, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData icd, const std::string& dts_path,
+bool Translate(const ManagedPath& input_path, bool select_msgs,
+	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 	ParquetTranslationManager ptm(input_path, icd);
@@ -361,7 +361,7 @@ bool RecordMetadata(const ManagedPath& translated_data_dir,
 	md.RecordSimpleMap(chanid_to_bus_name_map, "chanid_to_bus_name_map");
 
 	// Record the ICD path.
-	md.RecordSingleKeyValuePair("dts_path", dts_path);
+	md.RecordSingleKeyValuePair("dts_path", dts_path.RawString());
 
 	// Get a string containing the complete metadata output and
 	// and write it to the yaml file.

@@ -386,3 +386,95 @@ TEST(ManagedPathTest, GetFileSizeNonFile)
 
 	EXPECT_TRUE(std::filesystem::remove(std::filesystem::path(test_fname)));
 }
+
+TEST(ManagedPathTest, GetListOfFilesNotADirectory)
+{
+	// Create object representative of dir that does not exist.
+	std::string test_fname = "my_dir";
+	ManagedPath mp;
+	mp /= test_fname;
+
+	bool success = true;
+	std::vector<ManagedPath> file_list({ mp });
+
+	mp.GetListOfFiles(success, file_list);
+
+	EXPECT_FALSE(success);
+	EXPECT_EQ(file_list.size(), 0);
+}
+
+TEST(ManagedPathTest, GetListOfFilesCorrectList)
+{
+	std::string test_fname = "my_dir";
+	ManagedPath mp;
+	mp /= test_fname;
+
+	// Create dir
+	EXPECT_TRUE(mp.create_directory());
+
+	std::string file_name1 = "the-file.txt";
+	std::string file_name2 = "1other.data";
+
+	ManagedPath file_path1 = mp / file_name1;
+	ManagedPath file_path2 = mp / file_name2;
+
+	// Create files
+	std::ofstream(file_path1.RawString()).put('a');
+	std::ofstream(file_path2.RawString()).put('a');
+
+	bool success = false;
+	std::vector<ManagedPath> file_list({ mp });
+
+	mp.GetListOfFiles(success, file_list);
+
+	EXPECT_TRUE(success);
+	EXPECT_EQ(file_list.size(), 2);
+	
+	// Check correct files name in alphanumeric order
+	EXPECT_EQ(file_list[0].filename().RawString(), file_name2);
+	EXPECT_EQ(file_list[1].filename().RawString(), file_name1);
+
+	std::filesystem::path rm_path(mp.RawString());
+	std::filesystem::remove_all(rm_path);
+}
+
+TEST(ManagedPathTest, GetListOfFilesExcludeFiles)
+{
+	std::string test_fname = "my_dir";
+	ManagedPath mp;
+	mp /= test_fname;
+
+	// Create dir
+	EXPECT_TRUE(mp.create_directory());
+
+	std::string file_name1 = "the-file.txt";
+	std::string file_name2 = "1other.data";
+	std::string file_name3 = "b-files.out";
+
+	ManagedPath file_path1 = mp / file_name1;
+	ManagedPath file_path2 = mp / file_name2;
+	ManagedPath file_path3 = mp / file_name3;
+
+	// Create files
+	std::ofstream(file_path1.RawString()).put('a');
+	std::ofstream(file_path2.RawString()).put('a');
+	std::ofstream(file_path3.RawString()).put('a');
+
+	bool success = false;
+	std::vector<ManagedPath> file_list({ mp });
+
+	std::vector<std::string> exclude({ "the-" });
+
+	mp.GetListOfFiles(success, file_list, exclude);
+
+	EXPECT_TRUE(success);
+	EXPECT_EQ(file_list.size(), 2);
+
+	// Check correct files name in alphanumeric order
+	EXPECT_EQ(file_list[0].filename().RawString(), file_name2);
+	EXPECT_EQ(file_list[1].filename().RawString(), file_name3);
+
+	std::filesystem::path rm_path(mp.RawString());
+	std::filesystem::remove_all(rm_path);
+}
+
