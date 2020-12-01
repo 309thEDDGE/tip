@@ -58,6 +58,7 @@ if [ -z "$LOG_FILE" ]; then
 	# In the future we might have to run ctest in order to get coverage statistics
 	# If we do, try to make our tests compatible with the --parallel option of ctest
 	cd ${TEST_DIR}
+ldd ./tests
 	./tests
 	cd ${BASE_DIR}
 
@@ -182,5 +183,18 @@ for type in ${!MAX_TIMES[@]} ; do
 	fi
 	
 done
+
+echo ""
+echo "-------------- Check for Alkemist presence --------------"
+ldd ./bin/pqcompare
+readelf -x .txtrp ./bin/pqcompare | grep 0x -m3
+ldd ./bin/bincompare
+readelf -x .txtrp ./bin/bincompare | grep 0x -m3
+ldd ./bin/tests
+readelf -x .txtrp ./bin/tests | grep 0x -m3
+ldd ./bin/tip_parse_video
+readelf -x .txtrp ./bin/tip_parse_video | grep 0x -m3
+ldd ./bin/tip_translate
+readelf -x .txtrp ./bin/tip_translate | grep 0x -m3
 
 exit $EXIT_CODE

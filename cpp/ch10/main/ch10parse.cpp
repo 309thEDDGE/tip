@@ -53,8 +53,12 @@ int main(int argc, char* argv[])
 	std::string output_path = inpath.parent_path().string();
 	if (argc == 3)
 	{
-		// TODO: check that the output path is valid!
 		output_path = argv[2];
+		if (!std::filesystem::is_directory(std::filesystem::path(output_path)))
+		{
+			printf("User-defined output path is not a directory: %s\n", output_path.c_str());
+			return 0;
+		}
 		printf("Output path: %s\n", output_path.c_str());
 	}
 

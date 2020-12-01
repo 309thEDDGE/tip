@@ -14,6 +14,7 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 	std::set<uint64_t> channel_ids,
 	uint64_t mask,
 	uint64_t vote_threshold,
+	std::set<std::string> bus_exclusions,
 	std::map<uint64_t, std::string> tmats_chanid_to_source_map, 
 	std::map<std::string, std::string> tmats_busname_corrections)
 {
@@ -21,6 +22,18 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 	tmats_chanid_to_source_map_ = tmats_chanid_to_source_map;
 	channel_ids_ = channel_ids;
 	mask_ = mask;
+
+	// convert all bus exclusion elements to upper case
+	// to remove case sensitivity
+	for (auto bus : bus_exclusions)
+	{
+		std::transform(bus.begin(),
+			bus.end(),
+			bus.begin(),
+			::toupper);
+
+		upper_case_bus_exclusions_.insert(bus);
+	}
 
 	if (tmats_chanid_to_source_map.empty())
 		tmats_present_ = false;
@@ -33,6 +46,30 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 			iterable_tools_.UpdateMapVals<uint64_t, std::string>
 			(	tmats_chanid_to_source_map_,
 				tmats_busname_corrections);
+
+		// Exclude channel IDs when the bus_exclusion set contains
+		// a bus name that is a subset of a bus name in TMATs.
+		// The matches should not be case sensitive
+		for (std::map<uint64_t, std::string>::iterator it = tmats_chanid_to_source_map_.begin();
+			it != tmats_chanid_to_source_map_.end();
+			++it)
+		{
+			std::string temp;
+			temp = it->second;
+
+			std::transform(it->second.begin(), 
+				it->second.end(), 
+				temp.begin(), 
+				::toupper);
+
+			for (auto bus : upper_case_bus_exclusions_)
+			{
+				// handle exclusion bus being a subset 
+				// of a TMATs bus name
+				if (temp.find(bus) != std::string::npos)
+					excluded_channel_ids_.insert(it->first);
+			}
+		}
 	}
 
 	// Create message_key_to_channel_ids_map_ and
@@ -353,7 +390,39 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 	else
 	{
 		SubmitToFinalBusMap(vote_mapping, "Vote Method");
-	}	
+	}
+
+	// Exclude any residual bus names that match specified
+	// bus_exclusions, match is not case sensitive 
+	// and bus_exclusion matches can be subsets
+	// of mapped bus names.
+	for (std::map<uint64_t, std::pair<std::string, std::string>>::iterator it =
+		final_bus_map_with_sources_.begin();
+		it != final_bus_map_with_sources_.end();
+		++it)
+	{
+		std::string temp = it->second.first;
+		std::transform(temp.begin(),
+			temp.end(),
+			temp.begin(),
+			::toupper);
+
+		for (auto bus : upper_case_bus_exclusions_)
+		{
+			// handle exclusion bus being a subset 
+			// of a final bus name
+			if (temp.find(bus) != std::string::npos)
+				excluded_channel_ids_.insert(it->first);
+		}
+		
+	}
+
+	// Exclude channel ids in the exclusion map
+	for (auto channel_id : excluded_channel_ids_)
+	{
+		if (final_bus_map_with_sources_.count(channel_id) > 0)
+			final_bus_map_with_sources_.erase(channel_id);
+	}
 
 	Print();
 

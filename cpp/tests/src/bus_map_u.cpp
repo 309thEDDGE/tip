@@ -18,6 +18,7 @@ protected:
 	FileReader fr;
 	uint64_t mask = UINT64_MAX;
 	uint64_t vote_threshold = 0;
+	std::set<std::string> bus_name_exclusions;
 
 	BusMapTest()
 	{
@@ -95,6 +96,7 @@ TEST_F(BusMapTest, UserAdjustmentsAdjustThenValidChannelIDThenQuit)
 		std::set<uint64_t>({ 1,5 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -121,6 +123,7 @@ TEST_F(BusMapTest, UserAdjustmentsAdjustThenInvalidChannelIDThenQuit)
 		std::set<uint64_t>({ 1,5 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -146,6 +149,7 @@ TEST_F(BusMapTest, UserAdjustmentsAdjustThenValidChannelIDThenInvalidBusNameThen
 		std::set<uint64_t>({ 1,5 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -167,10 +171,15 @@ TEST_F(BusMapTest, UserAdjustmentsAdjustThenInvalidChannelIDThenValidChannelIDTh
 	icd_message_key_to_busnames_map[11 & mask] = std::set<std::string>({ "BUS2" });
 	icd_message_key_to_busnames_map[12 & mask] = std::set<std::string>({ "BUS3" });
 
+	// bus name exclusions should not limit the user from 
+	// manual selection
+	bus_name_exclusions.insert("BUS3");
+
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
 		std::set<uint64_t>({ 1,2,5 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -209,6 +218,7 @@ TEST_F(BusMapTest, UserAdjustmentsOverrideExistingWithNewNameAndSource)
 		std::set<uint64_t>({ 1,2,5 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0 });
@@ -242,6 +252,7 @@ TEST_F(BusMapTest, UserAdjustmentsAddFromNonMappedToFinalMap)
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });
@@ -278,6 +289,7 @@ TEST_F(BusMapTest, UserAdjustmentsMapMultipleAndContinueAdjustsFinalMap)
 		std::set<uint64_t>({ 1,2,3,4 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });
@@ -325,6 +337,7 @@ TEST_F(BusMapTest, UserAdjustmentsMapMultipleAndContinueAdjustsFinalMapTMATS)
 		std::set<uint64_t>({ 1,2,3,4 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 
@@ -356,6 +369,7 @@ TEST_F(BusMapTest, UserAdjustmentsEnsureNoMapInputDoesnotAllowChangesToFinalMap)
 		std::set<uint64_t>(),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	std::vector<std::string> adj_vec = { "2","invalid","q" };
@@ -377,6 +391,7 @@ TEST_F(BusMapTest, InitializeMapsInitialMapsAssigned)
 		std::set<uint64_t>(),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	EXPECT_EQ(b.GetICD_MessageKeyToBusNamesMap().size(),0);
@@ -389,6 +404,7 @@ TEST_F(BusMapTest, InitializeMapsInitialMapsAssigned)
 		std::set<uint64_t>({5,6,7,8}),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 	EXPECT_EQ(b.GetICD_MessageKeyToBusNamesMap(), icd_message_key_to_busnames_map);
 	EXPECT_THAT(b.GetChannelIDs(), ::testing::ElementsAre(5, 6, 7, 8));
@@ -407,6 +423,7 @@ TEST_F(BusMapTest, InitializeMapsWithMask)
 		std::set<uint64_t>({ 5,6,7,8 }),
 		mask_input,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	std::unordered_map<uint64_t, std::set<std::string>> compare_map;
@@ -427,6 +444,7 @@ TEST_F(BusMapTest, InitializeMapsMessageKeyToChannelIDCreationAndUniqueBuses)
 		std::set<uint64_t>(),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	icd_message_key_to_channelids_map[1] = std::set<uint64_t>();
@@ -450,6 +468,7 @@ TEST_F(BusMapTest, InitializeMapsTMATSCheck)
 		std::set<uint64_t>(),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 	EXPECT_FALSE(b.TmatsPresent());
 
@@ -463,6 +482,7 @@ TEST_F(BusMapTest, InitializeMapsTMATSCheck)
 		std::set<uint64_t>(),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 	EXPECT_TRUE(b.TmatsPresent());
 
@@ -481,6 +501,7 @@ TEST_F(BusMapTest, InitializeMapsTMATSReplacements)
 		std::set<uint64_t>(),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 	EXPECT_FALSE(b.TmatsPresent());
 
@@ -506,6 +527,7 @@ TEST_F(BusMapTest, InitializeMapsTMATSReplacements)
 		std::set<uint64_t>(),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map,
 		tmats_replacements);
 
@@ -618,6 +640,7 @@ TEST_F(BusMapTest, SubmitMessagesWithMask)
 		std::set<uint64_t>({ 0,1 }),
 		mask_input,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	// Both entries should map with the same key given the mask =  UINT64_MAX - 1
@@ -761,6 +784,7 @@ TEST_F(BusMapTest, FinalizeTMATSMoreChannelIDsThanNecessaryAndOverridesVoteMap)
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());
@@ -776,6 +800,7 @@ TEST_F(BusMapTest, FinalizeTMATSMoreChannelIDsThanNecessaryAndOverridesVoteMap)
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());	
@@ -819,6 +844,7 @@ TEST_F(BusMapTest, FinalizeTMATSFewerChannelIDsThanNecessaryAndOverridesVoteMap)
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());
@@ -866,6 +892,7 @@ TEST_F(BusMapTest, FinalizeVoteMappingMoreChannelIDsThanNecessaryAndOverridesTMA
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());
@@ -899,6 +926,200 @@ TEST_F(BusMapTest, FinalizeVoteMappingMoreChannelIDsThanNecessaryAndOverridesTMA
 	EXPECT_EQ(final_bus_map_with_source[3].second, "Vote Method");
 }
 
+
+TEST_F(BusMapTest, FinalizeVoteMappingExclusion)
+{
+	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUSB" }); 
+	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUSB" }); // duplicate
+	icd_message_key_to_busnames_map[12] = std::set<std::string>({ "BUSC" });
+	icd_message_key_to_busnames_map[13] = std::set<std::string>({ "BUSD" });
+	icd_message_key_to_busnames_map[14] = std::set<std::string>({ "BUSX" });
+	icd_message_key_to_busnames_map[15] = std::set<std::string>({ "BUSF" });
+	icd_message_key_to_busnames_map[16] = std::set<std::string>({ "BusGMUX" }); // not in TMATs but is in exclusion set, should be removed
+																				// includes subset and case sensitive tests
+	icd_message_key_to_busnames_map[17] = std::set<std::string>({ "BUSD" }); // duplicate
+
+
+	tmats_chanid_to_source_map[1] = "BUSBMUX"; // Subset test
+	tmats_chanid_to_source_map[2] = "BusC";	   // Upper/Lower case test
+	tmats_chanid_to_source_map[3] = "BUSD";    // Exact match
+	tmats_chanid_to_source_map[4] = "BUSX";	   // TMATs bus name replacement
+	tmats_chanid_to_source_map[5] = "BUSF";	   // Should be corrected and then removed
+	tmats_chanid_to_source_map[7] = "BUSD";    // Duplicate
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({ 0,1,2,3,4,5,6,7 }),
+		mask,
+		vote_threshold,
+		bus_name_exclusions,
+		tmats_chanid_to_source_map);
+
+	ASSERT_TRUE(b.TmatsPresent());
+
+	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0, 0, 0, 0, 0, 0, 0 });
+	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({ 10,11,12,13,14,15,16,17 });
+	std::vector<uint64_t> channel_ids = std::vector<uint64_t>({   0, 1, 2, 3, 4, 5, 6, 7 });
+
+	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
+
+	std::map<uint64_t, std::string> res;
+	bool continue_translation = b.Finalize(res, 0, false);
+	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 8);
+	EXPECT_TRUE(continue_translation);
+	EXPECT_EQ(res[0], "BUSB");
+	EXPECT_EQ(res[1], "BUSB");
+	EXPECT_EQ(res[2], "BUSC");
+	EXPECT_EQ(res[3], "BUSD");
+	EXPECT_EQ(res[4], "BUSX");
+	EXPECT_EQ(res[5], "BUSF");
+	EXPECT_EQ(res[6], "BusGMUX");
+	EXPECT_EQ(res[7], "BUSD");
+
+
+	// Also check the source
+	std::map<uint64_t, std::pair<std::string, std::string>> final_bus_map_with_source =
+		b.GetFinalBusMap_withSource();
+
+	EXPECT_TRUE(iterable_tools_.GetKeys(final_bus_map_with_source).size() == 8);
+
+	EXPECT_EQ(final_bus_map_with_source[0].first, "BUSB");
+	EXPECT_EQ(final_bus_map_with_source[0].second, "Vote Method");
+	EXPECT_EQ(final_bus_map_with_source[1].first, "BUSB");
+	EXPECT_EQ(final_bus_map_with_source[1].second, "Vote Method");
+	EXPECT_EQ(final_bus_map_with_source[2].first, "BUSC");
+	EXPECT_EQ(final_bus_map_with_source[2].second, "Vote Method");
+	EXPECT_EQ(final_bus_map_with_source[3].first, "BUSD");
+	EXPECT_EQ(final_bus_map_with_source[3].second, "Vote Method");
+	EXPECT_EQ(final_bus_map_with_source[4].first, "BUSX");
+	EXPECT_EQ(final_bus_map_with_source[4].second, "Vote Method");
+	EXPECT_EQ(final_bus_map_with_source[5].first, "BUSF");
+	EXPECT_EQ(final_bus_map_with_source[5].second, "Vote Method");
+	EXPECT_EQ(final_bus_map_with_source[6].first, "BusGMUX");
+	EXPECT_EQ(final_bus_map_with_source[6].second, "Vote Method");
+	EXPECT_EQ(final_bus_map_with_source[7].first, "BUSD");
+	EXPECT_EQ(final_bus_map_with_source[7].second, "Vote Method");
+
+
+	// After applying exclusion set
+	BusMap b2;
+
+	bus_name_exclusions = std::set<std::string>({ "BUSB","BUSC","BUSD", "BUSE", "BUSg" });
+	std::map<std::string, std::string> tmats_busname_replacements;
+	tmats_busname_replacements["BUSX"] = "BUSE";
+
+	b2.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({ 1,2,3,4,5,6 }),
+		mask,
+		vote_threshold,
+		bus_name_exclusions,
+		tmats_chanid_to_source_map,
+		tmats_busname_replacements);
+
+	ASSERT_TRUE(b2.TmatsPresent());
+
+	transmit_cmds = std::vector<uint64_t>({ 0, 0, 0, 0, 0, 0 });
+	recieve_cmds = std::vector<uint64_t>({ 11,12,13,14,15,16 });
+	channel_ids = std::vector<uint64_t>({   1, 2, 3, 4, 5, 6 });
+
+	EXPECT_TRUE(b2.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
+
+	continue_translation = b2.Finalize(res, 0, false);
+	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 1);
+	EXPECT_TRUE(continue_translation);
+	EXPECT_EQ(res[5], "BUSF");
+
+	// Also check the source
+	final_bus_map_with_source =
+		b2.GetFinalBusMap_withSource();
+
+	EXPECT_TRUE(iterable_tools_.GetKeys(final_bus_map_with_source).size() == 1);
+
+	EXPECT_EQ(final_bus_map_with_source[5].first, "BUSF");
+	EXPECT_EQ(final_bus_map_with_source[5].second, "Vote Method");
+}
+
+TEST_F(BusMapTest, FinalizeVoteMappingExclusionTMATS)
+{
+	tmats_chanid_to_source_map[1] = "BUSBMUX"; // Subset test
+	tmats_chanid_to_source_map[2] = "BusC";	   // Upper/Lower case test
+	tmats_chanid_to_source_map[3] = "BUSD";    // Exact match
+	tmats_chanid_to_source_map[4] = "BUSX";	   // TMATS bus name replacement
+	tmats_chanid_to_source_map[5] = "BUSF";	   // Should be corrected and then removed
+	tmats_chanid_to_source_map[6] = "BUSD";    // Duplicate
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({ 1,2,3,4,5,6 }),
+		mask,
+		vote_threshold,
+		bus_name_exclusions,
+		tmats_chanid_to_source_map);
+
+	ASSERT_TRUE(b.TmatsPresent());
+
+	std::map<uint64_t, std::string> res;
+	bool continue_translation = b.Finalize(res, true, false);
+	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 6);
+	EXPECT_TRUE(continue_translation);
+	EXPECT_EQ(res[1], "BUSBMUX");
+	EXPECT_EQ(res[2], "BusC");
+	EXPECT_EQ(res[3], "BUSD");
+	EXPECT_EQ(res[4], "BUSX");
+	EXPECT_EQ(res[5], "BUSF");
+	EXPECT_EQ(res[6], "BUSD");
+
+
+	// Also check the source
+	std::map<uint64_t, std::pair<std::string, std::string>> final_bus_map_with_source =
+		b.GetFinalBusMap_withSource();
+
+	EXPECT_TRUE(iterable_tools_.GetKeys(final_bus_map_with_source).size() == 6);
+
+	EXPECT_EQ(final_bus_map_with_source[1].first, "BUSBMUX");
+	EXPECT_EQ(final_bus_map_with_source[1].second, "TMATS");
+	EXPECT_EQ(final_bus_map_with_source[2].first, "BusC");
+	EXPECT_EQ(final_bus_map_with_source[2].second, "TMATS");
+	EXPECT_EQ(final_bus_map_with_source[3].first, "BUSD");
+	EXPECT_EQ(final_bus_map_with_source[3].second, "TMATS");
+	EXPECT_EQ(final_bus_map_with_source[4].first, "BUSX");
+	EXPECT_EQ(final_bus_map_with_source[4].second, "TMATS");
+	EXPECT_EQ(final_bus_map_with_source[5].first, "BUSF");
+	EXPECT_EQ(final_bus_map_with_source[5].second, "TMATS");
+	EXPECT_EQ(final_bus_map_with_source[6].first, "BUSD");
+	EXPECT_EQ(final_bus_map_with_source[6].second, "TMATS");
+
+
+	// After applying exclusion set
+	BusMap b2;
+
+	bus_name_exclusions = std::set<std::string>({ "BUSB","BUSC","BUSD", "BUSE"});
+	std::map<std::string, std::string> tmats_busname_replacements;
+	tmats_busname_replacements["BUSX"] = "BUSE";
+
+	b2.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({ 1,2,3,4,5,6 }),
+		mask,
+		vote_threshold,
+		bus_name_exclusions,
+		tmats_chanid_to_source_map,
+		tmats_busname_replacements);
+
+	ASSERT_TRUE(b2.TmatsPresent());
+
+	continue_translation = b2.Finalize(res, true, false);
+	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 1);
+	EXPECT_TRUE(continue_translation);
+	EXPECT_EQ(res[5], "BUSF");
+
+	// Also check the source
+	final_bus_map_with_source =
+		b2.GetFinalBusMap_withSource();
+
+	EXPECT_TRUE(iterable_tools_.GetKeys(final_bus_map_with_source).size() == 1);
+
+	EXPECT_EQ(final_bus_map_with_source[5].first, "BUSF");
+	EXPECT_EQ(final_bus_map_with_source[5].second, "TMATS");
+}
+
 TEST_F(BusMapTest, FinalizeVoteMappingFewerChannelIDsThanNecessaryAndOverridesTMATSMap)
 {
 	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUSA" });
@@ -917,6 +1138,7 @@ TEST_F(BusMapTest, FinalizeVoteMappingFewerChannelIDsThanNecessaryAndOverridesTM
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	ASSERT_TRUE(b.TmatsPresent());
@@ -1005,6 +1227,7 @@ TEST_F(BusMapTest, FinalizeClearExistingMap)
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	std::map<uint64_t, std::string> res;
@@ -1024,6 +1247,7 @@ TEST_F(BusMapTest, FinalizeReturnsFalseIfNothingMappedAndUserStopIsFalse)
 		std::set<uint64_t>({ 1,2,3 }),
 		mask,
 		vote_threshold,
+		bus_name_exclusions,
 		tmats_chanid_to_source_map);
 
 	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });
@@ -1031,6 +1255,48 @@ TEST_F(BusMapTest, FinalizeReturnsFalseIfNothingMappedAndUserStopIsFalse)
 	std::vector<uint64_t> channel_ids = std::vector<uint64_t>({   5, 8 });
 
 	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
+
+	std::map<uint64_t, std::string> res;
+	bool continue_translation = b.Finalize(res, 0, false);
+	EXPECT_FALSE(continue_translation);
+	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 0);
+}
+
+TEST_F(BusMapTest, FinalizeReturnsFalseIfEmptyChannelIDs)
+{
+	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUSA" });
+	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUSB" });
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>(),
+		mask,
+		vote_threshold,
+		bus_name_exclusions,
+		tmats_chanid_to_source_map);
+
+	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0 });
+	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({ 10,11 });
+	std::vector<uint64_t> channel_ids = std::vector<uint64_t>({ 5, 8 });
+
+	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
+
+	std::map<uint64_t, std::string> res;
+	bool continue_translation = b.Finalize(res, 0, false);
+	EXPECT_FALSE(continue_translation);
+	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 0);
+}
+
+TEST_F(BusMapTest, FinalizeReturnsFalseIfNoVotes)
+{
+	icd_message_key_to_busnames_map[10] = std::set<std::string>({ "BUSA" });
+	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUSB" });
+
+	b.InitializeMaps(&icd_message_key_to_busnames_map,
+		std::set<uint64_t>({ 1,4,8 }),
+		mask,
+		vote_threshold,
+		bus_name_exclusions,
+		tmats_chanid_to_source_map);
 
 	std::map<uint64_t, std::string> res;
 	bool continue_translation = b.Finalize(res, 0, false);

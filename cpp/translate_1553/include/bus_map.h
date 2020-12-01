@@ -36,6 +36,8 @@ private:
 	UserInput user_input_;
 	std::map<uint64_t, std::string>* final_map_ptr_;
 	uint64_t vote_threshold_;
+	std::set<uint64_t> excluded_channel_ids_;
+	std::set<std::string> upper_case_bus_exclusions_;
 
 	void PrepareFinalMap();
 	void PrintVoteMap();
@@ -85,6 +87,16 @@ public:
 
 	 vote_threshold				  -> for a mapping to be made, votes must be >= vote_threshold
 
+	 bus_exclusions				  -> if a bus name exists in the final bus map that also
+										exists in the bus_exclusions list, remove it from 
+										the final map. The bus_exclusion list marks a removal 
+										if it is a subset of a final mapped bus. It is also 
+										not case sensative when applying matches. 
+										If the excluded bus name exists in tmats_chanid_to_source_map,
+										the channel ID associated with the excluded bus will
+										also be removed even if the vote method suggests
+										a different bus mapping for that given channel ID.
+
 	 tmats_chanid_to_source_map	  -> non required map of channel ids to source(bus name)
 										from tmats. The information is in metadata
 										inside the parsed ch10 parquet file.
@@ -100,6 +112,7 @@ public:
 		std::set<uint64_t> channel_ids,
 		uint64_t mask = UINT64_MAX,
 		uint64_t vote_threshold = 1,
+		std::set<std::string> bus_exclusions = std::set<std::string>(),
 		std::map<uint64_t, std::string> tmats_chanid_to_source_map
 		= std::map<uint64_t, std::string>(),
 		std::map<std::string, std::string> tmats_busname_corrections
