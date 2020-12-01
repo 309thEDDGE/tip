@@ -54,7 +54,6 @@ uint8_t ParquetTranslationManager::setup_output_paths()
 		parquet_path_.GetListOfFiles(success, input_parquet_paths_, file_exclusion_substrings);
 		if (!success)
 			return 1;
-
 	}
 	else
 	{
@@ -68,15 +67,11 @@ uint8_t ParquetTranslationManager::setup_output_paths()
 	// directory.
 	output_dir_ = parquet_path_.parent_path().CreatePathObject(parquet_path_, "_translated");
 	output_base_name_ = output_dir_.filename();
-	if (!output_dir_.is_directory())
+	if(!output_dir_.create_directory())
 	{
-		bool create_dir = output_dir_.create_directory();
-		if (!create_dir)
-		{
-			printf("ParquetTranslationManager::create_paths(): Failed to create directory: %s\n",
-				output_dir_.RawString().c_str());
-			return 1;
-		}
+		printf("ParquetTranslationManager::create_paths(): Failed to create directory: %s\n",
+			output_dir_.RawString().c_str());
+		return 1;
 	}
 
 	printf("Output base name: %s\n", output_base_name_.RawString().c_str());

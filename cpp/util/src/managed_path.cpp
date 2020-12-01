@@ -3,7 +3,7 @@
 fs::path ManagedPath::AmendPath(fs::path input_path) const
 {
 #ifdef __WIN64
-	if (input_path.string().size() > 260)
+	if (input_path.string().size() > 259)
 	{
 		fs::path temp_path(windows_prefix_);
 		temp_path += input_path;
@@ -81,8 +81,8 @@ bool ManagedPath::create_directory()
 	// If the directory exists, return true.
 	if (fs::is_directory(amended_path))
 	{
-		printf("ManagedPath::CreateDir(): Directory already exists - %s\n", 
-			this->RawString().c_str());
+		/*printf("ManagedPath::create_directory(): Directory already exists - %s\n", 
+			this->RawString().c_str());*/
 		return true;
 	}
 
@@ -90,7 +90,7 @@ bool ManagedPath::create_directory()
 	ManagedPath parent = this->parent_path();
 	if (!parent.is_directory())
 	{
-		printf("ManagedPath::CreateDir(): Parent directory does not exist - %s\n",
+		printf("ManagedPath::create_directory(): Parent directory does not exist - %s\n",
 			parent.RawString().c_str());
 		return false;
 	}
@@ -107,7 +107,7 @@ bool ManagedPath::create_directory()
 		}
 		else
 		{
-			printf("ManagedPath::CreateDir(): Failed to created dir (attempt %d) - %s\n",
+			printf("ManagedPath::create_directory(): Failed to created dir (attempt %d) - %s\n",
 				i + 1, this->RawString().c_str());
 		}
 
@@ -119,7 +119,7 @@ bool ManagedPath::create_directory()
 			break;
 		else if(i == max_create_dir_attempts_ - 1)
 		{
-			printf("ManagedPath::CreateDir(): Failed to created dir after %d attemps - %s\n",
+			printf("ManagedPath::create_directory(): Failed to created dir after %d attemps - %s\n",
 				max_create_dir_attempts_, this->RawString().c_str());
 			return false;
 		}

@@ -8,6 +8,7 @@
 #include <chrono>
 #include "icd_data.h"
 #include "icd_translate.h"
+#include "managed_path.h"
 
 
 class Translatable1553Table
@@ -97,7 +98,7 @@ public:
 	void append_data(int64_t& time, const int32_t* raw_data, int64_t& row_ind);
 	std::string& name();
 	uint16_t translate();
-	uint8_t configure_parquet_context(std::filesystem::path& output_dir, std::filesystem::path& base_name,
+	uint8_t configure_parquet_context(ManagedPath& output_dir, ManagedPath& base_name,
 		bool is_multithreaded, uint8_t id);
 	void write_to_parquet_file(uint16_t& write_rows_count);
 	bool is_bad();

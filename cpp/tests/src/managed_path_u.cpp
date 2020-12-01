@@ -42,7 +42,7 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 	//printf("string len: %zu\n", mp.RawString().size());
 	test_path = std::filesystem::path(mp.RawString());
 	EXPECT_TRUE(test_path.string().size() == 260);
-	EXPECT_FALSE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
+	EXPECT_TRUE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
 
 	// > 260
 	test_path_str = std::vector<std::string>({ "this","path","to-the-file","must_be",
@@ -80,7 +80,7 @@ TEST(ManagedPathTest, string)
 	for (auto s : test_path_str)
 		mp /= s;
 	EXPECT_TRUE(mp.RawString().size() == 260);
-	EXPECT_FALSE(HasWindowsPrefix(mp.string()));
+	EXPECT_TRUE(HasWindowsPrefix(mp.string()));
 
 	// > 260
 	test_path_str = std::vector<std::string>({ "this","path","to-the-file","must_be",

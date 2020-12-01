@@ -110,7 +110,8 @@ public:
 	object, similar to std::filesystem::create_directory.
 
 	Returns: true if the directory does not exist and the 
-	directory is successfully created, false otherwise.
+	directory is successfully created or if the directory
+	already exists, otherwise false.
 	*/
 	bool create_directory();
 

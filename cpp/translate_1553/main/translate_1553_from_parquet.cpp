@@ -29,13 +29,11 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
 	const ManagedPath& dts_path, bool stop_after_bus_map, bool prompt_user,
 	uint64_t vote_threshold, std::vector<std::string> bus_exclusions, 
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap,
-	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
+	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map);
 bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prompt_user,
 	uint64_t vote_threshold, std::vector<std::string> bus_exclusions,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap,
-	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
+	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map);
 bool MTTranslate(const ManagedPath& input_path, uint8_t thread_count, bool select_msgs,
 	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
@@ -112,8 +110,7 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
 	const ManagedPath& dts_path, bool stop_after_bus_map, bool prompt_user,
 	uint64_t vote_threshold, std::vector<std::string> bus_exclusions,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap,
-	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
+	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 
 	// Read lines from ICD text file, ingest, and manipulate.
@@ -160,8 +157,7 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
 bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prompt_user,
 	uint64_t vote_threshold, std::vector<std::string> bus_exclusions,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap,
-	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
+	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 	std::unordered_map<uint64_t, std::set<std::string>> message_key_to_busnames_map;
 
