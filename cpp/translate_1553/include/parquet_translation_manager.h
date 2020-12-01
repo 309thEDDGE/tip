@@ -5,7 +5,6 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
-#include <filesystem>
 #include <chrono>
 #include <atomic>
 #include "managed_path.h"
@@ -102,11 +101,9 @@ public:
 		ManagedPath& output_base_name, ManagedPath& msg_list_path,
 		std::vector<ManagedPath>& input_parquet_paths, bool& parquet_path_is_dir);
 	void get_message_list(std::vector<std::string>& msg_names_list, bool& message_list_exists);
-	void operator()(std::filesystem::path& output_base_path, std::filesystem::path& output_base_name,
-		std::vector<std::string>& input_parquet_paths, std::filesystem::path& msg_list_path, 
-		std::vector<std::string>& msg_names_list, bool is_multithreaded);
+
 	std::atomic<bool>& completion_status();
-	std::filesystem::path GetTranslatedDataDirectory();
+	ManagedPath GetTranslatedDataDirectory();
 };
 
 #endif 

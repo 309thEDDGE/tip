@@ -80,7 +80,7 @@ uint8_t ParquetTranslationManager::setup_output_paths()
 	return 0;
 }
 
-std::filesystem::path ParquetTranslationManager::GetTranslatedDataDirectory()
+ManagedPath ParquetTranslationManager::GetTranslatedDataDirectory()
 {
 	return output_dir_;
 }
@@ -106,8 +106,6 @@ std::atomic<bool>& ParquetTranslationManager::completion_status()
 {
 	return complete_;
 }
-
-
 
 void ParquetTranslationManager::operator()(const ManagedPath& output_base_path, const ManagedPath& output_base_name,
 	std::vector<ManagedPath>& input_parquet_paths, bool is_multithreaded)

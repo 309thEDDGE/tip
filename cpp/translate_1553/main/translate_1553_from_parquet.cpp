@@ -12,7 +12,6 @@
 #include "managed_path.h"
 #include <arrow/api.h>
 #include <arrow/io/api.h>
-#include <filesystem>
 #include <iostream>
 #include <cstdlib>
 #include <set>
@@ -359,7 +358,7 @@ bool RecordMetadata(const ManagedPath& translated_data_dir,
 {
 	// Use Metadata class to create the output metadata file path.
 	Metadata md;
-	std::filesystem::path md_path = md.GetYamlMetadataPath(translated_data_dir,
+	ManagedPath md_path = md.GetYamlMetadataPath(translated_data_dir,
 		"_metadata");
 
 	// Record the final bus map used for translation.

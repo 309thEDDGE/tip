@@ -6,8 +6,8 @@
 #include <cstdint>
 #include "icd_element.h"
 #include "parse_text.h"
-#include "iterable_tools.h"
 #include <filesystem>
+#include "managed_path.h"
 #include <cctype>
 #include <algorithm>
 #include "yaml-cpp/yaml.h"
