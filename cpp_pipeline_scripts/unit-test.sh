@@ -82,6 +82,8 @@ else
 	# Don't set EXIT_CODE; the pipeline doesn't expect translation to succeed at this point
 fi
 
+echo ""
+echo "-------------- Check for Alkemist presence --------------"
 ldd ./bin/pqcompare
 readelf -x .txtrp ./bin/pqcompare | grep 0x -m3
 ldd ./bin/bincompare
