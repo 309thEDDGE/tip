@@ -34,7 +34,7 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 	// = 260
 	test_path_str = std::vector<std::string>({ "this","path","to-the-file","must_be",
 		"_equivalent_to_260_chars_in_size", "this-is-a-long-part01",
-		"this-is-a-long-part02", "this-is-a-long-part03\\this-is-a-long-part04",
+		"this-is-a-long-part02", "this-is-a-long-part03", "this-is-a-long-part04",
 		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-a"});
 	mp = ManagedPath();
 	for (auto s : test_path_str)
@@ -42,19 +42,27 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 	//printf("string len: %zu\n", mp.RawString().size());
 	test_path = std::filesystem::path(mp.RawString());
 	EXPECT_TRUE(test_path.string().size() == 260);
+#ifdef __WIN64
 	EXPECT_TRUE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
+#elif defined __linux__
+	EXPECT_FALSE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
+#endif
 
 	// > 260
 	test_path_str = std::vector<std::string>({ "this","path","to-the-file","must_be",
 		"_equivalent_to_260_chars_in_size", "this-is-a-long-part01",
-		"this-is-a-long-part02", "this-is-a-long-part03\\this-is-a-long-part04",
+		"this-is-a-long-part02", "this-is-a-long-part03", "this-is-a-long-part04",
 		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-another-very-long-part" });
 	mp = ManagedPath();
 	for (auto s : test_path_str)
 		mp /= s;
 	test_path = std::filesystem::path(mp.RawString());
 	EXPECT_TRUE(test_path.string().size() > 260);
+#ifdef __WIN64
 	EXPECT_TRUE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
+#elif defined __linux__
+	EXPECT_FALSE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
+#endif
 }
 
 TEST(ManagedPathTest, string)
@@ -74,24 +82,32 @@ TEST(ManagedPathTest, string)
 	// = 260
 	test_path_str = std::vector<std::string>({ "this","path","to-the-file","must_be",
 		"_equivalent_to_260_chars_in_size", "this-is-a-long-part01",
-		"this-is-a-long-part02", "this-is-a-long-part03\\this-is-a-long-part04",
+		"this-is-a-long-part02", "this-is-a-long-part03", "this-is-a-long-part04",
 		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-a" });
 	mp = ManagedPath();
 	for (auto s : test_path_str)
 		mp /= s;
 	EXPECT_TRUE(mp.RawString().size() == 260);
+#ifdef __WIN64
 	EXPECT_TRUE(HasWindowsPrefix(mp.string()));
+#elif defined __linux__
+	EXPECT_FALSE(HasWindowsPrefix(mp.string()));
+#endif
 
 	// > 260
 	test_path_str = std::vector<std::string>({ "this","path","to-the-file","must_be",
 		"_equivalent_to_260_chars_in_size", "this-is-a-long-part01",
-		"this-is-a-long-part02", "this-is-a-long-part03\\this-is-a-long-part04",
+		"this-is-a-long-part02", "this-is-a-long-part03", "this-is-a-long-part04",
 		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-another-very-long-part" });
 	mp = ManagedPath();
 	for (auto s : test_path_str)
 		mp /= s;
 	EXPECT_TRUE(mp.RawString().size() > 260);
+#ifdef __WIN64
 	EXPECT_TRUE(HasWindowsPrefix(mp.string()));
+#elif defined __linux__
+	EXPECT_FALSE(HasWindowsPrefix(mp.string()));
+#endif
 }
 
 TEST(ManagedPathTest, CreateDirectoryAlreadyExists)
