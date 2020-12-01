@@ -400,6 +400,14 @@ bool ICDTranslate::ConfigureWordLevel(size_t input_word_count, std::vector<OutTy
 #endif
 		return false;
 	}
+
+	// Scale factor of 0 does not give meaningful data. Handle
+	// case when MSB val implies scale factor of zero.
+	if (scale_ == 0.0)
+		scale_ = 1.0;
+	if (scale_twos_ == 0.0)
+		scale_twos_ = 1.0;
+
 	return true;
 }
 
