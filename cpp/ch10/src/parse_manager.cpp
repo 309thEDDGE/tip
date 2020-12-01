@@ -199,7 +199,7 @@ void ParseManager::start_workers()
 	// Create metadata object and create output path name for metadata
 	// to be recorded in 1553 output directory.
 	Metadata md;
-	std::filesystem::path md_path = md.GetYamlMetadataPath(
+	ManagedPath md_path = md.GetYamlMetadataPath(
 		output_dir_map_[Ch10DataType::MILSTD1553_DATA_F1],
 		"_metadata");
 
@@ -237,7 +237,7 @@ void ParseManager::start_workers()
 	// Create metadata object for video metadata.
 	Metadata vmd;
 	md_path = vmd.GetYamlMetadataPath(
-		fspath_map[Ch10DataType::VIDEO_DATA_F0],
+		output_dir_map_[Ch10DataType::VIDEO_DATA_F0],
 		"_metadata");
 
 	// Get the channel ID to minimum time stamp map.
