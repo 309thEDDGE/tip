@@ -36,17 +36,17 @@ else
 	MAKE="make -j8"
 fi
 
-# echo "Setting each source file mod time to its last commit time"
-# cd $BASE_DIR
-# for FILE in $(git ls-files | grep -e "\.cpp$\|\.h$")
-# do
-#     TIME=$(git log --pretty=format:%cd -n 1 --date=iso -- "$FILE")
-#     TIME=$(date -d "$TIME" +%Y%m%d%H%M.%S)
-#     touch -m -t "$TIME" "$FILE"
-# 	echo -n .
-# done
-# echo ""
-# echo "Done"
+echo "Setting each source file mod time to its last commit time"
+cd $BASE_DIR
+for FILE in $(git ls-files | grep -e "\.cpp$\|\.h$")
+do
+    TIME=$(git log --pretty=format:%cd -n 1 --date=iso -- "$FILE")
+    TIME=$(date -d "$TIME" +%Y%m%d%H%M.%S)
+    touch -m -t "$TIME" "$FILE"
+	echo -n .
+done
+echo ""
+echo "Done"
 
 echo "Running '$CMAKE' for TIP"
 # the pipeline build image has a /deps directory
