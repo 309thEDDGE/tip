@@ -18,7 +18,7 @@ bool HasWindowsPrefix(std::string input_str)
 
 TEST(ManagedPathTest, AmendPathInsertsPrefix)
 {
-	ManagedPath mp;
+	ManagedPath mp(std::string("start"));
 
 	// < 260
 	std::vector<std::string> test_path_str = { "data", "Is", "not-here", "ok.txt" };
@@ -32,16 +32,17 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 	EXPECT_FALSE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
 
 	// = 260
-	test_path_str = std::vector<std::string>({ "this","path","to-the-file","must_be",
+	test_path_str = std::vector<std::string>({ "path","to-the-file","must_be",
 		"_equivalent_to_260_chars_in_size", "this-is-a-long-part01",
 		"this-is-a-long-part02", "this-is-a-long-part03", "this-is-a-long-part04",
-		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-a"});
-	mp = ManagedPath();
+		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-a-long-part07",
+		"this-is-a-long-part08", "this-is-a-long-part09" });
+	mp = ManagedPath(std::string("this"));
 	for (auto s : test_path_str)
 		mp /= s;
-	//printf("string len: %zu\n", mp.RawString().size());
+	printf("string len: %zu\n", mp.RawString().size());
 	test_path = std::filesystem::path(mp.RawString());
-	EXPECT_TRUE(test_path.string().size() == 260);
+	EXPECT_EQ(test_path.string().size(), 260);
 #ifdef __WIN64
 	EXPECT_TRUE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
 #elif defined __linux__
@@ -49,11 +50,12 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 #endif
 
 	// > 260
-	test_path_str = std::vector<std::string>({ "this","path","to-the-file","must_be",
+	test_path_str = std::vector<std::string>({ "path","to-the-file","must_be",
 		"_equivalent_to_260_chars_in_size", "this-is-a-long-part01",
 		"this-is-a-long-part02", "this-is-a-long-part03", "this-is-a-long-part04",
-		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-another-very-long-part" });
-	mp = ManagedPath();
+		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-a-long-part07",
+		"this-is-a-long-part08", "this-is-a-long-part09", "this-is-a-long-part10" });
+	mp = ManagedPath(std::string("this"));
 	for (auto s : test_path_str)
 		mp /= s;
 	test_path = std::filesystem::path(mp.RawString());
@@ -68,7 +70,7 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 TEST(ManagedPathTest, string)
 {
 	
-	ManagedPath mp;
+	ManagedPath mp(std::string("start"));
 
 	// < 260
 	std::vector<std::string> test_path_str = { "data", "Is", "not-here", "ok.txt" };
@@ -80,14 +82,15 @@ TEST(ManagedPathTest, string)
 	EXPECT_FALSE(HasWindowsPrefix(mp.string()));
 
 	// = 260
-	test_path_str = std::vector<std::string>({ "this","path","to-the-file","must_be",
+	test_path_str = std::vector<std::string>({ "path","to-the-file","must_be",
 		"_equivalent_to_260_chars_in_size", "this-is-a-long-part01",
 		"this-is-a-long-part02", "this-is-a-long-part03", "this-is-a-long-part04",
-		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-a" });
-	mp = ManagedPath();
+		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-a-long-part07",
+		"this-is-a-long-part08", "this-is-a-long-part09" });
+	mp = ManagedPath(std::string("this"));
 	for (auto s : test_path_str)
 		mp /= s;
-	EXPECT_TRUE(mp.RawString().size() == 260);
+	EXPECT_EQ(mp.RawString().size(), 260);
 #ifdef __WIN64
 	EXPECT_TRUE(HasWindowsPrefix(mp.string()));
 #elif defined __linux__
@@ -95,11 +98,12 @@ TEST(ManagedPathTest, string)
 #endif
 
 	// > 260
-	test_path_str = std::vector<std::string>({ "this","path","to-the-file","must_be",
+	test_path_str = std::vector<std::string>({ "path","to-the-file","must_be",
 		"_equivalent_to_260_chars_in_size", "this-is-a-long-part01",
 		"this-is-a-long-part02", "this-is-a-long-part03", "this-is-a-long-part04",
-		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-another-very-long-part" });
-	mp = ManagedPath();
+		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-a-long-part07",
+		"this-is-a-long-part08", "this-is-a-long-part09", "this-is-a-long-part10" });
+	mp = ManagedPath(std::string("this"));
 	for (auto s : test_path_str)
 		mp /= s;
 	EXPECT_TRUE(mp.RawString().size() > 260);
