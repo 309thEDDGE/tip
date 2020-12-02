@@ -104,7 +104,7 @@ uint8_t TranslationMaster::translate()
 		{
 			printf("\nThread %d processing:\n", thread_index);
 			for (int i = 0; i < thread_parquet_paths[thread_index].size(); i++)
-				printf("%s\n", thread_parquet_paths[thread_index][i].c_str());
+				printf("%s\n", thread_parquet_paths[thread_index][i].RawString().c_str());
 			if (!debug)
 			{
 				threads_.push_back(std::thread(std::ref(*(ptm_vec_[thread_index])), 

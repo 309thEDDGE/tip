@@ -230,9 +230,9 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 
 	ParquetReader pr;
 	pr.SetManualRowgroupIncrementMode();
-	if (!pr.SetPQPath(input_path.string()))
+	if (!pr.SetPQPath(input_path))
 	{
-		printf("Non Existant Path %s\n",input_path.RawString().c_str());
+		printf("Non Existent Path %s\n",input_path.RawString().c_str());
 		return false;
 	};
 
