@@ -225,6 +225,28 @@ public:
 	static std::vector<ManagedPath> ExcludePathsWithSubString(const std::vector<ManagedPath>&
 		input_paths, const std::vector<std::string>& substrings);
 
+
+	/*
+	Filter a vector of ManagedPath objects by selecting/keeping all objects from the vector
+	that represent paths which contain a substring equal to one of the substrings in
+	the substrings vector.
+
+	Input:
+
+		input_paths	- Vector of ManagedPath objects
+
+		substrings	- Vector of strings used to select files from
+		the input list which contain sub-strings matching any of the files
+		in this list.
+
+	Return:
+
+		Vector of ManagedPath objects which represent paths that contain
+		substrings matching at least one of those in the substrings vector.
+	*/
+	static std::vector<ManagedPath> SelectPathsWithSubString(const std::vector<ManagedPath>&
+		input_paths, const std::vector<std::string>& substrings);
+
 	/*
 	Filter a vector of ManagedPath objects by removing all objects which correspond
 	to directories or do not exist.
@@ -239,16 +261,19 @@ public:
 	*/
 	static std::vector<ManagedPath> SelectFiles(const std::vector<ManagedPath>& input_paths);
 
-	/*static std::vector<ManagedPath> GetDirectories(const std::vector<ManagedPath>& input_paths);
+	/*
+	Filter a vector of ManagedPath objects by removing all objects which correspond
+	to files or do not exist.
 
-	static std::vector<ManagedPath> GetFiles(const std::vector<ManagedPath>& input_paths);
+	Input:
 
-	static std::vector<ManagedPath> ExcludePathsWithSubString(const std::vector<ManagedPath>&
-		input_paths, const std::vector<std::string>& substrings);
+		input_paths	- Vector of ManagedPath objects
 
-	static std::vector<ManagedPath> SelectPathsWithSubstring(const std::vector<ManagedPath>&
-		input_paths, const std::vector<std::string>& substrings);*/
+	Return:
 
+		Vector of ManagedPath objects which represent directories.
+	*/
+	static std::vector<ManagedPath> SelectDirectories(const std::vector<ManagedPath>& input_paths);
 
 
 	//////////////////////////////////////////

@@ -264,6 +264,34 @@ std::vector<ManagedPath> ManagedPath::ExcludePathsWithSubString(const std::vecto
 	return return_paths;
 }
 
+std::vector<ManagedPath> ManagedPath::SelectPathsWithSubString(const std::vector<ManagedPath>&
+	input_paths, const std::vector<std::string>& substrings)
+{
+	std::vector<ManagedPath> return_paths;
+	std::vector<std::string>::const_iterator it;
+	std::string temp_path_str = "";
+
+	for (std::vector<ManagedPath>::const_iterator mpit = input_paths.cbegin();
+		mpit != input_paths.cend(); ++mpit)
+	{
+		temp_path_str = mpit->RawString();
+
+		// If the current entry contains as a sub-string any of the
+		// strings int the substrings vector, do not include 
+		// it in return_paths.
+		for (it = substrings.cbegin(); it != substrings.cend(); ++it)
+		{
+			if (temp_path_str.find(*it) != std::string::npos)
+			{
+				return_paths.push_back(*mpit);
+				break;
+			}
+		}
+	}
+
+	return return_paths;
+}
+
 std::vector<ManagedPath> ManagedPath::SelectFiles(const std::vector<ManagedPath>& input_paths)
 {
 	std::vector<ManagedPath> return_paths;
@@ -274,6 +302,24 @@ std::vector<ManagedPath> ManagedPath::SelectFiles(const std::vector<ManagedPath>
 		if (mpit->exists())
 		{
 			if (mpit->is_regular_file())
+			{
+				return_paths.push_back(*mpit);
+			}
+		}
+	}
+	return return_paths;
+}
+
+std::vector<ManagedPath> ManagedPath::SelectDirectories(const std::vector<ManagedPath>& input_paths)
+{
+	std::vector<ManagedPath> return_paths;
+
+	for (std::vector<ManagedPath>::const_iterator mpit = input_paths.cbegin();
+		mpit != input_paths.cend(); ++mpit)
+	{
+		if (mpit->exists())
+		{
+			if (mpit->is_directory())
 			{
 				return_paths.push_back(*mpit);
 			}

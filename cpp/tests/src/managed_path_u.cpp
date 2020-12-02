@@ -531,6 +531,82 @@ TEST(ManagedPathTest, ExcludePathsWithSubString)
 	std::filesystem::remove_all(rm_path);
 }
 
+TEST(ManagedPathTest, SelectPathsWithSubString)
+{
+	std::string test_fname = "my_dir";
+	ManagedPath mp;
+	mp /= test_fname;
+
+	// Create dir
+	EXPECT_TRUE(mp.create_directory());
+
+	std::string file_name1 = "the-file.txt";
+	std::string file_name2 = "1fileother.data";
+	std::string file_name3 = "b-files.out";
+
+	ManagedPath file_path1 = mp / file_name1;
+	ManagedPath file_path2 = mp / file_name2;
+	ManagedPath file_path3 = mp / file_name3;
+
+	// Create files
+	std::ofstream(file_path1.RawString()).put('a');
+	std::ofstream(file_path2.RawString()).put('a');
+	std::ofstream(file_path3.RawString()).put('a');
+
+	bool success = false;
+	std::vector<ManagedPath> dir_entries;
+
+	mp.ListDirectoryEntries(success, dir_entries);
+	EXPECT_TRUE(success);
+	EXPECT_EQ(dir_entries.size(), 3);
+
+	// 
+	// Select all
+	//
+	std::vector<std::string> substrings({ "file" });
+
+	std::vector<ManagedPath> result = ManagedPath::SelectPathsWithSubString(
+		dir_entries, substrings);
+
+	// Removed the "the-file.txt" entry.
+	EXPECT_EQ(result.size(), 3);
+
+	// Check correct files name in alphanumeric order
+	EXPECT_EQ(result[0].filename().RawString(), file_name2);
+	EXPECT_EQ(result[1].filename().RawString(), file_name3);
+	EXPECT_EQ(result[2].filename().RawString(), file_name1);
+
+	//
+	// Select single entry
+	//
+	substrings = std::vector<std::string>({ "other" });
+	result = ManagedPath::SelectPathsWithSubString(
+		dir_entries, substrings);
+
+	// Removed the "the-file.txt" and "b-files.out" entries.
+	EXPECT_EQ(result.size(), 1);
+
+	// Check correct files name in alphanumeric order
+	EXPECT_EQ(result[0].filename().RawString(), file_name2);
+
+	//
+	// Select multiple
+	//
+	substrings = std::vector<std::string>({ "-file" });
+	result = ManagedPath::SelectPathsWithSubString(
+		dir_entries, substrings);
+
+	// Removed the "the-file.txt".
+	EXPECT_EQ(result.size(), 2);
+
+	// Check correct files name in alphanumeric order
+	EXPECT_EQ(result[0].filename().RawString(), file_name3);
+	EXPECT_EQ(result[1].filename().RawString(), file_name1);
+
+	std::filesystem::path rm_path(mp.RawString());
+	std::filesystem::remove_all(rm_path);
+}
+
 TEST(ManagedPathTest, SelectFiles)
 {
 	std::string test_fname = "my_dir";
@@ -548,7 +624,7 @@ TEST(ManagedPathTest, SelectFiles)
 	ManagedPath file_path2 = mp / file_name2;
 	ManagedPath file_path3 = mp / file_name3;
 
-	// Create files
+	// Create files and dirs
 	std::ofstream(file_path1.RawString()).put('a');
 	std::ofstream(file_path2.RawString()).put('a');
 	EXPECT_TRUE(file_path3.create_directory());
@@ -570,4 +646,46 @@ TEST(ManagedPathTest, SelectFiles)
 	std::filesystem::path rm_path(mp.RawString());
 	std::filesystem::remove_all(rm_path);
 }
+
+TEST(ManagedPathTest, SelectDirectories)
+{
+	std::string test_fname = "my_dir";
+	ManagedPath mp;
+	mp /= test_fname;
+
+	// Create dir
+	EXPECT_TRUE(mp.create_directory());
+
+	std::string file_name1 = "the-file.txt";
+	std::string file_name2 = "1other.data";
+	std::string file_name3 = "b-files.out";
+
+	ManagedPath file_path1 = mp / file_name1;
+	ManagedPath file_path2 = mp / file_name2;
+	ManagedPath file_path3 = mp / file_name3;
+
+	// Create files and dirs
+	std::ofstream(file_path1.RawString()).put('a');
+	EXPECT_TRUE(file_path2.create_directory());
+	EXPECT_TRUE(file_path3.create_directory());
+
+	bool success = false;
+	std::vector<ManagedPath> dir_entries;
+
+	mp.ListDirectoryEntries(success, dir_entries);
+	EXPECT_TRUE(success);
+	EXPECT_EQ(dir_entries.size(), 3);
+
+	// Remove "the-file.txt" file
+	std::vector<ManagedPath> files_only = ManagedPath::SelectDirectories(dir_entries);
+	EXPECT_EQ(files_only.size(), 2);
+
+	EXPECT_EQ(files_only[0].filename().RawString(), file_name2);
+	EXPECT_EQ(files_only[1].filename().RawString(), file_name3);
+
+	std::filesystem::path rm_path(mp.RawString());
+	std::filesystem::remove_all(rm_path);
+}
+
+
 
