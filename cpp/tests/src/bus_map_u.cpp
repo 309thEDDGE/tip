@@ -917,6 +917,7 @@ TEST_F(BusMapTest, FinalizeVoteMappingWithTMATSCheckSetToTrue)
 	icd_message_key_to_busnames_map[11] = std::set<std::string>({ "BUSB" });
 	icd_message_key_to_busnames_map[12] = std::set<std::string>({ "BUSC" });
 	icd_message_key_to_busnames_map[13] = std::set<std::string>({ "BUSD" });
+	icd_message_key_to_busnames_map[14] = std::set<std::string>({ "BUSE" });
 
 	tmats_chanid_to_source_map[0] = "BUS1"; // BUSA should not match TMATS
 	tmats_chanid_to_source_map[1] = "BUSB"; // BUSB should match TMATS
@@ -934,9 +935,9 @@ TEST_F(BusMapTest, FinalizeVoteMappingWithTMATSCheckSetToTrue)
 
 	ASSERT_TRUE(b.TmatsPresent());
 
-	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0, 0, 0, 0, 0 });
-	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({ 10,11,12,13,14,15 });
-	std::vector<uint64_t> channel_ids = std::vector<uint64_t>({ 0, 1, 2, 3, 4, 5 });
+	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0, 0, 0, 0, 0, 0 });
+	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({ 10,11,12,13,14,13,15 });
+	std::vector<uint64_t> channel_ids = std::vector<uint64_t>({   0, 1, 2, 3, 4, 4, 5 });
 
 	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
 
@@ -964,9 +965,8 @@ TEST_F(BusMapTest, FinalizeVoteMappingWithTMATSCheckSetToTrue)
 	EXPECT_TRUE(iterable_tools_.GetKeys(excludedChannelIDs).size() == 4);
 	EXPECT_EQ(excludedChannelIDs[0], "TMATS Mismatch");
 	EXPECT_EQ(excludedChannelIDs[3], "Missing From TMATS");
-	EXPECT_EQ(excludedChannelIDs[4], "No Votes");
+	EXPECT_EQ(excludedChannelIDs[4], "Tie Vote");
 	EXPECT_EQ(excludedChannelIDs[5], "No Votes");
-
 }
 
 TEST_F(BusMapTest, FinalizeTMATSMustBeExactBusMatchFromDTSFile)
@@ -1134,6 +1134,9 @@ TEST_F(BusMapTest, FinalizeVoteMappingExclusion)
 	icd_message_key_to_busnames_map[16] = std::set<std::string>({ "BusGMUX" }); // not in TMATs but is in exclusion set, should be removed
 																				// includes subset and case sensitive tests
 	icd_message_key_to_busnames_map[17] = std::set<std::string>({ "BUSD" }); // duplicate
+	icd_message_key_to_busnames_map[18] = std::set<std::string>({ "BUSZ" }); // channel ID 8 will vote for BUSZ, but it should still be removed
+																			 // since channel ID 8 originated as BUSB in TMATS
+																			 // and BUSB is in the removal list
 
 
 	tmats_chanid_to_source_map[1] = "BUSBMUX"; // Subset test
@@ -1142,9 +1145,12 @@ TEST_F(BusMapTest, FinalizeVoteMappingExclusion)
 	tmats_chanid_to_source_map[4] = "BUSX";	   // TMATs bus name replacement
 	tmats_chanid_to_source_map[5] = "BUSF";	   // Should be corrected and then removed
 	tmats_chanid_to_source_map[7] = "BUSD";    // Duplicate
+	tmats_chanid_to_source_map[8] = "BUSB";	   // Vote result will vote for BUSZ but channel ID 8
+											   // should still be removed since BUSB is in the removal list
+											   
 
 	b.InitializeMaps(&icd_message_key_to_busnames_map,
-		std::set<uint64_t>({ 0,1,2,3,4,5,6,7 }),
+		std::set<uint64_t>({ 0,1,2,3,4,5,6,7,8 }),
 		mask,
 		vote_threshold,
 		vote_method_checks_tmats,
@@ -1153,15 +1159,15 @@ TEST_F(BusMapTest, FinalizeVoteMappingExclusion)
 
 	ASSERT_TRUE(b.TmatsPresent());
 
-	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0, 0, 0, 0, 0, 0, 0 });
-	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({ 10,11,12,13,14,15,16,17 });
-	std::vector<uint64_t> channel_ids = std::vector<uint64_t>({   0, 1, 2, 3, 4, 5, 6, 7 });
+	std::vector<uint64_t> transmit_cmds = std::vector<uint64_t>({ 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+	std::vector<uint64_t> recieve_cmds = std::vector<uint64_t>({ 10,11,12,13,14,15,16,17,18 });
+	std::vector<uint64_t> channel_ids = std::vector<uint64_t>({   0, 1, 2, 3, 4, 5, 6, 7, 8 });
 
 	EXPECT_TRUE(b.SubmitMessages(transmit_cmds, recieve_cmds, channel_ids));
 
 	std::map<uint64_t, std::string> res;
 	bool continue_translation = b.Finalize(res, 0, false);
-	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 8);
+	EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 9);
 	EXPECT_TRUE(continue_translation);
 	EXPECT_EQ(res[0], "BUSB");
 	EXPECT_EQ(res[1], "BUSB");
@@ -1171,13 +1177,14 @@ TEST_F(BusMapTest, FinalizeVoteMappingExclusion)
 	EXPECT_EQ(res[5], "BUSF");
 	EXPECT_EQ(res[6], "BusGMUX");
 	EXPECT_EQ(res[7], "BUSD");
+	EXPECT_EQ(res[8], "BUSZ");
 
 
 	// Also check the source
 	std::map<uint64_t, std::pair<std::string, std::string>> final_bus_map_with_source =
 		b.GetFinalBusMap_withSource();
 
-	EXPECT_TRUE(iterable_tools_.GetKeys(final_bus_map_with_source).size() == 8);
+	EXPECT_TRUE(iterable_tools_.GetKeys(final_bus_map_with_source).size() == 9);
 
 	EXPECT_EQ(final_bus_map_with_source[0].first, "BUSB");
 	EXPECT_EQ(final_bus_map_with_source[0].second, "Vote Method");
@@ -1195,6 +1202,8 @@ TEST_F(BusMapTest, FinalizeVoteMappingExclusion)
 	EXPECT_EQ(final_bus_map_with_source[6].second, "Vote Method");
 	EXPECT_EQ(final_bus_map_with_source[7].first, "BUSD");
 	EXPECT_EQ(final_bus_map_with_source[7].second, "Vote Method");
+	EXPECT_EQ(final_bus_map_with_source[8].first, "BUSZ");
+	EXPECT_EQ(final_bus_map_with_source[8].second, "Vote Method");
 
 
 	// After applying exclusion set
@@ -1205,7 +1214,7 @@ TEST_F(BusMapTest, FinalizeVoteMappingExclusion)
 	tmats_busname_replacements["BUSX"] = "BUSE";
 
 	b2.InitializeMaps(&icd_message_key_to_busnames_map,
-		std::set<uint64_t>({ 0,1,2,3,4,5,6,7 }),
+		std::set<uint64_t>({ 0,1,2,3,4,5,6,7,8 }),
 		mask,
 		vote_threshold,
 		vote_method_checks_tmats,
@@ -1233,7 +1242,7 @@ TEST_F(BusMapTest, FinalizeVoteMappingExclusion)
 
 	// Check the excluded channel IDs map
 	std::map<uint64_t, std::string> excludedChannelIDs = b2.GetExcludedChannelIDs();
-	EXPECT_TRUE(iterable_tools_.GetKeys(excludedChannelIDs).size() == 7);
+	EXPECT_TRUE(iterable_tools_.GetKeys(excludedChannelIDs).size() == 8);
 	EXPECT_EQ(excludedChannelIDs[0], "Config Option: bus_name_exclusions");
 	EXPECT_EQ(excludedChannelIDs[1], "Config Option: bus_name_exclusions");
 	EXPECT_EQ(excludedChannelIDs[2], "Config Option: bus_name_exclusions");
@@ -1241,6 +1250,7 @@ TEST_F(BusMapTest, FinalizeVoteMappingExclusion)
 	EXPECT_EQ(excludedChannelIDs[4], "Config Option: bus_name_exclusions");
 	EXPECT_EQ(excludedChannelIDs[6], "Config Option: bus_name_exclusions");
 	EXPECT_EQ(excludedChannelIDs[7], "Config Option: bus_name_exclusions");
+	EXPECT_EQ(excludedChannelIDs[8], "Config Option: bus_name_exclusions");
 }
 
 TEST_F(BusMapTest, FinalizeExclusionTMATS)

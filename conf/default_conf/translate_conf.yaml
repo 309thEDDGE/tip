@@ -19,7 +19,9 @@ translate_thread_count: 1
 # use_tmats_busmap
 #
 # Use tmats for mapping chapter 10 channel ids to bus names instead of the
-# automatic bus mapping utility. Recommended to set to false due to tmats inconsistency.
+# voting method explained in vote_threshold comments. 
+# TMATS bus names must be exact matches with DTS bus names for successful
+# bus mapping.
 #
 use_tmats_busmap: false
 
@@ -67,6 +69,7 @@ stop_after_bus_map: false
 #
 # vote_threshold 
 #
+# The vote_threshold is only used when use_tmats_busmap = false
 # Bus mapping is used to associate a 1553 channel ID recorded in 
 # the chapter 10 to a bus name found in the 1553 DTS file.
 # One method is to use tmats, if it is correct, by setting 
@@ -86,14 +89,46 @@ stop_after_bus_map: false
 # that the channel ID with lower traffic could be mapped to the wrong bus.
 # vote_threshold can be used to help prevent this issue. To create a final 
 # channel ID -> bus name mapping, the bus votes from a given channel ID
-# must be >= vote_threshold.
+# must be >= vote_threshold. vote_threshold is also helpful if DTS bus names
+# are not subsets or equivalent to TMATS bus names and vote_method_checks_tmats = false.
 #
 # A good threshold can be found from trial and error. It greatly depends
 # on how complete the 1553 DTS file is and the amount of bus traffic
-# on each bus. The vote_threshold is not used when use_tmats_busmap = true
+# on each bus. 
 # Valid ranges are [1, INT_MAX].
 #
 vote_threshold: 5
+
+#
+# vote_method_checks_tmats 
+#
+# vote_method_checks_tmats is only used when use_tmats_busmap = false
+# Once the voting process is carried out, the results will be compared 
+# with TMATS. If a bus associated with a given channel ID is a subset 
+# of the TMATS bus for that given channel ID, it will allow the channel 
+# ID to be mapped. If a TMATS match is not made, it will not map the channel 
+# ID that doesn't have a TMATS bus name match
+#
+#
+# Example 1:
+# voting method results--
+# channel ID = 1,  bus name = "BUS1"
+# --
+# tmats--
+# channel ID = 1, bus name = "BUS1" or "BUS1MUX" or "*ANYTHING*BUS1*ANYTHING*"
+# -- 
+# final bus map (channel ID = 1 -> "BUS1")
+#
+# Example 2:
+# voting method results--
+# channel ID = 1,  bus name = "BUS1"
+# --
+# tmats results--
+# channel ID = 1, bus name = "BUS2" or missing from TMATS
+# -- 
+# final bus map (channel ID 1 will be left unmapped)
+#
+vote_method_checks_tmats: false
 
 # 
 # bus_name_exclusions
