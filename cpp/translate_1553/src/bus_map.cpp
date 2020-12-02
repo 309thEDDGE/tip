@@ -24,6 +24,7 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 	channel_ids_ = channel_ids;
 	mask_ = mask;
 	vote_method_checks_tmats_ = vote_method_checks_tmats;
+	tmats_busname_corrections_ = tmats_busname_corrections;
 
 	// Filter out channel IDs in TMATs that are not
 	// in the channel ID master list
@@ -53,24 +54,11 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 	}
 	printf("----\n");
 	
-
-	if (tmats_chanid_to_source_map_.size() > 0)
-		iterable_tools_.PrintMapWithHeader_KeyToValue<uint64_t, std::string>
-		(tmats_chanid_to_source_map_,
-			std::vector<std::string>({ "chID", "Bus" }),
-			"TMATS Map");
-
-	// convert all bus exclusion elements to upper case
-	// to remove case sensitivity
-	for (auto bus : bus_exclusions)
-	{
-		std::transform(bus.begin(),
-			bus.end(),
-			bus.begin(),
-			::toupper);
-
-		upper_case_bus_exclusions_.insert(bus);
-	}
+	// Print TMATS map before tmats busname corrections
+	iterable_tools_.PrintMapWithHeader_KeyToValue<uint64_t, std::string>
+	(tmats_chanid_to_source_map_,
+		std::vector<std::string>({ "chID", "Bus" }),
+		"Original TMATS Map");	
 
 	if (tmats_chanid_to_source_map.empty())
 		tmats_present_ = false;
@@ -83,6 +71,24 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 			iterable_tools_.UpdateMapVals<uint64_t, std::string>
 			(	tmats_chanid_to_source_map_,
 				tmats_busname_corrections);
+	}
+
+	// Print TMATS map after tmats busname corrections
+	iterable_tools_.PrintMapWithHeader_KeyToValue<uint64_t, std::string>
+	(tmats_chanid_to_source_map_,
+		std::vector<std::string>({ "chID", "Bus" }),
+		"TMATS Map After Corrections");
+
+	// convert all bus exclusion elements to upper case
+	// to remove case sensitivity
+	for (auto bus : bus_exclusions)
+	{
+		std::transform(bus.begin(),
+			bus.end(),
+			bus.begin(),
+			::toupper);
+
+		upper_case_bus_exclusions_.insert(bus);
 	}
 
 	// Create message_key_to_channel_ids_map_ and
@@ -424,8 +430,22 @@ std::map<uint64_t, std::string> BusMap::TmatsMapping()
 		{
 			return_map[it->first] = it->second;
 		}
+		else
+		{
+			excluded_channel_ids_[it->first] = "TMATS Bus Name Not in DTS File";
+		}
 	}
 
+	// Add any additional channel IDS that are missing from
+	// TMATS to the excluded channel id list
+	// Be sure not to override "TMATS Bus Name Not in DTS File" with 
+	// the addition of && excluded_channel_ids_.count(channel_id) == 0
+	for (auto channel_id : channel_ids_)
+	{
+		if (return_map.count(channel_id) == 0 &&
+			excluded_channel_ids_.count(channel_id) == 0)
+			excluded_channel_ids_[channel_id] = "Missing From TMATS";
+	}
 
 	return return_map;
 }
