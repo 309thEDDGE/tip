@@ -51,9 +51,13 @@ uint8_t ParquetTranslationManager::setup_output_paths()
 
 		bool success = false;
 		std::vector<std::string> file_exclusion_substrings({ "metadata", "TMATS" });
-		parquet_path_.GetListOfFiles(success, input_parquet_paths_, file_exclusion_substrings);
+		parquet_path_.ListDirectoryEntries(success, input_parquet_paths_);
 		if (!success)
 			return 1;
+
+		// Filter to get files only and exclude certain files.
+		input_parquet_paths_ = ManagedPath::ExcludePathsWithSubString(
+			ManagedPath::SelectFiles(input_parquet_paths_), file_exclusion_substrings);
 	}
 	else
 	{
