@@ -11,6 +11,7 @@
 !vendor/parquet-testing-master
 !vendor/.timestamp
 !.gitignore
+!.gitlab/**
 !bin
 !conf
 !conf/**
