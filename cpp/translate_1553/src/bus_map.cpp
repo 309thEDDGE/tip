@@ -14,6 +14,7 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 	std::set<uint64_t> channel_ids,
 	uint64_t mask,
 	uint64_t vote_threshold,
+	bool vote_method_checks_tmats,
 	std::set<std::string> bus_exclusions,
 	std::map<uint64_t, std::string> tmats_chanid_to_source_map, 
 	std::map<std::string, std::string> tmats_busname_corrections)
@@ -22,6 +23,42 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 	tmats_chanid_to_source_map_ = tmats_chanid_to_source_map;
 	channel_ids_ = channel_ids;
 	mask_ = mask;
+	vote_method_checks_tmats_ = vote_method_checks_tmats;
+
+	// Filter out channel IDs in TMATs that are not
+	// in the channel ID master list
+	std::map<uint64_t, std::string> temp;
+	for (std::map<uint64_t, std::string>::iterator it =
+		tmats_chanid_to_source_map_.begin();
+		it != tmats_chanid_to_source_map_.end();
+		++it)
+	{
+		// if the tmats channel id exists in the set of 
+		// channel ids provided by initialize maps,
+		// add the channel id to a temp map that will be 
+		// assigned to tmats_chanid_to_source_map_
+		if (channel_ids_.count(it->first) == 1)
+		{
+			temp[it->first] = it->second;
+		}
+	}
+
+	tmats_chanid_to_source_map_ = temp;
+
+	// Print out maps
+	printf("\nChannel IDs to Map----\n");
+	for (auto channel_id : channel_ids_)
+	{
+		printf("%i\n", channel_id);
+	}
+	printf("----\n");
+	
+
+	if (tmats_chanid_to_source_map_.size() > 0)
+		iterable_tools_.PrintMapWithHeader_KeyToValue<uint64_t, std::string>
+		(tmats_chanid_to_source_map_,
+			std::vector<std::string>({ "chID", "Bus" }),
+			"TMATS Map");
 
 	// convert all bus exclusion elements to upper case
 	// to remove case sensitivity
@@ -67,7 +104,8 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 				// handle exclusion bus being a subset 
 				// of a TMATs bus name
 				if (temp.find(bus) != std::string::npos)
-					excluded_channel_ids_.insert(it->first);
+					excluded_channel_ids_[it->first] = 
+					"Config Option: bus_name_exclusions";
 			}
 		}
 	}
@@ -92,38 +130,7 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 		}
 		for (auto bus : it->second)
 			unique_buses_.insert(bus);
-	}	
-
-	// Print out maps
-	printf("\nChannel IDs to Map----\n");
-	for (auto channel_id : channel_ids_)
-	{
-		printf("%i\n", channel_id);
-	}
-	printf("----\n");
-
-	// Only print tmats channel ids that are in the 
-	// channel id master list
-	std::map<uint64_t, std::string> tmats_print_map;
-	for (std::map<uint64_t, std::string>::iterator it =
-		tmats_chanid_to_source_map_.begin();
-		it != tmats_chanid_to_source_map_.end();
-		++it)
-	{
-		// if the tmats channel id exists in the set of 
-		// channel ids provided by initialize maps,
-		// add the channel id to the tmats print map
-		if (channel_ids_.count(it->first) == 1)
-		{
-			tmats_print_map[it->first] = it->second;
-		}
-	}
-
-	if (tmats_print_map.size() > 0)
-		iterable_tools_.PrintMapWithHeader_KeyToValue<uint64_t, std::string>
-		(tmats_print_map,
-			std::vector<std::string>({ "chID", "Bus" }),
-			"TMATS Map");
+	}		
 }
 
 std::string BusMap::PrintFinalMap()
@@ -142,7 +149,7 @@ std::string BusMap::PrintFinalMap()
 
 	if (iterable_tools_.GetKeys(final_bus_map_with_sources_).size()
 		!= channel_ids_.size())
-		ss << "\n--Unmapped--\n";
+		ss << "\n--Unmapped (reason)--\n";
 	else
 		ss << "\n--All Channel IDs Mapped--\n";
 
@@ -150,7 +157,13 @@ std::string BusMap::PrintFinalMap()
 	for (auto channel_id : channel_ids_)
 	{
 		if (final_bus_map_with_sources_.count(channel_id) == 0)
-			ss << " " << channel_id << "\n";
+		{
+			std::string exclusion_reason = "";
+			if (excluded_channel_ids_.count(channel_id) > 0)
+				exclusion_reason = excluded_channel_ids_[channel_id];
+
+			ss << " " << channel_id << "\t" << exclusion_reason << "\n";
+		}
 	}
 
 	ss << iterable_tools_.GetPrintBar() << "\n\n";
@@ -361,12 +374,85 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 			}
 		}
 
-		if (highest_vote >= vote_threshold_ && find_count == 1)
-			vote_map[it->first] = highest_voted_bus;
+		if (find_count == 1 && highest_vote >= vote_threshold_)
+		{
+			vote_map[it->first] = highest_voted_bus;			
+		}
+		else
+		{
+			if (highest_vote == 0)
+				excluded_channel_ids_[it->first] = "No Votes";
+			else if (highest_vote < vote_threshold_)
+				excluded_channel_ids_[it->first] = "Votes did not exceed vote_threshold";
+			else if (find_count == 1)
+				excluded_channel_ids_[it->first] = "Tie Vote";			
+		}
+	}
 
+	// Add any channel ids that are not in the vote map
+	// as "No Votes"
+	for (auto channel_id : channel_ids_)
+	{
+		if(votes_.count(channel_id) == 0)
+			excluded_channel_ids_[channel_id] = "No Votes";
+	}
+
+	/*
+		If vote_method_checks_tmats_ = true
+		make sure all the bus names match
+		the bus names found in tmats for
+		each channel ID, note! the mapped bus
+		can be a subset of the TMATs bus name.
+	*/
+	if (vote_method_checks_tmats_)
+	{
+		for (std::map<uint64_t,std::string>::iterator it = vote_map.begin();
+			it != vote_map.end();
+			++it)
+		// Check if the TMATs channel ID is present
+		if (tmats_chanid_to_source_map_.count(it->first) == 0)
+		{
+			excluded_channel_ids_[it->first] = 
+				"Missing From TMATS";
+		}
+		else
+		{
+			// If the bus name is not a subset of the bus name
+			// for a given channel ID from TMATs, remove it from 
+			// the map and consider the busmap a failure
+			if (tmats_chanid_to_source_map_[it->first].find(it->second)
+				== std::string::npos)
+			{
+				excluded_channel_ids_[it->first] =
+					"TMATS Mismatch";
+			}
+		}
 	}
 
 	return vote_map;
+}
+
+std::map<uint64_t, std::string> BusMap::TmatsMapping()
+{
+
+	std::map<uint64_t, std::string> return_map;
+
+	// Only map tmats bus names that exist in the DTS file
+	for (std::map<uint64_t, std::string>::iterator it =
+		tmats_chanid_to_source_map_.begin();
+		it != tmats_chanid_to_source_map_.end();
+		++it)
+	{
+		// if the tmats bus name matches a DTS file
+		// bus name one for one, add the tmats mapping
+		if (unique_buses_.count(it->second) == 1)
+		{
+			return_map[it->first] = it->second;
+		}
+	}
+
+
+	return return_map;
 }
 
 
@@ -382,14 +468,18 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 
 	// vote mapping
 	std::map<uint64_t, std::string> vote_mapping = VoteMapping();
+	std::map<uint64_t, std::string> tmats_mapping = TmatsMapping();
 
 	if (use_tmats_busmap)
 	{
-		SubmitToFinalBusMap(tmats_chanid_to_source_map_, "TMATS");
+		SubmitToFinalBusMap(tmats_mapping, "TMATS");
 	}
 	else
 	{
-		SubmitToFinalBusMap(vote_mapping, "Vote Method");
+		if (vote_method_checks_tmats_)
+			SubmitToFinalBusMap(vote_mapping, "Vote Method & TMATS");
+		else
+			SubmitToFinalBusMap(vote_mapping, "Vote Method");
 	}
 
 	// Exclude any residual bus names that match specified
@@ -412,14 +502,17 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 			// handle exclusion bus being a subset 
 			// of a final bus name
 			if (temp.find(bus) != std::string::npos)
-				excluded_channel_ids_.insert(it->first);
-		}
-		
+				excluded_channel_ids_[it->first] = 
+				"Config Option: bus_name_exclusions";
+		}		
 	}
 
 	// Exclude channel ids in the exclusion map
-	for (auto channel_id : excluded_channel_ids_)
+	for (std::map<uint64_t,std::string>::iterator it = excluded_channel_ids_.begin();
+		it != excluded_channel_ids_.end();
+		++it)
 	{
+		uint64_t channel_id = it->first;
 		if (final_bus_map_with_sources_.count(channel_id) > 0)
 			final_bus_map_with_sources_.erase(channel_id);
 	}
@@ -491,6 +584,13 @@ void BusMap::SubmitToFinalBusMap(const std::map<uint64_t,
 	for (std::map<uint64_t, std::string>::const_iterator
 		it = insert_map.begin(); it != insert_map.end(); it++)
 	{
+		/*
+		// Remove any excluded_channel_ids_ that match new insertions
+		if (excluded_channel_ids_.count(it->first))
+		{
+			excluded_channel_ids_.erase(excluded_channel_ids_.find(it->first));
+		}*/
+
 		if (final_bus_map_with_sources_.count(it->first) == 0
 			&& channel_ids_.count(it->first) > 0)
 		{
