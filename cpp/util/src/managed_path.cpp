@@ -52,29 +52,35 @@ std::string ManagedPath::string() const
 	return amended_path.fs::path::string();
 }
 
+bool ManagedPath::exists() const
+{
+	fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));
+	return fs::exists(amended_path);
+}
+
 std::string ManagedPath::RawString() const
 {
 	return this->fs::path::string();
 }
 
-bool ManagedPath::is_regular_file()
+bool ManagedPath::is_regular_file() const
 {
 	fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));
 	return fs::is_regular_file(amended_path);
 }
 
-bool ManagedPath::is_directory()
+bool ManagedPath::is_directory() const
 {
 	fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));
 	return fs::is_directory(amended_path);
 }
 
-ManagedPath ManagedPath::parent_path()
+ManagedPath ManagedPath::parent_path() const
 {
 	return ManagedPath(this->fs::path::parent_path());
 }
 
-bool ManagedPath::create_directory()
+bool ManagedPath::create_directory() const
 {
 	fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));
 
@@ -128,7 +134,7 @@ bool ManagedPath::create_directory()
 	return true;
 }
 
-bool ManagedPath::remove()
+bool ManagedPath::remove() const
 {
 	fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));
 	return fs::remove(amended_path);
@@ -148,7 +154,7 @@ ManagedPath ManagedPath::stem() const
 
 
 ManagedPath ManagedPath::CreatePathObject(const ManagedPath& output_fname,
-	const std::string& extension_replacement)
+	const std::string& extension_replacement) const
 {
 	if (extension_replacement == "")
 	{
@@ -166,7 +172,7 @@ ManagedPath ManagedPath::CreatePathObject(const ManagedPath& output_fname,
 	}
 }
 
-void ManagedPath::GetFileSize(bool& success, uint64_t& result)
+void ManagedPath::GetFileSize(bool& success, uint64_t& result) const
 {
 	success = false;
 	result = 0;
@@ -188,45 +194,22 @@ void ManagedPath::GetFileSize(bool& success, uint64_t& result)
 	}
 }
 
-void ManagedPath::GetListOfFiles(bool& success, std::vector<ManagedPath>& output_list,
-	const std::vector<std::string>& exclude_matching)
+void ManagedPath::ListDirectoryEntries(bool& success, std::vector<ManagedPath>& output_list) const
 {
 	output_list.clear();
 
 	if (this->is_directory())
 	{
-		std::string temp_path_str = "";
 		ManagedPath temp_path;
-		bool skip_entry = false;
 		std::vector<ManagedPath> temp_output_list;
 		std::vector<std::string> filenames_list;
-		std::vector<std::string>::const_iterator it;
+		
 		fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));
 		for (auto& p : std::filesystem::directory_iterator(amended_path))
 		{
 			temp_path = ManagedPath(p.path());
-			temp_path_str = temp_path.RawString();
-			skip_entry = false;
-			if (!temp_path.is_directory())
-			{
-				// If the current entry contains as a sub-string any of the
-				// strings int the exclude_matching vector, do not include 
-				// it in output_list.
-				for (it = exclude_matching.cbegin(); it != exclude_matching.cend(); ++it)
-				{
-					if (temp_path_str.find(*it) != std::string::npos)
-					{
-						skip_entry = true;
-						break;
-					}
-				}
-
-				if (skip_entry)
-					continue;
-
-				temp_output_list.push_back(temp_path);
-				filenames_list.push_back(temp_path.filename().RawString());
-			}
+			temp_output_list.push_back(temp_path);
+			filenames_list.push_back(temp_path.filename().RawString());
 		}
 
 		// Get the vector of indices that sorts the filenames vector.
@@ -246,4 +229,55 @@ void ManagedPath::GetListOfFiles(bool& success, std::vector<ManagedPath>& output
 			"is not a directory (%s)\n", this->RawString().c_str());
 		success = false;
 	}
+}
+
+std::vector<ManagedPath> ManagedPath::ExcludePathsWithSubString(const std::vector<ManagedPath>&
+	input_paths, const std::vector<std::string>& substrings)
+{
+	std::vector<ManagedPath> return_paths;
+	std::vector<std::string>::const_iterator it;
+	std::string temp_path_str = "";
+	bool skip_entry = false;
+
+	for (std::vector<ManagedPath>::const_iterator mpit = input_paths.cbegin();
+		mpit != input_paths.cend(); ++mpit)
+	{
+		skip_entry = false;
+		temp_path_str = mpit->RawString();
+
+		// If the current entry contains as a sub-string any of the
+		// strings int the substrings vector, do not include 
+		// it in return_paths.
+		for (it = substrings.cbegin(); it != substrings.cend(); ++it)
+		{
+			if (temp_path_str.find(*it) != std::string::npos)
+			{
+				skip_entry = true;
+				break;
+			}
+		}
+
+		if (!skip_entry)
+			return_paths.push_back(*mpit);
+	}
+
+	return return_paths;
+}
+
+std::vector<ManagedPath> ManagedPath::SelectFiles(const std::vector<ManagedPath>& input_paths)
+{
+	std::vector<ManagedPath> return_paths;
+
+	for (std::vector<ManagedPath>::const_iterator mpit = input_paths.cbegin();
+		mpit != input_paths.cend(); ++mpit)
+	{
+		if (mpit->exists())
+		{
+			if (mpit->is_regular_file())
+			{
+				return_paths.push_back(*mpit);
+			}
+		}
+	}
+	return return_paths;
 }

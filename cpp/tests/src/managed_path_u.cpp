@@ -407,7 +407,7 @@ TEST(ManagedPathTest, GetFileSizeNonFile)
 	EXPECT_TRUE(std::filesystem::remove(std::filesystem::path(test_fname)));
 }
 
-TEST(ManagedPathTest, GetListOfFilesNotADirectory)
+TEST(ManagedPathTest, ListDirectoryEntriesDirNotExist)
 {
 	// Create object representative of dir that does not exist.
 	std::string test_fname = "my_dir";
@@ -417,13 +417,13 @@ TEST(ManagedPathTest, GetListOfFilesNotADirectory)
 	bool success = true;
 	std::vector<ManagedPath> file_list({ mp });
 
-	mp.GetListOfFiles(success, file_list);
+	mp.ListDirectoryEntries(success, file_list);
 
 	EXPECT_FALSE(success);
 	EXPECT_EQ(file_list.size(), 0);
 }
 
-TEST(ManagedPathTest, GetListOfFilesCorrectList)
+TEST(ManagedPathTest, ListDirectoryEntriesCorrectList)
 {
 	std::string test_fname = "my_dir";
 	ManagedPath mp;
@@ -445,7 +445,7 @@ TEST(ManagedPathTest, GetListOfFilesCorrectList)
 	bool success = false;
 	std::vector<ManagedPath> file_list({ mp });
 
-	mp.GetListOfFiles(success, file_list);
+	mp.ListDirectoryEntries(success, file_list);
 
 	EXPECT_TRUE(success);
 	EXPECT_EQ(file_list.size(), 2);
@@ -458,7 +458,7 @@ TEST(ManagedPathTest, GetListOfFilesCorrectList)
 	std::filesystem::remove_all(rm_path);
 }
 
-TEST(ManagedPathTest, GetListOfFilesExcludeFiles)
+TEST(ManagedPathTest, ExcludePathsWithSubString)
 {
 	std::string test_fname = "my_dir";
 	ManagedPath mp;
@@ -481,18 +481,91 @@ TEST(ManagedPathTest, GetListOfFilesExcludeFiles)
 	std::ofstream(file_path3.RawString()).put('a');
 
 	bool success = false;
-	std::vector<ManagedPath> file_list({ mp });
+	std::vector<ManagedPath> dir_entries;
+	std::vector<std::string> substrings({ "the-" });
 
-	std::vector<std::string> exclude({ "the-" });
-
-	mp.GetListOfFiles(success, file_list, exclude);
-
+	mp.ListDirectoryEntries(success, dir_entries);
 	EXPECT_TRUE(success);
-	EXPECT_EQ(file_list.size(), 2);
+	EXPECT_EQ(dir_entries.size(), 3);
+
+	// 
+	// Single exclusion
+	//
+	std::vector<ManagedPath> result = ManagedPath::ExcludePathsWithSubString(
+		dir_entries, substrings);
+
+	// Removed the "the-file.txt" entry.
+	EXPECT_EQ(result.size(), 2);
 
 	// Check correct files name in alphanumeric order
-	EXPECT_EQ(file_list[0].filename().RawString(), file_name2);
-	EXPECT_EQ(file_list[1].filename().RawString(), file_name3);
+	EXPECT_EQ(result[0].filename().RawString(), file_name2);
+	EXPECT_EQ(result[1].filename().RawString(), file_name3);
+
+	//
+	// Multiple exclusion
+	//
+	substrings = std::vector<std::string>({ "the-", "files" });
+	result = ManagedPath::ExcludePathsWithSubString(
+		dir_entries, substrings);
+
+	// Removed the "the-file.txt" and "b-files.out" entries.
+	EXPECT_EQ(result.size(), 1);
+
+	// Check correct files name in alphanumeric order
+	EXPECT_EQ(result[0].filename().RawString(), file_name2);
+
+	//
+	// Multiple substrings for single exclusion
+	//
+	substrings = std::vector<std::string>({ "the-", "txt", "files" });
+	result = ManagedPath::ExcludePathsWithSubString(
+		dir_entries, substrings);
+
+	// Removed the "the-file.txt".
+	EXPECT_EQ(result.size(), 1);
+
+	// Check correct files name in alphanumeric order
+	EXPECT_EQ(result[0].filename().RawString(), file_name2);
+
+	std::filesystem::path rm_path(mp.RawString());
+	std::filesystem::remove_all(rm_path);
+}
+
+TEST(ManagedPathTest, SelectFiles)
+{
+	std::string test_fname = "my_dir";
+	ManagedPath mp;
+	mp /= test_fname;
+
+	// Create dir
+	EXPECT_TRUE(mp.create_directory());
+
+	std::string file_name1 = "the-file.txt";
+	std::string file_name2 = "1other.data";
+	std::string file_name3 = "b-files.out";
+
+	ManagedPath file_path1 = mp / file_name1;
+	ManagedPath file_path2 = mp / file_name2;
+	ManagedPath file_path3 = mp / file_name3;
+
+	// Create files
+	std::ofstream(file_path1.RawString()).put('a');
+	std::ofstream(file_path2.RawString()).put('a');
+	EXPECT_TRUE(file_path3.create_directory());
+
+	bool success = false;
+	std::vector<ManagedPath> dir_entries;
+
+	mp.ListDirectoryEntries(success, dir_entries);
+	EXPECT_TRUE(success);
+	EXPECT_EQ(dir_entries.size(), 3);
+
+	// Remove "b-files.out" dir
+	std::vector<ManagedPath> files_only = ManagedPath::SelectFiles(dir_entries);
+	EXPECT_EQ(files_only.size(), 2);
+
+	EXPECT_EQ(files_only[0].filename().RawString(), file_name2);
+	EXPECT_EQ(files_only[1].filename().RawString(), file_name1);
 
 	std::filesystem::path rm_path(mp.RawString());
 	std::filesystem::remove_all(rm_path);

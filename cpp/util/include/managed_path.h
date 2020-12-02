@@ -47,6 +47,15 @@ public:
 	//
 
 	/*
+	Determine if a file or directory represented by a 
+	ManagedPath object exists. Same functionality as the 
+	std::filesystem::exists function.
+
+	Returns: true if exists, false otherwise.
+	*/
+	bool exists() const;
+
+	/*
 	Get a string that is formatted with special characters
 	necessary for long paths in windows, if necessary. 
 
@@ -61,7 +70,7 @@ public:
 	Returns: A ManagedPath object containing the parent
 	path.
 	*/
-	ManagedPath parent_path();
+	ManagedPath parent_path() const;
 
 	/*
 	Check whether the current object is a regular file.
@@ -70,7 +79,7 @@ public:
 
 	Returns: true if is regular file, false otherwise
 	*/
-	bool is_regular_file();
+	bool is_regular_file() const;
 
 	/*
 	Check whether the current object is a directory.
@@ -79,7 +88,7 @@ public:
 
 	Returns: true if is directory, false otherwise
 	*/
-	bool is_directory();
+	bool is_directory() const;
 
 	/*
 	Get the filename component of the current object.
@@ -113,14 +122,14 @@ public:
 	directory is successfully created or if the directory
 	already exists, otherwise false.
 	*/
-	bool create_directory();
+	bool create_directory() const;
 
 	/*
 	Remove a file or directory, similar to std::filesystem::remove.
 
 	Returns: true if file/dir is removed, false otherwise.
 	*/
-	bool remove();
+	bool remove() const;
 
 	/*
 	Get an un-amended raw string. Useful for print statements.
@@ -153,7 +162,7 @@ public:
 	Return: ManagedPath object representative of the new path
 	*/
 	ManagedPath CreatePathObject(const ManagedPath& output_fname,
-		const std::string& extension_replacement = "");
+		const std::string& extension_replacement = "") const;
 
 
 	/*
@@ -169,17 +178,13 @@ public:
 		result	- Output result indicating file size in bytes.
 		Set to 0 if success is false.
 	*/
-	void GetFileSize(bool& success, uint64_t& result);
+	void GetFileSize(bool& success, uint64_t& result) const;
 
 	/*
 	Fill the output_list vector with ManagedPath objects corresponding
 	to the contents of the directory of the current object. If the current
 	object is not a directory or does not exist, the output_list will be empty
 	and the success bool will be false.
-
-	Optionally pass a vector of strings which are used to exclude files found
-	in the directory if one of the exclude_matching strings is a sub-string of
-	the filename() component.
 
 	Sort the objects in the output_list alphanumerically by the string paths
 	represented by each object.
@@ -197,8 +202,53 @@ public:
 		the output_list which contain sub-strings matching any of the files
 		in this list.
 	*/
-	void GetListOfFiles(bool& success, std::vector<ManagedPath>& output_list,
-		const std::vector<std::string>& exclude_matching = std::vector<std::string>());
+	void ListDirectoryEntries(bool& success, std::vector<ManagedPath>& output_list) const;
+
+	/*
+	Filter a vector of ManagedPath objects by removing all objects from the vector
+	that represent paths which contain a substring equal to one of the substrings in 
+	the substrings vector.
+
+	Input: 
+
+		input_paths	- Vector of ManagedPath objects
+
+		substrings	- Vector of strings used to exclude files from 
+		the output list which contain sub-strings matching any of the files
+		in this list.
+
+	Return:
+
+		Vector of ManagedPath objects which represent paths that do not contain
+		substrings matching any of those in the substrings vector.
+	*/
+	static std::vector<ManagedPath> ExcludePathsWithSubString(const std::vector<ManagedPath>&
+		input_paths, const std::vector<std::string>& substrings);
+
+	/*
+	Filter a vector of ManagedPath objects by removing all objects which correspond
+	to directories or do not exist.
+
+	Input:
+
+		input_paths	- Vector of ManagedPath objects
+
+	Return:
+
+		Vector of ManagedPath objects which represent files.
+	*/
+	static std::vector<ManagedPath> SelectFiles(const std::vector<ManagedPath>& input_paths);
+
+	/*static std::vector<ManagedPath> GetDirectories(const std::vector<ManagedPath>& input_paths);
+
+	static std::vector<ManagedPath> GetFiles(const std::vector<ManagedPath>& input_paths);
+
+	static std::vector<ManagedPath> ExcludePathsWithSubString(const std::vector<ManagedPath>&
+		input_paths, const std::vector<std::string>& substrings);
+
+	static std::vector<ManagedPath> SelectPathsWithSubstring(const std::vector<ManagedPath>&
+		input_paths, const std::vector<std::string>& substrings);*/
+
 
 
 	//////////////////////////////////////////
