@@ -206,8 +206,8 @@ public:
 
 	/*
 	Filter a vector of ManagedPath objects by removing all objects from the vector
-	that represent paths which contain a substring equal to one of the substrings in 
-	the substrings vector.
+	that represent paths which contain a substring (in the filename() component) 
+	equal to one of the substrings in the substrings vector.
 
 	Input: 
 
@@ -228,8 +228,8 @@ public:
 
 	/*
 	Filter a vector of ManagedPath objects by selecting/keeping all objects from the vector
-	that represent paths which contain a substring equal to one of the substrings in
-	the substrings vector.
+	that represent paths which contain (in the filename() component) a substring equal 
+	to one of the substrings in the substrings vector.
 
 	Input:
 

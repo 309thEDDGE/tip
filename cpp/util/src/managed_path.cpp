@@ -243,7 +243,7 @@ std::vector<ManagedPath> ManagedPath::ExcludePathsWithSubString(const std::vecto
 		mpit != input_paths.cend(); ++mpit)
 	{
 		skip_entry = false;
-		temp_path_str = mpit->RawString();
+		temp_path_str = mpit->filename().RawString();
 
 		// If the current entry contains as a sub-string any of the
 		// strings int the substrings vector, do not include 
@@ -274,7 +274,7 @@ std::vector<ManagedPath> ManagedPath::SelectPathsWithSubString(const std::vector
 	for (std::vector<ManagedPath>::const_iterator mpit = input_paths.cbegin();
 		mpit != input_paths.cend(); ++mpit)
 	{
-		temp_path_str = mpit->RawString();
+		temp_path_str = mpit->filename().RawString();
 
 		// If the current entry contains as a sub-string any of the
 		// strings int the substrings vector, do not include 

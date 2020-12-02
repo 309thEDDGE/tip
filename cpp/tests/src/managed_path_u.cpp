@@ -531,6 +531,29 @@ TEST(ManagedPathTest, ExcludePathsWithSubString)
 	std::filesystem::remove_all(rm_path);
 }
 
+TEST(ManagedPathTest, ExcludePathsWithSubStringNotInFilenameComponent)
+{
+	std::string test_fname = "my_dir";
+	ManagedPath mp;
+	mp /= test_fname;
+
+	std::string file_name1 = "the-file.txt";
+	std::string file_name2 = "1other.data";
+
+	ManagedPath file_path1 = mp / file_name1;
+	ManagedPath file_path2 = mp / file_name2;
+
+	std::vector<ManagedPath> dir_entries({ file_path1, file_path2 });
+	std::vector<std::string> substrings({ "dir" });
+
+	std::vector<ManagedPath> result = ManagedPath::ExcludePathsWithSubString(
+		dir_entries, substrings);
+
+	// Ensure that both entries are NOT removed due to having "dir" in 
+	// "my_dir" portion of the path.
+	EXPECT_EQ(result.size(), 2);
+}
+
 TEST(ManagedPathTest, SelectPathsWithSubString)
 {
 	std::string test_fname = "my_dir";
@@ -605,6 +628,30 @@ TEST(ManagedPathTest, SelectPathsWithSubString)
 
 	std::filesystem::path rm_path(mp.RawString());
 	std::filesystem::remove_all(rm_path);
+}
+
+TEST(ManagedPathTest, SelectPathsWithSubStringNotInFilenameComponent)
+{
+	std::string test_fname = "my_dir";
+	ManagedPath mp;
+	mp /= test_fname;
+
+	std::string file_name1 = "the-file.txt";
+	std::string file_name2 = "1fileother.data";
+
+	ManagedPath file_path1 = mp / file_name1;
+	ManagedPath file_path2 = mp / file_name2;
+
+	std::vector<ManagedPath> dir_entries({ file_path1, file_path2 });
+
+	std::vector<std::string> substrings({ "dir" });
+
+	std::vector<ManagedPath> result = ManagedPath::SelectPathsWithSubString(
+		dir_entries, substrings);
+
+	// Ensure that zero entries are selected. The "dir" in "my_dir" portion
+	// of the path should not be used, only the filename() componenet.
+	EXPECT_EQ(result.size(), 0);
 }
 
 TEST(ManagedPathTest, SelectFiles)
