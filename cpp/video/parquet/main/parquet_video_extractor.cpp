@@ -10,7 +10,8 @@ int main(int argc, char* argv[]) {
 	
 	ParquetVideoExtraction pe;
 
-	bool valid_path = pe.Initialize(argv[1]);
+	std::string input_pq_video_dir = argv[1];
+	bool valid_path = pe.Initialize(ManagedPath(input_pq_video_dir));
 
 	if (!valid_path)
 	{
