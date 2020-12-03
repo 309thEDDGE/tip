@@ -120,7 +120,7 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
 		printf("Failed to read ICD: %s\n", dts_path.RawString().c_str());
 		return false;
 	}
-	if (!dts1553.IngestLines(dts_path.string(), fr.GetLines()))
+	if (!dts1553.IngestLines(dts_path, fr.GetLines()))
 	{
 		printf("Failed to ingest DTS1553 data\n");
 		return false;

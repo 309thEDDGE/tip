@@ -9,7 +9,6 @@
 #include <parquet/arrow/writer.h>
 #include <string>
 #include <vector>
-#include <filesystem>
 #include "managed_path.h"
 
 class ParquetReader {
@@ -71,7 +70,6 @@ public:
 							6. Column names not consistent
 				 True  -> If valid parquet folder
 	*/
-	/*bool SetPQPath(std::string base_path);*/
 	bool SetPQPath(ManagedPath base_path);
 
 	/*

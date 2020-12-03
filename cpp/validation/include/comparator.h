@@ -5,7 +5,6 @@
 #include <arrow/io/api.h>
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/schema.h>
-//#include <filesystem>
 #include <map>
 #include <set>
 #include "parquet_reader.h"
