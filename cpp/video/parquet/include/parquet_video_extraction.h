@@ -4,7 +4,6 @@
 #include <parquet/arrow/schema.h>
 
 #include<unordered_map>
-//#include<filesystem>
 #include<fstream>
 #include "managed_path.h"
 
@@ -21,8 +20,6 @@ private:
 	int row_group_count_;
 	int channel_id_index_;
 	int data_column_index_;
-	//std::filesystem::path parquet_path_;
-	//std::filesystem::path output_path_;
 	ManagedPath parquet_path_;
 	ManagedPath output_path_;
 

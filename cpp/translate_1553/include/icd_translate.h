@@ -256,18 +256,6 @@ bool ICDTranslate::TranslateArrayOfElement(const std::vector<uint16_t>& input_wo
 		}
 	}
 
-	// Isaac debug
-	//if (icd_elem.elem_name_ == "L09-05")
-	//{
-	//	for (size_t i = 0; i < 100; i++)
-	//	{
-	//		//printf("word %05hu, eu %hhd\n", input_words[i], output_eu[i]);
-	//		printf("words %05hu %05hu, scale %e, eu %llf\n", input_words[i*2], 
-	//			input_words[i*2+1], scale_twos_, output_eu[i]);
-	//	}
-	//}
-	// end debug
-
 	return true;
 }
 
