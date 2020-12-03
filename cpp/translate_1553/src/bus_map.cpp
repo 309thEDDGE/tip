@@ -60,7 +60,7 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
 		std::vector<std::string>({ "chID", "Bus" }),
 		"Original TMATS Map");	
 
-	if (tmats_chanid_to_source_map.empty())
+	if (tmats_chanid_to_source_map_.empty())
 		tmats_present_ = false;
 	else
 	{

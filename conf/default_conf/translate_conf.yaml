@@ -83,7 +83,7 @@ stop_after_bus_map: false
 # from the 1553 DTS file, the channel ID votes for the bus/buses associated
 # with the transmit/recieve command word from the 1553 DTS file. 
 # (Note: word count is ignored from transmit/recieve command word matching)
-# IF there are a lot of different 1553 buses recorded in the chapter 10 
+# If there are a lot of different 1553 buses recorded in the chapter 10 
 # and not enough command words provided through the 1553 DTS file AND
 # not a lot of traffic exists on one of the buses, there is a chance
 # that the channel ID with lower traffic could be mapped to the wrong bus.
