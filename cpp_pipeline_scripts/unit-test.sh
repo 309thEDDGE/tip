@@ -23,7 +23,24 @@ fi
 TEST_DIR=${CMAKE_BUILD_DIR}/cpp
 
 echo ""
-echo Unit Tests
+echo "-------------------- Check for outdated binaries --------------------"
+echo ""
+PIPELINE_SCRIPT_DIR=$(dirname $0)
+BUILD_SCRIPT=$PIPELINE_SCRIPT_DIR/build.sh
+BINARIES="$(find $CMAKE_BUILD_DIR -name *.a)"
+BINARIES="$BINARIES $CMAKE_BUILD_DIR/bin/tip_*"
+OLDEST=$(ls -t $BINARIES $BUILD_SCRIPT | tail -1)
+# Fail if the build script has changed after any binary was built
+if [ $OLDEST != $BUILD_SCRIPT ]; then
+	echo "ERROR:At least one binary file was built before the new build script"
+	echo ""
+	ls -lt $OLDEST $BUILD_SCRIPT
+	echo ""
+	exit 1
+fi
+
+echo ""
+echo "-------------------- Unit Tests --------------------"
 echo ""
 # For now, run cpp/tests because it is much faster than ctest
 # In the future we might have to run ctest in order to get coverage statistics

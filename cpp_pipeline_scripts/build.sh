@@ -38,7 +38,7 @@ fi
 
 echo "Setting each source file mod time to its last commit time"
 cd $BASE_DIR
-for FILE in $(git ls-files | grep -e "\.cpp$\|\.h$")
+for FILE in $(git ls-files | grep -e "\.cpp$\|\.h\|\.sh$")
 do
     TIME=$(git log --pretty=format:%cd -n 1 --date=iso -- "$FILE")
     TIME=$(date -d "$TIME" +%Y%m%d%H%M.%S)
