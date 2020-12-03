@@ -6,6 +6,7 @@ Remember to use TDD for your development.
 * [ ] Passes end-to-end with IL4 data
 * [ ] Passes pipeline
 * [ ] Reviewed and approved by a Maintainer
+  - [ ] Code is testable
   - [ ] Unit tests are complete
   - [ ] Code follows our coding guide
   - [ ] Code is throughly commented
