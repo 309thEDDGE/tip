@@ -383,7 +383,7 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 		make sure all the bus names match
 		the bus names found in tmats for
 		each channel ID, note! the mapped bus
-		can be a subset of the TMATs bus name.
+		can be a substring of the TMATs bus name.
 	*/
 	if (vote_method_checks_tmats_)
 	{
@@ -398,7 +398,7 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 		}
 		else
 		{
-			// If the bus name is not a subset of the bus name
+			// If the bus name is not a substring of the bus name
 			// for a given channel ID from TMATs, remove it from 
 			// the map.
 			if (tmats_chanid_to_source_map_[it->first].find(it->second)
@@ -465,7 +465,7 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 	excluded_channel_ids_.clear();
 
 	// Exclude channel IDs when the bus_exclusion set contains
-	// a bus name that is a subset of a bus name in TMATs.
+	// a bus name that is a substring of a bus name in TMATs.
 	// The matches should not be case sensitive
 	for (std::map<uint64_t, std::string>::iterator it = tmats_chanid_to_source_map_.begin();
 		it != tmats_chanid_to_source_map_.end();
@@ -481,7 +481,7 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 
 		for (auto bus : upper_case_bus_exclusions_)
 		{
-			// handle exclusion bus being a subset 
+			// handle exclusion bus being a substring 
 			// of a TMATs bus name
 			if (temp.find(bus) != std::string::npos)
 				excluded_channel_ids_[it->first] =
@@ -505,7 +505,7 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 
 	// Exclude any residual bus names that match specified
 	// bus_exclusions, match is not case sensitive 
-	// and bus_exclusion matches can be subsets
+	// and bus_exclusion matches can be substrings
 	// of mapped bus names.
 	for (std::map<uint64_t, std::pair<std::string, std::string>>::iterator it =
 		final_bus_map_with_sources_.begin();
@@ -520,7 +520,7 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 
 		for (auto bus : upper_case_bus_exclusions_)
 		{
-			// handle exclusion bus being a subset 
+			// handle exclusion bus being a substring 
 			// of a final bus name
 			if (temp.find(bus) != std::string::npos)
 				excluded_channel_ids_[it->first] = 

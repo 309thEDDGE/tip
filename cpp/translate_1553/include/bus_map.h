@@ -90,12 +90,12 @@ public:
 	 vote_threshold				  -> for a mapping to be made, votes must be >= vote_threshold
 
 	 vote_method_checks_tmats	  -> the end result of a vote method checks to see if the bus name
-										is a subset of the busname in TMATs for a given channel ID
+										is a substring of the busname in TMATs for a given channel ID
 
 	 bus_exclusions				  -> if a bus name exists in the final bus map that also
 										exists in the bus_exclusions list, remove it from 
 										the final map. The bus_exclusion list marks a removal 
-										if it is a subset of a final mapped bus. It is also 
+										if it is a substring of a final mapped bus. It is also 
 										not case sensative when applying matches. 
 										If the excluded bus name exists in tmats_chanid_to_source_map,
 										the channel ID associated with the excluded bus will

@@ -90,7 +90,7 @@ stop_after_bus_map: false
 # vote_threshold can be used to help prevent this issue. To create a final 
 # channel ID -> bus name mapping, the bus votes from a given channel ID
 # must be >= vote_threshold. vote_threshold is also helpful if DTS bus names
-# are not subsets or equivalent to TMATS bus names and vote_method_checks_tmats = false.
+# are not substrings or equivalent to TMATS bus names and vote_method_checks_tmats = false.
 #
 # A good threshold can be found from trial and error. It greatly depends
 # on how complete the 1553 DTS file is and the amount of bus traffic
@@ -104,8 +104,8 @@ vote_threshold: 5
 #
 # vote_method_checks_tmats is only used when use_tmats_busmap = false
 # Once the voting process is carried out, the results will be compared 
-# with TMATS. If a bus associated with a given channel ID is a subset 
-# of the TMATS bus for that given channel ID, it will allow the channel 
+# with TMATS. If a bus name associated with a given channel ID is a substring 
+# of the TMATS bus name for that given channel ID, it will allow the channel 
 # ID to be mapped. If a TMATS match is not made, it will not map the channel 
 # ID that doesn't have a TMATS bus name match
 #
@@ -136,7 +136,7 @@ vote_method_checks_tmats: false
 # If a bus name exists in the final bus map that also
 # exists in the bus_name_exclusions list. It will be removed 
 # from the final bus map. Removals include the case when 
-# a bus from the bus_name_exclusions list is a subset of the full bus name
+# a bus from the bus_name_exclusions list is a substring of the full bus name
 # found in either the DTS file or TMATS. 
 # Example: TMATs/DTS = "BUSAMUX",  
 # bus_name_exclusion = "BUSA", will result in removal

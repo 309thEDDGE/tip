@@ -921,7 +921,7 @@ TEST_F(BusMapTest, FinalizeVoteMappingWithTMATSCheckSetToTrue)
 
 	tmats_chanid_to_source_map[0] = "BUS1"; // BUSA should not match TMATS
 	tmats_chanid_to_source_map[1] = "BUSB"; // BUSB should match TMATS
-	tmats_chanid_to_source_map[2] = "THISBUSCMUX"; // Should match BUSC as a subset
+	tmats_chanid_to_source_map[2] = "THISBUSCMUX"; // Should match BUSC as a Substring
 	// channel ID 3 should not map because it is missing from TMATS
 	// channel ID 4 is a vote tie
 	tmats_chanid_to_source_map[5] = "BUSA"; // Channel ID 5 has not votes and should not map
@@ -1150,14 +1150,14 @@ TEST_F(BusMapTest, FinalizeVoteMappingExclusion)
 	icd_message_key_to_busnames_map[14] = std::set<std::string>({ "BUSX" });
 	icd_message_key_to_busnames_map[15] = std::set<std::string>({ "BUSF" });
 	icd_message_key_to_busnames_map[16] = std::set<std::string>({ "BusGMUX" }); // not in TMATs but is in exclusion set, should be removed
-																				// includes subset and case sensitive tests
+																				// includes substring and case sensitive tests
 	icd_message_key_to_busnames_map[17] = std::set<std::string>({ "BUSD" }); // duplicate
 	icd_message_key_to_busnames_map[18] = std::set<std::string>({ "BUSZ" }); // channel ID 8 will vote for BUSZ, but it should still be removed
 																			 // since channel ID 8 originated as BUSB in TMATS
 																			 // and BUSB is in the removal list
 
 
-	tmats_chanid_to_source_map[1] = "BUSBMUX"; // Subset test
+	tmats_chanid_to_source_map[1] = "BUSBMUX"; // substring test
 	tmats_chanid_to_source_map[2] = "BusC";	   // Upper/Lower case test
 	tmats_chanid_to_source_map[3] = "BUSD";    // Exact match
 	tmats_chanid_to_source_map[4] = "BUSX";	   // TMATs bus name replacement
@@ -1282,7 +1282,7 @@ TEST_F(BusMapTest, FinalizeExclusionTMATS)
 	icd_message_key_to_busnames_map[17] = std::set<std::string>({ "BUSE" });
 																				
 
-	tmats_chanid_to_source_map[1] = "BUSBMUX"; // Subset test
+	tmats_chanid_to_source_map[1] = "BUSBMUX"; // Substring test
 	tmats_chanid_to_source_map[2] = "BusC";	   // Upper/Lower case test
 	tmats_chanid_to_source_map[3] = "BUSD";    // Exact match
 	tmats_chanid_to_source_map[4] = "BUSX";	   // TMATS bus name replacement
