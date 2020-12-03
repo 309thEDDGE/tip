@@ -338,9 +338,9 @@ if(video_data)
       ${video_inc_dir}/parquet_video_extraction.h ${video_src_dir}/parquet_video_extraction.cpp)
 #    set_property(TARGET ${video_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${video_exe_name} PUBLIC ${video_inc_dir}
-                               ${parquet_inc_dirs})
+                               ${parquet_inc_dirs} ${util_inc_dir})
     target_compile_features(${video_exe_name} PUBLIC cxx_std_17)
-    target_link_libraries(${video_exe_name} ${parquet_libs} ${linux_libs})
+    target_link_libraries(${video_exe_name} ${parquet_libs} ${linux_libs} ${util_lib_name})
 endif()
 
 #########################################################
