@@ -400,7 +400,7 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 		{
 			// If the bus name is not a subset of the bus name
 			// for a given channel ID from TMATs, remove it from 
-			// the map and consider the busmap a failure
+			// the map.
 			if (tmats_chanid_to_source_map_[it->first].find(it->second)
 				== std::string::npos)
 			{

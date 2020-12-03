@@ -202,11 +202,6 @@ public:
 							mapped and prompt_user is false
 						  |OR| prompt_user is set to true and the user
 							selects option "q" to quit translation	
-						  |OR| vote_method_checks_tmats = true and 
-						  one of the buses mapped through the vote method 
-						  do not correlate with the bus name in TMATs for 
-						  a given channel ID (use_tmats_busmap must be false 
-						  for the vote method to be used)
 	*/
 	bool Finalize(std::map<uint64_t, std::string>& final_map,
 		bool use_tmats_busmap,
