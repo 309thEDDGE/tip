@@ -53,6 +53,7 @@ TEST_F(TranslationConfigParamsTest, InitializeValidEntry)
 	file << "exit_after_table_creation : false\n";
 	file << "stop_after_bus_map : false\n";
 	file << "vote_threshold : 1\n";
+	file << "vote_method_checks_tmats : false\n";
 	file << "bus_name_exclusions :\n  [\n   BusA, \n   BusB\n  ]\n";
 	file << "prompt_user : false\n";
 	file << "translate_thread_count: 1\n";
@@ -82,6 +83,7 @@ TEST_F(TranslationConfigParamsTest, InitializeEmptyList)
 	file << "exit_after_table_creation : false\n";
 	file << "stop_after_bus_map : false\n";
 	file << "vote_threshold : 1\n";
+	file << "vote_method_checks_tmats : false\n";
 	file << "prompt_user : false\n";
 	file << "bus_name_exclusions :\n  [\n   BusA, \n   BusB\n  ]\n";
 	file << "comet_busmap_replacement :\n  {}\n";

@@ -36,12 +36,14 @@ private:
 	UserInput user_input_;
 	std::map<uint64_t, std::string>* final_map_ptr_;
 	uint64_t vote_threshold_;
-	std::set<uint64_t> excluded_channel_ids_;
+	bool vote_method_checks_tmats_;
+	std::map<uint64_t, std::string> excluded_channel_ids_;
 	std::set<std::string> upper_case_bus_exclusions_;
 
 	void PrepareFinalMap();
 	void PrintVoteMap();
 	std::map<uint64_t, std::string> VoteMapping();
+	std::map<uint64_t, std::string> TmatsMapping();
 	std::string PrintFinalMap();
 	void SubmitToFinalBusMap(const std::map<uint64_t,
 		std::string>& insert_map,
@@ -87,10 +89,13 @@ public:
 
 	 vote_threshold				  -> for a mapping to be made, votes must be >= vote_threshold
 
+	 vote_method_checks_tmats	  -> the end result of a vote method checks to see if the bus name
+										is a substring of the busname in TMATs for a given channel ID
+
 	 bus_exclusions				  -> if a bus name exists in the final bus map that also
 										exists in the bus_exclusions list, remove it from 
 										the final map. The bus_exclusion list marks a removal 
-										if it is a subset of a final mapped bus. It is also 
+										if it is a substring of a final mapped bus. It is also 
 										not case sensative when applying matches. 
 										If the excluded bus name exists in tmats_chanid_to_source_map,
 										the channel ID associated with the excluded bus will
@@ -112,6 +117,7 @@ public:
 		std::set<uint64_t> channel_ids,
 		uint64_t mask = UINT64_MAX,
 		uint64_t vote_threshold = 1,
+		bool vote_method_checks_tmats = false,
 		std::set<std::string> bus_exclusions = std::set<std::string>(),
 		std::map<uint64_t, std::string> tmats_chanid_to_source_map
 		= std::map<uint64_t, std::string>(),
@@ -195,7 +201,7 @@ public:
 				  False-> If zero channel_ids are
 							mapped and prompt_user is false
 						  |OR| prompt_user is set to true and the user
-							selects option "q" to quit translation		
+							selects option "q" to quit translation	
 	*/
 	bool Finalize(std::map<uint64_t, std::string>& final_map,
 		bool use_tmats_busmap,
@@ -257,8 +263,14 @@ public:
 		return final_bus_map_with_sources_; 
 	}
 
+	std::map<uint64_t, std::string> GetExcludedChannelIDs()
+	{
+		return excluded_channel_ids_;
+	}
+
 	bool UserAdjustments(std::vector<std::string>* test_options = NULL);
 	
+
 	/////////////////////////
 };
 
