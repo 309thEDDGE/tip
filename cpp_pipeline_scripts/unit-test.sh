@@ -26,9 +26,11 @@ echo ""
 echo "-------------------- Check for outdated binaries --------------------"
 echo ""
 PIPELINE_SCRIPT_DIR=$(dirname $0)
+BIN=$CMAKE_BUILD_DIR/bin
+[ -d "$BIN" ] || BIN=$BASE_DIR/bin
 BUILD_SCRIPT=$PIPELINE_SCRIPT_DIR/build.sh
-BINARIES="$(find $CMAKE_BUILD_DIR -name *.a)"
-BINARIES="$BINARIES $CMAKE_BUILD_DIR/bin/tip_*"
+BINARIES="$(find $BIN -name *.a)"
+BINARIES="$BINARIES $BIN/tip_*"
 OLDEST=$(ls -t $BINARIES $BUILD_SCRIPT | tail -1)
 # Fail if the build script has changed after any binary was built
 if [ $OLDEST != $BUILD_SCRIPT ]; then
@@ -37,7 +39,11 @@ if [ $OLDEST != $BUILD_SCRIPT ]; then
 	ls -lt $OLDEST $BUILD_SCRIPT
 	echo ""
 	exit 1
+else
+	echo "All binaries are newer than the build script"
+	ls -lt $OLDEST
 fi
+exit
 
 echo ""
 echo "-------------------- Unit Tests --------------------"
