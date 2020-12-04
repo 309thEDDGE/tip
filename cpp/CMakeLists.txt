@@ -31,6 +31,7 @@ add_library(${util_lib_name}
             ${util_src_dir}/tmats_parser.cpp         ${util_inc_dir}/tmats_parser.h
             ${util_src_dir}/metadata.cpp             ${util_inc_dir}/metadata.h
             ${util_src_dir}/parquet_reader.cpp       ${util_inc_dir}/parquet_reader.h
+            ${util_src_dir}/managed_path.cpp         ${util_inc_dir}/managed_path.h
  )
 
 target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} ${yaml_inc_dir} ${parquet_inc_dirs})
@@ -110,10 +111,12 @@ target_include_directories(${ch10pq_lib_name} PUBLIC
                             ${ch10pq_inc_dir}
                             ${pqctx_inc_dir} 
                             ${eth_inc_dir}
-                            ${ch10_inc_dir}) # Ch10 format headers.
+                            ${ch10_inc_dir} # Ch10 format headers.
+                            ${util_inc_dir})
 target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${ch10pq_lib_name} PRIVATE -fPIE)
-target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${eth_lib_name} ${linux_libs})
+target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${eth_lib_name} ${linux_libs}
+                      ${util_lib_name})
 
 #########################################################
 #             Build/link translate_1553 lib
@@ -291,7 +294,8 @@ if(build_tests)
                    ${test_src_dir}/parquet_arrow_validator_u.cpp ${test_src_dir}/parquet_context_u.cpp
                    ${test_src_dir}/tmats_parser_u.cpp ${test_src_dir}/metadata_u.cpp 
                    ${test_src_dir}/parse_manager_u.cpp ${test_src_dir}/parquet_reader_u.cpp
-                   ${test_src_dir}/dts1553_u.cpp)
+                   ${test_src_dir}/dts1553_u.cpp
+                   ${test_src_dir}/managed_path_u.cpp)
 #    set_property(TARGET ${test_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
                                ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
@@ -334,9 +338,9 @@ if(video_data)
       ${video_inc_dir}/parquet_video_extraction.h ${video_src_dir}/parquet_video_extraction.cpp)
 #    set_property(TARGET ${video_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${video_exe_name} PUBLIC ${video_inc_dir}
-                               ${parquet_inc_dirs})
+                               ${parquet_inc_dirs} ${util_inc_dir})
     target_compile_features(${video_exe_name} PUBLIC cxx_std_17)
-    target_link_libraries(${video_exe_name} ${parquet_libs} ${linux_libs})
+    target_link_libraries(${video_exe_name} ${parquet_libs} ${linux_libs} ${util_lib_name})
 endif()
 
 #########################################################

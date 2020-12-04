@@ -3,6 +3,7 @@
 
 #include "parquet_context.h"
 #include "MilStd1553F1Format.h"
+#include "managed_path.h"
 #include <set>
 #include <cmath>
 
@@ -53,13 +54,12 @@ private:
 
 public:
 	ParquetMilStd1553F1();
-	ParquetMilStd1553F1(std::string outfile, uint16_t ID, bool truncate);
+	ParquetMilStd1553F1(ManagedPath outfile, uint16_t ID, bool truncate);
 	void append_data(const uint64_t& time_stamp, uint8_t doy, const char* name, 
 		const MilStd1553F1ChanSpecFormat* chan_spec,
 		const MilStd1553F1MsgCommWord* msg, const uint16_t* data, const uint16_t& chanid, 
 		int8_t totwrdcnt, int8_t calcwrdcnt, uint8_t payload_incomplete);
 	void commit();
-	void add_names_to_set(std::set<std::string>& output_set);
 };
 
 #endif

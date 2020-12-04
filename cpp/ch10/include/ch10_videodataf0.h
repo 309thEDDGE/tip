@@ -2,6 +2,7 @@
 #define CH10VIDEODATAF0_H
 
 #include "parse_context.h"
+#include "managed_path.h"
 #include "VideoDataF0Format.h"
 
 #ifdef LOCALDB
@@ -44,7 +45,7 @@ private:
 	// information if specified by the Ch10 header.
 	//const uint8_t transport_stream_copy_size; --> use TransportStream_DATA_SIZE instead
 
-	std::string outpath;
+	ManagedPath outpath;
 
 	// Total size of packet body in bytes including channel specific data and possible 
 	// intra-pkt time stamps in addition to multiple 188-byte transport stream packets.
@@ -85,7 +86,7 @@ private:
 
 public:
 	~Ch10VideoDataF0();
-	Ch10VideoDataF0(BinBuff& buff, uint16_t ID, std::string out_path);
+	Ch10VideoDataF0(BinBuff& buff, uint16_t ID, ManagedPath out_path);
 	void Initialize(const Ch10TimeData* ch10td, const Ch10HeaderData* ch10hd) override;
 	uint8_t Parse() override;
 	void close();

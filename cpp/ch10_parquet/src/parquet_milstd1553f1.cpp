@@ -6,7 +6,7 @@ ParquetContext(DEFAULT_ROW_GROUP_COUNT), id_(0), temp_element_count_(0), commwor
 
 }
 
-ParquetMilStd1553F1::ParquetMilStd1553F1(std::string outfile, uint16_t ID, bool truncate) : 
+ParquetMilStd1553F1::ParquetMilStd1553F1(ManagedPath outfile, uint16_t ID, bool truncate) :
 	max_temp_element_count_(DEFAULT_ROW_GROUP_COUNT * DEFAULT_BUFFER_SIZE_MULTIPLIER),
 	ParquetContext(DEFAULT_ROW_GROUP_COUNT), id_(ID), temp_element_count_(0), commword_ptr_(nullptr)
 {
@@ -100,7 +100,7 @@ ParquetMilStd1553F1::ParquetMilStd1553F1(std::string outfile, uint16_t ID, bool 
 	SetMemoryLocation(calcwrdcnt_, "calcwrdcnt");
 	SetMemoryLocation(payload_incomplete_, "incomplete");
 
-	bool ret = OpenForWrite(outfile, truncate);
+	bool ret = OpenForWrite(outfile.string(), truncate);
 }
 
 void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, const char* name,
@@ -253,10 +253,4 @@ void ParquetMilStd1553F1::commit()
 		
 		std::fill(data_.begin(), data_.end(), 0);
 	}
-}
-
-void ParquetMilStd1553F1::add_names_to_set(std::set<std::string>& output_set)
-{
-	for (std::set<std::string>::iterator it = name_set_.begin(); it != name_set_.end(); ++it)
-		output_set.insert(*it);
 }

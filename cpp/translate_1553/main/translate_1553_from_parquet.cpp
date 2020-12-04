@@ -9,9 +9,9 @@
 #include "bus_map.h"
 #include "parquet_reader.h"
 #include "translation_config_params.h"
+#include "managed_path.h"
 #include <arrow/api.h>
 #include <arrow/io/api.h>
-#include <filesystem>
 #include <iostream>
 #include <cstdlib>
 #include <set>
@@ -21,50 +21,46 @@
 // of vars.
 
 
-bool GetArguments(int argc, char* argv[], std::string& input_path,
-	std::string& icd_path);
-bool GetArguments(int argc, char* argv[], std::string& input_path,
-	uint8_t& thread_count, std::string& icd_path);
-
-bool PrepareICDAndBusMap(DTS1553& dts1553, const std::string& input_path,
-	const std::string& dts_path, bool stop_after_bus_map, bool prompt_user,
+bool GetArguments(int argc, char* argv[], ManagedPath& input_path,
+	ManagedPath& icd_path);
+bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
+	const ManagedPath& dts_path, bool stop_after_bus_map, bool prompt_user,
 	uint64_t vote_threshold, bool vote_method_checks_tmats, 
 	std::vector<std::string> bus_exclusions,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap,
-	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
-bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prompt_user,
+	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map);
+bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prompt_user,
 	uint64_t vote_threshold, bool vote_method_checks_tmats, 
 	std::vector<std::string> bus_exclusions,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap,
+	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map);
+bool MTTranslate(const ManagedPath& input_path, uint8_t thread_count, bool select_msgs,
+	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
-bool MTTranslate(std::string input_path, uint8_t thread_count, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData icd, const std::string& dts_path,
+bool Translate(const ManagedPath& input_path, bool select_msgs,
+	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
-bool Translate(std::string input_path, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData icd, const std::string& dts_path,
-	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
-bool RecordMetadata(const std::filesystem::path translated_data_dir,
-	const std::string& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map);
+bool RecordMetadata(const ManagedPath& translated_data_dir,
+	const ManagedPath& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map);
 
 int main(int argc, char* argv[])
 {
-	std::string input_path = "";
+	ManagedPath input_path;
 	uint8_t thread_count = 0;
-	std::string dts_path = "";
+	ManagedPath dts_path;
 
 	if (!GetArguments(argc, argv, input_path, dts_path))
 		return 0;
 
 	TranslationConfigParams config;
-	std::filesystem::path file_path("../conf/translate_conf.yaml");
-	if (!config.Initialize(file_path.string()))
+	ManagedPath config_path;
+	config_path = config_path.parent_path() / "conf" / "translate_conf.yaml";
+	if (!config.Initialize(config_path.string()))
 		return 0;
 	thread_count = config.translate_thread_count_;
 
-	printf("DTS1553 path: %s\n", dts_path.c_str());
-	printf("Input: %s\n", input_path.c_str());
+	printf("DTS1553 path: %s\n", dts_path.RawString().c_str());
+	printf("Input: %s\n", input_path.RawString().c_str());
 	printf("Thread count: %hhu\n", thread_count);
 
 	DTS1553 dts1553;
@@ -95,24 +91,8 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-bool GetArguments(int argc, char* argv[], std::string& input_path, 
-	uint8_t& thread_count, std::string& icd_path)
-{
-
-	if (argc < 3)
-	{
-		printf("Args not present\n");
-		return false;
-	}
-
-	input_path = argv[1]; // path to parquet "file" (could be .parquet directory)
-	thread_count = atoi(argv[2]);
-
-	return true;
-}
-
-bool GetArguments(int argc, char* argv[], std::string& input_path,
-	std::string& icd_path)
+bool GetArguments(int argc, char* argv[], ManagedPath& input_path,
+	ManagedPath& icd_path)
 {
 	if (argc < 3)
 	{
@@ -120,27 +100,26 @@ bool GetArguments(int argc, char* argv[], std::string& input_path,
 		return false;
 	}
 
-	input_path = argv[1]; // path to parquet "file" (could be .parquet directory)
-	icd_path = argv[2];
+	input_path = ManagedPath(std::string(argv[1])); // path to parquet "file" (or .parquet directory)
+	icd_path = ManagedPath(std::string(argv[2]));
 
 	return true;
 }
 
-bool PrepareICDAndBusMap(DTS1553& dts1553, const std::string& input_path,
-	const std::string& dts_path, bool stop_after_bus_map, bool prompt_user,
+bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
+	const ManagedPath& dts_path, bool stop_after_bus_map, bool prompt_user,
 	uint64_t vote_threshold, bool vote_method_checks_tmats,
 	std::vector<std::string> bus_exclusions,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap, 
-	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
+	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 
 	// Read lines from ICD text file, ingest, and manipulate.
 	auto start_time = std::chrono::high_resolution_clock::now();
 	FileReader fr;
-	if (fr.ReadFile(dts_path) == 1)
+	if (fr.ReadFile(dts_path.string()) == 1)
 	{
-		printf("Failed to read ICD: %s\n", dts_path.c_str());
+		printf("Failed to read ICD: %s\n", dts_path.RawString().c_str());
 		return false;
 	}
 	if (!dts1553.IngestLines(dts_path, fr.GetLines()))
@@ -157,8 +136,8 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const std::string& input_path,
 
 	// Generate the bus map from metadata and possibly user
 	// input.
-	if (!SynthesizeBusMap(dts1553, input_path, prompt_user, vote_threshold, vote_method_checks_tmats,
-		bus_exclusions, tmats_bus_name_corrections, use_tmats_busmap, 
+	if (!SynthesizeBusMap(dts1553, input_path, prompt_user, vote_threshold, 
+		vote_method_checks_tmats, bus_exclusions, tmats_bus_name_corrections, use_tmats_busmap, 
 		chanid_to_bus_name_map))
 	{
 		return false;
@@ -176,10 +155,11 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const std::string& input_path,
 	return true;
 }
 
-bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prompt_user,
-	uint64_t vote_threshold, bool vote_method_checks_tmats, std::vector<std::string> bus_exclusions,
+bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prompt_user,
+	uint64_t vote_threshold, bool vote_method_checks_tmats,
+	std::vector<std::string> bus_exclusions,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap, std::map<uint64_t,std::string>& chanid_to_bus_name_map)
+	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 	std::unordered_map<uint64_t, std::set<std::string>> message_key_to_busnames_map;
 
@@ -188,8 +168,8 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 
 	// Create the metadata file path from the input raw parquet path.
 	Metadata input_md;
-	std::filesystem::path input_md_path = input_md.GetYamlMetadataPath(
-		std::filesystem::path(input_path), "_metadata");
+	ManagedPath input_md_path = input_md.GetYamlMetadataPath(
+		input_path, "_metadata");
 
 	// Use YamlReader to read the yaml metadata file.
 	YamlReader yr;
@@ -256,7 +236,7 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 	pr.SetManualRowgroupIncrementMode();
 	if (!pr.SetPQPath(input_path))
 	{
-		printf("Non Existant Path %s\n",input_path.c_str());
+		printf("Non Existent Path %s\n",input_path.RawString().c_str());
 		return false;
 	};
 
@@ -322,8 +302,6 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 	// Reverse the map that is populated in the previous step.
 	std::map<std::string, std::set<uint64_t>> bus_name_to_chanid_map =
 		it.ReverseMapSet(chanid_to_bus_name_set_map);
-	/*std::vector<std::string> cols = { "BusName", "chID" };
-	it.PrintMapWithHeader_KeyToSet(bus_name_to_chanid_map, cols, "bus_name_to_chanid_map");*/
 
 	// Correct and update the lookup table in ICDData with the new map.
 	if (!dts1553.ICDDataPtr()->ReplaceBusNameWithChannelIDInLookup(bus_name_to_chanid_map))
@@ -335,8 +313,8 @@ bool SynthesizeBusMap(DTS1553& dts1553, const std::string& input_path, bool prom
 	return true;
 }
 
-bool MTTranslate(std::string input_path, uint8_t thread_count, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData icd, const std::string& dts_path,
+bool MTTranslate(const ManagedPath& input_path, uint8_t thread_count, bool select_msgs,
+	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 	TranslationMaster tm(input_path, thread_count, select_msgs,
@@ -357,8 +335,8 @@ bool MTTranslate(std::string input_path, uint8_t thread_count, bool select_msgs,
 	return true;
 }
 
-bool Translate(std::string input_path, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData icd, const std::string& dts_path,
+bool Translate(const ManagedPath& input_path, bool select_msgs,
+	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 	ParquetTranslationManager ptm(input_path, icd);
@@ -379,19 +357,19 @@ bool Translate(std::string input_path, bool select_msgs,
 	return true;
 }
 
-bool RecordMetadata(const std::filesystem::path translated_data_dir,
-	const std::string& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map)
+bool RecordMetadata(const ManagedPath& translated_data_dir,
+	const ManagedPath& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map)
 {
 	// Use Metadata class to create the output metadata file path.
 	Metadata md;
-	std::filesystem::path md_path = md.GetYamlMetadataPath(translated_data_dir,
+	ManagedPath md_path = md.GetYamlMetadataPath(translated_data_dir,
 		"_metadata");
 
 	// Record the final bus map used for translation.
 	md.RecordSimpleMap(chanid_to_bus_name_map, "chanid_to_bus_name_map");
 
 	// Record the ICD path.
-	md.RecordSingleKeyValuePair("dts_path", dts_path);
+	md.RecordSingleKeyValuePair("dts_path", dts_path.RawString());
 
 	// Get a string containing the complete metadata output and
 	// and write it to the yaml file.

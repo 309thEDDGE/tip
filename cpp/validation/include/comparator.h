@@ -5,10 +5,10 @@
 #include <arrow/io/api.h>
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/schema.h>
-#include <filesystem>
 #include <map>
 #include <set>
 #include "parquet_reader.h"
+#include "managed_path.h"
 
 
 class Comparator {
@@ -52,7 +52,7 @@ public:
 		Returns: False -> If either path is invalid
 				 True  -> Other wise	
 	*/
-	bool Initialize(std::string file1, std::string file2);
+	bool Initialize(ManagedPath path1, ManagedPath path2);
 
 	/*
 		Compares two vectors from start position to (size + start position)

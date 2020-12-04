@@ -4,6 +4,7 @@
 #include <sstream>
 #include "yaml-cpp/yaml.h"
 #include "icd_data.h"
+#include "managed_path.h"
 
 // Explicit indication of DTS1553 components
 enum class DTS1553Component : uint8_t
@@ -63,7 +64,7 @@ public:
 	/*
 		IngestLines
 
-		icd_path:	Full path to dts file. File name is used determine file type,
+		dts_path:	Full path to dts file. File name is used determine file type,
 		            either yaml or text/csv.
 
 		lines:		All non-newline-terminated lines of text from the dts file.
@@ -72,7 +73,7 @@ public:
 		return:		True if success, false if failure.
 	
 	*/
-	bool IngestLines(const std::string& dts_path, const std::vector<std::string>& lines);
+	bool IngestLines(const ManagedPath& dts_path, const std::vector<std::string>& lines);
 
 	/*
 		ProcessLinesAsYaml

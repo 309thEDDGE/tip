@@ -2,9 +2,9 @@
 
 #include "parse_manager.h"
 
-ParseManager::ParseManager(std::string fname, std::string output_path, const ParserConfigParams * const config) : 
+ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const ParserConfigParams * const config) :
 	config_(config),
-	input_fname(fname), 
+	input_path(fname), 
 	output_path(output_path), 
 	read_size(10000), 
 	append_read_size(10000000), 
@@ -23,100 +23,96 @@ ParseManager::ParseManager(std::string fname, std::string output_path, const Par
 	workers(nullptr), 
 	milstd1553_msg_selection(false)
 {
+	bool success = false;
+	input_path.GetFileSize(success, total_size);
+	if (success)
+	{
 #ifdef DEBUG
 #if DEBUG > 0
-	printf("Ch10 file path: %s\n", input_fname.c_str());
-
+		printf("File size: %llu MB\n\n", total_size / (1024 * 1024));
 #endif
 #endif
-
-	// Use MilStd1553 conf file data to create a vector of sorted message
-	// names if required.
-#ifdef XDAT
-	create_milstd1553_sorted_msgs();
-#endif
-
-	if (!error_set)
-	{
-		// Open file and determine size.
-		ifile.open(input_fname.c_str(), std::ios::binary | std::ios::ate);
-		if (!(ifile.is_open()))
-		{
-			printf("Error opening file: %s\n", input_fname.c_str());
-			error_set = true;
-		}
-		else
-		{
-			total_size = ifile.tellg();
-			printf("total size is %llu\n", total_size);
-			ifile.seekg(0);
-#ifdef DEBUG
-			if (DEBUG > 0)
-				printf("File size: %llu MB\n\n", total_size / (1024 * 1024));
-#endif
-
-			// Create file output paths based on the input file name.
-			create_paths();
-		}
+		create_output_dirs();
 	}
+	else
+		error_set = true;
 }
 
-void ParseManager::create_paths()
+void ParseManager::create_output_dirs()
 {
-	// Create parquet output file directory.
-	std::filesystem::path input_path(input_fname);
-	std::filesystem::path out_path(output_path);
-	std::filesystem::path parquet_1553_path = out_path / input_path.stem();
-	parquet_1553_path += std::filesystem::path("_1553.parquet");
-	printf("Parquet 1553 output path: %s\n", parquet_1553_path.string().c_str());
-
-	if (!std::filesystem::exists(parquet_1553_path))
-	{
-		//printf("parquet path DOES NOT EXIST!\n");
-		bool create_dir_success = false;
-		create_dir_success = std::filesystem::create_directory(parquet_1553_path);
-		if (!create_dir_success)
-		{
-			error_set = true;
-			printf("Creation of directory %s failed\n", parquet_1553_path.string().c_str());
-		}
-	}
-	fspath_map[Ch10DataType::MILSTD1553_DATA_F1] = parquet_1553_path;
+	ManagedPath parquet_1553_path = output_path.CreatePathObject(input_path, "_1553.parquet");
+	printf("Parquet 1553 output path: %s\n", parquet_1553_path.RawString().c_str());
+	if (!parquet_1553_path.create_directory())
+		error_set = true;
+	output_dir_map_[Ch10DataType::MILSTD1553_DATA_F1] = parquet_1553_path;
 
 #ifdef VIDEO_DATA
-	std::filesystem::path parquet_vid_path = out_path / input_path.stem();
-	parquet_vid_path += std::filesystem::path("_video.parquet");
-	printf("Parquet video output path: %s\n", parquet_vid_path.string().c_str());
-	fspath_map[Ch10DataType::VIDEO_DATA_F0] = parquet_vid_path;
 
-	if (!std::filesystem::exists(parquet_vid_path))
-	{
-		bool create_dir_success = false;
-		create_dir_success = std::filesystem::create_directory(parquet_vid_path);
-		if (!create_dir_success)
-		{
-			error_set = true;
-			printf("Creation of directory %s failed\n", parquet_vid_path.string().c_str());
-		}
-	}
+	ManagedPath parquet_vid_path = output_path.CreatePathObject(input_path, "_video.parquet");
+	printf("Parquet video output path: %s\n", parquet_vid_path.RawString().c_str());
+	if (!parquet_vid_path.create_directory())
+		error_set = true;
+	output_dir_map_[Ch10DataType::VIDEO_DATA_F0] = parquet_vid_path;
+
 #endif
+
 #ifdef ETHERNET_DATA
-	std::filesystem::path parquet_eth_path = out_path / input_path.stem();
-	parquet_eth_path += std::filesystem::path("_ethernet.parquet");
-	printf("Parquet ethernet output path: %s\n", parquet_eth_path.string().c_str());
-	fspath_map[Ch10DataType::ETHERNET_DATA_F0] = parquet_eth_path;
 
-	if (!std::filesystem::exists(parquet_eth_path))
-	{
-		bool create_dir_success = false;
-		create_dir_success = std::filesystem::create_directory(parquet_eth_path);
-		if (!create_dir_success)
-		{
-			error_set = true;
-			printf("Creation of directory %s failed\n", parquet_eth_path.string().c_str());
-		}
-	}
+	ManagedPath parquet_eth_path = output_path.CreatePathObject(input_path, "_ethernet.parquet");
+	printf("Parquet ethernet output path: %s\n", parquet_eth_path.RawString().c_str());
+	if (!parquet_eth_path.create_directory())
+		error_set = true;
+	output_dir_map_[Ch10DataType::ETHERNET_DATA_F0] = parquet_eth_path;
+
 #endif
+}
+
+void ParseManager::create_output_file_paths()
+{
+	char replacement_ext_format[] = "__%03u.parquet";
+	char replacement_ext_buffer[20];
+	std::string replacement_ext = "";
+	ManagedPath temp_output_dir;
+
+	for (uint16_t read_ind = 0; read_ind < n_reads; read_ind++)
+	{
+		// Create the replacement extension for the current index.
+		sprintf(replacement_ext_buffer, replacement_ext_format, read_ind);
+		replacement_ext = std::string(replacement_ext_buffer);
+
+		// Create a temporary map to hold all of the output file paths for the 
+		// current index.
+		std::map<Ch10DataType, ManagedPath> temp_output_file_map;
+
+		// Get a copy of the output dir path for simplification.
+		temp_output_dir = output_dir_map_[Ch10DataType::MILSTD1553_DATA_F1];
+
+		// Create the output file path.
+		temp_output_file_map[Ch10DataType::MILSTD1553_DATA_F1] = temp_output_dir.CreatePathObject(
+			temp_output_dir, replacement_ext);
+
+		/*printf("Create output file path: %s\n",
+			temp_output_file_map[Ch10DataType::MILSTD1553_DATA_F1].RawString().c_str());*/
+
+#ifdef VIDEO_DATA
+
+		temp_output_dir = output_dir_map_[Ch10DataType::VIDEO_DATA_F0];
+		temp_output_file_map[Ch10DataType::VIDEO_DATA_F0] = temp_output_dir.CreatePathObject(
+			temp_output_dir, replacement_ext);
+
+#endif
+
+#ifdef ETHERNET_DATA
+
+		temp_output_dir = output_dir_map_[Ch10DataType::ETHERNET_DATA_F0];
+		temp_output_file_map[Ch10DataType::ETHERNET_DATA_F0] = temp_output_dir.CreatePathObject(
+			temp_output_dir, replacement_ext);
+
+#endif
+
+		// Add the temp map to the vector maps.
+		output_file_path_vec_.push_back(temp_output_file_map);
+	}
 }
 
 bool ParseManager::error_state()
@@ -126,6 +122,14 @@ bool ParseManager::error_state()
 
 void ParseManager::start_workers()
 {
+	ifile.open(input_path.string().c_str(), std::ios::binary);
+	if (!(ifile.is_open()))
+	{
+		printf("Error opening file: %s\n", input_path.RawString().c_str());
+		error_set = true;
+		return;
+	}
+
 	read_size = config_->parse_chunk_bytes_ * 1e6;
 	n_threads = config_->parse_thread_count_;
 	uint16_t max_workers = config_->max_chunk_read_count_;
@@ -142,7 +146,9 @@ void ParseManager::start_workers()
 	binary_buffers = new BinBuff[n_reads];
 	workers_allocated = true;
 
-	printf("\nInput file: %s\n", input_fname.c_str());
+	create_output_file_paths();
+
+	printf("\nInput file: %s\n", input_path.RawString().c_str());
 	printf("Using %u threads\n", n_threads);
 #ifdef DEBUG
 	if (DEBUG > 0)
@@ -193,12 +199,12 @@ void ParseManager::start_workers()
 	// Create metadata object and create output path name for metadata
 	// to be recorded in 1553 output directory.
 	Metadata md;
-	std::filesystem::path md_path = md.GetYamlMetadataPath(
-		fspath_map[Ch10DataType::MILSTD1553_DATA_F1],
+	ManagedPath md_path = md.GetYamlMetadataPath(
+		output_dir_map_[Ch10DataType::MILSTD1553_DATA_F1],
 		"_metadata");
 
 	// Record the input ch10 path.
-	md.RecordSingleKeyValuePair("ch10_input_file_path", input_fname);
+	md.RecordSingleKeyValuePair("ch10_input_file_path", input_path.RawString());
 
 	// Obtain the tx and rx combined channel ID to LRU address map and
 	// record it to the Yaml writer.
@@ -231,7 +237,7 @@ void ParseManager::start_workers()
 	// Create metadata object for video metadata.
 	Metadata vmd;
 	md_path = vmd.GetYamlMetadataPath(
-		fspath_map[Ch10DataType::VIDEO_DATA_F0],
+		output_dir_map_[Ch10DataType::VIDEO_DATA_F0],
 		"_metadata");
 
 	// Get the channel ID to minimum time stamp map.
@@ -326,7 +332,7 @@ std::streamsize ParseManager::activate_worker(uint16_t binbuff_ind, uint16_t ID,
 	{
 		is_final_worker = true;
 	}
-	workers[ID].initialize(ID, start_pos, n_read, binbuff_ind, fspath_map,
+	workers[ID].initialize(ID, start_pos, n_read, binbuff_ind, output_file_path_vec_[ID],
 		is_final_worker);
 #endif
 
@@ -335,18 +341,16 @@ std::streamsize ParseManager::activate_worker(uint16_t binbuff_ind, uint16_t ID,
 	{
 		printf("Init. worker %u: start = %llu, read size = %u, bb ind = %u\n", 
 			ID, start_pos, n_read, binbuff_ind);
-		printf("Output file name: %s\n", worker_outfile_name(ID).c_str());
 	}
 	#endif
 		
 	// Start this instance of ParseWorker. Append mode false.
 #ifdef LIBIRIG106
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
-		false, check_word_count, milstd1553_msg_selection, milstd1553_sorted_msg_selection, 
-		std::ref(tmats_body_vec_));
+		false, std::ref(tmats_body_vec_));
 #else
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
-		false, check_word_count, milstd1553_msg_selection, milstd1553_sorted_msg_selection);
+		false);
 #endif
 	
 	return read_count;
@@ -375,66 +379,12 @@ std::streamsize ParseManager::activate_append_mode_worker(uint16_t binbuff_ind, 
 	// Start this instance of ParseWorker. Append mode true.
 #ifdef LIBIRIG106
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
-		true, check_word_count, milstd1553_msg_selection, milstd1553_sorted_msg_selection, 
-		std::ref(tmats_body_vec_));
+		true, std::ref(tmats_body_vec_));
 #else
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
-		true, check_word_count, milstd1553_msg_selection, milstd1553_sorted_msg_selection);
+		true);
 #endif
 	return read_count;
-}
-
-std::string ParseManager::worker_outfile_name(uint16_t worker_ind)
-{
-	std::string key = ".ch10";
-	std::string output_fname = input_fname;
-	char buff[10];
-	sprintf(buff, "__%03u.h5", worker_ind);
-	std::string s(buff);
-	size_t pos = output_fname.rfind(key);
-	if(pos == std::string::npos)
-	{
-		printf("Substring not found: %s\n", key.c_str());
-		std::string def = "default.h5";
-		return def;
-	}
-	output_fname.replace(pos, key.length(), s);
-
-	// Create a path object to extract the file name 
-	// alone and append to the output path.
-	std::filesystem::path outpath(output_path);
-	std::filesystem::path old_output_fname(output_fname);
-	std::filesystem::path new_output_fname = outpath / old_output_fname.filename();
-	output_fname = new_output_fname.string();
-
-	return output_fname; 
-}
-
-std::string ParseManager::final_outfile_name()
-{
-	std::string key = ".ch10";
-	std::string output_fname = input_fname;
-	/*char buff[10];
-	sprintf(buff, ".h5");
-	std::string s(buff);*/
-	std::string s = ".h5";
-	size_t pos = output_fname.rfind(key);
-	if (pos == std::string::npos)
-	{
-		printf("Substring not found: %s\n", key.c_str());
-		std::string def = "final_default.h5";
-		return def;
-	}
-	output_fname.replace(pos, key.length(), s);
-
-	// Create a path object to extract the file name 
-	// alone and append to the output path.
-	std::filesystem::path outpath(output_path);
-	std::filesystem::path old_output_fname(output_fname);
-	std::filesystem::path new_output_fname = outpath / old_output_fname.filename();
-	output_fname = new_output_fname.string();
-
-	return output_fname;
 }
 
 void ParseManager::worker_queue(bool append_mode)
@@ -764,16 +714,6 @@ void ParseManager::collect_stats()
 	milstdstats->print_msg_stats();
 }
 
-#ifdef PARQUET
-// Concatenate data files which contain multiple data types.
-// Not implemented yet, but I expect this to modified for use
-// with Parquet or ORC files output.
-void ParseManager::concatenate_data_files()
-{
-
-}
-#endif
-
 ParseManager::~ParseManager()
 {
 	ifile.close();
@@ -795,41 +735,6 @@ ParseManager::~ParseManager()
 	}
 }
 
-bool ParseManager::file_exists(std::string& path)
-{
-	std::ifstream temp_ifile;
-	temp_ifile.open(path.c_str());
-	bool exists = false;
-	if (temp_ifile.is_open())
-		exists = true;
-	temp_ifile.close();
-	return exists;
-}
-
-#ifdef PARQUET
-void ParseManager::record_msg_names()
-{
-	std::filesystem::path input_path(input_fname);
-	std::filesystem::path out_path(output_path);
-	std::filesystem::path msg_names_path = out_path / input_path.stem();
-	msg_names_path += std::filesystem::path("_1553_messages.txt");
-	printf("Message names output path: %s\n", msg_names_path.string().c_str());
-
-	std::ofstream msg_file(msg_names_path.string());
-	if (msg_file.is_open())
-	{
-		for (std::set<std::string>::iterator it = name_set.begin(); it != name_set.end(); ++it)
-		{
-			msg_file << *it << "\n";
-		}
-		msg_file.close();
-	}
-	else
-		printf("Unable to open file: %s\n", msg_names_path.string().c_str());
-}
-
-#endif
-
 void ParseManager::ProcessTMATS()
 {
 	// if tmats doesn't exist return
@@ -845,14 +750,14 @@ void ParseManager::ProcessTMATS()
 		full_TMATS_string += tmats_body_vec_[i];
 	}
 
-	std::filesystem::path path;
-	path = fspath_map[Ch10DataType::MILSTD1553_DATA_F1] /
-		std::filesystem::path("_TMATS.txt");
+	ManagedPath tmats_path;
+	tmats_path = output_dir_map_[Ch10DataType::MILSTD1553_DATA_F1] /
+		"_TMATS.txt";
 	std::ofstream tmats;
-	tmats.open(path.string(), std::ios::trunc | std::ios::binary);
+	tmats.open(tmats_path.string(), std::ios::trunc | std::ios::binary);
 	if (tmats.good())
 	{
-		printf("\nWriting TMATS to %s\n", path.string().c_str());
+		printf("\nWriting TMATS to %s\n", tmats_path.RawString().c_str());
 		tmats << full_TMATS_string;
 	}
 

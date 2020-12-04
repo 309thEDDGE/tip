@@ -23,6 +23,8 @@
 
 #include "parse_manager.h"
 #include "parser_config_params.h"
+#include "managed_path.h"
+
 
 int main(int argc, char* argv[])
 {	
@@ -38,29 +40,35 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	
-	std::filesystem::path conf_path("../conf/parse_conf.yaml");
 	ParserConfigParams config;
+	ManagedPath conf_path;
+	conf_path = conf_path.parent_path() / "conf" / "parse_conf.yaml";
+	printf("Configuration file path: %s\n", conf_path.RawString().c_str());
 	bool settings_validated = config.Initialize(conf_path.string());
 
 	// Get path to ch10 file. 
-	std::string input_path = argv[1];
-	printf("Ch10 file path: %s\n", input_path.c_str());
+	std::string arg_path = argv[1];
+	ManagedPath input_path(arg_path);
+	if (!input_path.is_regular_file())
+	{
+		printf("User-defined input path is not a directory: %s\n", input_path.RawString().c_str());
+		return 0;
+	}
+	printf("Ch10 file path: %s\n", input_path.RawString().c_str());
 
 	// Check for a second argument. If present, this path specifies the output
 	// path. If not present, the output path is the same as the input path.
-	std::filesystem::path inpath(input_path);
-	std::string output_path = inpath.parent_path().string();
+	ManagedPath output_path = input_path.parent_path();
 	if (argc == 3)
 	{
-		output_path = argv[2];
-		if (!std::filesystem::is_directory(std::filesystem::path(output_path)))
+		output_path = ManagedPath(std::string(argv[2]));
+		if (!output_path.is_directory())
 		{
-			printf("User-defined output path is not a directory: %s\n", output_path.c_str());
+			printf("User-defined output path is not a directory: %s\n", output_path.RawString().c_str());
 			return 0;
 		}
-		printf("Output path: %s\n", output_path.c_str());
 	}
+	printf("Output path: %s\n", output_path.RawString().c_str());
 
 	if (settings_validated)
 	{

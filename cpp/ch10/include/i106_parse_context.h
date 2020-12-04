@@ -11,6 +11,7 @@ more complicated or less reliable.)
 
 #include <cstdint>
 #include <cstdio>
+#include "managed_path.h"
 #include "binbuff.h"
 
 
@@ -173,7 +174,7 @@ protected:
 	const uint8_t ts_size_;
 
 	// Output file path relevant to the derived class parse type.
-	std::string output_path_;
+	ManagedPath output_path_;
 
 	// Uses the TS_source and TS_format values to determine the
 	// correct means of parsing the time stamp. This function does
@@ -194,7 +195,7 @@ public:
 	// parsed. ID is used to identify the calling thread. 
 	I106ParseContext();
 	void Initialize(uint16_t ID, const Ch10MetaData* ch10md_ptr, 
-		const std::string& outpath);
+		const ManagedPath& outpath);
 
 	// Virtual method to be defined in derived class. Mentioned 
 	// here as a reminder to initialize the class that writes 

@@ -9,7 +9,7 @@ i106_status_(I106Status::I106_OK), npp(), pq_eth_writer_()
 
 bool I106Ch10EthernetF0::InitializeWriter()
 {
-	return pq_eth_writer_.Initialize(output_path_, id_);
+	return pq_eth_writer_.Initialize(output_path_.string(), id_);
 }
 
 uint8_t I106Ch10EthernetF0::Ingest(I106C10Header* header, void* buffer)

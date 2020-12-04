@@ -3,6 +3,7 @@
 
 #include "parquet_context.h"
 #include "VideoDataF0Format.h"
+#include "managed_path.h"
 #include <cmath>
 
 const int DEFAULT_ROW_GROUP_COUNT_VIDEO = 10000;
@@ -82,7 +83,7 @@ private:
 	std::vector<uint16_t> channel_id_;
 
 public:
-	ParquetVideoDataF0(std::string outfile, uint16_t ID, bool truncate);
+	ParquetVideoDataF0(ManagedPath outfile, uint16_t ID, bool truncate);
 
 	/*
 		Writes the remaining rows that were not written by append_data

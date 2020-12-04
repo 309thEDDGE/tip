@@ -1,6 +1,6 @@
 #include "dts1553.h"
 
-bool DTS1553::IngestLines(const std::string& dts_path, const std::vector<std::string>& lines)
+bool DTS1553::IngestLines(const ManagedPath& dts_path, const std::vector<std::string>& lines)
 {
 	// Check if yaml or text file.
 	bool is_yaml = icd_data_.IsYamlFile(dts_path);

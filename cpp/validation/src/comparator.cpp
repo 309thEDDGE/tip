@@ -1,24 +1,24 @@
 #include "comparator.h"
 
-bool Comparator::Initialize(std::string file1, std::string file2)
+bool Comparator::Initialize(ManagedPath path1, ManagedPath path2)
 {
-	if (!std::filesystem::exists(file1))
+	if (!path1.is_directory())
 	{
-		printf("\nERROR!! parquet directory %s doesn't exist: \n", file1.c_str());
+		printf("\nERROR!! parquet directory %s doesn't exist: \n", path1.RawString().c_str());
 		failure_ = true;
 	}
 
-	if (!std::filesystem::exists(file2))
+	if (!path2.is_directory())
 	{
-		printf("\nERROR!! parquet directory %s doesn't exist: \n", file2.c_str());
+		printf("\nERROR!! parquet directory %s doesn't exist: \n", path2.RawString().c_str());
 		failure_ = true;
 	}
 
 	bool return_status = false;
-	return_status = pm1_.SetPQPath(file1);
+	return_status = pm1_.SetPQPath(path1);
 	if (!return_status)
 		failure_ = true;
-	return_status = pm2_.SetPQPath(file2);
+	return_status = pm2_.SetPQPath(path2);
 	if (!return_status)
 		failure_ = true;
 	

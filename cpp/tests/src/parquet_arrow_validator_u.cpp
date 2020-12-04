@@ -223,17 +223,20 @@ protected:
 TEST_F(ParquetArrowValidatorTest, ComparatorInitializeNoFilesExist)
 {
 	Comparator comp;
-	EXPECT_FALSE(comp.Initialize("file1.parquet", "file2.parquet"));
+	std::string file_name1 = "file1.parquet";
+	std::string file_name2 = "file2.parquet";
+	EXPECT_FALSE(comp.Initialize(ManagedPath(file_name1), ManagedPath(file_name2)));
 }
 
 TEST_F(ParquetArrowValidatorTest, ComparatorInitializeNoFilesExist2)
 {
 	Comparator comp;
 	std::string file1 = "file1.parquet";
+	std::string file2 = "file2.parquet";
 
 	std::filesystem::create_directory(file1);
 
-	EXPECT_FALSE(comp.Initialize(file1, "file2.parquet"));
+	EXPECT_FALSE(comp.Initialize(ManagedPath(file1), ManagedPath(file2)));
 	std::filesystem::remove_all(file1);
 }
 

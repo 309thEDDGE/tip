@@ -5,9 +5,9 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
-#include <filesystem>
 #include <chrono>
 #include <atomic>
+#include "managed_path.h"
 #include "data_organization.h"
 #include <vector>
 #include <set>
@@ -26,11 +26,11 @@ class ParquetTranslationManager
 private:
 	DataOrg data_org_;
 	int status_;
-	std::string parquet_path_;
+	ManagedPath parquet_path_;
 	bool parquet_path_is_dir_;
-	std::vector<std::string> input_parquet_paths_;
-	std::filesystem::path output_dir_;
-	std::filesystem::path output_base_name_;
+	std::vector<ManagedPath> input_parquet_paths_;
+	ManagedPath output_dir_;
+	ManagedPath output_base_name_;
 	bool select_msgs_;
 	std::vector<std::string> select_msg_vec_;
 	bool have_created_reader_;
@@ -74,7 +74,7 @@ private:
 
 	// Private functions
 	uint8_t setup_output_paths();
-	uint8_t open_raw_1553_parquet_file(std::string& current_path);
+	uint8_t open_raw_1553_parquet_file(const ManagedPath& current_path);
 	uint8_t close_raw_1553_parquet_file();
 	uint8_t consume_row_group();
 	uint8_t finalize_translation();
@@ -85,8 +85,8 @@ private:
 	
 
 public:
-	ParquetTranslationManager(std::string parquet_path, ICDData icd);
-	ParquetTranslationManager(uint8_t id, ICDData icd);
+	ParquetTranslationManager(const ManagedPath& parquet_path, const ICDData& icd);
+	ParquetTranslationManager(uint8_t id, const ICDData& icd);
 	~ParquetTranslationManager();
 	int get_status();
 	void translate();
@@ -95,17 +95,15 @@ public:
 	
 
 	// Functions for use with multithreaded parsing only.
-	void operator()(std::filesystem::path& output_base_path, std::filesystem::path& output_base_name,
-		std::vector<std::string>& input_parquet_paths, bool is_multithreaded);
-	void get_paths(std::string parquet_path, std::filesystem::path& output_base_path, 
-		std::filesystem::path& output_base_name, std::filesystem::path& msg_list_path,
-		std::vector<std::string>& input_parquet_paths, bool& parquet_path_is_dir);
+	void operator()(const ManagedPath& output_base_path, const ManagedPath& output_base_name,
+		std::vector<ManagedPath>& input_parquet_paths, bool is_multithreaded);
+	void get_paths(ManagedPath parquet_path, ManagedPath& output_base_path,
+		ManagedPath& output_base_name, ManagedPath& msg_list_path,
+		std::vector<ManagedPath>& input_parquet_paths, bool& parquet_path_is_dir);
 	void get_message_list(std::vector<std::string>& msg_names_list, bool& message_list_exists);
-	void operator()(std::filesystem::path& output_base_path, std::filesystem::path& output_base_name,
-		std::vector<std::string>& input_parquet_paths, std::filesystem::path& msg_list_path, 
-		std::vector<std::string>& msg_names_list, bool is_multithreaded);
+
 	std::atomic<bool>& completion_status();
-	std::filesystem::path GetTranslatedDataDirectory();
+	ManagedPath GetTranslatedDataDirectory();
 };
 
 #endif 

@@ -1,6 +1,6 @@
 #include "parquet_videodataf0.h"
 
-ParquetVideoDataF0::ParquetVideoDataF0(std::string outfile, uint16_t ID, bool truncate) : 
+ParquetVideoDataF0::ParquetVideoDataF0(ManagedPath outfile, uint16_t ID, bool truncate) :
 	max_temp_element_count_(DEFAULT_ROW_GROUP_COUNT_VIDEO * DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO),
 	ParquetContext(DEFAULT_ROW_GROUP_COUNT_VIDEO), id_(ID), temp_element_count_(0)
 {
@@ -43,7 +43,7 @@ ParquetVideoDataF0::ParquetVideoDataF0(std::string outfile, uint16_t ID, bool tr
 	SetMemoryLocation<uint64_t>(time_, "time");
 	SetMemoryLocation<uint16_t>(channel_id_, "channelid");
 
-	bool ret = OpenForWrite(outfile, truncate);
+	bool ret = OpenForWrite(outfile.string(), truncate);
 }
 
 void ParquetVideoDataF0::commit()

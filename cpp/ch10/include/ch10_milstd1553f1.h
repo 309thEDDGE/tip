@@ -11,6 +11,7 @@
 #include "MilStd1553F1Format.h"
 #include "ch10_milstd1553f1stats.h"
 #include "ch10_packet_stats.h"
+#include "managed_path.h"
 #include <ctime>
 #include <cstring>
 
@@ -50,12 +51,9 @@ private:
 	int8_t datum_count;
 	uint8_t RTtoBC;
 	uint16_t zero;
-	bool check_word_count;
-	bool use_selected_msg_list;
-	std::vector<std::string> selected_msg_names;
-	std::vector<std::string>::iterator msg_names_start;
-	std::vector<std::string>::iterator msg_names_end;
-	std::vector<std::string>::iterator msg_names_itr;
+	//std::vector<std::string>::iterator msg_names_start;
+	//std::vector<std::string>::iterator msg_names_end;
+	//std::vector<std::string>::iterator msg_names_itr;
 	std::map<uint32_t, std::set<uint16_t>>* chanid_remoteaddr1_ptr;
 	std::map<uint32_t, std::set<uint16_t>>* chanid_remoteaddr2_ptr;
 	std::map<uint32_t, std::set<uint32_t>>* chanid_commwords_ptr_;
@@ -74,31 +72,27 @@ public:
 	uint8_t* word_count;
 #ifdef LOCALDB
 #ifdef PARQUET
-	Ch10MilStd1553F1(BinBuff& buff, uint16_t ID,
-		bool wc_check, std::string out_path, bool msg_selection,
-		std::vector<std::string> sorted_msg_selection_names) : ParseContext(buff, ID), msg(nullptr),
-		use_selected_msg_list(msg_selection),
-		selected_msg_names(sorted_msg_selection_names),
+	Ch10MilStd1553F1(BinBuff& buff, uint16_t ID, ManagedPath out_path) : 
+		ParseContext(buff, ID), msg(nullptr),
 		datum(nullptr), channel_id(0), command_word_payload_count_(0),
 		msg_hdr_size(14), msg_size(0), datum_count(0), msg_commword(nullptr),
 		RTtoBC(0), msg_index(0), msg_name(nullptr), word_count(nullptr),
-		zero(0), datum_shift(0), stats(), check_word_count(wc_check),
+		zero(0), datum_shift(0), stats(),
 		intrapkt_hdr_size(sizeof(*msg)),
 		db(out_path, ID, true), is_payload_incomplete_(0),
-		msg_names_start(selected_msg_names.begin()), msg_names_end(selected_msg_names.end()),
 		chanid_remoteaddr1_ptr(nullptr), chanid_remoteaddr2_ptr(nullptr), busid(UINT8_MAX)
 	{	}
-	void get_msg_names(std::set<std::string>& output_name_set);
+	
 #endif
 #endif
 
 	Ch10MilStd1553F1(BinBuff& buff, uint16_t ID, bool wc_check,
 		bool msg_selection) : ParseContext(buff, ID), msg(nullptr),
-		use_selected_msg_list(msg_selection), command_word_payload_count_(0),
+		command_word_payload_count_(0),
 		datum(nullptr), channel_id(0), is_payload_incomplete_(0),
 		msg_hdr_size(14), msg_size(0), datum_count(0), msg_commword(nullptr),
 		RTtoBC(0), msg_index(0), msg_name(nullptr), word_count(nullptr),
-		zero(0), datum_shift(0), stats(), check_word_count(wc_check),
+		zero(0), datum_shift(0), stats(),
 		intrapkt_hdr_size(sizeof(*msg)),
 		chanid_remoteaddr1_ptr(nullptr), chanid_remoteaddr2_ptr(nullptr), busid(UINT8_MAX) {}
 

@@ -9,12 +9,13 @@
 #include <parquet/arrow/writer.h>
 #include <string>
 #include <vector>
-#include <filesystem>
+#include "managed_path.h"
 
 class ParquetReader {
 
 private:
-	std::vector<std::string> input_parquet_paths_;
+	//std::vector<std::string> input_parquet_paths_;
+	std::vector<ManagedPath> input_parquet_paths_;
 
 	// Arrow variables.
 	arrow::Status st_;
@@ -69,7 +70,7 @@ public:
 							6. Column names not consistent
 				 True  -> If valid parquet folder
 	*/
-	bool SetPQPath(std::string base_path);
+	bool SetPQPath(ManagedPath base_path);
 
 	/*
 		Gets the next row group for a given column

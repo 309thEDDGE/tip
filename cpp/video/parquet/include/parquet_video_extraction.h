@@ -4,8 +4,8 @@
 #include <parquet/arrow/schema.h>
 
 #include<unordered_map>
-#include<filesystem>
 #include<fstream>
+#include "managed_path.h"
 
 class ParquetVideoExtraction {
 
@@ -20,14 +20,14 @@ private:
 	int row_group_count_;
 	int channel_id_index_;
 	int data_column_index_;
-	std::filesystem::path parquet_path_;
-	std::filesystem::path output_path_;
+	ManagedPath parquet_path_;
+	ManagedPath output_path_;
 
 	std::unordered_map<int32_t, std::ofstream*> video_streams_;
 	std::unordered_map<int32_t, std::vector<uint16_t>> write_buffer_;
 	std::unordered_map<int32_t, int> buffer_lengths_;
 
-	bool OpenParquetFile(std::string file_path);
+	bool OpenParquetFile(ManagedPath file_path);
 	bool ExtractFileTS();
 	void WriteRowGroup(const arrow::NumericArray<arrow::Int32Type>& data_arr,
 		const arrow::NumericArray<arrow::Int32Type>& channel_ids);
@@ -57,7 +57,7 @@ public:
 							the output TS path could not be created
 				 True  -> Other wise	
 	*/
-	bool Initialize(std::string video_path);
+	bool Initialize(ManagedPath video_path);
 
 	/*
 		Extract transport stream data from 

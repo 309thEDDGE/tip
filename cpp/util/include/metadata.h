@@ -4,8 +4,8 @@
 #include <map>
 #include <set>
 #include <string>
-#include <filesystem>
 #include "yaml-cpp/yaml.h"
+#include "managed_path.h"
 #include "iterable_tools.h"
 
 class Metadata
@@ -31,7 +31,7 @@ public:
 	// - metadata_path: Absolute metadata file output path generated
 	//		by this function
 	//
-	std::filesystem::path GetYamlMetadataPath(const std::filesystem::path& output_dir,
+	ManagedPath GetYamlMetadataPath(const ManagedPath& output_dir,
 		const std::string& base_file_name);
 
 	// Emit a single key value pair as a stand-alone Yaml map. 
