@@ -56,10 +56,6 @@ BINARIES="$BINARIES $CMAKE_BUILD_DIR/bin/tip_*"
 for file in $BINARIES; do
 	[ $BUILD_SCRIPT -nt $file ] && rm $file
 done
-OLDEST=$(ls -t $BINARIES $BUILD_SCRIPT | tail -1)
-# Fail if the build script has changed after any binary was built
-if [ $OLDEST != $BUILD_SCRIPT ]; then
-
 
 echo "Running '$CMAKE' for TIP"
 # the pipeline build image has a /deps directory
