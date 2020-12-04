@@ -48,6 +48,17 @@ done
 echo ""
 echo "Done"
 
+echo "Checking for outdated binaries"
+PIPELINE_SCRIPT_DIR=$(dirname $0)
+BUILD_SCRIPT=$PIPELINE_SCRIPT_DIR/build.sh
+BINARIES="$(find $CMAKE_BUILD_DIR -name *.a)"
+BINARIES="$BINARIES $CMAKE_BUILD_DIR/bin/tip_*"
+for file in $BINARIES; do
+	[ $BUILD_SCRIPT -nt $file ] && rm $file
+done
+OLDEST=$(ls -t $BINARIES $BUILD_SCRIPT | tail -1)
+# Fail if the build script has changed after any binary was built
+if [ $OLDEST != $BUILD_SCRIPT ]; then
 
 
 echo "Running '$CMAKE' for TIP"
