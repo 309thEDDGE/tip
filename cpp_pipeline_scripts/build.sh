@@ -7,7 +7,15 @@ BASE_DIR=$PWD
 BUILD_DIR=$BASE_DIR/build
 DEPS_DIR=$BASE_DIR/deps
 DEPS_SOURCE=/deps
+BUILD_SCRIPT=$0
+if [ -d "$BUILD_DIR/bin" ]; then
+	BIN=$BUILD_DIR/bin
+elif [ -d "$BASE_DIR/bin" ]; then
+	BIN=$BASE_DIR/bin
+fi
+echo "BIN=$BIN"
 
+# Add LFR ALKEMIST build flags
 # TODO: Explain how to remove this later
 export TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L${DEPS_DIR}/alkemist-lfr/lib"
 OLDPATH="${PATH}"
@@ -36,7 +44,13 @@ else
 	MAKE="make -j8"
 fi
 
-echo "Setting each source file mod time to its last commit time"
+
+echo "Checking for outdated binaries"
+# Get paths to all libraries
+BINARIES=( $(find $BIN -name \*.a) )
+# Add executables (files starting with tip_ and not having a . [no extension])
+BINARIES+=( $(find $BIN -name tip_\* | grep -v '\.' || : ) )
+echo "...setting each source file mod time to its last commit time"
 cd $BASE_DIR
 for FILE in $(git ls-files | grep -e "\.cpp$\|\.h\|\.sh$")
 do
@@ -47,14 +61,8 @@ do
 done
 echo ""
 echo "Done"
-
-echo "Checking for outdated binaries"
-PIPELINE_SCRIPT_DIR=$(dirname $0)
-BUILD_SCRIPT=$PIPELINE_SCRIPT_DIR/build.sh
-BINARIES="$(find $CMAKE_BUILD_DIR -name *.a)"
-BINARIES="$BINARIES $CMAKE_BUILD_DIR/bin/tip_*"
 for file in $BINARIES; do
-	[ $BUILD_SCRIPT -nt $file ] && rm $file
+	[ $BUILD_SCRIPT -nt $file ] && rm $file && echo "removed outdated $file"
 done
 
 echo "Running '$CMAKE' for TIP"
@@ -77,5 +85,3 @@ if [ -d bin ] ; then
 	rm -rf build/bin
 	mv bin build/
 fi
-
-export PATH=${OLDPATH}

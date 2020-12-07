@@ -43,7 +43,6 @@ else
 	echo "All binaries are newer than the build script"
 	ls -lt $OLDEST
 fi
-exit
 
 echo ""
 echo "-------------------- Unit Tests --------------------"
