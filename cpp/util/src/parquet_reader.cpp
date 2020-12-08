@@ -96,7 +96,6 @@ bool ParquetReader::SetPQPath(ManagedPath base_path)
 	for(std::vector<ManagedPath>::const_iterator it = pq_paths_list.cbegin(); 
 		it != pq_paths_list.cend(); ++it)
 	{
-		printf("ParquetReader::SetPQPath(): Examining %s\n", it->RawString().c_str());
 		arrow::Status st;
 		arrow::MemoryPool* pool = arrow::default_memory_pool();
 		std::shared_ptr<arrow::io::ReadableFile> arrow_file;

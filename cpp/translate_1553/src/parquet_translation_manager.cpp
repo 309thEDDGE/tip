@@ -458,7 +458,7 @@ uint8_t ParquetTranslationManager::open_raw_1553_parquet_file(const ManagedPath&
 	// Open file reader.
 #ifdef DEBUG
 #if DEBUG > 0
-	printf("\nReading parquet file: %s\n", current_path.c_str());
+	printf("\nReading parquet file: %s\n", current_path.RawString().c_str());
 #endif
 #endif
 

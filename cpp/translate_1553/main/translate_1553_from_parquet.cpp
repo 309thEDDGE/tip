@@ -28,20 +28,25 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
 	uint64_t vote_threshold, bool vote_method_checks_tmats, 
 	std::vector<std::string> bus_exclusions,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map);
+	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
+	std::set<uint64_t>& excluded_channel_ids);
 bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prompt_user,
 	uint64_t vote_threshold, bool vote_method_checks_tmats, 
 	std::vector<std::string> bus_exclusions,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map);
+	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
+	std::set<uint64_t>& excluded_channel_ids);
 bool MTTranslate(const ManagedPath& input_path, uint8_t thread_count, bool select_msgs,
 	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
-	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
+	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
+	const std::set<uint64_t>& excluded_channel_ids);
 bool Translate(const ManagedPath& input_path, bool select_msgs,
 	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
-	std::map<uint64_t, std::string>& chanid_to_bus_name_map);
+	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
+	const std::set<uint64_t>& excluded_channel_ids);
 bool RecordMetadata(const ManagedPath& translated_data_dir,
-	const ManagedPath& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map);
+	const ManagedPath& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
+	const std::set<uint64_t>& excluded_channel_ids, const ManagedPath& input_path);
 
 int main(int argc, char* argv[])
 {
@@ -65,10 +70,11 @@ int main(int argc, char* argv[])
 
 	DTS1553 dts1553;
 	std::map<uint64_t, std::string> chanid_to_bus_name_map;
+	std::set<uint64_t> excluded_channel_ids = std::set<uint64_t>();
 	if (!PrepareICDAndBusMap(dts1553, input_path, dts_path, config.stop_after_bus_map_,
 		config.prompt_user_, config.vote_threshold_, config.vote_method_checks_tmats_,
 		config.bus_exclusions_,	config.tmats_busname_corrections_, config.use_tmats_busmap_, 
-		chanid_to_bus_name_map))
+		chanid_to_bus_name_map, excluded_channel_ids))
 	{
 		return 0;
 	}
@@ -78,13 +84,13 @@ int main(int argc, char* argv[])
 	if (thread_count > 0)
 	{
 		MTTranslate(input_path, thread_count, !config.select_specific_messages_.empty(),
-			config.select_specific_messages_, dts1553.GetICDData(), dts_path, chanid_to_bus_name_map);
+			config.select_specific_messages_, dts1553.GetICDData(), dts_path, chanid_to_bus_name_map, excluded_channel_ids);
 	}
 	// Start the translation routine that doesn't use threading.
 	else
 	{
 		Translate(input_path, !config.select_specific_messages_.empty(), 
-			config.select_specific_messages_, dts1553.GetICDData(), dts_path, chanid_to_bus_name_map);
+			config.select_specific_messages_, dts1553.GetICDData(), dts_path, chanid_to_bus_name_map, excluded_channel_ids);
 	}
 
 	//system("pause");
@@ -111,7 +117,8 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
 	uint64_t vote_threshold, bool vote_method_checks_tmats,
 	std::vector<std::string> bus_exclusions,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map)
+	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
+	std::set<uint64_t>& excluded_channel_ids)
 {
 
 	// Read lines from ICD text file, ingest, and manipulate.
@@ -138,7 +145,7 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
 	// input.
 	if (!SynthesizeBusMap(dts1553, input_path, prompt_user, vote_threshold, 
 		vote_method_checks_tmats, bus_exclusions, tmats_bus_name_corrections, use_tmats_busmap, 
-		chanid_to_bus_name_map))
+		chanid_to_bus_name_map, excluded_channel_ids))
 	{
 		return false;
 	}
@@ -159,7 +166,8 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 	uint64_t vote_threshold, bool vote_method_checks_tmats,
 	std::vector<std::string> bus_exclusions,
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
-	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map)
+	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
+	std::set<uint64_t>& excluded_channel_ids)
 {
 	std::unordered_map<uint64_t, std::set<std::string>> message_key_to_busnames_map;
 
@@ -299,6 +307,15 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 		chanid_to_bus_name_set_map[it->first] = bus_name_set;
 	}
 
+	// If a channel ID from chanid_to_lruaddrs_set is not in 
+	// chanid_to_bus_name_map add it as an excluded channel 
+	// id and save to metadata later
+	for (auto channel_id : chanid_to_lruaddrs_set)
+	{
+		if (chanid_to_bus_name_map.count(channel_id) == 0)
+			excluded_channel_ids.insert(channel_id);
+	}
+
 	// Reverse the map that is populated in the previous step.
 	std::map<std::string, std::set<uint64_t>> bus_name_to_chanid_map =
 		it.ReverseMapSet(chanid_to_bus_name_set_map);
@@ -315,12 +332,14 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 
 bool MTTranslate(const ManagedPath& input_path, uint8_t thread_count, bool select_msgs,
 	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
-	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
+	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
+	const std::set<uint64_t>& excluded_channel_ids)
 {
 	TranslationMaster tm(input_path, thread_count, select_msgs,
 		select_msg_names, icd);
 
-	RecordMetadata(tm.GetTranslatedDataDirectory(), dts_path, chanid_to_bus_name_map);
+	RecordMetadata(tm.GetTranslatedDataDirectory(), dts_path, chanid_to_bus_name_map,
+		excluded_channel_ids, input_path);
 
 	auto start_time = std::chrono::high_resolution_clock::now();
 	uint8_t ret_val = tm.translate();
@@ -337,12 +356,14 @@ bool MTTranslate(const ManagedPath& input_path, uint8_t thread_count, bool selec
 
 bool Translate(const ManagedPath& input_path, bool select_msgs,
 	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
-	std::map<uint64_t, std::string>& chanid_to_bus_name_map)
+	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
+	const std::set<uint64_t>& excluded_channel_ids)
 {
 	ParquetTranslationManager ptm(input_path, icd);
 	ptm.set_select_msgs_list(select_msgs, select_msg_names);
 
-	RecordMetadata(ptm.GetTranslatedDataDirectory(), dts_path, chanid_to_bus_name_map);
+	RecordMetadata(ptm.GetTranslatedDataDirectory(), dts_path, chanid_to_bus_name_map,
+		excluded_channel_ids, input_path);
 
 	auto start_time = std::chrono::high_resolution_clock::now();
 	ptm.translate();
@@ -358,7 +379,8 @@ bool Translate(const ManagedPath& input_path, bool select_msgs,
 }
 
 bool RecordMetadata(const ManagedPath& translated_data_dir,
-	const ManagedPath& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map)
+	const ManagedPath& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
+	const std::set<uint64_t>& excluded_channel_ids, const ManagedPath& input_path)
 {
 	// Use Metadata class to create the output metadata file path.
 	Metadata md;
@@ -370,6 +392,12 @@ bool RecordMetadata(const ManagedPath& translated_data_dir,
 
 	// Record the ICD path.
 	md.RecordSingleKeyValuePair("dts_path", dts_path.RawString());
+
+	// Record the busmap status.
+	md.RecordSingleKeyValuePair("excluded_channel_ids", excluded_channel_ids);
+
+	// Record parsed parquet file used to translate.
+	md.RecordSingleKeyValuePair("1553_parquet_file_path", input_path.RawString());
 
 	// Get a string containing the complete metadata output and
 	// and write it to the yaml file.
