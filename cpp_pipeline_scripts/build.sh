@@ -41,31 +41,22 @@ fi
 
 echo "Checking for outdated binaries"
 # Get paths to all libraries
-BINARIES=( $(find $BUILD_DIR -name \*.a) )
-# Add executables (files starting with tip_ and not having a . [no extension])
-BINARIES+=( $(find $BUILD_DIR -name bin/tip_\* | grep -v '\.' || : ) )
-# echo "...setting each source file mod time to its last commit time"
-# cd $BASE_DIR
-# for FILE in $(git ls-files | grep -e "\.cpp$\|\.h\|\.sh$")
-# do
-#     TIME=$(git log --pretty=format:%cd -n 1 --date=iso -- "$FILE")
-#     TIME=$(date -d "$TIME" +%Y%m%d%H%M.%S)
-#     touch -m -t "$TIME" "$FILE"
-# 	echo -n .
-# done
-# echo ""
-# echo "Done"
-
-for file in $BINARIES; do
-	echo checking $file vs $BUILD_SCRIPT
-	[ $BUILD_SCRIPT -nt $file ] && rm $file && echo "removed outdated $file"
-	[ -f $file ] && ls -lt $file
+echo "...setting each source file mod time to its last commit time"
+cd $BASE_DIR
+for FILE in $(git ls-files | grep -e "\.cpp$\|\.h\|\.sh$")
+do
+    TIME=$(git log --pretty=format:%cd -n 1 --date=iso -- "$FILE")
+    TIME=$(date -d "$TIME" +%Y%m%d%H%M.%S)
+    touch -m -t "$TIME" "$FILE"
+	echo -n .
 done
-##########
-echo "Libraries in '$BIN'"
-find $BIN -name \*.a | xargs ls -lt $BUILD_SCRIPT 
-exit 1 ###############
-########
+echo "Done"
+
+BINARIES=( $(find $BUILD_DIR -name \*.a) )
+for file in ${BINARIES[*]}; do
+	echo "checking ${#BINARIES[*]} files: $file vs $BUILD_SCRIPT"
+	[ $BUILD_SCRIPT -nt $file ] && rm $file && echo "removed outdated $file"
+done
 
 echo "Running '$CMAKE' for TIP"
 # the pipeline build image has a /deps directory
