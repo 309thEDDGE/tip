@@ -398,7 +398,7 @@ uint8_t ParquetTranslationManager::consume_row_group()
 					// Failed in some way. Do not attempt
 					// to add data or translate.
 					continue;
-				}
+				}				
 			}
 					
 			// If the table is not bad.
@@ -633,6 +633,13 @@ uint8_t ParquetTranslationManager::create_table(size_t table_ind)
 			printf("configure_parquet_context() error!\n");
 			return ret_val;
 		}
+	}
+
+	// Add the message name to a set to be added
+	// to translator metadata
+	if (!table_ptr->is_bad())
+	{
+		translated_messages_.insert(table_name_);
 	}
 
 	ret_val = 0;

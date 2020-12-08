@@ -36,17 +36,18 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
 	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
 	std::set<uint64_t>& excluded_channel_ids);
-bool MTTranslate(const ManagedPath& input_path, uint8_t thread_count, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
+bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path, uint8_t thread_count,
+	ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
 	const std::set<uint64_t>& excluded_channel_ids);
-bool Translate(const ManagedPath& input_path, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
+bool Translate( TranslationConfigParams config, const ManagedPath& input_path,
+	ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
 	const std::set<uint64_t>& excluded_channel_ids);
-bool RecordMetadata(const ManagedPath& translated_data_dir,
+bool RecordMetadata(TranslationConfigParams config, const ManagedPath& translated_data_dir,
 	const ManagedPath& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-	const std::set<uint64_t>& excluded_channel_ids, const ManagedPath& input_path);
+	const std::set<uint64_t>& excluded_channel_ids, const ManagedPath& input_path,
+	const std::set<std::string>& translated_messages);
 
 int main(int argc, char* argv[])
 {
@@ -73,7 +74,7 @@ int main(int argc, char* argv[])
 	std::set<uint64_t> excluded_channel_ids = std::set<uint64_t>();
 	if (!PrepareICDAndBusMap(dts1553, input_path, dts_path, config.stop_after_bus_map_,
 		config.prompt_user_, config.vote_threshold_, config.vote_method_checks_tmats_,
-		config.bus_exclusions_,	config.tmats_busname_corrections_, config.use_tmats_busmap_, 
+		config.bus_name_exclusions_,	config.tmats_busname_corrections_, config.use_tmats_busmap_, 
 		chanid_to_bus_name_map, excluded_channel_ids))
 	{
 		return 0;
@@ -83,14 +84,14 @@ int main(int argc, char* argv[])
 	// if thread_count = 1 is specified).
 	if (thread_count > 0)
 	{
-		MTTranslate(input_path, thread_count, !config.select_specific_messages_.empty(),
-			config.select_specific_messages_, dts1553.GetICDData(), dts_path, chanid_to_bus_name_map, excluded_channel_ids);
+		MTTranslate(config, input_path, thread_count, dts1553.GetICDData(),
+			 dts_path, chanid_to_bus_name_map, excluded_channel_ids);
 	}
 	// Start the translation routine that doesn't use threading.
 	else
 	{
-		Translate(input_path, !config.select_specific_messages_.empty(), 
-			config.select_specific_messages_, dts1553.GetICDData(), dts_path, chanid_to_bus_name_map, excluded_channel_ids);
+		Translate(config, input_path, dts1553.GetICDData(),
+			dts_path, chanid_to_bus_name_map, excluded_channel_ids);
 	}
 
 	//system("pause");
@@ -330,16 +331,15 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 	return true;
 }
 
-bool MTTranslate(const ManagedPath& input_path, uint8_t thread_count, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
+bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path, 
+	uint8_t thread_count, ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
 	const std::set<uint64_t>& excluded_channel_ids)
 {
-	TranslationMaster tm(input_path, thread_count, select_msgs,
-		select_msg_names, icd);
+	bool select_msgs = !config.select_specific_messages_.empty();
 
-	RecordMetadata(tm.GetTranslatedDataDirectory(), dts_path, chanid_to_bus_name_map,
-		excluded_channel_ids, input_path);
+	TranslationMaster tm(input_path, thread_count, select_msgs,
+		config.select_specific_messages_, icd);
 
 	auto start_time = std::chrono::high_resolution_clock::now();
 	uint8_t ret_val = tm.translate();
@@ -348,22 +348,25 @@ bool MTTranslate(const ManagedPath& input_path, uint8_t thread_count, bool selec
 		printf("Translation error!\n");
 		return false;
 	}
+
+	RecordMetadata(config, tm.GetTranslatedDataDirectory(), dts_path, chanid_to_bus_name_map,
+		excluded_channel_ids, input_path, tm.GetTranslatedMessages());
+
 	auto stop_time = std::chrono::high_resolution_clock::now();
 	printf("Duration: %zd sec\n", std::chrono::duration_cast<std::chrono::seconds>(
 		stop_time - start_time).count());
 	return true;
 }
 
-bool Translate(const ManagedPath& input_path, bool select_msgs,
-	std::vector<std::string> select_msg_names, ICDData icd, const ManagedPath& dts_path,
+bool Translate(TranslationConfigParams config, const ManagedPath& input_path,
+	ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
 	const std::set<uint64_t>& excluded_channel_ids)
 {
-	ParquetTranslationManager ptm(input_path, icd);
-	ptm.set_select_msgs_list(select_msgs, select_msg_names);
+	bool select_msgs = !config.select_specific_messages_.empty();
 
-	RecordMetadata(ptm.GetTranslatedDataDirectory(), dts_path, chanid_to_bus_name_map,
-		excluded_channel_ids, input_path);
+	ParquetTranslationManager ptm(input_path, icd);
+	ptm.set_select_msgs_list(select_msgs, config.select_specific_messages_);
 
 	auto start_time = std::chrono::high_resolution_clock::now();
 	ptm.translate();
@@ -372,33 +375,55 @@ bool Translate(const ManagedPath& input_path, bool select_msgs,
 		printf("Translation error\n");
 		return false;
 	}
+
+	RecordMetadata(config, ptm.GetTranslatedDataDirectory(), dts_path, chanid_to_bus_name_map,
+		excluded_channel_ids, input_path, ptm.GetTranslatedMessages());
+
 	auto stop_time = std::chrono::high_resolution_clock::now();
 	printf("Duration: %zd sec\n", std::chrono::duration_cast<std::chrono::seconds>(
 		stop_time - start_time).count());
 	return true;
 }
 
-bool RecordMetadata(const ManagedPath& translated_data_dir,
+bool RecordMetadata(TranslationConfigParams config, const ManagedPath& translated_data_dir,
 	const ManagedPath& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-	const std::set<uint64_t>& excluded_channel_ids, const ManagedPath& input_path)
+	const std::set<uint64_t>& excluded_channel_ids, const ManagedPath& input_path,
+	const std::set<std::string>& translated_messages)
 {
 	// Use Metadata class to create the output metadata file path.
 	Metadata md;
 	ManagedPath md_path = md.GetYamlMetadataPath(translated_data_dir,
-		"_metadata");
+		"_metadata");	
 
-	// Record the final bus map used for translation.
-	md.RecordSimpleMap(chanid_to_bus_name_map, "chanid_to_bus_name_map");
+	// Record config parameters.
+	md.RecordSingleKeyValuePair("translate_thread_count", config.translate_thread_count_);
+	md.RecordSingleKeyValuePair("use_tmats_busmap", config.use_tmats_busmap_);
+	md.RecordSingleKeyValuePair("tmats_busname_corrections", config.tmats_busname_corrections_);
+	md.RecordSingleKeyValuePair("prompt_user", config.prompt_user_);
+	md.RecordSingleKeyValuePair("vote_threshold", config.vote_threshold_);
+	md.RecordSingleKeyValuePair("vote_method_checks_tmats", config.vote_method_checks_tmats_);
+	md.RecordSingleKeyValuePair("bus_name_exclusions", config.bus_name_exclusions_);
+	md.RecordSingleKeyValuePair("stop_after_bus_map", config.stop_after_bus_map_);
+	md.RecordSingleKeyValuePair("select_specific_messages", config.select_specific_messages_);
+	md.RecordSingleKeyValuePair("exit_after_table_creation", config.exit_after_table_creation_);
 
 	// Record the ICD path.
 	md.RecordSingleKeyValuePair("dts_path", dts_path.RawString());
 
-	// Record the busmap status.
-	md.RecordSingleKeyValuePair("excluded_channel_ids", excluded_channel_ids);
-
 	// Record parsed parquet file used to translate.
 	md.RecordSingleKeyValuePair("1553_parquet_file_path", input_path.RawString());
 
+	// Record the final bus map used for translation.
+	md.RecordSimpleMap(chanid_to_bus_name_map, "chanid_to_bus_name_map");
+
+	// Record the busmap status.
+	md.RecordSingleKeyValuePair("excluded_channel_ids", excluded_channel_ids);
+
+	// Record translated messages.
+	md.RecordSingleKeyValuePair("translated_messages", translated_messages);
+
+	
+	
 	// Get a string containing the complete metadata output and
 	// and write it to the yaml file.
 	std::ofstream stream_translation_metadata(md_path.string(),
