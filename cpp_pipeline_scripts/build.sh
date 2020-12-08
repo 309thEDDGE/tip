@@ -8,12 +8,6 @@ BUILD_DIR=$BASE_DIR/build
 DEPS_DIR=$BASE_DIR/deps
 DEPS_SOURCE=/deps
 BUILD_SCRIPT=$0
-if [ -d "$BUILD_DIR/bin" ]; then
-	BIN=$BUILD_DIR/bin
-elif [ -d "$BASE_DIR/bin" ]; then
-	BIN=$BASE_DIR/bin
-fi
-echo "BIN=$BIN"
 
 # Add LFR ALKEMIST build flags
 # TODO: Explain how to remove this later
@@ -47,23 +41,31 @@ fi
 
 echo "Checking for outdated binaries"
 # Get paths to all libraries
-BINARIES=( $(find $BIN -name \*.a) )
+BINARIES=( $(find $BUILD_DIR -name \*.a) )
 # Add executables (files starting with tip_ and not having a . [no extension])
-BINARIES+=( $(find $BIN -name tip_\* | grep -v '\.' || : ) )
-echo "...setting each source file mod time to its last commit time"
-cd $BASE_DIR
-for FILE in $(git ls-files | grep -e "\.cpp$\|\.h\|\.sh$")
-do
-    TIME=$(git log --pretty=format:%cd -n 1 --date=iso -- "$FILE")
-    TIME=$(date -d "$TIME" +%Y%m%d%H%M.%S)
-    touch -m -t "$TIME" "$FILE"
-	echo -n .
-done
-echo ""
-echo "Done"
+BINARIES+=( $(find $BUILD_DIR -name bin/tip_\* | grep -v '\.' || : ) )
+# echo "...setting each source file mod time to its last commit time"
+# cd $BASE_DIR
+# for FILE in $(git ls-files | grep -e "\.cpp$\|\.h\|\.sh$")
+# do
+#     TIME=$(git log --pretty=format:%cd -n 1 --date=iso -- "$FILE")
+#     TIME=$(date -d "$TIME" +%Y%m%d%H%M.%S)
+#     touch -m -t "$TIME" "$FILE"
+# 	echo -n .
+# done
+# echo ""
+# echo "Done"
+
 for file in $BINARIES; do
+	echo checking $file vs $BUILD_SCRIPT
 	[ $BUILD_SCRIPT -nt $file ] && rm $file && echo "removed outdated $file"
+	[ -f $file ] && ls -lt $file
 done
+##########
+echo "Libraries in '$BIN'"
+find $BIN -name \*.a | xargs ls -lt $BUILD_SCRIPT 
+exit 1 ###############
+########
 
 echo "Running '$CMAKE' for TIP"
 # the pipeline build image has a /deps directory
