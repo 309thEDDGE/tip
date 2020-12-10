@@ -1,12 +1,14 @@
-As a XXXX I want YYYY so that ZZZZ.
+As a __
+<br/> I want __
+<br/> so that __
 
 Details:
 
 Acceptance Criteria:
 
-1. 
-1. 
-1. 
+1. * [ ] .
+1. * [ ] .
+1. * [ ] .
 
 Definition of Ready
 * [ ] Clearly defined
