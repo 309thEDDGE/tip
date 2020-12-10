@@ -38,25 +38,40 @@ else
 	MAKE="make -j8"
 fi
 
-
-echo "Checking for outdated binaries"
-# Get paths to all libraries
-echo "...setting each source file mod time to its last commit time"
-cd $BASE_DIR
-for FILE in $(git ls-files | grep -e "\.cpp$\|\.h\|\.sh$")
-do
-    TIME=$(git log --pretty=format:%cd -n 1 --date=iso -- "$FILE")
-    TIME=$(date -d "$TIME" +%Y%m%d%H%M.%S)
-    touch -m -t "$TIME" "$FILE"
-	echo -n .
-done
-echo "Done"
-
 BINARIES=( $(find $BUILD_DIR -name \*.a) )
-for file in ${BINARIES[*]}; do
-	echo "checking ${#BINARIES[*]} files: $file vs $BUILD_SCRIPT"
-	[ $BUILD_SCRIPT -nt $file ] && rm $file && echo "removed outdated $file"
-done
+### Diagnostics
+ echo "Found ${#BINARIES[*]} libraries: ${BINARIES[*]}"
+ [ ${#BINARIES[*]} -gt 0 ] && ls -lt ${BINARIES[*]}
+### End
+
+# If no libraries exist skip directly to build
+if [ -z ${BINARIES[0]} ]; then
+	echo "No cached libraries; doing a clean build"
+# If variable TIP_REBUILD_ALL exists rebuild all
+elif [ -v TIP_REBUILD_ALL ]; then
+	echo "Variable TIP_REBUILD_ALL is set; rebuilding all"
+	echo rm ${BINARIES[*]}
+	rm ${BINARIES[*]}
+# Otherwise build based on modification times
+else
+	echo "Checking for outdated binaries"
+	# Get paths to all libraries
+	echo "...setting each source file mod time to its last commit time"
+	cd $BASE_DIR
+	for FILE in $(git ls-files | grep -e "\.cpp$\|\.h\|\.sh$")
+	do
+		TIME=$(git log --pretty=format:%cd -n 1 --date=iso -- "$FILE")
+		TIME=$(date -d "$TIME" +%Y%m%d%H%M.%S)
+		touch -m -t "$TIME" "$FILE"
+		echo -n .
+	done
+	echo "Done"
+
+	# CMake doesn't know about build.sh, so check its dependencies explicitly
+	for file in ${BINARIES[*]}; do
+		[ $BUILD_SCRIPT -nt $file ] && rm $file && echo "removed outdated $file"
+	done
+fi
 
 echo "Running '$CMAKE' for TIP"
 # the pipeline build image has a /deps directory
