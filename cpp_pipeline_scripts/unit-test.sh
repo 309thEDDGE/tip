@@ -36,6 +36,13 @@ BINARIES=( $(find . -name *.a) )
 #  echo "${BINARIES[*]}"
 #  ls -lt ${BINARIES[*]}
 ### End
+
+# Reset build script's modification time to its last commit time
+GIT_FILE=$(realpath --relative-to=. $BUILD_SCRIPT)
+TIME=$(git log --pretty=format:%cd -n 1 --date=iso -- $GIT_FILE)
+TIME=$(date -d "$TIME" +%Y%m%d%H%M.%S)
+touch -m -t "$TIME" "$GIT_FILE"
+
 OLDEST=$(ls -t $BINARIES $BUILD_SCRIPT | tail -1)
 # Fail if the build script has changed after any binary was built
 if [ $OLDEST != $BUILD_SCRIPT ]; then
