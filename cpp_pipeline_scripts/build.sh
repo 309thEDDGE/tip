@@ -40,8 +40,8 @@ fi
 
 BINARIES=( $(find $BUILD_DIR -name \*.a) )
 ### Diagnostics
- echo "Found ${#BINARIES[*]} libraries: ${BINARIES[*]}"
- [ ${#BINARIES[*]} -gt 0 ] && ls -lt ${BINARIES[*]}
+#  echo "Found ${#BINARIES[*]} libraries: ${BINARIES[*]}"
+#  [ ${#BINARIES[*]} -gt 0 ] && ls -lt ${BINARIES[*]}
 ### End
 
 # If no libraries exist skip directly to build
