@@ -16,7 +16,7 @@ trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 BASE_DIR=${PWD}
 if [ -z "${CMAKE_BUILD_DIR}" ] ; then 
 	# We are not in the pipeline; set vars for running locally
-	BASE_DIR=/app
+	[ -d /app ] && BASE_DIR=/app
 	CMAKE_BUILD_DIR=${BASE_DIR}/build
 	UNITTEST_REPORT_DIR=$BASE_DIR/reports
 fi
@@ -25,23 +25,28 @@ TEST_DIR=${CMAKE_BUILD_DIR}/cpp
 echo ""
 echo "-------------------- Check for outdated binaries --------------------"
 echo ""
-PIPELINE_SCRIPT_DIR=$(dirname $0)
-BIN=$CMAKE_BUILD_DIR/bin
-[ -d "$BIN" ] || BIN=$BASE_DIR/bin
+PIPELINE_SCRIPT_DIR=$(dirname $(readlink -f $0))
 BUILD_SCRIPT=$PIPELINE_SCRIPT_DIR/build.sh
-BINARIES="$(find $BIN -name *.a)"
-BINARIES="$BINARIES $BIN/tip_*"
+echo "Build script:"
+ls -l $BUILD_SCRIPT
+cd $CMAKE_BUILD_DIR
+BINARIES=( $(find . -name *.a) )
+### Diagnostics
+#  echo "Found ${#BINARIES[*]} libraries:"
+#  echo "${BINARIES[*]}"
+#  ls -lt ${BINARIES[*]}
+### End
 OLDEST=$(ls -t $BINARIES $BUILD_SCRIPT | tail -1)
 # Fail if the build script has changed after any binary was built
 if [ $OLDEST != $BUILD_SCRIPT ]; then
-	echo "ERROR:At least one binary file was built before the new build script"
+	echo "Libraries:"
+	ls -lt ${BINARIES[*]}
 	echo ""
-	ls -lt $OLDEST $BUILD_SCRIPT
-	echo ""
+	echo "ERROR:At least one binary file is older than the build script."
+	echo "      TIP executables are out of date."
 	exit 1
 else
 	echo "All binaries are newer than the build script"
-	ls -lt $OLDEST
 fi
 
 echo ""
@@ -51,7 +56,6 @@ echo ""
 # In the future we might have to run ctest in order to get coverage statistics
 # If we do, try to make our tests compatible with the --parallel option of ctest
 cd ${TEST_DIR}
-ldd ./tests
 ./tests
 cd ${BASE_DIR}
 
