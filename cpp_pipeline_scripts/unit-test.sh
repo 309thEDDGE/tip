@@ -18,8 +18,9 @@ if [ -z "${CMAKE_BUILD_DIR}" ] ; then
 	# We are not in the pipeline; set vars for running locally
 	[ -d /app ] && BASE_DIR=/app
 	CMAKE_BUILD_DIR=${BASE_DIR}/build
-	UNITTEST_REPORT_DIR=$BASE_DIR/reports
 fi
+UNITTEST_REPORT_DIR=$BASE_DIR/reports
+CMAKE_BUILD_DIR=$(readlink -f "$CMAKE_BUILD_DIR") # Change to absolute path
 TEST_DIR=${CMAKE_BUILD_DIR}/cpp
 
 echo ""
@@ -117,15 +118,21 @@ fi
 
 echo ""
 echo "-------------- Check for Alkemist presence --------------"
-ldd ./bin/pqcompare
-readelf -x .txtrp ./bin/pqcompare | grep 0x -m3
-ldd ./bin/bincompare
-readelf -x .txtrp ./bin/bincompare | grep 0x -m3
-ldd ./bin/tests
-readelf -x .txtrp ./bin/tests | grep 0x -m3
-ldd ./bin/tip_parse_video
-readelf -x .txtrp ./bin/tip_parse_video | grep 0x -m3
-ldd ./bin/tip_translate
-readelf -x .txtrp ./bin/tip_translate | grep 0x -m3
+if [ -v PIPELINE -o -v ALKEMIST_LICENSE_KEY ]; then
+	ldd ./bin/pqcompare
+	readelf -x .txtrp ./bin/pqcompare | grep 0x -m3
+	ldd ./bin/bincompare
+	readelf -x .txtrp ./bin/bincompare | grep 0x -m3
+	ldd ./bin/tests
+	readelf -x .txtrp ./bin/tests | grep 0x -m3
+	ldd ./bin/tip_parse_video
+	readelf -x .txtrp ./bin/tip_parse_video | grep 0x -m3
+	ldd ./bin/tip_translate
+	readelf -x .txtrp ./bin/tip_translate | grep 0x -m3
+else
+	echo "Skipping Alkemist check:"
+	echo "No ALKEMIST_LICENSE_KEY defined and not running on the pipeline (PIPELINE not defined)"
+fi
 
+echo ""
 exit $EXIT_CODE
