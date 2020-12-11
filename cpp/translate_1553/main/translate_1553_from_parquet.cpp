@@ -36,7 +36,7 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 	std::map<std::string, std::string>& tmats_bus_name_corrections,
 	bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
 	std::set<uint64_t>& excluded_channel_ids);
-bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path, uint8_t thread_count,
+bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path, 
 	ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
 	const std::set<uint64_t>& excluded_channel_ids);
@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
 	// if thread_count = 1 is specified).
 	if (thread_count > 0)
 	{
-		MTTranslate(config, input_path, thread_count, dts1553.GetICDData(),
+		MTTranslate(config, input_path, dts1553.GetICDData(),
 			 dts_path, chanid_to_bus_name_map, excluded_channel_ids);
 	}
 	// Start the translation routine that doesn't use threading.
@@ -332,13 +332,13 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 }
 
 bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path, 
-	uint8_t thread_count, ICDData icd, const ManagedPath& dts_path,
+	ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
 	const std::set<uint64_t>& excluded_channel_ids)
 {
 	bool select_msgs = !config.select_specific_messages_.empty();
 
-	TranslationMaster tm(input_path, thread_count, select_msgs,
+	TranslationMaster tm(input_path, config.translate_thread_count_, select_msgs,
 		config.select_specific_messages_, icd);
 
 	auto start_time = std::chrono::high_resolution_clock::now();
