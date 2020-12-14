@@ -44,7 +44,7 @@ BINARIES=( $(find $BUILD_DIR -name \*.a) )
 #  [ ${#BINARIES[*]} -gt 0 ] && ls -lt ${BINARIES[*]}
 ### End
 
-# If no libraries exist skip directly to build
+# If no cached libraries exist skip directly to build
 if [ -z ${BINARIES[0]} ]; then
 	echo "No cached libraries; doing a clean build"
 # If variable TIP_REBUILD_ALL exists rebuild all
@@ -77,6 +77,7 @@ echo "Running '$CMAKE' for TIP"
 # the pipeline build image has a /deps directory
 # if there is a /deps directory then replace the local deps directory
 if [ -d $DEPS_SOURCE ] ; then
+	echo "Restoring 3rd party dependencies"
 	rm -rf $BASE_DIR/deps
 	mv $DEPS_SOURCE $BASE_DIR
 fi
