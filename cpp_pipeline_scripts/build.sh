@@ -38,24 +38,24 @@ else
 	MAKE="make -j8"
 fi
 
+# Get paths to all cached libraries
 BINARIES=( $(find $BUILD_DIR -name \*.a) )
 ### Diagnostics
-#  echo "Found ${#BINARIES[*]} libraries: ${BINARIES[*]}"
+#  echo "Found ${#BINARIES[*]} cached libraries: ${BINARIES[*]}"
 #  [ ${#BINARIES[*]} -gt 0 ] && ls -lt ${BINARIES[*]}
 ### End
 
-# If no cached libraries exist skip directly to build
+# If no cached libraries exist, skip directly to build
 if [ -z ${BINARIES[0]} ]; then
 	echo "No cached libraries; doing a clean build"
-# If variable TIP_REBUILD_ALL exists rebuild all
+# If variable TIP_REBUILD_ALL is defined, rebuild all
 elif [ -v TIP_REBUILD_ALL ]; then
 	echo "Variable TIP_REBUILD_ALL is set; rebuilding all"
 	echo rm ${BINARIES[*]}
 	rm ${BINARIES[*]}
-# Otherwise build based on modification times
+# Otherwise, allow CMake to build based on modification times
 else
 	echo "Checking for outdated binaries"
-	# Get paths to all libraries
 	echo "...setting each source file mod time to its last commit time"
 	cd $BASE_DIR
 	for FILE in $(git ls-files | grep -e "\.cpp$\|\.h\|\.sh$")
@@ -69,24 +69,24 @@ else
 
 	# CMake doesn't know about build.sh, so check its dependencies explicitly
 	for file in ${BINARIES[*]}; do
-		[ $BUILD_SCRIPT -nt $file ] && rm $file && echo "removed outdated $file"
+		[ $BUILD_SCRIPT -nt $file ] && rm $file && echo "...removed outdated $file"
 	done
 fi
 
-echo "Running '$CMAKE' for TIP"
+echo "Running '$CMAKE'"
 # the pipeline build image has a /deps directory
 # if there is a /deps directory then replace the local deps directory
 if [ -d $DEPS_SOURCE ] ; then
-	echo "Restoring 3rd party dependencies"
-	rm -rf $BASE_DIR/deps
-	mv $DEPS_SOURCE $BASE_DIR
+	echo "Restoring 3rd party dependencies from $DEPS_SOURCE"
+	rm -rf $DEPS_DIR
+	mv $DEPS_SOURCE $DEPS_DIR
 fi
 
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 $CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
-echo "Running '$MAKE' for TIP"
+echo "Running '$MAKE'"
 $MAKE install
 # move bin folder to build for use in later pipeline stages
 cd $BASE_DIR
@@ -94,3 +94,5 @@ if [ -d bin ] ; then
 	rm -rf build/bin
 	mv bin build/
 fi
+
+PATH=$"{OLDPATH}"
