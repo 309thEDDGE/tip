@@ -398,11 +398,12 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 		}
 		else
 		{
-			// If the bus name is not a substring of the bus name
-			// for a given channel ID from TMATs, remove it from 
-			// the map.
+			// If the DTS bus name and TMATS bus names are not
+			// substrings of each other remove the channel IDs
+			// from the final busmap
 			if (tmats_chanid_to_source_map_[it->first].find(it->second)
-				== std::string::npos)
+				== std::string::npos && 
+				it->second.find(tmats_chanid_to_source_map_[it->first]) == std::string::npos)
 			{
 				excluded_channel_ids_[it->first] =
 					"TMATS Mismatch";

@@ -27,6 +27,7 @@ public:
 		bool select_msgs, std::vector<std::string> select_msg_names, ICDData icd);
 	uint8_t translate();
 	ManagedPath GetTranslatedDataDirectory();
+	std::set<std::string> GetTranslatedMessages();
 };
 
 #endif

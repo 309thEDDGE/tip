@@ -36,19 +36,20 @@ Use `markdown_to_html.py` in the tip_scripts directory to convert md file to htm
 #### CMake
 
 * `cd tip/build`
-* `cmake .. -D<option>=<value>`
+* `cmake .. -GNinja -D<option>=<value>`
 	- add `-GNinja` for faster build
 * Default options: 
 	- no video output
 	- build tests
-* Options given with `-D<option>=<value>`, multiple options with `-D<option1>=<val1> -D<option2>=<val2> ...`: 
+* Options given with `-D<option>=<value>`, multiple options with `-D<option1>=<val1> -D<option2>=<val2> ...`:
+	- Ethernet Off (`-DETHERNET=OFF`) - turn ethernet parsing off, default ON
+		- Ethernet parsing requires npcap and libtins dependencies!!
 	- Video (`-DVIDEO=ON`) - extract video from Ch10 and build video extractor executable , default OFF
 		- must be set if --video argument is passed to `parse_and_translate.py` (see "Helper Script" below)
 	- Turn off tests (`-DNOTESTS=ON`) - without this option tests are built by default
 	- Container mode (`-DCONTAINER=ON`) - use shared libs in Linux-standard lib directories, default OFF
 		- linux standard builds outside of a container are in progress
-	- Ethernet Off (`-DETHERNET=OFF`) - turn ethernet parsing off, default ON
-		- Ethernet parsing requires npcap and libtins dependencies
+	
 * build according to platform (see "Platform-Specific" below)
 * Executables are placed in `tip/bin`
 * Libraries are placed in `tip/bin/lib`
@@ -60,12 +61,12 @@ Use `markdown_to_html.py` in the tip_scripts directory to convert md file to htm
 * Must install cmake in Windows
 * In command prompt or VS x64 command prompt:
 	- `cd tip/build`
-	- `cmake .. -D<option>=<value>`
+	- `cmake .. -GNinja -D<option>=<value>`
 	- build with one of these commands
+		- `ninja install` (if -GNinja was included)
 		- `msbuild.exe INSTALL.vcxproj /property:Configuration=Release`
 			- must be in VS x64 Native Tools Command Prompt
-			- VS x64 Native Tools Command Prompt can be installed with VS, developer tools module enabled. License not required. From the Start menu navigate to the Visual Studio 2019 folder and select the correct command prompt.
-		- `ninja install` (if -GNinja was included)
+			- VS x64 Native Tools Command Prompt can be installed with VS, developer tools module enabled. License not required. From the Start menu navigate to the Visual Studio 2019 folder and select the correct command prompt.		
 		- `cmake --build . --config Release`
 
 * INSTALL will automatically run ALL_BUILD
@@ -119,13 +120,13 @@ If the `parse_and_translate.py` script is used, relevant config files are automa
 ### Call Executables Directly
 
 #### --Standard executables
-**tip\_parse.exe**: Parse ch10 file into intermediate Parquet files with raw 1553 payload information. The output parquet path is the folder containing the ch10 provided in the argument.  
- `tip_parse.exe [path to \*.ch10 file]`  
+**tip\_parse.exe**: Parse ch10 file into intermediate Parquet files with raw 1553 payload information. If the second command line argument is not specified, the output parquet path is the folder containing the ch10 provided in the first argument.  
+ `tip_parse.exe [path to \*.ch10 file] [optional argument, output directory]`  
 
- **tip\_parse\_video.exe**: Parse ch10 file into intermediate Parquet files with raw 1553 payload information and video transport stream data. The output parquet path is the folder containing the ch10 provided in the argument. (only available when built with `-DVIDEO=ON`)
- `tip_parse_video.exe [path to \*.ch10 file]`  
+ **tip\_parse\_video.exe**: Only available when built with `-DVIDEO=ON`. Parse ch10 file into intermediate Parquet files with raw 1553 payload information and video transport stream data. If the second command line argument is not specified, the output parquet path is the folder containing the ch10 provided in the first argument.  
+ `tip_parse_video.exe [path to \*.ch10 file] [optional argument, output directory]`  
 
- **parquet\_video\_extractor.exe**: Extract video transport stream data from parquet files. Exports TS files to a folder `<ch10path>/<ch10name>_video_TS` next to `<ch10path>/<ch10name>_video.parquet` (only available when built with `-DVIDEO=ON`)  
+ **parquet\_video\_extractor.exe**: Only available when built with `-DVIDEO=ON`. Extract video transport stream data from parquet files. Exports TS files to a folder `<ch10path>/<ch10name>_video_TS` next to `<ch10path>/<ch10name>_video.parquet`  
  `parquet_video_extractor.exe [path to <ch10path>/<ch10name>_video.parquet folder]`  
 
   **tip\_translate.exe**: Translate raw 1553 data from Parquet files to parquet tables of enginering units.  

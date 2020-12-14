@@ -27,6 +27,20 @@ ManagedPath TranslationMaster::GetTranslatedDataDirectory()
 	return output_base_path_;
 }
 
+std::set<std::string> TranslationMaster::GetTranslatedMessages()
+{
+	// Gather all translated messages from all
+	// threads
+	std::set<std::string> translated_messages;
+	for (int i = 0; i < ptm_vec_.size(); i++)
+	{
+		std::set<std::string> temp = ptm_vec_[i]->GetTranslatedMessages();
+		for (auto message : temp)
+			translated_messages.insert(message);
+	}
+	return translated_messages;
+}
+
 uint8_t TranslationMaster::translate()
 {
 	
