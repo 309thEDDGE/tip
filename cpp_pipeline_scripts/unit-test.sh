@@ -117,8 +117,8 @@ else
 fi
 
 echo ""
-echo "-------------- Check for Alkemist presence --------------"
 if [ -v PIPELINE -o -v ALKEMIST_LICENSE_KEY ]; then
+	echo "-------------- Check for Alkemist presence --------------"
 	ldd ./bin/pqcompare
 	readelf -x .txtrp ./bin/pqcompare | grep 0x -m3
 	ldd ./bin/bincompare
@@ -130,8 +130,8 @@ if [ -v PIPELINE -o -v ALKEMIST_LICENSE_KEY ]; then
 	ldd ./bin/tip_translate
 	readelf -x .txtrp ./bin/tip_translate | grep 0x -m3
 else
-	echo "Skipping Alkemist check:"
-	echo "No ALKEMIST_LICENSE_KEY defined and not running on the pipeline (PIPELINE not defined)"
+	echo "Skipping Alkemist check: "
+	echo "   ALKEMIST_LICENSE_KEY and PIPELINE variables are both undefined"
 fi
 
 echo ""
