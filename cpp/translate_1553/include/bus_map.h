@@ -89,8 +89,13 @@ public:
 
 	 vote_threshold				  -> for a mapping to be made, votes must be >= vote_threshold
 
-	 vote_method_checks_tmats	  -> the end result of a vote method checks to see if the bus name
-										is a substring of the busname in TMATs for a given channel ID
+	 vote_method_checks_tmats	  -> vote_method_checks_tmats is only used when use_tmats_busmap = false
+										Once the voting process is carried out, the results will be compared 
+										with TMATS. If the bus name determined by the vote method is a substring
+										of the bus name found in TMATS OR the TMATS bus name is a substring
+										of the vote method bus name for a given channel ID, it will allow the channel 
+										ID to be mapped. If a TMATS substring match is not made, it will not map 
+										the channel ID that doesn't have a TMATS bus name match
 
 	 bus_exclusions				  -> if a bus name exists in the final bus map that also
 										exists in the bus_exclusions list, remove it from 

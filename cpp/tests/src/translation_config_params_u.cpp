@@ -71,7 +71,7 @@ TEST_F(TranslationConfigParamsTest, InitializeValidEntry)
 	EXPECT_EQ(config.exit_after_table_creation_, false);
 	EXPECT_EQ(config.stop_after_bus_map_, false);
 	EXPECT_EQ(config.prompt_user_, false);
-	EXPECT_THAT(config.bus_exclusions_, ::testing::ElementsAre("BusA", "BusB"));
+	EXPECT_THAT(config.bus_name_exclusions_, ::testing::ElementsAre("BusA", "BusB"));
 	EXPECT_EQ(config.translate_thread_count_, 1);
 }
 

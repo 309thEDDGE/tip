@@ -23,7 +23,7 @@ public:
 	bool prompt_user_;
 	bool vote_method_checks_tmats_;
 	int translate_thread_count_;
-	std::vector<std::string> bus_exclusions_;
+	std::vector<std::string> bus_name_exclusions_;
 
 
 	bool Initialize(std::string file_path)
@@ -66,7 +66,7 @@ public:
 			vote_threshold_, 1, INT_MAX, true));
 
 		success.insert(yr.GetParams("bus_name_exclusions",
-			bus_exclusions_, true));
+			bus_name_exclusions_, true));
 
 		success.insert(yr.GetParams("prompt_user", 
 			prompt_user_, true));

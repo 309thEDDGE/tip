@@ -52,6 +52,7 @@ private:
 	std::unordered_map<size_t, uint16_t> msg_append_count_map_;
 	std::string table_name_;
 	std::set<size_t> select_table_indices_;
+	std::set<std::string> translated_messages_;
 
 	// Arrow variables.
 	arrow::Status st_;
@@ -101,6 +102,7 @@ public:
 		ManagedPath& output_base_name, ManagedPath& msg_list_path,
 		std::vector<ManagedPath>& input_parquet_paths, bool& parquet_path_is_dir);
 	void get_message_list(std::vector<std::string>& msg_names_list, bool& message_list_exists);
+	std::set<std::string> GetTranslatedMessages() { return translated_messages_; }
 
 	std::atomic<bool>& completion_status();
 	ManagedPath GetTranslatedDataDirectory();

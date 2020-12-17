@@ -104,9 +104,10 @@ vote_threshold: 5
 #
 # vote_method_checks_tmats is only used when use_tmats_busmap = false
 # Once the voting process is carried out, the results will be compared 
-# with TMATS. If a bus name associated with a given channel ID is a substring 
-# of the TMATS bus name for that given channel ID, it will allow the channel 
-# ID to be mapped. If a TMATS match is not made, it will not map the channel 
+# with TMATS. If the bus name determined by the vote method is a substring
+# of the bus name found in TMATS OR the TMATS bus name is a substring
+# of the vote method bus name for a given channel ID, it will allow the channel 
+# ID to be mapped. If a TMATS substring match is not made, it will not map the channel 
 # ID that doesn't have a TMATS bus name match
 #
 #
@@ -127,6 +128,15 @@ vote_threshold: 5
 # channel ID = 1, bus name = "BUS2" or missing from TMATS
 # -- 
 # final bus map (channel ID 1 will be left unmapped)
+#
+# Example 3:
+# voting method results--
+# channel ID = 1,  bus name = "*ANYTHING*BUS1*ANYTHING*"
+# --
+# tmats--
+# channel ID = 1, bus name = "BUS1"
+# -- 
+# final bus map (channel ID = 1 -> "BUS1")
 #
 vote_method_checks_tmats: false
 

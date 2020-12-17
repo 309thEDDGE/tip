@@ -203,6 +203,13 @@ void ParseManager::start_workers()
 		output_dir_map_[Ch10DataType::MILSTD1553_DATA_F1],
 		"_metadata");
 
+	// Record Config options used
+	md.RecordSingleKeyValuePair("parse_chunk_bytes", config_->parse_chunk_bytes_);
+	md.RecordSingleKeyValuePair("parse_thread_count", config_->parse_thread_count_);
+	md.RecordSingleKeyValuePair("max_chunk_read_count", config_->max_chunk_read_count_);
+	md.RecordSingleKeyValuePair("worker_offset_wait_ms", config_->worker_offset_wait_ms_);
+	md.RecordSingleKeyValuePair("worker_shift_wait_ms", config_->worker_shift_wait_ms_);
+
 	// Record the input ch10 path.
 	md.RecordSingleKeyValuePair("ch10_input_file_path", input_path.RawString());
 
@@ -216,6 +223,9 @@ void ParseManager::start_workers()
 	std::map<uint32_t, std::vector<std::vector<uint32_t>>> output_chanid_commwords_map;
 	collect_chanid_to_commwords_metadata(output_chanid_commwords_map);
 	md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
+
+
+
 
 #ifdef LIBIRIG106
 	ProcessTMATS();
