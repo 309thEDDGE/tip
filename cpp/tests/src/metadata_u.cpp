@@ -2,17 +2,15 @@
 #include "gmock/gmock.h"
 #include "metadata.h"
 
-using fspath = std::filesystem::path;
-
 class MetadataTest : public ::testing::Test
 {
 protected:
 
 	Metadata md_;
 	std::string base_file_name_;
-	fspath md_path_;
+	ManagedPath md_path_;
 	std::string expected_md_string_;
-	MetadataTest() : base_file_name_(""), md_(), md_path_("/home/usr/lib64"),
+	MetadataTest() : base_file_name_(""), md_(), md_path_(std::string("/home/usr/lib64")),
 		expected_md_string_("")
 	{
 
@@ -27,31 +25,31 @@ protected:
 TEST_F(MetadataTest, GetYamlMetadataPathEmptyFileName)
 {
 	base_file_name_ = "";
-	fspath outdir1("C:\\Users\\Admin\\Documents");
+	ManagedPath outdir1(std::string("C:\\Users\\Admin\\Documents"));
 	md_path_ = md_.GetYamlMetadataPath(outdir1, base_file_name_);
-	EXPECT_EQ(md_path_.parent_path().string(), outdir1.string());
-	EXPECT_EQ(md_path_.filename().string(), "_metadata.yaml");
+	EXPECT_EQ(md_path_.parent_path().RawString(), outdir1.string());
+	EXPECT_EQ(md_path_.filename().RawString(), "_metadata.yaml");
 
-	fspath outdir2("/home/user/blah");
+	ManagedPath outdir2(std::string("/home/user/blah"));
 	md_path_ = md_.GetYamlMetadataPath(outdir2, base_file_name_);
-	EXPECT_EQ(md_path_.parent_path().string(), outdir2.string());
-	EXPECT_EQ(md_path_.filename().string(), "_metadata.yaml");
+	EXPECT_EQ(md_path_.parent_path().RawString(), outdir2.string());
+	EXPECT_EQ(md_path_.filename().RawString(), "_metadata.yaml");
 }	
 
 TEST_F(MetadataTest, GetYamlMetadataPathEmptyOutDir)
 {
 	base_file_name_ = "metadata";
-	fspath outdir1("");
+	ManagedPath outdir1(std::string(""));
 	md_path_ = md_.GetYamlMetadataPath(outdir1, base_file_name_);
-	EXPECT_EQ(md_path_.string(), "metadata.yaml");
+	EXPECT_EQ(md_path_.RawString(), "metadata.yaml");
 }
 
 TEST_F(MetadataTest, GetYamlMetadataPathEmptyOutDirAndFileName)
 {
 	base_file_name_ = "";
-	fspath outdir1("");
+	ManagedPath outdir1(std::string(""));
 	md_path_ = md_.GetYamlMetadataPath(outdir1, base_file_name_);
-	EXPECT_EQ(md_path_.string(), "_metadata.yaml");
+	EXPECT_EQ(md_path_.RawString(), "_metadata.yaml");
 }
 
 TEST_F(MetadataTest, GetMetadataStringSingleKeyValuePair)

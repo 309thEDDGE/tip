@@ -1,7 +1,7 @@
 #include "parquet_video_extraction.h"
 
 
-bool ParquetVideoExtraction::OpenParquetFile(std::string file_path)
+bool ParquetVideoExtraction::OpenParquetFile(ManagedPath file_path)
 {
 	std::string data_col_name = "data";
 	std::string channel_id_col_name = "channelid";
@@ -9,7 +9,7 @@ bool ParquetVideoExtraction::OpenParquetFile(std::string file_path)
 #ifdef NEWARROW
 	try
 	{
-	PARQUET_ASSIGN_OR_THROW(arrow_file_, arrow::io::ReadableFile::Open(file_path, pool_));
+	PARQUET_ASSIGN_OR_THROW(arrow_file_, arrow::io::ReadableFile::Open(file_path.string(), pool_));
 	}
 	catch (...)
 	{
@@ -18,7 +18,7 @@ bool ParquetVideoExtraction::OpenParquetFile(std::string file_path)
 	}
 #else
 	// Open file reader.
-	st_ = arrow::io::ReadableFile::Open(file_path, pool_, &arrow_file_);
+	st_ = arrow::io::ReadableFile::Open(file_path.string(), pool_, &arrow_file_);
 	if (!st_.ok())
 	{
 		printf("arrow::io::ReadableFile::Open error (ID %s): %s\n",
@@ -231,34 +231,24 @@ void ParquetVideoExtraction::WriteRowGroup(const arrow::NumericArray<arrow::Int3
 	}
 }
 
-bool ParquetVideoExtraction::Initialize(std::string video_path)
+bool ParquetVideoExtraction::Initialize(ManagedPath video_path)
 {
-	if (!std::filesystem::exists(video_path))
+	if (!video_path.is_directory())
 	{
-		printf("Video directory %s does not exist\n", video_path.c_str());
+		printf("Video directory %s does not exist\n", video_path.RawString().c_str());
 		return false;
 	}
 
-	printf("Transport Stream Extractor--\nParquet Path: %s\n", video_path.c_str());
+	printf("Transport Stream Extractor--\nParquet Path: %s\n", video_path.RawString().c_str());
 
 	parquet_path_ = video_path;
-	output_path_ = parquet_path_;
+	std::string ext_replacement = "_TS";
+	output_path_ = parquet_path_.parent_path().CreatePathObject(parquet_path_, ext_replacement);
 
-	std::string file_name = output_path_.stem().string();
-
-	output_path_.remove_filename();
-	output_path_ += std::filesystem::path(file_name + "_TS");
-
-	// If the output path does not exist create it
-	if (!std::filesystem::exists(output_path_))
+	if (!output_path_.create_directory())
 	{
-		bool create_dir_success = false;
-		create_dir_success = std::filesystem::create_directory(output_path_);
-		if (!create_dir_success)
-		{
-			printf("Creation of directory %s failed\n", output_path_.string().c_str());
-			return false;
-		}
+		printf("Creation of directory %s failed\n", output_path_.RawString().c_str());
+		return false;
 	}
 
 	return true;
@@ -266,25 +256,39 @@ bool ParquetVideoExtraction::Initialize(std::string video_path)
 
 bool ParquetVideoExtraction::ExtractTS()
 {
-	// iterate over video parquet files and write TS
-	for (const auto& entry : std::filesystem::directory_iterator(parquet_path_))
+	// Get list of entries in the parquet_path_ directory and
+	// select only those which are files and contain the substring
+	// ".parquet".
+	std::vector<std::string> substr({ ".parquet" });
+	std::vector<ManagedPath> dir_entries;
+	bool success = false;
+	parquet_path_.ListDirectoryEntries(success, dir_entries);
+
+	if (!success)
 	{
-		if (entry.path().extension().string() == ".parquet")
+		printf("Failed to get list of directory entries from %s\n",
+			parquet_path_.RawString().c_str());
+	}
+
+	std::vector<ManagedPath> matching_files = ManagedPath::SelectPathsWithSubString(
+		ManagedPath::SelectFiles(dir_entries), substr);
+
+	for (std::vector<ManagedPath>::const_iterator it = matching_files.cbegin();
+		it != matching_files.cend(); ++it)
+	{
+		printf("\n\n--Reading parquet file: \n%s\n", it->stem().RawString().c_str());
+		if (!OpenParquetFile(*it))
 		{
-			printf("\n\n--Reading parquet file: \n%s\n", entry.path().stem().string().c_str());
-			bool valid_file = OpenParquetFile(entry.path().string());
-
-			if (!valid_file)
-			{
-				return false;
-			}
-
-			bool valid_TS_print = ExtractFileTS();
-
-			if (!valid_TS_print)
-				return false;
+			return false;
 		}
-	}	
 
-	printf("\n\n --Finished\nTransport Stream Output Written to: %s\n", output_path_.string().c_str());
+		if (!ExtractFileTS())
+		{
+			return false;
+		}
+	}
+
+	printf("\n\n --Finished\nTransport Stream Output Written to: %s\n", 
+		output_path_.RawString().c_str());
+	return true;
 }

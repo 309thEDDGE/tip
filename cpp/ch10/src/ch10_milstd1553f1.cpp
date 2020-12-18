@@ -7,13 +7,6 @@ Ch10MilStd1553F1::~Ch10MilStd1553F1()
 	
 }
 
-#ifdef PARQUET
-void Ch10MilStd1553F1::get_msg_names(std::set<std::string>& output_name_set)
-{
-	db.add_names_to_set(output_name_set);
-}
-#endif
-
 void Ch10MilStd1553F1::Initialize(const Ch10TimeData* ch10td, const Ch10HeaderData* ch10hd)
 {
 	ch10td_ptr_ = ch10td;

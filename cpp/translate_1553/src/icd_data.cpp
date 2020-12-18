@@ -608,13 +608,10 @@ const ICDElement* ICDData::GetElementPointerByIndex(const size_t& index)
 	return &icd_elements_[index];
 }
 
-bool ICDData::IsYamlFile(const std::string& icd_path)
+bool ICDData::IsYamlFile(const ManagedPath& icd_path)
 {
-	// Convert to path object.
-	std::filesystem::path icdp(icd_path);
-
 	// Get the extension and cast to lower case.
-	std::string extension = icdp.extension().string();
+	std::string extension = icd_path.extension().string();
 	std::transform(extension.begin(), extension.end(), extension.begin(),
 		[](unsigned char c) { return std::tolower(c); });
 

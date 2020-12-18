@@ -256,18 +256,6 @@ bool ICDTranslate::TranslateArrayOfElement(const std::vector<uint16_t>& input_wo
 		}
 	}
 
-	// Isaac debug
-	//if (icd_elem.elem_name_ == "L09-05")
-	//{
-	//	for (size_t i = 0; i < 100; i++)
-	//	{
-	//		//printf("word %05hu, eu %hhd\n", input_words[i], output_eu[i]);
-	//		printf("words %05hu %05hu, scale %e, eu %llf\n", input_words[i*2], 
-	//			input_words[i*2+1], scale_twos_, output_eu[i]);
-	//	}
-	//}
-	// end debug
-
 	return true;
 }
 
@@ -400,6 +388,14 @@ bool ICDTranslate::ConfigureWordLevel(size_t input_word_count, std::vector<OutTy
 #endif
 		return false;
 	}
+
+	// Scale factor of 0 does not give meaningful data. Handle
+	// case when MSB val implies scale factor of zero.
+	if (scale_ == 0.0)
+		scale_ = 1.0;
+	if (scale_twos_ == 0.0)
+		scale_twos_ = 1.0;
+
 	return true;
 }
 

@@ -534,92 +534,37 @@ uint16_t Translatable1553Table::translate()
 	return translation_err_count_;
 }
 
-uint8_t Translatable1553Table::configure_parquet_context(std::filesystem::path& output_dir, 
-	std::filesystem::path& base_name, bool is_multithreaded, uint8_t id)
+uint8_t Translatable1553Table::configure_parquet_context(ManagedPath& output_dir,
+	ManagedPath& base_name, bool is_multithreaded, uint8_t id)
 {
 	// Create the Parquet file output path.
-	std::string parquet_file_name = "_" + name_ + ".parquet";
-	std::filesystem::path parquet_path = output_dir / base_name;
-	parquet_path += std::filesystem::path(parquet_file_name);
-	parquet_file_name = parquet_path.string();
-	//printf("Parquet path: %s\n", parquet_file_name.c_str());
+	std::string parquet_dir_extension = "_" + name_ + ".parquet";
+	ManagedPath parquet_dir_path = output_dir / base_name;
+	parquet_dir_path += ManagedPath(parquet_dir_extension);
+
+	ManagedPath final_parquet_path = parquet_dir_path;
 
 	if (is_multithreaded)
 	{
 		/*
 		If this code is being executed in multithreaded manner, then instead of
 		creating a single output Parquet file to contain the translated values for a
-		 given table, create a directory with the parquet_path created above and
+		 given table, create a directory with the path created above and
 		 write to files within that directory, indexed via the id argument.
 		*/
 
 		// If the path doesn't exist as a directory, create it.
-		if (!std::filesystem::exists(parquet_path))
+		if (!parquet_dir_path.create_directory())
 		{
-			int create_dir_attempt_counter = 0;
-			int max_attempts = 2;
-			while (!std::filesystem::create_directory(parquet_path))
-			{
-				create_dir_attempt_counter++;
-				printf("Translatable1553Table::configure_parquet_context(): "
-					"Failed to create directory %s, attempt %d\n",
-					parquet_path.string().c_str(), create_dir_attempt_counter);
-
-				// Sleep to give the OS some time before the next file is created.
-				std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
-				if (std::filesystem::exists(parquet_path))
-					break;
-
-				if (create_dir_attempt_counter == max_attempts)
-				{
-					printf("Translatable1553Table::configure_parquet_context(): "
-						"Failed to create directory %s, max attempts %d -- exiting!\n",
-						parquet_path.string().c_str(), create_dir_attempt_counter);
-					return 1;
-				}
-			}
-
-			// Sleep to give the OS some time before the next file is created.
-			//std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			return 1;
 		}
 
 		// Create the output parquet file name based on the parquet_path file name.
-		parquet_path /= parquet_path.stem();
 		char buff[20];
 		sprintf(buff, "__%02hhu.parquet", id);
 		std::string ext(buff);
-		parquet_path += std::filesystem::path(ext);
-
-#ifdef __WIN64
-		/*
-		Test -- prepend boost::filesystem extended-length path prefix.
-		Note: This seems to work with Apache Arrow 0.14.0 for reasons explained
-		below. However, it will probably fail with Apache Arrow 0.15.0 and higher,
-		or maybe an earlier version.
-
-		Explanation: Prior to 0.15.0 Arrow relies on boost::filesystem to handle 
-		path manipulation and open files, etc. In JIRA issue ARROW-6613 ("[C++] Remove
-		dependency on boost::filesystem") boost::filesystem was removed prior to
-		the release of Arrow 0.15.0 which occurred on 20191005. See 
-		arrow.apache.org/release/0.15.0.html. When std::filesystem is used, paths are 
-		limited to 260 characters due to Windows MAX_PATH setting. I verified this by
-		running translate_1553_from_parquet.cpp on files which resulted in output paths
-		below and above MAX_PATH. Output files with length less than MAX_PATH complete
-		without issue and longer paths fail due to an Arrow IO problem in which filesystem
-		says it can't find the path. 
-
-		Per boost.org/doc/libs/1_58_0/libs/filesystem/doc/reference.html#long-path-warning
-		one way to get around the MAX_PATH limitation is to use the path prefix that I
-		fill in temp_path below. Inclusion of this prefix allow Arrow to process long
-		path lengths without issue. 
-		*/
-		std::filesystem::path temp_path("\\\\?\\");
-		temp_path += parquet_path;
-		parquet_path = temp_path;
-		// end test -- delete this block to remove test feature
-#endif
-		parquet_file_name = parquet_path.string();
+		final_parquet_path = parquet_dir_path.CreatePathObject(parquet_dir_path,
+			ext);
 	}
 
 	// Create ParquetContext object.
@@ -669,10 +614,10 @@ uint8_t Translatable1553Table::configure_parquet_context(std::filesystem::path& 
 	
 	// Open the Parquet file for writing. Set truncate (2nd arg) to true to
 	// create new file and overwrite existing file, if present.
-	if (pq_->OpenForWrite(parquet_file_name, true) == false)
+	if (pq_->OpenForWrite(final_parquet_path.string(), true) == false)
 	{
 		printf("Translatable1553Table::configure_parquet_context(): ParquetContext::open_for_write() error for path %s\n",
-			parquet_file_name.c_str());
+			final_parquet_path.RawString().c_str());
 		return 1;
 	}
 

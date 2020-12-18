@@ -6,14 +6,14 @@ Metadata::Metadata()
 	emitter_ << YAML::BeginDoc;
 }
 
-std::filesystem::path Metadata::GetYamlMetadataPath(const std::filesystem::path& output_dir,
+ManagedPath Metadata::GetYamlMetadataPath(const ManagedPath& output_dir,
 	const std::string& base_file_name)
 {
-	std::filesystem::path file_name_component;
+	ManagedPath file_name_component;
 	if (base_file_name != "")
-		file_name_component = std::filesystem::path(base_file_name + ".yaml");
+		file_name_component = ManagedPath(std::string(base_file_name + ".yaml"));
 	else
-		file_name_component = std::filesystem::path("_metadata.yaml");
+		file_name_component = ManagedPath(std::string("_metadata.yaml"));
 	return output_dir / file_name_component;
 }
 

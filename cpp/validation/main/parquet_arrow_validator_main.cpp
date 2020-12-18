@@ -17,7 +17,9 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-	comp.Initialize(argv[1], argv[2]);
+	std::string path1(argv[1]);
+	std::string path2(argv[2]);
+	comp.Initialize(ManagedPath(path1), ManagedPath(path2));
 	comp.CompareAll();
 	
 	auto t2 = Clock::now();

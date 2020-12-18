@@ -1,7 +1,7 @@
 #include "parquet_translation_manager.h"
 
-ParquetTranslationManager::ParquetTranslationManager(uint8_t id, ICDData icd) :
-	parquet_path_(""), icd_(icd), iter_tools_(),
+ParquetTranslationManager::ParquetTranslationManager(uint8_t id, const ICDData& icd) :
+	parquet_path_(), icd_(icd), iter_tools_(),
 	pool_(arrow::default_memory_pool()), have_created_reader_(false), status_(1),
 	table_count_(0), have_consumed_all_row_groups_(false), row_group_index_(0), raw_table_row_group_count_(0),
 	raw_table_data_col_index_(0), data_org_(), output_dir_(), output_base_name_(),
@@ -13,7 +13,8 @@ ParquetTranslationManager::ParquetTranslationManager(uint8_t id, ICDData icd) :
 
 }
 
-ParquetTranslationManager::ParquetTranslationManager(std::string parquet_path, ICDData icd) :
+ParquetTranslationManager::ParquetTranslationManager(const ManagedPath& parquet_path, 
+	const ICDData& icd) :
 	parquet_path_(parquet_path), pool_(arrow::default_memory_pool()), have_created_reader_(false), status_(1),
 	table_count_(0), have_consumed_all_row_groups_(false), row_group_index_(0), raw_table_row_group_count_(0),
 	raw_table_data_col_index_(0), data_org_(), output_dir_(), output_base_name_(),
@@ -40,108 +41,58 @@ void ParquetTranslationManager::set_select_msgs_list(bool select_msgs, std::vect
 
 uint8_t ParquetTranslationManager::setup_output_paths()
 {
+
 	// Determine if parquet_path is a directory.
-	std::filesystem::path input_parquet_path(parquet_path_);
-	parquet_path_is_dir_ = std::filesystem::is_directory(input_parquet_path);
+	parquet_path_is_dir_ = parquet_path_.is_directory();
 
 	if (parquet_path_is_dir_)
 	{
-		printf("Input path IS a directory: %s\n", parquet_path_.c_str());
+		printf("Input path IS a directory: %s\n", parquet_path_.RawString().c_str());
 
-		/*
-		If input path is a directory, then the Parquet "file" represented 
-		by the input path is a special case in which a directory can be 
-		labeled as .parquet and a Parquet reader can read the directory 
-		and all of its contents as if it were a single file. In this case,
-		this translation algorithm needs to loop over and consume the 
-		contents of each file in that directory.
-		*/
-		size_t metadata_find_result = std::string::npos;
-		size_t tmats_find_result = std::string::npos;
-		std::string temp_path = "";
-		for (auto& p : std::filesystem::directory_iterator(input_parquet_path))
-		{
-			temp_path = p.path().string();
-			if (!p.is_directory())
-			{
-				// Do not add the path of the current file if it has the
-				// sub-string "metadata" because that file contains only
-				// metadata and will have been already consumed in main().
-				// Also ignore _TMATS.txt file.
-				metadata_find_result = temp_path.find("metadata");
-				tmats_find_result = temp_path.find("TMATS");
-				if ((metadata_find_result == std::string::npos) &&
-					(tmats_find_result == std::string::npos))
-				{
-#ifdef DEBUG
-#if DEBUG > 1
-					printf("input path: %s\n", temp_path.c_str());
-#endif
-#endif
-					input_parquet_paths_.push_back(temp_path);
-				}
-			}
-		}
+		bool success = false;
+		std::vector<std::string> file_exclusion_substrings({ "metadata", "TMATS" });
+		parquet_path_.ListDirectoryEntries(success, input_parquet_paths_);
+		if (!success)
+			return 1;
 
-		// Sort the input paths such that they are processed in the order generated
-		// by the parser.
-		input_parquet_paths_ = iter_tools_.Sort(input_parquet_paths_);
-
-		// Create an output directory at the same level as the Parquet "file"
-		// directory.
-		output_base_name_ = input_parquet_path.stem(); 
-		output_base_name_ += std::filesystem::path("_translated");
-		//printf("parent path is %s\n", input_parquet_path.parent_path().string().c_str());
-		output_dir_ = input_parquet_path.parent_path() / output_base_name_;
-		if (!std::filesystem::exists(output_dir_))
-		{
-			bool create_dir = std::filesystem::create_directory(output_dir_);
-			if (!create_dir)
-			{
-				printf("Failed to create directory: %s\n", output_dir_.string().c_str());
-				return 1;
-			}
-		}
+		// Filter to get files only and exclude certain files.
+		input_parquet_paths_ = ManagedPath::ExcludePathsWithSubString(
+			ManagedPath::SelectFiles(input_parquet_paths_), file_exclusion_substrings);
 	}
 	else
 	{
-		printf("Input path IS NOT a directory: %s\n", parquet_path_.c_str());
+		printf("Input path IS NOT a directory: %s\n", parquet_path_.RawString().c_str());
 
 		// There is only one input path, the parquet_path_.
 		input_parquet_paths_.push_back(parquet_path_);
-		
-		// The output directory is at the same level as the input path.
-		output_base_name_ = input_parquet_path.stem();
-		output_base_name_ += std::filesystem::path("_translated");
-		//printf("parent path is %s\n", input_parquet_path.parent_path().string().c_str());
-		output_dir_ = input_parquet_path.parent_path() / output_base_name_;
-		if (!std::filesystem::exists(output_dir_))
-		{
-			bool create_dir = std::filesystem::create_directory(output_dir_);
-			if (!create_dir)
-			{
-				printf("Failed to create directory: %s\n", output_dir_.string().c_str());
-				return 1;
-			}
-		}
-		/*else
-			printf("Directory already exists: %s\n", output_dir_.string().c_str());*/
 	}
-	printf("Output base name: %s\n", output_base_name_.string().c_str());
-	printf("Output directory: %s\n", output_dir_.string().c_str());
+
+	// Create an output directory at the same level as the Parquet
+	// directory.
+	output_dir_ = parquet_path_.parent_path().CreatePathObject(parquet_path_, "_translated");
+	output_base_name_ = output_dir_.filename();
+	if(!output_dir_.create_directory())
+	{
+		printf("ParquetTranslationManager::create_paths(): Failed to create directory: %s\n",
+			output_dir_.RawString().c_str());
+		return 1;
+	}
+
+	printf("Output base name: %s\n", output_base_name_.RawString().c_str());
+	printf("Output directory: %s\n", output_dir_.RawString().c_str());
 
 	return 0;
 }
 
-std::filesystem::path ParquetTranslationManager::GetTranslatedDataDirectory()
+ManagedPath ParquetTranslationManager::GetTranslatedDataDirectory()
 {
 	return output_dir_;
 }
 
 
-void ParquetTranslationManager::get_paths(std::string parquet_path, std::filesystem::path& output_base_path,
-	std::filesystem::path& output_base_name, std::filesystem::path& msg_list_path,
-	std::vector<std::string>& input_parquet_paths, bool& parquet_path_is_dir)
+void ParquetTranslationManager::get_paths(ManagedPath parquet_path, ManagedPath& output_base_path,
+	ManagedPath& output_base_name, ManagedPath& msg_list_path,
+	std::vector<ManagedPath>& input_parquet_paths, bool& parquet_path_is_dir)
 {
 	parquet_path_ = parquet_path;
 	setup_output_paths();
@@ -160,11 +111,8 @@ std::atomic<bool>& ParquetTranslationManager::completion_status()
 	return complete_;
 }
 
-
-
-void ParquetTranslationManager::operator()(std::filesystem::path& output_base_path, 
-	std::filesystem::path& output_base_name, std::vector<std::string>& input_parquet_paths, 
-	bool is_multithreaded)
+void ParquetTranslationManager::operator()(const ManagedPath& output_base_path, const ManagedPath& output_base_name,
+	std::vector<ManagedPath>& input_parquet_paths, bool is_multithreaded)
 {
 	// Get start time.
 	//auto start_time = std::chrono::high_resolution_clock::now();
@@ -450,7 +398,7 @@ uint8_t ParquetTranslationManager::consume_row_group()
 					// Failed in some way. Do not attempt
 					// to add data or translate.
 					continue;
-				}
+				}				
 			}
 					
 			// If the table is not bad.
@@ -505,12 +453,12 @@ uint8_t ParquetTranslationManager::consume_row_group()
 	return 0;
 }
 
-uint8_t ParquetTranslationManager::open_raw_1553_parquet_file(std::string& current_path)
+uint8_t ParquetTranslationManager::open_raw_1553_parquet_file(const ManagedPath& current_path)
 {
 	// Open file reader.
 #ifdef DEBUG
 #if DEBUG > 0
-	printf("\nReading parquet file: %s\n", current_path.c_str());
+	printf("\nReading parquet file: %s\n", current_path.RawString().c_str());
 #endif
 #endif
 
@@ -526,7 +474,7 @@ uint8_t ParquetTranslationManager::open_raw_1553_parquet_file(std::string& curre
 	}
 	   
 #else
-	st_ = arrow::io::ReadableFile::Open(current_path, pool_, &arrow_file_);
+	st_ = arrow::io::ReadableFile::Open(current_path.string(), pool_, &arrow_file_);
 	if (!st_.ok())
 	{
 		printf("arrow::io::ReadableFile::Open error (ID %s): %s\n", 
@@ -685,6 +633,13 @@ uint8_t ParquetTranslationManager::create_table(size_t table_ind)
 			printf("configure_parquet_context() error!\n");
 			return ret_val;
 		}
+	}
+
+	// Add the message name to a set to be added
+	// to translator metadata
+	if (!table_ptr->is_bad())
+	{
+		translated_messages_.insert(table_name_);
 	}
 
 	ret_val = 0;

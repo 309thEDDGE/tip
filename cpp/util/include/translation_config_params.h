@@ -21,8 +21,9 @@ public:
 	bool stop_after_bus_map_;
 	int vote_threshold_;
 	bool prompt_user_;
+	bool vote_method_checks_tmats_;
 	int translate_thread_count_;
-	std::vector<std::string> bus_exclusions_;
+	std::vector<std::string> bus_name_exclusions_;
 
 
 	bool Initialize(std::string file_path)
@@ -58,11 +59,14 @@ public:
 		success.insert(yr.GetParams("stop_after_bus_map", 
 			stop_after_bus_map_, true));
 
+		success.insert(yr.GetParams("vote_method_checks_tmats",
+			vote_method_checks_tmats_, true));
+
 		success.insert(yr.GetParams("vote_threshold",
 			vote_threshold_, 1, INT_MAX, true));
 
 		success.insert(yr.GetParams("bus_name_exclusions",
-			bus_exclusions_, true));
+			bus_name_exclusions_, true));
 
 		success.insert(yr.GetParams("prompt_user", 
 			prompt_user_, true));

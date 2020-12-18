@@ -21,12 +21,12 @@ ParseWorker::~ParseWorker()
 
 ParseWorker::ParseWorker() : start_position(0), 
 	last_position(0), id(UINT16_MAX), complete(false),
-	bb_ind(UINT16_MAX), output_fname(""), first_TDP_loc(UINT32_MAX),
+	bb_ind(UINT16_MAX), first_TDP_loc(UINT32_MAX),
 	pkt_count(0),
 	packet_ledger(), packet_error_ledger(),
 	tdf(nullptr), milstd(nullptr), delete_alloc(false), continue_parsing(false),
 	first_tdp(false), pkthdr(nullptr), read_size(0), retcode(0),
-	have_generated_file_names(false), final_worker(false), is_scan_worker(false)
+	final_worker(false), is_scan_worker(false)
 #ifdef LIBIRIG106
 	, i106_handle_(0), i106_status_(I106Status::I106_OK), i106_offset_(0), found_tmats_(false),
 	temp_buffer_vec_(temp_buffer_size_)
@@ -40,7 +40,7 @@ ParseWorker::ParseWorker() : start_position(0),
 #ifdef PARQUET
 void ParseWorker::initialize(uint16_t ID,
 	uint64_t start_pos, uint32_t read, uint16_t binbuff_ind,
-	std::map<Ch10DataType, std::filesystem::path>& fsmap,
+	std::map<Ch10DataType, ManagedPath>& file_path_map,
 	bool is_final_worker)
 {
 	id = ID;
@@ -48,7 +48,7 @@ void ParseWorker::initialize(uint16_t ID,
 	read_size = read;
 	bb_ind = binbuff_ind;
 	final_worker = is_final_worker;
-	generate_parquet_file_names(fsmap);
+	output_file_paths_ = file_path_map;
 #ifdef LIBIRIG106
 	if (ID == 0)
 		found_tmats_ = false;
@@ -56,11 +56,6 @@ void ParseWorker::initialize(uint16_t ID,
 		found_tmats_ = true;
 
 #endif
-}
-
-void ParseWorker::get_msg_names(std::set<std::string>& output_name_set)
-{
-	milstd->get_msg_names(output_name_set);
 }
 #endif
 
@@ -75,8 +70,7 @@ void ParseWorker::append_mode_initialize(uint32_t read, uint16_t binbuff_ind,
 #endif
 }
 
-void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd1553_word_count, bool milstd1553_msg_selection,
-	std::vector<std::string> milstd1553_sorted_selected_msgs)
+void ParseWorker::operator()(BinBuff& bb, bool append_mode)
 {
 #ifdef DEBUG
 	if (DEBUG > 0)
@@ -119,13 +113,11 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 	{
 		pkthdr = new Ch10PacketHeader(bb, id);
 		tdf = new Ch10TDF1(bb, id);
-		milstd = new Ch10MilStd1553F1(bb, id, check_milstd1553_word_count,
-			output_file_names[Ch10DataType::MILSTD1553_DATA_F1],
-			milstd1553_msg_selection, milstd1553_sorted_selected_msgs);
+		milstd = new Ch10MilStd1553F1(bb, id, output_file_paths_[Ch10DataType::MILSTD1553_DATA_F1]);
 		milstd->set_channelid_remoteaddress_output(&chanid_remoteaddr1_map, &chanid_remoteaddr2_map);
 #ifdef VIDEO_DATA
 		printf("\n(%03u) ParseWorker parsing VIDEO\n", id);
-		video = new Ch10VideoDataF0(bb, id, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
+		video = new Ch10VideoDataF0(bb, id, output_file_paths_[Ch10DataType::VIDEO_DATA_F0]);
 #endif
 		delete_alloc = true;
 	}
@@ -355,8 +347,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 }
 
 #ifdef LIBIRIG106
-void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd1553_word_count, bool milstd1553_msg_selection,
-	std::vector<std::string> milstd1553_sorted_selected_msgs, std::vector<std::string>& tmats_body_vec)
+void ParseWorker::operator()(BinBuff& bb, bool append_mode, std::vector<std::string>& tmats_body_vec)
 {
 #ifdef DEBUG
 	if (DEBUG > 0)
@@ -399,19 +390,17 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, bool check_milstd155
 	{
 		pkthdr = new Ch10PacketHeader(bb, id);
 		tdf = new Ch10TDF1(bb, id);
-		milstd = new Ch10MilStd1553F1(bb, id, check_milstd1553_word_count,
-			output_file_names[Ch10DataType::MILSTD1553_DATA_F1],
-			milstd1553_msg_selection, milstd1553_sorted_selected_msgs);
+		milstd = new Ch10MilStd1553F1(bb, id, output_file_paths_[Ch10DataType::MILSTD1553_DATA_F1]);
 		milstd->set_channelid_remoteaddress_output(&chanid_remoteaddr1_map, &chanid_remoteaddr2_map);
 		milstd->set_channelid_commwords_output(&chanid_commwords_map);
 #ifdef VIDEO_DATA
 		printf("\n(%03u) ParseWorker parsing video packets\n", id);
-		video = new Ch10VideoDataF0(bb, id, output_file_names[Ch10DataType::VIDEO_DATA_F0]);
+		video = new Ch10VideoDataF0(bb, id, output_file_paths_[Ch10DataType::VIDEO_DATA_F0]);
 #endif
 #ifdef ETHERNET_DATA
 		printf("\n(%03hu) ParseWorker parsing Ethernet packets\n", id);
 		i106_ethernetf0_.Initialize(id, &ch10md_, 
-			output_file_names[Ch10DataType::ETHERNET_DATA_F0]);
+			output_file_paths_[Ch10DataType::ETHERNET_DATA_F0]);
 		if (!i106_ethernetf0_.InitializeWriter())
 		{
 			printf("\n(%03hu) ParseWorker failed to initialize Ethernet writer\n", id);
@@ -917,48 +906,6 @@ Ch10MilStd1553F1Stats* ParseWorker::milstd1553_stats()
 {
 	return &(milstd->get_stats());
 }
-
-std::string ParseWorker::output_file_path()
-{
-	return output_fname;
-}
-
-std::string ParseWorker::output_file_path(Ch10DataType dt)
-{
-	return output_file_names[dt];
-}
-
-#ifdef PARQUET
-void ParseWorker::generate_parquet_file_names(std::map<Ch10DataType, std::filesystem::path>& fsmap)
-{
-	if (!have_generated_file_names)
-	{
-		have_generated_file_names = true;
-		std::filesystem::path dirpath = fsmap[Ch10DataType::MILSTD1553_DATA_F1];
-		std::filesystem::path outpath = dirpath / dirpath.stem();
-		char buff[20];
-		sprintf(buff, "__%03u.parquet", id);
-		std::string ext(buff);
-		outpath += std::filesystem::path(ext);
-		output_file_names[Ch10DataType::MILSTD1553_DATA_F1] = outpath.string();
-		printf("Worker output path: %s\n", output_file_names[Ch10DataType::MILSTD1553_DATA_F1].c_str());
-
-#ifdef VIDEO_DATA
-		dirpath = fsmap[Ch10DataType::VIDEO_DATA_F0];
-		outpath = dirpath / dirpath.stem();
-		outpath += std::filesystem::path(ext);
-		output_file_names[Ch10DataType::VIDEO_DATA_F0] = outpath.string();
-#endif
-#ifdef ETHERNET_DATA
-		dirpath = fsmap[Ch10DataType::ETHERNET_DATA_F0];
-		outpath = dirpath / dirpath.stem();
-		outpath += std::filesystem::path(ext);
-		output_file_names[Ch10DataType::ETHERNET_DATA_F0] = outpath.string();
-#endif
-
-	}
-}
-#endif
 
 void ParseWorker::append_chanid_remoteaddr_maps(std::map<uint32_t, std::set<uint16_t>>& out1,
 	std::map<uint32_t, std::set<uint16_t>>&out2)
