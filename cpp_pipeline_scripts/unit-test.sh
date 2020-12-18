@@ -220,6 +220,7 @@ done
 
 echo ""
 if [ -v PIPELINE -o -v ALKEMIST_LICENSE_KEY ]; then
+	cd $BASE_DIR
 	echo "-------------- Check for Alkemist presence --------------"
 	ldd ./bin/pqcompare
 	readelf -x .txtrp ./bin/pqcompare | grep 0x -m3

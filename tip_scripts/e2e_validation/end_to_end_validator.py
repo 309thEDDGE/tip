@@ -329,7 +329,7 @@ class E2EValidator(object):
         if total_transl_time is None:
             roundval = None
         else:
-            roundval = roundval(total_transl_time, 2)
+            roundval = round(total_transl_time, 2)
         msg = 'Total translated 1553 time: {} seconds'.format(roundval)
         print(msg)
         self.print(msg)
@@ -338,7 +338,7 @@ class E2EValidator(object):
             roundval = None
         else:
             total_time = total_parse_time + total_transl_time
-            roundval = roundval(total_time, 2)
+            roundval = round(total_time, 2)
         msg = 'All validation set time: {} seconds'.format(roundval)
         print(msg)
         self.print(msg)
