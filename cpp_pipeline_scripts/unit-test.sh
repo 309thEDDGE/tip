@@ -41,17 +41,16 @@ BASE_DIR=${PWD}
 if [ -z "${CMAKE_BUILD_DIR}" ]; then 
 	LOCAL=True
 	# We are not in the pipeline; set vars for running locally
-	[ -d /app ] && BASE_DIR=/app
+	if [ -d /app ]; then 
+		BASE_DIR=/app
 	fi
 	CMAKE_BUILD_DIR=${BASE_DIR}/build
 fi
-	UNITTEST_REPORT_DIR=$BASE_DIR/reports
+UNITTEST_REPORT_DIR=$BASE_DIR/reports
 CMAKE_BUILD_DIR=$(readlink -f "$CMAKE_BUILD_DIR") # Change to absolute path
 TEST_DIR=${CMAKE_BUILD_DIR}/cpp
 
-# Skip unit tests if a log file was specified for testing
-if [ -z "$LOG_FILE" ]; then
-	echo ""
+echo ""
 echo "-------------------- Check for outdated binaries --------------------"
 echo ""
 PIPELINE_SCRIPT_DIR=$(dirname $(readlink -f $0))
@@ -85,9 +84,11 @@ else
 	echo "All binaries are newer than the build script"
 fi
 
-echo ""
-echo "-------------------- Unit Tests --------------------"
-echo ""
+# Skip unit tests if a log file was specified for testing
+if [ -z "$LOG_FILE" ]; then
+	echo ""
+	echo "-------------------- Unit Tests --------------------"
+	echo ""
 	# For now, run cpp/tests because it is much faster than ctest
 	# In the future we might have to run ctest in order to get coverage statistics
 	# If we do, try to make our tests compatible with the --parallel option of ctest
@@ -207,18 +208,29 @@ function check_time {
 # Check times
 for type in ${!MAX_TIMES[@]} ; do
 	echo ""
+	echo -n "$type time: "
+	if ! check_time $LOG_FILE $type ${MAX_TIMES[$type]} ; then
+		# For now, do not fail for translate time
+		if [ "${type,,}" != "translate" ]; then  # compare lower-case
+			EXIT_CODE=1
+		fi
+	fi
+	
+done
+
+echo ""
 if [ -v PIPELINE -o -v ALKEMIST_LICENSE_KEY ]; then
-echo "-------------- Check for Alkemist presence --------------"
-ldd ./bin/pqcompare
-readelf -x .txtrp ./bin/pqcompare | grep 0x -m3
-ldd ./bin/bincompare
-readelf -x .txtrp ./bin/bincompare | grep 0x -m3
-ldd ./bin/tests
-readelf -x .txtrp ./bin/tests | grep 0x -m3
-ldd ./bin/tip_parse_video
-readelf -x .txtrp ./bin/tip_parse_video | grep 0x -m3
-ldd ./bin/tip_translate
-readelf -x .txtrp ./bin/tip_translate | grep 0x -m3
+	echo "-------------- Check for Alkemist presence --------------"
+	ldd ./bin/pqcompare
+	readelf -x .txtrp ./bin/pqcompare | grep 0x -m3
+	ldd ./bin/bincompare
+	readelf -x .txtrp ./bin/bincompare | grep 0x -m3
+	ldd ./bin/tests
+	readelf -x .txtrp ./bin/tests | grep 0x -m3
+	ldd ./bin/tip_parse_video
+	readelf -x .txtrp ./bin/tip_parse_video | grep 0x -m3
+	ldd ./bin/tip_translate
+	readelf -x .txtrp ./bin/tip_translate | grep 0x -m3
 else
 	echo "Skipping Alkemist check: "
 	echo "   ALKEMIST_LICENSE_KEY and PIPELINE variables are both undefined"
