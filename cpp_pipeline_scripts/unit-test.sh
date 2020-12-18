@@ -16,20 +16,54 @@ trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 BASE_DIR=${PWD}
 if [ -z "${CMAKE_BUILD_DIR}" ] ; then 
 	# We are not in the pipeline; set vars for running locally
-	BASE_DIR=/app
+	[ -d /app ] && BASE_DIR=/app
 	CMAKE_BUILD_DIR=${BASE_DIR}/build
-	UNITTEST_REPORT_DIR=$BASE_DIR/reports
 fi
+UNITTEST_REPORT_DIR=$BASE_DIR/reports
+CMAKE_BUILD_DIR=$(readlink -f "$CMAKE_BUILD_DIR") # Change to absolute path
 TEST_DIR=${CMAKE_BUILD_DIR}/cpp
 
 echo ""
-echo Unit Tests
+echo "-------------------- Check for outdated binaries --------------------"
+echo ""
+PIPELINE_SCRIPT_DIR=$(dirname $(readlink -f $0))
+BUILD_SCRIPT=$PIPELINE_SCRIPT_DIR/build.sh
+echo "Build script:"
+ls -l $BUILD_SCRIPT
+cd $CMAKE_BUILD_DIR
+BINARIES=( $(find . -name *.a) )
+### Diagnostics
+#  echo "Found ${#BINARIES[*]} libraries:"
+#  echo "${BINARIES[*]}"
+#  ls -lt ${BINARIES[*]}
+### End
+
+# Reset build script's modification time to its last commit time
+GIT_FILE=$(realpath --relative-to=. $BUILD_SCRIPT)
+TIME=$(git log --pretty=format:%cd -n 1 --date=iso -- $GIT_FILE)
+TIME=$(date -d "$TIME" +%Y%m%d%H%M.%S)
+touch -m -t "$TIME" "$GIT_FILE"
+
+OLDEST=$(ls -t $BINARIES $BUILD_SCRIPT | tail -1)
+# Fail if the build script has changed after any binary was built
+if [ $OLDEST != $BUILD_SCRIPT ]; then
+	echo "Libraries:"
+	ls -lt ${BINARIES[*]}
+	echo ""
+	echo "ERROR:At least one binary file is older than the build script."
+	echo "      TIP executables are out of date."
+	exit 1
+else
+	echo "All binaries are newer than the build script"
+fi
+
+echo ""
+echo "-------------------- Unit Tests --------------------"
 echo ""
 # For now, run cpp/tests because it is much faster than ctest
 # In the future we might have to run ctest in order to get coverage statistics
 # If we do, try to make our tests compatible with the --parallel option of ctest
 cd ${TEST_DIR}
-ldd ./tests
 ./tests
 cd ${BASE_DIR}
 
@@ -83,16 +117,22 @@ else
 fi
 
 echo ""
-echo "-------------- Check for Alkemist presence --------------"
-ldd ./bin/pqcompare
-readelf -x .txtrp ./bin/pqcompare | grep 0x -m3
-ldd ./bin/bincompare
-readelf -x .txtrp ./bin/bincompare | grep 0x -m3
-ldd ./bin/tests
-readelf -x .txtrp ./bin/tests | grep 0x -m3
-ldd ./bin/tip_parse_video
-readelf -x .txtrp ./bin/tip_parse_video | grep 0x -m3
-ldd ./bin/tip_translate
-readelf -x .txtrp ./bin/tip_translate | grep 0x -m3
+if [ -v PIPELINE -o -v ALKEMIST_LICENSE_KEY ]; then
+	echo "-------------- Check for Alkemist presence --------------"
+	ldd ./bin/pqcompare
+	readelf -x .txtrp ./bin/pqcompare | grep 0x -m3
+	ldd ./bin/bincompare
+	readelf -x .txtrp ./bin/bincompare | grep 0x -m3
+	ldd ./bin/tests
+	readelf -x .txtrp ./bin/tests | grep 0x -m3
+	ldd ./bin/tip_parse_video
+	readelf -x .txtrp ./bin/tip_parse_video | grep 0x -m3
+	ldd ./bin/tip_translate
+	readelf -x .txtrp ./bin/tip_translate | grep 0x -m3
+else
+	echo "Skipping Alkemist check: "
+	echo "   ALKEMIST_LICENSE_KEY and PIPELINE variables are both undefined"
+fi
 
+echo ""
 exit $EXIT_CODE
