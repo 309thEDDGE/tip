@@ -31,10 +31,10 @@ else
 	exit 1
 fi
 
-declare -A MAX_TIMES
+declare -A THRESHOLDS
 [ -n "$PARSE_THRESHOLD" ] || PARSE_THRESHOLD=0.0
 [ -n "$TRANSLATE_THRESHOLD" ] || TRANSLATE_THRESHOLD=0.0
-MAX_TIMES=([parse]="$PARSE_THRESHOLD" [translate]="$TRANSLATE_THRESHOLD")
+THRESHOLDS=([parse]="$PARSE_THRESHOLD" [translate]="$TRANSLATE_THRESHOLD")
 
 
 BASE_DIR=${PWD}
@@ -206,12 +206,12 @@ function check_time {
 }
 
 # Check times
-for type in ${!MAX_TIMES[@]} ; do
+for type in ${!THRESHOLDS[@]} ; do
 	echo ""
 	echo -n "$type time: "
-	if ! check_time $LOG_FILE $type ${MAX_TIMES[$type]} ; then
+	if ! check_time $LOG_FILE $type ${THRESHOLDS[$type]} ; then
 		# For now, do not fail for translate time
-		if [ "${type,,}" != "translate" ]; then  # compare lower-case
+		if [ "${type,,}" != "translate" ]; then  # ',,' means convert to lower-case
 			EXIT_CODE=1
 		fi
 	fi
