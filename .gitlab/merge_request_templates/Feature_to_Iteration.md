@@ -1,10 +1,9 @@
-Closes issue #XX
+## Closes issue #XX
 
-Remember to use TDD for your development.
-
+* [ ] TDD used for development
 * [ ] Meets acceptance criteria for related issue
-* [ ] Passes end-to-end with IL4 data
 * [ ] Passes pipeline
+* [ ] Passes end-to-end with translation on IL4 data
 * [ ] Reviewed and approved by a Maintainer
   - [ ] Code is testable
   - [ ] Unit tests are complete
