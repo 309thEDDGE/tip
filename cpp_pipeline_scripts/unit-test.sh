@@ -50,6 +50,10 @@ UNITTEST_REPORT_DIR=$BASE_DIR/reports
 CMAKE_BUILD_DIR=$(readlink -f "$CMAKE_BUILD_DIR") # Change to absolute path
 TEST_DIR=${CMAKE_BUILD_DIR}/cpp
 
+# In the pipeline, only the build directory is present.
+# Restore the bin directory if needed.
+if [ ! -d $BASE_DIR/bin ]; then mv $CMAKE_BUILD_DIR/bin $BASE_DIR ; fi
+
 echo ""
 echo "-------------------- Check for outdated binaries --------------------"
 echo ""
@@ -122,12 +126,8 @@ if [ -z "$LOG_FILE" ]; then
 	echo ""
 	echo "-------------------- End-to-End Test ---------------------"
 	cd $BASE_DIR
-	# In the pipeline, only the build directory is present.
-	# Restore the bin directory if needed.
-	if [ ! -d ./bin ]; then mv build/bin . ; fi
-
-	# If in a test container
-	if [ -z "E2E_TEST" ]; then
+	# If no test directory defined
+	if [ -z "$E2E_TEST" ]; then
 		echo "No test directory specified and directory /test does not exist"
 		EXIT $1
 	fi
@@ -219,7 +219,9 @@ for type in ${!THRESHOLDS[@]} ; do
 done
 
 echo ""
-if [ -v PIPELINE -o -v ALKEMIST_LICENSE_KEY ]; then
+# If we are running on a pipeline, always check for Alkemist
+# If not, only check if ALKEMIST_LICENSE_KEY is provided
+if [[ -v PIPELINE || -n "$ALKEMIST_LICENSE_KEY" ]]; then
 	cd $BASE_DIR
 	echo "-------------- Check for Alkemist presence --------------"
 	ldd ./bin/pqcompare
@@ -234,7 +236,7 @@ if [ -v PIPELINE -o -v ALKEMIST_LICENSE_KEY ]; then
 	readelf -x .txtrp ./bin/tip_translate | grep 0x -m3
 else
 	echo "Skipping Alkemist check: "
-	echo "   ALKEMIST_LICENSE_KEY and PIPELINE variables are both undefined"
+	echo "   not on a pipeline; ALKEMIST_LICENSE_KEY unset or empty"
 fi
 
 echo ""
