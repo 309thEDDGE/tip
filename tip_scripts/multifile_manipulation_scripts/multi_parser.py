@@ -1,5 +1,6 @@
 from xml.dom import minidom
 import subprocess
+import time
 import os
 import sys
 import argparse
@@ -11,7 +12,8 @@ from tip_scripts.exec import Exec
 from datetime import datetime
 
 class MultiParser:
-	def __init__(self, overwrite, tip_root_path, datafiles_path, dts_database_path, output_path):
+	def __init__(self, config_data, tip_root_path, datafiles_path, dts_database_path, output_path):
+		self.config_data = config_data
 		self.datafiles_path = datafiles_path
 		self.dts_database_path = dts_database_path
 		self.output_path = output_path
@@ -19,8 +21,12 @@ class MultiParser:
 		self.parser_executable_path = Path("")
 		self.translator_executable_path = Path("")
 		self.combined_metadata = []
-		self.overwrite = overwrite
-		self.failure_stats = {'parser_failures': [], 'translator_failures': [], 'duplicate_ch10_file_paths': {}}
+		self.multi_parse_stats = {'parser_failures': [], 
+									'translator_failures': [], 
+									'duplicate_ch10_file_paths': {},
+									'non_overwrite_skips': [],
+									'DTS_config_not_found': [],
+									'exclusion_skips': []}
 
 
 	def initialize_paths(self):
@@ -55,10 +61,10 @@ class MultiParser:
 
 		# if failure stats folder does not exist, create it
 		# if the parquet_data directory doesn't exist, create it
-		failure_stats_dir = os.path.join(self.output_path,'failure_stats')
-		if not os.path.isdir(failure_stats_dir):
-			print('creating directory {}'.format(failure_stats_dir))
-			os.mkdir(failure_stats_dir)
+		multi_parse_stats_dir = os.path.join(self.output_path,'multi_parse_stats')
+		if not os.path.isdir(multi_parse_stats_dir):
+			print('creating directory {}'.format(multi_parse_stats_dir))
+			os.mkdir(multi_parse_stats_dir)
 
 
 		# append time stamp to file name for failure stats yaml file
@@ -66,11 +72,24 @@ class MultiParser:
 		# dd/mm/YY H:M:S
 		dt_string = now.strftime("%m%d%Y_%H_%M_%S")
 		# write failure statistics to yaml
-		self.failure_yaml_path = os.path.join(failure_stats_dir,'_' + dt_string + '_failure_stats.yaml');
+		self.multi_parse_stats_yaml_path = os.path.join(multi_parse_stats_dir,'_' + dt_string + '_multi_parse_stats.yaml');
 
 		# update the working directly to bin for the executable to find
 		# config files
 		os.chdir(os.path.join(self.tip_root_path,'bin'))
+
+	def return_DTS_path(self, DTS_config):
+		DTS_path_yaml = os.path.join(self.dts_database_path, DTS_config + '_ICD.yaml')
+		DTS_path_txt = os.path.join(self.dts_database_path, DTS_config + '_ICD.txt')
+		DTS_path = Path('')
+		if os.path.isfile(DTS_path_yaml):
+			return DTS_path_yaml
+
+		elif os.path.isfile(DTS_path_txt):
+			return DTS_path_txt
+
+		else:
+			return 'NONE'
 
 	def parse_and_translate(self):
 
@@ -95,25 +114,101 @@ class MultiParser:
 			translated_path = os.path.join(chapter10_database_folder_path, str(chapter10name) + '_1553_translated')
 			execute_translator_only = False
 
+			# Skip based off exclusion and inclusion config restrictions
+			all_caps_ch10_path = ch10path.upper()
+
+			exclude = False
+
+			# if exclusion string is a substring of the 
+			# chapter 10 path, do not process the 
+			# chapter 10. Case insensitive
+			for exclusion in self.config_data['exclusion_path_substrings']:
+				exclusion = exclusion.upper()
+
+				if all_caps_ch10_path.find(exclusion) != -1:
+					exclude = True
+					print('exclusion string {} exists in chapter 10 path'
+							', skipping chapter 10 {}'.format(exclusion, ch10path))
+
+			# if inclusion string is not a substring of the 
+			# chapter 10 path, do not process the 
+			# chapter 10. Case insensitive
+			for inclusion in self.config_data['inclusion_path_substrings']:
+				inclusion = inclusion.upper()
+
+				if all_caps_ch10_path.find(inclusion) == -1:
+					exclude = True
+					print('inclusion string {} does not exist in chapter 10 path'
+							', skipping chapter 10 {}'.format(inclusion, ch10path))
+
+			if exclude:
+				self.multi_parse_stats['exclusion_skips'].append(ch10path)
+				continue
+
+
 			# If the chapter 10 name has already been 
 			# processed, add it to the failure statistics
 			# and continue.
 			if chapter10name in ch10_names.keys():
-				if chapter10name not in self.failure_stats['duplicate_ch10_file_paths'].keys():
-					self.failure_stats['duplicate_ch10_file_paths'][chapter10name] = []
+				if chapter10name not in self.multi_parse_stats['duplicate_ch10_file_paths'].keys():
+					self.multi_parse_stats['duplicate_ch10_file_paths'][chapter10name] = []
 					# make sure to insert the first chatper 10 path associated with the first chatper 10 found 
-					self.failure_stats['duplicate_ch10_file_paths'][chapter10name].append(ch10_names[chapter10name])
-					self.failure_stats['duplicate_ch10_file_paths'][chapter10name].append(ch10path)
+					self.multi_parse_stats['duplicate_ch10_file_paths'][chapter10name].append(ch10_names[chapter10name])
+					self.multi_parse_stats['duplicate_ch10_file_paths'][chapter10name].append(ch10path)
 				else:
-					self.failure_stats['duplicate_ch10_file_paths'][chapter10name].append(ch10path)
+					self.multi_parse_stats['duplicate_ch10_file_paths'][chapter10name].append(ch10path)
 				continue
 
 			ch10_names[chapter10name] = ch10path
 
+			# Check for valid DTS config
+			DTS_identifier_method = 'NONE'
+			DTS_path = ''
+
+			XML_identification = 'NONE'
+			path_identification = 'NONE'
+			default_identification = 'NONE'
+
+			XML_identification = self.return_DTS_path(datafile.attributes['AircraftCometName'].value)
+
+			# check folders in the path
+			subfolders = self.splitall(ch10path)
+			path_config = 'NONE'
+			found = False
+			for k, v in self.config_data['DTS_config_path_maps'].items():
+				for subfolder in subfolders:
+					# convert to upper case for case insensitivity
+					if subfolder.upper() == k.upper():
+						path_config = v
+						found = True
+						break
+				if found:
+					path_identification = self.return_DTS_path(path_config)
+					break
+
+			default_identification = self.return_DTS_path(self.config_data['default_DTS_config'])
+
+			if XML_identification != 'NONE':
+				DTS_identifier_method = 'XML_identification'
+				DTS_path = XML_identification
+				DTS_config = datafile.attributes['AircraftCometName'].value
+			elif path_identification != 'NONE':
+				DTS_identifier_method = 'path_identification'
+				DTS_path = path_identification
+				DTS_config = path_config
+			elif default_identification != 'NONE':
+				DTS_identifier_method = 'default_identification'
+				DTS_path = default_identification
+				DTS_config = self.config_data['default_DTS_config']
+			else:
+				self.multi_parse_stats['DTS_config_not_found'].append(ch10path)
+				DTS_config = 'NONE'
+				print('DTS file not found!')
+
 			# Check if chapter 10 folder exists
 			if os.path.isdir(chapter10_database_folder_path):
 				# if overwrite = True, delete any old data
-				if self.overwrite:
+				if self.config_data['overwrite']:
 					self.delete_chapter10_database_folder(chapter10_database_folder_path, chapter10name)
 					os.mkdir(chapter10_database_folder_path)
 				else:
@@ -132,17 +227,43 @@ class MultiParser:
 						execute_translator_only = True
 						print('Parser data exists without translation data for {}, only executing translation'.format(chapter10name))
 
-					# if overwrite = False, and both parser and translator data
-					# exist, simply continue, and leave data alone
+					# Translation and parser data exist
 					else:
-						print('Data already exists for {}, skipping parse and translate steps'.format(chapter10name))
-						continue
+						# check if metadata exists
+						metadata_path = os.path.join(translated_path,'_metadata.yaml')
+						if os.path.isfile(metadata_path):
+
+							file_data = {}
+							with open(metadata_path) as file:
+								file_data = yaml.load(file)
+	
+							# check if dts path was logged
+							if 'dts_path' in file_data.keys():
+								# if dts path is different re translate
+								if file_data['dts_path'] == DTS_path:
+									print('Data already exists for {}, skipping parse and translate steps'.format(chapter10name))
+									self.multi_parse_stats['non_overwrite_skips'].append(ch10path)
+									continue
+								else:
+									execute_translator_only = True
+									self.remove_translated(translated_path)
+									print('DTS path updated, re-execution translation'.format(metadata_path))
+
+							else:
+								execute_translator_only = True
+								self.remove_translated(translated_path)
+								print('Translator metadata missing dts_path {}, re-executing translation'.format(metadata_path))
+
+						else:
+							execute_translator_only = True
+							self.remove_translated(translated_path)
+							print('Translator metadata does not exist for {}, re-executing translation'.format(chapter10name))
+						
 
 			# If chapter 10 folder does not
 			# exist, create it. 
 			else:
 				os.mkdir(chapter10_database_folder_path)
-			
 
 			
 			# Initialize combined metadata
@@ -155,14 +276,15 @@ class MultiParser:
 									'TimeOfDay': datafile.attributes['TimeOfDay'].value, 
 									'TailNum': datafile.attributes['TailNum'].value, 
 									'Block': datafile.attributes['Block'].value, 
-									'DTS_name': datafile.attributes['AircraftCometName'].value, 
-									'SoftwareVersion': datafile.attributes['AircraftTapeName'].value, 
+									'DTS_identifier_method': DTS_identifier_method,
 									'Pilot': datafile.attributes['Pilot'].value, 
-									'CallSign': datafile.attributes['CallSign'].value, 
-									'Parsed': False, 
-									'Translated': False 
+									'CallSign': datafile.attributes['CallSign'].value
 									}
-			
+
+			high_level_metadata_yaml_path = os.path.join(chapter10_database_folder_path,'_high_level_metadata.yaml');
+			with open(high_level_metadata_yaml_path, 'w') as file:
+				print('\n--Writing _high_level_metadata: \n{}\n'.format(high_level_metadata_yaml_path))
+				yaml.dump(high_level_metadata,file)			
 
 
 			print('---------chapter10 name: {}---------\n'.format(tail))
@@ -172,14 +294,14 @@ class MultiParser:
 				# check if the file is a chapter 10 file
 				if ext != '.ch10':
 					print('\n\n--Parser Failure!!\nfilename {} is not a chapter 10'.format(ch10path))
-					self.failure_stats['parser_failures'].append(ch10path)
+					self.multi_parse_stats['parser_failures'].append(ch10path)
 					self.delete_chapter10_database_folder(chapter10_database_folder_path, chapter10name)
 					continue
 
 				# check if the chapter 10 exists
 				if not os.path.isfile(ch10path):
 					print('\n\n--Parser Failure!!\nch10 path {} does not exist'.format(ch10path))
-					self.failure_stats['parser_failures'].append(ch10path)
+					self.multi_parse_stats['parser_failures'].append(ch10path)
 					self.delete_chapter10_database_folder(chapter10_database_folder_path, chapter10name)
 					continue
 
@@ -191,23 +313,18 @@ class MultiParser:
 				print('Parsed Path: {}'.format(parsed_path))
 				if stdout.find('Duration:') == -1:
 					print('\n\n--Parser Failure!!')
-					self.failure_stats['parser_failures'].append(ch10path)
+					self.multi_parse_stats['parser_failures'].append(ch10path)
 					self.delete_chapter10_database_folder(chapter10_database_folder_path, chapter10name)
 					continue
 
 				if not os.path.isdir(parsed_path):
 					print('\n\n--Parser Failure!!\nexpected parser output: {}'.format(parsed_path))
-					self.failure_stats['parser_failures'].append(ch10path)
+					self.multi_parse_stats['parser_failures'].append(ch10path)
 					continue
 					
 				print('SUCCESS')
 				high_level_metadata['Parsed'] = True
 
-				# write high level metadata
-				high_level_metadata_yaml_path = os.path.join(chapter10_database_folder_path,'_high_level_metadata.yaml');
-				with open(high_level_metadata_yaml_path, 'w') as file:
-					print('\n--Writing _high_level_metadata: \n{}\n\n'.format(high_level_metadata_yaml_path))
-					yaml.dump(high_level_metadata,file)
 
 				print('Parser Success:\n {}\n\n'.format(parsed_path))
 
@@ -219,27 +336,16 @@ class MultiParser:
 			if not os.path.isdir(parsed_path):
 				print('\n\n--Translator Failure!!\nparsed file {} does not exist'.format(parsed_path))
 				self.remove_translated(translated_path)
-				self.failure_stats['translator_failures'].append(ch10path)
+				self.multi_parse_stats['translator_failures'].append(ch10path)
 				continue
 
-			# Handle the case when execute_translator_only = True
-			# and high_level_metadata['Parsed'] is never set to true
-			high_level_metadata['Parsed'] = True
-
-			DTS_path_yaml = os.path.join(self.dts_database_path,datafile.attributes['AircraftCometName'].value + '_ICD.yaml')
-			DTS_path_txt = os.path.join(self.dts_database_path,datafile.attributes['AircraftCometName'].value + '_ICD.txt')
-			DTS_path = Path('')
-			if os.path.isfile(DTS_path_yaml):
-				DTS_path = DTS_path_yaml
-
-			elif os.path.isfile(DTS_path_txt):
-				DTS_path = DTS_path_txt
-
-			else:
-				print('Neither txt nor yaml DTS paths exist\ntxt: {}\nyaml: {}\n'.format(DTS_path_txt,DTS_path_yaml))
+			if not os.path.isfile(DTS_path):
 				self.remove_translated(translated_path)
-				self.failure_stats['translator_failures'].append(ch10path)
+				# The reason for not adding to multi_parse_stats['translator_failures']
+				# is because this case should have been added previously to 
+				# multi_parse_stats['DTS_config_not_found']
 				continue
+			
 
 			execTranslate = Exec()
 			arg_list = [str(self.translator_executable_path), str(parsed_path), str(DTS_path)]
@@ -251,26 +357,33 @@ class MultiParser:
 
 				# when failure delete translated folder if still there
 				self.remove_translated(translated_path)
-				self.failure_stats['translator_failures'].append(ch10path)
+				self.multi_parse_stats['translator_failures'].append(ch10path)
 				continue
 
 
 			if not os.path.isdir(translated_path):
 				print('\n\n--Translator Failure!!\nexpected translator output: {}'.format(translated_path))
-				self.failure_stats['translator_failures'].append(ch10path)
+				self.multi_parse_stats['translator_failures'].append(ch10path)
 				continue
-
-			high_level_metadata['Translated'] = True
-
-			# write high level metadata (overwrite with Translated = True)
-			high_level_metadata_yaml_path = os.path.join(chapter10_database_folder_path,'_high_level_metadata.yaml');
-			with open(high_level_metadata_yaml_path, 'w') as file:
-				print('\n--Writing _high_level_metadata: \n{}\n'.format(high_level_metadata_yaml_path))
-				yaml.dump(high_level_metadata,file)
 
 			print('Translator Success:\n {}\n'.format(translated_path))
 
 
+	# taken from https://www.oreilly.com/library/view/python-cookbook/0596001673/ch04s16.html
+	def splitall(self, path):
+		allparts = []
+		while 1:
+			parts = os.path.split(path)
+			if parts[0] == path:  # sentinel for absolute paths
+				allparts.insert(0, parts[0])
+				break
+			elif parts[1] == path: # sentinel for relative paths
+				allparts.insert(0, parts[1])
+				break
+			else:
+				path = parts[0]
+				allparts.insert(0, parts[1])
+		return allparts
 
 	'''
 	def delete_dir(self, element):
@@ -352,9 +465,9 @@ class MultiParser:
 	'''
 
 	def write_failure_stats(self):
-		with open(self.failure_yaml_path, 'w') as file:
-			print('--Writing failure stats to yaml file: \n{}'.format(self.failure_yaml_path))
-			yaml.dump(self.failure_stats,file)
+		with open(self.multi_parse_stats_yaml_path, 'w') as file:
+			print('--Writing failure stats to yaml file: \n{}'.format(self.multi_parse_stats_yaml_path))
+			yaml.dump(self.multi_parse_stats,file)
 
 	def delete_chapter10_database_folder(self, ch10_database_folder, chapter10name):
 		parsed_path = os.path.join(ch10_database_folder, str(chapter10name) + '_1553.parquet')
@@ -389,6 +502,8 @@ class MultiParser:
 			delete_path = '\\\\?\\' +  ch10_database_folder
 			shutil.rmtree(ch10_database_folder)
 
+		time.sleep(.03)
+
 	def remove_translated(self, translated_path):
 
 		# remove translated if exists
@@ -397,6 +512,8 @@ class MultiParser:
 			# Must prepend to path in case path is > 260 characters
 			delete_path = '\\\\?\\' +  translated_path
 			shutil.rmtree(delete_path)
+
+		time.sleep(.03)
 
 
 	def exec(self):		
