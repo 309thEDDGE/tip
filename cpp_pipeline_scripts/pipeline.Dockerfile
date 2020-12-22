@@ -1,4 +1,4 @@
-FROM registry.il2.dsop.io/platform-one/devops/pipeline-templates/ubi8-gcc-bundle:1.0
+FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/ubi8-gcc-bundle:1.0
 
 ENV LFR_ROOT_PATH=/opt/alkemist/lfr
 # Install alkemist-lfr
