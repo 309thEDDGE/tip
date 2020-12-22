@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-REGISTRY=registry.il2.dsop.io
+REGISTRY=registry.il2.dso.mil
 BUILD_IMAGE=$REGISTRY/skicamp/project-opal/tip/build:MR57
 TEST_IMAGE=$REGISTRY/skicamp/project-opal/tip/test:1.0
 
