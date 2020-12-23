@@ -17,9 +17,9 @@ overwrite: false
 # If "AircraftCometName" is not specified in the xml file,
 # folder names in the chapter10 path will be searched for matches with keys
 # specfied in DTS_config_path_maps. If there is a match between
-# a folder name and a key in the DTS_config_path_maps (case insensitive), the value 
-# from the key, value pair will be checked to see if the associated DTS file exists in the dts_database_path. If the
-# dts file with the "value" exists in the dts_database_path, it will be used for translation.
+# a folder name and a key in DTS_config_path_maps (case insensitive), the value 
+# from the key, value pair will be checked to see if the associated DTS file exists in the dts_database_path.
+# If the correlated dts file exists in dts_database_path, it will be used for translation.
 #
 # --example--
 # DTS_config_path_maps:
