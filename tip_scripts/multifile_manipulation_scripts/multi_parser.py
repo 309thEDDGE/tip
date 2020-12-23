@@ -33,7 +33,7 @@ class MultiParser:
 		self.parser_executable_path = os.path.join(self.tip_root_path,'bin','tip_parse.exe')
 		self.translator_executable_path = os.path.join(self.tip_root_path,'bin','tip_translate.exe')
 
-		# check dts path exists
+		# check if dts path exists
 		if not os.path.isdir(self.dts_database_path):
 			sys.exit('dts database path {} does not exist\n'.format(self.dts_database_path))
 
@@ -60,18 +60,16 @@ class MultiParser:
 			os.mkdir(self.parquet_data_path)
 
 		# if failure stats folder does not exist, create it
-		# if the parquet_data directory doesn't exist, create it
 		multi_parse_stats_dir = os.path.join(self.output_path,'multi_parse_stats')
 		if not os.path.isdir(multi_parse_stats_dir):
 			print('creating directory {}'.format(multi_parse_stats_dir))
 			os.mkdir(multi_parse_stats_dir)
 
 
-		# append time stamp to file name for failure stats yaml file
+		# append time stamp to file name for multi parse stats yaml file
 		now = datetime.now()
 		# dd/mm/YY H:M:S
 		dt_string = now.strftime("%m%d%Y_%H_%M_%S")
-		# write failure statistics to yaml
 		self.multi_parse_stats_yaml_path = os.path.join(multi_parse_stats_dir,'_' + dt_string + '_multi_parse_stats.yaml');
 
 		# update the working directly to bin for the executable to find
@@ -96,12 +94,13 @@ class MultiParser:
 		datafiles_xml = minidom.parse(str(self.datafiles_path))
 		datafiles = datafiles_xml.getElementsByTagName('dataFile')
 		ch10_names = {}
+		process_count = 0
 
 
 		for datafile in datafiles:
-			# Continually overwrite the failure stats yaml file for continual
+			# Continually overwrite multi-parse stats yaml file for continual
 			# updates
-			self.write_failure_stats()
+			self.write_multi_parse_stats()
 
 			print('\n\n\n\n')
 			translator_success = False
@@ -116,7 +115,6 @@ class MultiParser:
 
 			# Skip based off exclusion and inclusion config restrictions
 			all_caps_ch10_path = ch10path.upper()
-
 			exclude = False
 
 			# if exclusion string is a substring of the 
@@ -147,7 +145,7 @@ class MultiParser:
 
 
 			# If the chapter 10 name has already been 
-			# processed, add it to the failure statistics
+			# processed, add it to multi-parse statistics
 			# and continue.
 			if chapter10name in ch10_names.keys():
 				if chapter10name not in self.multi_parse_stats['duplicate_ch10_file_paths'].keys():
@@ -237,12 +235,11 @@ class MultiParser:
 							with open(metadata_path) as file:
 								file_data = yaml.load(file)
 	
-							# check if dts path was logged
+							# check if dts path was logged in metadata
 							if 'dts_path' in file_data.keys():
 								# if dts path is different re translate
 								if file_data['dts_path'] == DTS_path:
 									print('Data already exists for {}, skipping parse and translate steps'.format(chapter10name))
-									print(DTS_path)
 									self.multi_parse_stats['non_overwrite_skips'].append(ch10path)
 									continue
 								else:
@@ -267,7 +264,7 @@ class MultiParser:
 				os.mkdir(chapter10_database_folder_path)
 
 			
-			# Initialize combined metadata
+			# Initialize high level metadata
 			high_level_metadata = {'ch10path': ch10path,  
 									'1553_parquet_path': parsed_path, 
 									'1553_translated_path': translated_path, 
@@ -369,6 +366,12 @@ class MultiParser:
 
 			print('Translator Success:\n {}\n'.format(translated_path))
 
+			process_count = process_count + 1
+
+			if self.config_data['max_process_count'] != -1 and process_count >= self.config_data['max_process_count']:
+				print('max_process_count threshold met')
+				break
+
 
 	# taken from https://www.oreilly.com/library/view/python-cookbook/0596001673/ch04s16.html
 	def splitall(self, path):
@@ -387,9 +390,9 @@ class MultiParser:
 		return allparts
 		
 
-	def write_failure_stats(self):
+	def write_multi_parse_stats(self):
 		with open(self.multi_parse_stats_yaml_path, 'w') as file:
-			print('--Writing failure stats to yaml file: \n{}'.format(self.multi_parse_stats_yaml_path))
+			print('--Writing multi parse stats to yaml file: \n{}'.format(self.multi_parse_stats_yaml_path))
 			yaml.dump(self.multi_parse_stats,file)
 
 	def delete_chapter10_database_folder(self, ch10_database_folder, chapter10name):
@@ -445,4 +448,4 @@ class MultiParser:
 
 		self.parse_and_translate()
 
-		self.write_failure_stats()		
+		self.write_multi_parse_stats()		

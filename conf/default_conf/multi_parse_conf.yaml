@@ -88,3 +88,12 @@ exclusion_path_substrings:
 #
 inclusion_path_substrings:
   []
+
+# 
+# max_process_count
+#
+# only translate and parse up to max_process_count chapter 10 files
+#
+# set to -1 to process entire xml
+# 
+max_process_count: -1
