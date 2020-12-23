@@ -242,6 +242,7 @@ class MultiParser:
 								# if dts path is different re translate
 								if file_data['dts_path'] == DTS_path:
 									print('Data already exists for {}, skipping parse and translate steps'.format(chapter10name))
+									print(DTS_path)
 									self.multi_parse_stats['non_overwrite_skips'].append(ch10path)
 									continue
 								else:
@@ -384,85 +385,7 @@ class MultiParser:
 				path = parts[0]
 				allparts.insert(0, parts[1])
 		return allparts
-
-	'''
-	def delete_dir(self, element):
-		if os.path.isdir(element):
-			elements = os.listdir(element)
-			for item in elements:
-				item = os.path.join(element,item)
-				self.delete_dir(item)
-		else:
-			os.remove(element)
-			return
-
-		os.rmdir(element)
-	'''
-
-	'''
-	def write_metadata(self):
 		
-		print('\n\n---------Writing metadata---------\n')
-		# only write metadata if translated or parsed 
-		# data were written successfully
-		sifted_combined_metadata = []
-
-		failure_list = {'Parsed': [], 'Translated': []}
-
-		# write meta_data to each file and save the metadata to 
-		# sifted combined metadata if either parsed or translated
-		# data were parsed
-		for file_level_metadata in self.combined_metadata:
-			pq_directory = file_level_metadata['1553_parquet_path']
-			translated_directory = file_level_metadata['1553_translated_path']
-
-			# only allow combined metadata to be written out if
-			# either the translated data or parsed data are valid
-			# and the directories exist
-			if (file_level_metadata['Parsed'] and os.path.isdir(pq_directory)) or \
-				(file_level_metadata['Translated'] and os.path.isdir(translated_directory)):
-				sifted_combined_metadata.append(copy.deepcopy(file_level_metadata))
-
-			# check for parser failure and add to failure statistics
-			if not (file_level_metadata['Parsed'] and os.path.isdir(pq_directory)):
-				failure_list['Parsed'].append(copy.deepcopy(file_level_metadata['ch10path']))
-
-			# check for translator failure and add to failure statistics
-			if  not (file_level_metadata['Translated'] and os.path.isdir(translated_directory)):
-				failure_list['Translated'].append(copy.deepcopy(file_level_metadata['ch10path']))			
-
-			# attempt to add file level metadata gathered from the xml for each parsed file
-			if os.path.isdir(pq_directory):
-				yaml_path = os.path.join(pq_directory,'_file_portion_metadata.yaml');
-
-				# delete unnecessary keys for file level metadata
-				if '1553_parquet_path' in file_level_metadata: del file_level_metadata['1553_parquet_path']
-				if '1553_translated_path' in file_level_metadata: del file_level_metadata['1553_translated_path']			
-				if 'Translated' in file_level_metadata: del file_level_metadata['Translated']
-				if 'Parsed' in file_level_metadata: del file_level_metadata['Parsed']
-
-				with open(yaml_path, 'w') as file:
-					print('\nWriting file_portion_metadata: \n{}\n'.format(pq_directory))
-					yaml.dump(file_level_metadata,file)
-
-
-			else:
-				print('Failed to write file_portion_metadata:\n{}\n'.format(pq_directory))
-
-		# write combined meta_data to yaml
-		combined_yaml_path = os.path.join(self.output_path,'_combined_metadata.yaml');
-		with open(combined_yaml_path, 'w') as file:
-			print('\n--Writing combined yaml meta_data: \n{}\n\n'.format(yaml_path))
-			yaml.dump(sifted_combined_metadata,file)
-
-		# write failure statistics to yaml
-		failure_yaml_path = os.path.join(self.output_path,'_failure_stats.yaml');
-		with open(failure_yaml_path, 'w') as file:
-			print('\n--Writing failure status to yaml file: \n{}\n\n'.format(failure_yaml_path))
-			yaml.dump(failure_list,file)
-
-		print('\n\n---Finished---\n\n')
-	'''
 
 	def write_failure_stats(self):
 		with open(self.multi_parse_stats_yaml_path, 'w') as file:
