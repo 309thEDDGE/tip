@@ -57,7 +57,7 @@ default_DTS_config: ""
 # field in multi_parse_stats.yaml.
 #
 # --example--
-# DTS_config_path_maps:
+# exclusion_path_substrings:
 #   [
 #     AbC,
 #     dEF
@@ -77,7 +77,7 @@ exclusion_path_substrings:
 # field in multi_parse_stats.yaml.
 #
 # --example--
-# DTS_config_path_maps:
+# inclusion_path_substrings:
 #   [
 #     AbC,
 #     dEF
