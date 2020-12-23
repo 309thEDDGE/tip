@@ -1,0 +1,99 @@
+#
+# multi_parse_conf.yaml Configuration file for tip_scripts/multifile_manipulation_scripts/run_multi_parser.py
+#
+# Place the config file in conf\multi_parse_conf.yaml
+#
+
+#
+# Overwrite 
+#
+# Overwrite existing parsed and translated output
+#
+overwrite: false
+
+#
+# DTS_config_path_maps 
+#
+# If "AircraftCometName" is not specified in the xml file,
+# folder names in the chapter10 path will be searched for matches with keys
+# specfied in DTS_config_path_maps. If there is a match between
+# a folder name and a key in DTS_config_path_maps (case insensitive), the value 
+# from the key, value pair will be checked to see if the associated DTS file exists in the dts_database_path.
+# If the correlated dts file exists in dts_database_path, it will be used for translation.
+#
+# --example--
+# DTS_config_path_maps:
+#   {
+#     conf1: config_1,
+#     conf2: config_2
+#   }
+# chapter10 path (missing "AircraftCometName" from xml) = C:\Users\conf1\chapter10.ch10 
+#     -> use config_1_ICD.yaml for translation if config_1_ICD.yaml exists in dts_database_path
+# chapter10 path (missing "AircraftCometName" from xml) = C:\Users\CONF2\chapter10.ch10 
+#     -> use config_2_ICD.yaml for translation if config_2_ICD.yaml exists in dts_database_path
+#
+DTS_config_path_maps:
+  {}
+
+#
+# default_DTS_config 
+#
+# If "AircraftCometName" is not specified in the xml file, AND DTS_config_path_maps was not successful
+# in finding a path match, the default DTS config will be used.
+#
+#--example--
+# default_DTS_config: config_1
+#
+# If "AircraftCometName" is not specified in the xml file, AND DTS_config_path_maps was not successful, AND config_1_ICD.yaml 
+# exists in dts_database_path, config_1_ICD.yaml will be used for translation.
+#
+default_DTS_config: ""
+
+#
+# exclusion_path_substrings 
+#
+# If any listed exclusion_path_substrings EXIST as a case insensitive substring in the chatper 10 path, 
+# skip the chapter 10, do not process it, and add the full chapter 10 path to the exclusion_skips
+# field in multi_parse_stats.yaml.
+#
+# --example--
+# exclusion_path_substrings:
+#   [
+#     AbC,
+#     dEF
+#   ]
+# chapter10 path = C:\Users\ABCDEF\chapter10.ch10 -> skip and don't process
+# chapter10 path = C:\Users\DEFGHI\chapter10.ch10 -> skip and don't process
+# chapter10 path = C:\Users\EFG\chapter10.ch10 -> process
+#
+exclusion_path_substrings:
+  []
+
+#
+# inclusion_path_substrings 
+#
+# If any listed inclusion_path_substrings DO NOT exist as a case insensitive substring in the chatper 10 path, 
+# skip the chapter 10, do not process it, and add the full chapter 10 path to the exclusion_skips
+# field in multi_parse_stats.yaml.
+#
+# --example--
+# inclusion_path_substrings:
+#   [
+#     AbC,
+#     dEF
+#   ]
+# chapter10 path = C:\Users\hola\chapter10.ch10 -> skip and don't process
+# chapter10 path = C:\Users\ABC_CKEMI\chapter10.ch10 -> process
+# chapter10 path = C:\Users\DEF_Bonjour\chapter10.ch10 -> process
+#
+inclusion_path_substrings:
+  []
+
+# 
+# max_process_count
+#
+# only translate and parse up to max_process_count chapter 10 files
+#
+# set to -1 to process entire xml
+# 
+max_process_count: -1

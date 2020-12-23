@@ -1456,8 +1456,8 @@ TEST_F(BusMapTest, VoteThreshold)
 	// Check the excluded channel IDs map
 	std::map<uint64_t, std::string> excludedChannelIDs = b.GetExcludedChannelIDs();
 	EXPECT_TRUE(iterable_tools_.GetKeys(excludedChannelIDs).size() == 2);
-	EXPECT_EQ(excludedChannelIDs[1], "Votes did not exceed vote_threshold");
-	EXPECT_EQ(excludedChannelIDs[2], "Votes did not exceed vote_threshold");
+	EXPECT_EQ(excludedChannelIDs[1], "Vote count not >= vote_threshold");
+	EXPECT_EQ(excludedChannelIDs[2], "Vote count not >= vote_threshold");
 
 	// add another vote for channel ID 2 and expect
 	// a map for that channel ID 2 but not for channel
@@ -1484,7 +1484,7 @@ TEST_F(BusMapTest, VoteThreshold)
 	// Check the excluded channel IDs map
 	excludedChannelIDs = b.GetExcludedChannelIDs();
 	EXPECT_TRUE(iterable_tools_.GetKeys(excludedChannelIDs).size() == 1);
-	EXPECT_EQ(excludedChannelIDs[1], "Votes did not exceed vote_threshold");
+	EXPECT_EQ(excludedChannelIDs[1], "Vote count not >= vote_threshold");
 }
 
 TEST_F(BusMapTest, FinalizeClearExistingMap)
