@@ -104,6 +104,38 @@ main() {
 	fi
 
 	PATH=$"{OLDPATH}"
+} # main
+
+setup() {
+	if ! is_set TIP_SETUP_COMPLETED; then
+		BASE_DIR=$PWD
+		if [[ -d /app ]]; then
+			BASE_DIR=/app
+		fi
+		BUILD_DIR=$BASE_DIR/build
+		DEPS_DIR=$BASE_DIR/deps
+		TEST_DIR=$BASE_DIR/cpp
+		BUILD_SCRIPT=$BASE_DIR/cpp_pipeline_scripts/build.sh
+		DEPS_SOURCE=/deps
+		E2E_TEST=/test
+
+		# Set default values if unset
+		CMAKE_BUILD_DIR=${CMAKE_BUILD_DIR:-$BUILD_DIR}
+		UNITTEST_REPORT_DIR=${UNITTEST_REPORT_DIR:-$BASE_DIR/reports}
+
+		# Set variable to prevent setup from running again
+		TIP_SETUP_COMPLETED=""
+	fi
+}
+
+set_exit_on_error() {
+	# exit when any command fails
+	set -e
+
+	# keep track of the last executed command
+	trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
+	# echo an error message before exiting
+	trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 }
 
 is_set() {
@@ -118,8 +150,12 @@ is_file() {
 	[[ -f "$1" ]]
 }
 
-setup() {
-	BASE_DIR=$PWD
+is_absolute_path() {
+	[[ "${1:0:1}" = "/" ]] # Make sure the first character is '/'
+}
+
+get_absolute_path() {
+	readlink -f $1
 }
 
 
@@ -140,12 +176,13 @@ T_is_set_fails_when_varable_not_defined() {
 }
 
 T_is_set_passes_when_varable_defined_to_null() {
-	___gobbledy___GOOK____=
+	local ___gobbledy___GOOK____=
 	is_set ___gobbledy___GOOK____
 }
 
 T_is_set_passes_when_variable_not_empty() {
-	___gobbledy___GOOK____="not empty"
+	local ___gobbledy___GOOK____="not empty"
+	is_set ___gobbledy___GOOK____
 }
 
 T_basht_detected() {
@@ -165,7 +202,98 @@ T_is_file_passes_when_file_present() {
 	is_file /usr/bin/env
 }
 
-T_setup_sets_base_dir_to_directory() {
+T_setup_sets_base_dir_to_absolute_directory() {
 	setup
 	[[ -d "${BASE_DIR}" ]]
+	is_absolute_path ${BASE_DIR}
+}
+
+T_setup_runs_only_once() {
+	setup
+	local real_base=${BASE_DIR}
+	local fake="___fake_dir____"
+	# Change BASE_DIR to prove a second call to setup doesn't reset it
+	BASE_DIR=${fake}
+
+	setup
+	new_base=${BASE_DIR}
+	BASE_DIR=${real_base} # Set BASE_DIR back to its correct value
+	[[ $new_base != $real_base ]]
+}
+
+T_setup_base_dir_contains_tip() {
+	setup
+	[[ -d $BASE_DIR/cpp ]] 				|| $T_fail "BASE_DIR does not contain cpp: '$BASE_DIR'"
+	[[ -d $BASE_DIR/tip_scripts ]] 		|| $T_fail "BASE_DIR does not contain tip_scripts: '$BASE_DIR'"
+	[[ -f $BASE_DIR/CMakeLists.txt ]]	|| $T_fail "BASE_DIR does not contain CMakeLists.txt: '$BASE_DIR'"
+}
+
+T_setup_sets_build_dir_variable() {
+	setup
+	[[ "$BUILD_DIR" == "$BASE_DIR/build" ]]
+}
+
+T_setup_sets_deps_dir_variable() {
+	setup
+	[[ "$DEPS_DIR" == "$BASE_DIR/deps" ]]
+}
+
+T_setup_sets_test_dir_variable() {
+	setup
+	[[ "$TEST_DIR" == "$BASE_DIR/cpp" ]]
+}
+
+T_setup_sets_deps_source_variable() {
+	setup
+	[[ "$DEPS_SOURCE" == /deps ]]
+}
+
+T_setup_sets_e2e_test_variable() {
+	setup
+	[[ "$E2E_TEST" == /test ]]
+}
+
+T_setup_sets_build_script_variable() {
+	setup
+	[[ -f "$BUILD_SCRIPT" ]]
+	[[ $(basename ${BUILD_SCRIPT}) == "build.sh" ]]
+}
+
+T_setup_sets_cmake_build_dir_default() {
+	setup
+	[[ "$CMAKE_BUILD_DIR" == "$BUILD_DIR" ]]
+}
+
+T_setup_sets_test_reports_default() {
+	setup
+	[[ "$UNITTEST_REPORT_DIR" == "$BASE_DIR/reports" ]]
+}
+
+T_is_absolute_path_passes_on_absolute() {
+	is_absolute_path "/anything"
+}
+
+T_is_absolute_path_fails_on_relative() {
+	is_absolute_path .
+	[[ "$?" != 0 ]]
+}
+
+T_get_absolute_path() {
+	local absolute=$(get_absolute_path .)
+	is_absolute_path $absolute
+}
+
+T_set_exit_on_error_sets_traps() {
+	set_exit_on_error
+
+	[[ -n "$(trap -p DEBUG)" ]]
+	[[ -n "$(trap -p ERR)" ]]
+}
+
+T_set_exit_on_error_sets_option() {
+	set_exit_on_error
+	# Clear traps
+	trap - ERR DEBUG
+
+	shopt -oq errexit
 }
