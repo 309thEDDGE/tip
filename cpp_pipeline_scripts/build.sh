@@ -7,19 +7,6 @@ main() {
 	set_exit_on_error
 	setup
 	
-	# If we are running on a pipeline, always build with Alkemist
-	# If not, only include Alkemist if ALKEMIST_LICENSE_KEY is provided
-	if [[ -v PIPELINE || -n "$ALKEMIST_LICENSE_KEY" ]]; then
-		# Add LFR ALKEMIST build flags
-		echo "Building with Alkemist libraries"
-		export TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L${DEPS_DIR}/alkemist-lfr/lib"
-		OLDPATH="${PATH}"
-		export PATH="${LFR_ROOT_PATH}/scripts:${PATH}"
-	else
-		echo "Building WITHOUT Alkemist libraries:"
-		echo "   not on a pipeline and ALKEMIST_LICENSE_KEY unset or empty"
-	fi
-
 	echo -n "Checking for ninja..."
 	if [[ -f /usr/local/bin/ninja ]] ; then
 		echo "yes"
@@ -91,9 +78,41 @@ main() {
 	PATH=$"{OLDPATH}"
 } # main
 
+setup_alkemist() {
+	# # If we are running on a pipeline, always build with Alkemist
+	# # If not, only include Alkemist if ALKEMIST_LICENSE_KEY is provided
+	# if is_alkemist_included; then
+	# 	# Add LFR ALKEMIST build flags
+	# 	echo "Building with Alkemist libraries"
+	# 	export TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L${DEPS_DIR}/alkemist-lfr/lib"
+	# 	OLDPATH="${PATH}"
+	# 	export PATH="${LFR_ROOT_PATH}/scripts:${PATH}"
+	# else
+	# 	echo "Building WITHOUT Alkemist libraries:"
+	# 	echo "   not on a pipeline and ALKEMIST_LICENSE_KEY unset or empty"
+	# fi
+	:
+}
+
 
 
 # ------------------ RUN MAIN ---------------------
 if ! is_test ; then 
 	main $@
 fi
+
+#____________________________________________ TESTS ____________________________
+T_setup_alkemist_fails_when_lfr_root_path_unset() {
+	if is_set LFR_ROOT_PATH; then local lfr="$LFR_ROOT_PATH"; fi
+	unset LFR_ROOT_PATH
+	local PIPELINE="TRUE"
+
+	setup_alkemist
+	local result=$?
+
+	if is_set lfr; then 
+		LFR_ROOT_PATH="$lfr"; 
+	fi
+
+	[[ "$result" != 0 ]]
+}

@@ -190,15 +190,23 @@ T_is_alkemist_included_true_with_license_defined() {
 }
 
 T_is_alkemist_included_false_w_o_pipeline_or_license() {
-	if is_set ALKEMIST_LICENSE_KEY; then local alk="$ALKEMIST_LICENSE_KEY"; fi
-	if is_set PIPELINE; then local pl="$PIPELINE"; fi
+	if is_set ALKEMIST_LICENSE_KEY; then 
+		local alk="$ALKEMIST_LICENSE_KEY"; 
+	fi
+	if is_set PIPELINE; then 
+		local pl="$PIPELINE"; 
+	fi
 
 	unset ALKEMIST_LICENSE_KEY PIPELINE
 	is_alkemist_included
-	local result = $?
+	local result=$?
 
-	if is_set $alk; then ALKEMIST_LICENSE_KEY="$alk"
-	if is_set $pl; then PIPELINE="$pl"
+	if is_set alk; then 
+		ALKEMIST_LICENSE_KEY="$alk"; 
+	fi
+	if is_set pl; then 
+		PIPELINE="$pl"; 
+	fi
 
-	[[ $? != 0 ]]
+	[[ "$result" != 0 ]]
 }
