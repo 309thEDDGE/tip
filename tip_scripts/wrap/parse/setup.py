@@ -1,12 +1,14 @@
+#
+# setup.py for tip_parse package
+#
+
 import os, sys
 import glob
-import platform
 from pathlib import Path
 from setuptools import setup, Extension
 
 wrap_util_path = os.path.dirname(os.path.abspath(os.path.join(
     os.path.realpath(__file__), '..')))
-#print(wrap_util_path)
 sys.path.append(wrap_util_path)
 
 from wrap_util.wrap_util import *
