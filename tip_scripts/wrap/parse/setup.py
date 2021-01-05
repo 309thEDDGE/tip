@@ -4,51 +4,37 @@ import platform
 from pathlib import Path
 from setuptools import setup, Extension
 
-tip_root_path = os.path.dirname(os.path.abspath(
-    os.path.join(os.path.realpath(__file__), '../../..')))
+wrap_util_path = os.path.dirname(os.path.abspath(os.path.join(
+    os.path.realpath(__file__), '..')))
+#print(wrap_util_path)
+sys.path.append(wrap_util_path)
 
-def get_platform():
-
-    plat = platform.platform()
-    active_plat = None
-    if plat.find('Windows') > -1:
-        active_plat = 'windows'
-    elif plat.find('Linux') > -1:
-        active_plat = 'linux'
-    else:
-        print('Platform {:s} not recognized. Exiting.'.format(plat))
-        sys.exit(0)
-    
-    return active_plat
-
-srcdir_name = 'cpp'
-bindir_name = 'bin'
-libdir_name = 'lib'
-depsdir_name = 'deps'
+from wrap_util.wrap_util import *
 
 ch10dir_name = 'ch10'
 utildir_name = 'util'
 
-srcdir = os.path.join(tip_root_path, srcdir_name)
-bindir = os.path.join(tip_root_path, bindir_name)
-libdir = os.path.join(bindir, libdir_name)
-depsdir = os.path.join(tip_root_path, depsdir_name)
+# Get absolute paths to src, binaries, libs and deps dirs.
+srcdir, bindir, libdir, depsdir = get_src_bin_lib_deps_dirs()
 
-#source_files = [os.path.join(srcdir, ch10dir_name, 'main', 'ch10parse.cpp')]
+# Configure relevant source files and include dirs.
 source_files = ['parse_wrap.cpp']
 incl_dirs = [os.path.join(srcdir, ch10dir_name, 'include'),
              os.path.join(srcdir, utildir_name, 'include')]
 
+# For now, link all libs instead of choosing only the required libs
+# which may be most or all of them.
+lib_dirs = [libdir]
+libs = glob.glob(os.path.join(libdir, '*.lib'))
+libs = [Path(x).stem for x in libs]
+
+# Prepare empty lists for third party lib paths and
+# other potential arguments to the Extension class.
 third_party_incl_dirs = []
 third_party_lib_dirs = []
 third_party_libs = []
 exports = []
 runtime_libs = []
-
-lib_dirs = [libdir]
-libs = glob.glob(os.path.join(libdir, '*.lib'))
-libs = [Path(x).stem for x in libs]
-
 link_args = []
 compile_args = []
 d_files = []
@@ -88,17 +74,15 @@ if plat == 'windows':
     # runtime_library_dirs keyword var does not work in windows. Use
     # setup data_files keyword instead.
     #runtime_libs.extend([os.path.join(depsdir, 'npcap', 'lib', 'x64')])
-
     d_files = [('', [os.path.join(depsdir, 'npcap', 'lib', 'x64', 'Packet.dll'), 
                      os.path.join(depsdir, 'npcap', 'lib', 'x64', 'wpcap.dll')]),
                ]
-
-    #exports.extend(['RunParser'])
 
 elif plat == 'linux':
     print('linux not ready yet. exiting.')
     sys.exit(0)
 
+# Append third party items to the relevant lists.
 incl_dirs.extend(third_party_incl_dirs)
 lib_dirs.extend(third_party_lib_dirs)
 libs.extend(third_party_libs)
@@ -106,10 +90,10 @@ libs.extend(third_party_libs)
 print('incl_dirs:', incl_dirs)
 print('libs:', libs)
 
-
-
-macros = [('PARQUET', None), ('ARROW_STATIC', None), ('PARQUET_STATIC', None),
-          ('TINS_STATIC', None)]
+# Set macros specific to building TIP
+macros = []
+#macros = [('PARQUET', None), ('ARROW_STATIC', None), ('PARQUET_STATIC', None),
+#          ('TINS_STATIC', None)]
 
 setup(
     name='tip_parse',
