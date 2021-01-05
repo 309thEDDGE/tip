@@ -135,6 +135,7 @@ add_library(${trans_lib_name}
         ${trans_src_dir}/translatable_base.cpp              ${trans_inc_dir}/translatable_base.h
         ${trans_src_dir}/translation_master.cpp             ${trans_inc_dir}/translation_master.h
         ${trans_src_dir}/dts1553.cpp                        ${trans_inc_dir}/dts1553.h
+        ${trans_src_dir}/translator_helper_funcs.cpp        ${trans_inc_dir}/translator_helper_funcs.h
     )
 
 target_include_directories(${trans_lib_name} PUBLIC ${trans_inc_dir}
