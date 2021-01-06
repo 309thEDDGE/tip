@@ -43,7 +43,7 @@ bool ValidatePaths(char* arg1, char* arg2, ManagedPath& input_path, ManagedPath&
 }
 
 bool StartParse(ManagedPath input_path, ManagedPath output_path,
-	ParserConfigParams config)
+	ParserConfigParams config, double& duration)
 {
 	// Get start time.
 	auto start_time = std::chrono::high_resolution_clock::now();
@@ -59,6 +59,7 @@ bool StartParse(ManagedPath input_path, ManagedPath output_path,
 
 	// Get stop time and print duration.
 	auto stop_time = std::chrono::high_resolution_clock::now();
-	printf("Duration: %.3f sec\n", (stop_time - start_time).count() / 1.0e9);
+	duration = (stop_time - start_time).count() / 1.0e9;
+	printf("Duration: %.3f sec\n", duration);
 	return true;
 }

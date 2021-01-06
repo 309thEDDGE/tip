@@ -46,7 +46,8 @@ int main(int argc, char* argv[])
 	if (!ValidatePaths(argv[1], arg2, input_path, output_path))
 		return 0;
 
-	StartParse(input_path, output_path, config);
+	double duration;
+	StartParse(input_path, output_path, config, duration);
 	return 0;
 }
 

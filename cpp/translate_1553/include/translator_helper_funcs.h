@@ -33,11 +33,11 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path,
 	ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-	const std::set<uint64_t>& excluded_channel_ids);
+	const std::set<uint64_t>& excluded_channel_ids, double& duration);
 bool Translate(TranslationConfigParams config, const ManagedPath& input_path,
 	ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-	const std::set<uint64_t>& excluded_channel_ids);
+	const std::set<uint64_t>& excluded_channel_ids, double& duration);
 bool RecordMetadata(TranslationConfigParams config, const ManagedPath& translated_data_dir,
 	const ManagedPath& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
 	const std::set<uint64_t>& excluded_channel_ids, const ManagedPath& input_path,

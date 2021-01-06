@@ -255,7 +255,7 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path,
 	ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-	const std::set<uint64_t>& excluded_channel_ids)
+	const std::set<uint64_t>& excluded_channel_ids, double& duration)
 {
 	bool select_msgs = !config.select_specific_messages_.empty();
 
@@ -274,15 +274,16 @@ bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path,
 		excluded_channel_ids, input_path, tm.GetTranslatedMessages());
 
 	auto stop_time = std::chrono::high_resolution_clock::now();
-	printf("Duration: %zd sec\n", std::chrono::duration_cast<std::chrono::seconds>(
-		stop_time - start_time).count());
+	std::chrono::duration<double> secs = stop_time - start_time;
+	duration = secs.count();
+	printf("Duration: %.3f sec\n", duration);
 	return true;
 }
 
 bool Translate(TranslationConfigParams config, const ManagedPath& input_path,
 	ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-	const std::set<uint64_t>& excluded_channel_ids)
+	const std::set<uint64_t>& excluded_channel_ids, double& duration)
 {
 	bool select_msgs = !config.select_specific_messages_.empty();
 
@@ -301,8 +302,9 @@ bool Translate(TranslationConfigParams config, const ManagedPath& input_path,
 		excluded_channel_ids, input_path, ptm.GetTranslatedMessages());
 
 	auto stop_time = std::chrono::high_resolution_clock::now();
-	printf("Duration: %zd sec\n", std::chrono::duration_cast<std::chrono::seconds>(
-		stop_time - start_time).count());
+	std::chrono::duration<double> secs = stop_time - start_time;
+	duration = secs.count();
+	printf("Duration: %.3f sec\n", duration);
 	return true;
 }
 
