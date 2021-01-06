@@ -1,5 +1,6 @@
 
 import os, sys
+import time
 import numpy as np
 from pathlib import Path
 import platform
@@ -79,12 +80,21 @@ def parse_duration_from_stdout(stdout_lines):
 if __name__ == '__main__':
 
     # TODO:
-    # - Pass overwrite flags to RunCLProcess.run(). Process checks for output and runs as necessary.
     # - Include logging in run_cl_process.py and exec.py.
 
     # 
     # Environment setup.
     #
+
+    # Try to use python-native TIP functions.
+    native_python = False
+    from tip_scripts.wrap.tip import TIP
+    pytip = TIP()
+    if pytip.is_ready():
+        print('python-native tip parse/translate ready!')
+        native_python = True
+
+
     plat = platform.platform()
     active_plat = None
     if plat.find('Windows') > -1:
@@ -251,154 +261,171 @@ if __name__ == '__main__':
             raw_1553_pq_dir = str(raw_1553_pq_dir.with_name(raw_1553_pq_dir.stem + '_1553.parquet'))
             raw_video_pq_dir = str(Path(ch10path).with_name(Path(ch10path).stem + '_video.parquet'))
             TS_path = str(Path(ch10path).with_name(Path(ch10path).stem + '_video_TS'))
-        #print(raw_1553_pq_dir)
 
-        # Create translated data output dir.
-        trans_1553_dir = Path(raw_1553_pq_dir)
-        trans_1553_dir = str(trans_1553_dir.with_name(trans_1553_dir.stem + '_translated'))
-        #print(trans_1553_dir)
+        if native_python:
+            ret = pytip.parse(ch10path, args.out_path)
+            if ret is None:
+                sys.exit(0)
+            exec_duration[ch10path]['raw1553'] = ret[1]
+            
+        else:
 
+            # Create translated data output dir.
+            trans_1553_dir = Path(raw_1553_pq_dir)
+            trans_1553_dir = str(trans_1553_dir.with_name(trans_1553_dir.stem + '_translated'))
+            #print(trans_1553_dir)
+
+            # 
+            # Set up Parser call.
+            #
+            parser_exe_path = os.path.join(exe_dir, use_parser_exe)
+            print("parser exe: {:s}".format(parser_exe_path))
+            parser_call = RunCLProcess()
+            parser_call.set_executable_path(parser_exe_path)
+
+            # Register required output dir.
+            parser_call.register_output_dir(raw_1553_pq_dir)
+            parser_call.register_output_dir(raw_video_pq_dir)
+
+            # Check if output dir exists.
+            parsed_dir_exists = parser_call.output_dirs_exist()
+            if parsed_dir_exists:
+                parser_call.message_output_dirs_exist()
+                if args.overwrite:
+                   ow_message(parser_exe_name)
+                   parser_call.remove_existing_output_dirs()
+                else:
+                    skip_message(parser_exe_name)
+            if not parsed_dir_exists or args.overwrite:
         
+                # Set input Ch10 file path.
+                parser_call.add_file_path_argument(ch10path)
 
-        # 
-        # Set up Parser call.
-        #
-        parser_exe_path = os.path.join(exe_dir, use_parser_exe)
-        print("parser exe: {:s}".format(parser_exe_path))
-        parser_call = RunCLProcess()
-        parser_call.set_executable_path(parser_exe_path)
+                # Set output directory path if present.
+                if args.out_path is not None:
+                    #print('out_path', args.out_path)
+                    parser_call.add_dir_path_argument(args.out_path)
 
-        # Register required output dir.
-        parser_call.register_output_dir(raw_1553_pq_dir)
-        parser_call.register_output_dir(raw_video_pq_dir)
+                # Set stdout confirmation text.
+                parser_call.set_stdout_must_contain('Duration: ')
 
-        # Check if output dir exists.
-        parsed_dir_exists = parser_call.output_dirs_exist()
-        if parsed_dir_exists:
-            parser_call.message_output_dirs_exist()
-            if args.overwrite:
-               ow_message(parser_exe_name)
-               parser_call.remove_existing_output_dirs()
-            else:
-                skip_message(parser_exe_name)
-        if not parsed_dir_exists or args.overwrite:
-        
-            # Set input Ch10 file path.
-            parser_call.add_file_path_argument(ch10path)
+                # Execute parser.
+                did_run = parser_call.run(args.dry_run, cwd=exe_dir, print_stdout=True)
+                if not args.dry_run:
+                    if not did_run:
+                        sys.exit(0)
+                    if parser_call.get_return_value() != 0 or not parser_call.have_output_success():
+                        sys.exit(0)
 
-            # Set output directory path if present.
-            if args.out_path is not None:
-                #print('out_path', args.out_path)
-                parser_call.add_dir_path_argument(args.out_path)
-
-            # Set stdout confirmation text.
-            parser_call.set_stdout_must_contain('Duration: ')
-
-            # Execute parser.
-            did_run = parser_call.run(args.dry_run, cwd=exe_dir, print_stdout=True)
-            if not args.dry_run:
-                if not did_run:
-                    sys.exit(0)
-                if parser_call.get_return_value() != 0 or not parser_call.have_output_success():
-                    sys.exit(0)
-
-            # Parse duration value from stdout.
-            exec_duration[ch10path]['raw1553'] = parse_duration_from_stdout(parser_call.get_stdout_lines_matching('Duration:'))
+                # Parse duration value from stdout.
+                exec_duration[ch10path]['raw1553'] = parse_duration_from_stdout(parser_call.get_stdout_lines_matching('Duration:'))
 
         #
         # Set up Translator call.
         #
-        trans_call = RunCLProcess()
+        if native_python:
+            ret = pytip.translate(raw_1553_pq_dir, args.icd_path)
+            if ret is None:
+                sys.exit(0)
+            exec_duration[ch10path]['transl1553'] = ret[1]
+            
+        else:
+            trans_call = RunCLProcess()
 
-        # Set executable path.
-        translate_exe_path = os.path.join(exe_dir, use_translator_exe)
-        trans_call.set_executable_path(translate_exe_path)
+            # Set executable path.
+            translate_exe_path = os.path.join(exe_dir, use_translator_exe)
+            trans_call.set_executable_path(translate_exe_path)
 
-        # Register required output dir.
-        trans_call.register_output_dir(trans_1553_dir)
+            # Register required output dir.
+            trans_call.register_output_dir(trans_1553_dir)
 
-        # Check if translated output dir exists.
-        trans_dir_exists = trans_call.output_dirs_exist()
-        if trans_dir_exists:
-            trans_call.message_output_dirs_exist()
-            if args.overwrite:
-               ow_message(translator_exe_name)
-               trans_call.remove_existing_output_dirs()
-            else:
-                skip_message(translator_exe_name)
-        if not trans_dir_exists or args.overwrite:
+            # Check if translated output dir exists.
+            trans_dir_exists = trans_call.output_dirs_exist()
+            if trans_dir_exists:
+                trans_call.message_output_dirs_exist()
+                if args.overwrite:
+                   ow_message(translator_exe_name)
+                   trans_call.remove_existing_output_dirs()
+                else:
+                    skip_message(translator_exe_name)
+            if not trans_dir_exists or args.overwrite:
 
-            # Set input raw 1553 parquet directory path.
-            trans_call.add_dir_path_argument(raw_1553_pq_dir)
+                # Set input raw 1553 parquet directory path.
+                trans_call.add_dir_path_argument(raw_1553_pq_dir)
 
-            # Set n threads argument. Only relevant in legacy mode.
-            # if args.legacy_mode:
-                # trans_call.add_command_argument(args.n_threads)
+                # Set n threads argument. Only relevant in legacy mode.
+                # if args.legacy_mode:
+                    # trans_call.add_command_argument(args.n_threads)
 
-            # Set ICD text file path. Only relevant in non-legacy
-            # mode.
-            #if not args.legacy_mode:
-            trans_call.add_file_path_argument(args.icd_path)
+                # Set ICD text file path. Only relevant in non-legacy
+                # mode.
+                #if not args.legacy_mode:
+                trans_call.add_file_path_argument(args.icd_path)
 
-            # Set stdout confirmation text.
-            trans_call.set_stdout_must_contain('Duration: ')
+                # Set stdout confirmation text.
+                trans_call.set_stdout_must_contain('Duration: ')
 
-            # Execute translator.
-            did_run = trans_call.run(args.dry_run, cwd=exe_dir, print_stdout=True)
-            # Do not exit on translation failure so video extraction can occur.
-            if not args.dry_run:
-                if did_run:
-                    if trans_call.get_return_value() == 0 and trans_call.have_output_success():
+                # Execute translator.
+                did_run = trans_call.run(args.dry_run, cwd=exe_dir, print_stdout=True)
+                # Do not exit on translation failure so video extraction can occur.
+                if not args.dry_run:
+                    if did_run:
+                        if trans_call.get_return_value() == 0 and trans_call.have_output_success():
 
-                        # Parse duration value from stdout.
-                        exec_duration[ch10path]['transl1553'] = parse_duration_from_stdout(trans_call.get_stdout_lines_matching('Duration:'))
-                #if not did_run:
-                    #sys.exit(0)
-                #if trans_call.get_return_value() != 0 or not trans_call.have_output_success():
-                    #sys.exit(0)
+                            # Parse duration value from stdout.
+                            exec_duration[ch10path]['transl1553'] = parse_duration_from_stdout(trans_call.get_stdout_lines_matching('Duration:'))
+                    #if not did_run:
+                        #sys.exit(0)
+                    #if trans_call.get_return_value() != 0 or not trans_call.have_output_success():
+                        #sys.exit(0)
 
 
         #
         # Set up TS extractor call (if --video)
         #
-        if args.video and not args.no_ts:
+        if native_python:
+            pass
+        else:
+            if args.video and not args.no_ts:
 
-            video_extr = RunCLProcess()
+                video_extr = RunCLProcess()
 
-            # Set executable path.
-            video_extr_exe_path = os.path.join(exe_dir, video_extr_exe_name)
-            video_extr.set_executable_path(video_extr_exe_path)
+                # Set executable path.
+                video_extr_exe_path = os.path.join(exe_dir, video_extr_exe_name)
+                video_extr.set_executable_path(video_extr_exe_path)
 
-            # Register required output dir.
-            video_extr.register_output_dir(TS_path)
+                # Register required output dir.
+                video_extr.register_output_dir(TS_path)
 
-            # Check if directory already exists.
-            video_extr_dir_exists = video_extr.output_dirs_exist()
-            if video_extr_dir_exists:
-                video_extr.message_output_dirs_exist()
-                if args.overwrite:
-                   ow_message(video_extr_exe_name)
-                   video_extr.remove_existing_output_dirs()
-                else:
-                    skip_message(video_extr_exe_name)
-            if not video_extr_dir_exists or args.overwrite:
+                # Check if directory already exists.
+                video_extr_dir_exists = video_extr.output_dirs_exist()
+                if video_extr_dir_exists:
+                    video_extr.message_output_dirs_exist()
+                    if args.overwrite:
+                       ow_message(video_extr_exe_name)
+                       video_extr.remove_existing_output_dirs()
+                    else:
+                        skip_message(video_extr_exe_name)
+                if not video_extr_dir_exists or args.overwrite:
 
-                # Set input raw video parquet directory path.
-                video_extr.add_dir_path_argument(raw_video_pq_dir)
+                    # Set input raw video parquet directory path.
+                    video_extr.add_dir_path_argument(raw_video_pq_dir)
 
-                # Set stdout confirmation text.
-                video_extr.set_stdout_must_contain('Elapsed Time: ')
+                    # Set stdout confirmation text.
+                    video_extr.set_stdout_must_contain('Elapsed Time: ')
 
-                # Execute video extractor.
-                did_run = video_extr.run(args.dry_run, cwd=exe_dir)
-                if not args.dry_run:
-                    if not did_run:
-                        sys.exit(0)
-                    if video_extr.get_return_value() != 0 or not video_extr.have_output_success():
-                        sys.exit(0)
+                    # Execute video extractor.
+                    did_run = video_extr.run(args.dry_run, cwd=exe_dir)
+                    if not args.dry_run:
+                        if not did_run:
+                            sys.exit(0)
+                        if video_extr.get_return_value() != 0 or not video_extr.have_output_success():
+                            sys.exit(0)
 
         print('\njson:')
-        json.dump(exec_duration, sys.stdout)
+        print('[[{:s}]]'.format(json.dumps(exec_duration)))
+        #json.dump(exec_duration, sys.stdout)
+
 
 
     sys.exit(0)

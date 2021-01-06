@@ -176,8 +176,15 @@ class E2EValidator(object):
             char_ind = stdout.find('json:')
             if char_ind > 0:
                 # +5 to get past json:, +1 to get past the newline
-                json_body = stdout[char_ind+5:]
-                duration_data = json.loads(json_body)
+                #json_body = stdout[char_ind+5:]
+                relevant_section = stdout[char_ind:]
+                json_body = relevant_section[relevant_section.find('[[')+2:relevant_section.find(']]')]
+                try:
+                    duration_data = json.loads(json_body)
+                except json.decoder.JSONDecodeError as e:
+                    print('json_body:', json_body)
+                    print(e)
+                    sys.exit(0)
 
                 # Add duration information to dict.
                 # Loaded duration dict must be one: key = ch10 path, val = duration info.

@@ -50,30 +50,3 @@ int main(int argc, char* argv[])
 	StartParse(input_path, output_path, config, duration);
 	return 0;
 }
-
-//extern "C"
-//{
-//	int RunParser(char* input_path, char* output_path, char* tip_path)
-//	{
-//		ParserConfigParams config;
-//		if (!ValidateConfig(config, tip_path))
-//			return 1;
-//
-//		ManagedPath mp_input_path;
-//		ManagedPath mp_output_path;
-//		if (!ValidatePaths(input_path, output_path, mp_input_path, mp_output_path))
-//			return 1;
-//
-//		if(!StartParse(mp_input_path, mp_output_path, config))
-//			return 1;
-//
-//		return 0;
-//	}
-//
-//	/*int PyInit_tip_parse(char* input_path, char* output_path, char* tip_path) 
-//	{
-//		return RunParser(input_path, output_path, tip_path);
-//	}*/
-//
-//	void PyInit_tip_parse() {}
-//}
