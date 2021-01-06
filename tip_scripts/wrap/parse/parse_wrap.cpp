@@ -3,7 +3,7 @@
 
 // Module name is tip_parse
 
-int RunParser(char* input_path, char* output_path, char* tip_path)
+int RunParser(char* input_path, char* output_path, char* tip_path, double& duration)
 {
 	ParserConfigParams config;
 	if (!ValidateConfig(config, tip_path))
@@ -14,7 +14,7 @@ int RunParser(char* input_path, char* output_path, char* tip_path)
 	if (!ValidatePaths(input_path, output_path, mp_input_path, mp_output_path))
 		return 1;
 
-	if(!StartParse(mp_input_path, mp_output_path, config))
+	if(!StartParse(mp_input_path, mp_output_path, config, duration))
 		return 1;
 
 	return 0;
@@ -33,9 +33,9 @@ extern "C"
 			Py_RETURN_NONE;
 		}
 
-		int ret = RunParser(input_path, output_path, tip_root_path);
-		long long_ret = long(ret);
-		return PyLong_FromLong(long_ret);
+		double duration = 0.0;
+		int ret = RunParser(input_path, output_path, tip_root_path, duration);
+		return Py_BuildValue("[id]", ret, duration);
 	}
 
 	// Method definition object for this extension, these argumens mean:
@@ -49,7 +49,8 @@ extern "C"
 		{
 			"run_parser", run_parser, METH_VARARGS,
 			"Print 'run_parser' from a method defined in a C extension."
-		}
+		},
+		{NULL, NULL, 0, NULL} // This is used to delimit the array
 	};
 
 	// Module definition

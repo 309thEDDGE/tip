@@ -1,56 +1,53 @@
-//#include "translator_helper_funcs.h"
+#include "translator_helper_funcs.h"
 #include <cstdio>
 #include "Python.h"
 
 // Module name is tip_translate
 
-int RunTranslator(char* in_path, char* dts_in_path, char* tip_path)
+int RunTranslator(char* in_path, char* dts_in_path, char* tip_path, double& duration)
 {
-	printf("before create str input path\n");
-	//std::string str_input_path(in_path);
-	//printf("before create mp input path\n");
-	//ManagedPath input_path(str_input_path);
+	std::string str_input_path(in_path);
+	ManagedPath input_path(str_input_path);
 
-	//std::string str_dts_in_path(dts_in_path);
-	//ManagedPath dts_path(str_dts_in_path);
+	std::string str_dts_in_path(dts_in_path);
+	ManagedPath dts_path(str_dts_in_path);
 
-	//TranslationConfigParams config;
-	//std::string root_path(tip_path);
-	//printf("before init config\n");
-	//if (!InitializeConfig(root_path, config))
-	//	return 1;
-	//uint8_t thread_count = config.translate_thread_count_;
+	TranslationConfigParams config;
+	std::string root_path(tip_path);
+	if (!InitializeConfig(root_path, config))
+		return 1;
+	uint8_t thread_count = config.translate_thread_count_;
 
-	//printf("DTS1553 path: %s\n", dts_path.RawString().c_str());
-	//printf("Input: %s\n", input_path.RawString().c_str());
-	//printf("Thread count: %hhu\n", thread_count);
+	printf("DTS1553 path: %s\n", dts_path.RawString().c_str());
+	printf("Input: %s\n", input_path.RawString().c_str());
+	printf("Thread count: %hhu\n", thread_count);
 
-	//DTS1553 dts1553;
-	//std::map<uint64_t, std::string> chanid_to_bus_name_map;
-	//std::set<uint64_t> excluded_channel_ids = std::set<uint64_t>();
-	//if (!PrepareICDAndBusMap(dts1553, input_path, dts_path, config.stop_after_bus_map_,
-	//	config.prompt_user_, config.vote_threshold_, config.vote_method_checks_tmats_,
-	//	config.bus_name_exclusions_, config.tmats_busname_corrections_, config.use_tmats_busmap_,
-	//	chanid_to_bus_name_map, excluded_channel_ids))
-	//{
-	//	return 0;
-	//}
+	DTS1553 dts1553;
+	std::map<uint64_t, std::string> chanid_to_bus_name_map;
+	std::set<uint64_t> excluded_channel_ids = std::set<uint64_t>();
+	if (!PrepareICDAndBusMap(dts1553, input_path, dts_path, config.stop_after_bus_map_,
+		config.prompt_user_, config.vote_threshold_, config.vote_method_checks_tmats_,
+		config.bus_name_exclusions_, config.tmats_busname_corrections_, config.use_tmats_busmap_,
+		chanid_to_bus_name_map, excluded_channel_ids))
+	{
+		return 0;
+	}
 
-	//// Start translation routine for multi-threaded use case (or single-threaded using the threading framework
-	//// if thread_count = 1 is specified).
-	//if (thread_count > 0)
-	//{
-	//	if (!MTTranslate(config, input_path, dts1553.GetICDData(),
-	//		dts_path, chanid_to_bus_name_map, excluded_channel_ids))
-	//		return 1;
-	//}
-	//// Start the translation routine that doesn't use threading.
-	//else
-	//{
-	//	if (!Translate(config, input_path, dts1553.GetICDData(),
-	//		dts_path, chanid_to_bus_name_map, excluded_channel_ids))
-	//		return 1;
-	//}
+	// Start translation routine for multi-threaded use case (or single-threaded using the threading framework
+	// if thread_count = 1 is specified).
+	if (thread_count > 0)
+	{
+		if (!MTTranslate(config, input_path, dts1553.GetICDData(),
+			dts_path, chanid_to_bus_name_map, excluded_channel_ids, duration))
+			return 1;
+	}
+	// Start the translation routine that doesn't use threading.
+	else
+	{
+		if (!Translate(config, input_path, dts1553.GetICDData(),
+			dts_path, chanid_to_bus_name_map, excluded_channel_ids, duration))
+			return 1;
+	}
 
 	return 0;
 }
@@ -67,10 +64,10 @@ extern "C"
 		{
 			Py_RETURN_NONE;
 		}
-		printf("before RunTranslator\n");
-		int ret = RunTranslator(input_path, dts_path, tip_root_path);
-		long long_ret = long(ret);
-		return PyLong_FromLong(long_ret);
+
+		double duration = 0.0;
+		int ret = RunTranslator(input_path, dts_path, tip_root_path, duration);
+		return Py_BuildValue("[id]", ret, duration);
 	}
 
 	// Method definition object for this extension, these argumens mean:
@@ -84,7 +81,8 @@ extern "C"
 		{
 			"run_translator", run_translator, METH_VARARGS,
 			"Print 'run_translator' from a method defined in a C extension."
-		}
+		},
+        {NULL, NULL, 0, NULL} // This is used to delimit the array
 	};
 
 	// Module definition
