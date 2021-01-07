@@ -88,12 +88,14 @@ if __name__ == '__main__':
 
     # Try to use python-native TIP functions.
     native_python = False
-    from tip_scripts.wrap.tip import TIP
-    pytip = TIP()
-    if pytip.is_ready():
-        print('python-native tip parse/translate ready!')
+    tip = None
+    try:
+        from tip import TIP
         native_python = True
-
+        tip = TIP(script_path)
+    except ModuleNotFoundError as e:
+        native_pyton = False
+        print("\'tip\' python module not found, resorting to system calls!")
 
     plat = platform.platform()
     active_plat = None
@@ -263,7 +265,7 @@ if __name__ == '__main__':
             TS_path = str(Path(ch10path).with_name(Path(ch10path).stem + '_video_TS'))
 
         if native_python:
-            ret = pytip.parse(ch10path, args.out_path)
+            ret = tip.parse(ch10path, args.out_path)
             if ret is None:
                 sys.exit(0)
             exec_duration[ch10path]['raw1553'] = ret[1]
@@ -324,7 +326,7 @@ if __name__ == '__main__':
         # Set up Translator call.
         #
         if native_python:
-            ret = pytip.translate(raw_1553_pq_dir, args.icd_path)
+            ret = tip.translate(raw_1553_pq_dir, args.icd_path)
             if ret is None:
                 sys.exit(0)
             exec_duration[ch10path]['transl1553'] = ret[1]
@@ -384,7 +386,9 @@ if __name__ == '__main__':
         # Set up TS extractor call (if --video)
         #
         if native_python:
-            pass
+            ret = tip.extract_video(raw_video_pq_dir)
+            if ret is None:
+                sys.exit(0)
         else:
             if args.video and not args.no_ts:
 
