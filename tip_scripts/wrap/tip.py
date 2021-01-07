@@ -1,48 +1,46 @@
-import importlib
-# Instantiate this class, then check if ready:
-#
-# t = TIP()
-# if t.is_ready():
-#     do stuff . . . 
-#     t.parse() # see parse.parse.parse
-#     t.translate() # see translate.translate.translate
-# 
+from pathlib import Path
+import tip_parse
+import tip_translate
+import tip_video
+#import wrap_util.wrap_util as util
 
 class TIP:
 
-    def __init__(self):
-        self.parse = None
-        self.translate = None
-        self.ready = False
-        self.ready = self._import_tip_packages()
-        self._assign_funcs()
-        
-    def is_ready(self):
-        return self.ready
+    def __init__(self, tip_root_path):
+        self.tip_root_path = tip_root_path
 
-    def _import_tip_packages(self):
+    def parse(self, input_path, output_path):
 
-        #try:
-        #    import tip_parse
-        #    import tip_translate
-        #except ModuleNotFoundError:
-        #    return False
-        tip_parse_spec = importlib.util.find_spec('tip_parse')
-        tip_parse_found = tip_parse_spec is not None
+        res = None
 
-        tip_translate_spec = importlib.util.find_spec('tip_translate')
-        tip_translate_found = tip_translate_spec is not None
+        if output_path is None:
+            output_path = str(Path(input_path).parent)
+            print('output_path:', output_path)
 
-        if tip_parse_found and tip_translate_found:
-            return True
-        else:
-            return False
+        res = tip_parse.run_parser(input_path, output_path, self.tip_root_path)
 
-    def _assign_funcs(self):
+        if res is None:
+            print('tip_parse.run_parser: Call to RunParser was not made, likely due to malformed args.')
 
-        if self.ready:
-            from .parse.parse import parse
-            self.parse = parse
+        return res
 
-            from .translate.translate import translate
-            self.translate = translate
+    def translate(self, input_path, dts_path):
+
+        res = None
+
+        res = tip_translate.run_translator(input_path, dts_path, self.tip_root_path)
+
+        if res is None:
+            print('tip_translate.run_translator: RunTranslator was not called, likely due to malformed args.')
+
+        return res
+
+    def extract_video(self, input_pq_path):
+
+        res = None
+        res = tip_video.extract_video(input_pq_path)
+
+        if res is None:
+            print('tip_video.extract_video: ExtractVideo was not called, likely due to malformed args.')
+
+        return res
