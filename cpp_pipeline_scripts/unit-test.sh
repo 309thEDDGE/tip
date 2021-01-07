@@ -159,47 +159,6 @@ main() {
 		# Continue without failing; the pipeline doesn't expect translation to succeed at this point
 	fi
 
-	function check_time {
-		file=$1; shift
-		key_word=$1; shift
-		threshold=$1; shift
-		return_value=0 # Assume success
-		# Use the first 5 characters of the type in the pattern (e.g. Parse, Transl)
-		pattern=$(echo "${key_word:0:5}.*:.*seconds")
-		# echo ""
-		# echo "File: $file "
-		# echo "Pattern: $pattern "
-		# echo "Threshold: $threshold"
-
-		# Get the line containing the total time
-		# and save an array of the words
-		words=( $(grep -ie "$pattern" $file) )
-		# echo ""
-		# echo "${#words[*]} words "
-		# echo "${words[*]} "
-
-		# Get the word before "seconds"
-		if [ ${#words[*]} -gt 1 ]; then 
-			value="${words[-2]}"
-		fi
-		# echo "Value: $value"
-
-		if [ "$value" = "None" ]; then
-			return_value=1
-			echo "None"
-		else
-			# Use python to compare floating point values
-			if [ $(python -c "print($value < $threshold)") != "True" ]; then
-				return_value=1
-				echo "FAIL: $value is not less than $threshold seconds"
-			else
-				echo "PASS"
-			fi
-		fi
-
-		return $return_value
-	}
-
 	# Check times
 	for type in ${!THRESHOLDS[@]} ; do
 		echo ""
@@ -214,9 +173,7 @@ main() {
 	done
 
 	echo ""
-	# If we are running on a pipeline, always check for Alkemist
-	# If not, only check if ALKEMIST_LICENSE_KEY is provided
-	if [[ -v PIPELINE || -n "$ALKEMIST_LICENSE_KEY" ]]; then
+	if is_alkemist_included; then
 		cd $BASE_DIR
 		echo "-------------- Check for Alkemist presence --------------"
 		ldd ./bin/pqcompare
@@ -238,6 +195,38 @@ main() {
 	exit $EXIT_CODE
 } # main
 
+	function check_time {
+		file=$1; shift
+		key_word=$1; shift
+		threshold=$1; shift
+		return_value=0 # Assume success
+		# Use the first 5 characters of the type in the pattern (e.g. Parse, Transl)
+		pattern=$(echo "${key_word:0:5}.*:.*seconds")
+
+		# Get the line containing the total time
+		# and save an array of the words
+		words=( $(grep -ie "$pattern" $file) )
+
+		# Get the word before "seconds"
+		if [ ${#words[*]} -gt 1 ]; then 
+			value="${words[-2]}"
+		fi
+
+		if [ "$value" = "None" ]; then
+			return_value=1
+			echo "None"
+		else
+			# Use python to compare floating point values
+			if [ $(python -c "print($value < $threshold)") != "True" ]; then
+				return_value=1
+				echo "FAIL: $value is not less than $threshold seconds"
+			else
+				echo "PASS"
+			fi
+		fi
+
+		return $return_value
+	}
 
 
 # ------------------ RUN MAIN ---------------------
