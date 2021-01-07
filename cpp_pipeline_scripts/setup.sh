@@ -1,3 +1,6 @@
+# Bash reference sheet: https://devhints.io/bash
+# Bash best practices and debugging: http://mywiki.wooledge.org/BashGuide/Practices
+
 setup() {
 	if ! is_set TIP_SETUP_COMPLETED; then
 		test -d /app/cpp && cd /app # if /app/cpp exists cd to /app
@@ -27,6 +30,16 @@ set_exit_on_error() {
 	# echo an error message before exiting
 	trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 }
+
+# clear_exit_on_error() {
+    # Beware if you attempt to write this function!  Some observations:
+    # - While setting an option 'set -e' within a function *does* affect the calling 
+    #   environment, clearing an option with 'set +e" does *not* affect the calling 
+    #   environment.
+    # - Likewise, setting a trap with 'trap "..." SIGXXX' *does* affect the caller,
+    #   but clearing a trap with 'trap - SIGXXX' does *not* affect the caller.
+    # Therefore, a function for clearing shell options and traps may not be possible.
+#}
 
 is_set() {
 	[[ -v $1 ]]
