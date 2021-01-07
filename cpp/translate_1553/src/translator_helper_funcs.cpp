@@ -15,17 +15,17 @@ bool GetArguments(int argc, char* argv[], ManagedPath& input_path,
 	return true;
 }
 
-bool InitializeConfig(std::string tip_root_path, TranslationConfigParams& tcp)
+bool InitializeConfig(std::string conf_path, TranslationConfigParams& tcp)
 {
 	ManagedPath config_path;
-	if (tip_root_path == "")
+	if (conf_path == "")
 	{
 		config_path = config_path.parent_path() / "conf" / "translate_conf.yaml";
 	}
 	else
 	{
-		config_path = ManagedPath(tip_root_path);
-		config_path = config_path / "conf" / "translate_conf.yaml";
+		config_path = ManagedPath(conf_path);
+		config_path = config_path / "translate_conf.yaml";
 	}
 
 	if (!tcp.Initialize(config_path.string()))

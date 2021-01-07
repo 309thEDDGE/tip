@@ -100,14 +100,6 @@ else()
         )
 endif()
 
-#target_include_directories(${ch10pq_lib_name} PUBLIC 
-#                           ${ch10pq_inc_dir}
-#                           ${parquet_inc_dirs}
-#                           ${pqctx_inc_dir} 
-#                           ${ch10_inc_dir}) # Ch10 format headers.
-#target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)    
-#target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${parquet_libs})
-
 target_include_directories(${ch10pq_lib_name} PUBLIC 
                             ${ch10pq_inc_dir}
                             ${pqctx_inc_dir} 
@@ -115,7 +107,6 @@ target_include_directories(${ch10pq_lib_name} PUBLIC
                             ${ch10_inc_dir} # Ch10 format headers.
                             ${util_inc_dir})
 target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)
-#target_compile_options(${ch10pq_lib_name} PRIVATE -fPIE)
 target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${eth_lib_name} ${linux_libs}
                       ${util_lib_name})
 
@@ -350,10 +341,6 @@ endif()
 
 if(video_data)
     set(video_exe_name "parquet_video_extractor")
-    #set(video_path "video/parquet")
-    #set(video_inc_dir ${video_path}/${include_dir_name})
-    #set(video_src_dir ${video_path}/${source_dir_name})
-    #set(video_main_dir ${video_path}/${main_dir_name})
     message(STATUS "Building video extraction exe: " "${video_exe_name}")
     add_executable(${video_exe_name} ${videx_main_dir}/parquet_video_extractor.cpp)
     target_include_directories(${video_exe_name} PUBLIC ${videx_inc_dir}

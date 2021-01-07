@@ -6,11 +6,6 @@ import os, sys
 import glob
 from pathlib import Path
 from setuptools import setup, Extension
-
-#wrap_util_path = os.path.dirname(os.path.abspath(os.path.join(
-#    os.path.realpath(__file__), '..')))
-#sys.path.append(wrap_util_path)
-
 from wrap_util.wrap_util import *
 
 ch10dir_name = 'ch10'
@@ -38,9 +33,6 @@ incl_dirs = [os.path.join(srcdir, ch10dir_name, 'include'),
 lib_dirs = [libdir]
 libs = glob.glob(os.path.join(libdir, '*.lib'))
 libs = [Path(x).stem for x in libs]
-#libs.remove('pq_vid_extract')
-#libs.insert(0, 'arrow_static')
-#libs.insert(1, 'parquet_static')
 
 # Prepare empty lists for third party lib paths and
 # other potential arguments to the Extension class.
@@ -56,8 +48,7 @@ d_files = []
 # Platform-specific
 plat = get_platform()
 if plat == 'windows':
-    #incl_dirs.append(r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.27.29110\include')
-    #lib_dirs.append(r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.27.29110\lib\x64')
+   
     compile_args.append('/std:c++17')
     third_party_incl_dirs.extend([os.path.join(depsdir, 'yaml-cpp-yaml-cpp-0.6.0', 
                                       'yaml-cpp-yaml-cpp-0.6.0', 'include'),
@@ -87,7 +78,6 @@ if plat == 'windows':
 
     # runtime_library_dirs keyword var does not work in windows. Use
     # setup data_files keyword instead.
-    #runtime_libs.extend([os.path.join(depsdir, 'npcap', 'lib', 'x64')])
     d_files = [('', [os.path.join(depsdir, 'npcap', 'lib', 'x64', 'Packet.dll'), 
                      os.path.join(depsdir, 'npcap', 'lib', 'x64', 'wpcap.dll')]),
                ]
@@ -99,9 +89,7 @@ elif plat == 'linux':
 # Append third party items to the relevant lists.
 incl_dirs.extend(third_party_incl_dirs)
 lib_dirs.extend(third_party_lib_dirs)
-#libs.extend(third_party_libs)
-third_party_libs.extend(libs)
-libs = third_party_libs
+libs.extend(third_party_libs)
 
 print('incl_dirs:', incl_dirs)
 print('libs:', libs)

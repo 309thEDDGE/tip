@@ -16,7 +16,7 @@
 
 bool GetArguments(int argc, char* argv[], ManagedPath& input_path,
 	ManagedPath& icd_path);
-bool InitializeConfig(std::string tip_root_path, TranslationConfigParams& tcp);
+bool InitializeConfig(std::string conf_path, TranslationConfigParams& tcp);
 bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
 	const ManagedPath& dts_path, bool stop_after_bus_map, bool prompt_user,
 	uint64_t vote_threshold, bool vote_method_checks_tmats,

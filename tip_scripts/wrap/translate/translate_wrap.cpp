@@ -4,7 +4,7 @@
 
 // Module name is tip_translate
 
-int RunTranslator(char* in_path, char* dts_in_path, char* tip_path, double& duration)
+int RunTranslator(char* in_path, char* dts_in_path, char* conf_path, double& duration)
 {
 	std::string str_input_path(in_path);
 	ManagedPath input_path(str_input_path);
@@ -13,8 +13,8 @@ int RunTranslator(char* in_path, char* dts_in_path, char* tip_path, double& dura
 	ManagedPath dts_path(str_dts_in_path);
 
 	TranslationConfigParams config;
-	std::string root_path(tip_path);
-	if (!InitializeConfig(root_path, config))
+	std::string config_path(conf_path);
+	if (!InitializeConfig(config_path, config))
 		return 1;
 	uint8_t thread_count = config.translate_thread_count_;
 
@@ -30,7 +30,7 @@ int RunTranslator(char* in_path, char* dts_in_path, char* tip_path, double& dura
 		config.bus_name_exclusions_, config.tmats_busname_corrections_, config.use_tmats_busmap_,
 		chanid_to_bus_name_map, excluded_channel_ids))
 	{
-		return 0;
+		return 1;
 	}
 
 	// Start translation routine for multi-threaded use case (or single-threaded using the threading framework
@@ -58,15 +58,15 @@ extern "C"
 	{
 		char* input_path;
 		char* dts_path;
-		char* tip_root_path;
+		char* conf_path;
 
-		if (!PyArg_ParseTuple(args, "sss", &input_path, &dts_path, &tip_root_path))
+		if (!PyArg_ParseTuple(args, "sss", &input_path, &dts_path, &conf_path))
 		{
-			Py_RETURN_NONE;
+			return Py_BuildValue("[id]", -1, 0.0);
 		}
 
 		double duration = 0.0;
-		int ret = RunTranslator(input_path, dts_path, tip_root_path, duration);
+		int ret = RunTranslator(input_path, dts_path, conf_path, duration);
 		return Py_BuildValue("[id]", ret, duration);
 	}
 

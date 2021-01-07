@@ -33,7 +33,7 @@ extern "C"
 
 		if (!PyArg_ParseTuple(args, "s", &input_path))
 		{
-			Py_RETURN_NONE;
+			Py_BuildValue("[id]", -1, 0.0);
 		}
 
 		double duration = 0.0;

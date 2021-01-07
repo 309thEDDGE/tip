@@ -92,9 +92,10 @@ if __name__ == '__main__':
     try:
         from tip import TIP
         native_python = True
-        tip = TIP(script_path)
+        tip = TIP(os.path.join(script_path, 'conf'))
+        print('TIP parse, translate and video extraction will be accomplished via the \'tip\' python module.')
     except ModuleNotFoundError as e:
-        native_pyton = False
+        native_python = False
         print("\'tip\' python module not found, resorting to system calls!")
 
     plat = platform.platform()
@@ -266,8 +267,6 @@ if __name__ == '__main__':
 
         if native_python:
             ret = tip.parse(ch10path, args.out_path)
-            if ret is None:
-                sys.exit(0)
             exec_duration[ch10path]['raw1553'] = ret[1]
             
         else:
@@ -327,8 +326,6 @@ if __name__ == '__main__':
         #
         if native_python:
             ret = tip.translate(raw_1553_pq_dir, args.icd_path)
-            if ret is None:
-                sys.exit(0)
             exec_duration[ch10path]['transl1553'] = ret[1]
             
         else:
@@ -385,13 +382,10 @@ if __name__ == '__main__':
         #
         # Set up TS extractor call (if --video)
         #
-        if native_python:
-            ret = tip.extract_video(raw_video_pq_dir)
-            if ret is None:
-                sys.exit(0)
-        else:
-            if args.video and not args.no_ts:
-
+        if args.video and not args.no_ts:
+            if native_python:
+                ret = tip.extract_video(raw_video_pq_dir)
+            else:
                 video_extr = RunCLProcess()
 
                 # Set executable path.
@@ -406,8 +400,8 @@ if __name__ == '__main__':
                 if video_extr_dir_exists:
                     video_extr.message_output_dirs_exist()
                     if args.overwrite:
-                       ow_message(video_extr_exe_name)
-                       video_extr.remove_existing_output_dirs()
+                        ow_message(video_extr_exe_name)
+                        video_extr.remove_existing_output_dirs()
                     else:
                         skip_message(video_extr_exe_name)
                 if not video_extr_dir_exists or args.overwrite:

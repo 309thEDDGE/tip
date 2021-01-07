@@ -3,10 +3,10 @@
 
 // Module name is tip_parse
 
-int RunParser(char* input_path, char* output_path, char* tip_path, double& duration)
+int RunParser(char* input_path, char* output_path, char* conf_path, double& duration)
 {
 	ParserConfigParams config;
-	if (!ValidateConfig(config, tip_path))
+	if (!ValidateConfig(config, conf_path))
 		return 1;
 
 	ManagedPath mp_input_path;
@@ -26,15 +26,15 @@ extern "C"
 	{
 		char* input_path;
 		char* output_path;
-		char* tip_root_path;
+		char* conf_path;
 
-		if (!PyArg_ParseTuple(args, "sss", &input_path, &output_path, &tip_root_path))
+		if (!PyArg_ParseTuple(args, "sss", &input_path, &output_path, &conf_path))
 		{
-			Py_RETURN_NONE;
+			return Py_BuildValue("[id]", -1, 0.0);
 		}
 
 		double duration = 0.0;
-		int ret = RunParser(input_path, output_path, tip_root_path, duration);
+		int ret = RunParser(input_path, output_path, conf_path, duration);
 		return Py_BuildValue("[id]", ret, duration);
 	}
 
