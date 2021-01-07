@@ -364,7 +364,7 @@ std::map<uint64_t, std::string> BusMap::VoteMapping()
 			if (highest_vote == 0)
 				excluded_channel_ids_[it->first] = "No Votes";
 			else if (highest_vote < vote_threshold_)
-				excluded_channel_ids_[it->first] = "Votes did not exceed vote_threshold";
+				excluded_channel_ids_[it->first] = "Vote count not >= vote_threshold";
 			else if (find_count > 1)
 				excluded_channel_ids_[it->first] = "Tie Vote";			
 		}
