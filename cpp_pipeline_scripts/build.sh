@@ -9,11 +9,18 @@ DEPS_DIR=$BASE_DIR/deps
 DEPS_SOURCE=/deps
 BUILD_SCRIPT=$0
 
-# Add LFR ALKEMIST build flags
-# TODO: Explain how to remove this later
-export TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L${DEPS_DIR}/alkemist-lfr/lib"
-OLDPATH="${PATH}"
-export PATH="${LFR_ROOT_PATH}/scripts:${PATH}"
+# If we are running on a pipeline, always build with Alkemist
+# If not, only include Alkemist if ALKEMIST_LICENSE_KEY is provided
+if [[ -v PIPELINE || -n "$ALKEMIST_LICENSE_KEY" ]]; then
+	# Add LFR ALKEMIST build flags
+	echo "Building with Alkemist libraries"
+	export TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L${DEPS_DIR}/alkemist-lfr/lib"
+	OLDPATH="${PATH}"
+	export PATH="${LFR_ROOT_PATH}/scripts:${PATH}"
+else
+	echo "Building WITHOUT Alkemist libraries:"
+	echo "   not on a pipeline; ALKEMIST_LICENSE_KEY unset or empty"
+fi
 
 # custom build command which will run in the pipeline
 # in the pipeline the working directory is the root of the project repository
@@ -39,7 +46,7 @@ else
 fi
 
 # Get paths to all cached libraries
-BINARIES=( $(find $BUILD_DIR -name \*.a) )
+BINARIES=( $(find $BUILD_DIR -name \*.a) ) || BINARIES=""
 ### Diagnostics
 #  echo "Found ${#BINARIES[*]} cached libraries: ${BINARIES[*]}"
 #  [ ${#BINARIES[*]} -gt 0 ] && ls -lt ${BINARIES[*]}
