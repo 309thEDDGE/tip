@@ -107,9 +107,8 @@ print('incl_dirs:', incl_dirs)
 print('libs:', libs)
 
 # Set macros specific to building TIP
-macros = []
-#macros = [('PARQUET', None), ('ARROW_STATIC', None), ('PARQUET_STATIC', None),
-#          ('TINS_STATIC', None)]
+macros = [('PARQUET', None), ('ARROW_STATIC', None), ('PARQUET_STATIC', None),
+          ('TINS_STATIC', None)]
 
 extensions = [
               Extension('tip_parse',
@@ -134,17 +133,17 @@ extensions = [
                            extra_link_args=link_args,
                            export_symbols=exports,
                            ),
-              #Extension('tip_video',
-              #             source_files3,
-              #             include_dirs=incl_dirs,
-              #             library_dirs=lib_dirs,
-              #             libraries=libs,
-              #             runtime_library_dirs=runtime_libs,
-              #             define_macros=macros,
-              #             extra_compile_args=compile_args,
-              #             extra_link_args=link_args,
-              #             export_symbols=exports,
-              #             ),
+              Extension('tip_video',
+                           source_files3,
+                           include_dirs=incl_dirs,
+                           library_dirs=lib_dirs,
+                           libraries=libs,
+                           runtime_library_dirs=runtime_libs,
+                           define_macros=macros,
+                           extra_compile_args=compile_args,
+                           extra_link_args=link_args,
+                           export_symbols=exports,
+                           ),
     ]
 
 setup(

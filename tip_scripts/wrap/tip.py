@@ -2,7 +2,6 @@ from pathlib import Path
 import tip_parse
 import tip_translate
 import tip_video
-#import wrap_util.wrap_util as util
 
 class TIP:
 
