@@ -54,11 +54,15 @@ is_file() {
 }
 
 is_absolute_path() {
-	[[ "${1:0:1}" = "/" ]] # Make sure the first character is '/'
+	[[ "${1:0:1}" = "/" ]] # Test whether the first character is '/'
 }
 
 get_absolute_path() {
 	readlink -f $1
+}
+
+is_alkemist_included() {
+	is_set PIPELINE || is_set ALKEMIST_LICENSE_KEY
 }
 
 # ------------------ TESTS ------------------------
@@ -120,9 +124,9 @@ T_setup_runs_only_once() {
 
 T_setup_base_dir_contains_tip() {
 	setup
-	[[ -d $BASE_DIR/cpp ]] 				|| $T_fail "BASE_DIR does not contain cpp: '$BASE_DIR'"
-	[[ -d $BASE_DIR/tip_scripts ]] 		|| $T_fail "BASE_DIR does not contain tip_scripts: '$BASE_DIR'"
-	[[ -f $BASE_DIR/CMakeLists.txt ]]	|| $T_fail "BASE_DIR does not contain CMakeLists.txt: '$BASE_DIR'"
+	[[ -d $BASE_DIR/cpp ]] && \
+	[[ -d $BASE_DIR/tip_scripts ]] && \
+	[[ -f $BASE_DIR/CMakeLists.txt ]]
 }
 
 T_setup_sets_build_dir_variable() {
@@ -180,17 +184,42 @@ T_get_absolute_path() {
 	is_absolute_path $absolute
 }
 
-T_set_exit_on_error_sets_traps() {
-	set_exit_on_error
+# This test works but causes the test run to abort on any failure
+# T_set_exit_on_error() {
+# 	set_exit_on_error
+# 	shopt -oq errexit
+# 	[[ -n "$(trap -p DEBUG)" ]]
+# 	[[ -n "$(trap -p ERR)" ]]
+# }
 
-	[[ -n "$(trap -p DEBUG)" ]]
-	[[ -n "$(trap -p ERR)" ]]
+T_is_alkemist_included_true_on_pipeline() {
+	local PIPELINE=""
+	is_alkemist_included
 }
 
-T_set_exit_on_error_sets_option() {
-	set_exit_on_error
-	# Clear traps
-	trap - ERR DEBUG
+T_is_alkemist_included_true_with_license_defined() {
+	local ALKEMIST_LICENSE_KEY=""
+	is_alkemist_included
+}
 
-	shopt -oq errexit
+T_is_alkemist_included_false_w_o_pipeline_or_license() {
+	if is_set ALKEMIST_LICENSE_KEY; then 
+		local alk="$ALKEMIST_LICENSE_KEY"; 
+	fi
+	if is_set PIPELINE; then 
+		local pl="$PIPELINE"; 
+	fi
+
+	unset ALKEMIST_LICENSE_KEY PIPELINE
+	is_alkemist_included
+	local result=$?
+
+	if is_set alk; then 
+		ALKEMIST_LICENSE_KEY="$alk"; 
+	fi
+	if is_set pl; then 
+		PIPELINE="$pl"; 
+	fi
+
+	[[ "$result" != 0 ]]
 }
