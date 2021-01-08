@@ -54,6 +54,7 @@ tip_scripts/__pycache__
 !.dockerignore
 !CMake_windows.txt
 !CMake_linux.txt
-
-
+**/build
+**/dist
+**/*.egg-info
 /cpp/out/build/x64-Debug (default)

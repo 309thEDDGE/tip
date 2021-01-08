@@ -20,7 +20,7 @@ set(ch10_main_dir ${ch10_lib_name}/${main_dir_name})
 set(util_lib_name "util")
 set(util_src_dir ${util_lib_name}/${source_dir_name}) # util/src
 set(util_inc_dir ${util_lib_name}/${include_dir_name})
-add_library(${util_lib_name}
+add_library(${util_lib_name} STATIC
             ${util_src_dir}/binbuff.cpp              ${util_inc_dir}/binbuff.h
             ${util_src_dir}/data_organization.cpp    ${util_inc_dir}/data_organization.h
             ${util_src_dir}/file_reader.cpp          ${util_inc_dir}/file_reader.h
@@ -46,7 +46,7 @@ set(pqctx_lib_name "parquet_context")
 message(STATUS "Building lib: " "${pqctx_lib_name}")
 set(pqctx_src_dir ${pqctx_lib_name}/${source_dir_name})
 set(pqctx_inc_dir ${pqctx_lib_name}/${include_dir_name})
-add_library(${pqctx_lib_name}
+add_library(${pqctx_lib_name} STATIC
             ${pqctx_inc_dir}/column_data.h
             ${pqctx_src_dir}/parquet_context.cpp   ${pqctx_inc_dir}/parquet_context.h
     )
@@ -69,8 +69,9 @@ if(libirig106 AND ethernet_data)
     set(eth_inc_dir ${eth_path}/${include_dir_name})
     set(eth_src_dir ${eth_path}/${source_dir_name})
     message(STATUS "Building ethernet lib (using libtins): " "${eth_lib_name}")
-    add_library(${eth_lib_name} ${eth_src_dir}/network_packet_parser.cpp ${eth_inc_dir}/network_packet_parser.h
-                                ${eth_src_dir}/ethernet_data.cpp ${eth_inc_dir}/ethernet_data.h)
+    add_library(${eth_lib_name} STATIC
+                ${eth_src_dir}/network_packet_parser.cpp ${eth_inc_dir}/network_packet_parser.h
+                ${eth_src_dir}/ethernet_data.cpp ${eth_inc_dir}/ethernet_data.h)
     target_include_directories(${eth_lib_name} PUBLIC ${eth_inc_dir}
                                ${all_tins_incs})
     target_link_libraries(${eth_lib_name} PUBLIC ${all_tins_libs})
@@ -87,25 +88,17 @@ set(ch10pq_src_dir ${ch10pq_lib_name}/${source_dir_name})
 set(ch10pq_inc_dir ${ch10pq_lib_name}/${include_dir_name})
 
 if(ethernet_data)
-    add_library(${ch10pq_lib_name}
+    add_library(${ch10pq_lib_name} STATIC
                 ${ch10pq_src_dir}/parquet_milstd1553f1.cpp ${ch10pq_inc_dir}/parquet_milstd1553f1.h
                 ${ch10pq_src_dir}/parquet_videodataf0.cpp  ${ch10pq_inc_dir}/parquet_videodataf0.h
                 ${ch10pq_src_dir}/parquet_ethernetf0.cpp ${ch10pq_inc_dir}/parquet_ethernetf0.h
         )
 else()
-    add_library(${ch10pq_lib_name}
+    add_library(${ch10pq_lib_name} STATIC
                 ${ch10pq_src_dir}/parquet_milstd1553f1.cpp ${ch10pq_inc_dir}/parquet_milstd1553f1.h
                 ${ch10pq_src_dir}/parquet_videodataf0.cpp  ${ch10pq_inc_dir}/parquet_videodataf0.h
         )
 endif()
-
-#target_include_directories(${ch10pq_lib_name} PUBLIC 
-#                           ${ch10pq_inc_dir}
-#                           ${parquet_inc_dirs}
-#                           ${pqctx_inc_dir} 
-#                           ${ch10_inc_dir}) # Ch10 format headers.
-#target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)    
-#target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${parquet_libs})
 
 target_include_directories(${ch10pq_lib_name} PUBLIC 
                             ${ch10pq_inc_dir}
@@ -114,7 +107,6 @@ target_include_directories(${ch10pq_lib_name} PUBLIC
                             ${ch10_inc_dir} # Ch10 format headers.
                             ${util_inc_dir})
 target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)
-#target_compile_options(${ch10pq_lib_name} PRIVATE -fPIE)
 target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${eth_lib_name} ${linux_libs}
                       ${util_lib_name})
 
@@ -125,7 +117,7 @@ set(trans_lib_name "translate_1553")
 message(STATUS "Building lib: " "${trans_lib_name}")
 set(trans_src_dir ${trans_lib_name}/${source_dir_name})
 set(trans_inc_dir ${trans_lib_name}/${include_dir_name})
-add_library(${trans_lib_name}
+add_library(${trans_lib_name} STATIC
         ${trans_src_dir}/bus_map.cpp                        ${trans_inc_dir}/bus_map.h
         ${trans_src_dir}/icd_data.cpp                       ${trans_inc_dir}/icd_data.h
         ${trans_src_dir}/icd_element.cpp                    ${trans_inc_dir}/icd_element.h
@@ -135,6 +127,7 @@ add_library(${trans_lib_name}
         ${trans_src_dir}/translatable_base.cpp              ${trans_inc_dir}/translatable_base.h
         ${trans_src_dir}/translation_master.cpp             ${trans_inc_dir}/translation_master.h
         ${trans_src_dir}/dts1553.cpp                        ${trans_inc_dir}/dts1553.h
+        ${trans_src_dir}/translator_helper_funcs.cpp        ${trans_inc_dir}/translator_helper_funcs.h
     )
 
 target_include_directories(${trans_lib_name} PUBLIC ${trans_inc_dir}
@@ -157,11 +150,28 @@ set(comp_inc_dir ${comp_path}/${include_dir_name})
 set(comp_src_dir ${comp_path}/${source_dir_name})
 set(comp_main_dir ${comp_path}/${main_dir_name})
 message(STATUS "Building pq-to-pq comparator lib: " "${comp_lib_name}")
-add_library(${comp_lib_name} ${comp_src_dir}/comparator.cpp )
+add_library(${comp_lib_name} STATIC
+            ${comp_src_dir}/comparator.cpp )
 target_include_directories(${comp_lib_name} PUBLIC ${comp_inc_dir} ${parquet_inc_dirs} ${util_inc_dir})
 target_link_libraries(${comp_lib_name} PUBLIC ${util_lib_name} ${linux_libs})
 target_compile_features(${comp_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${comp_lib_name} PRIVATE -fPIE)
+
+#########################################################
+#      Build/link Parquet Video Extraction lib
+#########################################################
+set(videx_lib_name "pq_vid_extract")
+set(videx_path "video/parquet")
+set(videx_inc_dir ${videx_path}/${include_dir_name})
+set(videx_src_dir ${videx_path}/${source_dir_name})
+set(videx_main_dir ${videx_path}/${main_dir_name})
+message(STATUS "Building Pq Video Extraction lib: " "${videx_lib_name}")
+add_library(${videx_lib_name} STATIC
+            ${videx_src_dir}/parquet_video_extraction.cpp 
+            ${videx_inc_dir}/parquet_video_extraction.h)
+target_include_directories(${videx_lib_name} PUBLIC ${videx_inc_dir} ${parquet_inc_dirs} ${util_inc_dir})
+target_link_libraries(${videx_lib_name} PUBLIC ${parquet_libs} ${util_lib_name} ${linux_libs} )
+target_compile_features(${videx_lib_name} PUBLIC cxx_std_17)
 
 #########################################################
 #                Build/link ch10parse Lib
@@ -190,7 +200,7 @@ if(libirig106)
     endif()
 endif()
 
-add_library(${ch10parse_lib_name} 
+add_library(${ch10parse_lib_name} STATIC 
     ${ch10_inc_dir}/ch10.h ${ch10_inc_dir}/ch10_milstd1553f1.h ${ch10_inc_dir}/ch10_milstd1553f1stats.h
     ${ch10_inc_dir}/ch10_packet_header.h ${ch10_inc_dir}/ch10_packet_header_format.h
     ${ch10_inc_dir}/ch10_packet_stats.h ${ch10_inc_dir}/ch10_tdf1.h ${ch10_inc_dir}/ch10_videodataf0.h
@@ -201,6 +211,7 @@ add_library(${ch10parse_lib_name}
     ${ch10_src_dir}/ch10_packet_header.cpp ${ch10_src_dir}/ch10_tdf1.cpp 
     ${ch10_src_dir}/ch10_videodataf0.cpp ${ch10_src_dir}/parse_manager.cpp ${ch10_src_dir}/parse_util.cpp
     ${ch10_src_dir}/parse_worker.cpp
+    ${ch10_src_dir}/parser_helper_funcs.cpp ${ch10_inc_dir}/parser_helper_funcs.h
     ${parse_ethernet_src}
     )
 target_include_directories(${ch10parse_lib_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
@@ -233,6 +244,7 @@ install(TARGETS ${util_lib_name}
                 ${comp_lib_name}
                 ${eth_lib_name}
                 ${ch10parse_lib_name}
+                ${videx_lib_name}
         DESTINATION ${out_lib_dir}
 )
 
@@ -329,18 +341,13 @@ endif()
 
 if(video_data)
     set(video_exe_name "parquet_video_extractor")
-    set(video_path "video/parquet")
-    set(video_inc_dir ${video_path}/${include_dir_name})
-    set(video_src_dir ${video_path}/${source_dir_name})
-    set(video_main_dir ${video_path}/${main_dir_name})
     message(STATUS "Building video extraction exe: " "${video_exe_name}")
-    add_executable(${video_exe_name} ${video_main_dir}/parquet_video_extractor.cpp
-      ${video_inc_dir}/parquet_video_extraction.h ${video_src_dir}/parquet_video_extraction.cpp)
-#    set_property(TARGET ${video_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
-    target_include_directories(${video_exe_name} PUBLIC ${video_inc_dir}
+    add_executable(${video_exe_name} ${videx_main_dir}/parquet_video_extractor.cpp)
+    target_include_directories(${video_exe_name} PUBLIC ${videx_inc_dir}
                                ${parquet_inc_dirs} ${util_inc_dir})
     target_compile_features(${video_exe_name} PUBLIC cxx_std_17)
-    target_link_libraries(${video_exe_name} ${parquet_libs} ${linux_libs} ${util_lib_name})
+    target_link_libraries(${video_exe_name} ${videx_lib_name} ${parquet_libs} 
+                          ${linux_libs} ${util_lib_name})
 endif()
 
 #########################################################
