@@ -3,7 +3,7 @@
 fs::path ManagedPath::AmendPath(fs::path input_path) const
 {
 #ifdef __WIN64
-	if (input_path.string().size() > 259)
+	if (input_path.string().size() > max_unamended_path_len_)
 	{
 		fs::path temp_path(windows_prefix_);
 		temp_path += input_path;
@@ -78,6 +78,11 @@ bool ManagedPath::is_directory() const
 ManagedPath ManagedPath::parent_path() const
 {
 	return ManagedPath(this->fs::path::parent_path());
+}
+
+ManagedPath ManagedPath::absolute() const
+{
+	return ManagedPath(fs::absolute(fs::path(this->fs::path::string())));
 }
 
 bool ManagedPath::create_directory() const

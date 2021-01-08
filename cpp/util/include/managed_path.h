@@ -20,6 +20,15 @@ private:
 protected:
 
 public:
+
+	// Maximum path in windows is 260 chars including a terminating
+	// null character.
+	// See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+	// When checking for paths that exceed this value, this class
+	// counts the characters in the path string which does not include
+	// the null character, so the maximum path length is set to 1 
+	// fewer.
+	static const int max_unamended_path_len_ = 249;
 	
 	//////////////////////////////////////////
 	// User functions
@@ -71,6 +80,15 @@ public:
 	path.
 	*/
 	ManagedPath parent_path() const;
+
+	/*
+	Get the absolute. Same functionality as the
+	std::filesystem::absolute function.
+
+	Returns: A ManagedPath object containing the absolute
+	path.
+	*/
+	ManagedPath absolute() const;
 
 	/*
 	Check whether the current object is a regular file.
