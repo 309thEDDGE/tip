@@ -217,7 +217,12 @@ TEST(ManagedPathTest, CreateDirectoryFailsWithoutCorrectionAbsPath)
 	
 	// If the error code is zero, then an error was not thrown.
 	// If zero, 
+#ifdef __WIN64
 	EXPECT_TRUE((ec.value() != 0) || (!result));
+#elif defined __linux__
+	EXPECT_TRUE((ec.value() == 0) && result);
+#endif
+	
 
 	// Attempt to create the directory using ManagedPath.
 	// Ought to succeed.
@@ -274,7 +279,11 @@ TEST(ManagedPathTest, CreateDirectoryFailsWithoutCorrectionRelPath)
 
 	// If the error code is zero, then an error was not thrown.
 	// If zero, 
+#ifdef __WIN64
 	EXPECT_TRUE((ec.value() != 0) || (!result));
+#elif defined __linux__
+	EXPECT_TRUE((ec.value() == 0) && result);
+#endif
 
 	// Attempt to create the directory using ManagedPath.
 	// Ought to succeed.
