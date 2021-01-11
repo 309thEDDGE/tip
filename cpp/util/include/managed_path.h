@@ -15,7 +15,7 @@ class ManagedPath : public fs::path
 {
 private:
 	static const inline fs::path windows_prefix_ = "\\\\?\\";
-	static const int max_create_dir_attempts_ = 5;
+	static const int max_create_dir_attempts_ = 3;
 
 protected:
 
@@ -28,7 +28,16 @@ public:
 	// counts the characters in the path string which does not include
 	// the null character, so the maximum path length is set to 1 
 	// fewer.
-	static const int max_unamended_path_len_ = 249;
+	// 
+	// The value of 259, however, does not pass all of the unit tests
+	// and the largest value for the maximum length that does is 
+	// 255. It's possible that the null character is appended by
+	// std::filesystem under the hood, possibly originally represented
+	// as "\0" or similar (two chars) and that the drive path followed by the
+	// backslash (three chars) is counted in error or perhaps the link
+	// above is incorrect that the drive and slash is not part of the 256-char
+	// path length limit.
+	static const int max_unamended_path_len_ = 255;
 	
 	//////////////////////////////////////////
 	// User functions
