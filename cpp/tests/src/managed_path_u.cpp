@@ -3,6 +3,7 @@
 #include "managed_path.h"
 #include <fstream>
 #include <iostream>
+#include <system_error>
 
 bool HasWindowsPrefix(std::string input_str)
 {
@@ -16,11 +17,70 @@ bool HasWindowsPrefix(std::string input_str)
 	return false;
 }
 
+std::vector<std::string> CreatePathWithLength(const ManagedPath& mp_relative, size_t desired_len)
+{
+	ManagedPath mp_new = mp_relative;
+	std::vector<std::string> path_components;
+
+	char long_component[] = "this-is-a-very-very-long-path-component%02d"; // 41
+	std::string mid_component = "this_is_shorter"; // 15
+	std::string short_component = "comp_short"; // 10
+	std::string char_component = "a";
+	bool first_time_char = true;
+	char buff[50];
+	int index = 0;
+	size_t diff = 0;
+	while ((diff = desired_len - mp_new.RawString().size()) > 0)
+	{
+		//printf("diff = %zu\n", diff);
+		if (diff >= 41 + 1)
+		{
+			sprintf(buff, long_component, index);
+			index++;
+			std::string temp_comp(buff);
+			mp_new /= temp_comp;
+			path_components.push_back(temp_comp);
+		}
+		else if (diff >= 15 + 1)
+		{
+			mp_new /= mid_component;
+			path_components.push_back(mid_component);
+		}
+		else if (diff >= 10 + 1)
+		{
+			mp_new /= short_component;
+			path_components.push_back(short_component);
+		}
+		else
+		{
+			if (first_time_char && diff > 1)
+			{
+				mp_new /= char_component;
+				path_components.push_back(char_component);
+				first_time_char = false;
+			}
+			else
+			{
+				mp_new += char_component;
+				std::string temp_comp = path_components.back();
+				path_components.pop_back();
+				temp_comp += char_component;
+				path_components.push_back(temp_comp);
+				first_time_char = false;
+			}
+		}
+	}
+
+	return path_components;
+}
+
 TEST(ManagedPathTest, AmendPathInsertsPrefix)
 {
 	ManagedPath mp(std::string("start"));
 
-	// < 260
+	// 
+	// <= ManagedPath::max_unamended_path_len_
+	//
 	std::vector<std::string> test_path_str = { "data", "Is", "not-here", "ok.txt" };
 
 	// Build the path in a platform-independent way
@@ -28,38 +88,34 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 		mp /= s;
 	std::filesystem::path test_path(mp.RawString());
 
-	EXPECT_TRUE(test_path.string().size() < 260);
+	EXPECT_TRUE(test_path.string().size() <= ManagedPath::max_unamended_path_len_);
 	EXPECT_FALSE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
 
-	// = 260
-	test_path_str = std::vector<std::string>({ "path","to-the-file","must_be",
-		"_equivalent_to_260_chars_in_size", "this-is-a-long-part01",
-		"this-is-a-long-part02", "this-is-a-long-part03", "this-is-a-long-part04",
-		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-a-long-part07",
-		"this-is-a-long-part08", "this-is-a-long-part09" });
-	mp = ManagedPath(std::string("this"));
+	//
+	// = ManagedPath::max_unamended_path_len_ + 1
+	//
+	mp = ManagedPath();
+	test_path_str = CreatePathWithLength(mp, ManagedPath::max_unamended_path_len_ + 1);
 	for (auto s : test_path_str)
 		mp /= s;
-	printf("string len: %zu\n", mp.RawString().size());
+	//printf("string len: %zu\n", mp.RawString().size());
 	test_path = std::filesystem::path(mp.RawString());
-	EXPECT_EQ(test_path.string().size(), 260);
+	EXPECT_EQ(test_path.string().size(), ManagedPath::max_unamended_path_len_ + 1);
 #ifdef __WIN64
 	EXPECT_TRUE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
 #elif defined __linux__
 	EXPECT_FALSE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
 #endif
 
-	// > 260
-	test_path_str = std::vector<std::string>({ "path","to-the-file","must_be",
-		"_equivalent_to_260_chars_in_size", "this-is-a-long-part01",
-		"this-is-a-long-part02", "this-is-a-long-part03", "this-is-a-long-part04",
-		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-a-long-part07",
-		"this-is-a-long-part08", "this-is-a-long-part09", "this-is-a-long-part10" });
-	mp = ManagedPath(std::string("this"));
+	// 
+	// > ManagedPath::max_unamended_path_len_ + 1
+	//
+	mp = ManagedPath();
+	test_path_str = CreatePathWithLength(mp, ManagedPath::max_unamended_path_len_ + 10);
 	for (auto s : test_path_str)
 		mp /= s;
 	test_path = std::filesystem::path(mp.RawString());
-	EXPECT_TRUE(test_path.string().size() > 260);
+	EXPECT_TRUE(test_path.string().size() > ManagedPath::max_unamended_path_len_ + 1);
 #ifdef __WIN64
 	EXPECT_TRUE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
 #elif defined __linux__
@@ -72,46 +128,171 @@ TEST(ManagedPathTest, string)
 	
 	ManagedPath mp(std::string("start"));
 
-	// < 260
+	// 
+	// <= ManagedPath::max_unamended_path_len_
+	//
 	std::vector<std::string> test_path_str = { "data", "Is", "not-here", "ok.txt" };
 
 	// Build the path in a platform-independent way
 	for (auto s : test_path_str)
 		mp /= s;
-	EXPECT_TRUE(mp.RawString().size() < 260);
+	EXPECT_TRUE(mp.RawString().size() <= ManagedPath::max_unamended_path_len_);
 	EXPECT_FALSE(HasWindowsPrefix(mp.string()));
 
-	// = 260
-	test_path_str = std::vector<std::string>({ "path","to-the-file","must_be",
-		"_equivalent_to_260_chars_in_size", "this-is-a-long-part01",
-		"this-is-a-long-part02", "this-is-a-long-part03", "this-is-a-long-part04",
-		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-a-long-part07",
-		"this-is-a-long-part08", "this-is-a-long-part09" });
-	mp = ManagedPath(std::string("this"));
+	// 
+	// = ManagedPath::max_unamended_path_len_ + 1
+	//
+	mp = ManagedPath();
+	test_path_str = CreatePathWithLength(mp, ManagedPath::max_unamended_path_len_ + 1);
 	for (auto s : test_path_str)
 		mp /= s;
-	EXPECT_EQ(mp.RawString().size(), 260);
+	EXPECT_EQ(mp.RawString().size(), ManagedPath::max_unamended_path_len_ + 1);
 #ifdef __WIN64
 	EXPECT_TRUE(HasWindowsPrefix(mp.string()));
 #elif defined __linux__
 	EXPECT_FALSE(HasWindowsPrefix(mp.string()));
 #endif
 
-	// > 260
-	test_path_str = std::vector<std::string>({ "path","to-the-file","must_be",
-		"_equivalent_to_260_chars_in_size", "this-is-a-long-part01",
-		"this-is-a-long-part02", "this-is-a-long-part03", "this-is-a-long-part04",
-		"this-is-a-long-part05", "this-is-a-long-part06", "this-is-a-long-part07",
-		"this-is-a-long-part08", "this-is-a-long-part09", "this-is-a-long-part10" });
-	mp = ManagedPath(std::string("this"));
+	// 
+	// > ManagedPath::max_unamended_path_len_ + 1
+	//
+	mp = ManagedPath();
+	test_path_str = CreatePathWithLength(mp, ManagedPath::max_unamended_path_len_ + 10);
 	for (auto s : test_path_str)
 		mp /= s;
-	EXPECT_TRUE(mp.RawString().size() > 260);
+	EXPECT_TRUE(mp.RawString().size() > ManagedPath::max_unamended_path_len_ + 1);
 #ifdef __WIN64
 	EXPECT_TRUE(HasWindowsPrefix(mp.string()));
 #elif defined __linux__
 	EXPECT_FALSE(HasWindowsPrefix(mp.string()));
 #endif
+}
+
+TEST(ManagedPathTest, CreateDirectoryFailsWithoutCorrectionAbsPath)
+{
+	// Create relative-path object.
+	ManagedPath mp;
+
+	// Get the absolute path.
+	mp = mp.absolute();
+	//printf("\nabsolute: %s\n", mp.RawString().c_str());
+
+	std::vector<std::string> test_path_str = CreatePathWithLength(mp, 
+		ManagedPath::max_unamended_path_len_ + 1);
+	
+	// Append test_path_str components as file path components.
+	ManagedPath fullpath = mp; 
+	for (auto s : test_path_str)
+		fullpath /= s;
+	//printf("\nabsolute extended to max + 1: %s\n", fullpath.RawString().c_str());
+	EXPECT_EQ(fullpath.RawString().size(), ManagedPath::max_unamended_path_len_ + 1);
+
+	// Create all but the last directory.
+	ManagedPath currdir = mp;
+	//printf("\nstr vec size is %zu\n", test_path_str.size());
+	for (size_t i = 0; i < test_path_str.size() - 1; i++)
+	{
+		//printf("\nappending to path: %s\n", test_path_str[i].c_str());
+		currdir /= test_path_str[i];
+		
+		EXPECT_TRUE(currdir.create_directory());
+		//printf("after append length = %zu\n", currdir.RawString().size());
+	}
+
+	// Attempt to create the last directory using standard fs::create_directory. 
+	// This ought to fail because the path is too long.
+	currdir /= test_path_str[test_path_str.size() - 1];
+
+	/*
+	This doesn't just return false. It also throws an error. 
+	Catch the error. Also, one way to fix the create_directory
+	impl is to catch the error, amend path, and try again. 
+	This is an ugly approach but will likely solve the problem, 
+	though it may need to be implemented in several functions
+	that operate on the real file system.
+	*/
+	fs::path raw_path(currdir.RawString());
+	std::error_code ec;
+	bool result = fs::create_directory(raw_path, ec); 
+	
+	// If the error code is zero, then an error was not thrown.
+	// If zero, 
+#ifdef __WIN64
+	EXPECT_TRUE((ec.value() != 0) || (!result));
+#elif defined __linux__
+	EXPECT_TRUE((ec.value() == 0) && result);
+#endif
+	
+
+	// Attempt to create the directory using ManagedPath.
+	// Ought to succeed.
+	EXPECT_TRUE(currdir.create_directory());
+
+	// Delete all directories created during this test.
+	fs::path remove_path(test_path_str[0]);
+	EXPECT_TRUE(fs::remove_all(remove_path));
+
+}
+
+TEST(ManagedPathTest, CreateDirectoryFailsWithoutCorrectionRelPath)
+{
+	// Create relative-path object.
+	ManagedPath mp;
+
+	std::vector<std::string> test_path_str = CreatePathWithLength(mp,
+		ManagedPath::max_unamended_path_len_ + 1);
+
+	// Append test_path_str components as file path components.
+	ManagedPath fullpath = mp;
+	for (auto s : test_path_str)
+		fullpath /= s;
+	//printf("\nrelative path extended to max + 1: %s\n", fullpath.RawString().c_str());
+	EXPECT_EQ(fullpath.RawString().size(), ManagedPath::max_unamended_path_len_ + 1);
+
+	// Create all but the last directory.
+	ManagedPath currdir = mp;
+	//printf("\nstr vec size is %zu\n", test_path_str.size());
+	for (size_t i = 0; i < test_path_str.size() - 1; i++)
+	{
+		//printf("\nappending to path: %s\n", test_path_str[i].c_str());
+		currdir /= test_path_str[i];
+
+		EXPECT_TRUE(currdir.create_directory());
+		//printf("after append length = %zu\n", currdir.RawString().size());
+	}
+
+	// Attempt to create the last directory using standard fs::create_directory. 
+	// This ought to fail because the path is too long.
+	currdir /= test_path_str[test_path_str.size() - 1];
+
+	/*
+	This doesn't just return false. It also throws an error.
+	Catch the error. Also, one way to fix the create_directory
+	impl is to catch the error, amend path, and try again.
+	This is an ugly approach but will likely solve the problem,
+	though it may need to be implemented in several functions
+	that operate on the real file system.
+	*/
+	fs::path raw_path(currdir.RawString());
+	std::error_code ec;
+	bool result = fs::create_directory(raw_path, ec);
+
+	// If the error code is zero, then an error was not thrown.
+	// If zero, 
+#ifdef __WIN64
+	EXPECT_TRUE((ec.value() != 0) || (!result));
+#elif defined __linux__
+	EXPECT_TRUE((ec.value() == 0) && result);
+#endif
+
+	// Attempt to create the directory using ManagedPath.
+	// Ought to succeed.
+	EXPECT_TRUE(currdir.create_directory());
+
+	// Delete all directories created during this test.
+	fs::path remove_path(test_path_str[0]);
+	EXPECT_TRUE(fs::remove_all(remove_path));
+
 }
 
 TEST(ManagedPathTest, CreateDirectoryAlreadyExists)
@@ -145,16 +326,18 @@ TEST(ManagedPathTest, CreateDirectoryLongPath)
 	ManagedPath mp;
 	std::string root_dir_name = "test_dir";
 
-	// Create the part of the path that's less than 261 chars using std::filesystem.
+	// Create the part of the path that's less than ManagedPath::max_unamended_path_len_ + 1
+	// chars using std::filesystem.
 	mp /= ManagedPath(root_dir_name);
 	mp = mp / "this_is_part_of_a_very_long_path_section00" / "this_is_part_of_a_very_long_path_section01";
 	mp = mp / "this_is_part_of_a_very_long_path_section02" / "this_is_part_of_a_very_long_path_section03";
-	EXPECT_TRUE(mp.RawString().size() < 261);
+	EXPECT_TRUE(mp.RawString().size() <= ManagedPath::max_unamended_path_len_);
 
 	fs::path small_path(mp.RawString());
 	EXPECT_TRUE(fs::create_directories(small_path));
 
-	// Extend the path beyond 260 and create the final path.
+	// Extend the path beyond ManagedPath::max_unamended_path_len_ and 
+	// create the final path.
 	mp = mp / "this_is_part_of_a_very_long_path_section04";
 
 	// Code below fails with an exception on Windows.
@@ -176,46 +359,6 @@ TEST(ManagedPathTest, CreateDirectoryLongPath)
 	fs::path root_path(root_dir_name);
 	EXPECT_TRUE(fs::remove_all(root_path));
 }
-
-//TEST(ManagedPathTest, CreateDirectoryMultipleRapidCalls)
-//{
-//	std::string root_dir_name = "test_dir";
-//	
-//	// Create current working directory ManagedPath object
-//	ManagedPath root_dir;
-//
-//	// Append the test root dir.
-//	root_dir /= root_dir_name;
-//
-//	// Create the base dir.
-//	EXPECT_TRUE(root_dir.create_directory());
-//
-//	// Create a bunch of ManagedPath objects in preparation for
-//	// rapid directory creation.
-//	std::vector<ManagedPath> sub_dirs;
-//	std::string sub_dir_base_name = "subdir";
-//	int subdir_count = 500;
-//	for (int i = 0; i < subdir_count; i++)
-//	{
-//		sub_dirs.push_back(root_dir / (sub_dir_base_name + std::to_string(i)));
-//	}
-//
-//	// Create directories
-//	for (int i = 0; i < subdir_count; i++)
-//	{
-//		// I expected this to fail, but it didn't
-//		EXPECT_TRUE(fs::create_directory(fs::path(sub_dirs[i].RawString())));
-//
-//		// I expected that this call would not fail only if the 
-//		// code in ManagedPath::create_directory that allows multiple
-//		// fs::create_directory attempts is uncommented. This is not the case.
-//		//EXPECT_TRUE(sub_dirs[i].create_directory());
-//	}
-//
-//	// Remove all remaining dirs using std::filesystem::remove_all.
-//	fs::path root_path(root_dir_name);
-//	EXPECT_TRUE(fs::remove_all(root_path));
-//}
 
 TEST(ManagedPathTest, AppendOperator)
 {
