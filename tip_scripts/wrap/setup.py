@@ -17,6 +17,11 @@ vidextractdir_name = os.path.join('video', 'parquet')
 # Get absolute paths to src, binaries, libs and deps dirs.
 srcdir, bindir, libdir, depsdir = get_src_bin_lib_deps_dirs()
 
+# Set ethernet = False if ethernet libs are not present AND
+# cmake was configured with '-DETHERNET=OFF', otherwise 
+# set ethernet = True.
+ethernet = True
+
 # Configure relevant source files and include dirs.
 source_files1 = ['parse/parse_wrap.cpp']
 source_files2 = ['translate/translate_wrap.cpp']
@@ -53,17 +58,21 @@ if plat == 'windows':
     third_party_incl_dirs.extend([os.path.join(depsdir, 'yaml-cpp-yaml-cpp-0.6.0', 
                                       'yaml-cpp-yaml-cpp-0.6.0', 'include'),
                                   os.path.join(depsdir, 'libirig106', 'include'),
-                                  os.path.join(depsdir, 'arrow_library_dependencies', 'include'),
-                                  os.path.join(depsdir, 'libtins', 'include'),
-                                  os.path.join(depsdir, 'npcap', 'include'),
+                                  os.path.join(depsdir, 'arrow_library_dependencies', 'include')
                                   ])
+    if ethernet:
+        third_party_incl_dirs.extend([os.path.join(depsdir, 'libtins', 'include'),
+                                      os.path.join(depsdir, 'npcap', 'include'),
+                                      ])
     third_party_lib_dirs.extend([os.path.join(depsdir, 'yaml-cpp-yaml-cpp-0.6.0', 
                                       'yaml-cpp-yaml-cpp-0.6.0', 'build', 'Release'),
                                  os.path.join(depsdir, 'libirig106', 'lib'),
-                                 os.path.join(depsdir, 'arrow_library_dependencies', 'lib'),
-                                 os.path.join(depsdir, 'libtins', 'lib'),
-                                 os.path.join(depsdir, 'npcap', 'lib', 'x64'),
+                                 os.path.join(depsdir, 'arrow_library_dependencies', 'lib')
                                  ])
+    if ethernet:
+        third_party_lib_dirs.extend([os.path.join(depsdir, 'libtins', 'lib'),
+                                     os.path.join(depsdir, 'npcap', 'lib', 'x64')
+                                     ])
     third_party_libs.extend(['libyaml-cppmd',
                               'irig106',
                               'arrow_static', 'zlibstatic', 'liblz4_static', 'zstd_static',
@@ -71,16 +80,17 @@ if plat == 'windows':
                               'brotlidec-static', 'double-conversion', 'parquet_static',
                               'libboost_filesystem-vc140-mt-x64-1_67', 
                               'libboost_system-vc140-mt-x64-1_67',
-                              'libboost_regex-vc140-mt-x64-1_67',
-                              'tins',
-                              'Packet', 'wpcap', 'Ws2_32', 'Iphlpapi',
-        ])
+                              'libboost_regex-vc140-mt-x64-1_67'
+                              ])
+    if ethernet:
+        third_party_libs.extend(['tins', 'Packet', 'wpcap', 'Ws2_32', 'Iphlpapi'])
 
     # runtime_library_dirs keyword var does not work in windows. Use
     # setup data_files keyword instead.
-    d_files = [('', [os.path.join(depsdir, 'npcap', 'lib', 'x64', 'Packet.dll'), 
-                     os.path.join(depsdir, 'npcap', 'lib', 'x64', 'wpcap.dll')]),
-               ]
+    if ethernet:
+        d_files = [('', [os.path.join(depsdir, 'npcap', 'lib', 'x64', 'Packet.dll'), 
+                         os.path.join(depsdir, 'npcap', 'lib', 'x64', 'wpcap.dll')]),
+                         ]
 
 elif plat == 'linux':
     print('linux not ready yet. exiting.')
@@ -95,8 +105,9 @@ print('incl_dirs:', incl_dirs)
 print('libs:', libs)
 
 # Set macros specific to building TIP
-macros = [('PARQUET', None), ('ARROW_STATIC', None), ('PARQUET_STATIC', None),
-          ('TINS_STATIC', None)]
+macros = [('PARQUET', None), ('ARROW_STATIC', None), ('PARQUET_STATIC', None)]
+if ethernet:
+    macros.extend([('TINS_STATIC', None), ('ETHERNET_DATA', None)])
 
 extensions = [
               Extension('tip_parse',
