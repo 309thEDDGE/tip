@@ -27,7 +27,7 @@ Based on google c++ style guide https://google.github.io/styleguide/cppguide.htm
 * [ ] Classes and functions follow the format `ThisIsMyClassOrFunction`
 * [ ] Variables follow the format `my_variable`
 * [ ] Class member variables have a trailing underscore: `class_variable_`
-* [ ] Source and header files follow the format `source_file.cpp` `header_file.h`
+* [ ] Source and header files follow the format `my_class.cpp` and `my_class.h`
 
 ##### Standard types
 * [ ] Use the types in the sample code below, especially for function parameters and class variables
