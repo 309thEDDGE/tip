@@ -63,10 +63,10 @@ Based on google c++ style guide https://google.github.io/styleguide/cppguide.htm
     /*
         Description of what my function does
         Inputs:   big_input   -> A big number to count to
-                  name        -> The name of the numberrr
+                  name        -> The name of the number
         Returns:           
     */
-    int MyFunction(uint64_t big_input, string name)
+    int MyFunction(const uint64_t& big_input, const string& name)
     {
         for (uint64_t i=0; i < big_input; i++)
         {
