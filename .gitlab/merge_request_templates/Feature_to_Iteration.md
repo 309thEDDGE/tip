@@ -18,7 +18,7 @@ Based on google c++ style guide https://google.github.io/styleguide/cppguide.htm
 ##### Brace placement
 * [ ] All functions, `if` blocks and loops have braces
   - Exception: No braces are required for _very_ short `if` or loop statements on _one line_
-* [ ] Opening braces are directly below the `if`/`for`/`while`/`function`
+* [ ] Opening braces are directly below the `if`/`for`/`while` or function
 
 ##### Naming convention
 
@@ -39,6 +39,7 @@ Based on google c++ style guide https://google.github.io/styleguide/cppguide.htm
 ##### General
 * [ ] 80 characters per line (whenever possible)
 * [ ] Put all class functions and variables that don't need to be public in private
+* [ ] Pass function parameters by `const ref` if larger than one byte (or just `ref` if the function can change the value)
 * [ ] Try to increase speed for massively repeated code
 * [ ] Restructure code to be more testable (functions working as independently as possible) 
 * [ ] Restructure code to be more readable
