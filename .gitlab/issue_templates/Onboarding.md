@@ -8,6 +8,7 @@
 
 ###### Merge Request (MR)
 * [ ] Create a merge request from the issue
+  - NOTE: set the source branch for the MR to the current IterationX branch
 * [ ] Initialize the MR from this template: _Onboarding_
 * [ ] Complete each item in your MR
 * [ ] Mark the MR as ready (remove _Draft_)
