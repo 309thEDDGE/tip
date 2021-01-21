@@ -1,12 +1,15 @@
+###### Issue
 * [ ] Create an issue
   - Name: _<your_name> Onboarding_
   - Milestone: _<current iteration>_
   - Tags: _SODO_
-  
+* [ ] Initialize the issue with this template: _Onboarding_
 * [ ] Move the issue to _Doing_
+
+###### Merge Request (MR)
 * [ ] Create a merge request from the issue
-* [ ] Initialize the MR from this template: _Feature_to_Iteration_
-* [ ] Create a new file: `checklists/<your_name>_onboarding.md`
-* [ ] Copy the contents of checklists/templates/onboard.md into your new file
-* [ ] Complete each item in your new file
-  - Change `[ ]` to `[X]` for each item when complete
+* [ ] Initialize the MR from this template: _Onboarding_
+* [ ] Complete each item in your MR
+* [ ] Mark the MR as ready (remove _Draft_)
+* [ ] Have the MR reviewed
+* [ ] Have the MR merged by a Maintainer
