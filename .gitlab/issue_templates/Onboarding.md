@@ -1,8 +1,8 @@
 ###### Issue
 * [ ] Create an issue
-  - Name: _<your_name> Onboarding_
-  - Milestone: _<current iteration>_
-  - Tags: _SODO_
+  - [ ] Name the issue: _<your_name> Onboarding_
+  - [ ] Assign to Milestone: _choose the current iteration_
+  - [ ] Add labels: _SODO_
 * [ ] Initialize the issue with this template: _Onboarding_
 * [ ] Move the issue to _Doing_
 
