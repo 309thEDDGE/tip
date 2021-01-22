@@ -198,6 +198,7 @@ class E2EValidator(object):
 
             else:
                 print('!!! json data not found in parse_and_translate.py stdout. Exiting. !!!')
+                print('\n\nstdout:\n', stdout)
                 sys.exit(0)
 
 
