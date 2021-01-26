@@ -131,8 +131,8 @@ Navigate to `tip/bin` to call executables.
  **parquet\_video\_extractor.exe**: Only available when built with `-DVIDEO=ON`. Extract video transport stream data from parquet files. Exports TS files to a folder `<ch10path>/<ch10name>_video_TS` next to `<ch10path>/<ch10name>_video.parquet`  
  `parquet_video_extractor.exe [path to <ch10path>/<ch10name>_video.parquet folder]`  
 
-  **tip\_translate.exe**: Translate raw 1553 data from Parquet files to parquet tables of enginering units.  
-`tip_translate.exe [path to parsed 1553 data directory, output from *ch10parse.exe ('<ch10path>/<ch10name>_1553.parquet')] [path to ICD]`
+  **tip\_translate.exe**: Translate raw 1553 data from Parquet files to parquet tables of enginering units.  The translated output is placed in the same folder as the parsed Parquet data.
+`tip_translate.exe [path to parsed 1553 data directory, output from *ch10parse.exe ('<ch10path>/<ch10name>_1553.parquet')] [path to DTS]`
 
 ## Build Notes
 
@@ -185,7 +185,7 @@ v1.0.0
 * Reorganize directory structure for compatibility with build system
 * Humble beginnings of containerized TIP and a potential in-container RESTful API
 * Update deliverable script to avoid conflicts with other common Python packages
-* Capability to ingest YAML ICD
+* Capability to ingest YAML DTS
 
 v1.0.1
 * Rename scripts directory to tip_scripts

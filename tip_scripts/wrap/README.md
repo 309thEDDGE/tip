@@ -10,6 +10,9 @@ More information about the underlying libraries that are wrapped in the project 
 in the README in the _tip_ project.
 
 ## Build
+
+If the wheel has previously been built, remove the old wrap build artifacts before rebuilding the wheel.  To do this, delete the `build`, `dist`, and `tip.egg-info` directories.
+
 Use python's native setuptools to build a wheel
 
 `python setup.py bdist_wheel`
