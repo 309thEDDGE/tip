@@ -384,7 +384,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, std::vector<std::str
 		video->SetBinbuff(&bb);
 		video->set_truncate(false);
 #endif
-		// Close the handle was was originally created in the 
+		// Close the handle that was originally created in the 
 		// non append mode state
 		i106_status_ = I106C10Close(i106_handle_);
 		if (i106_status_ != I106Status::I106_OK)
