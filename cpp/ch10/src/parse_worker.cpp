@@ -394,7 +394,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, std::vector<std::str
 		}	
 		else
 		{
-			printf("\nDeleting Handle: %d\n",i106_handle_);
+			printf("\nDeleting Handle: %i\n",i106_handle_);
 		}
 
 	}
@@ -835,7 +835,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode, std::vector<std::str
 		}	
 		else
 		{
-			printf("\nDeleting Handle: %d\n",i106_handle_);
+			printf("\nDeleting Handle: %i\n",i106_handle_);
 		}
 	}
 #endif
