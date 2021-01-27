@@ -265,17 +265,16 @@ if __name__ == '__main__':
             raw_video_pq_dir = str(Path(ch10path).with_name(Path(ch10path).stem + '_video.parquet'))
             TS_path = str(Path(ch10path).with_name(Path(ch10path).stem + '_video_TS'))
 
+        # Create translated data output dir.
+        trans_1553_dir = Path(raw_1553_pq_dir)
+        trans_1553_dir = str(trans_1553_dir.with_name(trans_1553_dir.stem + '_translated'))
+
         if native_python:
-            ret = tip.parse(ch10path, args.out_path)
-            exec_duration[ch10path]['raw1553'] = ret[1]
-            
+            parsed_dir_exists = os.path.isdir(raw_1553_pq_dir)
+            if not parsed_dir_exists or args.overwrite:
+                ret = tip.parse(ch10path, args.out_path)
+                exec_duration[ch10path]['raw1553'] = ret[1]
         else:
-
-            # Create translated data output dir.
-            trans_1553_dir = Path(raw_1553_pq_dir)
-            trans_1553_dir = str(trans_1553_dir.with_name(trans_1553_dir.stem + '_translated'))
-            #print(trans_1553_dir)
-
             # 
             # Set up Parser call.
             #
@@ -325,8 +324,10 @@ if __name__ == '__main__':
         # Set up Translator call.
         #
         if native_python:
-            ret = tip.translate(raw_1553_pq_dir, args.icd_path)
-            exec_duration[ch10path]['transl1553'] = ret[1]
+            trans_dir_exists = os.path.isdir(trans_1553_dir)
+            if not trans_dir_exists or args.overwrite:
+                ret = tip.translate(raw_1553_pq_dir, args.icd_path)
+                exec_duration[ch10path]['transl1553'] = ret[1]
             
         else:
             trans_call = RunCLProcess()
@@ -384,7 +385,9 @@ if __name__ == '__main__':
         #
         if args.video and not args.no_ts:
             if native_python:
-                ret = tip.extract_video(raw_video_pq_dir)
+                video_extr_dir_exists = os.path.isdir(TS_path)
+                if not video_extr_dir_exists or args.overwrite:
+                    ret = tip.extract_video(raw_video_pq_dir)
             else:
                 video_extr = RunCLProcess()
 
@@ -423,7 +426,5 @@ if __name__ == '__main__':
         print('\njson:')
         print('[[{:s}]]'.format(json.dumps(exec_duration)))
         #json.dump(exec_duration, sys.stdout)
-
-
 
     sys.exit(0)
