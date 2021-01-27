@@ -80,7 +80,7 @@ main() {
 	$CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
 
 	echo "Running '$MAKE'"
-	$MAKE install
+	$MAKE -v install
 	# move bin folder to build for use in later pipeline stages
 	cd $BASE_DIR
 	if [ -d bin ] ; then 
