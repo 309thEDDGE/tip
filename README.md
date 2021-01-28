@@ -120,6 +120,8 @@ If the `parse_and_translate.py` script is used, relevant config files are automa
 ### Call Executables Directly
 
 #### --Standard executables
+Navigate to `tip/bin` to call executables.
+
 **tip\_parse.exe**: Parse ch10 file into intermediate Parquet files with raw 1553 payload information. If the second command line argument is not specified, the output parquet path is the folder containing the ch10 provided in the first argument.  
  `tip_parse.exe [path to \*.ch10 file] [optional argument, output directory]`  
 
