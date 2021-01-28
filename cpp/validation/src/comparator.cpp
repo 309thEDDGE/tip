@@ -389,3 +389,111 @@ bool Comparator::CompareBool(int column, bool is_list)
 	}
 	return true;
 }
+
+template<>
+bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
+	int& size1,
+	std::vector<double>& vec2,
+	int& size2,
+	int column)
+{
+	compare_vec_result_ = true;
+	//double hunnet = 100.0;
+	//double absperdiff = 0.0;
+	//double small = DBL_MAX;
+	// Note the conversion to uint8_t allows for comparisons of NaN
+	// in the case of float and double
+	// If nothing exists in one of the vectors
+	// comparison should be false
+	if (size1 == 0 || size2 == 0)
+	{
+		begin_pos_1_ = 0;
+		begin_pos_2_ = 0;
+		size1 = 0;
+		size2 = 0;
+		return false;
+	}
+	// If both vectors are the same size
+	// compare both and reset all positions
+	if (size1 == size2)
+	{
+		for (int i = 0; i < size2; i++)
+		{
+			if (vec2[begin_pos_2_ + i] != vec1[begin_pos_1_ + i])
+			{
+				
+				printf("vec1: %f, vec2: %f\n", vec1[begin_pos_1_ + i], vec2[begin_pos_2_ + i]);
+				/*absperdiff = abs((vec1[begin_pos_1_ + i] - vec2[i]) * hunnet
+					/ vec1[begin_pos_1_ + i]);
+				if (absperdiff < small)
+				{
+					printf("doubleval: diff is small, log10(abs per diff) = %04.1f\n",
+						log10(absperdiff));
+				}*/
+				if(!(isnan(vec2[begin_pos_2_ + i]) && isnan(vec1[begin_pos_1_ + i])))
+					compare_vec_result_ = false;
+			}
+		}
+		compared_count_[column] = compared_count_[column] + size1;
+		begin_pos_1_ = 0;
+		begin_pos_2_ = 0;
+		size1 = 0;
+		size2 = 0;
+	}
+	// If vector 1 is bigger than vector 2
+	// compare against vector 2 and prepare
+	// vector 1 position for the next comparison
+	else if (size1 > size2)
+	{
+		for (int i = 0; i < size2; i++)
+		{
+			if (vec2[begin_pos_2_ + i] != vec1[begin_pos_1_ + i])
+			{
+
+				printf("vec1: %f, vec2: %f\n", vec1[begin_pos_1_ + i], vec2[begin_pos_2_ + i]);
+				/*absperdiff = abs((vec1[begin_pos_1_ + i] - vec2[i]) * hunnet
+					/ vec1[begin_pos_1_ + i]);
+				if (absperdiff < small)
+				{
+					printf("doubleval: diff is small, log10(abs per diff) = %04.1f\n",
+						log10(absperdiff));
+				}*/
+				if (!(isnan(vec2[begin_pos_2_ + i]) && isnan(vec1[begin_pos_1_ + i])))
+					compare_vec_result_ = false;
+			}
+		}
+		compared_count_[column] = compared_count_[column] + size2;
+		size1 = size1 - size2;
+		begin_pos_1_ += size2;
+		begin_pos_2_ = 0;
+		size2 = 0;
+	}
+	// If vector 2 is bigger than vector 1
+	// compare against vector 1 and prepare
+	// vector 2 position for the next comparison
+	else
+	{
+		for (int i = 0; i < size1; i++)
+		{
+			if (vec1[begin_pos_1_ + i] != vec2[begin_pos_2_ + i])
+			{
+				printf("vec1: %f, vec2: %f\n", vec1[begin_pos_1_ + i], vec2[begin_pos_2_ + i]);
+				/*absperdiff = abs((vec1[i] - vec2[begin_pos_2_ + i]) * hunnet
+					/ vec1[i]);
+				if (absperdiff < small)
+				{
+					printf("doubleval: diff is small, log10(abs per diff) = %04.1f\n",
+						log10(absperdiff));
+				}*/
+				if (!(isnan(vec1[begin_pos_1_ + i]) && isnan(vec2[begin_pos_2_ + i])))
+					compare_vec_result_ = false;
+			}
+		}
+		compared_count_[column] = compared_count_[column] + size1;
+		size2 = size2 - size1;
+		begin_pos_2_ += size1;
+		begin_pos_1_ = 0;
+		size1 = 0;
+	}
+	return compare_vec_result_;
+}
