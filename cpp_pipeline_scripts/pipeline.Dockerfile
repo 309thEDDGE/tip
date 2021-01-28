@@ -25,3 +25,11 @@ ADD . /deps
 
 RUN	mkdir -p /deps/alkemist-lfr/lib \
 	&& mv ${LFR_ROOT_PATH}/lib/run/liblfr.a /deps/alkemist-lfr/lib
+
+# Install python development files
+RUN dnf install -y platform-python-devel
+
+# Install python wheel tools for building wheel in pytip
+RUN pip3.6 install wheel
+
+CMD ['/bin/bash']

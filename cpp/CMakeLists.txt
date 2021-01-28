@@ -17,9 +17,10 @@ set(ch10_main_dir ${ch10_lib_name}/${main_dir_name})
 #########################################################
 #                   Build/link util lib
 #########################################################
-set(util_lib_name "util")
-set(util_src_dir ${util_lib_name}/${source_dir_name}) # util/src
-set(util_inc_dir ${util_lib_name}/${include_dir_name})
+set(util_lib_name "tiputil")
+set(util_dir_name "util")
+set(util_src_dir ${util_dir_name}/${source_dir_name}) # util/src
+set(util_inc_dir ${util_dir_name}/${include_dir_name})
 add_library(${util_lib_name} STATIC
             ${util_src_dir}/binbuff.cpp              ${util_inc_dir}/binbuff.h
             ${util_src_dir}/data_organization.cpp    ${util_inc_dir}/data_organization.h

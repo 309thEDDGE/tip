@@ -1,5 +1,6 @@
 set(CMAKE_GENERATOR "Unix Makefiles")
 set(CMAKE_CXX_COMPILER "/usr/bin/g++")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 ####################
 message(STATUS "deps_dir: ${deps_dir}")
 
@@ -86,7 +87,7 @@ else()
     set(brotlienc_lib_name "${arrow_lib_dir}/libbrotlienc-static.a")
     set(doubleconv_lib_name "${arrow_lib_dir}/libdouble-conversion.a")
     set(glog_lib_name "${arrow_lib_dir}/libglog.a")
-    set(je_lib_name "${arrow_lib_dir}/libjemalloc.a")
+    set(je_lib_name "${arrow_lib_dir}/libjemalloc_pic.a")
     set(lz4_lib_name "${arrow_lib_dir}/liblz4.a")
     set(parquet_lib_name  "${arrow_lib_dir}/libparquet.a")
     set(snappy_lib_name "${arrow_lib_dir}/libsnappy.a")

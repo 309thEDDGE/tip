@@ -2,6 +2,7 @@
 #define PARSER_CONFIG_PARAMS_H
 
 #include "yaml_reader.h"
+#include <climits>
 #include <string>
 #include <thread>
 
