@@ -8,7 +8,7 @@ class ValidationBase(object):
         self.test_path = None
         self.truth_path = None
         self.test_passed = None
-        self.regex_translated_1553_msg_dir = re.compile(".+_1553_translated.+parquet")
+        self.regex_translated_1553_msg_dir = re.compile(".+_1553_translated_.+parquet")
         self.regex_raw_1553_dir = re.compile(".+_1553.parquet")
         self.regex_raw_video_dir = re.compile(".+_video.parquet")
         self.ready_to_validate = False

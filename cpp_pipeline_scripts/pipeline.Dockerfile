@@ -32,4 +32,4 @@ RUN dnf install -y platform-python-devel
 # Install python wheel tools for building wheel in pytip
 RUN pip3.6 install wheel
 
-CMD ['/bin/bash']
+CMD ["/bin/bash"]
