@@ -1,10 +1,10 @@
 ---
 translatable_message_definitions:
   msg_1:
-    msg_data: {command: [0, 45678], lru_addr: [0, 24], lru_subaddr: [0, 1], lru_name: [LRU_1, LRU_2], bus: bus_1, wrdcnt: 14, rate: 9.5, mode_code: False, desc: "LRU_2 TRANSPONDER MODE CONTROL"}
+    msg_data: {command: [0, 45678], lru_addr: [0, 24], lru_subaddr: [0, 1], lru_name: [bus_controller_name, LRU_2], bus: bus_1, wrdcnt: 20, rate: 9.5, mode_code: False, desc: "LRU_2 TRANSPONDER MODE CONTROL"}
     word_elem:
-      msg_1-17: {off: 14, cnt: 3, schema: SIGNED32, msbval: 16, desc: "MODE 2", uom: "NONE", multifmt: False, class: 0}
-      msg_1-20: {off: 20, cnt: 4, schema: SIGNED32, msbval: 1024, desc: "MODE 2", uom: "NONE", multifmt: False, class: 0}
+      msg_1-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 16, desc: "MODE 2", uom: "NONE", multifmt: False, class: 0}
+      msg_1-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1024, desc: "MODE 2", uom: "NONE", multifmt: False, class: 0}
     bit_elem:
       msg_1-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 16, desc: "MODE 2/B CODE BITS 1 TO 5", uom: "NONE", multifmt: False, class: 0, msb: 1, lsb: 5, bitcnt: 5}
       msg_1-0206: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 128, desc: "MODE 2/B CODE BITS 6 TO 13", uom: "NONE", multifmt: False, class: 0, msb: 6, lsb: 13, bitcnt: 8}
