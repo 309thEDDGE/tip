@@ -12,8 +12,8 @@ std::vector<std::string> ParseText::Split(std::string input_string, const char& 
 		return return_vec;
 
 	// If new line character at the end exists, remove it
-	if (input_string[input_string.length() - 1] == '\n')
-		input_string.erase(input_string.length() - 1,1);
+	if ((input_string.back() == '\n') || (input_string.back() == '\r'))
+	  input_string.pop_back();
 
 	/*size_t pos = input_string.find('\n');
 	if ((pos + 1) == input_string.length())
@@ -41,7 +41,7 @@ std::vector<std::string> ParseText::Split(std::string input_string, const char& 
 		std::vector<std::string> cols = { "Index", "SplitElem" };
 		it.PrintMapWithHeader_KeyToValue(quoted_sections, cols, "Quoted Sections");
 		it.PrintMapWithHeader_KeyToValue(unquoted_sections, cols, "Unquoted Sections");
-	}*/
+		}*/
 
 	if (have_quoted_sections)
 	{
