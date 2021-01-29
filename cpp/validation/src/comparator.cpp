@@ -398,9 +398,7 @@ bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
 	int column)
 {
 	compare_vec_result_ = true;
-	//double hunnet = 100.0;
-	//double absperdiff = 0.0;
-	//double small = DBL_MAX;
+	
 	// Note the conversion to uint8_t allows for comparisons of NaN
 	// in the case of float and double
 	// If nothing exists in one of the vectors
@@ -421,15 +419,6 @@ bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
 		{
 			if (vec2[begin_pos_2_ + i] != vec1[begin_pos_1_ + i])
 			{
-				
-				printf("vec1: %f, vec2: %f\n", vec1[begin_pos_1_ + i], vec2[begin_pos_2_ + i]);
-				/*absperdiff = abs((vec1[begin_pos_1_ + i] - vec2[i]) * hunnet
-					/ vec1[begin_pos_1_ + i]);
-				if (absperdiff < small)
-				{
-					printf("doubleval: diff is small, log10(abs per diff) = %04.1f\n",
-						log10(absperdiff));
-				}*/
 				if(!(std::isnan(vec2[begin_pos_2_ + i]) && std::isnan(vec1[begin_pos_1_ + i])))
 					compare_vec_result_ = false;
 			}
@@ -449,15 +438,6 @@ bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
 		{
 			if (vec2[begin_pos_2_ + i] != vec1[begin_pos_1_ + i])
 			{
-
-				printf("vec1: %f, vec2: %f\n", vec1[begin_pos_1_ + i], vec2[begin_pos_2_ + i]);
-				/*absperdiff = abs((vec1[begin_pos_1_ + i] - vec2[i]) * hunnet
-					/ vec1[begin_pos_1_ + i]);
-				if (absperdiff < small)
-				{
-					printf("doubleval: diff is small, log10(abs per diff) = %04.1f\n",
-						log10(absperdiff));
-				}*/
 				if (!(std::isnan(vec2[begin_pos_2_ + i]) && std::isnan(vec1[begin_pos_1_ + i])))
 					compare_vec_result_ = false;
 			}
@@ -477,14 +457,6 @@ bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
 		{
 			if (vec1[begin_pos_1_ + i] != vec2[begin_pos_2_ + i])
 			{
-				printf("vec1: %f, vec2: %f\n", vec1[begin_pos_1_ + i], vec2[begin_pos_2_ + i]);
-				/*absperdiff = abs((vec1[i] - vec2[begin_pos_2_ + i]) * hunnet
-					/ vec1[i]);
-				if (absperdiff < small)
-				{
-					printf("doubleval: diff is small, log10(abs per diff) = %04.1f\n",
-						log10(absperdiff));
-				}*/
 				if (!(std::isnan(vec1[begin_pos_1_ + i]) && std::isnan(vec2[begin_pos_2_ + i])))
 					compare_vec_result_ = false;
 			}
