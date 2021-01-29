@@ -430,7 +430,7 @@ bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
 					printf("doubleval: diff is small, log10(abs per diff) = %04.1f\n",
 						log10(absperdiff));
 				}*/
-				if(!(isnan(vec2[begin_pos_2_ + i]) && isnan(vec1[begin_pos_1_ + i])))
+				if(!(std::isnan(vec2[begin_pos_2_ + i]) && std::isnan(vec1[begin_pos_1_ + i])))
 					compare_vec_result_ = false;
 			}
 		}
@@ -458,7 +458,7 @@ bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
 					printf("doubleval: diff is small, log10(abs per diff) = %04.1f\n",
 						log10(absperdiff));
 				}*/
-				if (!(isnan(vec2[begin_pos_2_ + i]) && isnan(vec1[begin_pos_1_ + i])))
+				if (!(std::isnan(vec2[begin_pos_2_ + i]) && std::isnan(vec1[begin_pos_1_ + i])))
 					compare_vec_result_ = false;
 			}
 		}
@@ -485,7 +485,7 @@ bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
 					printf("doubleval: diff is small, log10(abs per diff) = %04.1f\n",
 						log10(absperdiff));
 				}*/
-				if (!(isnan(vec1[begin_pos_1_ + i]) && isnan(vec2[begin_pos_2_ + i])))
+				if (!(std::isnan(vec1[begin_pos_1_ + i]) && std::isnan(vec2[begin_pos_2_ + i])))
 					compare_vec_result_ = false;
 			}
 		}
