@@ -11,7 +11,7 @@ in the README in the _tip_ project.
 
 ## Build
 
-If the wheel has previously been built, remove the old wrap build artifacts before rebuilding the wheel.  To do this, delete the `build`, `dist`, and `tip.egg-info` directories.  Also unstall the old wheel: `pip uninstall dist/<wheel file name>.whl`
+If the wheel has previously been built, remove the old wrap build artifacts before rebuilding the wheel.  To do this, delete the `build`, `dist`, and `tip.egg-info` directories.  Also unistall the old wheel: `pip uninstall tip`
 
 Use python's native setuptools to build a wheel
 
