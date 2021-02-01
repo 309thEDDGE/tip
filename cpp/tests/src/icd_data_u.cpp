@@ -126,6 +126,32 @@ TEST(ICDElementTest, FillInvalidBitValues)
 		"description 5,17374824.000000000000,NONE";
 	EXPECT_FALSE(ice.Fill(test_str));
 }
+/*
+	// Elements 0, 1, 5, 6, 8, 22, 24 are string data
+	// 
+	std::string test_str = 
+		"BL22U,BL22U-20,00000,39030,22,"
+		"BD3,MIVU,23,ORT,19,"
+		"00,03,12.50,19,02,"
+		"03,0,0,02,00,"
+		"00,0,description 5,17374824.000000000000,NONE";
+*/
+TEST(ICDDataTest, FillElementsAcceptsPeriodAsStringElement)
+{
+	// Elements 0, 1, 5, 6, 8, 22, 24 are string data
+	// 
+	std::string test_str = 
+		".,.,00000,39030,22,"
+		".,.,23,.,19,"
+		"00,03,12.50,19,02,"
+		"03,0,0,02,00,"
+		"00,0,.,17374824.000000000000,.";
+		
+	ICDElement ice;
+	ParseText pt;
+	std::vector<std::string> split_data = pt.Split(test_str, ',');
+	ASSERT_TRUE(ice.FillElements(split_data));
+}
 
 TEST(ICDDataTest, IngestICDTextFileLinesEmptyVector)
 {
