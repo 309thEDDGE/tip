@@ -419,6 +419,13 @@ bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
 		{
 			if (vec2[begin_pos_2_ + i] != vec1[begin_pos_1_ + i])
 			{
+				// NaN checks are ignored because NaNs are, by definition, not comparable,
+				// or at least will always be compared as unequal. In the context of this code,
+				// the purpose of which is to compare two parquet files and indicate equality,
+				// the comparison of NaNs will indicate that the two files are unequal always. 
+				// We do not wish to indicate inequality in this case, so if the values in 
+				// comparison are not equal and at least one is not a NaN, then indicate
+				// inequality.
 				if(!(std::isnan(vec2[begin_pos_2_ + i]) && std::isnan(vec1[begin_pos_1_ + i])))
 					compare_vec_result_ = false;
 			}
