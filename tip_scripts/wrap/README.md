@@ -27,7 +27,7 @@ mentioned in the name of the wheel and the same OS and processor architecture.
 
 `pip install <wheel name>`
 
-`pip uninstall <wheel name>`
+`pip uninstall tip`
 
 ## Usage
 View _tip.py_ to learn about the function signature relative to the three primary
