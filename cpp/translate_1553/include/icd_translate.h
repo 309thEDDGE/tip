@@ -726,6 +726,39 @@ template<typename OutType>
 void ICDTranslate::TranslateFloat64IEEE(const std::vector<uint16_t>& input_words,
 	std::vector<OutType>& output_eu)
 {
+	/*
+	Note about NaNs: During comparison of linux- and windows-generated 
+	translated pq files from the same commit it was discovered that the
+	NaNs are not of the same variety and thus are represented by different
+	bits in the pq file. It appears that linux is better at encoding the type
+	of NaN, neg or pos, etc. 
+
+	The pq comparator code uses std::equal on a arrays of data casted
+	to uint8_t as a general solution for comparing columns of different 
+	data types. In the case of different NaNs, which are by definition not
+	comparable and therefore shouldn't be compared, the comparison fails 
+	because the underlying bits of the NaN
+	representations are different. We can solve this in two ways:
+
+	1) catch the presence of NaN in the for loop below, set the value to some portable and
+	generic version of NaN such that the bits are the same and the comparator 
+	does not fail. Note again that NaNs can't be compared, so the presence of 
+	NaNs in a truth and test data set in the same row ought not to be compared
+	as unequal in the context of checking if the contents of two pq files are 
+	dissimilar, in which case we wish NaNs to compare as equal and not indicate
+	that the two data sets are different. This option was not chosen because
+	we want to avoid another logical clause in the for loop to maximize execution
+	efficiency.
+
+	2) Do not rely on the generic comparison of uint8_t/bytes in the
+	pq comparator code and specialize the function for double type. In the 
+	specialization, loop over the columns of data being compared and skip
+	comparison if std::isnan is true for the data in both columns. We have
+	currently chosen this option and implemented the change in comparator.cpp.
+
+	The same consideration may come up for float type. It is not implemented 
+	for float currently. 
+	*/
 	double data_val = 0.;
 	uint16_t* ui16ptr = (uint16_t*)&data_val;
 	// No scale for double.
