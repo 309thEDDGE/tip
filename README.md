@@ -131,7 +131,7 @@ Navigate to `tip/bin` to call executables.
  **parquet\_video\_extractor.exe**: Only available when built with `-DVIDEO=ON`. Extract video transport stream data from parquet files. Exports TS files to a folder `<ch10path>/<ch10name>_video_TS` next to `<ch10path>/<ch10name>_video.parquet`  
  `parquet_video_extractor.exe [path to <ch10path>/<ch10name>_video.parquet folder]`  
 
-  **tip\_translate.exe**: Translate raw 1553 data from Parquet files to parquet tables of enginering units.  The translated output is placed in the same folder as the parsed Parquet data.  The second argument is a DTS file; there is a sample at Sample_DTS.yaml.
+  **tip\_translate.exe**: Translate raw 1553 data from Parquet files to parquet tables of enginering units.  The translated output is placed in the same folder as the parsed Parquet data.  The second argument is a DTS file, which stands for "Data Translation Specification"; this file is based on the Comet Flat Files, which come from the ICD specifications, but the DTS file is in a machine readable format. There is a sample at Sample_DTS.yaml.
 `tip_translate.exe [path to parsed 1553 data directory, output from *ch10parse.exe ('<ch10path>/<ch10name>_1553.parquet')] [path to DTS]`
 
 ## Build Notes
