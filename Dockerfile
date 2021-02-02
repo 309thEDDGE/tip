@@ -16,8 +16,4 @@ COPY tip_scripts/__init__.py ./
 WORKDIR /app
 COPY parse_and_translate.py ./
 
-RUN chown -R appuser:appuser /app
-
-USER appuser
-
-CMD ["bash"]
+CMD ["/bin/bash"]
