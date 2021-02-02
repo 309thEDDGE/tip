@@ -398,7 +398,7 @@ bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
 	int column)
 {
 	compare_vec_result_ = true;
-	
+
 	// Note the conversion to uint8_t allows for comparisons of NaN
 	// in the case of float and double
 	// If nothing exists in one of the vectors
@@ -415,22 +415,7 @@ bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
 	// compare both and reset all positions
 	if (size1 == size2)
 	{
-		for (int i = 0; i < size2; i++)
-		{
-			if (vec2[begin_pos_2_ + i] != vec1[begin_pos_1_ + i])
-			{
-				// NaN checks are ignored because NaNs are, by definition, not comparable,
-				// or at least will always be compared as unequal. In the context of this code,
-				// the purpose of which is to compare two parquet files and indicate equality,
-				// the comparison of NaNs will indicate that the two files are unequal always. 
-				// We do not wish to indicate inequality in this case, so if the values in 
-				// comparison are not equal and at least one is not a NaN, then indicate
-				// inequality.
-				if(!(std::isnan(vec2[begin_pos_2_ + i]) && std::isnan(vec1[begin_pos_1_ + i])))
-					compare_vec_result_ = false;
-			}
-		}
-		compared_count_[column] = compared_count_[column] + size1;
+		compare_vec_result_ = ComparisonLoop(vec1, vec2, size2, column);
 		begin_pos_1_ = 0;
 		begin_pos_2_ = 0;
 		size1 = 0;
@@ -441,15 +426,7 @@ bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
 	// vector 1 position for the next comparison
 	else if (size1 > size2)
 	{
-		for (int i = 0; i < size2; i++)
-		{
-			if (vec2[begin_pos_2_ + i] != vec1[begin_pos_1_ + i])
-			{
-				if (!(std::isnan(vec2[begin_pos_2_ + i]) && std::isnan(vec1[begin_pos_1_ + i])))
-					compare_vec_result_ = false;
-			}
-		}
-		compared_count_[column] = compared_count_[column] + size2;
+		compare_vec_result_ = ComparisonLoop(vec1, vec2, size2, column);
 		size1 = size1 - size2;
 		begin_pos_1_ += size2;
 		begin_pos_2_ = 0;
@@ -460,15 +437,7 @@ bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
 	// vector 2 position for the next comparison
 	else
 	{
-		for (int i = 0; i < size1; i++)
-		{
-			if (vec1[begin_pos_1_ + i] != vec2[begin_pos_2_ + i])
-			{
-				if (!(std::isnan(vec1[begin_pos_1_ + i]) && std::isnan(vec2[begin_pos_2_ + i])))
-					compare_vec_result_ = false;
-			}
-		}
-		compared_count_[column] = compared_count_[column] + size1;
+		compare_vec_result_ = ComparisonLoop(vec1, vec2, size1, column);
 		size2 = size2 - size1;
 		begin_pos_2_ += size1;
 		begin_pos_1_ = 0;
@@ -476,3 +445,4 @@ bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
 	}
 	return compare_vec_result_;
 }
+
