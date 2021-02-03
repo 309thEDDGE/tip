@@ -121,20 +121,10 @@ bool ICDElement::FillElements(const std::vector<std::string>& input_str_vec)
 
 	// string, msg_name
 	curr_str = input_str_vec[0];
-	if (pt.TextIsInteger(curr_str) || pt.TextIsFloat(curr_str))
-	{
-		printf("ICDElement::FillElements(): returning at msg_name\n");
-		return false;
-	}
 	msg_name_ = curr_str;
 
 	// string, elem_name
 	curr_str = input_str_vec[1];
-	if (pt.TextIsInteger(curr_str) || pt.TextIsFloat(curr_str))
-	{
-		printf("ICDElement::FillElements(): returning at elem_name\n");
-		return false;
-	}
 	elem_name_ = curr_str;
 
 	// uint16, xmit_word
@@ -166,20 +156,10 @@ bool ICDElement::FillElements(const std::vector<std::string>& input_str_vec)
 
 	// string, bus_name
 	curr_str = input_str_vec[5];
-	if (pt.TextIsInteger(curr_str) || pt.TextIsFloat(curr_str))
-	{
-		printf("ICDElement::FillElements(): returning at bus_name\n");
-		return false;
-	}
 	bus_name_ = curr_str;
 
 	// string, xmit_lru_name_
 	curr_str = input_str_vec[6];
-	if (pt.TextIsInteger(curr_str) || pt.TextIsFloat(curr_str))
-	{
-		printf("ICDElement::FillElements(): returning at xmit_lru_name\n");
-		return false;
-	}
 	xmit_lru_name_ = curr_str;
 
 	// uint8, xmit_lru_addr_
@@ -193,11 +173,6 @@ bool ICDElement::FillElements(const std::vector<std::string>& input_str_vec)
 
 	// string, dest_lru_name_
 	curr_str = input_str_vec[8];
-	if (pt.TextIsInteger(curr_str) || pt.TextIsFloat(curr_str))
-	{
-		printf("ICDElement::FillElements(): returning at dest_lru_name\n");
-		return false;
-	}
 	dest_lru_name_ = curr_str;
 
 	// uint8, dest_lru_addr_
@@ -350,11 +325,6 @@ bool ICDElement::FillElements(const std::vector<std::string>& input_str_vec)
 
 	// string, description_
 	curr_str = input_str_vec[22];
-	if (pt.TextIsInteger(curr_str) || pt.TextIsFloat(curr_str))
-	{
-		printf("ICDElement::FillElements(): returning at description\n");
-		return false;
-	}
 	description_ = curr_str;
 
 	// double, msb_val_
@@ -368,11 +338,6 @@ bool ICDElement::FillElements(const std::vector<std::string>& input_str_vec)
 
 	// string, uom_
 	curr_str = input_str_vec[24];
-	if (pt.TextIsInteger(curr_str) || pt.TextIsFloat(curr_str))
-	{
-		printf("ICDElement::FillElements(): returning at uom\n");
-		return false;
-	}
 	uom_ = curr_str;
 
 	return true;

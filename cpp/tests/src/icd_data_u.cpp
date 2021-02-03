@@ -73,13 +73,6 @@ TEST(ICDElementTest, FillIncorrectElementTypes)
 		"description 5,17374824.000000000000,NONE";
 	ASSERT_FALSE(ice.Fill(test_str));
 
-	// Second element should be a string and not convertible
-	// to an int or float
-	test_str = "BL22U,20,00000,39030,22,BD3,"
-		"MIVU,23,ORT,19,00,03,12.50,19,02,03,0,0,02,00,00,0,"
-		"description 5,17374824.000000000000,NONE,";
-	ASSERT_FALSE(ice.Fill(test_str));
-
 	// Element that is integer in the first test (19),
 	// is float here, which is incorrect.
 	test_str = "BL22U,BL22U-20,00000,39030,22,BD3,"
@@ -126,26 +119,17 @@ TEST(ICDElementTest, FillInvalidBitValues)
 		"description 5,17374824.000000000000,NONE";
 	EXPECT_FALSE(ice.Fill(test_str));
 }
-/*
-	// Elements 0, 1, 5, 6, 8, 22, 24 are string data
-	// 
-	std::string test_str = 
-		"BL22U,BL22U-20,00000,39030,22,"
-		"BD3,MIVU,23,ORT,19,"
-		"00,03,12.50,19,02,"
-		"03,0,0,02,00,"
-		"00,0,description 5,17374824.000000000000,NONE";
-*/
-TEST(ICDDataTest, FillElementsAcceptsPeriodAsStringElement)
+
+TEST(ICDDataTest, FillElementsAcceptsNumberAsStringElement)
 {
 	// Elements 0, 1, 5, 6, 8, 22, 24 are string data
-	// 
+
 	std::string test_str = 
-		".,.,00000,39030,22,"
-		".,.,23,.,19,"
+		"40,3.14,00000,39030,22,"
+		"8000,5.5,23,42,19,"
 		"00,03,12.50,19,02,"
 		"03,0,0,02,00,"
-		"00,0,.,17374824.000000000000,.";
+		"00,0,89,17374824.000000000000,80.0";
 		
 	ICDElement ice;
 	ParseText pt;
