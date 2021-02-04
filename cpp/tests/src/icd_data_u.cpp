@@ -122,19 +122,19 @@ TEST(ICDElementTest, FillInvalidBitValues)
 
 TEST(ICDDataTest, FillElementsAcceptsNumberAsStringElement)
 {
-	// Elements 0, 1, 5, 6, 8, 22, 24 are string data
+	// Fields 0, 1, 5, 6, 8, 22, 24 are string data
 
-	std::string test_str = 
+	std::string test_string = 
 		"40,3.14,00000,39030,22,"
 		"8000,5.5,23,42,19,"
 		"00,03,12.50,19,02,"
 		"03,0,0,02,00,"
 		"00,0,89,17374824.000000000000,80.0";
 		
-	ICDElement ice;
-	ParseText pt;
-	std::vector<std::string> split_data = pt.Split(test_str, ',');
-	ASSERT_TRUE(ice.FillElements(split_data));
+	ICDElement icd_element;
+	ParseText parser;
+	std::vector<std::string> fields = parser.Split(test_string, ',');
+	ASSERT_TRUE(icd_element.FillElements(fields));
 }
 
 TEST(ICDDataTest, IngestICDTextFileLinesEmptyVector)
