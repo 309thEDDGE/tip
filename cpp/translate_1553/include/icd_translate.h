@@ -733,7 +733,7 @@ void ICDTranslate::TranslateFloat64IEEE(const std::vector<uint16_t>& input_words
 	bits in the pq file. It appears that linux is better at encoding the type
 	of NaN, neg or pos, etc. 
 
-	The pq comparator code uses std::equal on a arrays of data casted
+	The pq comparator code uses std::equal on arrays of data casted
 	to uint8_t as a general solution for comparing columns of different 
 	data types. In the case of different NaNs, which are by definition not
 	comparable and therefore shouldn't be compared, the comparison fails 

@@ -115,7 +115,7 @@ public:
 	/*
 		Loop over vectors vec1 and vec2, comparing row_count 
 		rows. Comparison indices of vec1 and vec2 start at 
-		begin_pos_1_ and begin_pos_1_, respectively. Used
+		begin_pos_1_ and begin_pos_2_, respectively. Used
 		primarily for comparing float values.
 
 		Return: False -> If any rows do not equate and both rows
@@ -321,6 +321,7 @@ bool Comparator::ComparisonLoop(const std::vector<T>& vec1,
 	int column)
 {
 	bool comparison_result = true;
+	bool both_are_nan = false;
 	for (int i = 0; i < row_count; i++)
 	{
 		if (vec2[begin_pos_2_ + i] != vec1[begin_pos_1_ + i])
@@ -332,7 +333,8 @@ bool Comparator::ComparisonLoop(const std::vector<T>& vec1,
 			// We do not wish to indicate inequality in this case, so if the values in 
 			// comparison are not equal and at least one is not a NaN, then indicate
 			// inequality.
-			if (!(std::isnan(vec2[begin_pos_2_ + i]) && std::isnan(vec1[begin_pos_1_ + i])))
+			both_are_nan = std::isnan(vec2[begin_pos_2_ + i]) && std::isnan(vec1[begin_pos_1_ + i]);
+			if(!both_are_nan)
 				comparison_result = false;
 		}
 	}
