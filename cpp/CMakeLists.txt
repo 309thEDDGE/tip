@@ -233,6 +233,29 @@ target_link_libraries(${ch10parse_lib_name} PUBLIC
     )
 
 #########################################################
+#          Build/link ch10 parser rewrite lib
+#########################################################
+set(parserw_lib_name "")
+set(parserw_dir_name "")
+if(parser_rewrite)
+    set(parserw_lib_name "parserw")
+    set(parserw_dir_name "parser_rewrite")
+    set(parserw_src_dir ${parserw_dir_name}/${source_dir_name}) # util/src
+    set(parserw_inc_dir ${parserw_dir_name}/${include_dir_name})
+    add_library(${parserw_lib_name} STATIC
+               ${parserw_inc_dir}/ch10_packet_element_base.h ${parserw_src_dir}/ch10_packet_element_base.cpp
+               ${parserw_inc_dir}/ch10_packet_element.h ${parserw_src_dir}/ch10_packet_element.cpp
+               ${parserw_inc_dir}/ch10_packet_component.h ${parserw_src_dir}/ch10_packet_component.cpp
+               ${parserw_inc_dir}/ch10_packet_header.h ${parserw_src_dir}/ch10_packet_header.cpp
+               ${parserw_inc_dir}/ch10_packet.h ${parserw_src_dir}/ch10_packet.cpp
+     )
+
+    target_include_directories(${parserw_lib_name} PUBLIC ${parserw_inc_dir})
+    target_compile_features(${parserw_lib_name} PUBLIC cxx_std_17)
+    #target_link_libraries(${parserw_lib_name} PUBLIC )
+endif()
+
+#########################################################
 #                   Install Libs
 #########################################################
 
@@ -246,6 +269,7 @@ install(TARGETS ${util_lib_name}
                 ${eth_lib_name}
                 ${ch10parse_lib_name}
                 ${videx_lib_name}
+                ${parserw_lib_name}
         DESTINATION ${out_lib_dir}
 )
 
@@ -264,10 +288,10 @@ add_executable(${ch10parse_exe_name} ${ch10_main_dir}/ch10parse.cpp
 #set_property(TARGET ${ch10parse_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(${ch10parse_exe_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
-                            ${temp_irig_inc_dir} ${temp_eth_inc_dir}
+                            ${temp_irig_inc_dir} ${temp_eth_inc_dir} ${parserw_inc_dir}
                             )
 target_compile_features(${ch10parse_exe_name} PUBLIC cxx_std_17)
-target_link_libraries(${ch10parse_exe_name} ${ch10parse_lib_name})
+target_link_libraries(${ch10parse_exe_name} ${ch10parse_lib_name} ${parserw_lib_name})
 
 #########################################################
 #               Build/link translator Exe
@@ -308,11 +332,14 @@ if(build_tests)
                    ${test_src_dir}/tmats_parser_u.cpp ${test_src_dir}/metadata_u.cpp 
                    ${test_src_dir}/parse_manager_u.cpp ${test_src_dir}/parquet_reader_u.cpp
                    ${test_src_dir}/dts1553_u.cpp
-                   ${test_src_dir}/managed_path_u.cpp)
+                   ${test_src_dir}/managed_path_u.cpp
+                   ${test_src_dir}/ch10_packet_element_u.cpp 
+                   ${test_src_dir}/ch10_packet_component_u.cpp
+                   )
 #    set_property(TARGET ${test_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
                                ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
-                               ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} )
+                               ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} ${parserw_inc_dir})
 
     target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
     target_link_libraries(${test_exe_name}
@@ -323,6 +350,7 @@ if(build_tests)
                           ${comp_lib_name}
                           ${ch10parse_lib_name}
                           ${parquet_libs}
+                          ${parserw_lib_name}
               ${linux_libs})
 
     # For Ctest

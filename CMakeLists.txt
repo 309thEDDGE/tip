@@ -26,6 +26,13 @@ set(debug 1)
 set(libirig106 true)
 set(video_data false)
 set(ethernet_data true)
+set(parser_rewrite false)
+
+if(DEFINED PARSER_REWRITE)
+    message(STATUS "PARSER_REWRITE defined")
+    set(ignore ${PARSER_REWRITE})
+    set(parser_rewrite true)
+endif()
 
 if (DEFINED DEBUG)
     message(STATUS "DEBUG defined")

@@ -1,0 +1,25 @@
+#include "ch10_packet_component.h"
+
+void Ch10PacketComponent::ParseElements(const ElemPtrVec& elems, 
+    const uint8_t* data, 
+    uint64_t& loc)
+{
+    // Iterate over each Ch10PacketElement and Set the data.
+    for(elemit_ = elems.begin(); elemit_ != elems.end(); ++elemit_)
+    {
+        (*elemit_)->Set(data, loc);
+
+        // Increment the data pointer.
+        data += (*elemit_)->size;
+    }
+}
+
+bool Ch10PacketComponent::Parse(const uint8_t* data, uint64_t& loc)
+{
+    return true;
+}
+
+Ch10PacketComponent::~Ch10PacketComponent()
+{
+
+}
