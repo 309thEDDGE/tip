@@ -21,9 +21,9 @@ protected:
 
 public:
     Ch10PacketComponent() {}
-    void ParseElements(const ElemPtrVec& elems, const uint8_t* data, 
+    void ParseElements(const ElemPtrVec& elems, const uint8_t*& data, 
         uint64_t& loc);
-    virtual bool Parse(const uint8_t* data, uint64_t& loc);
+    virtual bool Parse(const uint8_t*& data, uint64_t& loc);
     virtual ~Ch10PacketComponent();
     
 };

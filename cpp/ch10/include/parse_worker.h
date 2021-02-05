@@ -31,6 +31,12 @@ extern "C" {
 }
 #endif
 
+#ifdef PARSER_REWRITE
+#include "ch10_context.h"
+#include "ch10_packet.h"
+#endif
+
+
 class ParseWorker
 {
 	

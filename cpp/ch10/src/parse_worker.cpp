@@ -70,6 +70,55 @@ void ParseWorker::append_mode_initialize(uint32_t read, uint16_t binbuff_ind,
 #endif
 }
 
+#ifdef PARSER_REWRITE
+void ParseWorker::operator()(BinBuff& bb, bool append_mode)
+{
+#ifdef DEBUG
+	if (DEBUG > 0)
+	{
+		if (append_mode)
+		{
+			printf("\n(%03u) APPEND MODE ParseWorker now active!\n", id);
+		}
+		else
+		{
+			printf("\n(%03u) ParseWorker now active!\n", id);
+		}
+
+	}
+	if (DEBUG > 1)
+		printf("(%03u) Absolute position: %llu\n", id, start_position);
+#endif
+
+	// Instantiate Ch10Context object
+	Ch10Context ctx(start_position);
+	ctx.SetSearchingForTDP(!append_mode);
+
+	// Instantiate Ch10Packet object
+	Ch10Packet packet(bb, ctx);
+
+	// Parse packets until error or end of buffer.
+	bool parse_result = true;
+	while (parse_result)
+	{
+		parse_result = packet.Parse();
+	}
+
+	// Update last_position;
+	last_position = ctx.absolute_position;
+
+	complete = true;
+#ifdef DEBUG
+#if DEBUG > 0
+	printf("(%03u) End of worker's shift\n", id);
+#endif
+#if DEBUG > 1
+	printf("(%03u) Absolute position: %llu\n\n", id, last_position);
+#endif
+#endif
+
+}
+#else
 void ParseWorker::operator()(BinBuff& bb, bool append_mode)
 {
 #ifdef DEBUG
@@ -345,6 +394,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode)
 #endif
 #endif
 }
+#endif // end non-parser-rewrite non-libirig106 
 
 #ifdef LIBIRIG106
 void ParseWorker::operator()(BinBuff& bb, bool append_mode, std::vector<std::string>& tmats_body_vec)

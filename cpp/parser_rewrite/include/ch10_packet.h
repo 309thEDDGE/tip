@@ -2,7 +2,10 @@
 #ifndef CH10_PACKET_H_
 #define CH10_PACKET_H_
 
-#include "ch10_packet_header.h"
+#include "binbuff.h"
+#include "ch10_context.h"
+#include "ch10_packet_header_component.h"
+
 // body
 // footer
 
@@ -10,10 +13,8 @@ class Ch10Packet
 {
 private:
     uint64_t relative_pos_;
-    uint64_t absolute_pos_; 
-    bool append_mode_;
-    bool parse_header_only_;
-    Ch10PacketHeader header_;
+    Ch10PacketHeaderComponent header_;
+    const uint8_t* data_ptr_;
 
     // Figure out how to keep a semi-permanent pointer to 
     // a previous packet's data, for keeping the RTC from
@@ -22,10 +23,21 @@ private:
     // Also, how to pass in or configure different parquet writer
     // classes. 
 
+    // Hold references to BinBuff and Ch10Context to avoid 
+    // the need to pass them into the Parse function each time
+    // a packet is parsed. Focus on performance.
+    // Non-const because both objects will need to be updated 
+    // as packets are parsed.
+    BinBuff& bb_;
+    Ch10Context& ctx_;
+
+    // Member variable to hold the BinBuff object function responses.
+    uint8_t bb_response_;
+
     public:
-    Ch10Packet() : relative_pos_(0), append_mode_(false), 
-        parse_header_only_(false), header_() {}
-    bool Parse(const uint8_t* data, const uint64_t& abs_pos);
+    Ch10Packet(BinBuff& binbuff, Ch10Context& context) : relative_pos_(0), header_(),
+        bb_(binbuff), ctx_(context), data_ptr_(nullptr), bb_response_(0) {}
+    bool Parse();
 
 };
 

@@ -81,7 +81,8 @@ class Ch10PacketComponentTest : public ::testing::Test
 TEST_F(Ch10PacketComponentTest, ParseElementPointerAreSet)
 {
     uint64_t loc_init = loc_;
-    comp_.ParseElements(elems_, data_.data(), loc_);
+    const uint8_t* data_ptr = (const uint8_t*)data_.data();
+    comp_.ParseElements(elems_, data_ptr, loc_);
 
     // If *element is still a nullptr, then don't bother to
     // do anything else.
@@ -103,4 +104,5 @@ TEST_F(Ch10PacketComponentTest, ParseElementPointerAreSet)
 
     // loc_ incremented correctly.
     EXPECT_EQ(loc_, loc_init + bf1elem_.size + bf2elem_.size + afelem_.size);
+    EXPECT_EQ(data_ptr, data_.data() + bf1elem_.size + bf2elem_.size + afelem_.size);
 }

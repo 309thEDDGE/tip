@@ -1,7 +1,7 @@
 #include "ch10_packet_component.h"
 
 void Ch10PacketComponent::ParseElements(const ElemPtrVec& elems, 
-    const uint8_t* data, 
+    const uint8_t*& data, 
     uint64_t& loc)
 {
     // Iterate over each Ch10PacketElement and Set the data.
@@ -14,7 +14,7 @@ void Ch10PacketComponent::ParseElements(const ElemPtrVec& elems,
     }
 }
 
-bool Ch10PacketComponent::Parse(const uint8_t* data, uint64_t& loc)
+bool Ch10PacketComponent::Parse(const uint8_t*& data, uint64_t& loc)
 {
     return true;
 }

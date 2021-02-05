@@ -355,7 +355,10 @@ std::streamsize ParseManager::activate_worker(uint16_t binbuff_ind, uint16_t ID,
 	#endif
 		
 	// Start this instance of ParseWorker. Append mode false.
-#ifdef LIBIRIG106
+#if defined PARSER_REWRITE
+	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
+		false);
+#elif defined LIBIRIG106
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
 		false, std::ref(tmats_body_vec_));
 #else
@@ -387,7 +390,10 @@ std::streamsize ParseManager::activate_append_mode_worker(uint16_t binbuff_ind, 
 	workers[ID].append_mode_initialize(n_read, binbuff_ind, last_pos);
 
 	// Start this instance of ParseWorker. Append mode true.
-#ifdef LIBIRIG106
+#if defined PARSER_REWRITE
+	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
+		true);
+#elif defined LIBIRIG106
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
 		true, std::ref(tmats_body_vec_));
 #else

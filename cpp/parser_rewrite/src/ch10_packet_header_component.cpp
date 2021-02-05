@@ -1,7 +1,7 @@
 
-#include "ch10_packet_header.h"
+#include "ch10_packet_header_component.h"
 
-bool Ch10PacketHeader::Parse(const uint8_t* data, uint64_t& loc)
+bool Ch10PacketHeaderComponent::Parse(const uint8_t*& data, uint64_t& loc)
 {
     // Parse the standard header portion.
     ParseElements(std_elems_vec_, data, loc);

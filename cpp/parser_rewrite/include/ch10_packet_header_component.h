@@ -1,11 +1,11 @@
 
 
-#ifndef CH10_PACKET_HEADER_H_
-#define CH10_PACKET_HEADER_H_
+#ifndef CH10_PACKET_HEADER_COMPONENT_H_
+#define CH10_PACKET_HEADER_COMPONENT_H_
 
 #include "ch10_packet_component.h"
 
-class Ch10PacketHeaderFormat
+class Ch10PacketHeaderFmt
 {
 	public:
 	uint32_t  	sync				: 16;
@@ -58,7 +58,7 @@ public:
     uint16_t checksum; 
 };
 
-class Ch10PacketHeader : public Ch10PacketComponent
+class Ch10PacketHeaderComponent : public Ch10PacketComponent
 {
 
 private:
@@ -70,12 +70,12 @@ private:
 
 
 public:
-    Ch10PacketElement<Ch10PacketHeaderFormat> std_hdr_elem_;
+    Ch10PacketElement<Ch10PacketHeaderFmt> std_hdr_elem_;
     Ch10PacketElement<Ch10PacketSecondaryHeaderBinWtFmt> secondary_binwt_elem_;
     Ch10PacketElement<Ch10PacketSecondaryHeaderIEEE1588Fmt> secondary_ieee_elem_;
     Ch10PacketElement<Ch10PacketSecondaryHeaderERTCFmt> secondary_ertc_elem_;
     Ch10PacketElement<Ch10PacketSecondaryHeaderChecksum> secondary_checksum_elem_;
-    Ch10PacketHeader() : Ch10PacketComponent(),
+    Ch10PacketHeaderComponent() : Ch10PacketComponent(),
         std_hdr_elem_(), secondary_binwt_elem_(), secondary_ieee_elem_(),
         secondary_ertc_elem_(), secondary_checksum_elem_(),
         std_elems_vec_{dynamic_cast<Ch10PacketElementBase*>(&std_hdr_elem_)},
@@ -86,7 +86,7 @@ public:
         secondary_ertc_elems_vec_{dynamic_cast<Ch10PacketElementBase*>(&secondary_ertc_elem_),
                                   dynamic_cast<Ch10PacketElementBase*>(&secondary_checksum_elem_)}
         {}
-    bool Parse(const uint8_t* data, uint64_t& loc) override;
+    bool Parse(const uint8_t*& data, uint64_t& loc) override;
 
 };
 
