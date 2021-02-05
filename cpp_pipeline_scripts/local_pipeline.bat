@@ -1,5 +1,5 @@
 set REGISTRY=registry.il2.dso.mil
-set BUILD_IMAGE=%REGISTRY%/skicamp/project-opal/tip/build:MR57
+set BUILD_IMAGE=%REGISTRY%/skicamp/project-opal/tip/build:MR92
 set TEST_IMAGE=%REGISTRY%/skicamp/project-opal/tip/test:1.0
 
 

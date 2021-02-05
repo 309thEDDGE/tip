@@ -195,6 +195,30 @@ TEST_F(ParseTextTest, SplitRemoveNewLineAtEnd)
 	ASSERT_TRUE(compare_vec == return_vec);
 }
 
+TEST_F(ParseTextTest, SplitRemoveCarriageReturnAtEnd)
+{
+	test_str = "AA|BB|30\r";
+	return_vec = pt.Split(test_str, '|');
+	compare_vec.push_back("AA");
+	compare_vec.push_back("BB");
+	compare_vec.push_back("30");
+	ASSERT_TRUE(compare_vec == return_vec);
+	compare_vec.clear();
+
+	test_str = "AA|BB\r|30\r";
+	return_vec = pt.Split(test_str, '|');
+	compare_vec.push_back("AA");
+	compare_vec.push_back("BB\r");
+	compare_vec.push_back("30");
+	ASSERT_TRUE(compare_vec == return_vec);
+	compare_vec.clear();
+
+	test_str = "AA\r";
+	return_vec = pt.Split(test_str, '|');
+	compare_vec.push_back("AA");
+	ASSERT_TRUE(compare_vec == return_vec);
+}
+
 TEST_F(ParseTextTest, SplitAvoidQuotedText)
 {
 	test_str = "ABCD,hello,\"my test, is good\"";

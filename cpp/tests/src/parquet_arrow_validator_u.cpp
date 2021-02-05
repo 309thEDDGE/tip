@@ -1062,6 +1062,31 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareDoubleNaN)
 	EXPECT_TRUE(comp.CompareColumn(1));
 }
 
+TEST_F(ParquetArrowValidatorTest, ComparatorCompareDoubleDifferentNaNImpls)
+{
+	//												column1				
+	std::vector<std::vector<double>> file1a = { {16.54, 5.34, 4.24, -std::numeric_limits<double>::quiet_NaN()} };
+	std::vector<std::vector<double>> file1b = { {-20.2, std::numeric_limits<double>::quiet_NaN(), 100.1, -1345677.4} };
+
+	std::vector<std::vector<double>> file2a = { {16.54, 5.34, 4.24, std::numeric_limits<double>::quiet_NaN()} };
+	std::vector<std::vector<double>> file2b = { {-20.2, std::numeric_limits<double>::quiet_NaN(), 100.1, -1345677.4} };
+
+	std::string dirname1 = "file1.parquet";
+	std::string dirname2 = "file2.parquet";
+	// file 1
+	ASSERT_TRUE(CreateParquetFile(arrow::float64(), dirname1, file1a, 2));
+	ASSERT_TRUE(CreateParquetFile(arrow::float64(), dirname1, file1b, 2));
+
+	// file 2
+	ASSERT_TRUE(CreateParquetFile(arrow::float64(), dirname2, file2a, 2));
+	ASSERT_TRUE(CreateParquetFile(arrow::float64(), dirname2, file2b, 2));
+
+	Comparator comp;
+
+	ASSERT_TRUE(comp.Initialize(dirname1, dirname2));
+	EXPECT_TRUE(comp.CompareColumn(1));
+}
+
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareFloatMatch)
 {
 	//												column1				column2

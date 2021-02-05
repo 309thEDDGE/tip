@@ -85,7 +85,7 @@ main() {
 	cd $BASE_DIR
 	if [ -d bin ] ; then 
 		rm -rf build/bin
-		mv bin build/
+		cp -r bin build/
 	fi
 
 	PATH=$"{OLDPATH}"
