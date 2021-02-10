@@ -41,8 +41,14 @@ Based on google c++ style guide https://google.github.io/styleguide/cppguide.htm
 * [ ] Put all class functions and variables that don't need to be public in private
 * [ ] Pass function parameters by `const ref` if larger than one byte (or just `ref` if the function can change the value)
 * [ ] Try to increase speed for massively repeated code
-* [ ] Restructure code to be more testable (functions working as independently as possible) 
 * [ ] Restructure code to be more readable
+
+#### Testability
+* [ ] No class implements the Singleton pattern
+* [ ] No static variables, just constants
+* [ ] No static functions except pure functions
+  - _Pure Function_: Produces the same output every time for a given set of inputs
+* [ ] All of a function's dependencies can be replaced with
 
 #### Sample code
 ```c++
