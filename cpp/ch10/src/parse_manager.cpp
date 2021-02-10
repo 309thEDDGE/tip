@@ -620,9 +620,6 @@ void ParseManager::worker_retire_queue()
 			
 				threads[active_workers[act_work_ind]].join();
 
-#ifdef PARQUET
-#endif
-
 				#ifdef DEBUG
 				if (DEBUG > 2)
 				{

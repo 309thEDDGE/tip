@@ -186,6 +186,7 @@ if(parser_rewrite)
     set(parserw_src_dir ${parserw_dir_name}/${source_dir_name}) # util/src
     set(parserw_inc_dir ${parserw_dir_name}/${include_dir_name})
     add_library(${parserw_lib_name} STATIC
+               ${parserw_inc_dir}/ch10_status.h
                ${parserw_inc_dir}/ch10_packet_element_base.h ${parserw_src_dir}/ch10_packet_element_base.cpp
                ${parserw_inc_dir}/ch10_packet_element.h ${parserw_src_dir}/ch10_packet_element.cpp
                ${parserw_inc_dir}/ch10_packet_component.h ${parserw_src_dir}/ch10_packet_component.cpp

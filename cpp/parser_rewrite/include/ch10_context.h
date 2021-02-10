@@ -4,6 +4,8 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <map>
+#include "ch10_status.h"
 
 enum class Ch10PacketType : uint8_t
 {
@@ -20,7 +22,10 @@ private:
 	uint64_t tdp_rtc_;
 	uint64_t tdp_abs_time_;
 
+	//std::map<Ch10PacketType, uint64_t>;
+
 	bool searching_for_tdp_;
+	bool found_tdp_;
 
 public:
 	const uint64_t& absolute_position;
@@ -29,10 +34,10 @@ public:
 	Ch10Context(const uint64_t& abs_pos) : absolute_position_(abs_pos), 
 		absolute_position(absolute_position_),
 		tdp_rtc_(0), tdp_rtc(tdp_rtc_), tdp_abs_time_(0), tdp_abs_time(tdp_abs_time_),
-		searching_for_tdp_(false) {}
+		searching_for_tdp_(false), found_tdp_(false) {}
 
 	void SetSearchingForTDP(bool should_search);
-	bool ContinueWithPacketType(uint8_t data_type);
+	Ch10Status ContinueWithPacketType(uint8_t data_type);
 	void UpdateAbsolutePosition(uint64_t new_absolute_pos);
 };
 

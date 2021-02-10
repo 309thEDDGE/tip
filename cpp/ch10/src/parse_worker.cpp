@@ -98,10 +98,18 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode)
 	Ch10Packet packet(bb, ctx);
 
 	// Parse packets until error or end of buffer.
-	bool parse_result = true;
-	while (parse_result)
+	bool continue_parsing = true;
+	Ch10Status status;
+	while (continue_parsing)
 	{
-		parse_result = packet.Parse();
+		status = packet.ParseHeader();
+		if (status == Ch10Status::BAD_SYNC || status == Ch10Status::PKT_TYPE_NO)
+			continue;
+		else if (status == Ch10Status::PKT_TYPE_EXIT || status == Ch10Status::BUFFER_LIMITED)
+		{
+			continue_parsing = false;
+			continue;
+		}
 	}
 
 	// Update last_position;

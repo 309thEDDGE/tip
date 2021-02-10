@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <memory>
+#include "ch10_status.h"
 #include "ch10_packet_element.h"
 
 /*
@@ -23,7 +24,7 @@ public:
     Ch10PacketComponent() {}
     void ParseElements(const ElemPtrVec& elems, const uint8_t*& data, 
         uint64_t& loc);
-    virtual bool Parse(const uint8_t*& data, uint64_t& loc);
+    virtual Ch10Status Parse(const uint8_t*& data, uint64_t& loc);
     virtual ~Ch10PacketComponent();
     
 };
