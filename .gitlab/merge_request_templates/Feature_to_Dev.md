@@ -11,9 +11,9 @@
   - [ ] Code follows our coding guide below
 ---
 
-### Coding Style Checklist
+### Coding Style
 
-Based on google c++ style guide https://google.github.io/styleguide/cppguide.html
+Based on Google's _C++ Style Guide_, https://google.github.io/styleguide/cppguide.html
 
 ##### Brace placement
 * [ ] All functions, `if` blocks and loops have braces
@@ -43,12 +43,19 @@ Based on google c++ style guide https://google.github.io/styleguide/cppguide.htm
 * [ ] Try to increase speed for massively repeated code
 * [ ] Restructure code to be more readable
 
-#### Testability
-* [ ] No class implements the Singleton pattern
-* [ ] No static variables, just constants
-* [ ] No static functions except pure functions
-  - _Pure Function_: Produces the same output every time for a given set of inputs
-* [ ] All of a function's dependencies can be replaced with
+#### Testability*
+
+Based on _Writing Testable Code_, https://www.toptal.com/qa/how-to-write-testable-code-and-why-it-mattersNo global state
+
+* [ ] No class enforces that it be a singleton
+* [ ] No static (class-wide) data except constants (_i.e._, individual objects contain separate data)
+* [ ] No static (class-wide) functions except pure functions that produce the same output every time for a given set of inputs
+No external effects
+* [ ] A function's behavior can only be affected by its arguments or its object's state 
+* [ ] A function only affects its arguments or its object's state
+* [ ] Any object affecting or affected by a function can be replaced with a mock by the object's owner
+  * _E.g._, system calls are wrapped in objects that can be replaced with mocks
+  * _E.g._, I/O is done through an object that can be replaced with a mock
 
 #### Sample code
 ```c++
@@ -80,5 +87,3 @@ Based on google c++ style guide https://google.github.io/styleguide/cppguide.htm
         }
     }
 ```
-
-
