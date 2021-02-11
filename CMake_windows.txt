@@ -85,9 +85,10 @@ set(gmock_lib_dir "${gsuite_path}/googlemock/lib")
 set(gtest_lib_name "${gtest_lib_dir}/gtest.lib")
 set(gmain_lib_name "${gtest_lib_dir}/gtest_main.lib")
 set(gmock_lib_name "${gmock_lib_dir}/gmock.lib")
+set(gmock_main_lib_name "${gmock_lib_dir}/gmock_main.lib")
 
 set(gsuite_inc_dirs ${gtest_inc_dir} ${gmock_inc_dir})
-set(gsuite_libs ${gtest_lib_name} ${gmain_lib_name} ${gmock_lib_name})
+set(gsuite_libs ${gtest_lib_name} ${gmain_lib_name} ${gmock_lib_name} ${gmock_main_lib_name})
 
 #########################################################
 #                   LibIrig106 Paths

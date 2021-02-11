@@ -331,6 +331,8 @@ if(build_tests)
         set(parserw_test_sources ${test_src_dir}/ch10_packet_element_u.cpp 
                    ${test_src_dir}/ch10_packet_component_u.cpp
                    ${test_src_dir}/ch10_context_u.cpp
+                   ${test_src_dir}/ch10_packet_header_component_u.cpp
+                   ${test_src_dir}/ch10_packet_u.cpp
                    )
     endif()
     add_executable(${test_exe_name}
