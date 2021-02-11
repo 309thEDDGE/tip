@@ -14,9 +14,9 @@ void Ch10PacketComponent::ParseElements(const ElemPtrVec& elems,
     }
 }
 
-bool Ch10PacketComponent::Parse(const uint8_t*& data, uint64_t& loc)
+Ch10Status Ch10PacketComponent::Parse(const uint8_t*& data, uint64_t& loc)
 {
-    return true;
+    return Ch10Status::OK;
 }
 
 Ch10PacketComponent::~Ch10PacketComponent()

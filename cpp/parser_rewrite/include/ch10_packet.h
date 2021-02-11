@@ -25,13 +25,13 @@ private:
     // Also, how to pass in or configure different parquet writer
     // classes. 
 
-    // Hold references to BinBuff and Ch10Context to avoid 
+    // Hold pointers to BinBuff and Ch10Context to avoid 
     // the need to pass them into the Parse function each time
     // a packet is parsed. Focus on performance.
-    // Non-const because both objects will need to be updated 
+    // Both objects will need to be updated 
     // as packets are parsed.
-    BinBuff& bb_;
-    Ch10Context& ctx_;
+    BinBuff *const bb_;
+    Ch10Context *const ctx_;
 
     // Member variable to hold the BinBuff object function responses.
     uint8_t bb_response_;
@@ -40,10 +40,10 @@ private:
     Ch10Status status_;
 
     public:
-    Ch10Packet(BinBuff& binbuff, Ch10Context& context) : relative_pos_(0), header_(),
+    Ch10Packet(BinBuff* binbuff, Ch10Context* context) : relative_pos_(0), header_(),
         bb_(binbuff), ctx_(context), data_ptr_(nullptr), bb_response_(0), 
         status_(Ch10Status::OK) {}
-    bool Parse();
+    //bool Parse();
 
     /*
     Parse the ch10 header at the current location of the buffer.
@@ -51,7 +51,22 @@ private:
     Advances the buffer to the next potentially viable position.
     */
     Ch10Status ParseHeader();
-    Ch10Status 
+
+    /*
+    Move position of buffer and absolute position index by amount indicated.
+    Check for error response from BinBuff object.
+
+    Args:
+
+        byte_count --> Count of bytes to advance buffer and absolute position.
+                       Input data type is uint32_t because the most common use 
+                       of this function will be to advance by the packet size
+                       to move from the beginning of the current packet to the 
+                       beginning of the next packet. This value is parsed out
+                       the ch10 packet header as a type uint32_t. This will
+                       avoid casting during the vast majority of calls.
+    */
+    Ch10Status AdvanceBufferAndAbsPosition(uint64_t byte_count);
 
 };
 

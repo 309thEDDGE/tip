@@ -70,27 +70,50 @@ class Ch10PacketHeaderComponent : public Ch10PacketComponent
 {
 
 private:
-    
-    ElemPtrVec std_elems_vec_;
-    ElemPtrVec secondary_binwt_elems_vec_;
-    ElemPtrVec secondary_ieee_elems_vec_;
-    ElemPtrVec secondary_ertc_elems_vec_;
 
-    // Sync value in Ch10 header as defined by Ch10 spec.
-    const uint16_t sync_;
-
-
-public:
+    // Packet elements, i.e., bit interpretations, to be parsed out of a 
+    // Ch10 packet header. Not all elements will be utilized for ever packet
+    // header. Most ch10 packets have headers which only have the standard 
+    // bit representation, which is described by Ch10PacketHeaderFmt and 
+    // parsed by std_hdr_elem_. The other elements are optional and related
+    // the possible presence of a packet secondary header, which is indicated
+    // via the secondary_hdr flag in Ch10PacketHeaderFmt.
     Ch10PacketElement<Ch10PacketHeaderFmt> std_hdr_elem_;
     Ch10PacketElement<Ch10PacketSecondaryHeaderBinWtFmt> secondary_binwt_elem_;
     Ch10PacketElement<Ch10PacketSecondaryHeaderIEEE1588Fmt> secondary_ieee_elem_;
     Ch10PacketElement<Ch10PacketSecondaryHeaderERTCFmt> secondary_ertc_elem_;
     Ch10PacketElement<Ch10PacketSecondaryHeaderChecksum> secondary_checksum_elem_;
+    
+    // Vectors of pointers to Ch10PacketElementBase. Used to hold pointers
+    // to objects derived from the base class such that multiple elements
+    // can be parsed with a single call to Ch10PacketComponent::ParseElements().
+    ElemPtrVec std_elems_vec_;
+    ElemPtrVec secondary_binwt_elems_vec_;
+    ElemPtrVec secondary_ieee_elems_vec_;
+    ElemPtrVec secondary_ertc_elems_vec_;
+
+
+public:
+
+    // Sync value in Ch10 header as defined by Ch10 spec.
+    const uint16_t sync_;
+
+    // Publically available parsed data.
+    const Ch10PacketElement<Ch10PacketHeaderFmt>& std_hdr_elem;
+    const Ch10PacketElement<Ch10PacketSecondaryHeaderBinWtFmt>& secondary_binwt_elem;
+    const Ch10PacketElement<Ch10PacketSecondaryHeaderIEEE1588Fmt>& secondary_ieee_elem;
+    const Ch10PacketElement<Ch10PacketSecondaryHeaderERTCFmt>& secondary_ertc_elem;
+    const Ch10PacketElement<Ch10PacketSecondaryHeaderChecksum>& secondary_checksum_elem;
+    
     const uint64_t std_hdr_size_;
     const uint64_t secondary_hdr_size_;
     Ch10PacketHeaderComponent() : Ch10PacketComponent(),
         std_hdr_elem_(), secondary_binwt_elem_(), secondary_ieee_elem_(),
         secondary_ertc_elem_(), secondary_checksum_elem_(),
+        std_hdr_elem(std_hdr_elem_), secondary_binwt_elem(secondary_binwt_elem_),
+        secondary_ieee_elem(secondary_ieee_elem_), 
+        secondary_ertc_elem(secondary_ertc_elem_), 
+        secondary_checksum_elem(secondary_checksum_elem_),
         std_elems_vec_{dynamic_cast<Ch10PacketElementBase*>(&std_hdr_elem_)},
         secondary_binwt_elems_vec_{dynamic_cast<Ch10PacketElementBase*>(&secondary_binwt_elem_),
                                    dynamic_cast<Ch10PacketElementBase*>(&secondary_checksum_elem_)},
@@ -102,6 +125,7 @@ public:
         secondary_hdr_size_(secondary_binwt_elem_.size + secondary_checksum_elem_.size) {}
     Ch10Status Parse(const uint8_t*& data, uint64_t& loc) override;
     Ch10Status ParseSecondaryHeader(const uint8_t*& data, uint64_t& loc);
+    //bool VerifyHeaderChecksum(const )
 
 };
 

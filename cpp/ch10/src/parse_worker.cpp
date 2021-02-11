@@ -95,7 +95,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode)
 	ctx.SetSearchingForTDP(!append_mode);
 
 	// Instantiate Ch10Packet object
-	Ch10Packet packet(bb, ctx);
+	Ch10Packet packet(&bb, &ctx);
 
 	// Parse packets until error or end of buffer.
 	bool continue_parsing = true;
@@ -110,6 +110,8 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode)
 			continue_parsing = false;
 			continue;
 		}
+
+		// parse body
 	}
 
 	// Update last_position;

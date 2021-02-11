@@ -11,21 +11,7 @@ Ch10Status Ch10PacketHeaderComponent::Parse(const uint8_t*& data, uint64_t& loc)
         return Ch10Status::BAD_SYNC;
 
     // Calculate and compare checksum.
-    // TODO
-
-
-    // In actual code, pass in a BinBuff object in stead of a 
-    // uint8_t* pointer to the data. The header packet component
-    // will be in charge of checking if the body and footer
-    // exceeds the remaining bytes left in the buffer. It
-    // will do this before proceeding.
-    // if((*std_hder_elem)->element.pkt_size > bb.bytes_remaining())
-    //{ return false; }
-
-    // If the secondary header bit is high, parse the
-    // secondary header.
-    // Write function for this:
-    // ParseSecondaryHeader()
+    
 
     return Ch10Status::OK;
 
@@ -34,10 +20,10 @@ Ch10Status Ch10PacketHeaderComponent::Parse(const uint8_t*& data, uint64_t& loc)
 Ch10Status Ch10PacketHeaderComponent::ParseSecondaryHeader(const uint8_t*& data, uint64_t& loc)
 {
     // Only parse if the secondary header option is enabled.
-    if ((*std_hdr_elem_)->secondary_hdr == 1)
+    if ((*std_hdr_elem_.element)->secondary_hdr == 1)
     {
         printf("Ch10PacketHeaderComponent::ParseSecondaryHeader(): Secondary header not handled!\n");
-        switch ((*std_hdr_elem_)->time_format)
+        switch ((*std_hdr_elem_.element)->time_format)
         {
         case 0:
         {
@@ -54,6 +40,7 @@ Ch10Status Ch10PacketHeaderComponent::ParseSecondaryHeader(const uint8_t*& data,
         default:
         {
             return Ch10Status::INVALID_SECONDARY_HDR_FMT;
+            printf("!!! Ch10PacketHeaderComponent::ParseSecondaryHeader(): Invalid secondary header format!\n");
         }
         }
     }

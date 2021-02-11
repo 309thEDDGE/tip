@@ -6,6 +6,7 @@
 
 enum class Ch10Status : uint8_t
 {
+	NONE,
 	OK,
 	PKT_TYPE_YES,
 	PKT_TYPE_NO,

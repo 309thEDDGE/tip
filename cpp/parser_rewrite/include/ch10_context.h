@@ -35,6 +35,7 @@ public:
 		absolute_position(absolute_position_),
 		tdp_rtc_(0), tdp_rtc(tdp_rtc_), tdp_abs_time_(0), tdp_abs_time(tdp_abs_time_),
 		searching_for_tdp_(false), found_tdp_(false) {}
+	~Ch10Context();
 
 	void SetSearchingForTDP(bool should_search);
 	Ch10Status ContinueWithPacketType(uint8_t data_type);

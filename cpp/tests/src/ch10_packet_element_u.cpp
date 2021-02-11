@@ -30,7 +30,7 @@ TEST(Ch10PacketElementTest, SetFloat)
     EXPECT_EQ(**elem.element, f2);
 }
 
-TEST(Ch10PacketElementTest, BitField)
+TEST(Ch10PacketElementTest, SetBitField)
 {
     uint64_t pos = 0;
     BitField obj;

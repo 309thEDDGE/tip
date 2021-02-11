@@ -1,5 +1,10 @@
 #include "ch10_context.h"
 
+Ch10Context::~Ch10Context()
+{
+
+}
+
 void Ch10Context::SetSearchingForTDP(bool should_search)
 {
 	searching_for_tdp_ = should_search;
