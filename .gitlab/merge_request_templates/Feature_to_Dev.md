@@ -16,14 +16,14 @@
 Based on Google's _C++ Style Guide_, https://google.github.io/styleguide/cppguide.html
 
 ##### Brace placement
-* [ ] All functions, `if` blocks and loops have braces
-  - Exception: No braces are required for _very_ short `if` or loop statements on _one line_
-* [ ] Opening braces are directly below the `if`/`for`/`while` or function
+* [ ] All functions, if blocks, and loops have braces
+  - Exception: No braces are required for _very_ short statements on the same line as the `if`, `for`, `do` or `while`
+* [ ] Opening braces are directly below the function or the `if`, `for`, `do` or `while`
 
 ##### Naming convention
 
 * [ ] Only use common abbreviations; otherwise spell it out
-    - (rule of thumb: if it's listed on Wikipedia)
+    - (rule of thumb: only use abbreviations listed on Wikipedia well-known in your domain [_e.g._ ICD for aircraft software])
 * [ ] Classes and functions follow the format `ThisIsMyClassOrFunction`
 * [ ] Variables follow the format `my_variable`
 * [ ] Class member variables have a trailing underscore: `class_variable_`
@@ -48,7 +48,7 @@ Based on Google's _C++ Style Guide_, https://google.github.io/styleguide/cppguid
 Based on _Writing Testable Code_, https://www.toptal.com/qa/how-to-write-testable-code-and-why-it-mattersNo global state
 
 * [ ] No class enforces that it be a singleton
-* [ ] No static (class-wide) data except constants (_i.e._, individual objects contain separate data)
+* [ ] No static (class-wide) data except constants (_i.e._, individual instances contain separate data)
 * [ ] No static (class-wide) functions except pure functions that produce the same output every time for a given set of inputs
 No external effects
 * [ ] A function's behavior can only be affected by its arguments or its object's state 
