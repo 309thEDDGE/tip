@@ -145,3 +145,20 @@ Ch10Status Ch10Packet::ParseHeader()
     return ctx_->ContinueWithPacketType((*header_.std_hdr_elem.element)->data_type);
 
 }
+
+void Ch10Packet::ParseBody()
+{
+    Ch10PacketType t = static_cast<Ch10PacketType>((*header_.std_hdr_elem.element)->data_type);
+    uint64_t val = ctx_->pkt_type_config_reference_map.at(t) & ctx_->pkt_type_config;
+    switch (val)
+    {
+    case ctx_->pkt_type_config_reference_map.at(Ch10PacketType::COMPUTER_GENERATED_DATA_F1):
+    {
+
+    }
+    case ctx_->pkt_type_config_reference_map.at(Ch10PacketType::TIME_DATA_F1):
+    {
+
+    }
+    }
+}

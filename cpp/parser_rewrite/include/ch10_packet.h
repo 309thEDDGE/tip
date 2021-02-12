@@ -119,6 +119,12 @@ public:
     */
     Ch10Status AdvanceBufferAndAbsPosition(uint64_t byte_count);
 
+    /*
+    The primary purpose of this function is to call the correct parser
+    for the packet type indicated in the header.
+    */
+    void ParseBody();
+
 };
 
 #endif

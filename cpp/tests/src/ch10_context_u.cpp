@@ -75,3 +75,81 @@ TEST(Ch10ContextTest, UpdateAbsolutePosition)
 	ASSERT_EQ(ctx.absolute_position, update_val);
 }
 
+TEST(Ch10ContextTest, CreatePacketTypeConfigReferenceNecessaryValsPresent)
+{
+	Ch10Context ctx(0);
+
+	std::map<Ch10PacketType, uint64_t> testmap;
+	ctx.CreatePacketTypeConfigReference(testmap);
+	uint64_t two = 2;
+	uint64_t index = 0;
+
+	EXPECT_EQ(testmap.at(Ch10PacketType::COMPUTER_GENERATED_DATA_F1), std::pow(two, index));
+	EXPECT_EQ(testmap[Ch10PacketType::TIME_DATA_F1], std::pow(two, index+1));
+	EXPECT_EQ(testmap[Ch10PacketType::MILSTD1553_F1], std::pow(two, index+2));
+	EXPECT_EQ(testmap[Ch10PacketType::VIDEO_DATA_F0], std::pow(two, index+3));
+}
+
+TEST(Ch10ContextTest, SetPacketTypeConfigDefaultsNonconfigurable)
+{
+	Ch10Context ctx(0);
+
+	std::map<Ch10PacketType, bool> pkt_type_config_map;
+
+	// Set the two non-configurable packet types to false.
+	pkt_type_config_map[Ch10PacketType::COMPUTER_GENERATED_DATA_F1] = false;
+	pkt_type_config_map[Ch10PacketType::TIME_DATA_F1] = false;
+
+	// Set the configuration.
+	ctx.SetPacketTypeConfig(pkt_type_config_map);
+
+	// Check that the bits representative of the default packet types 
+	// are high (= true).
+	uint64_t ref_value = ctx.pkt_type_config_reference_map.at(Ch10PacketType::COMPUTER_GENERATED_DATA_F1);
+	EXPECT_EQ(ref_value & ctx.pkt_type_config, ref_value);
+	ref_value = ctx.pkt_type_config_reference_map.at(Ch10PacketType::TIME_DATA_F1);
+	EXPECT_EQ(ref_value & ctx.pkt_type_config, ref_value);
+}
+
+TEST(Ch10ContextTest, SetPacketTypeConfigUnconfiguredAreTrue)
+{
+	Ch10Context ctx(0);
+
+	std::map<Ch10PacketType, bool> pkt_type_config_map;
+
+	// Turn on 1553 and neglect to specify video. 
+	pkt_type_config_map[Ch10PacketType::MILSTD1553_F1] = true;
+
+	// Set the configuration.
+	ctx.SetPacketTypeConfig(pkt_type_config_map);
+
+	uint64_t ref_value = ctx.pkt_type_config_reference_map.at(Ch10PacketType::MILSTD1553_F1);
+	EXPECT_EQ(ref_value & ctx.pkt_type_config, ref_value);
+
+	// Video data should be turned on be default since it was not specified.
+	ref_value = ctx.pkt_type_config_reference_map.at(Ch10PacketType::VIDEO_DATA_F0);
+	EXPECT_EQ(ref_value & ctx.pkt_type_config, ref_value);
+}
+
+TEST(Ch10ContextTest, SetPacketTypeConfigConfirmDisabledTypes)
+{
+	Ch10Context ctx(0);
+
+	std::map<Ch10PacketType, bool> pkt_type_config_map;
+
+	// Turn on 1553 and disable video.
+	pkt_type_config_map[Ch10PacketType::MILSTD1553_F1] = true;
+	pkt_type_config_map[Ch10PacketType::VIDEO_DATA_F0] = false;
+
+	// Set the configuration.
+	ctx.SetPacketTypeConfig(pkt_type_config_map);
+
+	uint64_t ref_value = ctx.pkt_type_config_reference_map.at(Ch10PacketType::MILSTD1553_F1);
+	EXPECT_EQ(ref_value & ctx.pkt_type_config, ref_value);
+
+	// Video bit-wise AND ought to evaluate to 0 since it was explicitly turned off.
+	ref_value = ctx.pkt_type_config_reference_map.at(Ch10PacketType::VIDEO_DATA_F0);
+	EXPECT_EQ(ref_value & ctx.pkt_type_config, 0);
+}
+
+

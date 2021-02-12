@@ -71,8 +71,6 @@ class Ch10PacketHeaderComponent : public Ch10PacketComponent
 
 private:
 
-    Ch10Status status_;
-
     // Packet elements, i.e., bit interpretations, to be parsed out of a 
     // Ch10 packet header. Not all elements will be utilized for ever packet
     // header. Most ch10 packets have headers which only have the standard 
@@ -126,7 +124,7 @@ public:
     
     const uint64_t std_hdr_size_;
     const uint64_t secondary_hdr_size_;
-    Ch10PacketHeaderComponent() : Ch10PacketComponent(), status_(Ch10Status::NONE),
+    Ch10PacketHeaderComponent() : Ch10PacketComponent(),
         std_hdr_elem_(), secondary_binwt_elem_(), secondary_ieee_elem_(),
         secondary_ertc_elem_(), secondary_checksum_elem_(),
         std_hdr_elem(std_hdr_elem_), secondary_binwt_elem(secondary_binwt_elem_),

@@ -137,8 +137,8 @@ protected:
             corrected_body_and_footer_len -= (12 + 24);
         else
             corrected_body_and_footer_len -= 24;
-        printf("orig body and footer len: %d, corrected packet len: %d, corrected body and footer len: %d\n",
-            body_and_footer_len, corrected_total_pkt_len, corrected_body_and_footer_len);
+        //printf("orig body and footer len: %d, corrected packet len: %d, corrected body and footer len: %d\n",
+        //   body_and_footer_len, corrected_total_pkt_len, corrected_body_and_footer_len);
     }
 };
 
