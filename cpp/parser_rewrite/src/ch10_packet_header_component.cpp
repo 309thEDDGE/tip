@@ -92,8 +92,13 @@ Ch10Status Ch10PacketHeaderComponent::VerifyDataChecksum(const uint8_t* body_dat
         checksum_data_ptr16_ = (const uint16_t*)body_data;
         checksum_value16_ = 0;
         for (uint32_t i = 0; i < checksum_unit_count_; i++)
+        {
             checksum_value16_ += checksum_data_ptr16_[i];
-
+            //printf("summing %hu\n", checksum_data_ptr16_[i]);
+        }
+        /*printf("Ch10PacketHeaderComponent::VerifyDataChecksum(): checksum_value16_ = %hu\n",
+            checksum_value16_);
+        printf("expected value = %hu\n", checksum_value);*/
         if (checksum_value16_ == checksum_value)
             return Ch10Status::CHECKSUM_TRUE;
     }

@@ -58,25 +58,25 @@ protected:
             secondary_header_present, corrected_body_and_footer_len,
             corrected_total_pkt_len);
 
-        printf("corrected body and footer: %d, corrected total: %d\n",
-            corrected_body_and_footer_len, corrected_total_pkt_len);
+        //printf("corrected body and footer: %d, corrected total: %d\n",
+            //corrected_body_and_footer_len, corrected_total_pkt_len);
         fake_body_and_footer8_.resize(corrected_body_and_footer_len);
         uint8_t sum = 0;
         for (int i = 0; i < corrected_body_and_footer_len - 1; i++)
         {
             fake_body_and_footer8_[i] = (uint8_t)rand();
-            printf("adding %hhu\n", fake_body_and_footer8_[i]);
+            //printf("adding %hhu\n", fake_body_and_footer8_[i]);
             sum += fake_body_and_footer8_[i];
         }
         fake_body_and_footer8_[corrected_body_and_footer_len - 1] = sum;
-        printf("sum: %hhu\n", sum);
+        //printf("sum: %hhu\n", sum);
         return fake_body_and_footer8_.data();
     }
 
     const uint8_t* CreateFakeBodyAndFooter16(int body_and_footer_byte_length,
-        int secondary_header_present, int& corrected_body_and_footer_len,
-        int& corrected_total_pkt_len)
+        int secondary_header_present, int& corrected_total_pkt_len)
     {
+        int corrected_body_and_footer_len = 0;
         CreateValidPacketLength(body_and_footer_byte_length,
             secondary_header_present, corrected_body_and_footer_len,
             corrected_total_pkt_len);
@@ -87,16 +87,18 @@ protected:
         for (int i = 0; i < data_units - 1; i++)
         {
             fake_body_and_footer16_[i] = (uint16_t)rand();
+            //printf("adding %hu\n", fake_body_and_footer16_[i]);
             sum += fake_body_and_footer16_[i];
         }
         fake_body_and_footer16_[data_units - 1] = sum;
+        //printf("sum: %hhu\n", sum);
         return (const uint8_t*)fake_body_and_footer16_.data();
     }
 
     const uint8_t* CreateFakeBodyAndFooter32(int body_and_footer_byte_length,
-        int secondary_header_present, int& corrected_body_and_footer_len,
-        int& corrected_total_pkt_len)
+        int secondary_header_present, int& corrected_total_pkt_len)
     {
+        int corrected_body_and_footer_len = 0;
         CreateValidPacketLength(body_and_footer_byte_length,
             secondary_header_present, corrected_body_and_footer_len,
             corrected_total_pkt_len);
@@ -267,6 +269,141 @@ TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum8BitNoSecondaryTrue)
         corr_total_pkt_len);
 
     status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_, 
+        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
+    EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
+}
+
+TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum8BitNoSecondaryFalse)
+{
+    pkt_hdr_fmt_.checksum_existence = 1; // 8-bit
+    // Set secondary header not present.
+    pkt_hdr_fmt_.secondary_hdr = 0;
+
+    int body_and_footer_len = 36;
+    int corr_total_pkt_len = 0;
+    body_ptr_ = CreateFakeBodyAndFooter8(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
+        corr_total_pkt_len);
+
+    // Add bad values by using incorrect packet length.
+    status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
+        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len + 4, pkt_hdr_fmt_.secondary_hdr);
+    EXPECT_EQ(status_, Ch10Status::CHECKSUM_FALSE);
+}
+
+TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum8BitWithSecondaryTrue)
+{
+    pkt_hdr_fmt_.checksum_existence = 1; // 8-bit
+    // Set secondary header not present.
+    pkt_hdr_fmt_.secondary_hdr = 1;
+
+    int body_and_footer_len = 55;
+    int corr_total_pkt_len = 0;
+    body_ptr_ = CreateFakeBodyAndFooter8(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
+        corr_total_pkt_len);
+
+    status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
+        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
+    EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
+}
+
+// Note that I'm not testing WithSecondaryFalse. It seems excessive to check
+// all the cases in which the sums don't match. More tests can be added if this
+// turns out to be a poor assumption.
+
+TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum16BitNoSecondaryTrue)
+{
+    pkt_hdr_fmt_.checksum_existence = 2; // 16-bit
+    // Set secondary header not present.
+    pkt_hdr_fmt_.secondary_hdr = 0;
+
+    int body_and_footer_len = 300;
+    int corr_total_pkt_len = 0;
+    body_ptr_ = CreateFakeBodyAndFooter16(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
+        corr_total_pkt_len);
+
+    status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
+        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
+    EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
+}
+
+TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum16BitNoSecondaryFalse)
+{
+    pkt_hdr_fmt_.checksum_existence = 2; // 16-bit
+    // Set secondary header not present.
+    pkt_hdr_fmt_.secondary_hdr = 0;
+
+    int body_and_footer_len = 222;
+    int corr_total_pkt_len = 0;
+    body_ptr_ = CreateFakeBodyAndFooter16(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
+        corr_total_pkt_len);
+
+    // Add bad values by using incorrect packet length.
+    status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
+        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len + 4, pkt_hdr_fmt_.secondary_hdr);
+    EXPECT_EQ(status_, Ch10Status::CHECKSUM_FALSE);
+}
+
+TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum16BitWithSecondaryTrue)
+{
+    pkt_hdr_fmt_.checksum_existence = 2; // 16-bit
+    // Set secondary header not present.
+    pkt_hdr_fmt_.secondary_hdr = 1;
+
+    int body_and_footer_len = 478;
+    int corr_total_pkt_len = 0;
+    body_ptr_ = CreateFakeBodyAndFooter16(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
+        corr_total_pkt_len);
+
+    status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
+        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
+    EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
+}
+
+TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum32BitNoSecondaryTrue)
+{
+    pkt_hdr_fmt_.checksum_existence = 3; // 32-bit
+    // Set secondary header not present.
+    pkt_hdr_fmt_.secondary_hdr = 0;
+
+    int body_and_footer_len = 3000;
+    int corr_total_pkt_len = 0;
+    body_ptr_ = CreateFakeBodyAndFooter32(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
+        corr_total_pkt_len);
+
+    status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
+        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
+    EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
+}
+
+TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum32BitNoSecondaryFalse)
+{
+    pkt_hdr_fmt_.checksum_existence = 3; // 32-bit
+    // Set secondary header not present.
+    pkt_hdr_fmt_.secondary_hdr = 0;
+
+    int body_and_footer_len = 7252;
+    int corr_total_pkt_len = 0;
+    body_ptr_ = CreateFakeBodyAndFooter32(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
+        corr_total_pkt_len);
+
+    // Add bad values by using incorrect packet length.
+    status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
+        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len + 4, pkt_hdr_fmt_.secondary_hdr);
+    EXPECT_EQ(status_, Ch10Status::CHECKSUM_FALSE);
+}
+
+TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum32BitWithSecondaryTrue)
+{
+    pkt_hdr_fmt_.checksum_existence = 3; // 32-bit
+    // Set secondary header not present.
+    pkt_hdr_fmt_.secondary_hdr = 1;
+
+    int body_and_footer_len = 5513;
+    int corr_total_pkt_len = 0;
+    body_ptr_ = CreateFakeBodyAndFooter32(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
+        corr_total_pkt_len);
+
+    status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
         pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
     EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
 }

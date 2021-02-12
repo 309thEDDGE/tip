@@ -97,8 +97,10 @@ private:
     //
     // Vars for checksum calculation.
     //
+
     // Count of checksum units, depending on the checksum data type.
     uint32_t checksum_unit_count_;
+
     // Pointers and vars for summing the values in the checksum.
     const uint16_t* checksum_data_ptr16_;
     uint16_t checksum_value16_;

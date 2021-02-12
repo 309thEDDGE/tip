@@ -120,10 +120,19 @@ Ch10Status Ch10Packet::ParseHeader()
     if (status_ == Ch10Status::BUFFER_LIMITED)
         return status_;
 
-    // Check the data checksum now that it's known the buffer enough
+    // Check the data checksum now that it's known there are sufficient
     // bytes remaining to fully parse the packet. Do not proceed if the
     // data checksum is invalid.
-
+    // 
+    // At this point data_ptr_ has been modified to point at the bytes immediately
+    // after the header or header+secondary header.
+    status_ = header_.VerifyDataChecksum(data_ptr_,
+        (*header_.std_hdr_elem.element)->checksum_existence,
+        (*header_.std_hdr_elem.element)->pkt_size,
+        (*header_.std_hdr_elem.element)->secondary_hdr);
+    // If the checksum does not match, Skip this pkt. 
+    if (status_ != Ch10Status::CHECKSUM_TRUE)
+        return Ch10Status::PKT_TYPE_NO;
 
     // Handle parsing of the secondary header. This is currently not 
     // completed. Data parsed in this step are not utilized.
