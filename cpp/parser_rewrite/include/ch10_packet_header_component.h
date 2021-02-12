@@ -71,6 +71,8 @@ class Ch10PacketHeaderComponent : public Ch10PacketComponent
 
 private:
 
+    Ch10Status status_;
+
     // Packet elements, i.e., bit interpretations, to be parsed out of a 
     // Ch10 packet header. Not all elements will be utilized for ever packet
     // header. Most ch10 packets have headers which only have the standard 
@@ -92,11 +94,26 @@ private:
     ElemPtrVec secondary_ieee_elems_vec_;
     ElemPtrVec secondary_ertc_elems_vec_;
 
+    //
+    // Vars for checksum calculation.
+    //
+    // Count of checksum units, depending on the checksum data type.
+    uint32_t checksum_unit_count_;
+    // Pointers and vars for summing the values in the checksum.
+    const uint16_t* checksum_data_ptr16_;
+    uint16_t checksum_value16_;
+    const uint32_t* checksum_data_ptr32_;
+    uint32_t checksum_value32_;
+    const uint8_t* checksum_data_ptr8_;
+    uint8_t checksum_value8_;
 
 public:
 
     // Sync value in Ch10 header as defined by Ch10 spec.
     const uint16_t sync_;
+
+    // Standard header count of bytes used in checksum.
+    const uint8_t header_checksum_byte_count_;
 
     // Publically available parsed data.
     const Ch10PacketElement<Ch10PacketHeaderFmt>& std_hdr_elem;
@@ -107,7 +124,7 @@ public:
     
     const uint64_t std_hdr_size_;
     const uint64_t secondary_hdr_size_;
-    Ch10PacketHeaderComponent() : Ch10PacketComponent(),
+    Ch10PacketHeaderComponent() : Ch10PacketComponent(), status_(Ch10Status::NONE),
         std_hdr_elem_(), secondary_binwt_elem_(), secondary_ieee_elem_(),
         secondary_ertc_elem_(), secondary_checksum_elem_(),
         std_hdr_elem(std_hdr_elem_), secondary_binwt_elem(secondary_binwt_elem_),
@@ -122,10 +139,16 @@ public:
         secondary_ertc_elems_vec_{dynamic_cast<Ch10PacketElementBase*>(&secondary_ertc_elem_),
                                   dynamic_cast<Ch10PacketElementBase*>(&secondary_checksum_elem_)},
         sync_(0xEB25), std_hdr_size_(std_hdr_elem_.size), 
-        secondary_hdr_size_(secondary_binwt_elem_.size + secondary_checksum_elem_.size) {}
+        secondary_hdr_size_(secondary_binwt_elem_.size + secondary_checksum_elem_.size),
+        header_checksum_byte_count_(std_hdr_elem_.size - 2), checksum_unit_count_(0),
+        checksum_data_ptr16_(nullptr), checksum_value16_(0),
+        checksum_data_ptr32_(nullptr), checksum_value32_(0),
+        checksum_data_ptr8_(nullptr), checksum_value8_(0) {}
     Ch10Status Parse(const uint8_t*& data, uint64_t& loc) override;
     Ch10Status ParseSecondaryHeader(const uint8_t*& data, uint64_t& loc);
-    //bool VerifyHeaderChecksum(const )
+    Ch10Status VerifyHeaderChecksum(const uint8_t* pkt_data, const uint32_t& checksum_value);
+    Ch10Status VerifyDataChecksum(const uint8_t* body_data, const uint32_t& checksum_existence,
+        const uint32_t& pkt_size, const uint32_t& secondary_hdr);
 
 };
 

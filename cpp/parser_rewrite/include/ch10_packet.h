@@ -39,10 +39,14 @@ private:
     // Hold Ch10Status, avoid creating new variable each time.
     Ch10Status status_;
 
-    public:
+    // Hold pkt_size temporarily to allow passing by reference.
+    uint64_t temp_pkt_size_;
+
+public:
+    const uint64_t& relative_pos;
     Ch10Packet(BinBuff* binbuff, Ch10Context* context) : relative_pos_(0), header_(),
         bb_(binbuff), ctx_(context), data_ptr_(nullptr), bb_response_(0), 
-        status_(Ch10Status::OK) {}
+        status_(Ch10Status::OK), relative_pos(relative_pos_), temp_pkt_size_(0) {}
     //bool Parse();
 
     /*
@@ -51,6 +55,53 @@ private:
     Advances the buffer to the next potentially viable position.
     */
     Ch10Status ParseHeader();
+
+    /*
+    Maintain the logic for Ch10PacketHeaderComponent::Parse status. Header
+    parsing outcome has great impact on the next parsing steps. Encapsulate
+    the logic for the various status possibilities in this function.
+
+    Args:
+
+        status --> Ch10Status returned from Ch10PacketHeaderComponent::Parse()
+
+        pkt_size --> Size of ch10 packet as given by pkt_size field in the 
+            Ch10PacketHeaderFmt.
+
+    Return:
+
+        Ch10Status --> Two classes of returns, good and bad. Good is indicated
+            by Ch10Status::OK, and bad is any other status. A good indication
+            implies that parsing of the header should continue and bad indicates
+            that parsing of the header should stop and the status returned
+            to the calling function.
+    */
+    Ch10Status ManageHeaderParseStatus(const Ch10Status& status, const uint64_t& pkt_size);
+
+
+    /*
+    Maintain the logic for Ch10PacketHeaderComponent::ParseSecondaryHeader 
+    status. Header
+    parsing outcome has great impact on the next parsing steps. Encapsulate
+    the logic for the various status possibilities in this function.
+
+    Args:
+
+        status --> Ch10Status returned from Ch10PacketHeaderComponent::Parse()
+
+        pkt_size --> Size of ch10 packet as given by pkt_size field in the
+            Ch10PacketHeaderFmt.
+
+    Return:
+
+        Ch10Status --> Two classes of returns, good and bad. Good is indicated
+            by Ch10Status::OK, and bad is any other status. A good indication
+            implies that parsing of the header should continue and bad indicates
+            that parsing of the header should stop and the status returned
+            to the calling function.
+    */
+    Ch10Status ManageSecondaryHeaderParseStatus(const Ch10Status& status, 
+        const uint64_t& pkt_size);
 
     /*
     Move position of buffer and absolute position index by amount indicated.

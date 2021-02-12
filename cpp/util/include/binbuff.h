@@ -74,7 +74,7 @@ class BinBuff
 
 		// Get a pointer to the raw buffer data at the current
 		// read position. 
-		const uint8_t* Data() const; 
+		virtual const uint8_t* Data() const; 
 
 		// Advance the read position relative to the current position.
 		// The beginning of a new buffer is initialized at position
