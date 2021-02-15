@@ -1,7 +1,7 @@
 #include "ch10_packet.h"
 
 
-Ch10Status Ch10Packet::AdvanceBufferAndAbsPosition(uint64_t byte_count)
+Ch10Status Ch10Packet::AdvanceBuffer(const uint64_t& byte_count)
 {
     bb_response_ = bb_->AdvanceReadPos(byte_count);
 
@@ -11,8 +11,6 @@ Ch10Status Ch10Packet::AdvanceBufferAndAbsPosition(uint64_t byte_count)
     // resume at the current absolute position later, in append mode.
     if (bb_response_ != 0)
         return Ch10Status::BUFFER_LIMITED;
-
-    ctx_->UpdateAbsolutePosition(ctx_->absolute_position + byte_count);
 
     return Ch10Status::OK;
 }
@@ -29,7 +27,7 @@ Ch10Status Ch10Packet::ManageHeaderParseStatus(const Ch10Status& status,
         // by a single byte and try again.
         if (status == Ch10Status::BAD_SYNC)
         {
-            status_ = AdvanceBufferAndAbsPosition(1);
+            status_ = AdvanceBuffer(1);
 
             // If the buffer can't be advanced, return this status.
             if (status_ == Ch10Status::BUFFER_LIMITED)
@@ -45,7 +43,7 @@ Ch10Status Ch10Packet::ManageHeaderParseStatus(const Ch10Status& status,
         // beginning of the next packet. 
         else
         {
-            status_ = AdvanceBufferAndAbsPosition(pkt_size);
+            status_ = AdvanceBuffer(pkt_size);
 
             // If the buffer can't be advanced, return this status.
             if (status_ == Ch10Status::BUFFER_LIMITED)
@@ -67,7 +65,7 @@ Ch10Status Ch10Packet::ManageSecondaryHeaderParseStatus(const Ch10Status& status
         // Skip the entire packet if the secondary header does not parse correctly.
         // This may not be the best way to handle this situation. Amend if necessary.
         //if (status == Ch10Status::INVALID_SECONDARY_HDR_FMT)
-        status_ = AdvanceBufferAndAbsPosition(pkt_size);
+        status_ = AdvanceBuffer(pkt_size);
 
         // If the buffer can't be advanced, return this status.
         if (status_ == Ch10Status::BUFFER_LIMITED)
@@ -116,9 +114,14 @@ Ch10Status Ch10Packet::ParseHeader()
     // skipping to next header if other problems occur, for example by 'continue'ing
     // in the main loop if a certain status is returned. The various parsers needed
     // to parse the packet body will use data_ptr_ and relative_pos_ to track position.
-    status_ = AdvanceBufferAndAbsPosition(temp_pkt_size_);
+    status_ = AdvanceBuffer(temp_pkt_size_);
     if (status_ == Ch10Status::BUFFER_LIMITED)
         return status_;
+
+    // Configure context to prepare for use use by the packet body parsers.
+    ctx_->UpdateContext(ctx_->absolute_position + temp_pkt_size_,
+        (*header_.std_hdr_elem.element)->pkt_size, (*header_.std_hdr_elem.element)->data_size,
+        (*header_.std_hdr_elem.element)->rtc1, (*header_.std_hdr_elem.element)->rtc2);
 
     // Check the data checksum now that it's known there are sufficient
     // bytes remaining to fully parse the packet. Do not proceed if the
@@ -148,17 +151,47 @@ Ch10Status Ch10Packet::ParseHeader()
 
 void Ch10Packet::ParseBody()
 {
-    Ch10PacketType t = static_cast<Ch10PacketType>((*header_.std_hdr_elem.element)->data_type);
-    uint64_t val = ctx_->pkt_type_config_reference_map.at(t) & ctx_->pkt_type_config;
-    switch (val)
-    {
-    case ctx_->pkt_type_config_reference_map.at(Ch10PacketType::COMPUTER_GENERATED_DATA_F1):
-    {
 
-    }
-    case ctx_->pkt_type_config_reference_map.at(Ch10PacketType::TIME_DATA_F1):
+    // Note: to test this function, it will be easiest to add a function to 
+    // to BinBuff to set a buffer from memory. After this is complete, a 
+    // BinBuff object can be created at test time which points to the address
+    // of a locally-created header object with a specific data type configured.
+    // Then a Ch10Packet instance can be created with the instance of BinBuff as 
+    // an argument and then ParseHeader, then ParseBody can be called. The 
+    // pkt_type_ can be checked via current_pkt_type.
+    pkt_type_ = Ch10PacketType::NONE;
+    switch ((*header_.std_hdr_elem.element)->data_type)
     {
+    case static_cast<uint8_t>(Ch10PacketType::COMPUTER_GENERATED_DATA_F1):
+    {
+        if (ctx_->pkt_type_config_map.at(Ch10PacketType::COMPUTER_GENERATED_DATA_F1))
+        {
+            pkt_type_ = Ch10PacketType::COMPUTER_GENERATED_DATA_F1;
+            tmats_.Parse(data_ptr_, relative_pos_, tmats_vec_);
+        }
+    }
+    case static_cast<uint8_t>(Ch10PacketType::TIME_DATA_F1):
+    {
+        if (ctx_->pkt_type_config_map.at(Ch10PacketType::TIME_DATA_F1))
+        {
+            pkt_type_ = Ch10PacketType::TIME_DATA_F1;
+        }
+    }
+    case static_cast<uint8_t>(Ch10PacketType::MILSTD1553_F1):
+    {
+        if (ctx_->pkt_type_config_map.at(Ch10PacketType::MILSTD1553_F1))
+        {
+            pkt_type_ = Ch10PacketType::MILSTD1553_F1;
+        }
+    }
+    case static_cast<uint8_t>(Ch10PacketType::VIDEO_DATA_F0):
+    {
+        if (ctx_->pkt_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0))
+        {
+            pkt_type_ = Ch10PacketType::VIDEO_DATA_F0;
+        }
+    }
+    }
 
-    }
-    }
+    // Return status?
 }

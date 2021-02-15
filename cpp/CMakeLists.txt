@@ -334,6 +334,7 @@ if(build_tests)
                    ${test_src_dir}/ch10_context_u.cpp
                    ${test_src_dir}/ch10_packet_header_component_u.cpp
                    ${test_src_dir}/ch10_packet_u.cpp
+                   ${test_src_dir}/ch10_tmats_component_u.cpp
                    )
     endif()
     add_executable(${test_exe_name}

@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <map>
+#include <unordered_map>
 #include <cmath>
 #include "ch10_status.h"
 
@@ -15,6 +16,7 @@ enum class Ch10PacketType : uint8_t
 	any packet types that are added to this enum! Also update
 	relevant unit tests in ch10_context_u.cpp.
 	*/
+	NONE					   = 0xFF,
 	COMPUTER_GENERATED_DATA_F1 = 0x01,
 	TIME_DATA_F1               = 0x11,
 	MILSTD1553_F1              = 0x19,
@@ -24,43 +26,69 @@ enum class Ch10PacketType : uint8_t
 class Ch10Context
 {
 private:
+
+	/// <summary>
+	/// Key components of Ch10 context.
+	/// </summary>
 	uint64_t absolute_position_;
 	uint64_t tdp_rtc_;
 	uint64_t tdp_abs_time_;
+	uint64_t rtc_;
+	uint32_t pkt_size_;
+	uint32_t data_size_;
+	uint64_t abs_time_;
+
+	// Conversion factor for relative time counter (RTC)
+	// to nanoseconds.
+	// Unit: count/ns
+	const uint64_t rtc_to_ns_;
 	
 	// Reference map for packet type on/off state.
 	// This map must include all elements of Ch10PacketType to
 	// ensure that all types can be configured for on/off correctly.
-	const std::map<Ch10PacketType, uint64_t> pkt_type_config_reference_map_;
+	std::unordered_map<Ch10PacketType, bool> pkt_type_config_map_;
 
 	bool searching_for_tdp_;
 	bool found_tdp_;
-
-	// Hold a bit representation of the packet type config for
-	// comparison when choosing to parse a packet body.
-	// This is initialized with uint64_max, so all packets are
-	// initially "turned on". The user must call SetPacketTypeConfig
-	// to configure.
-	uint64_t pkt_type_config_;
 
 public:
 	const uint64_t& absolute_position;
 	const uint64_t& tdp_rtc;
 	const uint64_t& tdp_abs_time;
-	const std::map<Ch10PacketType, uint64_t>& pkt_type_config_reference_map;
-	const uint64_t& pkt_type_config;
+	const uint64_t& rtc;
+	const uint32_t& pkt_size;
+	const uint32_t& data_size;
+	const uint64_t& abs_time;
+	const std::unordered_map<Ch10PacketType, bool>& pkt_type_config_map;
 	Ch10Context(const uint64_t& abs_pos);
 	~Ch10Context();
 
 	void SetSearchingForTDP(bool should_search);
 	Ch10Status ContinueWithPacketType(uint8_t data_type);
-	void UpdateAbsolutePosition(uint64_t new_absolute_pos);
-	void CreatePacketTypeConfigReference(std::map<Ch10PacketType, uint64_t>& input);
 
 	/*
-	Use a user-input map of Ch10PacketType to bool and the bit values 
-	associated with each Ch10PacketType to assemble the pkt_type_config_
-	integer.
+	Update the members that are of primary importance for conveyance
+	to the packet body parsers, including re-calculation of the current
+	packet absolute time based on TDP abs time, RTC, and the current packet
+	RTC.
+
+	Args:
+
+		abs_pos		--> absolute byte position within the Ch10
+		pkt_size	--> Total ch10 packet size in bytes, from Ch10PacketHeaderFmt::pkt_size
+		data_size	--> Size in bytes of ch10 packet body, from Ch10PacketHeaderFmt::data_size
+		rtc1/2		--> Two components of RTC, from from Ch10PacketHeaderFmt::rtc1/2
+
+	*/
+	void UpdateContext(const uint64_t& abs_pos, const uint32_t& pkt_size,
+		const uint32_t& data_size, const uint32_t& rtc1, const uint32_t& rtc2);
+
+
+	void CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketType, bool>& input);
+
+	/*
+	Use a user-input map of Ch10PacketType to bool to assemble the 
+	pkt_type_config_map_.
 
 	Args:
 

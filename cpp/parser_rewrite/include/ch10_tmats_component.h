@@ -2,7 +2,7 @@
 #define CH10_TMATS_COMPONENT_H_
 
 #include "ch10_packet_component.h"
-
+#include "ch10_context.h"
 class Ch10TMATSCSDWFmt
 {
 public:
@@ -37,9 +37,16 @@ private:
 	// Ch10PacketComponent::ParseElements.
 	ElemPtrVec tmats_elems_vec_;
 
+	// Pointer to Ch10Context
+	const Ch10Context* const ctx_;
+
 public:
-	Ch10TMATSComponent() :
-		tmats_elems_vec_{ dynamic_cast<Ch10PacketElementBase*>(&tmats_csdw_elem_) } {}
+	const Ch10PacketElement<Ch10TMATSCSDWFmt>& tmats_csdw_elem;
+	Ch10TMATSComponent(const Ch10Context* const ch10ctx) :
+		tmats_elems_vec_{ dynamic_cast<Ch10PacketElementBase*>(&tmats_csdw_elem_) },
+		ctx_(ch10ctx), tmats_csdw_elem(tmats_csdw_elem_) {}
+	Ch10Status Parse(const uint8_t*& data, uint64_t& loc, 
+		std::vector<std::string>& tmats_vec);
 
 
 };

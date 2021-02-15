@@ -71,7 +71,8 @@ void ParseWorker::append_mode_initialize(uint32_t read, uint16_t binbuff_ind,
 }
 
 #ifdef PARSER_REWRITE
-void ParseWorker::operator()(BinBuff& bb, bool append_mode)
+void ParseWorker::operator()(BinBuff& bb, bool append_mode, 
+	std::vector<std::string>& tmats_body_vec)
 {
 #ifdef DEBUG
 	if (DEBUG > 0)
@@ -95,7 +96,14 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode)
 	ctx.SetSearchingForTDP(!append_mode);
 
 	// Instantiate Ch10Packet object
-	Ch10Packet packet(&bb, &ctx);
+	Ch10Packet packet(&bb, &ctx, tmats_body_vec);
+
+	// Configure packet parsing.
+	std::map<Ch10PacketType, bool> pkt_type_conf = {
+		{Ch10PacketType::MILSTD1553_F1, true},
+		{Ch10PacketType::VIDEO_DATA_F0, false}
+	};
+	ctx.SetPacketTypeConfig(pkt_type_conf);
 
 	// Parse packets until error or end of buffer.
 	bool continue_parsing = true;

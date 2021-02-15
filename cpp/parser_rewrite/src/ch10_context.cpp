@@ -3,34 +3,11 @@
 Ch10Context::Ch10Context(const uint64_t& abs_pos) : absolute_position_(abs_pos),
 	absolute_position(absolute_position_),
 	tdp_rtc_(0), tdp_rtc(tdp_rtc_), tdp_abs_time_(0), tdp_abs_time(tdp_abs_time_),
-	searching_for_tdp_(false), found_tdp_(false), pkt_type_config_(UINT64_MAX),
-	pkt_type_config_reference_map(pkt_type_config_reference_map_), pkt_type_config(pkt_type_config_),
-	pkt_type_config_reference_map_{
-		{Ch10PacketType::COMPUTER_GENERATED_DATA_F1, std::pow((double)2, 0)},
-		{Ch10PacketType::TIME_DATA_F1, std::pow((double)2, 1)},
-		{Ch10PacketType::MILSTD1553_F1, std::pow((double)2, 2)},
-		{Ch10PacketType::VIDEO_DATA_F0, std::pow((double)2, 3)}
-		}
+	searching_for_tdp_(false), found_tdp_(false), pkt_type_config_map(pkt_type_config_map_),
+	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), abs_time_(0),
+	abs_time(abs_time_), rtc_(0), rtc(rtc_), rtc_to_ns_(100)
 {
-	// Create the reference pkt type configuration map.
-	//CreatePacketTypeConfigReference(pkt_type_config_reference_map_);
-
-	// Ensure that all elements defined in Ch10PacketType are present in the map.
-
-	/*uint64_t two = 2;
-	uint64_t index = 0;
-
-	pkt_type_config_reference_map_[Ch10PacketType::COMPUTER_GENERATED_DATA_F1] = std::pow(two, index);
-	index++;
-
-	pkt_type_config_reference_map_[Ch10PacketType::TIME_DATA_F1] = std::pow(two, index);
-	index++;
-
-	pkt_type_config_reference_map_[Ch10PacketType::MILSTD1553_F1] = std::pow(two, index);
-	index++;
-
-	pkt_type_config_reference_map_[Ch10PacketType::VIDEO_DATA_F0] = std::pow(two, index);
-	index++;*/
+	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
 
 Ch10Context::~Ch10Context()
@@ -82,29 +59,24 @@ Ch10Status Ch10Context::ContinueWithPacketType(uint8_t data_type)
 	return Ch10Status::PKT_TYPE_YES;
 }
 
-void Ch10Context::UpdateAbsolutePosition(uint64_t new_absolute_pos)
+void Ch10Context::UpdateContext(const uint64_t& abs_pos, const uint32_t& pkt_size,
+	const uint32_t& data_size, const uint32_t& rtc1, const uint32_t& rtc2)
 {
-	absolute_position_ = new_absolute_pos;
+	absolute_position_ = abs_pos;
+	pkt_size_ = pkt_size;
+	data_size_ = data_size;
+
+	rtc_ = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * rtc_to_ns_;
 }
 
-void Ch10Context::CreatePacketTypeConfigReference(std::map<Ch10PacketType, uint64_t>& input)
+void Ch10Context::CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketType, bool>& input)
 {
-	// Ensure that all elements defined in Ch10PacketType are present in the map.
-
-	uint64_t two = 2;
-	uint64_t index = 0;
-
-	input[Ch10PacketType::COMPUTER_GENERATED_DATA_F1] = std::pow(two, index);
-	index++;
-
-	input[Ch10PacketType::TIME_DATA_F1] = std::pow(two, index);
-	index++;
-
-	input[Ch10PacketType::MILSTD1553_F1] = std::pow(two, index);
-	index++;
-
-	input[Ch10PacketType::VIDEO_DATA_F0] = std::pow(two, index);
-	index++;
+	// Ensure that all elements defined in Ch10PacketType are present in the map 
+	// and initialized to true, or turned on by default.
+	input[Ch10PacketType::COMPUTER_GENERATED_DATA_F1] = true;
+	input[Ch10PacketType::TIME_DATA_F1] = true;
+	input[Ch10PacketType::MILSTD1553_F1] = true;
+	input[Ch10PacketType::VIDEO_DATA_F0] = true;
 }
 
 void Ch10Context::SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user_config)
@@ -114,16 +86,11 @@ void Ch10Context::SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user
 	using MapIt = std::map< Ch10PacketType, bool>::const_iterator;
 	for (MapIt it = user_config.cbegin(); it != user_config.cend(); ++it)
 	{
-		if (!it->second)
-		{
-			pkt_type_config_ = pkt_type_config_ & ~pkt_type_config_reference_map_.at(it->first);
-		}
+		pkt_type_config_map_[it->first] = it->second;
 	}
 
 	// Regardless of current configuration after applying user config, set tmats
 	// and time packets to true = on.
-	pkt_type_config_ = pkt_type_config_reference_map_.at(
-		Ch10PacketType::COMPUTER_GENERATED_DATA_F1) | pkt_type_config_;
-	pkt_type_config_ = pkt_type_config_reference_map_.at(
-		Ch10PacketType::TIME_DATA_F1) | pkt_type_config_;
+	pkt_type_config_map_[Ch10PacketType::COMPUTER_GENERATED_DATA_F1] = true;
+	pkt_type_config_map_[Ch10PacketType::TIME_DATA_F1] = true;
 }
