@@ -6,6 +6,7 @@ class Ch10PacketHeaderComponentTest : public ::testing::Test
 {
 protected:
     Ch10PacketHeaderFmt pkt_hdr_fmt_;
+    Ch10Context ctx_;
     Ch10PacketHeaderComponent ch10_pkt_hdr_comp_;
     uint64_t loc_;
     const uint8_t* data_ptr_;
@@ -17,7 +18,7 @@ protected:
     std::vector<uint32_t> fake_body_and_footer32_;
 
     Ch10PacketHeaderComponentTest() : loc_(0), data_ptr_(nullptr), orig_data_ptr_(nullptr),
-        status_(Ch10Status::NONE), body_ptr_(nullptr)
+        status_(Ch10Status::NONE), body_ptr_(nullptr), ctx_(0, 0), ch10_pkt_hdr_comp_(&ctx_)
     {
         // Fill out values for fake header data.
         pkt_hdr_fmt_.sync = ch10_pkt_hdr_comp_.sync_;

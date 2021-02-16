@@ -55,7 +55,7 @@ private:
 	bool found_tdp_;
 
 public:
-	const uint64_t& thread_id;
+	const uint16_t& thread_id;
 	const uint64_t& absolute_position;
 	const uint64_t& tdp_rtc;
 	const uint64_t& tdp_abs_time;

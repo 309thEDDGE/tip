@@ -51,10 +51,11 @@ public:
     const uint64_t& relative_pos;
     const Ch10PacketType& current_pkt_type;
     Ch10Packet(BinBuff* binbuff, Ch10Context* context, std::vector<std::string>& tmats_vec) 
-        : tmats_vec_(tmats_vec), relative_pos_(0), header_(),
+        : tmats_vec_(tmats_vec), relative_pos_(0), 
         bb_(binbuff), ctx_(context), data_ptr_(nullptr), bb_response_(0), 
         status_(Ch10Status::OK), relative_pos(relative_pos_), temp_pkt_size_(0),
-        pkt_type_(Ch10PacketType::NONE), current_pkt_type(pkt_type_), tmats_(ctx_) {}
+        pkt_type_(Ch10PacketType::NONE), current_pkt_type(pkt_type_), header_(context), 
+        tmats_(context) {}
 
     /*
     Parse the ch10 header at the current location of the buffer.
