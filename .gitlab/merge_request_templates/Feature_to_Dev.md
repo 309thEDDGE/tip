@@ -47,6 +47,8 @@ Based on Google's _C++ Style Guide_, https://google.github.io/styleguide/cppguid
 
 Based on _Writing Testable Code_, https://www.toptal.com/qa/how-to-write-testable-code-and-why-it-matters
 
+_Note:_ Follow the testability requirements unless they impact functionality or speed.
+
 ##### No global state
 * [ ] No class enforces that it be a singleton
 * [ ] No static (class-wide) data except constants (_i.e._, individual instances can contain different data values)
