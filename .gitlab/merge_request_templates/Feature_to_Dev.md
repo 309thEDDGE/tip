@@ -11,19 +11,19 @@
   - [ ] Code follows our coding guide below
 ---
 
-### Coding Style Checklist
+### Coding Style
 
-Based on google c++ style guide https://google.github.io/styleguide/cppguide.html
+Based on Google's _C++ Style Guide_, https://google.github.io/styleguide/cppguide.html
 
 ##### Brace placement
-* [ ] All functions, `if` blocks and loops have braces
-  - Exception: No braces are required for _very_ short `if` or loop statements on _one line_
-* [ ] Opening braces are directly below the `if`/`for`/`while` or function
+* [ ] All functions, if blocks, and loops have braces
+  - Exception: No braces are required for _very_ short statements on the same line as the `if`, `for`, `do` or `while`
+* [ ] Opening braces are directly below the function or the `if`, `for`, `do` or `while`
 
 ##### Naming convention
 
 * [ ] Only use common abbreviations; otherwise spell it out
-    - (rule of thumb: if it's listed on Wikipedia)
+    - (rule of thumb: only use abbreviations listed on Wikipedia or well-known in your domain [_e.g._ ICD for aircraft software])
 * [ ] Classes and functions follow the format `ThisIsMyClassOrFunction`
 * [ ] Variables follow the format `my_variable`
 * [ ] Class member variables have a trailing underscore: `class_variable_`
@@ -34,15 +34,32 @@ Based on google c++ style guide https://google.github.io/styleguide/cppguide.htm
 
 ##### Comments
 * [ ] Comment all public variables and functions (in the header file)
-* [ ] Comments for public member functions follow the format below
+* [ ] Comments for public member functions follow the format in the sample code below
 
 ##### General
-* [ ] 80 characters per line (whenever possible)
+* [ ] Maximum 80 characters per line (whenever possible)
 * [ ] Put all class functions and variables that don't need to be public in private
 * [ ] Pass function parameters by `const ref` if larger than one byte (or just `ref` if the function can change the value)
 * [ ] Try to increase speed for massively repeated code
-* [ ] Restructure code to be more testable (functions working as independently as possible) 
 * [ ] Restructure code to be more readable
+
+#### Testability
+
+Based on _Writing Testable Code_, https://www.toptal.com/qa/how-to-write-testable-code-and-why-it-matters
+
+_Note:_ Follow the testability requirements unless they impact functionality or speed.
+
+##### No global state
+* [ ] No class enforces that it be a singleton
+* [ ] No static (class-wide) data except constants (_i.e._, individual instances can contain different data values)
+* [ ] No static (class-wide) functions except pure functions that produce the same output every time for a given set of inputs
+
+##### No external effects
+* [ ] A function's behavior can only be affected by its arguments or its object's state 
+* [ ] A function only affects its arguments or its object's state
+* [ ] Any object affecting or affected by a function can be replaced with a mock by the object's owner
+  * _E.g._, system calls must be wrapped in objects that can be replaced with mocks
+  * _E.g._, I/O is done through an object that can be replaced with a mock
 
 #### Sample code
 ```c++
@@ -74,5 +91,3 @@ Based on google c++ style guide https://google.github.io/styleguide/cppguide.htm
         }
     }
 ```
-
-
