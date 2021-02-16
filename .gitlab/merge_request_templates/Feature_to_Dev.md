@@ -23,7 +23,7 @@ Based on Google's _C++ Style Guide_, https://google.github.io/styleguide/cppguid
 ##### Naming convention
 
 * [ ] Only use common abbreviations; otherwise spell it out
-    - (rule of thumb: only use abbreviations listed on Wikipedia well-known in your domain [_e.g._ ICD for aircraft software])
+    - (rule of thumb: only use abbreviations listed on Wikipedia or well-known in your domain [_e.g._ ICD for aircraft software])
 * [ ] Classes and functions follow the format `ThisIsMyClassOrFunction`
 * [ ] Variables follow the format `my_variable`
 * [ ] Class member variables have a trailing underscore: `class_variable_`
@@ -34,27 +34,29 @@ Based on Google's _C++ Style Guide_, https://google.github.io/styleguide/cppguid
 
 ##### Comments
 * [ ] Comment all public variables and functions (in the header file)
-* [ ] Comments for public member functions follow the format below
+* [ ] Comments for public member functions follow the format in the sample code below
 
 ##### General
-* [ ] 80 characters per line (whenever possible)
+* [ ] Maximum 80 characters per line (whenever possible)
 * [ ] Put all class functions and variables that don't need to be public in private
 * [ ] Pass function parameters by `const ref` if larger than one byte (or just `ref` if the function can change the value)
 * [ ] Try to increase speed for massively repeated code
 * [ ] Restructure code to be more readable
 
-#### Testability*
+#### Testability
 
-Based on _Writing Testable Code_, https://www.toptal.com/qa/how-to-write-testable-code-and-why-it-mattersNo global state
+Based on _Writing Testable Code_, https://www.toptal.com/qa/how-to-write-testable-code-and-why-it-matters
 
+##### No global state
 * [ ] No class enforces that it be a singleton
-* [ ] No static (class-wide) data except constants (_i.e._, individual instances contain separate data)
+* [ ] No static (class-wide) data except constants (_i.e._, individual instances can contain different data values)
 * [ ] No static (class-wide) functions except pure functions that produce the same output every time for a given set of inputs
-No external effects
+
+##### No external effects
 * [ ] A function's behavior can only be affected by its arguments or its object's state 
 * [ ] A function only affects its arguments or its object's state
 * [ ] Any object affecting or affected by a function can be replaced with a mock by the object's owner
-  * _E.g._, system calls are wrapped in objects that can be replaced with mocks
+  * _E.g._, system calls must be wrapped in objects that can be replaced with mocks
   * _E.g._, I/O is done through an object that can be replaced with a mock
 
 #### Sample code
