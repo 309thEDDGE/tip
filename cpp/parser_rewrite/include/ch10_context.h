@@ -27,6 +27,9 @@ class Ch10Context
 {
 private:
 
+	// ID to control or generate thread-specific log output.
+	uint16_t thread_id_;
+
 	/// <summary>
 	/// Key components of Ch10 context.
 	/// </summary>
@@ -52,6 +55,7 @@ private:
 	bool found_tdp_;
 
 public:
+	const uint64_t& thread_id;
 	const uint64_t& absolute_position;
 	const uint64_t& tdp_rtc;
 	const uint64_t& tdp_abs_time;
@@ -60,7 +64,7 @@ public:
 	const uint32_t& data_size;
 	const uint64_t& abs_time;
 	const std::unordered_map<Ch10PacketType, bool>& pkt_type_config_map;
-	Ch10Context(const uint64_t& abs_pos);
+	Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
 	~Ch10Context();
 
 	void SetSearchingForTDP(bool should_search);

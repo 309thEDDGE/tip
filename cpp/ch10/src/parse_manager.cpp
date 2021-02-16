@@ -224,10 +224,7 @@ void ParseManager::start_workers()
 	collect_chanid_to_commwords_metadata(output_chanid_commwords_map);
 	md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
 
-
-
-
-#ifdef LIBIRIG106
+#if defined(LIBIRIG106) || defined(PARSER_REWRITE)
 	ProcessTMATS();
 
 	// Record the TMATS channel ID to source map.

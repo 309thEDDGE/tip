@@ -14,7 +14,9 @@ Ch10Status Ch10PacketHeaderComponent::Parse(const uint8_t*& data, uint64_t& loc)
     status_ = VerifyHeaderChecksum((const uint8_t*)(*std_hdr_elem_.element),
         (*std_hdr_elem_.element)->checksum);
     if (status_ != Ch10Status::CHECKSUM_TRUE)
+    {
         return status_;
+    }
 
     return Ch10Status::OK;
 }

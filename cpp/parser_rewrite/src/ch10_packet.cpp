@@ -27,6 +27,8 @@ Ch10Status Ch10Packet::ManageHeaderParseStatus(const Ch10Status& status,
         // by a single byte and try again.
         if (status == Ch10Status::BAD_SYNC)
         {
+            if (ctx_->thread_id == 0)
+                printf("Ch10Packet::ManageHeaderParseStatus(): bad_sync!\n");
             status_ = AdvanceBuffer(1);
 
             // If the buffer can't be advanced, return this status.
@@ -43,6 +45,7 @@ Ch10Status Ch10Packet::ManageHeaderParseStatus(const Ch10Status& status,
         // beginning of the next packet. 
         else
         {
+            printf("Ch10Packet::ManageHeaderParseStatus(): not ok!\n");
             status_ = AdvanceBuffer(pkt_size);
 
             // If the buffer can't be advanced, return this status.
@@ -134,7 +137,7 @@ Ch10Status Ch10Packet::ParseHeader()
         (*header_.std_hdr_elem.element)->pkt_size,
         (*header_.std_hdr_elem.element)->secondary_hdr);
     // If the checksum does not match, Skip this pkt. 
-    if (status_ != Ch10Status::CHECKSUM_TRUE)
+    if (status_ == Ch10Status::CHECKSUM_FALSE)
         return Ch10Status::PKT_TYPE_NO;
 
     // Handle parsing of the secondary header. This is currently not 
@@ -168,6 +171,7 @@ void Ch10Packet::ParseBody()
         {
             pkt_type_ = Ch10PacketType::COMPUTER_GENERATED_DATA_F1;
             tmats_.Parse(data_ptr_, relative_pos_, tmats_vec_);
+            printf("after parse tmats, vec size is %zu\n", tmats_vec_.size());
         }
     }
     case static_cast<uint8_t>(Ch10PacketType::TIME_DATA_F1):

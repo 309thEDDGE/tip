@@ -92,7 +92,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 #endif
 
 	// Instantiate Ch10Context object
-	Ch10Context ctx(start_position);
+	Ch10Context ctx(start_position, id);
 	ctx.SetSearchingForTDP(!append_mode);
 
 	// Instantiate Ch10Packet object
