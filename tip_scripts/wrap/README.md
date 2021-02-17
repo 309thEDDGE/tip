@@ -9,7 +9,12 @@ Wraps three primary functions of the _tip_ project:
 More information about the underlying libraries that are wrapped in the project can be found
 in the README in the _tip_ project.
 
+This Python wrap inside TIP will be discontinued soon and moved to the pytip repo instead.
+
 ## Build
+
+If the wheel has previously been built, remove the old wrap build artifacts before rebuilding the wheel.  To do this, delete the `build`, `dist`, and `tip.egg-info` directories.  Also uninstall the old wheel: `pip uninstall tip`
+
 Use python's native setuptools to build a wheel
 
 `python setup.py bdist_wheel`
@@ -24,7 +29,7 @@ mentioned in the name of the wheel and the same OS and processor architecture.
 
 `pip install <wheel name>`
 
-`pip uninstall <wheel name>`
+`pip uninstall tip`
 
 ## Usage
 View _tip.py_ to learn about the function signature relative to the three primary

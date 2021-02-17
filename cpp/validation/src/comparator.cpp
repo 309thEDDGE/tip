@@ -389,3 +389,60 @@ bool Comparator::CompareBool(int column, bool is_list)
 	}
 	return true;
 }
+
+template<>
+bool Comparator::CompareVecs<double>(std::vector<double>& vec1,
+	int& size1,
+	std::vector<double>& vec2,
+	int& size2,
+	int column)
+{
+	compare_vec_result_ = true;
+
+	// Note the conversion to uint8_t allows for comparisons of NaN
+	// in the case of float and double
+	// If nothing exists in one of the vectors
+	// comparison should be false
+	if (size1 == 0 || size2 == 0)
+	{
+		begin_pos_1_ = 0;
+		begin_pos_2_ = 0;
+		size1 = 0;
+		size2 = 0;
+		return false;
+	}
+	// If both vectors are the same size
+	// compare both and reset all positions
+	if (size1 == size2)
+	{
+		compare_vec_result_ = ComparisonLoop(vec1, vec2, size2, column);
+		begin_pos_1_ = 0;
+		begin_pos_2_ = 0;
+		size1 = 0;
+		size2 = 0;
+	}
+	// If vector 1 is bigger than vector 2
+	// compare against vector 2 and prepare
+	// vector 1 position for the next comparison
+	else if (size1 > size2)
+	{
+		compare_vec_result_ = ComparisonLoop(vec1, vec2, size2, column);
+		size1 = size1 - size2;
+		begin_pos_1_ += size2;
+		begin_pos_2_ = 0;
+		size2 = 0;
+	}
+	// If vector 2 is bigger than vector 1
+	// compare against vector 1 and prepare
+	// vector 2 position for the next comparison
+	else
+	{
+		compare_vec_result_ = ComparisonLoop(vec1, vec2, size1, column);
+		size2 = size2 - size1;
+		begin_pos_2_ += size1;
+		begin_pos_1_ = 0;
+		size1 = 0;
+	}
+	return compare_vec_result_;
+}
+

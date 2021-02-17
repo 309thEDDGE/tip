@@ -5,6 +5,7 @@
 #include <arrow/io/api.h>
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/schema.h>
+#include <cmath>
 #include <map>
 #include <set>
 #include "parquet_reader.h"
@@ -110,6 +111,22 @@ public:
 				 True  -> If all columns match
 	*/
 	bool CompareAll();
+
+	/*
+		Loop over vectors vec1 and vec2, comparing row_count 
+		rows. Comparison indices of vec1 and vec2 start at 
+		begin_pos_1_ and begin_pos_2_, respectively. Used
+		primarily for comparing float values.
+
+		Return: False -> If any rows do not equate and both rows
+		                 are not NaNs.
+			    True  -> Otherwise
+	*/
+	template<typename T>
+	bool ComparisonLoop(const std::vector<T>& vec1,
+		const std::vector<T>& vec2,
+		int row_count,
+		int column);
 };
 
 
@@ -297,4 +314,32 @@ bool Comparator::Compare(int column, bool is_list)
 	return true;
 }
 
+template<typename T>
+bool Comparator::ComparisonLoop(const std::vector<T>& vec1,
+	const std::vector<T>& vec2,
+	int row_count,
+	int column)
+{
+	bool comparison_result = true;
+	bool both_are_nan = false;
+	for (int i = 0; i < row_count; i++)
+	{
+		if (vec2[begin_pos_2_ + i] != vec1[begin_pos_1_ + i])
+		{
+			// NaN checks are ignored because NaNs are, by definition, not comparable,
+			// or at least will always be compared as unequal. In the context of this code,
+			// the purpose of which is to compare two parquet files and indicate equality,
+			// the comparison of NaNs will indicate that the two files are unequal always. 
+			// We do not wish to indicate inequality in this case, so if the values in 
+			// comparison are not equal and at least one is not a NaN, then indicate
+			// inequality.
+			both_are_nan = std::isnan(vec2[begin_pos_2_ + i]) && std::isnan(vec1[begin_pos_1_ + i]);
+			if(!both_are_nan)
+				comparison_result = false;
+		}
+	}
+	compared_count_[column] = compared_count_[column] + row_count;
+
+	return comparison_result;
+}
 #endif

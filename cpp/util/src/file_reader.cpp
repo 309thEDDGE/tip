@@ -10,10 +10,9 @@ int FileReader::ReadFile(std::string file_name)
 	if (!in_file.is_open())
 		return 1;
 	
-	
-	while (std::getline(in_file, line))
+	while (std::getline(in_file, line, '\n'))
 	{
-		lines.push_back(line);
+	  lines.push_back(line);
 	}
 	return 0;
 }
