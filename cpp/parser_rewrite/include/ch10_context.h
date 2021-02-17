@@ -54,6 +54,19 @@ private:
 	bool searching_for_tdp_;
 	bool found_tdp_;
 
+	// Indicates that tdp data are relevant. This is only
+	// valid after found_tdp_ is set to true. If this var 
+	// is false, then tdp data are not available, absolute time
+	// can't be computed, and rtc time ought to be used in 
+	// place of absolute time.
+	bool tdp_none_;
+
+	// 1 if IRIG time (day of year) is found in the TDP packet.
+	// 0 if otherwise (day, month, year). This value is only
+	// relevant after the TDP has been parsed, i.e., found_tdp_
+	// is set to true.
+	uint8_t tdp_doy_; 
+
 public:
 	const uint16_t& thread_id;
 	const uint64_t& absolute_position;
@@ -63,6 +76,8 @@ public:
 	const uint32_t& pkt_size;
 	const uint32_t& data_size;
 	const uint64_t& abs_time;
+	const bool& tdp_none;
+	const uint8_t& tdp_doy;
 	const std::unordered_map<Ch10PacketType, bool>& pkt_type_config_map;
 	Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
 	~Ch10Context();
@@ -106,6 +121,17 @@ public:
 		to true.
 	*/
 	void SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user_config);
+
+	/*
+	Update tdp_rtc_, tdp_abs_time_, tdp_doy_, tdp_none_ and found_tdp_,
+	member vars necessary
+	for absolute time calculation for other data packets. 
+
+	Args:
+
+		
+	*/
+	//void UpdateWithTDPData(const uint64_t& tdp_abs_time);
 };
 
 

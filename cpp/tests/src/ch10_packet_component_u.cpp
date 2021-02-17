@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "ch10_context.h"
 #include "ch10_packet_component.h"
 
 class BitField1
@@ -36,15 +37,16 @@ class Ch10PacketComponentTest : public ::testing::Test
     size_t bitfield1_size_;
     size_t bitfield2_size_;
     size_t arrayfloat_size_;
+    Ch10Context ctx_;
     Ch10PacketComponent comp_;
     uint64_t loc_;
     Ch10PacketElement<BitField1> bf1elem_;
     Ch10PacketElement<BitField2> bf2elem_;
     Ch10PacketElement<ArrayFloat> afelem_;
 
-    Ch10PacketComponentTest() : total_size_(0), 
+    Ch10PacketComponentTest() : total_size_(0),
         bitfield1_size_(sizeof(BitField1)), bitfield2_size_(sizeof(BitField2)),
-        arrayfloat_size_(sizeof(ArrayFloat)), loc_(0), comp_()
+        arrayfloat_size_(sizeof(ArrayFloat)), loc_(0), ctx_(0,0), comp_(&ctx_)
     {
         total_size_ = bitfield1_size_ + bitfield2_size_ + arrayfloat_size_;
 

@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include "ch10_status.h"
+#include "ch10_context.h"
 #include "ch10_packet_element.h"
 
 /*
@@ -20,8 +21,12 @@ private:
 protected:
     Ch10Status status_;
 
+    // Pointer to Ch10Context
+    const Ch10Context* const ctx_;
+
 public:
-    Ch10PacketComponent() : status_(Ch10Status::NONE) {}
+    Ch10PacketComponent(const Ch10Context* const ch10ctx) : status_(Ch10Status::NONE),
+        ctx_(ch10ctx) {}
     void ParseElements(const ElemPtrVec& elems, const uint8_t*& data, 
         uint64_t& loc);
     virtual Ch10Status Parse(const uint8_t*& data, uint64_t& loc);

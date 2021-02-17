@@ -4,7 +4,6 @@
 #define CH10_PACKET_HEADER_COMPONENT_H_
 
 #include "ch10_packet_component.h"
-#include "ch10_context.h"
 
 class Ch10PacketHeaderFmt
 {
@@ -72,9 +71,6 @@ class Ch10PacketHeaderComponent : public Ch10PacketComponent
 
 private:
 
-    // Pointer to Ch10Context
-    const Ch10Context* const ctx_;
-
     // Packet elements, i.e., bit interpretations, to be parsed out of a 
     // Ch10 packet header. Not all elements will be utilized for ever packet
     // header. Most ch10 packets have headers which only have the standard 
@@ -128,9 +124,9 @@ public:
     
     const uint64_t std_hdr_size_;
     const uint64_t secondary_hdr_size_;
-    Ch10PacketHeaderComponent(const Ch10Context* const ch10ctx) : Ch10PacketComponent(),
+    Ch10PacketHeaderComponent(const Ch10Context* const ch10ctx) : Ch10PacketComponent(ch10ctx),
         std_hdr_elem_(), secondary_binwt_elem_(), secondary_ieee_elem_(),
-        secondary_ertc_elem_(), secondary_checksum_elem_(), ctx_(ch10ctx),
+        secondary_ertc_elem_(), secondary_checksum_elem_(),
         std_hdr_elem(std_hdr_elem_), secondary_binwt_elem(secondary_binwt_elem_),
         secondary_ieee_elem(secondary_ieee_elem_), 
         secondary_ertc_elem(secondary_ertc_elem_), 

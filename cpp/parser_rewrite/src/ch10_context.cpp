@@ -5,7 +5,8 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
 	tdp_rtc_(0), tdp_rtc(tdp_rtc_), tdp_abs_time_(0), tdp_abs_time(tdp_abs_time_),
 	searching_for_tdp_(false), found_tdp_(false), pkt_type_config_map(pkt_type_config_map_),
 	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), abs_time_(0),
-	abs_time(abs_time_), rtc_(0), rtc(rtc_), rtc_to_ns_(100), thread_id_(id), thread_id(thread_id_)
+	abs_time(abs_time_), rtc_(0), rtc(rtc_), rtc_to_ns_(100), thread_id_(id), thread_id(thread_id_),
+	tdp_none_(false), tdp_none(tdp_none_), tdp_doy_(0), tdp_doy(tdp_doy_)
 {
 	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
