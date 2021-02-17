@@ -84,7 +84,7 @@ public:
 	const Ch10PacketElement<TDF1CSDWFmt>& tdp_csdw_elem;
 	const Ch10PacketElement<TDF1DataIRIGFmt>& tdp_irig_elem;
 	const Ch10PacketElement<TDF1DataNonIRIGFmt>& tdp_nonirig_elem;
-	Ch10TDPComponent(const Ch10Context* const ch10ctx) :
+	Ch10TDPComponent(Ch10Context* const ch10ctx) :
 		Ch10PacketComponent(ch10ctx),
 		tdp_csdw_elem_vec_{ dynamic_cast<Ch10PacketElementBase*>(&tdp_csdw_elem_) },
 		tdp_irig_elem_vec_{ dynamic_cast<Ch10PacketElementBase*>(&tdp_irig_elem_) },
@@ -104,6 +104,18 @@ public:
 		Absolute time in nanoseconds since the epoch, which begins on 1/1/1970.
 	*/
 	uint64_t ComputeIRIGTime(const TDF1DataIRIGFmt* const irig_fmt);
+
+	/*
+	Compute absolute time with using
+	an instance of TDF1DataNonIRIGFmt as input.
+
+	Args:
+		nonirig_fmt	--> TDF1DataNonIRIGFmt instance with initialized values
+
+	Return:
+		Absolute time in nanoseconds since the epoch, which begins on 1/1/1970.
+	*/
+	uint64_t ComputeNonIRIGTime(const TDF1DataNonIRIGFmt* const nonirig_fmt);
 };
 
 #endif

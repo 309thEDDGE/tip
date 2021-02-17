@@ -59,7 +59,7 @@ private:
 	// is false, then tdp data are not available, absolute time
 	// can't be computed, and rtc time ought to be used in 
 	// place of absolute time.
-	bool tdp_none_;
+	bool tdp_valid_;
 
 	// 1 if IRIG time (day of year) is found in the TDP packet.
 	// 0 if otherwise (day, month, year). This value is only
@@ -76,8 +76,9 @@ public:
 	const uint32_t& pkt_size;
 	const uint32_t& data_size;
 	const uint64_t& abs_time;
-	const bool& tdp_none;
+	const bool& tdp_valid;
 	const uint8_t& tdp_doy;
+	const bool& found_tdp;
 	const std::unordered_map<Ch10PacketType, bool>& pkt_type_config_map;
 	Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
 	~Ch10Context();
@@ -123,15 +124,22 @@ public:
 	void SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user_config);
 
 	/*
-	Update tdp_rtc_, tdp_abs_time_, tdp_doy_, tdp_none_ and found_tdp_,
+	Update tdp_rtc_, tdp_abs_time_, tdp_doy_, tdp_valid_ and found_tdp_,
 	member vars necessary
 	for absolute time calculation for other data packets. 
 
 	Args:
+		tdp_abs_time	--> absolute time in nanoseconds since the epoch
+							as calculated from data retrieved from the 
+							TDP packet
+		tdp_doy			--> bit value, 1 = day-of-year time (IRIG time),
+							0 = year-mth-day time
+		tdp_valid		--> true if tdp csdw time_fmt or src are none,
+							false otherwise. Set to false if tdp data is invalid.
 
-		
 	*/
-	//void UpdateWithTDPData(const uint64_t& tdp_abs_time);
+	void UpdateWithTDPData(const uint64_t& tdp_abs_time, uint8_t tdp_doy,
+		bool tdp_valid);
 };
 
 

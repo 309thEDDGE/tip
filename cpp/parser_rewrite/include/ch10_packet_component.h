@@ -22,10 +22,10 @@ protected:
     Ch10Status status_;
 
     // Pointer to Ch10Context
-    const Ch10Context* const ctx_;
+    Ch10Context* const ctx_;
 
 public:
-    Ch10PacketComponent(const Ch10Context* const ch10ctx) : status_(Ch10Status::NONE),
+    Ch10PacketComponent(Ch10Context* const ch10ctx) : status_(Ch10Status::NONE),
         ctx_(ch10ctx) {}
     void ParseElements(const ElemPtrVec& elems, const uint8_t*& data, 
         uint64_t& loc);

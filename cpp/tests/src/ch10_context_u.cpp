@@ -152,3 +152,59 @@ TEST(Ch10ContextTest, UpdateContextSetVars)
 	EXPECT_EQ(data_size, ctx.data_size);
 	EXPECT_EQ(rtc, ctx.rtc);
 }
+
+TEST(Ch10ContextTest, UpdateWithTDPDataTDPIsNone)
+{
+	Ch10Context ctx(0);
+	uint64_t tdp_abs_time = 344199919;
+	uint64_t abs_pos = 6112919;
+	uint32_t data_size = 3399;
+	uint32_t pkt_size = 4399;
+	uint32_t rtc1 = 321053;
+	uint32_t rtc2 = 502976;
+	uint64_t rtc = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * 100;
+	uint8_t tdp_doy = 1;
+
+	// Update Context to assign rtc value internally
+	ctx.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2);
+	
+	// Update with TDP, but set tdp_valid bool to false = invalid.
+	bool tdp_valid = false;
+	ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+
+	EXPECT_EQ(ctx.tdp_valid, tdp_valid);
+
+	// Confirm that certain variables have NOT been updated to 
+	// reflect whatever is passed into the function.
+	EXPECT_FALSE(ctx.tdp_abs_time == tdp_abs_time);
+	EXPECT_FALSE(ctx.tdp_rtc == rtc);
+}
+
+TEST(Ch10ContextTest, UpdateWithTDPDataVarsUpdated)
+{
+	Ch10Context ctx(0);
+	uint64_t tdp_abs_time = 344199919;
+	uint64_t abs_pos = 6112919;
+	uint32_t data_size = 3399;
+	uint32_t pkt_size = 4399;
+	uint32_t rtc1 = 321053;
+	uint32_t rtc2 = 502976;
+	uint64_t rtc = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * 100;
+	uint8_t tdp_doy = 1;
+
+	// Update Context to assign rtc value internally
+	ctx.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2);
+
+	// Update with TDP valid
+	bool tdp_valid = true;
+	ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+
+	EXPECT_EQ(ctx.tdp_valid, tdp_valid);
+
+	// Confirm that certain variables have been updated to 
+	// reflect whatever is passed into the function.
+	EXPECT_EQ(ctx.tdp_abs_time, tdp_abs_time);
+	EXPECT_EQ(ctx.tdp_rtc, rtc);
+	EXPECT_EQ(ctx.tdp_doy, tdp_doy);
+	EXPECT_EQ(ctx.found_tdp, true);
+}

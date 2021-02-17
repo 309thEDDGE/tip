@@ -6,7 +6,7 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
 	searching_for_tdp_(false), found_tdp_(false), pkt_type_config_map(pkt_type_config_map_),
 	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), abs_time_(0),
 	abs_time(abs_time_), rtc_(0), rtc(rtc_), rtc_to_ns_(100), thread_id_(id), thread_id(thread_id_),
-	tdp_none_(false), tdp_none(tdp_none_), tdp_doy_(0), tdp_doy(tdp_doy_)
+	tdp_valid_(false), tdp_valid(tdp_valid_), tdp_doy_(0), tdp_doy(tdp_doy_), found_tdp(found_tdp_)
 {
 	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
@@ -94,4 +94,28 @@ void Ch10Context::SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user
 	// and time packets to true = on.
 	pkt_type_config_map_[Ch10PacketType::COMPUTER_GENERATED_DATA_F1] = true;
 	pkt_type_config_map_[Ch10PacketType::TIME_DATA_F1] = true;
+}
+
+void Ch10Context::UpdateWithTDPData(const uint64_t& tdp_abs_time, uint8_t tdp_doy,
+	bool tdp_valid)
+{
+	tdp_valid_ = tdp_valid;
+
+	// Do not update any values if tdp is not valid
+	if (tdp_valid)
+	{
+		// This function should only be called by the TDP parser at 
+		// the time it is parsed. If so, the RTC stored in this 
+		// instance of Ch10Context is the TDP RTC. Re-assign it as such.
+		tdp_rtc_ = rtc_;
+
+		// Store the tdp absolute time.
+		tdp_abs_time_ = tdp_abs_time;
+
+		// Store the tdp doy.
+		tdp_doy_ = tdp_doy;
+
+		// Indicate that the TDP has been found.
+		found_tdp_ = true;
+	}
 }

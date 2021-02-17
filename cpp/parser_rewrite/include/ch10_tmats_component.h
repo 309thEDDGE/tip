@@ -39,7 +39,7 @@ private:
 
 public:
 	const Ch10PacketElement<Ch10TMATSCSDWFmt>& tmats_csdw_elem;
-	Ch10TMATSComponent(const Ch10Context* const ch10ctx) :
+	Ch10TMATSComponent(Ch10Context* const ch10ctx) :
 		Ch10PacketComponent(ch10ctx),
 		tmats_elems_vec_{ dynamic_cast<Ch10PacketElementBase*>(&tmats_csdw_elem_) },
 		tmats_csdw_elem(tmats_csdw_elem_) {}
