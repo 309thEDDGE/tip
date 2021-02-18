@@ -2,6 +2,9 @@ FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/hardened-ubi8-s
 
 ARG CMAKE_BUILD_DIR="build"
 
+WORKDIR /app/headers
+COPY cpp ./
+
 WORKDIR /app/bin
 COPY ${CMAKE_BUILD_DIR}/cpp ./
 
