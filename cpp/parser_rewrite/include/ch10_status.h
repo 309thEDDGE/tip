@@ -19,6 +19,7 @@ enum class Ch10Status : uint8_t
 	CHECKSUM_TRUE,
 	CHECKSUM_FALSE,
 	TDP_NONE,
+	MILSTD1553_TS_NOT_HANDLED,
 };
 
 #endif

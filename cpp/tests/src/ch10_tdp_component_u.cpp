@@ -310,7 +310,11 @@ TEST_F(Ch10TDPComponentTest, ParseIRIGTime)
     uint32_t rtc2 = 502976;
     uint64_t rtc = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * 100;
     uint8_t tdp_doy = 1; // 1 for irig time
-    ctx_.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2);
+    uint8_t intrapkt_ts_src = 0;
+    uint8_t time_fmt = 1;
+
+    ctx_.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2,
+        intrapkt_ts_src, time_fmt);
 
     // Ch10Context::UpdateWithTDPData will be called by Parse().
 
@@ -349,7 +353,11 @@ TEST_F(Ch10TDPComponentTest, ParseNonIRIGTime)
     uint32_t rtc2 = 502976;
     uint64_t rtc = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * 100;
     uint8_t tdp_doy = 0; // 0 for non-irig time
-    ctx_.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2);
+    uint8_t intrapkt_ts_src = 0;
+    uint8_t time_fmt = 1;
+
+    ctx_.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2,
+        intrapkt_ts_src, time_fmt);
 
     // Ch10Context::UpdateWithTDPData will be called by Parse().
 

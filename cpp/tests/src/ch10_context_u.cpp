@@ -145,12 +145,17 @@ TEST(Ch10ContextTest, UpdateContextSetVars)
 	uint32_t rtc1 = 321053;
 	uint32_t rtc2 = 502976;
 	uint64_t rtc = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * 100;
+	uint8_t intrapkt_ts_src = 0;
+	uint8_t time_fmt = 1;
 
-	ctx.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2);
+	ctx.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2,
+		intrapkt_ts_src, time_fmt);
 	EXPECT_EQ(abs_pos, ctx.absolute_position);
 	EXPECT_EQ(pkt_size, ctx.pkt_size);
 	EXPECT_EQ(data_size, ctx.data_size);
 	EXPECT_EQ(rtc, ctx.rtc);
+	EXPECT_EQ(intrapkt_ts_src, ctx.intrapkt_ts_src);
+	EXPECT_EQ(time_fmt, ctx.time_format);
 }
 
 TEST(Ch10ContextTest, UpdateWithTDPDataTDPIsNone)
@@ -164,9 +169,12 @@ TEST(Ch10ContextTest, UpdateWithTDPDataTDPIsNone)
 	uint32_t rtc2 = 502976;
 	uint64_t rtc = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * 100;
 	uint8_t tdp_doy = 1;
+	uint8_t intrapkt_ts_src = 0;
+	uint8_t time_fmt = 1;
 
 	// Update Context to assign rtc value internally
-	ctx.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2);
+	ctx.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2, 
+		intrapkt_ts_src, time_fmt);
 	
 	// Update with TDP, but set tdp_valid bool to false = invalid.
 	bool tdp_valid = false;
@@ -191,9 +199,12 @@ TEST(Ch10ContextTest, UpdateWithTDPDataVarsUpdated)
 	uint32_t rtc2 = 502976;
 	uint64_t rtc = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * 100;
 	uint8_t tdp_doy = 1;
+	uint8_t intrapkt_ts_src = 0;
+	uint8_t time_fmt = 1;
 
 	// Update Context to assign rtc value internally
-	ctx.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2);
+	ctx.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2,
+		intrapkt_ts_src, time_fmt);
 
 	// Update with TDP valid
 	bool tdp_valid = true;

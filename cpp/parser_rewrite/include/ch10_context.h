@@ -67,6 +67,16 @@ private:
 	// is set to true.
 	uint8_t tdp_doy_; 
 
+	// Intra-packet time stamp source, from Ch10PacketHeaderFmt::intrapkt_ts_source.
+	// 0 = intra-packet TS source is the header RTC and should be parsed as RTC.
+	// 1 = intra-packet TS source is the header secondary time stamp and should
+	// be parsed as indicated by Ch10PacketHeaderFmt::time_fmt.
+	uint8_t intrapkt_ts_src_;
+
+	// Indicates the ch10 packet header secondary header time format, 
+	// if present (indicated by Ch10PacketHeaderFmt::secondary_hdr = 1)
+	uint8_t time_format_;
+
 public:
 	const uint16_t& thread_id;
 	const uint64_t& absolute_position;
@@ -79,6 +89,8 @@ public:
 	const bool& tdp_valid;
 	const uint8_t& tdp_doy;
 	const bool& found_tdp;
+	const uint8_t& intrapkt_ts_src;
+	const uint8_t& time_format;
 	const std::unordered_map<Ch10PacketType, bool>& pkt_type_config_map;
 	Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
 	~Ch10Context();
@@ -101,7 +113,8 @@ public:
 
 	*/
 	void UpdateContext(const uint64_t& abs_pos, const uint32_t& pkt_size,
-		const uint32_t& data_size, const uint32_t& rtc1, const uint32_t& rtc2);
+		const uint32_t& data_size, const uint32_t& rtc1, const uint32_t& rtc2,
+		uint8_t intrapkt_ts_source, uint8_t time_format);
 
 
 	void CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketType, bool>& input);

@@ -6,7 +6,8 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
 	searching_for_tdp_(false), found_tdp_(false), pkt_type_config_map(pkt_type_config_map_),
 	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), abs_time_(0),
 	abs_time(abs_time_), rtc_(0), rtc(rtc_), rtc_to_ns_(100), thread_id_(id), thread_id(thread_id_),
-	tdp_valid_(false), tdp_valid(tdp_valid_), tdp_doy_(0), tdp_doy(tdp_doy_), found_tdp(found_tdp_)
+	tdp_valid_(false), tdp_valid(tdp_valid_), tdp_doy_(0), tdp_doy(tdp_doy_), found_tdp(found_tdp_),
+	intrapkt_ts_src_(0), intrapkt_ts_src(intrapkt_ts_src_), time_format_(0), time_format(time_format_)
 {
 	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
@@ -61,11 +62,14 @@ Ch10Status Ch10Context::ContinueWithPacketType(uint8_t data_type)
 }
 
 void Ch10Context::UpdateContext(const uint64_t& abs_pos, const uint32_t& pkt_size,
-	const uint32_t& data_size, const uint32_t& rtc1, const uint32_t& rtc2)
+	const uint32_t& data_size, const uint32_t& rtc1, const uint32_t& rtc2, 
+	uint8_t intrapkt_ts_source, uint8_t time_format)
 {
 	absolute_position_ = abs_pos;
 	pkt_size_ = pkt_size;
 	data_size_ = data_size;
+	intrapkt_ts_src_ = intrapkt_ts_source;
+	time_format_ = time_format;
 
 	rtc_ = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * rtc_to_ns_;
 }
