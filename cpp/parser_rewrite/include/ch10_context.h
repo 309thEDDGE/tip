@@ -94,11 +94,12 @@ private:
 	// Record a 32-bit integer calculated from the command word(s).
 	// Used for bus mapping. Map channel id to set of these command
 	// word values.
-	std::map<uint32_t, std::set<uint32_t>> chanid_commwords_map;
+	std::map<uint32_t, std::set<uint32_t>> chanid_commwords_map_;
 
 	// Reference command words 1 and 2 in the 1553
 	// message data header.
-	const uint16_t* command_word1_, command_word2_;
+	const uint16_t* command_word1_;
+	const uint16_t* command_word2_;
 
 
 public:
@@ -203,7 +204,7 @@ public:
 	Update the channel ID to command words map. The integer inserted into
 	the set of uint32_t is the upshifted command word1 + command word2.
 	*/
-	void UpdateChannelIDToLRUAddressMaps(const uint32_t& channel_id,
+	void UpdateChannelIDToLRUAddressMaps(const uint32_t& chanid,
 		const MilStd1553F1DataHeaderFmt* const data_header);
 };
 

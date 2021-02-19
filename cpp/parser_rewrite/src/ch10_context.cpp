@@ -147,26 +147,26 @@ uint64_t Ch10Context::CalculateAbsTimeFromRTCFormat(const uint32_t& rtc1,
 	return tdp_abs_time_ + (temp_rtc_ - tdp_rtc_);
 }
 
-void Ch10Context::UpdateChannelIDToLRUAddressMaps(const uint32_t& channel_id,
+void Ch10Context::UpdateChannelIDToLRUAddressMaps(const uint32_t& chanid,
 	const MilStd1553F1DataHeaderFmt* const data_header)
 {
 	// Set pointers for command words 1 and 2.
-	command_word1_ = (const uint16_t*)&(data_header->word_count1);
-	command_word2_ = (const uint16_t*)&(data_header->word_count2);
+	const MilStd1553F1DataHeaderCommWordsFmt* comm_words =
+		(const MilStd1553F1DataHeaderCommWordsFmt*)data_header;
 
 	if (data_header->RR)
 	{
-		chanid_remoteaddr1_map_[channel_id].insert(data_header->remote_addr1);
-		chanid_remoteaddr2_map_[channel_id].insert(data_header->remote_addr2);
-		chanid_commwords_map_[channel_id].insert(
-			*command_word2_ << 16 + *command_word1_);
+		chanid_remoteaddr1_map_[chanid].insert(data_header->remote_addr1);
+		chanid_remoteaddr2_map_[chanid].insert(data_header->remote_addr2);
+		chanid_commwords_map_[chanid].insert(
+			(uint32_t(comm_words->comm_word2) << 16) + comm_words->comm_word1);
 	}
 	else
 	{
-		chanid_remoteaddr1_map_[channel_id].insert(remoteaddr1);
+		chanid_remoteaddr1_map_[chanid].insert(data_header->remote_addr1);
 		if (data_header->tx1)
-			chanid_commwords_map_[channel_id].insert(*command_word1_ << 16);
+			chanid_commwords_map_[chanid].insert(uint32_t(comm_words->comm_word1) << 16);
 		else
-			chanid_commwords_map_[channel_id].insert(*command_word1_);
+			chanid_commwords_map_[chanid].insert(comm_words->comm_word1);
 	}
 }

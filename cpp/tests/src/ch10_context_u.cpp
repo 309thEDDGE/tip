@@ -261,27 +261,33 @@ TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsRTtoRT)
 	uint64_t abs_pos = 4823829394;
 	ctx.UpdateContext(abs_pos, &hdr_fmt);
 
-	// Update the maps. If RTtoRT is 1, then both addr maps 1 and 2 
+	// Update the maps. If RTtoRT (RR) is 1, then both addr maps 1 and 2 
 	// will be updated.
-	uint16_t RTtoRT = 1;
-	uint16_t remoteaddr1 = 10;
-	uint16_t remoteaddr2 = 3;
-	ctx.UpdateChannelIDToLRUAddressMaps(hdr_fmt.chanID, RTtoRT, remoteaddr1,
-		remoteaddr2);
+	MilStd1553F1DataHeaderFmt data_hdr;
+	const MilStd1553F1DataHeaderCommWordsFmt* cw = 
+		(const MilStd1553F1DataHeaderCommWordsFmt *)&data_hdr;
+	data_hdr.RR = 1;
+	data_hdr.remote_addr1 = 10;
+	data_hdr.remote_addr2 = 3;
+	uint32_t commword_val1 = (uint32_t(cw->comm_word2) << 16) + cw->comm_word1;
+	ctx.UpdateChannelIDToLRUAddressMaps(hdr_fmt.chanID, &data_hdr);
 
-	remoteaddr1 = 12;
-	remoteaddr2 = 3;
-	ctx.UpdateChannelIDToLRUAddressMaps(hdr_fmt.chanID, RTtoRT, remoteaddr1,
-		remoteaddr2);
+	data_hdr.remote_addr1 = 12;
+	data_hdr.remote_addr2 = 3;
+	uint32_t commword_val2 = (uint32_t(cw->comm_word2) << 16) + cw->comm_word1;
+	ctx.UpdateChannelIDToLRUAddressMaps(hdr_fmt.chanID, &data_hdr);
 
 	// Check if the key and values are correct.
 	EXPECT_TRUE(ctx.chanid_remoteaddr1_map.count(hdr_fmt.chanID) == 1);
 	EXPECT_TRUE(ctx.chanid_remoteaddr2_map.count(hdr_fmt.chanID) == 1);
+	EXPECT_TRUE(ctx.chanid_commwords_map.count(hdr_fmt.chanID) == 1);
 
 	EXPECT_THAT(ctx.chanid_remoteaddr1_map.at(hdr_fmt.chanID), 
 		::testing::UnorderedElementsAre(10, 12 ));
 	EXPECT_THAT(ctx.chanid_remoteaddr2_map.at(hdr_fmt.chanID), 
 		::testing::UnorderedElementsAre(3));
+	EXPECT_THAT(ctx.chanid_commwords_map.at(hdr_fmt.chanID),
+		::testing::UnorderedElementsAre(commword_val1, commword_val2));
 }
 
 TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsNotRTtoRT)
@@ -298,16 +304,21 @@ TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsNotRTtoRT)
 
 	// Update the maps. If RTtoRT is 1, then both addr maps 1 and 2 
 	// will be updated.
-	uint16_t RTtoRT = 0;
-	uint16_t remoteaddr1 = 10;
-	uint16_t remoteaddr2 = 3;
-	ctx.UpdateChannelIDToLRUAddressMaps(hdr_fmt.chanID, RTtoRT, remoteaddr1,
-		remoteaddr2);
+	MilStd1553F1DataHeaderFmt data_hdr;
+	const MilStd1553F1DataHeaderCommWordsFmt* cw =
+		(const MilStd1553F1DataHeaderCommWordsFmt*)&data_hdr;
+	data_hdr.RR = 0;
+	data_hdr.remote_addr1 = 10;
+	data_hdr.remote_addr2 = 3;
+	data_hdr.tx1 = 1;
+	uint32_t commword_val1 = uint32_t(cw->comm_word1) << 16;
+	ctx.UpdateChannelIDToLRUAddressMaps(hdr_fmt.chanID, &data_hdr);
 
-	remoteaddr1 = 12;
-	remoteaddr2 = 3;
-	ctx.UpdateChannelIDToLRUAddressMaps(hdr_fmt.chanID, RTtoRT, remoteaddr1,
-		remoteaddr2);
+	data_hdr.remote_addr1 = 12;
+	data_hdr.remote_addr2 = 3;
+	data_hdr.tx1 = 0;
+	uint32_t commword_val2 = cw->comm_word1;
+	ctx.UpdateChannelIDToLRUAddressMaps(hdr_fmt.chanID, &data_hdr);
 
 	// Check if the key and values are correct.
 	EXPECT_TRUE(ctx.chanid_remoteaddr1_map.count(hdr_fmt.chanID) == 1);
@@ -316,4 +327,6 @@ TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsNotRTtoRT)
 	EXPECT_THAT(ctx.chanid_remoteaddr1_map.at(hdr_fmt.chanID),
 		::testing::UnorderedElementsAre(10, 12));
 	EXPECT_EQ(ctx.chanid_remoteaddr2_map.at(hdr_fmt.chanID).size(), 0);
+	EXPECT_THAT(ctx.chanid_commwords_map.at(hdr_fmt.chanID),
+		::testing::UnorderedElementsAre(commword_val1, commword_val2));
 }

@@ -31,4 +31,14 @@ public:
 	uint16_t remote_addr2 : 5; // command word, remote LRU addr.
 };
 
+class MilStd1553F1DataHeaderCommWordsFmt
+{
+public:
+	uint16_t : 16;
+	uint16_t : 16;
+	uint16_t : 16;
+	uint16_t comm_word1 : 16;
+	uint16_t comm_word2 : 16;
+};
+
 #endif

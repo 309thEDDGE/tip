@@ -49,8 +49,17 @@ private:
 	// Vars for parsing the 1553 message payloads
 	//
 
+	// Max allowed message count within a 1553 packet. Used to
+	// check for corruption issues. This value is very rough guess.
+	const uint16_t max_message_count_;
+
+	// Max allowed byte count per message payload.
+	// max of (32 payload words + 2 command words + 2 status words) 
+	// * 2 bytes per word = 72 bytes.
+	const uint16_t max_byte_count_;
+
 	// Interpret the raw bytes as uint16_t words
-	//const uint16_t* payload_ptr_;
+	const uint16_t* payload_ptr_;
 
 	// 1 if payload word count from command word is greater than
 	// the calculated payload word count from the message length,
@@ -77,15 +86,38 @@ public:
 		milstd1553f1_csdw_elem(milstd1553f1_csdw_elem_),
 		milstd1553f1_rtctime_elem(milstd1553f1_rtctime_elem_),
 		milstd1553f1_data_hdr_elem(milstd1553f1_data_hdr_elem_),
-		msg_index_(0), abs_time_(0)
+		msg_index_(0), abs_time_(0), max_message_count_(10000),
+		payload_ptr_(nullptr), max_byte_count_(72)
 	{}
 	Ch10Status Parse(const uint8_t*& data, uint64_t& loc) override;
 
 	/*
-		Need to add input vectors for insert remote addrs to chanid map.
+	Parse all of the messages in the body of the 1553 packet that
+	follows the CSDW. Each message is composed of an intra-packet time 
+	stamp and a header, followed by n bytes of message payload. This
+	function parses intra-packet matter and the message payload for
+	all messages in the case of RTC format intra-packet time stamps.
+	It also sets the private member var abs_time_.
+
+	Args: 
+		msg_count	--> count of messages, each with time and header,
+						in the packet
+		data		--> pointer to the first byte in the series of 
+						messages
+		loc			--> counter to be incremented by the count
+						of bytes processed/read during the parsing
+						of the messages
+
+	Return:
+		Status of parsing
 	*/
 	Ch10Status ParseRTCTimeMessages(const uint32_t& msg_count, 
 		const uint8_t*& data, uint64_t& loc);
+
+	Ch10Status ParsePayload(const uint8_t*& data,
+		const MilStd1553F1DataHeaderFmt* const data_header);
+
+	uint16_t GetWordCountFromDataHeader(const MilStd1553F1DataHeaderFmt* const data_header);
 };
 
 #endif
