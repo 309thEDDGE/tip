@@ -2,6 +2,8 @@
 #ifndef CH10_1553F1_COMPONENT_H_
 #define CH10_1553F1_COMPONENT_H_
 
+#include <cstdint>
+#include "ch10_1553f1_msg_hdr_format.h"
 #include "ch10_packet_component.h"
 
 class MilStd1553F1CSDWFmt
@@ -17,33 +19,6 @@ class MilStd1553F1DataRTCTimeStampFmt
 public:
 	uint64_t ts1_ : 32;
 	uint64_t ts2_ : 32;
-};
-
-class MilStd1553F1DataHeaderFmt
-{
-public:
-	uint16_t : 3;
-	uint16_t WE : 1; // invalid word error
-	uint16_t SE : 1; // sync type error
-	uint16_t WCE : 1; // word count error 
-	uint16_t : 3;
-	uint16_t TO : 1; // response time out
-	uint16_t FE : 1; // format error 
-	uint16_t RR : 1; // RT to RT transfer
-	uint16_t ME : 1; // message error
-	uint16_t bus_dir : 1; // 0 = msg from chan A, 1 = msg from chan B
-	uint16_t : 0;
-	uint16_t gap1 : 8; // time from command/data word to first and only status
-	uint16_t gap2 : 8; // time from last data word and second status word
-	uint16_t length : 16; // total bytes in the message (command, data, status)
-	uint16_t word_count1 : 5; // command word, N transmitted/requested messages
-	uint16_t sub_addr1 : 5; // command word, sub address location
-	uint16_t tx1 : 1; // command word, message is for remote to transmit
-	uint16_t remote_addr1 : 5; // command word, remote LRU addr.
-	uint16_t word_count2 : 5; // command word, N transmitted/requested messages
-	uint16_t sub_addr2 : 5; // command word, sub address location
-	uint16_t tx2 : 1; // command word, message is for remote to transmit
-	uint16_t remote_addr2 : 5; // command word, remote LRU addr.
 };
 
 /*
@@ -66,7 +41,26 @@ private:
 	// 1553 packet.
 	uint32_t msg_index_;
 
-	// Reference to a vector 
+	// Hold absolute time of current message in units of nanoseconds
+	// since the epoch.
+	uint32_t abs_time_; 
+
+	//
+	// Vars for parsing the 1553 message payloads
+	//
+
+	// Interpret the raw bytes as uint16_t words
+	//const uint16_t* payload_ptr_;
+
+	// 1 if payload word count from command word is greater than
+	// the calculated payload word count from the message length,
+	// 0 otherwise.
+	//uint8_t is_payload_incomplete_;
+
+	// Calculated payload word count from the message length,
+	// subtracting the command and status words.
+	//int8_t calc_payload_word_count_;
+
 
 public:
 
@@ -83,7 +77,7 @@ public:
 		milstd1553f1_csdw_elem(milstd1553f1_csdw_elem_),
 		milstd1553f1_rtctime_elem(milstd1553f1_rtctime_elem_),
 		milstd1553f1_data_hdr_elem(milstd1553f1_data_hdr_elem_),
-		msg_index_(0)
+		msg_index_(0), abs_time_(0)
 	{}
 	Ch10Status Parse(const uint8_t*& data, uint64_t& loc) override;
 

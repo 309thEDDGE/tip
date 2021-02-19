@@ -304,17 +304,17 @@ TEST_F(Ch10TDPComponentTest, ParseIRIGTime)
 
     // Prepare the context.
     uint64_t abs_pos = 6112919;
-    uint32_t data_size = 3399;
-    uint32_t pkt_size = 4399;
-    uint32_t rtc1 = 321053;
-    uint32_t rtc2 = 502976;
-    uint64_t rtc = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * 100;
+    Ch10PacketHeaderFmt hdr_fmt;
+    hdr_fmt.data_size = 3399;
+    hdr_fmt.pkt_size = 4399;
+    hdr_fmt.rtc1 = 321053;
+    hdr_fmt.rtc2 = 502976;
+    uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
     uint8_t tdp_doy = 1; // 1 for irig time
-    uint8_t intrapkt_ts_src = 0;
-    uint8_t time_fmt = 1;
+    hdr_fmt.intrapkt_ts_source = 0;
+    hdr_fmt.time_format = 1;
 
-    ctx_.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2,
-        intrapkt_ts_src, time_fmt);
+    ctx_.UpdateContext(abs_pos, &hdr_fmt);
 
     // Ch10Context::UpdateWithTDPData will be called by Parse().
 
@@ -347,17 +347,17 @@ TEST_F(Ch10TDPComponentTest, ParseNonIRIGTime)
 
     // Prepare the context.
     uint64_t abs_pos = 6112919;
-    uint32_t data_size = 3399;
-    uint32_t pkt_size = 4399;
-    uint32_t rtc1 = 321053;
-    uint32_t rtc2 = 502976;
-    uint64_t rtc = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * 100;
+    Ch10PacketHeaderFmt hdr_fmt;
+    hdr_fmt.data_size = 3399;
+    hdr_fmt.pkt_size = 4399;
+    hdr_fmt.rtc1 = 321053;
+    hdr_fmt.rtc2 = 502976;
+    uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
     uint8_t tdp_doy = 0; // 0 for non-irig time
-    uint8_t intrapkt_ts_src = 0;
-    uint8_t time_fmt = 1;
+    hdr_fmt.intrapkt_ts_source = 0;
+    hdr_fmt.time_format = 1;
 
-    ctx_.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2,
-        intrapkt_ts_src, time_fmt);
+    ctx_.UpdateContext(abs_pos, &hdr_fmt);
 
     // Ch10Context::UpdateWithTDPData will be called by Parse().
 

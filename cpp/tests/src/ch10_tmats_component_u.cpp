@@ -21,6 +21,7 @@ protected:
     uint32_t rtc2_;
     uint8_t intrapkt_ts_src_;
     uint8_t time_fmt_;
+    Ch10PacketHeaderFmt hdr_fmt_;
 
     Ch10TMATSComponentTest() : loc_(0), data_ptr_(nullptr), orig_data_ptr_(nullptr),
         status_(Ch10Status::NONE), body_ptr_(nullptr), ctx_(0), tmats_comp_(&ctx_), abs_pos_(0),
@@ -38,8 +39,8 @@ TEST_F(Ch10TMATSComponentTest, ParseTMATSZeroLength)
     // Setup the context such that the body size is equal to the
     // CSDW and therefore zero bytes remain for TMATS matter.
     body_size_ = (uint32_t)tmats_comp_.tmats_csdw_elem.size;
-    ctx_.UpdateContext(abs_pos_, pkt_size_, body_size_, rtc1_, rtc2_,
-        intrapkt_ts_src_, time_fmt_);
+    hdr_fmt_.data_size = body_size_;
+    ctx_.UpdateContext(abs_pos_, &hdr_fmt_);
 
     // Set the data_ptr_ to the address of the csdw.
     data_ptr_ = (const uint8_t*)&tmats_fmt_;
@@ -60,10 +61,10 @@ TEST_F(Ch10TMATSComponentTest, ParseTMATSCorrectChars)
     uint32_t extra_size = 100;
     uint32_t csdw_size = (uint32_t)tmats_comp_.tmats_csdw_elem.size;
     body_size_ = csdw_size + extra_size;
+    hdr_fmt_.data_size = body_size_;
     std::vector<char> csdw_and_data(body_size_);
    
-    ctx_.UpdateContext(abs_pos_, pkt_size_, body_size_, rtc1_, rtc2_,
-        intrapkt_ts_src_, time_fmt_);
+    ctx_.UpdateContext(abs_pos_, &hdr_fmt_);
 
     // Set the data_ptr_ to the beginning of the vector of char.
     data_ptr_ = (const uint8_t*)csdw_and_data.data();

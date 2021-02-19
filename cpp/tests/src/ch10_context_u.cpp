@@ -139,42 +139,44 @@ TEST(Ch10ContextTest, SetPacketTypeConfigConfirmDisabledTypes)
 TEST(Ch10ContextTest, UpdateContextSetVars)
 {
 	Ch10Context ctx(0);
+	Ch10PacketHeaderFmt hdr_fmt;
 	uint64_t abs_pos = 344199919;
-	uint32_t pkt_size = 4320;
-	uint32_t data_size = 3399;
-	uint32_t rtc1 = 321053;
-	uint32_t rtc2 = 502976;
-	uint64_t rtc = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * 100;
-	uint8_t intrapkt_ts_src = 0;
-	uint8_t time_fmt = 1;
+	hdr_fmt.pkt_size = 4320;
+	hdr_fmt.data_size = 3399;
+	hdr_fmt.rtc1 = 321053;
+	hdr_fmt.rtc2 = 502976;
+	hdr_fmt.chanID = 9;
+	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
+	hdr_fmt.intrapkt_ts_source = 0;
+	hdr_fmt.time_format = 1;
 
-	ctx.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2,
-		intrapkt_ts_src, time_fmt);
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
 	EXPECT_EQ(abs_pos, ctx.absolute_position);
-	EXPECT_EQ(pkt_size, ctx.pkt_size);
-	EXPECT_EQ(data_size, ctx.data_size);
+	EXPECT_EQ(hdr_fmt.pkt_size, ctx.pkt_size);
+	EXPECT_EQ(hdr_fmt.data_size, ctx.data_size);
 	EXPECT_EQ(rtc, ctx.rtc);
-	EXPECT_EQ(intrapkt_ts_src, ctx.intrapkt_ts_src);
-	EXPECT_EQ(time_fmt, ctx.time_format);
+	EXPECT_EQ(hdr_fmt.intrapkt_ts_source, ctx.intrapkt_ts_src);
+	EXPECT_EQ(hdr_fmt.time_format, ctx.time_format);
+	EXPECT_TRUE(ctx.chanid_remoteaddr1_map.count(hdr_fmt.chanID) == 1);
 }
 
 TEST(Ch10ContextTest, UpdateWithTDPDataTDPIsNone)
 {
 	Ch10Context ctx(0);
-	uint64_t tdp_abs_time = 344199919;
-	uint64_t abs_pos = 6112919;
-	uint32_t data_size = 3399;
-	uint32_t pkt_size = 4399;
-	uint32_t rtc1 = 321053;
-	uint32_t rtc2 = 502976;
-	uint64_t rtc = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * 100;
+	Ch10PacketHeaderFmt hdr_fmt;
+	uint64_t tdp_abs_time = 4772113676;
+	uint64_t abs_pos = 344199919;
+	hdr_fmt.pkt_size = 4320;
+	hdr_fmt.data_size = 3399;
+	hdr_fmt.rtc1 = 321053;
+	hdr_fmt.rtc2 = 502976;
+	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
+	hdr_fmt.intrapkt_ts_source = 0;
+	hdr_fmt.time_format = 1;
 	uint8_t tdp_doy = 1;
-	uint8_t intrapkt_ts_src = 0;
-	uint8_t time_fmt = 1;
 
 	// Update Context to assign rtc value internally
-	ctx.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2, 
-		intrapkt_ts_src, time_fmt);
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
 	
 	// Update with TDP, but set tdp_valid bool to false = invalid.
 	bool tdp_valid = false;
@@ -192,19 +194,19 @@ TEST(Ch10ContextTest, UpdateWithTDPDataVarsUpdated)
 {
 	Ch10Context ctx(0);
 	uint64_t tdp_abs_time = 344199919;
-	uint64_t abs_pos = 6112919;
-	uint32_t data_size = 3399;
-	uint32_t pkt_size = 4399;
-	uint32_t rtc1 = 321053;
-	uint32_t rtc2 = 502976;
-	uint64_t rtc = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * 100;
+	Ch10PacketHeaderFmt hdr_fmt;
+	uint64_t abs_pos = 344199919;
+	hdr_fmt.pkt_size = 4320;
+	hdr_fmt.data_size = 3399;
+	hdr_fmt.rtc1 = 321053;
+	hdr_fmt.rtc2 = 502976;
+	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
+	hdr_fmt.intrapkt_ts_source = 0;
+	hdr_fmt.time_format = 1;
 	uint8_t tdp_doy = 1;
-	uint8_t intrapkt_ts_src = 0;
-	uint8_t time_fmt = 1;
 
 	// Update Context to assign rtc value internally
-	ctx.UpdateContext(abs_pos, pkt_size, data_size, rtc1, rtc2,
-		intrapkt_ts_src, time_fmt);
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
 
 	// Update with TDP valid
 	bool tdp_valid = true;
@@ -218,4 +220,100 @@ TEST(Ch10ContextTest, UpdateWithTDPDataVarsUpdated)
 	EXPECT_EQ(ctx.tdp_rtc, rtc);
 	EXPECT_EQ(ctx.tdp_doy, tdp_doy);
 	EXPECT_EQ(ctx.found_tdp, true);
+}
+
+TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
+{
+	Ch10Context ctx(0);
+
+	// Update context with "current" header data.
+	Ch10PacketHeaderFmt hdr_fmt;
+	hdr_fmt.rtc1 = 321053;
+	hdr_fmt.rtc2 = 502976;
+	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
+	uint64_t abs_pos = 4823829394;
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
+
+	// Update context with TDP-specific data.
+	uint64_t tdp_abs_time = 344199919;
+	uint8_t tdp_doy = 0;
+	uint8_t tdp_valid = true;
+	ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+
+	uint32_t current_rtc1 = 321200;
+	uint32_t current_rtc2 = 502999;
+	uint64_t current_rtc = ((uint64_t(current_rtc2) << 32) + uint64_t(current_rtc1)) * 100;
+	uint64_t expected_abs_time = tdp_abs_time + (current_rtc - rtc);
+	uint64_t calculated_abs_time = ctx.CalculateAbsTimeFromRTCFormat(current_rtc1,
+		current_rtc2);
+	ASSERT_EQ(calculated_abs_time, expected_abs_time);
+}
+
+TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsRTtoRT)
+{
+	Ch10Context ctx(0);
+
+	// Update context with "current" header data. Only care about 
+	// chanID, which will create an entry in the map with an empty 
+	// set.
+	Ch10PacketHeaderFmt hdr_fmt;
+	hdr_fmt.chanID = 4;
+	uint64_t abs_pos = 4823829394;
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
+
+	// Update the maps. If RTtoRT is 1, then both addr maps 1 and 2 
+	// will be updated.
+	uint16_t RTtoRT = 1;
+	uint16_t remoteaddr1 = 10;
+	uint16_t remoteaddr2 = 3;
+	ctx.UpdateChannelIDToLRUAddressMaps(hdr_fmt.chanID, RTtoRT, remoteaddr1,
+		remoteaddr2);
+
+	remoteaddr1 = 12;
+	remoteaddr2 = 3;
+	ctx.UpdateChannelIDToLRUAddressMaps(hdr_fmt.chanID, RTtoRT, remoteaddr1,
+		remoteaddr2);
+
+	// Check if the key and values are correct.
+	EXPECT_TRUE(ctx.chanid_remoteaddr1_map.count(hdr_fmt.chanID) == 1);
+	EXPECT_TRUE(ctx.chanid_remoteaddr2_map.count(hdr_fmt.chanID) == 1);
+
+	EXPECT_THAT(ctx.chanid_remoteaddr1_map.at(hdr_fmt.chanID), 
+		::testing::UnorderedElementsAre(10, 12 ));
+	EXPECT_THAT(ctx.chanid_remoteaddr2_map.at(hdr_fmt.chanID), 
+		::testing::UnorderedElementsAre(3));
+}
+
+TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsNotRTtoRT)
+{
+	Ch10Context ctx(0);
+
+	// Update context with "current" header data. Only care about 
+	// chanID, which will create an entry in the map with an empty 
+	// set.
+	Ch10PacketHeaderFmt hdr_fmt;
+	hdr_fmt.chanID = 4;
+	uint64_t abs_pos = 4823829394;
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
+
+	// Update the maps. If RTtoRT is 1, then both addr maps 1 and 2 
+	// will be updated.
+	uint16_t RTtoRT = 0;
+	uint16_t remoteaddr1 = 10;
+	uint16_t remoteaddr2 = 3;
+	ctx.UpdateChannelIDToLRUAddressMaps(hdr_fmt.chanID, RTtoRT, remoteaddr1,
+		remoteaddr2);
+
+	remoteaddr1 = 12;
+	remoteaddr2 = 3;
+	ctx.UpdateChannelIDToLRUAddressMaps(hdr_fmt.chanID, RTtoRT, remoteaddr1,
+		remoteaddr2);
+
+	// Check if the key and values are correct.
+	EXPECT_TRUE(ctx.chanid_remoteaddr1_map.count(hdr_fmt.chanID) == 1);
+	EXPECT_TRUE(ctx.chanid_remoteaddr2_map.count(hdr_fmt.chanID) == 1);
+
+	EXPECT_THAT(ctx.chanid_remoteaddr1_map.at(hdr_fmt.chanID),
+		::testing::UnorderedElementsAre(10, 12));
+	EXPECT_EQ(ctx.chanid_remoteaddr2_map.at(hdr_fmt.chanID).size(), 0);
 }

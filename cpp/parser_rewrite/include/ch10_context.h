@@ -6,8 +6,11 @@
 #include <cstdio>
 #include <map>
 #include <unordered_map>
+#include <set>
 #include <cmath>
 #include "ch10_status.h"
+#include "ch10_header_format.h"
+#include "ch10_1553f1_msg_hdr_format.h"
 
 enum class Ch10PacketType : uint8_t
 {
@@ -36,7 +39,7 @@ private:
 	uint64_t absolute_position_;
 	uint64_t tdp_rtc_;
 	uint64_t tdp_abs_time_;
-	uint64_t rtc_;
+	uint64_t rtc_;  // nanoseconds
 	uint32_t pkt_size_;
 	uint32_t data_size_;
 	uint64_t abs_time_;
@@ -77,6 +80,27 @@ private:
 	// if present (indicated by Ch10PacketHeaderFmt::secondary_hdr = 1)
 	uint8_t time_format_;
 
+	// Channel ID from Ch10PacketHeaderFmt (chanID), identifies data
+	// source for the contents of the packet.
+	uint32_t channel_id_;
+
+	// Temporary RTC time in nanoseconds
+	uint64_t temp_rtc_;
+
+	// Record mapping of 1553 message channel ID to lru addresses.
+	std::map<uint32_t, std::set<uint16_t>> chanid_remoteaddr1_map_;
+	std::map<uint32_t, std::set<uint16_t>> chanid_remoteaddr2_map_;
+
+	// Record a 32-bit integer calculated from the command word(s).
+	// Used for bus mapping. Map channel id to set of these command
+	// word values.
+	std::map<uint32_t, std::set<uint32_t>> chanid_commwords_map;
+
+	// Reference command words 1 and 2 in the 1553
+	// message data header.
+	const uint16_t* command_word1_, command_word2_;
+
+
 public:
 	const uint16_t& thread_id;
 	const uint64_t& absolute_position;
@@ -91,7 +115,12 @@ public:
 	const bool& found_tdp;
 	const uint8_t& intrapkt_ts_src;
 	const uint8_t& time_format;
+	const uint32_t& channel_id;
 	const std::unordered_map<Ch10PacketType, bool>& pkt_type_config_map;
+	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr1_map;
+	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr2_map;
+	const std::map<uint32_t, std::set<uint32_t>>& chanid_commwords_map;
+
 	Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
 	~Ch10Context();
 
@@ -104,17 +133,16 @@ public:
 	packet absolute time based on TDP abs time, RTC, and the current packet
 	RTC.
 
+	Use the chanID in Ch10PacketHeaderFmt to insert an empty set
+	in the chanid to remote lru addresses maps.
+
 	Args:
 
-		abs_pos		--> absolute byte position within the Ch10
-		pkt_size	--> Total ch10 packet size in bytes, from Ch10PacketHeaderFmt::pkt_size
-		data_size	--> Size in bytes of ch10 packet body, from Ch10PacketHeaderFmt::data_size
-		rtc1/2		--> Two components of RTC, from from Ch10PacketHeaderFmt::rtc1/2
+		abs_pos			--> absolute byte position within the Ch10
+		hdr_fmt_ptr_	--> pointer to Ch10PacketHeaderFmt
 
 	*/
-	void UpdateContext(const uint64_t& abs_pos, const uint32_t& pkt_size,
-		const uint32_t& data_size, const uint32_t& rtc1, const uint32_t& rtc2,
-		uint8_t intrapkt_ts_source, uint8_t time_format);
+	void UpdateContext(const uint64_t& abs_pos, const Ch10PacketHeaderFmt* const hdr_fmt_ptr_);
 
 
 	void CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketType, bool>& input);
@@ -153,6 +181,30 @@ public:
 	*/
 	void UpdateWithTDPData(const uint64_t& tdp_abs_time, uint8_t tdp_doy,
 		bool tdp_valid);
+
+	/*
+	Calculate absolute time from RTC time format components. This context
+	must have been updated with UpdateWithTDPData prior to this call
+	in order for absolute time to be calculated correctly.
+
+	Args:
+		rtc1	--> first 32-bit component of rtc counter
+		rtc2	--> second 32-bit component of rtc counter
+
+	Return:
+		absolute time in nanoseconds since the epoch
+	*/
+	uint64_t CalculateAbsTimeFromRTCFormat(const uint32_t& rtc1, const uint32_t& rtc2);
+
+	/*
+	Update maps of channel ID to remote addresses 1 and 2 as obtained from
+	the 1553 intra-packet data headers.
+
+	Update the channel ID to command words map. The integer inserted into
+	the set of uint32_t is the upshifted command word1 + command word2.
+	*/
+	void UpdateChannelIDToLRUAddressMaps(const uint32_t& channel_id,
+		const MilStd1553F1DataHeaderFmt* const data_header);
 };
 
 

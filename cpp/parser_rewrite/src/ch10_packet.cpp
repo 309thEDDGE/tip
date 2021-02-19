@@ -123,10 +123,7 @@ Ch10Status Ch10Packet::ParseHeader()
 
     // Configure context to prepare for use use by the packet body parsers.
     ctx_->UpdateContext(ctx_->absolute_position + temp_pkt_size_,
-        (*header_.std_hdr_elem.element)->pkt_size, (*header_.std_hdr_elem.element)->data_size,
-        (*header_.std_hdr_elem.element)->rtc1, (*header_.std_hdr_elem.element)->rtc2,
-        (*header_.std_hdr_elem.element)->intrapkt_ts_source, 
-        (*header_.std_hdr_elem.element)->time_format);
+        *header_.std_hdr_elem.element);
 
     // Check the data checksum now that it's known there are sufficient
     // bytes remaining to fully parse the packet. Do not proceed if the
