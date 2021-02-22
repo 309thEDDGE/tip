@@ -64,11 +64,20 @@ private:
 	// 1 if payload word count from command word is greater than
 	// the calculated payload word count from the message length,
 	// 0 otherwise.
-	//uint8_t is_payload_incomplete_;
+	uint8_t is_payload_incomplete_;
 
 	// Calculated payload word count from the message length,
-	// subtracting the command and status words.
-	//int8_t calc_payload_word_count_;
+	// subtracting the command and status words. Signed integer
+	// to allow negative values, which can occur when the count
+	// of transmitted messages is in error or there are some
+	// message errors.
+	int8_t calc_payload_word_count_;
+
+	// Expected payload word count, as interpreted from the intra-packet
+	// header and taking into consideration that the current message may
+	// be a mode code and that a word count of zero 
+	// indicates a 32-word payload.
+	uint16_t expected_payload_word_count_;
 
 
 public:
@@ -87,7 +96,8 @@ public:
 		milstd1553f1_rtctime_elem(milstd1553f1_rtctime_elem_),
 		milstd1553f1_data_hdr_elem(milstd1553f1_data_hdr_elem_),
 		msg_index_(0), abs_time_(0), max_message_count_(10000),
-		payload_ptr_(nullptr), max_byte_count_(72)
+		payload_ptr_(nullptr), max_byte_count_(72), expected_payload_word_count_(0),
+		calc_payload_word_count_(0), is_payload_incomplete_(0)
 	{}
 	Ch10Status Parse(const uint8_t*& data, uint64_t& loc) override;
 

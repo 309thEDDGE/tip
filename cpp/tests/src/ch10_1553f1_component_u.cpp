@@ -6,14 +6,15 @@ class Ch101553F1ComponentTest : public ::testing::Test
 {
 protected:
     Ch101553F1Component comp_;
-    uint64_t loc_;
+    uint64_t wrd_cnt_;
     const uint8_t* data_ptr_;
+    uint64_t loc_
     Ch10Status status_;
     Ch10Context ctx_;
     MilStd1553F1DataHeaderFmt fmt_;
 
-    Ch101553F1ComponentTest() : loc_(0), data_ptr_(nullptr),
-        status_(Ch10Status::NONE), ctx_(0), comp_(&ctx_)
+    Ch101553F1ComponentTest() : wrd_cnt_(0), data_ptr_(nullptr),
+        status_(Ch10Status::NONE), ctx_(0), comp_(&ctx_), loc_(0)
     {
     }
 };
@@ -42,4 +43,42 @@ TEST_F(Ch101553F1ComponentTest, ParsePayloadTooManyBytesNonRTtoRT)
     fmt_.tx1 = 1;
     status_ = comp_.ParsePayload(data_ptr_, &fmt_);
     EXPECT_EQ(status_, Ch10Status::MILSTD1553_MSG_LENGTH);
+}
+
+TEST_F(Ch101553F1ComponentTest, GetWordCountFromDataHeaderRTtoRT)
+{
+    fmt_.RR = 1;
+    fmt_.word_count1 = 12;
+    wrd_cnt_ = comp_.GetWordCountFromDataHeader(&fmt_);
+    EXPECT_EQ(fmt_.word_count1, wrd_cnt_);
+
+    // word_count1 == 0 => actual word count == 32
+    fmt_.word_count1 = 0;
+    wrd_cnt_ = comp_.GetWordCountFromDataHeader(&fmt_);
+    EXPECT_EQ(32, wrd_cnt_);
+}
+
+TEST_F(Ch101553F1ComponentTest, GetWordCountFromDataHeaderNonRTtoRTModeCode)
+{
+    fmt_.RR = 0;
+    fmt_.word_count1 = 12; // <= 15 ==> no data word
+    fmt_.sub_addr1 = 0;
+    wrd_cnt_ = comp_.GetWordCountFromDataHeader(&fmt_);
+    EXPECT_EQ(0, wrd_cnt_);
+
+    // word_count1 == 15 and sub_addr1 == 0 => actual word count == 1
+    // single data payload
+    fmt_.word_count1 = 16;
+    wrd_cnt_ = comp_.GetWordCountFromDataHeader(&fmt_);
+    EXPECT_EQ(1, wrd_cnt_);
+
+    // Repeat two tests with sub_addr1 == 31, also mode code
+    fmt_.sub_addr1 = 31;
+    fmt_.word_count1 = 12; // <= 15 ==> no data word
+    wrd_cnt_ = comp_.GetWordCountFromDataHeader(&fmt_);
+    EXPECT_EQ(0, wrd_cnt_);
+
+    fmt_.word_count1 = 16;
+    wrd_cnt_ = comp_.GetWordCountFromDataHeader(&fmt_);
+    EXPECT_EQ(1, wrd_cnt_);
 }
