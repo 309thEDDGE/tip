@@ -343,26 +343,39 @@ TEST(Ch10ContextTest, CheckConfigurationPathsNotRequired)
 		{Ch10PacketType::COMPUTER_GENERATED_DATA_F1, true}
 	};
 
+	std::map<Ch10PacketType, ManagedPath> enabled_paths;
+
 	// No paths defined.
 	std::map<Ch10PacketType, ManagedPath> pkt_type_paths;
-	bool config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	bool config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths,
+		enabled_paths);
 	EXPECT_TRUE(config_ok);
+	EXPECT_EQ(enabled_paths.size(), 0);
 
 	// Try both non-required types set to true.
+	enabled_paths.clear();
 	pkt_type_enabled[Ch10PacketType::TIME_DATA_F1] = true;
-	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths,
+		enabled_paths);
 	EXPECT_TRUE(config_ok);
+	EXPECT_EQ(enabled_paths.size(), 0);
 
 	// Add video path, even though it's not enabled.
+	enabled_paths.clear();
 	pkt_type_paths[Ch10PacketType::VIDEO_DATA_F0] = ManagedPath();
-	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths,
+		enabled_paths);
 	EXPECT_TRUE(config_ok);
+	EXPECT_EQ(enabled_paths.size(), 0);
 
 	// Add video and 1553, but not enabled.
+	enabled_paths.clear();
 	pkt_type_enabled[Ch10PacketType::VIDEO_DATA_F0] = false;
 	pkt_type_enabled[Ch10PacketType::MILSTD1553_F1] = false;
-	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths,
+		enabled_paths);
 	EXPECT_TRUE(config_ok);
+	EXPECT_EQ(enabled_paths.size(), 0);
 }
 
 TEST(Ch10ContextTest, CheckConfigurationPathsRequired)
@@ -374,32 +387,52 @@ TEST(Ch10ContextTest, CheckConfigurationPathsRequired)
 		{Ch10PacketType::COMPUTER_GENERATED_DATA_F1, true},
 		{Ch10PacketType::TIME_DATA_F1, true}
 	};
+	std::map<Ch10PacketType, ManagedPath> enabled_paths;
 
 	// Add 1533 and video, with only 1553 enabled ==> 1553 path required.
 	pkt_type_enabled[Ch10PacketType::VIDEO_DATA_F0] = false;
 	pkt_type_enabled[Ch10PacketType::MILSTD1553_F1] = true;
 	std::map<Ch10PacketType, ManagedPath> pkt_type_paths;
-	bool config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	bool config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths,
+		enabled_paths);
 	EXPECT_FALSE(config_ok);
+	EXPECT_EQ(enabled_paths.size(), 0);
 
 	// Set video to enabled.
+	enabled_paths.clear();
 	pkt_type_enabled[Ch10PacketType::VIDEO_DATA_F0] = true;
-	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths,
+		enabled_paths);
 	EXPECT_FALSE(config_ok);
+	EXPECT_EQ(enabled_paths.size(), 0);
 
-	// Insert video path. 1553 path still not present.
+	// Insert video path. 1553 path still not present. Configuration fails.
+	enabled_paths.clear();
 	pkt_type_paths[Ch10PacketType::VIDEO_DATA_F0] = ManagedPath();
-	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths,
+		enabled_paths);
 	EXPECT_FALSE(config_ok);
+	EXPECT_EQ(enabled_paths.size(), 0);
 
 	// Insert 1553 path.
+	enabled_paths.clear();
 	pkt_type_paths[Ch10PacketType::MILSTD1553_F1] = ManagedPath();
-	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths,
+		enabled_paths);
 	EXPECT_TRUE(config_ok);
+	EXPECT_EQ(enabled_paths.count(Ch10PacketType::VIDEO_DATA_F0), 1);
+	EXPECT_EQ(enabled_paths.count(Ch10PacketType::MILSTD1553_F1), 1);
 
 	// Disable video, path still present shouldn't matter. Config should
 	// be ok.
+	enabled_paths.clear();
 	pkt_type_enabled[Ch10PacketType::VIDEO_DATA_F0] = false;
-	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths,
+		enabled_paths);
 	EXPECT_TRUE(config_ok);
+	EXPECT_EQ(enabled_paths.count(Ch10PacketType::VIDEO_DATA_F0), 0);
+	EXPECT_EQ(enabled_paths.count(Ch10PacketType::MILSTD1553_F1), 1);
 }
+
+// Test InitializeFileWriters, this function and the other code it impacts
+// probably needs re-factoring prior.

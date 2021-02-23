@@ -7,6 +7,7 @@
 #include "ch10_context.h"
 #include "ch10_packet_header_component.h"
 #include "ch10_tmats_component.h"
+#include "ch10_tdp_component.h"
 #include "ch10_1553f1_component.h"
 
 // body
@@ -20,9 +21,6 @@ private:
     const uint8_t* data_ptr_;
 
     Ch10PacketHeaderComponent header_;
-
-    // Also, how to pass in or configure different parquet writer
-    // classes?
 
     // Hold pointers to BinBuff and Ch10Context to avoid 
     // the need to pass them into the Parse function each time
@@ -47,6 +45,7 @@ private:
     // Various packet parser instances.
     Ch10TMATSComponent tmats_;
     std::vector<std::string>& tmats_vec_;
+    Ch10TDPComponent tdp_component_;
     Ch101553F1Component milstd1553f1_component_;
 
 public:
@@ -57,7 +56,7 @@ public:
         bb_(binbuff), ctx_(context), data_ptr_(nullptr), bb_response_(0), 
         status_(Ch10Status::OK), relative_pos(relative_pos_), temp_pkt_size_(0),
         pkt_type_(Ch10PacketType::NONE), current_pkt_type(pkt_type_), header_(context), 
-        tmats_(context), milstd1553f1_component_(context) {}
+        tmats_(context), tdp_component_(context), milstd1553f1_component_(context) {}
 
     /*
     Parse the ch10 header at the current location of the buffer.
@@ -134,17 +133,6 @@ public:
     for the packet type indicated in the header.
     */
     void ParseBody();
-
-    /*
-    Initialize file writers for the various packet types if enabled. This function
-    is useful to avoid initializing file writers by default in the various parser
-    constructors, which makes testing difficult. 
-
-    Use the Ch10Context pkt_type_config_map and pkt_type_paths_map in conjunction
-    with Ch10PacketComponent::SetOutPath or overrides.
-
-    */
-    void InitializeFileWriters();
 
 };
 

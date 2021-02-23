@@ -228,8 +228,7 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, c
 void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy,
 	const MilStd1553F1CSDWFmt* const chan_spec,
 	const MilStd1553F1DataHeaderFmt* const msg, const uint16_t* const data,
-	const uint16_t& chanid, int8_t totwrdcnt, int8_t calcwrdcnt,
-	uint8_t payload_incomplete)
+	const uint16_t& chanid, int8_t calcwrdcnt, uint8_t payload_incomplete)
 {
 	WE_[temp_element_count_] = msg->WE;
 	SE_[temp_element_count_] = msg->SE;
@@ -304,7 +303,7 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy,
 	}
 
 	channel_id_[temp_element_count_] = chanid;
-	totwrdcnt_[temp_element_count_] = totwrdcnt;
+	totwrdcnt_[temp_element_count_] = msg->length/2;
 	calcwrdcnt_[temp_element_count_] = calcwrdcnt;
 	payload_incomplete_[temp_element_count_] = payload_incomplete;
 

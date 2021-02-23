@@ -148,7 +148,6 @@ Ch10Status Ch10Packet::ParseHeader()
 
     // Continue to parse depending on the context.
     return ctx_->ContinueWithPacketType((*header_.std_hdr_elem.element)->data_type);
-
 }
 
 void Ch10Packet::ParseBody()
@@ -178,6 +177,7 @@ void Ch10Packet::ParseBody()
         if (ctx_->pkt_type_config_map.at(Ch10PacketType::TIME_DATA_F1))
         {
             pkt_type_ = Ch10PacketType::TIME_DATA_F1;
+            tdp_component_.Parse(data_ptr_, relative_pos_);
         }
     }
     case static_cast<uint8_t>(Ch10PacketType::MILSTD1553_F1):
@@ -185,6 +185,7 @@ void Ch10Packet::ParseBody()
         if (ctx_->pkt_type_config_map.at(Ch10PacketType::MILSTD1553_F1))
         {
             pkt_type_ = Ch10PacketType::MILSTD1553_F1;
+            milstd1553f1_component_.Parse(data_ptr_, relative_pos_);
         }
     }
     case static_cast<uint8_t>(Ch10PacketType::VIDEO_DATA_F0):
@@ -197,18 +198,4 @@ void Ch10Packet::ParseBody()
     }
 
     // Return status?
-}
-
-void Ch10Packet::InitializeFileWriters()
-{
-    // Iterate over Ch10Context::pkt_type_config_map to check if a packet
-    // is enabled and, if so, set the path for the file writer that belongs
-    // to the relevant object.
-    using MapIt = std::unordered_map<Ch10PacketType, bool>::const_iterator;
-    const std::unordered_map<Ch10PacketType, bool>& conf = ctx_->pkt_type_config_map;
-
-    for (MapIt it = conf.cbegin(); it != conf.cend(); ++it)
-    {
-
-    }
 }

@@ -68,7 +68,7 @@ public:
 	void append_data(const uint64_t& time_stamp, uint8_t doy, const char* name, 
 		const MilStd1553F1ChanSpecFormat* chan_spec,
 		const MilStd1553F1MsgCommWord* msg, const uint16_t* data, const uint16_t& chanid, 
-		int8_t totwrdcnt, int8_t calcwrdcnt, uint8_t payload_incomplete);
+		int8_t calcwrdcnt, uint8_t payload_incomplete);
 	void commit();
 };
 

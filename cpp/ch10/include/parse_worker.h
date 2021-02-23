@@ -61,6 +61,9 @@ class ParseWorker
 #endif
 
 #endif
+#ifdef PARSER_REWRITE
+		Ch10Context ctx;
+#endif
 	uint8_t retcode;
 	bool continue_parsing;
 	bool delete_alloc;

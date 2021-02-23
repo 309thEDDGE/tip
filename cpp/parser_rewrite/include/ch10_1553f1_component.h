@@ -75,7 +75,7 @@ private:
 	//
 	// Parquet writer
 	//
-	std::unique_ptr<ParquetMilStd1553F1> pq_writer_;
+	std::shared_ptr<ParquetMilStd1553F1> pq_writer_;
 
 
 public:
@@ -135,8 +135,6 @@ public:
 		const MilStd1553F1DataHeaderFmt* const data_header);
 
 	uint16_t GetWordCountFromDataHeader(const MilStd1553F1DataHeaderFmt* const data_header);
-
-	void SetOutputPath(const ManagedPath& mpath) override;
 };
 
 #endif

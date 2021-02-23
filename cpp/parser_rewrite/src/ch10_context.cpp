@@ -8,12 +8,35 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
 	abs_time(abs_time_), rtc_(0), rtc(rtc_), rtc_to_ns_(100), thread_id_(id), thread_id(thread_id_),
 	tdp_valid_(false), tdp_valid(tdp_valid_), tdp_doy_(0), tdp_doy(tdp_doy_), found_tdp(found_tdp_),
 	intrapkt_ts_src_(0), intrapkt_ts_src(intrapkt_ts_src_), time_format_(0), time_format(time_format_),
-	channel_id_(0), channel_id(channel_id_), temp_rtc_(0), 
+	channel_id_(UINT32_MAX), channel_id(channel_id_), temp_rtc_(0),
 	chanid_remoteaddr1_map(chanid_remoteaddr1_map_), chanid_remoteaddr2_map(chanid_remoteaddr2_map_),
 	chanid_commwords_map(chanid_commwords_map_), command_word1_(nullptr), command_word2_(nullptr),
-	pkt_type_paths_map(pkt_type_paths_map_)
+	is_configured_(false), milstd1553f1_pq_writer_(nullptr), milstd1553f1_pq_writer(nullptr)
 {
 	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
+}
+
+Ch10Context::Ch10Context() : absolute_position_(0),
+	absolute_position(absolute_position_),
+	tdp_rtc_(0), tdp_rtc(tdp_rtc_), tdp_abs_time_(0), tdp_abs_time(tdp_abs_time_),
+	searching_for_tdp_(false), found_tdp_(false), pkt_type_config_map(pkt_type_config_map_),
+	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), abs_time_(0),
+	abs_time(abs_time_), rtc_(0), rtc(rtc_), rtc_to_ns_(100), thread_id_(UINT32_MAX), 
+	thread_id(thread_id_),
+	tdp_valid_(false), tdp_valid(tdp_valid_), tdp_doy_(0), tdp_doy(tdp_doy_), found_tdp(found_tdp_),
+	intrapkt_ts_src_(0), intrapkt_ts_src(intrapkt_ts_src_), time_format_(0), time_format(time_format_),
+	channel_id_(UINT32_MAX), channel_id(channel_id_), temp_rtc_(0),
+	chanid_remoteaddr1_map(chanid_remoteaddr1_map_), chanid_remoteaddr2_map(chanid_remoteaddr2_map_),
+	chanid_commwords_map(chanid_commwords_map_), command_word1_(nullptr), command_word2_(nullptr),
+	is_configured_(false), milstd1553f1_pq_writer_(nullptr), milstd1553f1_pq_writer(nullptr)
+{
+	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
+}
+
+void Ch10Context::Initialize(const uint64_t& abs_pos, uint16_t id)
+{
+	absolute_position_ = abs_pos;
+	channel_id_ = id;
 }
 
 Ch10Context::~Ch10Context()
@@ -172,15 +195,10 @@ void Ch10Context::UpdateChannelIDToLRUAddressMaps(const uint32_t& chanid,
 	}
 }
 
-void Ch10Context::SetOutputPathsMap(const std::map<Ch10PacketType,
-	ManagedPath>& output_paths)
-{
-	pkt_type_paths_map_ = output_paths;
-}
-
 bool Ch10Context::CheckConfiguration(
 	const std::unordered_map<Ch10PacketType, bool>& pkt_type_enabled_config,
-	const std::map<Ch10PacketType, ManagedPath>& pkt_type_paths_config)
+	const std::map<Ch10PacketType, ManagedPath>& pkt_type_paths_config,
+	std::map<Ch10PacketType, ManagedPath>& enabled_paths)
 {
 	// Loop over enabled map and check for presence of paths.
 	using MapIt = std::unordered_map<Ch10PacketType, bool>::const_iterator;
@@ -200,10 +218,50 @@ bool Ch10Context::CheckConfiguration(
 					printf("Ch10Context::CheckConfiguration(): packet type %hhu is enabled and "
 						"a ManagedPath object does not exist in paths config map!\n",
 						static_cast<uint8_t>(it->first));
+
+					// Clear the output map.
+					enabled_paths.clear();
 					return false;
+				}
+
+				// Otherwise insert the enabled type and the corresponding ManagedPath object.
+				else
+				{
+					enabled_paths[it->first] = pkt_type_paths_config.at(it->first);
 				}
 			}
 		}
 	}
+	is_configured_ = true;
 	return true;
+}
+
+bool Ch10Context::IsConfigured()
+{
+	return is_configured_;
+}
+
+void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPath>& enabled_paths)
+{
+	// Loop over enabled packet types and create, then submit to relevant parser,
+	// a pointer to the file writer.
+	using MapIt = std::map<Ch10PacketType, ManagedPath>::const_iterator;
+	for (MapIt it = enabled_paths.cbegin(); it != enabled_paths.cend(); ++it)
+	{
+		switch (it->first)
+		{
+		case Ch10PacketType::MILSTD1553_F1:
+			milstd1553f1_pq_writer_ = std::make_unique<ParquetMilStd1553F1>(it->second,
+				channel_id_, true);
+
+			// Creating this publically accessible pointer is probably not the best 
+			// way to make the writer available, since it's now availalbe to everything.
+			// Perhaps I should create a function for each parser (inherits from Ch10PacketComponent)
+			// or maybe one in the base class in which to pass a const pointer that is stored
+			// in the parser class. This breaks the paradigm that a file writer is very context 
+			// specific and should be held by Ch10Context. This will need careful thinking
+			// and rework at some point.
+			milstd1553f1_pq_writer = milstd1553f1_pq_writer_.get();
+		}
+	}
 }

@@ -73,6 +73,11 @@ Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count,
 		// Update data and loc.
 		data += (*milstd1553f1_data_hdr_elem_.element)->length;
 		loc += (*milstd1553f1_data_hdr_elem_.element)->length;
+
+		// Append parsed data to the file.
+		ctx_->milstd1553f1_pq_writer->append_data(abs_time_, ctx_->tdp_doy,
+			*milstd1553f1_csdw_elem_.element, *milstd1553f1_data_hdr_elem_.element,
+			payload_ptr_, ctx_->channel_id, calc_payload_word_count_, is_payload_incomplete_);
 	}
 
 	return Ch10Status::OK;
@@ -130,9 +135,6 @@ Ch10Status Ch101553F1Component::ParsePayload(const uint8_t*& data,
 	// Set the payload pointer to the position of data pointer.
 	payload_ptr_ = (const uint16_t*)data;
 
-	// Append parsed data to the file.
-
-
 	return Ch10Status::OK;
 }
 
@@ -157,14 +159,4 @@ uint16_t Ch101553F1Component::GetWordCountFromDataHeader(
 	if (data_header->word_count1 == 0)
 		return 32;
 	return data_header->word_count1;
-}
-
-void Ch101553F1Component::SetOutputPath(const ManagedPath& mpath)
-{
-	// Call base class function.
-	Ch10PacketComponent::SetOutputPath(mpath);
-
-	// Create parquet writer object.
-	pq_writer_ = std::unique_ptr<ParquetMilStd1553F1>(
-		new ParquetMilStd1553F1(out_path_, ctx_->thread_id, true));
 }

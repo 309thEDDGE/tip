@@ -91,38 +91,48 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 		printf("(%03u) Absolute position: %llu\n", id, start_position);
 #endif
 
-	// Instantiate Ch10Context object
-	Ch10Context ctx(start_position, id);
+	// Initialize Ch10Context object. Note that this Ch10Context instance
+	// created in the ParseWorker constructor is persistent until the 
+	// ParseWorker instance is garbage-collected to maintain file writer
+	// (read: Parquet file writer) state.
+	ctx.Initialize(start_position, id);
 	ctx.SetSearchingForTDP(!append_mode);
 
-	// Configure packet parsing.
-	std::map<Ch10PacketType, bool> pkt_type_conf = {
-		{Ch10PacketType::MILSTD1553_F1, true},
-		{Ch10PacketType::VIDEO_DATA_F0, false}
-	};
-	ctx.SetPacketTypeConfig(pkt_type_conf);
-
-	// Set output file paths.
-	std::map<Ch10PacketType, ManagedPath> output_paths = {
-		{Ch10PacketType::MILSTD1553_F1, output_file_paths_[Ch10DataType::MILSTD1553_DATA_F1]}
-	};
-	ctx.SetOutputPathsMap(output_paths);
-
-	// Check configuration. Are the packet parse and output paths configs
-	// consistent?
-	bool config_ok = ctx.CheckConfiguration(ctx.pkt_type_config_map,
-		ctx.pkt_type_paths_map);
-	if (!config_ok)
+	if (!ctx.IsConfigured())
 	{
-		complete = true;
-		return;
+		// Configure packet parsing.
+		std::map<Ch10PacketType, bool> pkt_type_conf = {
+			{Ch10PacketType::MILSTD1553_F1, true},
+			{Ch10PacketType::VIDEO_DATA_F0, false}
+		};
+		ctx.SetPacketTypeConfig(pkt_type_conf);
+
+		// Configure output file paths.
+		std::map<Ch10PacketType, ManagedPath> output_paths = {
+			{Ch10PacketType::MILSTD1553_F1, output_file_paths_[Ch10DataType::MILSTD1553_DATA_F1]}
+		};
+
+		// Check configuration. Are the packet parse and output paths configs
+		// consistent?
+		std::map<Ch10PacketType, ManagedPath> enabled_paths;
+		bool config_ok = ctx.CheckConfiguration(ctx.pkt_type_config_map,
+			output_paths, enabled_paths);
+		if (!config_ok)
+		{
+			complete = true;
+			return;
+		}
+
+		// For each packet type that is enabled and has an output path specified,
+		// create a file writer object that is owned by Ch10Context to maintain
+		// state between regular and append mode calls to this worker's operator().
+		// Pass a pointer to the file writer to the relevant parser for use in 
+		// writing data to disk.
+		ctx.InitializeFileWriters(enabled_paths);
 	}
 
 	// Instantiate Ch10Packet object
 	Ch10Packet packet(&bb, &ctx, tmats_body_vec);
-
-	// Initialize parser file writers.
-	packet.InitializeFileWriters();
 
 	// Parse packets until error or end of buffer.
 	bool continue_parsing = true;
@@ -131,7 +141,9 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 	{
 		status = packet.ParseHeader();
 		if (status == Ch10Status::BAD_SYNC || status == Ch10Status::PKT_TYPE_NO)
+		{
 			continue;
+		}
 		else if (status == Ch10Status::PKT_TYPE_EXIT || status == Ch10Status::BUFFER_LIMITED)
 		{
 			continue_parsing = false;
@@ -145,7 +157,10 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 	// Update last_position;
 	last_position = ctx.absolute_position;
 
-	complete = true;
+	// Close all file writers if append_mode is true or
+	// this is the final worker which has no append mode.
+	ctx.CloseFileWriters(enabled_paths);
+	
 #ifdef DEBUG
 #if DEBUG > 0
 	printf("(%03u) End of worker's shift\n", id);
@@ -154,7 +169,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 	printf("(%03u) Absolute position: %llu\n\n", id, last_position);
 #endif
 #endif
-
+	complete = true;
 }
 #else
 void ParseWorker::operator()(BinBuff& bb, bool append_mode)
@@ -1003,19 +1018,32 @@ void ParseWorker::append_chanid_remoteaddr_maps(std::map<uint32_t, std::set<uint
 	std::map<uint32_t, std::set<uint16_t>>&out2)
 {
 	IterableTools it;
+#ifdef PARSER_REWRITE
+	out1 = it.CombineCompoundMapsToSet(out1, ctx.chanid_remoteaddr1_map);
+	out2 = it.CombineCompoundMapsToSet(out2, ctx.chanid_remoteaddr2_map);
+#else
 	out1 = it.CombineCompoundMapsToSet(out1, chanid_remoteaddr1_map);
 	out2 = it.CombineCompoundMapsToSet(out2, chanid_remoteaddr2_map);
+#endif
 }
 
 void ParseWorker::append_chanid_comwmwords_map(std::map<uint32_t, std::set<uint32_t>>& out)
 {
 	IterableTools it;
+#ifdef PARSER_REWRITE
+	out = it.CombineCompoundMapsToSet(out, ctx.chanid_commwords_map);
+#else
 	out = it.CombineCompoundMapsToSet(out, chanid_commwords_map);
+#endif
 }
 
 #ifdef VIDEO_DATA
 const std::map<uint16_t, uint64_t>& ParseWorker::GetChannelIDToMinTimeStampMap()
 {
+#ifdef PARSER_REWRITE
+	return std::map<uint16_t, uint64_t>();
+#else
 	return video->GetChannelIDToMinTimeStampMap();
+#endif
 }
 #endif
