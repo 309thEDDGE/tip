@@ -95,15 +95,34 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 	Ch10Context ctx(start_position, id);
 	ctx.SetSearchingForTDP(!append_mode);
 
-	// Instantiate Ch10Packet object
-	Ch10Packet packet(&bb, &ctx, tmats_body_vec);
-
 	// Configure packet parsing.
 	std::map<Ch10PacketType, bool> pkt_type_conf = {
 		{Ch10PacketType::MILSTD1553_F1, true},
 		{Ch10PacketType::VIDEO_DATA_F0, false}
 	};
 	ctx.SetPacketTypeConfig(pkt_type_conf);
+
+	// Set output file paths.
+	std::map<Ch10PacketType, ManagedPath> output_paths = {
+		{Ch10PacketType::MILSTD1553_F1, output_file_paths_[Ch10DataType::MILSTD1553_DATA_F1]}
+	};
+	ctx.SetOutputPathsMap(output_paths);
+
+	// Check configuration. Are the packet parse and output paths configs
+	// consistent?
+	bool config_ok = ctx.CheckConfiguration(ctx.pkt_type_config_map,
+		ctx.pkt_type_paths_map);
+	if (!config_ok)
+	{
+		complete = true;
+		return;
+	}
+
+	// Instantiate Ch10Packet object
+	Ch10Packet packet(&bb, &ctx, tmats_body_vec);
+
+	// Initialize parser file writers.
+	packet.InitializeFileWriters();
 
 	// Parse packets until error or end of buffer.
 	bool continue_parsing = true;

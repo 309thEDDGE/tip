@@ -23,3 +23,8 @@ Ch10PacketComponent::~Ch10PacketComponent()
 {
 
 }
+
+void Ch10PacketComponent::SetOutputPath(const ManagedPath& mpath)
+{
+    out_path_ = mpath;
+}

@@ -330,3 +330,76 @@ TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsNotRTtoRT)
 	EXPECT_THAT(ctx.chanid_commwords_map.at(hdr_fmt.chanID),
 		::testing::UnorderedElementsAre(commword_val1, commword_val2));
 }
+
+TEST(Ch10ContextTest, CheckConfigurationPathsNotRequired)
+{
+	Ch10Context ctx(0);
+	
+	// Note: TSP not defined and set to true. Normally this is ensured by other
+	// functions. However, TMATS and TDP (normally set to true) do not require
+	// paths and the lack of paths for either should not indicate an erroneous
+	// configuration.
+	std::unordered_map<Ch10PacketType, bool> pkt_type_enabled = {
+		{Ch10PacketType::COMPUTER_GENERATED_DATA_F1, true}
+	};
+
+	// No paths defined.
+	std::map<Ch10PacketType, ManagedPath> pkt_type_paths;
+	bool config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	EXPECT_TRUE(config_ok);
+
+	// Try both non-required types set to true.
+	pkt_type_enabled[Ch10PacketType::TIME_DATA_F1] = true;
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	EXPECT_TRUE(config_ok);
+
+	// Add video path, even though it's not enabled.
+	pkt_type_paths[Ch10PacketType::VIDEO_DATA_F0] = ManagedPath();
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	EXPECT_TRUE(config_ok);
+
+	// Add video and 1553, but not enabled.
+	pkt_type_enabled[Ch10PacketType::VIDEO_DATA_F0] = false;
+	pkt_type_enabled[Ch10PacketType::MILSTD1553_F1] = false;
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	EXPECT_TRUE(config_ok);
+}
+
+TEST(Ch10ContextTest, CheckConfigurationPathsRequired)
+{
+	Ch10Context ctx(0);
+
+	// Default minimal config for this map.
+	std::unordered_map<Ch10PacketType, bool> pkt_type_enabled = {
+		{Ch10PacketType::COMPUTER_GENERATED_DATA_F1, true},
+		{Ch10PacketType::TIME_DATA_F1, true}
+	};
+
+	// Add 1533 and video, with only 1553 enabled ==> 1553 path required.
+	pkt_type_enabled[Ch10PacketType::VIDEO_DATA_F0] = false;
+	pkt_type_enabled[Ch10PacketType::MILSTD1553_F1] = true;
+	std::map<Ch10PacketType, ManagedPath> pkt_type_paths;
+	bool config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	EXPECT_FALSE(config_ok);
+
+	// Set video to enabled.
+	pkt_type_enabled[Ch10PacketType::VIDEO_DATA_F0] = true;
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	EXPECT_FALSE(config_ok);
+
+	// Insert video path. 1553 path still not present.
+	pkt_type_paths[Ch10PacketType::VIDEO_DATA_F0] = ManagedPath();
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	EXPECT_FALSE(config_ok);
+
+	// Insert 1553 path.
+	pkt_type_paths[Ch10PacketType::MILSTD1553_F1] = ManagedPath();
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	EXPECT_TRUE(config_ok);
+
+	// Disable video, path still present shouldn't matter. Config should
+	// be ok.
+	pkt_type_enabled[Ch10PacketType::VIDEO_DATA_F0] = false;
+	config_ok = ctx.CheckConfiguration(pkt_type_enabled, pkt_type_paths);
+	EXPECT_TRUE(config_ok);
+}

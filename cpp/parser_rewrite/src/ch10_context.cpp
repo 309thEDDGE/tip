@@ -10,7 +10,8 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
 	intrapkt_ts_src_(0), intrapkt_ts_src(intrapkt_ts_src_), time_format_(0), time_format(time_format_),
 	channel_id_(0), channel_id(channel_id_), temp_rtc_(0), 
 	chanid_remoteaddr1_map(chanid_remoteaddr1_map_), chanid_remoteaddr2_map(chanid_remoteaddr2_map_),
-	chanid_commwords_map(chanid_commwords_map_), command_word1_(nullptr), command_word2_(nullptr)
+	chanid_commwords_map(chanid_commwords_map_), command_word1_(nullptr), command_word2_(nullptr),
+	pkt_type_paths_map(pkt_type_paths_map_)
 {
 	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
@@ -169,4 +170,40 @@ void Ch10Context::UpdateChannelIDToLRUAddressMaps(const uint32_t& chanid,
 		else
 			chanid_commwords_map_[chanid].insert(comm_words->comm_word1);
 	}
+}
+
+void Ch10Context::SetOutputPathsMap(const std::map<Ch10PacketType,
+	ManagedPath>& output_paths)
+{
+	pkt_type_paths_map_ = output_paths;
+}
+
+bool Ch10Context::CheckConfiguration(
+	const std::unordered_map<Ch10PacketType, bool>& pkt_type_enabled_config,
+	const std::map<Ch10PacketType, ManagedPath>& pkt_type_paths_config)
+{
+	// Loop over enabled map and check for presence of paths.
+	using MapIt = std::unordered_map<Ch10PacketType, bool>::const_iterator;
+	for (MapIt it = pkt_type_enabled_config.cbegin(); it != pkt_type_enabled_config.cend();
+		++it)
+	{
+		// If the packet type is TMATS or TDP, don't check for the path.
+		if (!(it->first == Ch10PacketType::COMPUTER_GENERATED_DATA_F1 ||
+			it->first == Ch10PacketType::TIME_DATA_F1))
+		{
+			// If the current type is enabled, then the path is relevant.
+			if (it->second)
+			{
+				// If a key-value pair does not exist for the current type, return false.
+				if (pkt_type_paths_config.count(it->first) == 0)
+				{
+					printf("Ch10Context::CheckConfiguration(): packet type %hhu is enabled and "
+						"a ManagedPath object does not exist in paths config map!\n",
+						static_cast<uint8_t>(it->first));
+					return false;
+				}
+			}
+		}
+	}
+	return true;
 }

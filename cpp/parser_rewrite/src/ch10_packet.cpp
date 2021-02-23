@@ -198,3 +198,17 @@ void Ch10Packet::ParseBody()
 
     // Return status?
 }
+
+void Ch10Packet::InitializeFileWriters()
+{
+    // Iterate over Ch10Context::pkt_type_config_map to check if a packet
+    // is enabled and, if so, set the path for the file writer that belongs
+    // to the relevant object.
+    using MapIt = std::unordered_map<Ch10PacketType, bool>::const_iterator;
+    const std::unordered_map<Ch10PacketType, bool>& conf = ctx_->pkt_type_config_map;
+
+    for (MapIt it = conf.cbegin(); it != conf.cend(); ++it)
+    {
+
+    }
+}

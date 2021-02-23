@@ -5,14 +5,7 @@
 #include <cstdint>
 #include "ch10_1553f1_msg_hdr_format.h"
 #include "ch10_packet_component.h"
-
-class MilStd1553F1CSDWFmt
-{
-public:
-	uint32_t count : 24;
-	uint32_t : 6;
-	uint32_t ttb : 2;
-};
+#include "parquet_milstd1553f1.h"
 
 class MilStd1553F1DataRTCTimeStampFmt
 {
@@ -77,10 +70,20 @@ private:
 	// header and taking into consideration that the current message may
 	// be a mode code and that a word count of zero 
 	// indicates a 32-word payload.
-	uint16_t expected_payload_word_count_;
+	int8_t expected_payload_word_count_;
+
+	//
+	// Parquet writer
+	//
+	std::unique_ptr<ParquetMilStd1553F1> pq_writer_;
 
 
 public:
+
+	const uint32_t& abs_time;
+	const int8_t& expected_payload_word_count;
+	const int8_t& calc_payload_word_count;
+	const uint8_t& is_payload_incomplete;
 
 	const Ch10PacketElement<MilStd1553F1CSDWFmt>& milstd1553f1_csdw_elem;
 	const Ch10PacketElement<MilStd1553F1DataRTCTimeStampFmt>& milstd1553f1_rtctime_elem;
@@ -97,8 +100,12 @@ public:
 		milstd1553f1_data_hdr_elem(milstd1553f1_data_hdr_elem_),
 		msg_index_(0), abs_time_(0), max_message_count_(10000),
 		payload_ptr_(nullptr), max_byte_count_(72), expected_payload_word_count_(0),
-		calc_payload_word_count_(0), is_payload_incomplete_(0)
-	{}
+		calc_payload_word_count_(0), is_payload_incomplete_(0), 
+		expected_payload_word_count(expected_payload_word_count_),
+		calc_payload_word_count(calc_payload_word_count_),
+		is_payload_incomplete(is_payload_incomplete_), abs_time(abs_time_),
+		pq_writer_(nullptr)
+	{	}
 	Ch10Status Parse(const uint8_t*& data, uint64_t& loc) override;
 
 	/*
@@ -128,6 +135,8 @@ public:
 		const MilStd1553F1DataHeaderFmt* const data_header);
 
 	uint16_t GetWordCountFromDataHeader(const MilStd1553F1DataHeaderFmt* const data_header);
+
+	void SetOutputPath(const ManagedPath& mpath) override;
 };
 
 #endif

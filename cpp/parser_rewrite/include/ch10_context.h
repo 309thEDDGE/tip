@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <set>
 #include <cmath>
+#include "managed_path.h"
 #include "ch10_status.h"
 #include "ch10_header_format.h"
 #include "ch10_1553f1_msg_hdr_format.h"
@@ -53,6 +54,9 @@ private:
 	// This map must include all elements of Ch10PacketType to
 	// ensure that all types can be configured for on/off correctly.
 	std::unordered_map<Ch10PacketType, bool> pkt_type_config_map_;
+
+	// Map of packet type to output path.
+	std::map<Ch10PacketType, ManagedPath> pkt_type_paths_map_;
 
 	bool searching_for_tdp_;
 	bool found_tdp_;
@@ -117,6 +121,7 @@ public:
 	const uint8_t& intrapkt_ts_src;
 	const uint8_t& time_format;
 	const uint32_t& channel_id;
+	const std::map<Ch10PacketType, ManagedPath>& pkt_type_paths_map;
 	const std::unordered_map<Ch10PacketType, bool>& pkt_type_config_map;
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr1_map;
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr2_map;
@@ -206,6 +211,28 @@ public:
 	*/
 	void UpdateChannelIDToLRUAddressMaps(const uint32_t& chanid,
 		const MilStd1553F1DataHeaderFmt* const data_header);
+
+	/*
+	Set a reference to a user-input map of Ch10PacketType to ManagedPath
+	which contains the output paths for the various parsers.
+
+	Args:
+		output_paths	--> map of Ch10PacketType to ManagedPath
+	*/
+	void SetOutputPathsMap(const std::map<Ch10PacketType, ManagedPath>& output_paths);
+
+	/*
+	Check if the configurations for packet type and output paths are consistent.
+	Return false if an enabled packet type does not have an output file specified.
+
+	Args:
+		pkt_type_enabled_config	--> Map of Ch10PacketType to bool. Use map set by call
+									to SetPacketTypeConfig.
+		pkt_type_paths_config	--> Map of Ch10PacketType to ManagedPath. Use map set 
+									by call to SetOutputPathsMap
+	*/
+	bool CheckConfiguration(const std::unordered_map<Ch10PacketType, bool>& pkt_type_enabled_config,
+		const std::map<Ch10PacketType, ManagedPath>& pkt_type_paths_config);
 };
 
 

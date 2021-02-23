@@ -14,6 +14,16 @@ set(ch10_src_dir ${ch10_lib_name}/${source_dir_name})
 set(ch10_inc_dir ${ch10_lib_name}/${include_dir_name})
 set(ch10_main_dir ${ch10_lib_name}/${main_dir_name})
 
+set(parserw_lib_name "")
+set(parserw_dir_name "")
+set(parserw_inc_dir "")
+if(parser_rewrite)
+    set(parserw_lib_name "parserw")
+    set(parserw_dir_name "parser_rewrite")
+    set(parserw_src_dir ${parserw_dir_name}/${source_dir_name}) # util/src
+    set(parserw_inc_dir ${parserw_dir_name}/${include_dir_name})
+endif()
+
 #########################################################
 #                   Build/link util lib
 #########################################################
@@ -106,6 +116,7 @@ target_include_directories(${ch10pq_lib_name} PUBLIC
                             ${pqctx_inc_dir} 
                             ${eth_inc_dir}
                             ${ch10_inc_dir} # Ch10 format headers.
+                            ${parserw_inc_dir} # parser rewrite format headers
                             ${util_inc_dir})
 target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${eth_lib_name} ${linux_libs}
@@ -177,14 +188,7 @@ target_compile_features(${videx_lib_name} PUBLIC cxx_std_17)
 #########################################################
 #          Build/link ch10 parser rewrite lib
 #########################################################
-set(parserw_lib_name "")
-set(parserw_dir_name "")
-set(parserw_inc_dir "")
 if(parser_rewrite)
-    set(parserw_lib_name "parserw")
-    set(parserw_dir_name "parser_rewrite")
-    set(parserw_src_dir ${parserw_dir_name}/${source_dir_name}) # util/src
-    set(parserw_inc_dir ${parserw_dir_name}/${include_dir_name})
     add_library(${parserw_lib_name} STATIC
                ${parserw_inc_dir}/ch10_status.h ${parserw_inc_dir}/ch10_header_format.h
                ${parserw_inc_dir}/ch10_1553f1_msg_hdr_format.h
@@ -199,9 +203,10 @@ if(parser_rewrite)
                ${parserw_inc_dir}/ch10_1553f1_component.h ${parserw_src_dir}/ch10_1553f1_component.cpp
      )
 
-    target_include_directories(${parserw_lib_name} PUBLIC ${parserw_inc_dir} ${util_inc_dir})
+    target_include_directories(${parserw_lib_name} PUBLIC ${parserw_inc_dir} ${util_inc_dir}
+                               ${ch10pq_inc_dir})
     target_compile_features(${parserw_lib_name} PUBLIC cxx_std_17)
-    target_link_libraries(${parserw_lib_name} PUBLIC ${util_lib_name})
+    target_link_libraries(${parserw_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_name})
 endif()
 
 #########################################################

@@ -4,6 +4,14 @@
 
 #include <cstdint>
 
+class MilStd1553F1CSDWFmt
+{
+public:
+	uint32_t count : 24;
+	uint32_t : 6;
+	uint32_t ttb : 2;
+};
+
 class MilStd1553F1DataHeaderFmt
 {
 public:

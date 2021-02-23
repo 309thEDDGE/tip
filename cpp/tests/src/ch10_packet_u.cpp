@@ -172,7 +172,10 @@ TEST_F(Ch10PacketTest, ManageSecondaryHeaderParseStatusInvalidBufferLimited)
 	EXPECT_EQ(status_, Ch10Status::BUFFER_LIMITED);
 }
 
+TEST_F(Ch10PacketTest, InitializeFileWriters)
+{
 
+}
 
 
 // test parse header

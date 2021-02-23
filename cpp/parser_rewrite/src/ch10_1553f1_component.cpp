@@ -25,6 +25,8 @@ Ch10Status Ch101553F1Component::Parse(const uint8_t*& data, uint64_t& loc)
 	{
 		status_ = ParseRTCTimeMessages((*milstd1553f1_csdw_elem_.element)->count,
 			data, loc);
+		if (status_ != Ch10Status::OK)
+			return status_;
 	}
 	else
 	{	
@@ -60,6 +62,8 @@ Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count,
 		// so it is useful to call before updating the channel ID to LRU address
 		// maps in case the message is corrupted.
 		status_ = ParsePayload(data, *milstd1553f1_data_hdr_elem_.element);
+		if (status_ != Ch10Status::OK)
+			return status_;
 
 		// Update channel ID to remote address maps and the channel ID to 
 		// command words integer map.
@@ -128,7 +132,6 @@ Ch10Status Ch101553F1Component::ParsePayload(const uint8_t*& data,
 
 	// Append parsed data to the file.
 
-	// Update data and loc.
 
 	return Ch10Status::OK;
 }
@@ -154,4 +157,14 @@ uint16_t Ch101553F1Component::GetWordCountFromDataHeader(
 	if (data_header->word_count1 == 0)
 		return 32;
 	return data_header->word_count1;
+}
+
+void Ch101553F1Component::SetOutputPath(const ManagedPath& mpath)
+{
+	// Call base class function.
+	Ch10PacketComponent::SetOutputPath(mpath);
+
+	// Create parquet writer object.
+	pq_writer_ = std::unique_ptr<ParquetMilStd1553F1>(
+		new ParquetMilStd1553F1(out_path_, ctx_->thread_id, true));
 }

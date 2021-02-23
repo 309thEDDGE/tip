@@ -8,7 +8,7 @@ protected:
     Ch101553F1Component comp_;
     uint64_t wrd_cnt_;
     const uint8_t* data_ptr_;
-    uint64_t loc_
+    uint64_t loc_;
     Ch10Status status_;
     Ch10Context ctx_;
     MilStd1553F1DataHeaderFmt fmt_;
@@ -18,32 +18,6 @@ protected:
     {
     }
 };
-
-TEST_F(Ch101553F1ComponentTest, ParsePayloadTooManyBytesRTtoRT)
-{
-    // Set message byte count to > 72, the max possible.
-    fmt_.length = 80;
-    fmt_.RR = 1;
-
-    status_ = comp_.ParsePayload(data_ptr_, &fmt_);
-    EXPECT_EQ(status_, Ch10Status::MILSTD1553_MSG_LENGTH);
-}
-
-TEST_F(Ch101553F1ComponentTest, ParsePayloadTooManyBytesNonRTtoRT)
-{
-    // Set message byte count to > 72, the max possible.
-    fmt_.length = 80;
-    fmt_.RR = 0;
-    fmt_.tx1 = 0;
-
-    status_ = comp_.ParsePayload(data_ptr_, &fmt_);
-    EXPECT_EQ(status_, Ch10Status::MILSTD1553_MSG_LENGTH);
-
-    // Transmit bit status should not impact this check.
-    fmt_.tx1 = 1;
-    status_ = comp_.ParsePayload(data_ptr_, &fmt_);
-    EXPECT_EQ(status_, Ch10Status::MILSTD1553_MSG_LENGTH);
-}
 
 TEST_F(Ch101553F1ComponentTest, GetWordCountFromDataHeaderRTtoRT)
 {
@@ -82,3 +56,98 @@ TEST_F(Ch101553F1ComponentTest, GetWordCountFromDataHeaderNonRTtoRTModeCode)
     wrd_cnt_ = comp_.GetWordCountFromDataHeader(&fmt_);
     EXPECT_EQ(1, wrd_cnt_);
 }
+
+TEST_F(Ch101553F1ComponentTest, ParsePayloadTooManyBytesRTtoRT)
+{
+    // Set message byte count to > 72, the max possible.
+    fmt_.length = 80;
+    fmt_.RR = 1;
+
+    status_ = comp_.ParsePayload(data_ptr_, &fmt_);
+    EXPECT_EQ(status_, Ch10Status::MILSTD1553_MSG_LENGTH);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParsePayloadTooManyBytesNonRTtoRT)
+{
+    // Set message byte count to > 72, the max possible.
+    fmt_.length = 80;
+    fmt_.RR = 0;
+    fmt_.tx1 = 0;
+
+    status_ = comp_.ParsePayload(data_ptr_, &fmt_);
+    EXPECT_EQ(status_, Ch10Status::MILSTD1553_MSG_LENGTH);
+
+    // Transmit bit status should not impact this check.
+    fmt_.tx1 = 1;
+    status_ = comp_.ParsePayload(data_ptr_, &fmt_);
+    EXPECT_EQ(status_, Ch10Status::MILSTD1553_MSG_LENGTH);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParsePayloadWordCountRTtoRT)
+{
+    // length = 25 words, 25-3 = 22 words for RTtoRT > 20
+    fmt_.length = 50;
+    fmt_.RR = 1;
+    fmt_.word_count1 = 20;
+    fmt_.sub_addr1 = 10;
+
+    status_ = comp_.ParsePayload(data_ptr_, &fmt_);
+    EXPECT_EQ(status_, Ch10Status::OK);
+    EXPECT_EQ(comp_.expected_payload_word_count, fmt_.word_count1);
+    EXPECT_EQ(comp_.calc_payload_word_count, 20);
+    EXPECT_EQ(comp_.is_payload_incomplete, 0);
+
+    // length = 15 words, 15-3 = 12 words for RTtoRT < 32
+    fmt_.length = 30;
+    fmt_.word_count1 = 0; // 32
+    status_ = comp_.ParsePayload(data_ptr_, &fmt_);
+    EXPECT_EQ(status_, Ch10Status::OK);
+    EXPECT_EQ(comp_.expected_payload_word_count, 32);
+    EXPECT_EQ(comp_.calc_payload_word_count, 12);
+    EXPECT_EQ(comp_.is_payload_incomplete, 1);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParsePayloadWordCountNonRTtoRT)
+{
+    // length = 25 words, 25-2 = 23 words for RT to BC > 20
+    fmt_.length = 50;
+    fmt_.RR = 0;
+    fmt_.tx1 = 1; // RT to BC
+    fmt_.word_count1 = 20;
+    fmt_.sub_addr1 = 10;
+
+    status_ = comp_.ParsePayload(data_ptr_, &fmt_);
+    EXPECT_EQ(status_, Ch10Status::OK);
+    EXPECT_EQ(comp_.expected_payload_word_count, fmt_.word_count1);
+    EXPECT_EQ(comp_.calc_payload_word_count, 20);
+    EXPECT_EQ(comp_.is_payload_incomplete, 0);
+
+    // length = 15 words, 15-2 = 13 words for RT to BC < 32
+    fmt_.length = 30;
+    fmt_.word_count1 = 0; // 32
+    status_ = comp_.ParsePayload(data_ptr_, &fmt_);
+    EXPECT_EQ(status_, Ch10Status::OK);
+    EXPECT_EQ(comp_.expected_payload_word_count, 32);
+    EXPECT_EQ(comp_.calc_payload_word_count, 13);
+    EXPECT_EQ(comp_.is_payload_incomplete, 1);
+
+    // Mode code without payload
+    fmt_.sub_addr1 = 0;
+    fmt_.word_count1 = 5;
+    status_ = comp_.ParsePayload(data_ptr_, &fmt_);
+    EXPECT_EQ(status_, Ch10Status::OK);
+    EXPECT_EQ(comp_.expected_payload_word_count, 0);
+    EXPECT_EQ(comp_.calc_payload_word_count, 0);
+    EXPECT_EQ(comp_.is_payload_incomplete, 0);
+
+    // Mode code with payload
+    fmt_.sub_addr1 = 0;
+    fmt_.word_count1 = 20; // > 15
+    status_ = comp_.ParsePayload(data_ptr_, &fmt_);
+    EXPECT_EQ(status_, Ch10Status::OK);
+    EXPECT_EQ(comp_.expected_payload_word_count, 1);
+    EXPECT_EQ(comp_.calc_payload_word_count, 1);
+    EXPECT_EQ(comp_.is_payload_incomplete, 0);
+}
+
+//SetOutputPath(
