@@ -23,6 +23,7 @@ Ch10Status Ch10TDPComponent::Parse(const uint8_t*& data, uint64_t& loc)
 	{
 		ParseElements(tdp_irig_elem_vec_, data, loc);
 		abs_time = ComputeIRIGTime(*tdp_irig_elem_.element);
+		printf("tdp abs_time_ = %llu\n", abs_time);
 		doy = 1;
 	}
 	else

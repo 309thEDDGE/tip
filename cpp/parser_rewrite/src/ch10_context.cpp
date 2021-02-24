@@ -4,8 +4,9 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
 	absolute_position(absolute_position_),
 	tdp_rtc_(0), tdp_rtc(tdp_rtc_), tdp_abs_time_(0), tdp_abs_time(tdp_abs_time_),
 	searching_for_tdp_(false), found_tdp_(false), pkt_type_config_map(pkt_type_config_map_),
-	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), abs_time_(0),
-	abs_time(abs_time_), rtc_(0), rtc(rtc_), rtc_to_ns_(100), thread_id_(id), thread_id(thread_id_),
+	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), //abs_time_(0),
+	//abs_time(abs_time_), 
+	rtc_(0), rtc(rtc_), rtc_to_ns_(100), thread_id_(id), thread_id(thread_id_),
 	tdp_valid_(false), tdp_valid(tdp_valid_), tdp_doy_(0), tdp_doy(tdp_doy_), found_tdp(found_tdp_),
 	intrapkt_ts_src_(0), intrapkt_ts_src(intrapkt_ts_src_), time_format_(0), time_format(time_format_),
 	channel_id_(UINT32_MAX), channel_id(channel_id_), temp_rtc_(0),
@@ -20,8 +21,9 @@ Ch10Context::Ch10Context() : absolute_position_(0),
 	absolute_position(absolute_position_),
 	tdp_rtc_(0), tdp_rtc(tdp_rtc_), tdp_abs_time_(0), tdp_abs_time(tdp_abs_time_),
 	searching_for_tdp_(false), found_tdp_(false), pkt_type_config_map(pkt_type_config_map_),
-	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), abs_time_(0),
-	abs_time(abs_time_), rtc_(0), rtc(rtc_), rtc_to_ns_(100), thread_id_(UINT32_MAX), 
+	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), //abs_time_(0),
+	//abs_time(abs_time_), 
+	rtc_(0), rtc(rtc_), rtc_to_ns_(100), thread_id_(UINT32_MAX), 
 	thread_id(thread_id_),
 	tdp_valid_(false), tdp_valid(tdp_valid_), tdp_doy_(0), tdp_doy(tdp_doy_), found_tdp(found_tdp_),
 	intrapkt_ts_src_(0), intrapkt_ts_src(intrapkt_ts_src_), time_format_(0), time_format(time_format_),
@@ -163,10 +165,12 @@ void Ch10Context::UpdateWithTDPData(const uint64_t& tdp_abs_time, uint8_t tdp_do
 	}
 }
 
-uint64_t Ch10Context::CalculateAbsTimeFromRTCFormat(const uint32_t& rtc1,
-	const uint32_t& rtc2)
+uint64_t Ch10Context::CalculateAbsTimeFromRTCFormat(const uint64_t& rtc1,
+	const uint64_t& rtc2)
 {
-	temp_rtc_ = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * rtc_to_ns_;
+	temp_rtc_ = ((rtc2 << 32) + rtc1) * rtc_to_ns_;
+	//printf("tdp abs_time %llu, temprtc %llu, tdprtc %llu\n", tdp_abs_time_, temp_rtc_, tdp_rtc_);
+	//abs_time_ = tdp_abs_time_ + (temp_rtc_ - tdp_rtc_);
 	return tdp_abs_time_ + (temp_rtc_ - tdp_rtc_);
 }
 

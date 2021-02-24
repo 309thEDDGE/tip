@@ -149,5 +149,3 @@ TEST_F(Ch101553F1ComponentTest, ParsePayloadWordCountNonRTtoRT)
     EXPECT_EQ(comp_.calc_payload_word_count, 1);
     EXPECT_EQ(comp_.is_payload_incomplete, 0);
 }
-
-//SetOutputPath(

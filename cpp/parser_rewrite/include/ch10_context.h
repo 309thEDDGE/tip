@@ -38,12 +38,17 @@ private:
 
 	// Key components of Ch10 context.
 	uint64_t absolute_position_;
-	uint64_t tdp_rtc_;
-	uint64_t tdp_abs_time_;
-	uint64_t rtc_;  // nanoseconds
+	uint64_t tdp_rtc_; // nanosecond
+	uint64_t tdp_abs_time_; // nanosecond
+	uint64_t rtc_;  // nanosecond
 	uint32_t pkt_size_;
 	uint32_t data_size_;
-	uint64_t abs_time_;
+
+	// Temporary (current message or data) calculate absolute time in nanosecond
+	//uint64_t abs_time_;
+
+	// Temporary RTC time in nanosecond
+	uint64_t temp_rtc_;
 
 	// Conversion factor for relative time counter (RTC)
 	// to nanoseconds.
@@ -88,9 +93,6 @@ private:
 	// source for the contents of the packet.
 	uint32_t channel_id_;
 
-	// Temporary RTC time in nanoseconds
-	uint64_t temp_rtc_;
-
 	// Record mapping of 1553 message channel ID to lru addresses.
 	std::map<uint32_t, std::set<uint16_t>> chanid_remoteaddr1_map_;
 	std::map<uint32_t, std::set<uint16_t>> chanid_remoteaddr2_map_;
@@ -123,7 +125,7 @@ public:
 	const uint64_t& rtc;
 	const uint32_t& pkt_size;
 	const uint32_t& data_size;
-	const uint64_t& abs_time;
+	//const uint64_t& abs_time;
 	const bool& tdp_valid;
 	const uint8_t& tdp_doy;
 	const bool& found_tdp;
@@ -219,7 +221,7 @@ public:
 	Return:
 		absolute time in nanoseconds since the epoch
 	*/
-	uint64_t CalculateAbsTimeFromRTCFormat(const uint32_t& rtc1, const uint32_t& rtc2);
+	uint64_t CalculateAbsTimeFromRTCFormat(const uint64_t& rtc1, const uint64_t& rtc2);
 
 	/*
 	Update maps of channel ID to remote addresses 1 and 2 as obtained from

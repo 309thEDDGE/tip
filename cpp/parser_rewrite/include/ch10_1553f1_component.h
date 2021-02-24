@@ -38,7 +38,7 @@ private:
 
 	// Hold absolute time of current message in units of nanoseconds
 	// since the epoch.
-	uint32_t abs_time_; 
+	uint64_t abs_time_; 
 
 	//
 	// Vars for parsing the 1553 message payloads

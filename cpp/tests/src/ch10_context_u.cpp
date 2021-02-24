@@ -241,8 +241,8 @@ TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
 	uint8_t tdp_valid = true;
 	ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
 
-	uint32_t current_rtc1 = 321200;
-	uint32_t current_rtc2 = 502999;
+	uint64_t current_rtc1 = 321200;
+	uint64_t current_rtc2 = 502999;
 	uint64_t current_rtc = ((uint64_t(current_rtc2) << 32) + uint64_t(current_rtc1)) * 100;
 	uint64_t expected_abs_time = tdp_abs_time + (current_rtc - rtc);
 	uint64_t calculated_abs_time = ctx.CalculateAbsTimeFromRTCFormat(current_rtc1,

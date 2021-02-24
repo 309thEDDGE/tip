@@ -12,9 +12,9 @@ Ch10Status Ch101553F1Component::Parse(const uint8_t*& data, uint64_t& loc)
 	// efficiency.
 	if ((*milstd1553f1_csdw_elem_.element)->count > max_message_count_)
 	{
-		uint32_t count = (*milstd1553f1_csdw_elem_.element)->count;
+		/*uint32_t count = (*milstd1553f1_csdw_elem_.element)->count;
 		printf("Ch101553F1Component::Parse(): CSDW message count = %u. Data may be corrupt!\n",
-			count);
+			count);*/
 		return Ch10Status::MILSTD1553_MSG_COUNT;
 	}
 
@@ -61,7 +61,7 @@ Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count,
 		abs_time_ = ctx_->CalculateAbsTimeFromRTCFormat(
 			(*milstd1553f1_rtctime_elem_.element)->ts1_,
 			(*milstd1553f1_rtctime_elem_.element)->ts2_);
-
+		//printf("abs_time_ = %llu\n", abs_time_);
 		//length = (*milstd1553f1_data_hdr_elem_.element)->length;
 		//printf("msg_index %u: length %hu, loc %llu\n", msg_index_, length, loc);
 
@@ -108,6 +108,9 @@ Ch10Status Ch101553F1Component::ParsePayload(const uint8_t*& data,
 
 	expected_payload_word_count_ = GetWordCountFromDataHeader(data_header);
 
+	// Set the payload pointer to the position of data pointer.
+	payload_ptr_ = (const uint16_t*)data;
+
 	// Calculate the message payload count from the message length. 
 	// We are interested in calculating the payload count to know if 
 	// it contains fewer words than expected from the command word.
@@ -128,11 +131,26 @@ Ch10Status Ch101553F1Component::ParsePayload(const uint8_t*& data,
 	// * RT to RT: 4 --> 3
 	// * BC to RT: 2 --> 1
 	if (data_header->RR)
+	{
 		calc_payload_word_count_ = (data_header->length / 2) - 3;
+
+		// Skip recieve, transmit and status words
+		payload_ptr_ += 3;
+	}
 	else if (data_header->tx1)
+	{
 		calc_payload_word_count_ = (data_header->length / 2) - 2;
+
+		// Skip transmit and status words
+		payload_ptr_ += 2;
+	}
 	else
+	{
 		calc_payload_word_count_ = (data_header->length / 2) - 1;
+
+		// Skip receive command word
+		payload_ptr_ += 1;
+	}
 
 	if (calc_payload_word_count_ < expected_payload_word_count_)
 		is_payload_incomplete_ = 1;
@@ -141,9 +159,6 @@ Ch10Status Ch101553F1Component::ParsePayload(const uint8_t*& data,
 		calc_payload_word_count_ = expected_payload_word_count_;
 		is_payload_incomplete_ = 0;
 	}
-
-	// Set the payload pointer to the position of data pointer.
-	payload_ptr_ = (const uint16_t*)data;
 
 	return Ch10Status::OK;
 }
