@@ -86,6 +86,7 @@ public:
 	const int8_t& expected_payload_word_count;
 	const int8_t& calc_payload_word_count;
 	const uint8_t& is_payload_incomplete;
+	const uint16_t* const* const payload_ptr_ptr;
 
 	const Ch10PacketElement<MilStd1553F1CSDWFmt>& milstd1553f1_csdw_elem;
 	const Ch10PacketElement<MilStd1553F1DataRTCTimeStampFmt>& milstd1553f1_rtctime_elem;
@@ -106,7 +107,8 @@ public:
 		expected_payload_word_count(expected_payload_word_count_),
 		calc_payload_word_count(calc_payload_word_count_),
 		is_payload_incomplete(is_payload_incomplete_), abs_time(abs_time_),
-		pq_writer_(nullptr), milstd1553f1_data_hdr_commword_ptr_(nullptr)
+		pq_writer_(nullptr), milstd1553f1_data_hdr_commword_ptr_(nullptr),
+		payload_ptr_ptr(&payload_ptr_)
 	{	}
 	Ch10Status Parse(const uint8_t*& data, uint64_t& loc) override;
 
