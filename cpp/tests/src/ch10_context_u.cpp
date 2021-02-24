@@ -146,6 +146,7 @@ TEST(Ch10ContextTest, UpdateContextSetVars)
 	hdr_fmt.rtc1 = 321053;
 	hdr_fmt.rtc2 = 502976;
 	hdr_fmt.chanID = 9;
+	hdr_fmt.data_type = static_cast<uint8_t>(Ch10PacketType::MILSTD1553_F1);
 	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
 	hdr_fmt.intrapkt_ts_source = 0;
 	hdr_fmt.time_format = 1;
@@ -263,9 +264,9 @@ TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsRTtoRT)
 
 	// Update the maps. If RTtoRT (RR) is 1, then both addr maps 1 and 2 
 	// will be updated.
-	MilStd1553F1DataHeaderFmt data_hdr;
-	const MilStd1553F1DataHeaderCommWordsFmt* cw = 
-		(const MilStd1553F1DataHeaderCommWordsFmt *)&data_hdr;
+	MilStd1553F1DataHeaderCommWordFmt data_hdr;
+	const MilStd1553F1DataHeaderCommWordOnlyFmt* cw = 
+		(const MilStd1553F1DataHeaderCommWordOnlyFmt *)&data_hdr;
 	data_hdr.RR = 1;
 	data_hdr.remote_addr1 = 10;
 	data_hdr.remote_addr2 = 3;
@@ -299,14 +300,15 @@ TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsNotRTtoRT)
 	// set.
 	Ch10PacketHeaderFmt hdr_fmt;
 	hdr_fmt.chanID = 4;
+	hdr_fmt.data_type = static_cast<uint8_t>(Ch10PacketType::MILSTD1553_F1);
 	uint64_t abs_pos = 4823829394;
 	ctx.UpdateContext(abs_pos, &hdr_fmt);
 
 	// Update the maps. If RTtoRT is 1, then both addr maps 1 and 2 
 	// will be updated.
-	MilStd1553F1DataHeaderFmt data_hdr;
-	const MilStd1553F1DataHeaderCommWordsFmt* cw =
-		(const MilStd1553F1DataHeaderCommWordsFmt*)&data_hdr;
+	MilStd1553F1DataHeaderCommWordFmt data_hdr;
+	const MilStd1553F1DataHeaderCommWordOnlyFmt* cw =
+		(const MilStd1553F1DataHeaderCommWordOnlyFmt*)&data_hdr;
 	data_hdr.RR = 0;
 	data_hdr.remote_addr1 = 10;
 	data_hdr.remote_addr2 = 3;

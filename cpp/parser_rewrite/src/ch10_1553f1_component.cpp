@@ -12,8 +12,9 @@ Ch10Status Ch101553F1Component::Parse(const uint8_t*& data, uint64_t& loc)
 	// efficiency.
 	if ((*milstd1553f1_csdw_elem_.element)->count > max_message_count_)
 	{
-		printf("Ch101553F1Component::Parse(): CSDW message count = %hu. Data may be corrupt!\n",
-			(*milstd1553f1_csdw_elem_.element)->count);
+		uint32_t count = (*milstd1553f1_csdw_elem_.element)->count;
+		printf("Ch101553F1Component::Parse(): CSDW message count = %u. Data may be corrupt!\n",
+			count);
 		return Ch10Status::MILSTD1553_MSG_COUNT;
 	}
 
@@ -23,7 +24,9 @@ Ch10Status Ch101553F1Component::Parse(const uint8_t*& data, uint64_t& loc)
 	// time stamp according to the packet header secondary time format (not implemented).
 	if (ctx_->intrapkt_ts_src == 0)
 	{
-		status_ = ParseRTCTimeMessages((*milstd1553f1_csdw_elem_.element)->count,
+		uint32_t count = (*milstd1553f1_csdw_elem_.element)->count;
+		//printf("msg count: %u\n", count);
+		status_ = ParseRTCTimeMessages(count,
 			data, loc);
 		if (status_ != Ch10Status::OK)
 			return status_;
@@ -44,6 +47,7 @@ Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count,
 	const uint8_t*& data, uint64_t& loc)
 {
 	// Iterate over messages
+	uint16_t length = 0;
 	for (msg_index_ = 0; msg_index_ < msg_count; msg_index_++)
 	{
 		// Parse the intra-packet time and header prior to each
@@ -58,17 +62,22 @@ Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count,
 			(*milstd1553f1_rtctime_elem_.element)->ts1_,
 			(*milstd1553f1_rtctime_elem_.element)->ts2_);
 
+		//length = (*milstd1553f1_data_hdr_elem_.element)->length;
+		//printf("msg_index %u: length %hu, loc %llu\n", msg_index_, length, loc);
+
 		// Parse the payload. This function also checks for payload inconsistencies
 		// so it is useful to call before updating the channel ID to LRU address
 		// maps in case the message is corrupted.
-		status_ = ParsePayload(data, *milstd1553f1_data_hdr_elem_.element);
+		milstd1553f1_data_hdr_commword_ptr_ =
+			(const MilStd1553F1DataHeaderCommWordFmt*)(*milstd1553f1_data_hdr_elem_.element);
+		status_ = ParsePayload(data, milstd1553f1_data_hdr_commword_ptr_);
 		if (status_ != Ch10Status::OK)
 			return status_;
 
 		// Update channel ID to remote address maps and the channel ID to 
 		// command words integer map.
 		ctx_->UpdateChannelIDToLRUAddressMaps(ctx_->channel_id,
-			*milstd1553f1_data_hdr_elem_.element);
+			milstd1553f1_data_hdr_commword_ptr_);
 
 		// Update data and loc.
 		data += (*milstd1553f1_data_hdr_elem_.element)->length;
@@ -76,7 +85,7 @@ Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count,
 
 		// Append parsed data to the file.
 		ctx_->milstd1553f1_pq_writer->append_data(abs_time_, ctx_->tdp_doy,
-			*milstd1553f1_csdw_elem_.element, *milstd1553f1_data_hdr_elem_.element,
+			*milstd1553f1_csdw_elem_.element, milstd1553f1_data_hdr_commword_ptr_,
 			payload_ptr_, ctx_->channel_id, calc_payload_word_count_, is_payload_incomplete_);
 	}
 
@@ -84,15 +93,16 @@ Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count,
 }
 
 Ch10Status Ch101553F1Component::ParsePayload(const uint8_t*& data,
-	const MilStd1553F1DataHeaderFmt* const data_header)
+	const MilStd1553F1DataHeaderCommWordFmt* data_header)
 {
 	// Check if the data length is too long to make sense, i.e., if it exceeds
 	// a max of (32 payload words + 2 command words + 2 status words) 
 	// * 2 bytes per word = 72 bytes.
 	if (data_header->length > max_byte_count_)
 	{
+		uint16_t length = data_header->length;
 		printf("Ch101553F1Component::ParsePayload(): payload length (%hu) > %hu\n",
-			data_header->length, max_byte_count_);
+			length, max_byte_count_);
 		return Ch10Status::MILSTD1553_MSG_LENGTH;
 	}
 
@@ -139,7 +149,7 @@ Ch10Status Ch101553F1Component::ParsePayload(const uint8_t*& data,
 }
 
 uint16_t Ch101553F1Component::GetWordCountFromDataHeader(
-	const MilStd1553F1DataHeaderFmt* const data_header)
+	const MilStd1553F1DataHeaderCommWordFmt* data_header)
 {
 	// If RT to RT message type, don't check for mode code.
 	if (data_header->RR == 0)

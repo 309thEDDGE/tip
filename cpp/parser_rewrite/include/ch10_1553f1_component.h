@@ -30,6 +30,8 @@ private:
 	ElemPtrVec milstd1553f1_csdw_elem_vec_;
 	ElemPtrVec milstd1553f1_rtctime_data_hdr_elem_vec_;
 
+	const MilStd1553F1DataHeaderCommWordFmt* milstd1553f1_data_hdr_commword_ptr_;
+
 	// Index of the 1553 message being parsed within the ch10
 	// 1553 packet.
 	uint32_t msg_index_;
@@ -104,7 +106,7 @@ public:
 		expected_payload_word_count(expected_payload_word_count_),
 		calc_payload_word_count(calc_payload_word_count_),
 		is_payload_incomplete(is_payload_incomplete_), abs_time(abs_time_),
-		pq_writer_(nullptr)
+		pq_writer_(nullptr), milstd1553f1_data_hdr_commword_ptr_(nullptr)
 	{	}
 	Ch10Status Parse(const uint8_t*& data, uint64_t& loc) override;
 
@@ -132,9 +134,9 @@ public:
 		const uint8_t*& data, uint64_t& loc);
 
 	Ch10Status ParsePayload(const uint8_t*& data,
-		const MilStd1553F1DataHeaderFmt* const data_header);
+		const MilStd1553F1DataHeaderCommWordFmt* data_header);
 
-	uint16_t GetWordCountFromDataHeader(const MilStd1553F1DataHeaderFmt* const data_header);
+	uint16_t GetWordCountFromDataHeader(const MilStd1553F1DataHeaderCommWordFmt* data_header);
 };
 
 #endif

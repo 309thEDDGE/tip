@@ -159,7 +159,8 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 
 	// Close all file writers if append_mode is true or
 	// this is the final worker which has no append mode.
-	ctx.CloseFileWriters(enabled_paths);
+	if(append_mode || final_worker)
+		ctx.CloseFileWriters();
 	
 #ifdef DEBUG
 #if DEBUG > 0

@@ -11,7 +11,7 @@ protected:
     uint64_t loc_;
     Ch10Status status_;
     Ch10Context ctx_;
-    MilStd1553F1DataHeaderFmt fmt_;
+    MilStd1553F1DataHeaderCommWordFmt fmt_;
 
     Ch101553F1ComponentTest() : wrd_cnt_(0), data_ptr_(nullptr),
         status_(Ch10Status::NONE), ctx_(0), comp_(&ctx_), loc_(0)

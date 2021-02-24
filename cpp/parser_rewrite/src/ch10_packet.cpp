@@ -25,7 +25,12 @@ Ch10Status Ch10Packet::ManageHeaderParseStatus(const Ch10Status& status,
         // then the data need to be searched until a correct sync 
         // word is found. Increment the buffer and absolute position
         // by a single byte and try again.
-        if (status == Ch10Status::BAD_SYNC)
+        // OR
+        // If the header checksum fails, then a sync byte may have been found
+        // accidentally and the packet size can't be trusted to be authentic
+        // because it is parsed out of bits that may not be part of a real 
+        // packet header. Treat it as a bad sync and look for the next sync.
+        if (status == Ch10Status::BAD_SYNC || status == Ch10Status::CHECKSUM_FALSE)
         {
             if (ctx_->thread_id == 0)
                 printf("Ch10Packet::ManageHeaderParseStatus(): bad_sync!\n");
@@ -38,7 +43,6 @@ Ch10Status Ch10Packet::ManageHeaderParseStatus(const Ch10Status& status,
             // Otherwise indicate the bad sync status.
             return Ch10Status::BAD_SYNC;
         }
-
         // TODO: Handle other non-ok status after checksum comparison is implemented, etc.
 
         // By default, skip the parsing of the packet and move the buffer to the
@@ -103,6 +107,8 @@ Ch10Status Ch10Packet::ParseHeader()
     if (status_ != Ch10Status::OK)
         return status_;
 
+    //printf("ParseHeader(): abs pos = %llu\n", ctx_->absolute_position);
+
     // Check if all of the bytes in current packet are available
     // in the buffer. There is no need to continue parsing the secondary
     // header or the packet body if all of the data are not present in
@@ -121,7 +127,7 @@ Ch10Status Ch10Packet::ParseHeader()
     if (status_ == Ch10Status::BUFFER_LIMITED)
         return status_;
 
-    // Configure context to prepare for use use by the packet body parsers.
+    // Configure context to prepare for use by the packet body parsers.
     ctx_->UpdateContext(ctx_->absolute_position + temp_pkt_size_,
         *header_.std_hdr_elem.element);
 

@@ -1,8 +1,7 @@
 #include "ch10_packet_component.h"
 
 void Ch10PacketComponent::ParseElements(const ElemPtrVec& elems, 
-    const uint8_t*& data, 
-    uint64_t& loc)
+    const uint8_t*& data, uint64_t& loc)
 {
     // Iterate over each Ch10PacketElement and Set the data.
     for(elemit_ = elems.begin(); elemit_ != elems.end(); ++elemit_)

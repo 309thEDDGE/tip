@@ -80,10 +80,6 @@ Ch10Status Ch10Context::ContinueWithPacketType(uint8_t data_type)
 			return Ch10Status::PKT_TYPE_EXIT;
 		}
 	}
-
-	// Check if the packet type is one that is configured to be parsed.
-	//
-	// NOt sure about the best way to do this. 
 	
 	return Ch10Status::PKT_TYPE_YES;
 }
@@ -100,17 +96,20 @@ void Ch10Context::UpdateContext(const uint64_t& abs_pos, const Ch10PacketHeaderF
 	rtc_ = ((uint64_t(hdr_fmt_ptr->rtc2) << 32) + uint64_t(hdr_fmt_ptr->rtc1)) * rtc_to_ns_;
 
 	// If the channel ID to remote LRU address maps don't have a mapping for the
-	// current channel id, then add it. 
-	if (chanid_remoteaddr1_map_.count(channel_id_) == 0)
+	// current channel id, then add it, but only if the current packet type is 
+	// 1553.
+	if (hdr_fmt_ptr->data_type == static_cast<uint8_t>(Ch10PacketType::MILSTD1553_F1))
 	{
-		std::set<uint16_t> temp_set;
-		chanid_remoteaddr1_map_[channel_id_] = temp_set;
-		chanid_remoteaddr2_map_[channel_id_] = temp_set;
+		if (chanid_remoteaddr1_map_.count(channel_id_) == 0)
+		{
+			std::set<uint16_t> temp_set;
+			chanid_remoteaddr1_map_[channel_id_] = temp_set;
+			chanid_remoteaddr2_map_[channel_id_] = temp_set;
 
-		std::set<uint32_t> temp_set2;
-		chanid_commwords_map_[channel_id_] = temp_set2;
+			std::set<uint32_t> temp_set2;
+			chanid_commwords_map_[channel_id_] = temp_set2;
+		}
 	}
-	
 }
 
 void Ch10Context::CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketType, bool>& input)
@@ -172,11 +171,11 @@ uint64_t Ch10Context::CalculateAbsTimeFromRTCFormat(const uint32_t& rtc1,
 }
 
 void Ch10Context::UpdateChannelIDToLRUAddressMaps(const uint32_t& chanid,
-	const MilStd1553F1DataHeaderFmt* const data_header)
+	const MilStd1553F1DataHeaderCommWordFmt* const data_header)
 {
 	// Set pointers for command words 1 and 2.
-	const MilStd1553F1DataHeaderCommWordsFmt* comm_words =
-		(const MilStd1553F1DataHeaderCommWordsFmt*)data_header;
+	const MilStd1553F1DataHeaderCommWordOnlyFmt* comm_words =
+		(const MilStd1553F1DataHeaderCommWordOnlyFmt*)data_header;
 
 	if (data_header->RR)
 	{
@@ -251,6 +250,11 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 		switch (it->first)
 		{
 		case Ch10PacketType::MILSTD1553_F1:
+
+			// Store the file writer status for this type as enabled.
+			pkt_type_file_writers_enabled_map_[Ch10PacketType::MILSTD1553_F1] = true;
+
+			// Create the writer object.
 			milstd1553f1_pq_writer_ = std::make_unique<ParquetMilStd1553F1>(it->second,
 				channel_id_, true);
 
@@ -262,6 +266,21 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 			// specific and should be held by Ch10Context. This will need careful thinking
 			// and rework at some point.
 			milstd1553f1_pq_writer = milstd1553f1_pq_writer_.get();
+		}
+	}
+}
+
+void Ch10Context::CloseFileWriters()
+{
+	using MapIt = std::unordered_map<Ch10PacketType, bool>::const_iterator;
+	for (MapIt it = pkt_type_file_writers_enabled_map_.cbegin(); 
+		it != pkt_type_file_writers_enabled_map_.cend(); ++it)
+	{
+		switch (it->first)
+		{
+		case Ch10PacketType::MILSTD1553_F1:
+			if(pkt_type_file_writers_enabled_map_.at(Ch10PacketType::MILSTD1553_F1))
+				milstd1553f1_pq_writer_->commit();
 		}
 	}
 }

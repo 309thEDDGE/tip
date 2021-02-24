@@ -227,7 +227,7 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, c
 #ifdef PARSER_REWRITE
 void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy,
 	const MilStd1553F1CSDWFmt* const chan_spec,
-	const MilStd1553F1DataHeaderFmt* const msg, const uint16_t* const data,
+	const MilStd1553F1DataHeaderCommWordFmt* msg, const uint16_t* const data,
 	const uint16_t& chanid, int8_t calcwrdcnt, uint8_t payload_incomplete)
 {
 	WE_[temp_element_count_] = msg->WE;
