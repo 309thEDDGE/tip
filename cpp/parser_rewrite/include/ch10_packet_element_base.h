@@ -13,7 +13,7 @@ class Ch10PacketElementBase
     public:
     const size_t& size = size_;
     Ch10PacketElementBase(size_t size) : size_(size) {}
-    virtual void Set(const uint8_t* data, uint64_t& pos) = 0;
+    virtual void Set(const uint8_t* data) = 0;
 
 };
 

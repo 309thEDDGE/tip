@@ -110,7 +110,7 @@ public:
 		pq_writer_(nullptr), milstd1553f1_data_hdr_commword_ptr_(nullptr),
 		payload_ptr_ptr(&payload_ptr_)
 	{	}
-	Ch10Status Parse(const uint8_t*& data, uint64_t& loc) override;
+	Ch10Status Parse(const uint8_t*& data) override;
 
 	/*
 	Parse all of the messages in the body of the 1553 packet that
@@ -125,15 +125,11 @@ public:
 						in the packet
 		data		--> pointer to the first byte in the series of 
 						messages
-		loc			--> counter to be incremented by the count
-						of bytes processed/read during the parsing
-						of the messages
 
 	Return:
 		Status of parsing
 	*/
-	Ch10Status ParseRTCTimeMessages(const uint32_t& msg_count, 
-		const uint8_t*& data, uint64_t& loc);
+	Ch10Status ParseRTCTimeMessages(const uint32_t& msg_count, const uint8_t*& data);
 
 	Ch10Status ParsePayload(const uint8_t*& data,
 		const MilStd1553F1DataHeaderCommWordFmt* data_header);

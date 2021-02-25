@@ -22,12 +22,10 @@ protected:
     MockBinBuff mock_bb_;
 	BinBuff* bb_ptr_;
     Ch10Context ch10_ctx_;
-    uint64_t loc_;
     Ch10Status status_;
 	std::vector<std::string> tmats_vec_;
 
-    Ch10PacketTest() : loc_(0),
-        status_(Ch10Status::NONE), mock_bb_(), ch10_ctx_(loc_), bb_ptr_(&mock_bb_)
+    Ch10PacketTest() : status_(Ch10Status::NONE), mock_bb_(), ch10_ctx_(0), bb_ptr_(&mock_bb_)
     {
     }
 };
