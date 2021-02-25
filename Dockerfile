@@ -2,6 +2,9 @@ FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/base-image/hard
 
 ARG CMAKE_BUILD_DIR="build"
 
+WORKDIR /app/headers
+COPY cpp ./
+
 WORKDIR /app/bin
 COPY ${CMAKE_BUILD_DIR}/cpp ./
 
