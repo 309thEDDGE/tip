@@ -13,18 +13,15 @@ class Ch10PacketElement : public Ch10PacketElementBase
     public: 
     const T* const * const element = &element_;
     Ch10PacketElement() : Ch10PacketElementBase(sizeof(T)), element_(nullptr) {}
-    void Set(const uint8_t* data, uint64_t& pos) override;
+    void Set(const uint8_t* data) override;
 
 };
 
 template<class T>
-void Ch10PacketElement<T>::Set(const uint8_t* data, uint64_t& pos)
+void Ch10PacketElement<T>::Set(const uint8_t* data)
 {
     // Set the address of the element to the current data address.
     element_ = (const T*)data;
-
-    // Increment the position by the element size.
-    pos += size_;   
 }
 
 #endif

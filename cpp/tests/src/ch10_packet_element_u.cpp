@@ -13,26 +13,22 @@ public:
 
 TEST(Ch10PacketElementTest, SetFloat)
 {
-    uint64_t pos = 0;
     float f = 30.2;
     Ch10PacketElement<float> elem;
     EXPECT_EQ(sizeof(float), elem.size);
     
     ASSERT_TRUE(*elem.element == nullptr);
-    elem.Set((const uint8_t*)&f, pos);
-    EXPECT_EQ(pos, sizeof(float));
+    elem.Set((const uint8_t*)&f);
     ASSERT_TRUE(elem.element != nullptr);
     EXPECT_EQ(**elem.element, f);
 
     float f2 = 100.0;
-    elem.Set((const uint8_t*)&f2, pos);
-    EXPECT_EQ(pos, 2*sizeof(float));
+    elem.Set((const uint8_t*)&f2);
     EXPECT_EQ(**elem.element, f2);
 }
 
 TEST(Ch10PacketElementTest, SetBitField)
 {
-    uint64_t pos = 0;
     BitField obj;
     obj.count = 310340;
     obj.val = 21;
@@ -41,8 +37,7 @@ TEST(Ch10PacketElementTest, SetBitField)
     EXPECT_EQ(sizeof(obj), elem.size);
     
     ASSERT_TRUE(*elem.element == nullptr);
-    elem.Set((const uint8_t*)&obj, pos);
-    EXPECT_EQ(pos, sizeof(obj));
+    elem.Set((const uint8_t*)&obj);
     ASSERT_TRUE(elem.element != nullptr);
     EXPECT_EQ((*elem.element)->count, obj.count);
     EXPECT_EQ((*elem.element)->flag, obj.flag);

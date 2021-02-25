@@ -1,9 +1,9 @@
 #include "ch10_tdp_component.h"
 
-Ch10Status Ch10TDPComponent::Parse(const uint8_t*& data, uint64_t& loc)
+Ch10Status Ch10TDPComponent::Parse(const uint8_t*& data)
 {
 	// Parse the TDP CSDW
-	ParseElements(tdp_csdw_elem_vec_, data, loc);
+	ParseElements(tdp_csdw_elem_vec_, data);
 
 	uint64_t abs_time = 0;
 	uint8_t doy = 0;
@@ -21,7 +21,7 @@ Ch10Status Ch10TDPComponent::Parse(const uint8_t*& data, uint64_t& loc)
 	
 	if ((*tdp_csdw_elem_.element)->date_fmt == 0)
 	{
-		ParseElements(tdp_irig_elem_vec_, data, loc);
+		ParseElements(tdp_irig_elem_vec_, data);
 		abs_time = ComputeIRIGTime(*tdp_irig_elem_.element);
 		SPDLOG_DEBUG("({:02d}) time data packet absolute time (abs_time_): {:d}", 
 			ctx_->thread_id, abs_time);
@@ -29,7 +29,7 @@ Ch10Status Ch10TDPComponent::Parse(const uint8_t*& data, uint64_t& loc)
 	}
 	else
 	{
-		ParseElements(tdp_nonirig_elem_vec_, data, loc);
+		ParseElements(tdp_nonirig_elem_vec_, data);
 		abs_time = ComputeNonIRIGTime(*tdp_nonirig_elem_.element);
 		doy = 0;
 	}

@@ -39,14 +39,13 @@ class Ch10PacketComponentTest : public ::testing::Test
     size_t arrayfloat_size_;
     Ch10Context ctx_;
     Ch10PacketComponent comp_;
-    uint64_t loc_;
     Ch10PacketElement<BitField1> bf1elem_;
     Ch10PacketElement<BitField2> bf2elem_;
     Ch10PacketElement<ArrayFloat> afelem_;
 
     Ch10PacketComponentTest() : total_size_(0),
         bitfield1_size_(sizeof(BitField1)), bitfield2_size_(sizeof(BitField2)),
-        arrayfloat_size_(sizeof(ArrayFloat)), loc_(0), ctx_(0,0), comp_(&ctx_)
+        arrayfloat_size_(sizeof(ArrayFloat)), ctx_(0,0), comp_(&ctx_)
     {
         total_size_ = bitfield1_size_ + bitfield2_size_ + arrayfloat_size_;
 
@@ -82,9 +81,8 @@ class Ch10PacketComponentTest : public ::testing::Test
 
 TEST_F(Ch10PacketComponentTest, ParseElementPointerAreSet)
 {
-    uint64_t loc_init = loc_;
     const uint8_t* data_ptr = (const uint8_t*)data_.data();
-    comp_.ParseElements(elems_, data_ptr, loc_);
+    comp_.ParseElements(elems_, data_ptr);
 
     // If *element is still a nullptr, then don't bother to
     // do anything else.
@@ -104,7 +102,6 @@ TEST_F(Ch10PacketComponentTest, ParseElementPointerAreSet)
     EXPECT_EQ((*afelem_.element)->ff[0], 10.5);
     EXPECT_EQ((*afelem_.element)->ff[1], 99.0);
 
-    // loc_ incremented correctly.
-    EXPECT_EQ(loc_, loc_init + bf1elem_.size + bf2elem_.size + afelem_.size);
+    // data_ptr_ incremented correctly.
     EXPECT_EQ(data_ptr, data_.data() + bf1elem_.size + bf2elem_.size + afelem_.size);
 }

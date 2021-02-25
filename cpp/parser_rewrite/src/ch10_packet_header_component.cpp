@@ -1,10 +1,10 @@
 
 #include "ch10_packet_header_component.h"
 
-Ch10Status Ch10PacketHeaderComponent::Parse(const uint8_t*& data, uint64_t& loc)
+Ch10Status Ch10PacketHeaderComponent::Parse(const uint8_t*& data)
 {
     // Parse the standard header portion.
-    ParseElements(std_elems_vec_, data, loc);
+    ParseElements(std_elems_vec_, data);
 
     // If the sync pattern is not correct, then this is an invalid header.
     if ((*std_hdr_elem_.element)->sync != sync_)
@@ -21,7 +21,7 @@ Ch10Status Ch10PacketHeaderComponent::Parse(const uint8_t*& data, uint64_t& loc)
     return Ch10Status::OK;
 }
 
-Ch10Status Ch10PacketHeaderComponent::ParseSecondaryHeader(const uint8_t*& data, uint64_t& loc)
+Ch10Status Ch10PacketHeaderComponent::ParseSecondaryHeader(const uint8_t*& data)
 {
     // Only parse if the secondary header option is enabled.
     if ((*std_hdr_elem_.element)->secondary_hdr == 1)
@@ -31,15 +31,15 @@ Ch10Status Ch10PacketHeaderComponent::ParseSecondaryHeader(const uint8_t*& data,
         {
         case 0:
         {
-            ParseElements(secondary_binwt_elems_vec_, data, loc);
+            ParseElements(secondary_binwt_elems_vec_, data);
         }
         case 1: 
         {
-            ParseElements(secondary_ieee_elems_vec_, data, loc);
+            ParseElements(secondary_ieee_elems_vec_, data);
         }
         case 2:
         {
-            ParseElements(secondary_ertc_elems_vec_, data, loc);
+            ParseElements(secondary_ertc_elems_vec_, data);
         }
         default:
         {

@@ -10,7 +10,6 @@ protected:
     TDF1DataIRIGFmt irig_fmt_;
     TDF1DataNonIRIGFmt nonirig_fmt_;
     Ch10TDPComponent tdp_comp_;
-    uint64_t loc_;
     const uint8_t* data_ptr_;
     const uint8_t* orig_data_ptr_;
     const uint8_t* body_ptr_;
@@ -24,7 +23,7 @@ protected:
     uint32_t rtc2_;
     std::vector<uint8_t> data_;
 
-    Ch10TDPComponentTest() : loc_(0), data_ptr_(nullptr), orig_data_ptr_(nullptr),
+    Ch10TDPComponentTest() : data_ptr_(nullptr), orig_data_ptr_(nullptr),
         status_(Ch10Status::NONE), body_ptr_(nullptr), ctx_(0), tdp_comp_(&ctx_), abs_pos_(0),
         pkt_size_(0), body_size_(0), rtc1_(0), rtc2_(0), abs_time_(0)
     {
@@ -246,7 +245,7 @@ TEST_F(Ch10TDPComponentTest, ParseTDPNone)
     CreateBuffer();
 
     // Check that parsed values agree with intended values.
-    status_ = tdp_comp_.Parse(data_ptr_, loc_);
+    status_ = tdp_comp_.Parse(data_ptr_);
     EXPECT_EQ((*tdp_comp_.tdp_csdw_elem.element)->time_fmt, tdp_fmt_.time_fmt);
     EXPECT_EQ((*tdp_comp_.tdp_csdw_elem.element)->date_fmt, tdp_fmt_.date_fmt);
 
@@ -260,7 +259,7 @@ TEST_F(Ch10TDPComponentTest, ParseTDPNone)
     tdp_fmt_.time_fmt = 0;
     tdp_fmt_.src = 0xf;
     CreateBuffer();
-    status_ = tdp_comp_.Parse(data_ptr_, loc_);
+    status_ = tdp_comp_.Parse(data_ptr_);
     EXPECT_EQ(status_, Ch10Status::TDP_NONE);
     EXPECT_EQ(ctx_.tdp_valid, false);
 }
@@ -322,7 +321,7 @@ TEST_F(Ch10TDPComponentTest, ParseIRIGTime)
     CreateBuffer();
 
     // Check that parsed values agree with intended values.
-    status_ = tdp_comp_.Parse(data_ptr_, loc_);
+    status_ = tdp_comp_.Parse(data_ptr_);
     EXPECT_EQ((*tdp_comp_.tdp_csdw_elem.element)->time_fmt, tdp_fmt_.time_fmt);
     EXPECT_EQ((*tdp_comp_.tdp_csdw_elem.element)->date_fmt, tdp_fmt_.date_fmt);
 
@@ -365,7 +364,7 @@ TEST_F(Ch10TDPComponentTest, ParseNonIRIGTime)
     CreateBuffer();
 
     // Check that parsed values agree with intended values.
-    status_ = tdp_comp_.Parse(data_ptr_, loc_);
+    status_ = tdp_comp_.Parse(data_ptr_);
     EXPECT_EQ((*tdp_comp_.tdp_csdw_elem.element)->time_fmt, tdp_fmt_.time_fmt);
     EXPECT_EQ((*tdp_comp_.tdp_csdw_elem.element)->date_fmt, tdp_fmt_.date_fmt);
 

@@ -28,9 +28,8 @@ public:
     
     Ch10PacketComponent(Ch10Context* const ch10ctx) : status_(Ch10Status::NONE),
         ctx_(ch10ctx) {}
-    void ParseElements(const ElemPtrVec& elems, const uint8_t*& data, 
-        uint64_t& loc);
-    virtual Ch10Status Parse(const uint8_t*& data, uint64_t& loc);
+    void ParseElements(const ElemPtrVec& elems, const uint8_t*& data);
+    virtual Ch10Status Parse(const uint8_t*& data);
     virtual ~Ch10PacketComponent();
     
 };

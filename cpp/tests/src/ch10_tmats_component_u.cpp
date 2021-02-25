@@ -7,7 +7,6 @@ class Ch10TMATSComponentTest : public ::testing::Test
 protected:
     Ch10TMATSCSDWFmt tmats_fmt_;
     Ch10TMATSComponent tmats_comp_;
-    uint64_t loc_;
     const uint8_t* data_ptr_;
     const uint8_t* orig_data_ptr_;
     const uint8_t* body_ptr_;
@@ -23,7 +22,7 @@ protected:
     uint8_t time_fmt_;
     Ch10PacketHeaderFmt hdr_fmt_;
 
-    Ch10TMATSComponentTest() : loc_(0), data_ptr_(nullptr), orig_data_ptr_(nullptr),
+    Ch10TMATSComponentTest() : data_ptr_(nullptr), orig_data_ptr_(nullptr),
         status_(Ch10Status::NONE), body_ptr_(nullptr), ctx_(0), tmats_comp_(&ctx_), abs_pos_(0),
         pkt_size_(0), body_size_(0), rtc1_(0), rtc2_(0), intrapkt_ts_src_(0), time_fmt_(1)
     {
@@ -45,10 +44,7 @@ TEST_F(Ch10TMATSComponentTest, ParseTMATSZeroLength)
     // Set the data_ptr_ to the address of the csdw.
     data_ptr_ = (const uint8_t*)&tmats_fmt_;
 
-    status_ = tmats_comp_.Parse(data_ptr_, loc_, tmats_vec_);
-
-    // Confirm loc_ has been advanced.
-    EXPECT_EQ(loc_, tmats_comp_.tmats_csdw_elem.size);
+    status_ = tmats_comp_.Parse(data_ptr_, tmats_vec_);
 
     // No additional data should be added to the vector.
     EXPECT_EQ(tmats_vec_.size(), 0);
@@ -76,10 +72,7 @@ TEST_F(Ch10TMATSComponentTest, ParseTMATSCorrectChars)
     // Make a string out of the body part of the vector.
     std::string orig_str(csdw_and_data.data() + csdw_size, extra_size);
 
-    status_ = tmats_comp_.Parse(data_ptr_, loc_, tmats_vec_);
-
-    // Confirm loc_ has been advanced.
-    EXPECT_EQ(loc_, tmats_comp_.tmats_csdw_elem.size);
+    status_ = tmats_comp_.Parse(data_ptr_, tmats_vec_);
 
     // Confirm that the string added to the vector and original string are the same.
     ASSERT_EQ(tmats_vec_.size(), 1);

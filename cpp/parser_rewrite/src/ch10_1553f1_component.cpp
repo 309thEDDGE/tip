@@ -1,9 +1,9 @@
 #include "ch10_1553f1_component.h"
 
-Ch10Status Ch101553F1Component::Parse(const uint8_t*& data, uint64_t& loc)
+Ch10Status Ch101553F1Component::Parse(const uint8_t*& data)
 {
 	// Parse the 1553F1 CSDW
-	ParseElements(milstd1553f1_csdw_elem_vec_, data, loc);
+	ParseElements(milstd1553f1_csdw_elem_vec_, data);
 
 	// Is the data corrupted such that the msg_count is too large?
 	// This check may be superfluous because it was originally implemented
@@ -27,7 +27,7 @@ Ch10Status Ch101553F1Component::Parse(const uint8_t*& data, uint64_t& loc)
 		uint32_t count = (*milstd1553f1_csdw_elem_.element)->count;
 		//printf("msg count: %u\n", count);
 		status_ = ParseRTCTimeMessages(count,
-			data, loc);
+			data);
 		if (status_ != Ch10Status::OK)
 			return status_;
 	}
@@ -45,7 +45,7 @@ Ch10Status Ch101553F1Component::Parse(const uint8_t*& data, uint64_t& loc)
 }
 
 Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count, 
-	const uint8_t*& data, uint64_t& loc)
+	const uint8_t*& data)
 {
 	// Iterate over messages
 	uint16_t length = 0;
@@ -55,7 +55,7 @@ Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count,
 		// message payload. The data pointer will be updated to
 		// the byte immediately following the header, which is the 
 		// first byte of the payload.
-		ParseElements(milstd1553f1_rtctime_data_hdr_elem_vec_, data, loc);
+		ParseElements(milstd1553f1_rtctime_data_hdr_elem_vec_, data);
 
 		// Calculate the absolute time using data that were obtained
 		// from the TDP.
@@ -64,7 +64,7 @@ Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count,
 			(*milstd1553f1_rtctime_elem_.element)->ts2_);
 		//printf("abs_time_ = %llu\n", abs_time_);
 		//length = (*milstd1553f1_data_hdr_elem_.element)->length;
-		//printf("msg_index %u: length %hu, loc %llu\n", msg_index_, length, loc);
+		//printf("msg_index %u: length %hu, loc %llu\n", msg_index_, length);
 
 		// Parse the payload. This function also checks for payload inconsistencies
 		// so it is useful to call before updating the channel ID to LRU address
@@ -80,9 +80,7 @@ Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count,
 		ctx_->UpdateChannelIDToLRUAddressMaps(ctx_->channel_id,
 			milstd1553f1_data_hdr_commword_ptr_);
 
-		// Update data and loc.
 		data += (*milstd1553f1_data_hdr_elem_.element)->length;
-		loc += (*milstd1553f1_data_hdr_elem_.element)->length;
 
 		// Append parsed data to the file.
 		ctx_->milstd1553f1_pq_writer->append_data(abs_time_, ctx_->tdp_doy,
