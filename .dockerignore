@@ -1,2 +1,6 @@
 **/.git
-**/node_modules
+**/*.cpp
+cpp/**/main
+cpp/**/src
+cpp/tests
+cpp/CMakeLists.txt
