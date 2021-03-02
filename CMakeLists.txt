@@ -15,6 +15,7 @@ project(TIP
 
 set(CMAKE_PLATFORM_INDEPENDENT_CODE ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 
 #########################################################
 #                      Build Options
