@@ -37,7 +37,7 @@ public:
 	// backslash (three chars) is counted in error or perhaps the link
 	// above is incorrect that the drive and slash is not part of the 256-char
 	// path length limit.
-	static const int max_unamended_path_len_ = 255;
+	static const int max_unamended_path_len_ = 247;
 	
 	//////////////////////////////////////////
 	// User functions
