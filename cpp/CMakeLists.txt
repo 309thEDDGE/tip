@@ -216,6 +216,7 @@ if(parser_rewrite)
                ${parserw_inc_dir}/ch10_status.h ${parserw_src_dir}/ch10_status.cpp 
                ${parserw_inc_dir}/ch10_header_format.h
                ${parserw_inc_dir}/ch10_1553f1_msg_hdr_format.h
+               ${parserw_inc_dir}/ch10_videof0_format.h
                ${parserw_inc_dir}/ch10_packet_element_base.h
                ${parserw_inc_dir}/ch10_packet_element.h
                ${parserw_inc_dir}/ch10_packet_component.h ${parserw_src_dir}/ch10_packet_component.cpp
@@ -225,6 +226,7 @@ if(parser_rewrite)
                ${parserw_inc_dir}/ch10_tmats_component.h ${parserw_src_dir}/ch10_tmats_component.cpp
                ${parserw_inc_dir}/ch10_tdp_component.h ${parserw_src_dir}/ch10_tdp_component.cpp
                ${parserw_inc_dir}/ch10_1553f1_component.h ${parserw_src_dir}/ch10_1553f1_component.cpp
+               ${parserw_inc_dir}/ch10_videof0_component.h ${parserw_src_dir}/ch10_videof0_component.cpp
      )
 
     target_include_directories(${parserw_lib_name} PUBLIC ${parserw_inc_dir} ${util_inc_dir}
@@ -372,6 +374,7 @@ if(build_tests)
                    ${test_src_dir}/ch10_tmats_component_u.cpp
                    ${test_src_dir}/ch10_tdp_component_u.cpp
                    ${test_src_dir}/ch10_1553f1_component_u.cpp
+                   ${test_src_dir}/ch10_videof0_component_u.cpp
                    )
     endif()
     add_executable(${test_exe_name}
