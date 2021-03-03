@@ -21,11 +21,11 @@ bool ValidatePaths(char* arg1, char* arg2, ManagedPath& input_path, ManagedPath&
 	input_path = ManagedPath(arg_path);
 	if (!input_path.is_regular_file())
 	{
-		printf("User-defined input path is not a file/does not exist: %s\n",
-			input_path.RawString().c_str());
+		spdlog::get("pm")->warn("User-defined input path is not a file/does not exist: {:s}",
+			input_path.RawString());
 		return false;
 	}
-	printf("Ch10 file path: %s\n", input_path.RawString().c_str());
+	spdlog::get("pm")->info("Ch10 file path: {:s}", input_path.RawString());
 
 	// Check for a second argument. If present, this path specifies the output
 	// path. If not present, the output path is the same as the input path.
@@ -35,12 +35,12 @@ bool ValidatePaths(char* arg1, char* arg2, ManagedPath& input_path, ManagedPath&
 		output_path = ManagedPath(std::string(arg2));
 		if (!output_path.is_directory())
 		{
-			printf("User-defined output path is not a directory: %s\n",
-				output_path.RawString().c_str());
+			spdlog::get("pm")->warn("User-defined output path is not a directory: {:s}",
+				output_path.RawString());
 			return false;
 		}
 	}
-	printf("Output path: %s\n", output_path.RawString().c_str());
+	spdlog::get("pm")->info("Output path: {:s}", output_path.RawString());
 	return true;
 }
 
@@ -62,7 +62,7 @@ bool StartParse(ManagedPath input_path, ManagedPath output_path,
 	// Get stop time and print duration.
 	auto stop_time = std::chrono::high_resolution_clock::now();
 	duration = (stop_time - start_time).count() / 1.0e9;
-	printf("Duration: %.3f sec\n", duration);
+	spdlog::get("pm")->info("Duration: {:.3f} sec", duration);
 	return true;
 }
 
@@ -71,22 +71,22 @@ bool SetupLogging()
 	try
 	{
 		// Setup async thread pool.
-		//spdlog::init_thread_pool(8192, 2);
+		spdlog::init_thread_pool(8192, 2);
 
 		// Rotating logs maxima
-		int max_size = 1024 * 1024 * 10; // 10 MB
-		int max_files = 20; 
+		int max_size = 1024 * 512; // 512 KB
+		int max_files = 5; 
 
 		// Console sink
 		auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 		console_sink->set_level(spdlog::level::info);
-		console_sink->set_pattern("[%T] [%n] [%l] %v");
+		console_sink->set_pattern("%^[%T] [%n] [%l] %v%$");
 
 		// ParseManager log
 		// automatically registered?
 		auto pm_log_sink = std::make_shared<spdlog::sinks::rotating_file_sink_st>("logs/pm_log.txt",
 			max_size, max_files);
-		pm_log_sink->set_level(spdlog::level::trace);
+		pm_log_sink->set_level(spdlog::level::debug);
 		pm_log_sink->set_pattern("[%D %T] [%l] %v");
 
 		// List of sinks for ParseManager, console logger
@@ -96,9 +96,25 @@ bool SetupLogging()
 		auto pm_logger = std::make_shared<spdlog::logger>("pm", pm_sinks.begin(), pm_sinks.end());
 		spdlog::register_logger(pm_logger);
 
-		/*auto pm_logger = spdlog::create_async<spdlog::sinks::rotating_file_sink>("pm_logger",
-			"logs/pm_log.txt", max_size, max_files);*/
+		// Parser primary threaded file sink.
+		max_size = 1024 * 1024 * 10; // 10 MB
+		max_files = 20; 
+		auto parser_log_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>("logs/parser_log.txt",
+			max_size, max_files);
+		parser_log_sink->set_level(spdlog::level::debug);
+		parser_log_sink->set_pattern("[%D %T] [%l:%t] [%@] %v");
 
+		// List of sinks for async parser, console logger
+		spdlog::sinks_init_list parser_sinks = { parser_log_sink, console_sink };
+
+		// Create and register async parser, consoler logger
+		auto parser_logger = std::make_shared<spdlog::async_logger>("parser", parser_sinks,
+			spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+		spdlog::register_logger(parser_logger);
+
+		// Register as default logger to simplify calls in ParseWorker and deeper where
+		// the majority of parser logging calls will be made.
+		spdlog::set_default_logger(parser_logger);
 
 	}
 	catch (const spdlog::spdlog_ex& ex)
