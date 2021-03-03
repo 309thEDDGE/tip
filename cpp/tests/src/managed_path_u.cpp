@@ -32,7 +32,7 @@ std::vector<std::string> CreatePathWithLength(const ManagedPath& mp_relative, si
 	size_t diff = 0;
 	while ((diff = desired_len - mp_new.RawString().size()) > 0)
 	{
-		//printf("diff = %zu\n", diff);
+		printf("diff = %zu\n", diff);
 		if (diff >= 41 + 1)
 		{
 			sprintf(buff, long_component, index);
@@ -98,7 +98,7 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 	test_path_str = CreatePathWithLength(mp, ManagedPath::max_unamended_path_len_ + 1);
 	for (auto s : test_path_str)
 		mp /= s;
-	//printf("string len: %zu\n", mp.RawString().size());
+	printf("string len: %zu\n", mp.RawString().size());
 	test_path = std::filesystem::path(mp.RawString());
 	EXPECT_EQ(test_path.string().size(), ManagedPath::max_unamended_path_len_ + 1);
 #ifdef __WIN64
@@ -125,7 +125,6 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 
 TEST(ManagedPathTest, string)
 {
-	
 	ManagedPath mp(std::string("start"));
 
 	// 
@@ -168,43 +167,60 @@ TEST(ManagedPathTest, string)
 #endif
 }
 
-TEST(ManagedPathTest, CreateDirectoryFailsWithoutCorrectionAbsPath)
+void TestCreateDirectoryFailsWithoutCorrection(bool use_absolute_path)
 {
+	uint16_t max_length = ManagedPath::max_unamended_path_len_;
+	uint16_t initial_length = max_length - 10;
+
 	// Create relative-path object.
 	ManagedPath mp;
 
 	// Get the absolute path.
 	mp = mp.absolute();
-	//printf("\nabsolute: %s\n", mp.RawString().c_str());
+	printf("\nabsolute: %s\n", mp.RawString().c_str());
 
-	std::vector<std::string> test_path_str = CreatePathWithLength(mp, 
-		ManagedPath::max_unamended_path_len_ + 1);
+	// Start with a path a little less than max, then test all
+	// lengths up to max for success and max+1 for failure.
+	std::vector<std::string> test_path_components = CreatePathWithLength(mp, 
+		initial_length);
 	
 	// Append test_path_str components as file path components.
 	ManagedPath fullpath = mp; 
-	for (auto s : test_path_str)
+	for (auto s : test_path_components)
 		fullpath /= s;
-	//printf("\nabsolute extended to max + 1: %s\n", fullpath.RawString().c_str());
-	EXPECT_EQ(fullpath.RawString().size(), ManagedPath::max_unamended_path_len_ + 1);
+	printf("\nabsolute extended to max + 1: %s\n", fullpath.RawString().c_str());
+	EXPECT_EQ(fullpath.RawString().size(), initial_length);
 
 	// Create all but the last directory.
 	ManagedPath currdir = mp;
-	//printf("\nstr vec size is %zu\n", test_path_str.size());
-	for (size_t i = 0; i < test_path_str.size() - 1; i++)
+	printf("\nstr vec size is %zu\n", test_path_components.size());
+	for (size_t i = 0; i < test_path_components.size() - 1; i++)
 	{
-		//printf("\nappending to path: %s\n", test_path_str[i].c_str());
-		currdir /= test_path_str[i];
+		printf("\nappending to path: %s\n", test_path_components[i].c_str());
+		currdir /= test_path_components[i];
 		
 		EXPECT_TRUE(currdir.create_directory());
-		//printf("after append length = %zu\n", currdir.RawString().size());
+		printf("after append length = %zu\n", currdir.RawString().size());
+	}
+
+	// Extend by one char at a time and verify create succeeds
+	ManagedPath base_dir(currdir);
+	std::string postfix = "";
+	for (size_t i = base_dir.RawString().size(); i <= max_length; i++)
+	{
+		postfix += 'a';
+		currdir = base_dir / postfix;
+		
+		EXPECT_TRUE(currdir.create_directory());
+		printf("after append length = %zu\n", currdir.RawString().size());
 	}
 
 	// Attempt to create the last directory using standard fs::create_directory. 
 	// This ought to fail because the path is too long.
-	currdir /= test_path_str[test_path_str.size() - 1];
+	postfix += 'a';
+	currdir = base_dir / postfix;
 
 	/*
-	This doesn't just return false. It also throws an error. 
 	Catch the error. Also, one way to fix the create_directory
 	impl is to catch the error, amend path, and try again. 
 	This is an ugly approach but will likely solve the problem, 
@@ -229,70 +245,19 @@ TEST(ManagedPathTest, CreateDirectoryFailsWithoutCorrectionAbsPath)
 	EXPECT_TRUE(currdir.create_directory());
 
 	// Delete all directories created during this test.
-	fs::path remove_path(test_path_str[0]);
+	fs::path remove_path(test_path_components[0]);
 	EXPECT_TRUE(fs::remove_all(remove_path));
 
 }
 
+TEST(ManagedPathTest, CreateDirectoryFailsWithoutCorrectionAbsPath)
+{
+	TestCreateDirectoryFailsWithoutCorrection(true);
+}
+
 TEST(ManagedPathTest, CreateDirectoryFailsWithoutCorrectionRelPath)
 {
-	// Create relative-path object.
-	ManagedPath mp;
-
-	std::vector<std::string> test_path_str = CreatePathWithLength(mp,
-		ManagedPath::max_unamended_path_len_ + 1);
-
-	// Append test_path_str components as file path components.
-	ManagedPath fullpath = mp;
-	for (auto s : test_path_str)
-		fullpath /= s;
-	//printf("\nrelative path extended to max + 1: %s\n", fullpath.RawString().c_str());
-	EXPECT_EQ(fullpath.RawString().size(), ManagedPath::max_unamended_path_len_ + 1);
-
-	// Create all but the last directory.
-	ManagedPath currdir = mp;
-	//printf("\nstr vec size is %zu\n", test_path_str.size());
-	for (size_t i = 0; i < test_path_str.size() - 1; i++)
-	{
-		//printf("\nappending to path: %s\n", test_path_str[i].c_str());
-		currdir /= test_path_str[i];
-
-		EXPECT_TRUE(currdir.create_directory());
-		//printf("after append length = %zu\n", currdir.RawString().size());
-	}
-
-	// Attempt to create the last directory using standard fs::create_directory. 
-	// This ought to fail because the path is too long.
-	currdir /= test_path_str[test_path_str.size() - 1];
-
-	/*
-	This doesn't just return false. It also throws an error.
-	Catch the error. Also, one way to fix the create_directory
-	impl is to catch the error, amend path, and try again.
-	This is an ugly approach but will likely solve the problem,
-	though it may need to be implemented in several functions
-	that operate on the real file system.
-	*/
-	fs::path raw_path(currdir.RawString());
-	std::error_code ec;
-	bool result = fs::create_directory(raw_path, ec);
-
-	// If the error code is zero, then an error was not thrown.
-	// If zero, 
-#ifdef __WIN64
-	EXPECT_TRUE((ec.value() != 0) || (!result));
-#elif defined __linux__
-	EXPECT_TRUE((ec.value() == 0) && result);
-#endif
-
-	// Attempt to create the directory using ManagedPath.
-	// Ought to succeed.
-	EXPECT_TRUE(currdir.create_directory());
-
-	// Delete all directories created during this test.
-	fs::path remove_path(test_path_str[0]);
-	EXPECT_TRUE(fs::remove_all(remove_path));
-
+	TestCreateDirectoryFailsWithoutCorrection(false);
 }
 
 TEST(ManagedPathTest, CreateDirectoryAlreadyExists)
