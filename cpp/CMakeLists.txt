@@ -204,9 +204,10 @@ if(parser_rewrite)
      )
 
     target_include_directories(${parserw_lib_name} PUBLIC ${parserw_inc_dir} ${util_inc_dir}
-                               ${ch10pq_inc_dir})
+                               ${ch10pq_inc_dir} ${spdlog_inc_dir})
     target_compile_features(${parserw_lib_name} PUBLIC cxx_std_17)
-    target_link_libraries(${parserw_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_name})
+    target_link_libraries(${parserw_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_name}
+                          ${spdlog_lib_name})
 endif()
 
 #########################################################
@@ -253,7 +254,7 @@ add_library(${ch10parse_lib_name} STATIC
 target_include_directories(${ch10parse_lib_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
                             ${temp_irig_inc_dir} ${temp_eth_inc_dir} ${parserw_inc_dir}
-                            )
+                            ${spdlog_inc_dir})
 target_compile_features(${ch10parse_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${ch10parse_lib_name} PRIVATE -fPIE)
 target_link_libraries(${ch10parse_lib_name} PUBLIC
@@ -266,6 +267,7 @@ target_link_libraries(${ch10parse_lib_name} PUBLIC
                         ${temp_tins_libs}
                         ${temp_eth_lib_name}
                         ${parserw_lib_name}
+                        ${spdlog_lib_name}
     )
 
 
