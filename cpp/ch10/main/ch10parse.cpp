@@ -34,9 +34,14 @@ int main(int argc, char* argv[])
 	}
 
 	ParserConfigParams config;
+	ManagedPath final_conf_path;
 	std::string tip_root_path = "";
-	if (!ValidateConfig(config, tip_root_path))
+	if (!ValidateConfig(config, tip_root_path, final_conf_path))
 		return 0;
+
+	if (!SetupLogging())
+		return 0;
+	spdlog::get("pm")->info("Configuration file path: {:s}", final_conf_path.RawString());
 
 	ManagedPath input_path;
 	ManagedPath output_path;
@@ -48,5 +53,10 @@ int main(int argc, char* argv[])
 
 	double duration;
 	StartParse(input_path, output_path, config, duration);
+
+	// Avoid deadlock in windows, see 
+	// http://stackoverflow.com/questions/10915233/stdthreadjoin-hangs-if-called-after-main-exits-when-using-vs2012-rc
+	spdlog::shutdown();
+
 	return 0;
 }
