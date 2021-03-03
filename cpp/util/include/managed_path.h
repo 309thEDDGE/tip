@@ -22,21 +22,12 @@ protected:
 public:
 
 	// Maximum path in windows is 260 chars including a terminating
-	// null character.
+	// null character, making the maximum string length 259.
 	// See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
-	// When checking for paths that exceed this value, this class
-	// counts the characters in the path string which does not include
-	// the null character, so the maximum path length is set to 1 
-	// fewer.
-	// 
-	// The value of 259, however, does not pass all of the unit tests
-	// and the largest value for the maximum length that does is 
-	// 255. It's possible that the null character is appended by
-	// std::filesystem under the hood, possibly originally represented
-	// as "\0" or similar (two chars) and that the drive path followed by the
-	// backslash (three chars) is counted in error or perhaps the link
-	// above is incorrect that the drive and slash is not part of the 256-char
-	// path length limit.
+	// Caveats:
+	//		This number includes drive-colon-backslash.
+	//		Absolute directory paths can only be 247 characters to allow the appending
+	//			of an 8.3 file name: 259 - 12 = 247
 	static const int max_unamended_path_len_ = 247;
 	
 	//////////////////////////////////////////
