@@ -35,13 +35,26 @@ int main(int argc, char* argv[])
 
 	ParserConfigParams config;
 	ManagedPath final_conf_path;
-	std::string tip_root_path = "";
-	if (!ValidateConfig(config, tip_root_path, final_conf_path))
+	std::string config_path = "";
+	if (!ValidateConfig(config, config_path, final_conf_path))
 		return 0;
 
-	if (!SetupLogging())
+	// Get the parent dir of the parent dir of the final configuration file
+	// path. In the future, it may be useful to create a function which 
+	// returns the log output path. It could take the config from yaml 
+	// and the final_conf_path as arguments. The options may include using
+	// a path taken from the yaml config or using a traditional directory 
+	// such as %LOCALAPPDATA% in windows or /home/<user>/.tip/logs or similar
+	// or to create a log dir in the same directory as the conf directory,
+	// which can be determined from final_conf_path, as is the only option
+	// used now.
+	ManagedPath log_dir = final_conf_path.parent_path().parent_path();
+	log_dir /= std::string("logs");
+
+	if (!SetupLogging(log_dir))
 		return 0;
-	spdlog::get("pm")->info("Configuration file path: {:s}", final_conf_path.RawString());
+	spdlog::get("pm_logger")->info("Configuration file path: {:s}", final_conf_path.RawString());
+	spdlog::get("pm_logger")->info("Log directory: {:s}", log_dir.RawString());
 
 	ManagedPath input_path;
 	ManagedPath output_path;
