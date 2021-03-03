@@ -1026,7 +1026,7 @@ void ParseWorker::append_chanid_comwmwords_map(std::map<uint32_t, std::set<uint3
 const std::map<uint16_t, uint64_t>& ParseWorker::GetChannelIDToMinTimeStampMap()
 {
 #ifdef PARSER_REWRITE
-	return std::map<uint16_t, uint64_t>();
+	return chanid_minvideotimestamp_map_;
 #else
 	return video->GetChannelIDToMinTimeStampMap();
 #endif

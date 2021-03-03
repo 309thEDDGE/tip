@@ -65,6 +65,7 @@ class ParseWorker
 #endif
 #ifdef PARSER_REWRITE
 		Ch10Context ctx;
+		std::map<uint16_t, uint64_t> chanid_minvideotimestamp_map_;
 #endif
 	uint8_t retcode;
 	bool continue_parsing;
