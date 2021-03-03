@@ -32,7 +32,7 @@ std::vector<std::string> CreatePathWithLength(const ManagedPath& mp_relative, si
 	size_t diff = 0;
 	while ((diff = desired_len - mp_new.RawString().size()) > 0)
 	{
-		printf("diff = %zu\n", diff);
+		//printf("diff = %zu\n", diff);
 		if (diff >= 41 + 1)
 		{
 			sprintf(buff, long_component, index);
@@ -98,7 +98,7 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 	test_path_str = CreatePathWithLength(mp, ManagedPath::max_unamended_path_len_ + 1);
 	for (auto s : test_path_str)
 		mp /= s;
-	printf("string len: %zu\n", mp.RawString().size());
+	//printf("string len: %zu\n", mp.RawString().size());
 	test_path = std::filesystem::path(mp.RawString());
 	EXPECT_EQ(test_path.string().size(), ManagedPath::max_unamended_path_len_ + 1);
 #ifdef __WIN64
@@ -167,6 +167,13 @@ TEST(ManagedPathTest, string)
 #endif
 }
 
+/* Since the next two tests only differ by using absolute vs. relative
+   paths, combine them into a single method with a parameter that
+   the tests will call.
+
+Input: 
+	use_absolute_paths - flag indicating whether to use absolute paths
+*/
 void TestCreateDirectoryFailsWithoutCorrection(bool use_absolute_path)
 {
 	uint16_t max_length = ManagedPath::max_unamended_path_len_;
@@ -175,9 +182,12 @@ void TestCreateDirectoryFailsWithoutCorrection(bool use_absolute_path)
 	// Create relative-path object.
 	ManagedPath mp;
 
-	// Get the absolute path.
-	mp = mp.absolute();
-	printf("\nabsolute: %s\n", mp.RawString().c_str());
+	if (use_absolute_path)
+	{
+		// Get the absolute path.
+		mp = mp.absolute();
+		//printf("\nabsolute: %s\n", mp.RawString().c_str());
+	}
 
 	// Start with a path a little less than max, then test all
 	// lengths up to max for success and max+1 for failure.
@@ -188,19 +198,19 @@ void TestCreateDirectoryFailsWithoutCorrection(bool use_absolute_path)
 	ManagedPath fullpath = mp; 
 	for (auto s : test_path_components)
 		fullpath /= s;
-	printf("\nabsolute extended to max + 1: %s\n", fullpath.RawString().c_str());
+	//printf("\nabsolute extended to max + 1: %s\n", fullpath.RawString().c_str());
 	EXPECT_EQ(fullpath.RawString().size(), initial_length);
 
 	// Create all but the last directory.
 	ManagedPath currdir = mp;
-	printf("\nstr vec size is %zu\n", test_path_components.size());
+	//printf("\nstr vec size is %zu\n", test_path_components.size());
 	for (size_t i = 0; i < test_path_components.size() - 1; i++)
 	{
-		printf("\nappending to path: %s\n", test_path_components[i].c_str());
+		//printf("\nappending to path: %s\n", test_path_components[i].c_str());
 		currdir /= test_path_components[i];
 		
 		EXPECT_TRUE(currdir.create_directory());
-		printf("after append length = %zu\n", currdir.RawString().size());
+		//printf("after append length = %zu\n", currdir.RawString().size());
 	}
 
 	// Extend by one char at a time and verify create succeeds
@@ -212,7 +222,7 @@ void TestCreateDirectoryFailsWithoutCorrection(bool use_absolute_path)
 		currdir = base_dir / postfix;
 		
 		EXPECT_TRUE(currdir.create_directory());
-		printf("after append length = %zu\n", currdir.RawString().size());
+		//printf("after append length = %zu\n", currdir.RawString().size());
 	}
 
 	// Attempt to create the last directory using standard fs::create_directory. 

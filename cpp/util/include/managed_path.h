@@ -25,9 +25,10 @@ public:
 	// null character, making the maximum string length 259.
 	// See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
 	// Caveats:
-	//		This number includes drive-colon-backslash.
-	//		Absolute directory paths can only be 247 characters to allow the appending
-	//			of an 8.3 file name: 259 - 12 = 247
+	//		- The drive letter is included in the count
+	//		- The system will only create directories up to 247 characters in order to allow 
+	//			the appending of a 12-char DOS-style 8.3 file name: 
+	//				259 - 12 = 247
 	static const int max_unamended_path_len_ = 247;
 	
 	//////////////////////////////////////////
