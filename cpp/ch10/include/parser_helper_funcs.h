@@ -16,4 +16,4 @@ bool ValidatePaths(char* arg1, char* arg2, ManagedPath& input_path, ManagedPath&
 bool StartParse(ManagedPath input_path, ManagedPath output_path,
 	ParserConfigParams config, double& duration);
 
-bool SetupLogging();
+bool SetupLogging(const ManagedPath& log_dir);
