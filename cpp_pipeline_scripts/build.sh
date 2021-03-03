@@ -77,7 +77,7 @@ main() {
 
 	mkdir -p $BUILD_DIR
 	cd $BUILD_DIR
-	$CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
+	$CMAKE -DPARSER_REWRITE=ON -DVIDEO=ON ..
 
 	echo "Running '$MAKE'"
 	$MAKE -v install

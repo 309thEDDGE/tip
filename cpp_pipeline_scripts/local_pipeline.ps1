@@ -1,6 +1,6 @@
 ﻿$REGISTRY="registry.il2.dso.mil"
 
-$BUILD_IMAGE="$REGISTRY/skicamp/project-opal/tip/build:MR92"
+$BUILD_IMAGE="$REGISTRY/skicamp/project-opal/tip/build:MR106"
 $TEST_IMAGE="$REGISTRY/skicamp/project-opal/tip/test:1.0"
 
 docker login $REGISTRY
