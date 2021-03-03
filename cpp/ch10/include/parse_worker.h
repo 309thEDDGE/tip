@@ -13,6 +13,8 @@
 #include "ch10_milstd1553f1.h"
 #include "iterable_tools.h"
 #include "managed_path.h"
+#include "spdlog/spdlog.h"
+
 #ifdef VIDEO_DATA
 #include "ch10_videodataf0.h"
 #endif

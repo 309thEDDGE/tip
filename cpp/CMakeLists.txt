@@ -45,10 +45,12 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/managed_path.cpp         ${util_inc_dir}/managed_path.h
  )
 
-target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} ${yaml_inc_dir} ${parquet_inc_dirs})
+target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} ${yaml_inc_dir} ${parquet_inc_dirs}
+                           ${spdlog_inc_dir})
 target_compile_features(${util_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${util_lib_name} PRIVATE -fPIE)
-target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} ${parquet_libs} ${linux_libs})
+target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} ${parquet_libs} ${linux_libs}
+                      ${spdlog_lib_name})
 
 #########################################################
 #              Build/link parquet_context lib
