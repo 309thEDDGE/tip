@@ -33,7 +33,8 @@ Ch10Status Ch101553F1Component::Parse(const uint8_t*& data, uint64_t& loc)
 	}
 	else
 	{	
-		printf("Ch101553F1Component::Parse(): Time stamp not handled!\n");
+		SPDLOG_WARN("({:02d}) Time stamp type not handled: {:d}", 
+			ctx_->thread_id, ctx_->time_format);
 		return Ch10Status::MILSTD1553_TS_NOT_HANDLED;
 		// TODO
 		// switch on Ch10Context::time_format type, utilize other ParseXXTimeMessages
@@ -101,8 +102,8 @@ Ch10Status Ch101553F1Component::ParsePayload(const uint8_t*& data,
 	if (data_header->length > max_byte_count_)
 	{
 		uint16_t length = data_header->length;
-		printf("Ch101553F1Component::ParsePayload(): payload length (%hu) > %hu\n",
-			length, max_byte_count_);
+		SPDLOG_WARN("({:02d}) 1553 message payload length ({:d}) greater than maximum ({:d})",
+			ctx_->thread_id, length, max_byte_count_);
 		return Ch10Status::MILSTD1553_MSG_LENGTH;
 	}
 

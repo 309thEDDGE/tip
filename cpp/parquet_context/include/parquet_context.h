@@ -11,8 +11,8 @@
 #include <parquet/arrow/writer.h>
 #include <parquet/arrow/schema.h>
 #include <typeinfo>
-
 #include "column_data.h"
+#include "spdlog/spdlog.h"
 
 /*
 
@@ -571,25 +571,21 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 				// vector size provided
 				if (data.size() % it->second.list_size_ != 0)
 				{
-					printf("Error!!!!!!!!!!!!  list size specified (%d)"
-						" is not a multiple of total data length (%d) "
-						"for column: %s\n",
+					SPDLOG_CRITICAL("list size specified {:d}"
+						" is not a multiple of total data length {:d} "
+						"for column: {:s}",
 						it->second.list_size_,
 						data.size(),
-						fieldName.c_str());
+						fieldName);
 					parquet_stop_ = true;
 					return false;
 				}
 
 				if (boolField != nullptr)
 				{
-#ifdef DEBUG
-#if DEBUG > 1
-					printf("Warning!!!!!!!!!!!!  Null fields for lists"
-						"are currently unavailable: %s\n",
-						fieldName.c_str());
-#endif
-#endif
+					SPDLOG_WARN("Null fields for lists "
+						"are currently unavailable: {:s",
+						fieldName);
 					boolField = nullptr;
 				}
 			}
@@ -600,9 +596,9 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 			{
 				if (boolField->size() != data.size())
 				{
-					printf("Error!!!!!!!!!!!!  null field vector must be the "
-						"same size as data vector: %s\n",
-						fieldName.c_str());
+					SPDLOG_CRITICAL("null field vector must be the "
+						"same size as data vector: {:s}",
+						fieldName);
 					parquet_stop_ = true;
 					return false;
 				}
@@ -611,13 +607,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 			// Check if ptr is already set
 			if (it->second.pointer_set_)
 			{
-#ifdef DEBUG
-#if DEBUG > 1
-				printf("Warning!!!!!!!!!!!!  in SetMemoryLocation, ptr"
-					"is already set for: %s\n",
-					fieldName.c_str());
-#endif
-#endif
+				SPDLOG_WARN("ptr is already set for: {:s}", fieldName);
 			}
 
 			// If casting is required			
@@ -641,9 +631,8 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 					typeid(std::string).name() == typeid(NativeType).name() ||
 					it->second.type_->id() == arrow::BooleanType::type_id)
 				{
-					printf("Error!!!!!!!!!!!!  can't cast from other data"
-						"type to string or bool for: %s\n",
-						fieldName.c_str());
+					SPDLOG_CRITICAL("can't cast from other data "
+						"type to string or bool for: {:s}", fieldName);
 					parquet_stop_ = true;
 					return false;
 				}
@@ -651,9 +640,9 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 				// Cast to larger datatype check
 				if (it->second.byte_size_ < sizeof(a))
 				{
-					printf("Error!!!!!!!!!!!!  Intended datatype to be cast"
-						"is smaller than the given datatype for: %s\n",
-						fieldName.c_str());
+					SPDLOG_CRITICAL("Intended datatype to be cast "
+						"is smaller than the given datatype for: {:s}",
+						fieldName);
 					parquet_stop_ = true;
 					return false;
 				}
@@ -664,9 +653,8 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 					typeid(NativeType).name() == typeid(float).name() ||
 					typeid(NativeType).name() == typeid(double).name())
 				{
-					printf("Error!!!!!!!!!!!!  Can't cast floating"
-						"point data types: %s, \n",
-						fieldName.c_str());
+					SPDLOG_CRITICAL("Can't cast floating point data types: {:s}",
+						fieldName);
 					parquet_stop_ = true;
 					return false;
 				}
@@ -674,13 +662,8 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 				// Equal size datatypes check
 				if (it->second.byte_size_ == sizeof(a))
 				{
-#ifdef DEBUG
-#if DEBUG > 1
-					printf("Warning!!!!!!!!!!!!  Intended datatype to "
-						"be cast is equal to the casting type for: %s\n",
-						fieldName.c_str());
-#endif
-#endif
+					SPDLOG_WARN("Intended datatype to "
+						"be cast is equal to the casting type for: {:s}", fieldName);
 				}
 
 				it->second.SetColumnData(data.data(),
@@ -688,13 +671,10 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 					typeid(NativeType).name(),
 					boolField,
 					data.size());
-#ifdef DEBUG
-#if DEBUG > 1
-				printf("Cast from %s planned for: %s, \n",
+
+				SPDLOG_DEBUG("Cast from {:s} planned for: {:s}",
 					typeid(NativeType).name(),
-					fieldName.c_str());
-#endif
-#endif
+					fieldName);
 
 			}
 			// Data types are the same and no casting required
@@ -711,9 +691,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 		}
 	}
 
-	printf("ERROR!!! -> Field name doesn't exist: %s\n",
-		fieldName.c_str());
-
+	SPDLOG_CRITICAL("Field name doesn't exist: {:s}", fieldName);
 	parquet_stop_ = true;
 	return false;
 }
@@ -733,46 +711,35 @@ inline bool ParquetContext::SetMemoryLocation<std::string>(std::vector<std::stri
 		{
 			if (typeid(std::string).name() != it->second.type_ID_)
 			{
-				printf("Error!!!!!!!!!!!!  in SetMemoryLocation, "
-					"can't cast from string to other types: %s\n",
-					fieldName.c_str());
+				SPDLOG_CRITICAL("can't cast from string to other types: {:s}",
+					fieldName);
 				parquet_stop_ = true;
 				return false;
 			}
 			else if (it->second.pointer_set_)
 			{
-#ifdef DEBUG
-#if DEBUG > 1
-				printf("Warning!!!!!!!!!!!!  in SetMemoryLocation, "
-					"ptr is already set for: %s\n",
-					fieldName.c_str());
-#endif
-#endif
+				SPDLOG_WARN("ptr is already set for: {:s}", fieldName);
 			}
 			if (it->second.is_list_)
 			{
 
 				if (data.size() % it->second.list_size_ != 0)
 				{
-					printf("Error!!!!!!!!!!!!  list size specified (%d)"
-						" is not a multiple of total data length (%d) "
-						"for column: %s\n",
+					SPDLOG_CRITICAL("list size specified ({:d})"
+						" is not a multiple of total data length ({:d}) "
+						"for column: {:s}",
 						it->second.list_size_,
 						data.size(),
-						fieldName.c_str());
+						fieldName);
 					parquet_stop_ = true;
 					return false;
 				}
 
 				if (boolField != nullptr)
 				{
-#ifdef DEBUG
-#if DEBUG > 1
-					printf("Warning!!!!!!!!!!!!  Null fields for lists"
-						"are currently unavailable: %s\n",
-						fieldName.c_str());
-#endif
-#endif
+					SPDLOG_WARN("Null fields for lists "
+						"are currently unavailable: {:s}",
+						fieldName);
 					boolField = nullptr;
 				}
 				
@@ -784,26 +751,20 @@ inline bool ParquetContext::SetMemoryLocation<std::string>(std::vector<std::stri
 			{
 				if (boolField->size() != data.size())
 				{
-					printf("Error!!!!!!!!!!!!  null field vector must be the "
-						"same size as data vector: %s\n",
-						fieldName.c_str());
+					SPDLOG_CRITICAL("null field vector must be the "
+						"same size as data vector: {:s}",
+						fieldName);
 					parquet_stop_ = true;
 					return false;
 				}
 			}
-#ifdef DEBUG
-#if DEBUG > 2
-			printf("setting field info for %s\n",
-				fieldName.c_str());
-#endif
-#endif
+			SPDLOG_DEBUG("setting field info for {:s}",	fieldName);
 			it->second.SetColumnData(data, fieldName, boolField);
 			
 			return true;
 		}
 	}
-	printf("ERROR!!! -> Field name doesn't exist:%s\n",
-		fieldName.c_str());
+	SPDLOG_CRITICAL("Field name doesn't exist: {:s}", fieldName);
 	parquet_stop_ = true;
 	return false;
 }

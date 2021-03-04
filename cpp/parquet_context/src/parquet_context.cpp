@@ -72,7 +72,7 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 	// and SetMemoryLocation before writing
 	if (fields_.size() == 0)
 	{
-		printf("Must call AddField and SetMemoryLocation before calling OpenForWrite\n");
+		SPDLOG_CRITICAL("Must call AddField and SetMemoryLocation before calling OpenForWrite");
 		return false;
 	}
 
@@ -84,8 +84,8 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 	{
 		if (!it->second.pointer_set_)
 		{
-			printf("Error!!!!!!, memory location for field not set: %s \n",
-				it->second.field_name_.c_str());
+			SPDLOG_CRITICAL("memory location for field not set: {:s}",
+				it->second.field_name_);
 			parquet_stop_ = true;
 			return false;
 		}
@@ -104,7 +104,7 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 		}
 		catch (...)
 		{
-			printf("FileOutputStream::Open error\n");
+			SPDLOG_CRITICAL("FileOutputStream::Open error");
 			return false;
 		}
 #else
@@ -114,9 +114,8 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 
 		if (!st_.ok())
 		{
-			printf("FileOutputStream::Open error (ID %s): %s\n",
-				st_.CodeAsString().c_str(),
-				st_.message().c_str());
+			SPDLOG_CRITICAL("FileOutputStream::Open error (ID {:s}): {:s}",
+				st_.CodeAsString(),	st_.message());
 			return false;
 		}
 #endif
@@ -144,9 +143,8 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 
 		if (!st_.ok())
 		{
-			printf("parquet::arrow::FileWriter::Open error (ID %s): %s\n",
-				st_.CodeAsString().c_str(),
-				st_.message().c_str());
+			SPDLOG_CRITICAL("parquet::arrow::FileWriter::Open error (ID {:s}): {:s}",
+				st_.CodeAsString(), st_.message());
 			return false;
 		}
 		have_created_writer_ = true;
@@ -300,9 +298,8 @@ bool ParquetContext::WriteColsIfReady()
 
 			if (!st_.ok())
 			{
-				printf("\"Finish\" error (ID %s): %s\n", 
-					st_.CodeAsString().c_str(), 
-					st_.message().c_str());
+				SPDLOG_ERROR("\"Finish\" error (ID {:s}): {:s}",
+					st_.CodeAsString(), st_.message());
 				return false;
 			}
 			arr_vec.push_back(temp_array_ptr);
@@ -313,19 +310,18 @@ bool ParquetContext::WriteColsIfReady()
 		st_ = writer_->WriteTable(*table, append_row_count_);
 		if (!st_.ok())
 		{
-			printf("WriteTable error (ID %s): %s\n", 
-				st_.CodeAsString().c_str(), 
-				st_.message().c_str());
+			SPDLOG_ERROR("WriteTable error (ID {:s}): {:s}",
+				st_.CodeAsString(), st_.message());
 			return false;
 		}
 		have_created_table_ = true;
 		
 		// Debug, check if table has metadata.
 		if(table->schema()->HasMetadata())
-		  printf("after being written, table has metadata\n");
+			SPDLOG_DEBUG("after being written, table has metadata");
 #ifdef NEWARROW
 		if(writer_->schema()->HasMetadata())
-		  printf("after writetable, writer has metadata\n");
+			SPDLOG_DEBUG("after writetable, writer has metadata");
 #endif
 	}
 	else
@@ -340,17 +336,15 @@ bool ParquetContext::WriteColsIfReady()
 
 			if (!st_.ok())
 			{
-				printf("\"Finish\" error (ID %s): %s", 
-					st_.CodeAsString().c_str(), 
-					st_.message().c_str());
+				SPDLOG_ERROR("\"Finish\" error (ID {:s}): {:s}",
+					st_.CodeAsString(), st_.message());
 				return false;
 			}
 			st_ = writer_->WriteColumnChunk(*temp_array_ptr);
 			if (!st_.ok())
 			{
-				printf("WriteColumnChunk error (ID %s): %s", 
-					st_.CodeAsString().c_str(), 
-					st_.message().c_str());
+				SPDLOG_ERROR("WriteColumnChunk error (ID {:s}): {:s}",
+					st_.CodeAsString(), st_.message());
 
 				return false;
 			}

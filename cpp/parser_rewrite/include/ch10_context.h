@@ -14,6 +14,7 @@
 #include "ch10_header_format.h"
 #include "ch10_1553f1_msg_hdr_format.h"
 #include "parquet_milstd1553f1.h"
+#include "spdlog/spdlog.h"
 
 enum class Ch10PacketType : uint8_t
 {

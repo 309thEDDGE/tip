@@ -68,6 +68,9 @@ bool StartParse(ManagedPath input_path, ManagedPath output_path,
 
 bool SetupLogging(const ManagedPath& log_dir)
 {
+	// Use the chart on this page for logging level reference:
+	// https://www.tutorialspoint.com/log4j/log4j_logging_levels.htm
+
 	try
 	{
 		// Setup async thread pool.
@@ -104,7 +107,7 @@ bool SetupLogging(const ManagedPath& log_dir)
 		auto parser_log_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(parser_log_path.string(),
 			max_size, max_files);
 		parser_log_sink->set_level(spdlog::level::debug);
-		parser_log_sink->set_pattern("[%D %T] [%l:%t] [%@] %v");
+		parser_log_sink->set_pattern("[%D %T] [%L] [%@] %v");
 
 		// List of sinks for async parser, console logger
 		spdlog::sinks_init_list parser_sinks = { parser_log_sink, console_sink };

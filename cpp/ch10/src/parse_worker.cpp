@@ -75,11 +75,11 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 	std::vector<std::string>& tmats_body_vec)
 {
 	if (append_mode)
-		SPDLOG_INFO("APPEND MODE ParseWorker now active!");
+		SPDLOG_INFO("({:02d}) APPEND MODE ParseWorker now active", id);
 	else
-		SPDLOG_INFO("ParseWorker now active!");
+		SPDLOG_INFO("({:02d}) ParseWorker now active", id);
 	
-	SPDLOG_DEBUG("Beginning of shift, absolute position: {:d}", start_position);
+	SPDLOG_DEBUG("({:02d}) Beginning of shift, absolute position: {:d}", id, start_position);
 
 	// Initialize Ch10Context object. Note that this Ch10Context instance
 	// created in the ParseWorker constructor is persistent until the 
@@ -152,8 +152,8 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 	if(append_mode || final_worker)
 		ctx.CloseFileWriters();
 	
-	SPDLOG_INFO("End of worker's shift");
-	SPDLOG_DEBUG("End of shift, absolute position: {:d}", last_position);
+	SPDLOG_INFO("({:02d}) End of worker's shift", id);
+	SPDLOG_DEBUG("({:02d}) End of shift, absolute position: {:d}", id, last_position);
 	complete = true;
 }
 #else

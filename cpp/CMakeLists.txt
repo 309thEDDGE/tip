@@ -64,10 +64,12 @@ add_library(${pqctx_lib_name} STATIC
             ${pqctx_src_dir}/parquet_context.cpp   ${pqctx_inc_dir}/parquet_context.h
     )
 
-target_include_directories(${pqctx_lib_name} PUBLIC ${pqctx_inc_dir} ${parquet_inc_dirs})
+target_include_directories(${pqctx_lib_name} PUBLIC ${pqctx_inc_dir} ${parquet_inc_dirs}
+                           ${spdlog_inc_dir})
 target_compile_features(${pqctx_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${pqctx_lib_name} PRIVATE -fPIE)
-target_link_libraries(${pqctx_lib_name} PUBLIC ${parquet_libs} ${linux_libs})
+target_link_libraries(${pqctx_lib_name} PUBLIC ${parquet_libs} ${linux_libs}
+                      ${spdlog_lib_name})
 
 #########################################################
 #      Build/link ethernet lib
@@ -119,10 +121,11 @@ target_include_directories(${ch10pq_lib_name} PUBLIC
                             ${eth_inc_dir}
                             ${ch10_inc_dir} # Ch10 format headers.
                             ${parserw_inc_dir} # parser rewrite format headers
-                            ${util_inc_dir})
+                            ${util_inc_dir}
+                            ${spdlog_inc_dir})
 target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${eth_lib_name} ${linux_libs}
-                      ${util_lib_name})
+                      ${util_lib_name} ${spdlog_lib_name})
 
 #########################################################
 #             Build/link translate_1553 lib
@@ -194,8 +197,8 @@ if(parser_rewrite)
     add_library(${parserw_lib_name} STATIC
                ${parserw_inc_dir}/ch10_status.h ${parserw_inc_dir}/ch10_header_format.h
                ${parserw_inc_dir}/ch10_1553f1_msg_hdr_format.h
-               ${parserw_inc_dir}/ch10_packet_element_base.h ${parserw_src_dir}/ch10_packet_element_base.cpp
-               ${parserw_inc_dir}/ch10_packet_element.h ${parserw_src_dir}/ch10_packet_element.cpp
+               ${parserw_inc_dir}/ch10_packet_element_base.h
+               ${parserw_inc_dir}/ch10_packet_element.h
                ${parserw_inc_dir}/ch10_packet_component.h ${parserw_src_dir}/ch10_packet_component.cpp
                ${parserw_inc_dir}/ch10_packet_header_component.h ${parserw_src_dir}/ch10_packet_header_component.cpp
                ${parserw_inc_dir}/ch10_packet.h ${parserw_src_dir}/ch10_packet.cpp
