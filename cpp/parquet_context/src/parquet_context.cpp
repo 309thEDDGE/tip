@@ -372,21 +372,17 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 	if (isList) 
 		listCount = columnData.list_size_;
 
-#ifdef DEBUG
-#if DEBUG > 1
-	printf("AppendColumn(): name %s, datatypename %s\n", columnData.field_name_.c_str(),
-		columnData.type_->name().c_str());
-#endif
-#endif
+	SPDLOG_DEBUG("AppendColumn(): name {:s}, datatypename {:s}", columnData.field_name_,
+		columnData.type_->name());
 
 	append_row_count_ = rows;
 
 	if (rows + offset > columnData.initial_max_row_size_)
 	{
-		printf("Error!! initial vector does not"
+		SPDLOG_CRITICAL("initial vector does not"
 			" contain enough information to write"
-			" %d rows with a %d offset for column %s\n", 
-			rows, offset, columnData.type_->name().c_str());
+			" {:d} rows with a {:d} offset for column {:s}", 
+			rows, offset, columnData.type_->name());
 		return false;
 	}
 
@@ -580,7 +576,7 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 		break;
 	}
 	default:
-		printf("Error!! Data type not included: %s\n", columnData.type_->name().c_str());
+		SPDLOG_CRITICAL("Data type not included: {:s}", columnData.type_->name());
 		return false;
 		break;
 	}
@@ -607,8 +603,7 @@ bool ParquetContext::AddField(const std::shared_ptr<arrow::DataType> type,
 	// Spark can't read unsigned data types from a parquet file
 	if (IsUnsigned(type)) 
 	{
-		printf("Error!!!!!!!!!!!!  Unsigned types are currently"
-				"not available for writing parquet");
+		SPDLOG_CRITICAL("Unsigned types are currently not available for writing parquet");
 		return false;
 		
 	}
@@ -651,14 +646,13 @@ bool ParquetContext::WriteColumns(const int& rows,const int offset)
 {
 	if (parquet_stop_) 
 	{
-		printf("Error!!!!!!, parquetStop = true\n");
+		SPDLOG_ERROR("parquetStop = true");
 		return false;
 	}
 
 	if (!have_created_writer_)
 	{
-		printf("Error!!!!!!, must call OpenForWrite"
-			" before calling WriteColumns\n");
+		SPDLOG_CRITICAL("must call OpenForWrite before calling WriteColumns");
 		return false;
 	}
 	append_row_count_ = rows;
@@ -676,7 +670,7 @@ bool ParquetContext::WriteColumns(const int& rows,const int offset)
 				ret_val = AppendColumn(it->second, rows, offset);
 				if (!ret_val)
 				{
-					printf("ParquetContext::WriteColumns(): AppendColumn() failure!\n");
+					SPDLOG_CRITICAL("AppendColumn() failure");
 					return false;
 				}
 			}
@@ -684,7 +678,7 @@ bool ParquetContext::WriteColumns(const int& rows,const int offset)
 
 		if (!WriteColsIfReady())
 		{
-			printf("ParquetContext::WriteColumns(): WriteColsIfReady() failure!\n");
+			SPDLOG_CRITICAL("WriteColsIfReady() failure");
 			return false;
 		}
 
@@ -701,7 +695,7 @@ bool ParquetContext::WriteColumns(const int& rows,const int offset)
 	
 	catch (...)
 	{
-		printf("ParquetContext::WriteColumns(): Caught Exception!\n");
+		SPDLOG_CRITICAL("WriteColumns(): Caught Exception");
 		return false;
 	}
 	
@@ -807,7 +801,7 @@ std::string ParquetContext::GetTypeIDFromArrowType(const std::shared_ptr<arrow::
 	}
 
 	default:
-		printf("Data type not included in add field: \n");
+		SPDLOG_ERROR("Data type not included in add field");
 		return "NA";
 		break;
 	}
@@ -835,8 +829,8 @@ bool ParquetContext::IncrementAndWrite()
 	{
 		if (print_activity_)
 		{
-			printf("ParquetContext::IncrementAndWrite(): %s, Writing %zu rows\n",
-				print_msg_.c_str(), appended_row_count_);
+			SPDLOG_INFO("IncrementAndWrite(): {:s}, Writing {:d} rows",
+				print_msg_, appended_row_count_);
 		}
 
 		// Write each of the row groups.
@@ -901,44 +895,34 @@ void ParquetContext::Finalize()
 	{
 		if (print_activity_)
 		{
-			printf("ParquetContext::Finalize(): %s, Writing %zu rows\n",
-				print_msg_.c_str(), appended_row_count_);
+			SPDLOG_INFO("Finalize(): {:s}, Writing {:d} rows",
+				print_msg_, appended_row_count_);
 		}
 
 		int n_calls = int(std::ceil(double(appended_row_count_) / double(ROW_GROUP_COUNT_)));
-#ifdef DEBUG
-#if DEBUG > 1
-		printf("ParquetContext::Finalize(): n_calls = %d\n", n_calls);
-#endif
-#endif
+		SPDLOG_INFO("Finalize(): n_calls = {:d}", n_calls);
 		for (int i = 0; i < n_calls; i++)
 		{
 			if (i == n_calls - 1)
 			{
-#ifdef DEBUG
-#if DEBUG > 1
-				printf("ParquetContext::Finalize(): WriteColumns(count = %d, offset = %d)\n",
+				SPDLOG_INFO("Finalize(): WriteColumns(count = {:d}, offset = {:d})",
 					appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_,
 					i * ROW_GROUP_COUNT_);
-#endif
-#endif
+
 				if (!WriteColumns(appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
 				{
-					printf("ParquetContext::Finalize(): WriteColumns() failure!\n");
+					SPDLOG_ERROR("Finalize(): WriteColumns() failure");
 				}
 			}
 			else
 			{
-#ifdef DEBUG
-#if DEBUG > 1
-				printf("ParquetContext::Finalize(): WriteColumns(count = %d, offset = %d)\n",
+				SPDLOG_INFO("Finalize(): WriteColumns(count = {:d}, offset = {:d})",
 					ROW_GROUP_COUNT_,
 					i * ROW_GROUP_COUNT_);
-#endif
-#endif
+
 				if (!WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
 				{
-					printf("ParquetContext::Finalize(): WriteColumns() failure!\n");
+					SPDLOG_ERROR("Finalize(): WriteColumns() failure");
 				}
 			}
 		}

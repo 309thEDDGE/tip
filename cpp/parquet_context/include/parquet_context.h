@@ -662,7 +662,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 				// Equal size datatypes check
 				if (it->second.byte_size_ == sizeof(a))
 				{
-					SPDLOG_WARN("Intended datatype to "
+					SPDLOG_DEBUG("Intended datatype to "
 						"be cast is equal to the casting type for: {:s}", fieldName);
 				}
 

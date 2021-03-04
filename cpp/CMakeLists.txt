@@ -32,6 +32,7 @@ set(util_dir_name "util")
 set(util_src_dir ${util_dir_name}/${source_dir_name}) # util/src
 set(util_inc_dir ${util_dir_name}/${include_dir_name})
 add_library(${util_lib_name} STATIC
+            ${util_src_dir}/parquet_reader.cpp       ${util_inc_dir}/parquet_reader.h
             ${util_src_dir}/binbuff.cpp              ${util_inc_dir}/binbuff.h
             ${util_src_dir}/data_organization.cpp    ${util_inc_dir}/data_organization.h
             ${util_src_dir}/file_reader.cpp          ${util_inc_dir}/file_reader.h
@@ -41,16 +42,17 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/yaml_reader.cpp          ${util_inc_dir}/yaml_reader.h
             ${util_src_dir}/tmats_parser.cpp         ${util_inc_dir}/tmats_parser.h
             ${util_src_dir}/metadata.cpp             ${util_inc_dir}/metadata.h
-            ${util_src_dir}/parquet_reader.cpp       ${util_inc_dir}/parquet_reader.h
             ${util_src_dir}/managed_path.cpp         ${util_inc_dir}/managed_path.h
  )
 
-target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} ${yaml_inc_dir} ${parquet_inc_dirs}
-                           ${spdlog_inc_dir})
+target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir}
+                           ${yaml_inc_dir} ${parquet_inc_dirs} ${spdlog_inc_dir} 
+                           )
 target_compile_features(${util_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${util_lib_name} PRIVATE -fPIE)
-target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} ${parquet_libs} ${linux_libs}
-                      ${spdlog_lib_name})
+target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} 
+                      ${parquet_libs} ${linux_libs} ${spdlog_lib_name}
+                      )
 
 #########################################################
 #              Build/link parquet_context lib

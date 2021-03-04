@@ -204,12 +204,9 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, c
 	temp_element_count_++;
 
 	if (temp_element_count_ == max_temp_element_count_)
-	{
-#ifdef DEBUG
-#if DEBUG > 0	
-		printf("(%03u) Writing MilStd1553F1 to Parquet, %d rows\n", id_, temp_element_count_);
-#endif
-#endif
+	{	
+		SPDLOG_INFO("({:02d}) Writing MilStd1553F1 to Parquet, {:d} rows", id_, temp_element_count_);
+
 		for (int i = 0; i < DEFAULT_BUFFER_SIZE_MULTIPLIER; i++)
 		{
 			//printf("write offset %d\n", i * DEFAULT_ROW_GROUP_COUNT);
@@ -326,11 +323,7 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy,
 
 	if (temp_element_count_ == max_temp_element_count_)
 	{
-#ifdef DEBUG
-#if DEBUG > 0	
-		printf("(%03u) Writing MilStd1553F1 to Parquet, %d rows\n", id_, temp_element_count_);
-#endif
-#endif
+		SPDLOG_INFO("({:02d}) Writing MilStd1553F1 to Parquet, {:d} rows", id_, temp_element_count_);
 		for (int i = 0; i < DEFAULT_BUFFER_SIZE_MULTIPLIER; i++)
 		{
 			//printf("write offset %d\n", i * DEFAULT_ROW_GROUP_COUNT);
@@ -348,11 +341,7 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy,
 
 void ParquetMilStd1553F1::commit()
 {
-#ifdef DEBUG
-#if DEBUG > 0
-	printf("(%03u) ParquetMilStd1553F1::commit(): temp_element_count_ = %d\n", id_, temp_element_count_);
-#endif
-#endif
+	SPDLOG_INFO("({:02d}) temp_element_count_ = {:d}", id_, temp_element_count_);
 
 	if (temp_element_count_ > 0)
 	{

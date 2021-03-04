@@ -20,9 +20,7 @@ uint64_t BinBuff::Initialize(std::ifstream& infile, const uint64_t& file_size,
 {
 	if (is_initialized_)
 	{
-		#ifdef DEBUG
-			printf("BinBuff::Initialize(): already initialized -- deleting bytes\n");
-		#endif
+		//SPDLOG_DEBUG("already initialized -- deleting bytes");
 		bytes_.clear();
 		is_initialized_ = false;
 	}
@@ -33,8 +31,8 @@ uint64_t BinBuff::Initialize(std::ifstream& infile, const uint64_t& file_size,
 
 	if (source_pos_ > file_size_)
 	{
-		printf("BinBuff::Initialize: read position %llu > file size %llu\n", 
-			source_pos_, file_size_);
+		//SPDLOG_WARN("BinBuff::Initialize: read position ({:d}) > file size ({:d})",
+		//	source_pos_, file_size_);
 		return UINT64_MAX;
 	}
 
@@ -42,8 +40,8 @@ uint64_t BinBuff::Initialize(std::ifstream& infile, const uint64_t& file_size,
 	uint64_t max_read_size = file_size_ - source_pos_;
 	if (max_read_size < read_count_)
 	{
-		printf("BinBuff::Initialize: max read size (%llu) < requested read count (%llu)\n",
-			max_read_size, read_count_);
+		//SPDLOG_DEBUG("max read size ({:d}) < requested read count ({:d})",
+		//	max_read_size, read_count_);
 
 		// Adjust the read count for memory allocation.
 		read_count_ = max_read_size;
@@ -53,7 +51,7 @@ uint64_t BinBuff::Initialize(std::ifstream& infile, const uint64_t& file_size,
 	uint64_t curr_pos = uint64_t(infile.tellg());
 	if (curr_pos != source_pos_)
 	{
-		printf("BinBuff::Initialize: seeking to %llu failed, position at %llu\n", source_pos_, curr_pos);
+		//SPDLOG_DEBUG("seeking to {:d} failed, position at {:d}", source_pos_, curr_pos);
 		return UINT64_MAX;
 	}
 
@@ -66,8 +64,8 @@ uint64_t BinBuff::Initialize(std::ifstream& infile, const uint64_t& file_size,
 	uint64_t actual_read_count = uint64_t(infile.gcount());
 	if (actual_read_count < read_count_)
 	{
-		printf("BinBuff::Initialize(): Actual read count (%llu) < requested read size (%llu)\n", 
-			actual_read_count, read_count_);
+		//SPDLOG_DEBUG("Actual read count ({:d}) < requested read size ({:d})",
+		//	actual_read_count, read_count_);
 
 		// Clear the error bits so the file can be read from again.
 		infile.clear();
@@ -89,7 +87,7 @@ uint8_t BinBuff::AdvanceReadPos(const uint64_t& count)
 {
 	if(pos_ + count > read_count_ - 1)
 	{
-		printf("BinBuff::AdvanceReadPos(): pos (%llu) + count (%llu) > %llu\n", pos_, count, read_count_-1);
+		//SPDLOG_DEBUG("pos ({:d}) + count ({:d}) > {:d}", pos_, count, read_count_-1);
 		return 1;
 	}
 	else { pos_ += count; }
@@ -100,7 +98,7 @@ uint8_t BinBuff::SetReadPos(const uint64_t& p)
 {
 	if(p > read_count_ - 1)
 	{
-		printf("BinBuff::SetReadPos(): position (%llu) > %llu\n", p, read_count_ - 1);
+		//SPDLOG_DEBUG("position ({:d}) > ({:d})", p, read_count_ - 1);
 		return 1;
 	}
 	else { pos_ = p; }

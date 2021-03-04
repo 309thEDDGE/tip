@@ -175,10 +175,8 @@ void ParseManager::start_workers()
 	delete[] threads;
 	threads = new std::thread[n_reads];
 
-#ifdef DEBUG
-	if (DEBUG > 0)
-		printf("\n-- Parsing dangling packets --\n");
-#endif
+	spdlog::get("pm_logger")->info("Parsing dangling packets");
+
 	append = true;
 	worker_queue(append);
 
