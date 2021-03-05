@@ -260,7 +260,7 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 
 			// Create the writer object.
 			milstd1553f1_pq_writer_ = std::make_unique<ParquetMilStd1553F1>(it->second,
-				channel_id_, true);
+				thread_id, true);
 
 			// Creating this publically accessible pointer is probably not the best 
 			// way to make the writer available, since it's now availalbe to everything.
