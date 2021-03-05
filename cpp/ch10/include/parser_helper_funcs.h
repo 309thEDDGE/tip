@@ -1,4 +1,7 @@
 
+#ifndef PARSER_HELPER_FUNCS_H_
+#define PARSER_HELPER_FUNCS_H_
+
 #include "parse_manager.h"
 #include "parser_config_params.h"
 #include "managed_path.h"
@@ -17,3 +20,5 @@ bool StartParse(ManagedPath input_path, ManagedPath output_path,
 	ParserConfigParams config, double& duration);
 
 bool SetupLogging(const ManagedPath& log_dir);
+
+#endif

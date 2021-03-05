@@ -374,7 +374,8 @@ if(build_tests)
 #    set_property(TARGET ${test_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
                                ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
-                               ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} ${parserw_inc_dir})
+                               ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} ${parserw_inc_dir}
+                               ${spdlog_inc_dir})
 
     target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
     target_link_libraries(${test_exe_name}
@@ -386,6 +387,7 @@ if(build_tests)
                           ${ch10parse_lib_name}
                           ${parquet_libs}
                           ${parserw_lib_name}
+                          ${spdlog_lib_name}
               ${linux_libs})
 
     # For Ctest
