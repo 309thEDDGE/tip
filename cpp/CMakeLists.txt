@@ -265,10 +265,8 @@ target_include_directories(${ch10parse_lib_name} PUBLIC ${ch10_inc_dir} ${yaml_i
 target_compile_features(${ch10parse_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${ch10parse_lib_name} PRIVATE -fPIE)
 target_link_libraries(${ch10parse_lib_name} PUBLIC
-                        ${util_lib_name}
-                        #${pqctx_lib_name}
                         ${ch10pq_lib_name}
-                        #${parquet_libs}
+                        ${util_lib_name}
                         ${linux_libs}
                         ${temp_irig_lib_name}
                         ${temp_tins_libs}
@@ -285,8 +283,8 @@ target_link_libraries(${ch10parse_lib_name} PUBLIC
 
 install(DIRECTORY DESTINATION ${out_lib_dir})
 
-install(TARGETS ${util_lib_name} 
-                ${pqctx_lib_name} 
+install(TARGETS ${pqctx_lib_name}
+                ${util_lib_name} 
                 ${ch10pq_lib_name} 
                 ${trans_lib_name}
                 ${comp_lib_name}
