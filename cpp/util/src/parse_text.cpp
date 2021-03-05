@@ -355,6 +355,9 @@ bool ParseText::IsASCII(const std::string& test_str)
 
 bool ParseText::IsUTF8(const std::string& test_str)
 {
+	// See table 3-7, "Well-Formed UTF-8 Byte Sequences"
+	// in http://www.unicode.org/versions/Unicode6.2.0/ch03.pdf
+
 	// Return false for empty strings.
 	if (test_str.length() == 0)
 		return false;
