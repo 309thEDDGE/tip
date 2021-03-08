@@ -4,9 +4,30 @@
 #include <cstdint>
 #include <cstddef>
 #include <cstdio>
-#include <vector>
 #include <fstream>
 #include <vector>
+
+/*
+Spdlog is used here and there is a conflict with a type, namespace, 
+or object defined in spdlog that is later interpreted incorrectly when 
+loading the parquet/arrow headers. 
+
+There is something in the build system that utilizes BinBuff prior to 
+parquet and thus tries to build binbuff first in the util lib and the
+definition is set prior to including parquet/arrow for other objects
+defined in the util lib. This is the reason for parquet/arrow inclusion
+here, in BinBuff where it's not needed. 
+
+I think a better solution is to break off all parquet/arrow related classes
+into a separate library, call it parquet_util, in which case the parquet/arrow
+headers will be included first in each class. 
+*/
+#include <arrow/api.h>
+#include <arrow/io/api.h>
+#include <parquet/arrow/reader.h>
+#include <parquet/arrow/schema.h>
+#include <parquet/arrow/writer.h>
+#include "spdlog/spdlog.h"
 
 class BinBuff
 {

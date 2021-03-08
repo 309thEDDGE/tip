@@ -32,6 +32,7 @@ set(util_dir_name "util")
 set(util_src_dir ${util_dir_name}/${source_dir_name}) # util/src
 set(util_inc_dir ${util_dir_name}/${include_dir_name})
 add_library(${util_lib_name} STATIC
+            ${util_src_dir}/parquet_reader.cpp       ${util_inc_dir}/parquet_reader.h
             ${util_src_dir}/binbuff.cpp              ${util_inc_dir}/binbuff.h
             ${util_src_dir}/data_organization.cpp    ${util_inc_dir}/data_organization.h
             ${util_src_dir}/file_reader.cpp          ${util_inc_dir}/file_reader.h
@@ -41,14 +42,17 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/yaml_reader.cpp          ${util_inc_dir}/yaml_reader.h
             ${util_src_dir}/tmats_parser.cpp         ${util_inc_dir}/tmats_parser.h
             ${util_src_dir}/metadata.cpp             ${util_inc_dir}/metadata.h
-            ${util_src_dir}/parquet_reader.cpp       ${util_inc_dir}/parquet_reader.h
             ${util_src_dir}/managed_path.cpp         ${util_inc_dir}/managed_path.h
  )
 
-target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} ${yaml_inc_dir} ${parquet_inc_dirs})
+target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir}
+                           ${yaml_inc_dir} ${parquet_inc_dirs} ${spdlog_inc_dir} 
+                           )
 target_compile_features(${util_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${util_lib_name} PRIVATE -fPIE)
-target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} ${parquet_libs} ${linux_libs})
+target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} 
+                      ${parquet_libs} ${linux_libs} ${spdlog_lib_name}
+                      )
 
 #########################################################
 #              Build/link parquet_context lib
@@ -62,10 +66,12 @@ add_library(${pqctx_lib_name} STATIC
             ${pqctx_src_dir}/parquet_context.cpp   ${pqctx_inc_dir}/parquet_context.h
     )
 
-target_include_directories(${pqctx_lib_name} PUBLIC ${pqctx_inc_dir} ${parquet_inc_dirs})
+target_include_directories(${pqctx_lib_name} PUBLIC ${pqctx_inc_dir} ${parquet_inc_dirs}
+                           ${spdlog_inc_dir})
 target_compile_features(${pqctx_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${pqctx_lib_name} PRIVATE -fPIE)
-target_link_libraries(${pqctx_lib_name} PUBLIC ${parquet_libs} ${linux_libs})
+target_link_libraries(${pqctx_lib_name} PUBLIC ${parquet_libs} ${linux_libs}
+                      ${spdlog_lib_name})
 
 #########################################################
 #      Build/link ethernet lib
@@ -117,10 +123,11 @@ target_include_directories(${ch10pq_lib_name} PUBLIC
                             ${eth_inc_dir}
                             ${ch10_inc_dir} # Ch10 format headers.
                             ${parserw_inc_dir} # parser rewrite format headers
-                            ${util_inc_dir})
+                            ${util_inc_dir}
+                            ${spdlog_inc_dir})
 target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${ch10pq_lib_name} PUBLIC ${pqctx_lib_name} ${eth_lib_name} ${linux_libs}
-                      ${util_lib_name})
+                      ${util_lib_name} ${spdlog_lib_name})
 
 #########################################################
 #             Build/link translate_1553 lib
@@ -190,10 +197,11 @@ target_compile_features(${videx_lib_name} PUBLIC cxx_std_17)
 #########################################################
 if(parser_rewrite)
     add_library(${parserw_lib_name} STATIC
-               ${parserw_inc_dir}/ch10_status.h ${parserw_inc_dir}/ch10_header_format.h
+               ${parserw_inc_dir}/ch10_status.h ${parserw_src_dir}/ch10_status.cpp 
+               ${parserw_inc_dir}/ch10_header_format.h
                ${parserw_inc_dir}/ch10_1553f1_msg_hdr_format.h
-               ${parserw_inc_dir}/ch10_packet_element_base.h ${parserw_src_dir}/ch10_packet_element_base.cpp
-               ${parserw_inc_dir}/ch10_packet_element.h ${parserw_src_dir}/ch10_packet_element.cpp
+               ${parserw_inc_dir}/ch10_packet_element_base.h
+               ${parserw_inc_dir}/ch10_packet_element.h
                ${parserw_inc_dir}/ch10_packet_component.h ${parserw_src_dir}/ch10_packet_component.cpp
                ${parserw_inc_dir}/ch10_packet_header_component.h ${parserw_src_dir}/ch10_packet_header_component.cpp
                ${parserw_inc_dir}/ch10_packet.h ${parserw_src_dir}/ch10_packet.cpp
@@ -204,9 +212,10 @@ if(parser_rewrite)
      )
 
     target_include_directories(${parserw_lib_name} PUBLIC ${parserw_inc_dir} ${util_inc_dir}
-                               ${ch10pq_inc_dir})
+                               ${ch10pq_inc_dir} ${spdlog_inc_dir})
     target_compile_features(${parserw_lib_name} PUBLIC cxx_std_17)
-    target_link_libraries(${parserw_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_name})
+    target_link_libraries(${parserw_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_name}
+                          ${spdlog_lib_name})
 endif()
 
 #########################################################
@@ -253,19 +262,18 @@ add_library(${ch10parse_lib_name} STATIC
 target_include_directories(${ch10parse_lib_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
                             ${temp_irig_inc_dir} ${temp_eth_inc_dir} ${parserw_inc_dir}
-                            )
+                            ${spdlog_inc_dir})
 target_compile_features(${ch10parse_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${ch10parse_lib_name} PRIVATE -fPIE)
 target_link_libraries(${ch10parse_lib_name} PUBLIC
-                        ${util_lib_name}
-                        #${pqctx_lib_name}
                         ${ch10pq_lib_name}
-                        #${parquet_libs}
+                        ${util_lib_name}
                         ${linux_libs}
                         ${temp_irig_lib_name}
                         ${temp_tins_libs}
                         ${temp_eth_lib_name}
                         ${parserw_lib_name}
+                        ${spdlog_lib_name}
     )
 
 
@@ -276,8 +284,8 @@ target_link_libraries(${ch10parse_lib_name} PUBLIC
 
 install(DIRECTORY DESTINATION ${out_lib_dir})
 
-install(TARGETS ${util_lib_name} 
-                ${pqctx_lib_name} 
+install(TARGETS ${pqctx_lib_name}
+                ${util_lib_name} 
                 ${ch10pq_lib_name} 
                 ${trans_lib_name}
                 ${comp_lib_name}
@@ -333,6 +341,7 @@ target_link_libraries(${trans_exe_name} ${trans_lib_name}
 if(build_tests)
     set(test_exe_name "tests")
     message(STATUS "Building lib: " "${test_exe_name}")
+    set(test_inc_dir ${test_exe_name}/${include_dir_name})
     set(test_src_dir ${test_exe_name}/${source_dir_name})
     set(test_main_dir ${test_exe_name}/${main_dir_name})
     set(parserw_test_sources "")
@@ -360,12 +369,14 @@ if(build_tests)
                    ${test_src_dir}/parse_manager_u.cpp ${test_src_dir}/parquet_reader_u.cpp
                    ${test_src_dir}/dts1553_u.cpp
                    ${test_src_dir}/managed_path_u.cpp
+                   ${test_inc_dir}/spdlog_setup_helper_funcs.h
                    ${parserw_test_sources}        
                    )
 #    set_property(TARGET ${test_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
-    target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
+    target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir} 
                                ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
-                               ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} ${parserw_inc_dir})
+                               ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} ${parserw_inc_dir}
+                               ${spdlog_inc_dir})
 
     target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
     target_link_libraries(${test_exe_name}
@@ -377,6 +388,7 @@ if(build_tests)
                           ${ch10parse_lib_name}
                           ${parquet_libs}
                           ${parserw_lib_name}
+                          ${spdlog_lib_name}
               ${linux_libs})
 
     # For Ctest

@@ -13,6 +13,8 @@
 #include "ch10_milstd1553f1.h"
 #include "iterable_tools.h"
 #include "managed_path.h"
+#include "spdlog/spdlog.h"
+
 #ifdef VIDEO_DATA
 #include "ch10_videodataf0.h"
 #endif
@@ -63,6 +65,7 @@ class ParseWorker
 #endif
 #ifdef PARSER_REWRITE
 		Ch10Context ctx;
+		std::map<uint16_t, uint64_t> chanid_minvideotimestamp_map_;
 #endif
 	uint8_t retcode;
 	bool continue_parsing;

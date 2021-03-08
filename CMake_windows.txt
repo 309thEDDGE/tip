@@ -137,3 +137,13 @@ set(other_tins_lib_names Ws2_32.lib Iphlpapi.lib)
 
 set(all_tins_incs ${tins_inc_dir} ${pcap_inc_dir})
 set(all_tins_libs ${tins_lib_name} ${other_tins_lib_names} ${pcap_lib_name})
+
+#########################################################
+#                   spdlog
+#########################################################
+set(spdlog_dir_name "spdlog-1.8.2")
+set(spdlog_path "${deps_dir}/${spdlog_dir_name}")
+set(spdlog_inc_dir ${spdlog_path}/include)
+set(spdlog_lib_dir ${spdlog_path}/lib)
+set(spdlog_lib_name ${spdlog_lib_dir}/spdlog.lib)
+
