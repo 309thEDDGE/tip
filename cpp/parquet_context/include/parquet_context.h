@@ -584,7 +584,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 				if (boolField != nullptr)
 				{
 					SPDLOG_WARN("Null fields for lists "
-						"are currently unavailable: {:s",
+						"are currently unavailable: {:s}",
 						fieldName);
 					boolField = nullptr;
 				}
@@ -631,8 +631,8 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
 					typeid(std::string).name() == typeid(NativeType).name() ||
 					it->second.type_->id() == arrow::BooleanType::type_id)
 				{
-					SPDLOG_CRITICAL("can't cast from other data "
-						"type to string or bool for: {:s}", fieldName);
+					SPDLOG_CRITICAL("can't cast from other data type "
+						"to string or bool for: {:s}", fieldName);
 					parquet_stop_ = true;
 					return false;
 				}

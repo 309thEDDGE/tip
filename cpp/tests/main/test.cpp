@@ -1,6 +1,6 @@
 
 #include "gmock/gmock.h"
-#include "../src/spdlog_setup_helper_funcs.h"
+#include "spdlog_setup_helper_funcs.h"
 
 int main(int argc, char** argv) {
 

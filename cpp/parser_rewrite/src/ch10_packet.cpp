@@ -33,7 +33,8 @@ Ch10Status Ch10Packet::ManageHeaderParseStatus(const Ch10Status& status,
         if (status == Ch10Status::BAD_SYNC || status == Ch10Status::CHECKSUM_FALSE)
         {
             if (ctx_->thread_id == 0)
-                SPDLOG_DEBUG("({:02d}) bad_sync", ctx_->thread_id);
+                SPDLOG_DEBUG("({:02d}) status = {:s}", ctx_->thread_id,
+                    Ch10StatusString(status));
             status_ = AdvanceBuffer(1);
 
             // If the buffer can't be advanced, return this status.
@@ -49,7 +50,8 @@ Ch10Status Ch10Packet::ManageHeaderParseStatus(const Ch10Status& status,
         // beginning of the next packet. 
         else
         {
-            SPDLOG_DEBUG("({:02d}) not ok", ctx_->thread_id);
+            SPDLOG_DEBUG("({:02d}) status = {:s}", ctx_->thread_id, 
+                Ch10StatusString(status));
             status_ = AdvanceBuffer(pkt_size);
 
             // If the buffer can't be advanced, return this status.

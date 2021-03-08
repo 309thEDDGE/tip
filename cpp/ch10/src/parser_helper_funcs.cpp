@@ -8,7 +8,7 @@ bool ValidateConfig(ParserConfigParams& config, std::string config_path,
 		conf_path = conf_path.parent_path() / "conf" / "parse_conf.yaml";
 	else
 		conf_path = ManagedPath(config_path) / "parse_conf.yaml";
-	/*printf("Configuration file path: %s\n", conf_path.RawString().c_str());*/
+	
 	bool settings_validated = config.Initialize(conf_path.string());
 	final_config_path = conf_path;
 	return settings_validated;
@@ -86,7 +86,6 @@ bool SetupLogging(const ManagedPath& log_dir)
 		console_sink->set_pattern("%^[%T] [%n] [%l] %v%$");
 
 		// ParseManager log
-		// automatically registered?
 		ManagedPath pm_log_path = log_dir / std::string("parse_manager.log");
 		auto pm_log_sink = std::make_shared<spdlog::sinks::rotating_file_sink_st>(pm_log_path.string(),
 			max_size, max_files);

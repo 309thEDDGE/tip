@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "ch10_packet_header_component.h"
-//#include "spdlog_setup_helper_funcs.h"
 
 class Ch10PacketHeaderComponentTest : public ::testing::Test
 {
@@ -38,9 +37,6 @@ protected:
         pkt_hdr_fmt_.rtc1 = 0; // set later
         pkt_hdr_fmt_.rtc2 = 0; // set later
         pkt_hdr_fmt_.checksum = 0; // set later
-
-        //std::string logger_name = "parse_logger";
-        //CreateNullLoggerWithName(logger_name);
     }
 
     ~Ch10PacketHeaderComponentTest()

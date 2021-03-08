@@ -6,10 +6,6 @@
 #include <iostream>
 #include <sstream>
 
-// Include the spdlog helper funcs to create a null logger with
-// the proper name.
-//#include "spdlog_setup_helper_funcs.h"
-
 class ParseManagerTest : public ::testing::Test
 {
 protected:
@@ -33,11 +29,6 @@ protected:
 			remove(filename.c_str());
 		}
 		file.close();
-
-		// Create a logger with the name used in ParseManager.
-		//std::string logger_name = "pm_logger";
-		//CreateNullLoggerWithName(logger_name);
-		
 	}
 	~ParseManagerTest()
 	{
@@ -49,7 +40,6 @@ protected:
 			remove(filename.c_str());
 		}
 		file.close();
-		//spdlog::shutdown();
 	}
 	void SetUp() override
 	{
