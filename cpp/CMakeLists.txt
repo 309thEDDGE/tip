@@ -197,7 +197,8 @@ target_compile_features(${videx_lib_name} PUBLIC cxx_std_17)
 #########################################################
 if(parser_rewrite)
     add_library(${parserw_lib_name} STATIC
-               ${parserw_inc_dir}/ch10_status.h ${parserw_inc_dir}/ch10_header_format.h
+               ${parserw_inc_dir}/ch10_status.h ${parserw_src_dir}/ch10_status.cpp 
+               ${parserw_inc_dir}/ch10_header_format.h
                ${parserw_inc_dir}/ch10_1553f1_msg_hdr_format.h
                ${parserw_inc_dir}/ch10_packet_element_base.h
                ${parserw_inc_dir}/ch10_packet_element.h
@@ -340,6 +341,7 @@ target_link_libraries(${trans_exe_name} ${trans_lib_name}
 if(build_tests)
     set(test_exe_name "tests")
     message(STATUS "Building lib: " "${test_exe_name}")
+    set(test_inc_dir ${test_exe_name}/${include_dir_name})
     set(test_src_dir ${test_exe_name}/${source_dir_name})
     set(test_main_dir ${test_exe_name}/${main_dir_name})
     set(parserw_test_sources "")
@@ -367,10 +369,11 @@ if(build_tests)
                    ${test_src_dir}/parse_manager_u.cpp ${test_src_dir}/parquet_reader_u.cpp
                    ${test_src_dir}/dts1553_u.cpp
                    ${test_src_dir}/managed_path_u.cpp
+                   ${test_inc_dir}/spdlog_setup_helper_funcs.h
                    ${parserw_test_sources}        
                    )
 #    set_property(TARGET ${test_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
-    target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
+    target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir} 
                                ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
                                ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} ${parserw_inc_dir}
                                ${spdlog_inc_dir})
