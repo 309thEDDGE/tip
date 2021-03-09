@@ -1,8 +1,8 @@
 #pragma once
 // Video Data, Format 0, pp. 93 IRIG106 Ch10
 
-#ifndef VIDEODATAF0FMT_H
-#define VIDEODATAF0FMT_H
+#ifndef CH10_VIDEOF0_HDR_FORMAT_H
+#define CH10_VIDEOF0_HDR_FORMAT_H
 
 #include <cstdint>
 
@@ -14,7 +14,7 @@ const uint32_t RECORDED_DATA_SIZE = uint32_t(sizeof(video_datum));
 const uint32_t MAX_DATA_COUNT = MAX_SIZE / RECORDED_DATA_SIZE;
 const uint32_t TransportStream_DATA_COUNT = TransportStream_UNIT_SIZE / RECORDED_DATA_SIZE;
 
-class VideoF0CSDWFmt
+class Ch10VideoF0HeaderFormat
 {
 public:
 	uint32_t : 23;  // reserved

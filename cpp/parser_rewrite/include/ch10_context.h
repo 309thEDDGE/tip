@@ -14,6 +14,8 @@
 #include "ch10_header_format.h"
 #include "ch10_1553f1_msg_hdr_format.h"
 #include "parquet_milstd1553f1.h"
+#include "ch10_videof0_header_format.h"
+#include "parquet_videodataf0.h"
 #include "spdlog/spdlog.h"
 
 enum class Ch10PacketType : uint8_t
@@ -116,6 +118,7 @@ private:
 	// File writers are owned by Ch10Context to maintain state
 	//
 	std::unique_ptr<ParquetMilStd1553F1> milstd1553f1_pq_writer_;
+	std::unique_ptr<ParquetVideoDataF0> videof0_pq_writer_;
 
 
 public:
@@ -138,6 +141,7 @@ public:
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr2_map;
 	const std::map<uint32_t, std::set<uint32_t>>& chanid_commwords_map;
 	ParquetMilStd1553F1* milstd1553f1_pq_writer;
+	const uint32_t intrapacket_ts_size_ = 2*sizeof(uint64_t);
 
 	Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
 	Ch10Context();

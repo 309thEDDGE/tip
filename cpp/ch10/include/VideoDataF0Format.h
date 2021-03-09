@@ -6,6 +6,11 @@
 
 #include <cstdint>
 
+#ifdef PARSER_REWRITE
+# 	include "ch10_videof0_header_format.h"
+ 	typedef Ch10VideoF0HeaderFormat VideoDataF0ChanSpecFormat; // Make old and new type names interchangeable
+#else
+
 const uint32_t TransportStream_UNIT_SIZE = 188;
 const uint32_t MAX_TransportStream_UNITS = 600;
 const uint32_t MAX_SIZE = TransportStream_UNIT_SIZE * MAX_TransportStream_UNITS;
@@ -24,6 +29,8 @@ public:
 	uint32_t IPH : 1;  // Intra-packet header. Indicates if intra-packet time stamps are inserted before each transport packet.
 	uint32_t ET : 1;  // Embedded Time. Indicates if embedded time is present in the MPEG-2 video data.
 };
+
+#endif // PARSER_REWRITE
 
 enum class VideoDataF1Status : uint8_t
 {
