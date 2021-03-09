@@ -2,6 +2,7 @@
 #define YAML_SCHEMA_VALIDATION_H_
 
 #include <vector>
+#include <cstdarg>
 #include "yaml-cpp/yaml.h"
 #include "parse_text.h"
 #include "yamlsv_log_item.h"
@@ -12,6 +13,9 @@ class YamlSV
 private:
 	//YAML::Node schema_node_;
 	ParseText parse_text_;
+
+	static const int buff_size_ = 512;
+	char buffer_[buff_size_];
 
 public:
 	YamlSV();
@@ -41,6 +45,12 @@ public:
 	*/
 	void AddLogItem(std::vector<LogItem>& log_output, LogLevel level, 
 		std::string message);
+
+	/*
+
+	*/
+	void AddLogItem(std::vector<LogItem>& log_output, LogLevel level,
+		const char* fmt, ...);
 
 	/*
 	Simultaneously verify that the user-defined schema yaml complies with the standard

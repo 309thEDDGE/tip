@@ -40,6 +40,18 @@ void YamlSV::AddLogItem(std::vector<LogItem>& log_output, LogLevel level,
 	log_output.push_back(item);
 }
 
+void YamlSV::AddLogItem(std::vector<LogItem>& log_output, LogLevel level,
+	const char* fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(buffer_, buff_size_, fmt, args);
+	std::string msg(buffer_);
+
+	LogItem item(level, msg);
+	log_output.push_back(item);
+}
+
 //bool YamlSV::MakeSchemaNode(YAML::Node& output_node, const YAML::Node& user_schema_node,
 //	std::vector<LogItem>& log_output)
 //{
@@ -114,11 +126,37 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 		for (YAML::const_iterator it = schema_node.begin(); it != schema_node.end(); ++it)
 		{
 			key = it->first.as<std::string>();
-			val = it->second.as<std::string>();
-			if (!VerifyType(val, test_node[key].as<std::string>()))
+
+			// If the key is not present in the test map, then do not proceed.
+			if (!test_node[key])
+			{
+				AddLogItem(log_output, LogLevel::INFO, 
+					"YamlSV::ProcessNode: Key %s in schema not present yaml",
+					key.c_str());
 				return false;
-			// Create the same node in the output_node.
-			//if (key == not_defined_str)
+			}
+
+			// If the mapped type is a scalar, check the value against the schema.
+			if (it->second.IsScalar())
+			{
+				val = it->second.as<std::string>();
+				if (!VerifyType(val, test_node[key].as<std::string>()))
+				{
+					// Need function which takes format string, etc.
+					AddLogItem(log_output, LogLevel::INFO, 
+						"YamlSV::ProcessNode: Value for key %s does not match type %s",
+						key.c_str(), val.c_str());
+					return false;
+				}
+			}
+
+			// If the mapped type is another map or a sequence, process the lower node
+			// separately.
+			else
+			{
+				if (!ProcessNode(test_node[key], it->second, log_output))
+					return false;
+			}
 
 		}
 	}
@@ -152,6 +190,11 @@ bool YamlSV::VerifyType(const std::string& str_type, const std::string& test_val
 		case static_cast<uint8_t>(YamlSVSchemaType::FLT) :
 		{
 			return parse_text_.TextIsFloat(test_val);
+		}
+		case static_cast<uint8_t>(YamlSVSchemaType::BOOL) :
+		{
+			if (!(test_val == "True" || test_val == "False"))
+				return false;
 		}
 	}
 	return true;
