@@ -3,12 +3,15 @@
 
 #include <vector>
 #include "yaml-cpp/yaml.h"
+#include "parse_text.h"
 #include "yamlsv_log_item.h"
+#include "yamlsv_schema.h"
 
 class YamlSV
 {
 private:
-	YAML::Node schema_node_;
+	//YAML::Node schema_node_;
+	ParseText parse_text_;
 
 public:
 	YamlSV();
@@ -40,10 +43,22 @@ public:
 		std::string message);
 
 	/*
-	
+	Simultaneously verify that the user-defined schema yaml complies with the standard
+	defined here and create a new node with values that can be more efficiently 
+	compared relative to the user schema types of "STR", "INT", etc.
 	*/
-	bool MakeSchemaNode(YAML::Node& output_node, const YAML::Node& user_schema_node,
+	/*bool MakeSchemaNode(YAML::Node& output_node, const YAML::Node& user_schema_node,
+		std::vector<LogItem>& log_output);*/
+
+	/*bool ProcessSchemaNode(YAML::Node& output_node, const YAML::Node& user_schema_node,
+		std::vector<LogItem>& log_output);*/
+
+	//bool GetTypeCode(const std::string& type_str, uint8_t& type_val);
+
+	bool ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_node,
 		std::vector<LogItem>& log_output);
+
+	bool VerifyType(const std::string& str_type, const std::string& test_val);
 };
 
 #endif
