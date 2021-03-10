@@ -142,7 +142,7 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 				// value mapped to the not defined key.
 				if (it == schema_node.end())
 				{
-					if (!TestOrProcess(it, test_current, log_output))
+					if (!TestMapElement(it, test_current, log_output))
 						return false;
 				}
 				else
@@ -151,11 +151,11 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 					while (test_current->first.as<std::string>() !=
 						schema_next->first.as<std::string>())
 					{
-						printf("compared schema %s with test %s\n",
+						/*printf("compared schema %s with test %s\n",
 							schema_next->first.as<std::string>().c_str(),
-							test_current->first.as<std::string>().c_str());
+							test_current->first.as<std::string>().c_str());*/
 
-						if (!TestOrProcess(it, test_current, log_output))
+						if (!TestMapElement(it, test_current, log_output))
 							return false;
 
 						test_current++;
@@ -168,13 +168,13 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 			if (!test_node[key])
 			{
 				AddLogItem(log_output, LogLevel::INFO, 
-					"YamlSV::ProcessNode: Key %s in schema not present yaml",
+					"YamlSV::ProcessNode: Key %s in schema not present in yaml",
 					key.c_str());
 				return false;
 			}
 
 			// If the mapped type is a scalar, check the value against the schema.
-			if (!TestOrProcess(it, test_current, log_output))
+			if (!TestMapElement(it, test_current, log_output))
 				return false;
 
 			/*if (test_current == test_node.end())
@@ -191,7 +191,62 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 	}
 	else if (schema_node.IsSequence())
 	{
+		test_current = test_node.begin();
 
+		// Do not process empty schema or test sequence
+		/*if (schema_node.size() == 0 || test_node.size() == 0)
+		{
+			if (schema_node.size() == 0)
+			{
+				AddLogItem(log_output, LogLevel::INFO, "Schema node is an empty sequence");
+			}
+			else if (test_node.size() == 0)
+			{
+				AddLogItem(log_output, LogLevel::INFO, "Test node is an empty sequence");
+			}
+			return false;
+		}*/
+
+		// If the size of the schema sequence is one, then there is no
+		// need to iterate.
+		if (schema_node.size() == 1)
+		{
+			// Process the deeper level if the entry is also a 
+			// sequence. 
+			if (schema_node[0].IsSequence())
+			{
+				if (!ProcessNode(test_node, schema_node, log_output))
+					return false;
+			}
+			else
+			{
+				if (!TestSequence(schema_node, test_node, log_output))
+					return false;
+			}
+		}
+		else
+		{
+			// Iterate over the schema sequence.
+			for (YAML::const_iterator it = schema_node.begin(); it != schema_node.end(); ++it)
+			{
+				// If the current element is a sequence and has size greater than
+				// one then process the deeper level.
+				if (it->IsSequence())
+				{
+					if (it->size() > 1)
+					{
+						if (!ProcessNode(*test_current, *it, log_output))
+							return false;
+					}
+					else
+					{
+						if (!TestSequence(*it, *test_current, log_output))
+							return false;
+					}
+				}
+				test_current++;
+			}
+		}
 	}
 	else if (schema_node.IsScalar())
 	{
@@ -210,6 +265,9 @@ bool YamlSV::VerifyType(const std::string& str_type, const std::string& test_val
 		return false;
 
 	// No need to check string. Anything can be interpreted as a string.
+	// Use switch for now in case we add more types later. This is currently
+	// probably not as efficient as using if, else if, etc. If we add another
+	// case or several then it will likely be more efficient than if, else if.
 	switch (string_to_schema_type_map.at(str_type))
 	{
 		case static_cast<uint8_t>(YamlSVSchemaType::INT) :
@@ -229,7 +287,7 @@ bool YamlSV::VerifyType(const std::string& str_type, const std::string& test_val
 	return true;
 }
 
-bool YamlSV::TestOrProcess(YAML::const_iterator& schema_it, YAML::const_iterator& test_it,
+bool YamlSV::TestMapElement(YAML::const_iterator& schema_it, YAML::const_iterator& test_it,
 	std::vector<LogItem>& log_output)
 {
 	// If the mapped type is a scalar, check the value against the schema.
@@ -261,6 +319,62 @@ bool YamlSV::TestOrProcess(YAML::const_iterator& schema_it, YAML::const_iterator
 	{
 		if (!ProcessNode(test_it->second, schema_it->second, log_output))
 			return false;
+	}
+	return true;
+}
+
+bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_node,
+	std::vector<LogItem>& log_output)
+{
+	// Ensure size of schema_node is 1.
+	if (schema_node.size() != 1)
+	{
+		AddLogItem(log_output, LogLevel::INFO,
+			"YamlSV::TestSequence: Schema node must have one element only (not %zu)",
+			schema_node.size());
+		return false;
+	}
+
+	// Error if the first (only) element in the schema is null.
+	if (schema_node[0].IsNull())
+	{
+		AddLogItem(log_output, LogLevel::INFO,
+			"YamlSV::TestSequence: Schema node element is null");
+		return false;
+	}
+
+	// Get the string representation of the type.
+	std::string str_type = schema_node[0].as<std::string>();
+
+	// Before iterating over the test sequence, check if the string type
+	// is valid.
+	if (schema_string_type_set.count(str_type) == 0)
+	{
+		AddLogItem(log_output, LogLevel::INFO,
+			"YamlSV::TestSequence: Type \"%s\" invalid", str_type.c_str());
+		return false;
+	}
+
+	// Size of the test sequence must be greater than zero.
+	if (!(test_node.size() > 0))
+	{
+		AddLogItem(log_output, LogLevel::INFO,
+			"YamlSV::TestSequence: Test node must have size greater than zero");
+		return false;
+	}
+
+	// Iterate over the test_node sequence, checking the type of 
+	// each element against the schema type.
+	for (YAML::const_iterator it = test_node.begin(); it != test_node.end(); ++it)
+	{
+		//printf("verify type %s, val %s\n", str_type.c_str(), it->as<std::string>().c_str());
+		if (!VerifyType(str_type, it->as<std::string>()))
+		{
+			AddLogItem(log_output, LogLevel::INFO,
+				"YamlSV::TestSequence: Value %s does not match type %s",
+				it->as<std::string>().c_str(), str_type.c_str());
+			return false;
+		}
 	}
 	return true;
 }

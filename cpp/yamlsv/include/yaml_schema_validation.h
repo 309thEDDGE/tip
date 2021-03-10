@@ -70,8 +70,11 @@ public:
 
 	bool VerifyType(const std::string& str_type, const std::string& test_val);
 
-	bool TestOrProcess(YAML::const_iterator& schema_it, 
+	bool TestMapElement(YAML::const_iterator& schema_it, 
 		YAML::const_iterator& test_it, std::vector<LogItem>& log_output);
+
+	bool TestSequence(const YAML::Node& schema_node, const YAML::Node& test_node, 
+		std::vector<LogItem>& log_output);
 
 };
 
