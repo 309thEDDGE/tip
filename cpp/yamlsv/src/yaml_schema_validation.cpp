@@ -375,6 +375,15 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
 		return false;
 	}
 
+	// Can not evaluate if test node is a scalar.
+	if (test_node.IsScalar())
+	{
+		AddLogItem(log_output, LogLevel::INFO,
+			"YamlSV::TestSequence: Test node must be a sequence, not scalar (%s)",
+			test_node.as<std::string>().c_str());
+		return false;
+	}
+
 	// Size of the test sequence must be greater than zero.
 	if (!(test_node.size() > 0))
 	{

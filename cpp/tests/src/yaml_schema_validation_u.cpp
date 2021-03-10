@@ -698,52 +698,48 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeMapAndSequenceNotDefined)
 {
 	schema_node_ = YAML::Load(
 		"m1: INT\n"
-		"m2: [FLT]\n"
-		"m3:\n"
-		"  - mm1: BOOL\n"
-		"  - mm2: [BOOL]\n"
-		"m4: INT\n");
+		"_NOT_DEFINED_: [FLT]\n"
+		"m3: BOOL\n");
 	test_node_ = YAML::Load(
 		"m1: 23\n"
 		"m2:\n"
 		"  - 2.0\n"
 		"  - 9.2\n"
-		"m3:\n"
-		"  - mm1: True\n"
-		"  - mm2: [True, False]\n"
-		"m4: 1002\n");
+		"mm2: [32, 100, 31.1]\n"
+		"mm3: [99.8]\n"
+		"m3: True\n");
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
 	EXPECT_EQ(log_items_.size(), 0);
 
-	test_node_["m1"] = "err";
+	test_node_["m2"] = "err";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("m1") != std::string::npos);
+	EXPECT_TRUE(log_items_[0].message.find("err") != std::string::npos);
 
 	log_items_.clear();
-	test_node_["m1"] = "21";
-	test_node_["m2"][0] = "bad";
+	test_node_["m2"] = YAML::Load("[2.0, 9.2]");
+	test_node_["mm2"][0] = "notflt";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("bad") != std::string::npos);
+	EXPECT_TRUE(log_items_[0].message.find("notflt") != std::string::npos);
 
 	log_items_.clear();
-	test_node_["m2"][0] = "33.11";
-	test_node_["m3"][1]["mm2"][0] = "true";
+	test_node_["mm2"][0] = "1.0";
+	test_node_["mm3"][0] = "data";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("true") != std::string::npos);
+	EXPECT_TRUE(log_items_[0].message.find("data") != std::string::npos);
 
 	log_items_.clear();
-	test_node_["m3"][1]["mm2"][0] = "True";
-	test_node_["m4"] = "str";
+	test_node_["mm3"][0] = "25.1";
+	test_node_["m3"] = "true";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("m4") != std::string::npos);
+	EXPECT_TRUE(log_items_[0].message.find("m3") != std::string::npos);
 }
