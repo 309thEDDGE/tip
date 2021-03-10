@@ -587,5 +587,163 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeEmptyTestSequence)
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("Test") != std::string::npos);
+	EXPECT_TRUE(log_items_[0].message.find("zero") != std::string::npos);
+}
+
+TEST_F(YamlSchemaValidationTest, ProcessNodeNestedSequence2)
+{
+	schema_node_ = YAML::Load(
+		"- [INT]\n"
+		"-\n"
+		"  - [FLT]\n"
+		"  - [BOOL]\n"
+		"- [BOOL]\n");
+	test_node_ = YAML::Load(
+		"- [20, 3400, 10]\n"
+		"-\n"
+		"  - [19.3, 19.8]\n"
+		"  - [True]\n"
+		"- [True, False, True]\n");
+
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(log_items_.size(), 0);
+
+	test_node_[0][1] = "badval";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("badval") != std::string::npos);
+
+	log_items_.clear();
+	test_node_[0][1] = "3511";
+	test_node_[1][0][0] = "badval";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("badval") != std::string::npos);
+
+	log_items_.clear();
+	test_node_[1][0][0] = "54.4";
+	test_node_[1][1][0] = "true";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("true") != std::string::npos);
+
+	log_items_.clear();
+	test_node_[1][1][0] = "False";
+	test_node_[2][1] = "false";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("false") != std::string::npos);
+}
+
+TEST_F(YamlSchemaValidationTest, ProcessNodeMapAndSequence1)
+{
+	schema_node_ = YAML::Load(
+		"m1: INT\n"
+		"m2: [FLT]\n"
+		"m3:\n"
+		"  - mm1: BOOL\n"
+		"  - mm2: [BOOL]\n"
+		"m4: INT\n");
+	test_node_ = YAML::Load(
+		"m1: 23\n"
+		"m2:\n"
+		"  - 2.0\n"
+		"  - 9.2\n"
+		"m3:\n"
+		"  - mm1: True\n"
+		"  - mm2: [True, False]\n"
+		"m4: 1002\n");
+
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(log_items_.size(), 0);
+
+	test_node_["m1"] = "err";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("m1") != std::string::npos);
+
+	log_items_.clear();
+	test_node_["m1"] = "21";
+	test_node_["m2"][0] = "bad";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("bad") != std::string::npos);
+
+	log_items_.clear();
+	test_node_["m2"][0] = "33.11";
+	test_node_["m3"][1]["mm2"][0] = "true";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("true") != std::string::npos);
+
+	log_items_.clear();
+	test_node_["m3"][1]["mm2"][0] = "True";
+	test_node_["m4"] = "str";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("m4") != std::string::npos);
+}
+
+TEST_F(YamlSchemaValidationTest, ProcessNodeMapAndSequenceNotDefined)
+{
+	schema_node_ = YAML::Load(
+		"m1: INT\n"
+		"m2: [FLT]\n"
+		"m3:\n"
+		"  - mm1: BOOL\n"
+		"  - mm2: [BOOL]\n"
+		"m4: INT\n");
+	test_node_ = YAML::Load(
+		"m1: 23\n"
+		"m2:\n"
+		"  - 2.0\n"
+		"  - 9.2\n"
+		"m3:\n"
+		"  - mm1: True\n"
+		"  - mm2: [True, False]\n"
+		"m4: 1002\n");
+
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(log_items_.size(), 0);
+
+	test_node_["m1"] = "err";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("m1") != std::string::npos);
+
+	log_items_.clear();
+	test_node_["m1"] = "21";
+	test_node_["m2"][0] = "bad";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("bad") != std::string::npos);
+
+	log_items_.clear();
+	test_node_["m2"][0] = "33.11";
+	test_node_["m3"][1]["mm2"][0] = "true";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("true") != std::string::npos);
+
+	log_items_.clear();
+	test_node_["m3"][1]["mm2"][0] = "True";
+	test_node_["m4"] = "str";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("m4") != std::string::npos);
 }

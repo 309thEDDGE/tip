@@ -211,11 +211,17 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 		// need to iterate.
 		if (schema_node.size() == 1)
 		{
+
 			// Process the deeper level if the entry is also a 
 			// sequence. 
 			if (schema_node[0].IsSequence())
 			{
-				if (!ProcessNode(test_node, schema_node, log_output))
+				// Then the first element in the test node must also be a sequence.
+				/*if (!test_node[0].isSequence())
+				{
+
+				}*/
+				if (!ProcessNode(test_node[0], schema_node[0], log_output))
 					return false;
 			}
 			else
@@ -244,17 +250,31 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 							return false;
 					}
 				}
+				else
+				{
+					if (!ProcessNode(*test_current, *it, log_output))
+						return false;
+				}
 				test_current++;
 			}
 		}
 	}
 	else if (schema_node.IsScalar())
 	{
-
+		// Verify the value against the schema type.
+		if (!VerifyType(schema_node.as<std::string>(), test_node.as<std::string>()))
+		{
+			AddLogItem(log_output, LogLevel::INFO,
+				"YamlSV::ProcessNode: Test value %s is not compatible with type %s",
+				test_node.as<std::string>().c_str(),
+				schema_node.as<std::string>().c_str());
+			return false;
+		}
 	}
 	else
 	{
-
+		AddLogItem(log_output, LogLevel::INFO, "Schema node is not a map, sequence, or scalar");
+		return false;
 	}
 	return true;
 }
@@ -296,7 +316,7 @@ bool YamlSV::TestMapElement(YAML::const_iterator& schema_it, YAML::const_iterato
 		if (!test_it->second.IsScalar())
 		{
 			AddLogItem(log_output, LogLevel::INFO,
-				"YamlSV::TestOrProcess: Value for key %s is not a scalar as indicated by the type %s",
+				"YamlSV::TestMapElement: Value for key %s is not a scalar as indicated by the type %s",
 				test_it->first.as<std::string>().c_str(),
 				schema_it->second.as<std::string>().c_str());
 			return false;
@@ -306,7 +326,7 @@ bool YamlSV::TestMapElement(YAML::const_iterator& schema_it, YAML::const_iterato
 			test_it->second.as<std::string>()))
 		{
 			AddLogItem(log_output, LogLevel::INFO,
-				"YamlSV::TestOrProcess: Value for key %s does not match type %s",
+				"YamlSV::TestMapElement: Value for key %s does not match type %s",
 				test_it->first.as<std::string>().c_str(), 
 				schema_it->second.as<std::string>().c_str());
 			return false;
@@ -367,7 +387,7 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
 	// each element against the schema type.
 	for (YAML::const_iterator it = test_node.begin(); it != test_node.end(); ++it)
 	{
-		//printf("verify type %s, val %s\n", str_type.c_str(), it->as<std::string>().c_str());
+		printf("verify type %s, val %s\n", str_type.c_str(), it->as<std::string>().c_str());
 		if (!VerifyType(str_type, it->as<std::string>()))
 		{
 			AddLogItem(log_output, LogLevel::INFO,
