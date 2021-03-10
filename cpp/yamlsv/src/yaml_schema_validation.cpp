@@ -118,14 +118,51 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 	std::vector<LogItem>& log_output)
 {
 	std::string key;
-	std::string val;
+	std::string type_str;
+	YAML::const_iterator schema_next;
+	YAML::const_iterator test_current;
+	//YAML::const_iterator test_next;
 	// current node level is a Scalar, Sequence, or Map.
 	if (schema_node.IsMap())
 	{
+		// TODO: Check if the current test_node is also a map and return false if not.
+
 		// Iterate over map.
+		test_current = test_node.begin();
 		for (YAML::const_iterator it = schema_node.begin(); it != schema_node.end(); ++it)
 		{
 			key = it->first.as<std::string>();
+
+			// If the key is the special tag "_NOT_DEFINED_", do not require a
+			// key and rely on the position of the iterators.
+			if (key == not_defined_str)
+			{
+				// While the current test key is not equal to the next schema key,
+				// assume the items are duplicates with the schema defined by the current
+				// value mapped to the not defined key.
+				if (it == schema_node.end())
+				{
+					if (!TestOrProcess(it, test_current, log_output))
+						return false;
+				}
+				else
+				{
+					schema_next = std::next(it, 1);
+					while (test_current->first.as<std::string>() !=
+						schema_next->first.as<std::string>())
+					{
+						printf("compared schema %s with test %s\n",
+							schema_next->first.as<std::string>().c_str(),
+							test_current->first.as<std::string>().c_str());
+
+						if (!TestOrProcess(it, test_current, log_output))
+							return false;
+
+						test_current++;
+					}
+				}
+				continue;
+			}
 
 			// If the key is not present in the test map, then do not proceed.
 			if (!test_node[key])
@@ -137,27 +174,19 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 			}
 
 			// If the mapped type is a scalar, check the value against the schema.
-			if (it->second.IsScalar())
+			if (!TestOrProcess(it, test_current, log_output))
+				return false;
+
+			/*if (test_current == test_node.end())
 			{
-				val = it->second.as<std::string>();
-				if (!VerifyType(val, test_node[key].as<std::string>()))
+				if (it != schema_node.end())
 				{
-					// Need function which takes format string, etc.
-					AddLogItem(log_output, LogLevel::INFO, 
-						"YamlSV::ProcessNode: Value for key %s does not match type %s",
-						key.c_str(), val.c_str());
+					AddLogItem(log_output, LogLevel::INFO,
+						"YamlSV::ProcessNode: test node iterator reached the end prematurely");
 					return false;
 				}
-			}
-
-			// If the mapped type is another map or a sequence, process the lower node
-			// separately.
-			else
-			{
-				if (!ProcessNode(test_node[key], it->second, log_output))
-					return false;
-			}
-
+			}*/
+			test_current++;
 		}
 	}
 	else if (schema_node.IsSequence())
@@ -196,6 +225,42 @@ bool YamlSV::VerifyType(const std::string& str_type, const std::string& test_val
 			if (!(test_val == "True" || test_val == "False"))
 				return false;
 		}
+	}
+	return true;
+}
+
+bool YamlSV::TestOrProcess(YAML::const_iterator& schema_it, YAML::const_iterator& test_it,
+	std::vector<LogItem>& log_output)
+{
+	// If the mapped type is a scalar, check the value against the schema.
+	if (schema_it->second.IsScalar())
+	{
+		if (!test_it->second.IsScalar())
+		{
+			AddLogItem(log_output, LogLevel::INFO,
+				"YamlSV::TestOrProcess: Value for key %s is not a scalar as indicated by the type %s",
+				test_it->first.as<std::string>().c_str(),
+				schema_it->second.as<std::string>().c_str());
+			return false;
+		}
+
+		if (!VerifyType(schema_it->second.as<std::string>(),
+			test_it->second.as<std::string>()))
+		{
+			AddLogItem(log_output, LogLevel::INFO,
+				"YamlSV::TestOrProcess: Value for key %s does not match type %s",
+				test_it->first.as<std::string>().c_str(), 
+				schema_it->second.as<std::string>().c_str());
+			return false;
+		}
+	}
+
+	// If the mapped type is another map or a sequence, process the lower node
+	// separately.
+	else
+	{
+		if (!ProcessNode(test_it->second, schema_it->second, log_output))
+			return false;
 	}
 	return true;
 }

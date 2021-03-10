@@ -197,6 +197,45 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeMissingKey)
 	EXPECT_TRUE(log_items_[0].message.find("dog") != std::string::npos);
 }
 
+TEST_F(YamlSchemaValidationTest, ProcessNodeIncorrectStructure)
+{
+	schema_node_ = YAML::Load(
+		"data: STR\n"
+		"time: FLT\n"
+		"state: BOOL\n");
+	test_node_ = YAML::Load(
+		"data: test\n"
+		"time: [23.4, 99.9]\n"
+		"state: True\n");
+
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("time") != std::string::npos);
+
+	test_node_ = YAML::Load(
+		"data: {test: 10, other: 30}\n"
+		"time: 23.4\n"
+		"state: True\n");
+	log_items_.clear();
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("data") != std::string::npos);
+
+	test_node_ = YAML::Load(
+		"data: test\n"
+		"time: 23.4\n"
+		"state:\n"
+		"  d1: 9\n"
+		"  d2: 10\n");
+	log_items_.clear();
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("state") != std::string::npos);
+}
+
 TEST_F(YamlSchemaValidationTest, ProcessNodeNestedMap1)
 {
 	schema_node_ = YAML::Load(
@@ -291,3 +330,42 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeNestedMap3)
 	EXPECT_TRUE(log_items_[0].message.find("err") != std::string::npos);
 }
 
+TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefined)
+{
+	schema_node_ = YAML::Load(
+		"data: STR\n"
+		"_NOT_DEFINED_: INT\n"
+		"val: FLT\n");
+	test_node_ = YAML::Load(
+		"data: test\n"
+		"dog: 9\n"
+		"val: 23.0\n");
+
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(log_items_.size(), 0);
+}
+
+TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefinedRepeating)
+{
+	schema_node_ = YAML::Load(
+		"data: STR\n"
+		"_NOT_DEFINED_: INT\n"
+		"val: FLT\n");
+	test_node_ = YAML::Load(
+		"data: test\n"
+		"dog: 9\n"
+		"abc: 12\n"
+		"def: 993\n"
+		"val: 23.0\n");
+
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(log_items_.size(), 0);
+
+	test_node_["abc"] = "hello";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_TRUE(log_items_[0].message.find("abc") != std::string::npos);
+}

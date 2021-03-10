@@ -69,6 +69,10 @@ public:
 		std::vector<LogItem>& log_output);
 
 	bool VerifyType(const std::string& str_type, const std::string& test_val);
+
+	bool TestOrProcess(YAML::const_iterator& schema_it, 
+		YAML::const_iterator& test_it, std::vector<LogItem>& log_output);
+
 };
 
 #endif
