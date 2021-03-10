@@ -52,19 +52,6 @@ public:
 	void AddLogItem(std::vector<LogItem>& log_output, LogLevel level,
 		const char* fmt, ...);
 
-	/*
-	Simultaneously verify that the user-defined schema yaml complies with the standard
-	defined here and create a new node with values that can be more efficiently 
-	compared relative to the user schema types of "STR", "INT", etc.
-	*/
-	/*bool MakeSchemaNode(YAML::Node& output_node, const YAML::Node& user_schema_node,
-		std::vector<LogItem>& log_output);*/
-
-	/*bool ProcessSchemaNode(YAML::Node& output_node, const YAML::Node& user_schema_node,
-		std::vector<LogItem>& log_output);*/
-
-	//bool GetTypeCode(const std::string& type_str, uint8_t& type_val);
-
 	bool ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_node,
 		std::vector<LogItem>& log_output);
 

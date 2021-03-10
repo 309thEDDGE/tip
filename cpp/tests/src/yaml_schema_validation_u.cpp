@@ -61,7 +61,7 @@ TEST_F(YamlSchemaValidationTest, ValidateEmptyNodes)
 	EXPECT_FALSE(res_);
 
 	// Log output 
-	EXPECT_EQ(log_items_.size(), 2);
+	EXPECT_EQ(log_items_.size(), 1);
 }
 
 TEST_F(YamlSchemaValidationTest, VerifyTypeNotAType)

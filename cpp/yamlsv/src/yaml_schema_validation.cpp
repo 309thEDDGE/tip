@@ -13,24 +13,20 @@ YamlSV::YamlSV() : parse_text_()
 bool YamlSV::Validate(const YAML::Node& test_node, const YAML::Node& user_schema_node,
 	std::vector<LogItem>& log_output)
 {
-	bool is_validated = true;
-
 	// Return false if nodes are empty.
 	if (test_node.size() == 0)
 	{
-		is_validated = false;
 		AddLogItem(log_output, LogLevel::WARN, "test node is empty");
+		return false;
 	}
 
 	if (user_schema_node.size() == 0)
 	{
-		is_validated = false;
 		AddLogItem(log_output, LogLevel::WARN, "schema node is empty");
+		return false;
 	}
 
-	if (!is_validated)
-		return false;
-	return true;
+	return ProcessNode(test_node, user_schema_node, log_output);
 }
 
 void YamlSV::AddLogItem(std::vector<LogItem>& log_output, LogLevel level,
@@ -52,68 +48,6 @@ void YamlSV::AddLogItem(std::vector<LogItem>& log_output, LogLevel level,
 	log_output.push_back(item);
 }
 
-//bool YamlSV::MakeSchemaNode(YAML::Node& output_node, const YAML::Node& user_schema_node,
-//	std::vector<LogItem>& log_output)
-//{
-//	// output_node should be initially empty
-//	if (output_node.size() == 0)
-//	{
-//		AddLogItem(log_output, LogLevel::WARN, "output node is not empty");
-//		return false;
-//	}
-//
-//	// 
-//	return true;
-//}
-
-//bool YamlSV::ProcessSchemaNode(YAML::Node& output_node, const YAML::Node& user_schema_node,
-//	std::vector<LogItem>& log_output)
-//{
-//	std::string key;
-//	std::string val;
-//	uint8_t type_val;
-//	bool res = false;
-//	// Decide if current node level is a Scalar, Sequence, or Map.
-//	if (user_schema_node.IsMap())
-//	{
-//		// Iterate over map.
-//		for (YAML::const_iterator it = user_schema_node.begin(); it != user_schema_node.end(); ++it)
-//		{
-//			key = it->first.as<std::string>();
-//			val = it->second.as<std::string>();
-//
-//			// Create the same node in the output_node.
-//			//if (key == not_defined_str)
-//			if (!GetTypeCode(val, type_val))
-//				return false;
-//			output_node[key] = type_val;
-//		}
-//	}
-//	else if (user_schema_node.IsSequence())
-//	{
-//
-//	}
-//	else if (user_schema_node.IsScalar())
-//	{
-//
-//	}
-//	else
-//	{
-//
-//	}
-//	return true;
-//}
-
-//bool YamlSV::GetTypeCode(const std::string& type_str, uint8_t& type_val)
-//{
-//	if (string_to_schema_type_map.count(type_str) == 1)
-//	{
-//		type_val = string_to_schema_type_map.at(type_str);
-//		return true;
-//	}
-//	return false;
-//}
-
 bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_node,
 	std::vector<LogItem>& log_output)
 {
@@ -121,12 +55,10 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 	std::string type_str;
 	YAML::const_iterator schema_next;
 	YAML::const_iterator test_current;
-	//YAML::const_iterator test_next;
+	
 	// current node level is a Scalar, Sequence, or Map.
 	if (schema_node.IsMap())
 	{
-		// TODO: Check if the current test_node is also a map and return false if not.
-
 		// Iterate over map.
 		test_current = test_node.begin();
 		for (YAML::const_iterator it = schema_node.begin(); it != schema_node.end(); ++it)
@@ -177,35 +109,12 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 			if (!TestMapElement(it, test_current, log_output))
 				return false;
 
-			/*if (test_current == test_node.end())
-			{
-				if (it != schema_node.end())
-				{
-					AddLogItem(log_output, LogLevel::INFO,
-						"YamlSV::ProcessNode: test node iterator reached the end prematurely");
-					return false;
-				}
-			}*/
 			test_current++;
 		}
 	}
 	else if (schema_node.IsSequence())
 	{
 		test_current = test_node.begin();
-
-		// Do not process empty schema or test sequence
-		/*if (schema_node.size() == 0 || test_node.size() == 0)
-		{
-			if (schema_node.size() == 0)
-			{
-				AddLogItem(log_output, LogLevel::INFO, "Schema node is an empty sequence");
-			}
-			else if (test_node.size() == 0)
-			{
-				AddLogItem(log_output, LogLevel::INFO, "Test node is an empty sequence");
-			}
-			return false;
-		}*/
 
 		// If the size of the schema sequence is one, then there is no
 		// need to iterate.
@@ -273,7 +182,8 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 	}
 	else
 	{
-		AddLogItem(log_output, LogLevel::INFO, "Schema node is not a map, sequence, or scalar");
+		AddLogItem(log_output, LogLevel::INFO, 
+			"YamlSV::ProcessNode: Schema node is not a map, sequence, or scalar");
 		return false;
 	}
 	return true;
@@ -396,7 +306,7 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
 	// each element against the schema type.
 	for (YAML::const_iterator it = test_node.begin(); it != test_node.end(); ++it)
 	{
-		printf("verify type %s, val %s\n", str_type.c_str(), it->as<std::string>().c_str());
+		//printf("verify type %s, val %s\n", str_type.c_str(), it->as<std::string>().c_str());
 		if (!VerifyType(str_type, it->as<std::string>()))
 		{
 			AddLogItem(log_output, LogLevel::INFO,

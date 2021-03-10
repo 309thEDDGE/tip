@@ -47,6 +47,7 @@ set(yamlsv_lib_name "yamlsv")
 set(yamlsv_dir_name "yamlsv")
 set(yamlsv_src_dir ${yamlsv_dir_name}/${source_dir_name})
 set(yamlsv_inc_dir ${yamlsv_dir_name}/${include_dir_name})
+set(yamlsv_main_dir ${yamlsv_dir_name}/${main_dir_name})
 add_library(${yamlsv_lib_name} STATIC
             ${yamlsv_src_dir}/yaml_schema_validation.cpp ${yamlsv_inc_dir}/yaml_schema_validation.h
             ${yamlsv_inc_dir}/yamlsv_log_item.h
@@ -391,6 +392,18 @@ add_executable(${bincomp_exe_name} ${comp_main_dir}/binary_comparison.cpp)
 #set_property(TARGET ${bincomp_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 #########################################################
+#                Build/link validate_yaml exe
+#########################################################
+set(yamlsv_exe_name "validate_yaml")
+message(STATUS "Building exe: " "${yamlsv_exe_name}")
+add_executable(${yamlsv_exe_name} ${yamlsv_main_dir}/validate_yaml.cpp)
+
+target_include_directories(${yamlsv_exe_name} PUBLIC ${yamlsv_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
+                            )
+target_compile_features(${yamlsv_exe_name} PUBLIC cxx_std_17)
+target_link_libraries(${yamlsv_exe_name} ${yamlsv_lib_name})
+
+#########################################################
 #                   Install Exes
 #########################################################
 install(DIRECTORY DESTINATION ${out_bin_dir})
@@ -399,6 +412,7 @@ install(TARGETS ${ch10parse_exe_name}
                 ${trans_exe_name}
                 ${comp_exe_name}
                 ${bincomp_exe_name}
+                ${yamlsv_exe_name}
         DESTINATION ${out_bin_dir}
         )
 
