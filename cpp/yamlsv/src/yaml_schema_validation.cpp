@@ -64,6 +64,8 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 		for (YAML::const_iterator it = schema_node.begin(); it != schema_node.end(); ++it)
 		{
 			key = it->first.as<std::string>();
+			AddLogItem(log_output, LogLevel::DDEBUG,
+				"YamlSV::ProcessNode: Schema map key = \"%s\"", key.c_str());
 
 			// If the key is the special tag "_NOT_DEFINED_", do not require a
 			// key and rely on the position of the iterators.

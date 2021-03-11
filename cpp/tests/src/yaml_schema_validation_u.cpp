@@ -14,16 +14,43 @@ protected:
 	YamlSV ysv_;
 	LogLevel level_;
 	std::string msg_;
+	std::vector<LogItem>::const_iterator log_it_;
 
-	YamlSchemaValidationTest() : res_(false), ysv_() {}
+	YamlSchemaValidationTest() : res_(false), ysv_()  {}
 
 	void PrintLogs()
 	{
-		for (std::vector<LogItem>::const_iterator it = log_items_.begin();
-			it != log_items_.end(); ++it)
+		for (log_it_ = log_items_.begin(); log_it_ != log_items_.end(); ++log_it_)
 		{
-			printf("%s\n", it->message.c_str());
+			log_it_->Print();
 		}
+	}
+
+	LogItem GetFirstInfoLogEntry()
+	{
+		for (log_it_ = log_items_.begin(); log_it_ != log_items_.end(); ++log_it_)
+		{
+			if (log_it_->log_level == LogLevel::INFO)
+				return *log_it_;
+		}
+		LogItem li;
+		return li;
+	}
+
+	bool InFirstInfoEntry(std::string search)
+	{
+		return GetFirstInfoLogEntry().message.find(search) != std::string::npos;
+	}
+
+	int InfoLogEntryCount()
+	{
+		int count = 0;
+		for (log_it_ = log_items_.begin(); log_it_ != log_items_.end(); ++log_it_)
+		{
+			if (log_it_->log_level == LogLevel::INFO)
+				count++;
+		}
+		return count;
 	}
 };
 
@@ -33,7 +60,7 @@ TEST_F(YamlSchemaValidationTest, AddLogItem)
 	msg_ = "this message";
 	ysv_.AddLogItem(log_items_, level_, msg_);
 
-	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
 	EXPECT_EQ(log_items_[0].log_level, level_);
 	EXPECT_EQ(log_items_[0].message, msg_);
 }
@@ -49,7 +76,7 @@ TEST_F(YamlSchemaValidationTest, AddLogItemFormatted)
 
 	ysv_.AddLogItem(log_items_, level_, msg_.c_str(), val);
 
-	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
 	EXPECT_EQ(log_items_[0].log_level, level_);
 	EXPECT_EQ(log_items_[0].message, final_msg);
 }
@@ -61,7 +88,7 @@ TEST_F(YamlSchemaValidationTest, ValidateEmptyNodes)
 	EXPECT_FALSE(res_);
 
 	// Log output 
-	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
 }
 
 TEST_F(YamlSchemaValidationTest, VerifyTypeNotAType)
@@ -147,7 +174,7 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeSingleMappedValue)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeSingleMultipleMappedValue)
@@ -163,29 +190,32 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeSingleMultipleMappedValue)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 
 	test_node_["dog"] = 9.8;
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("dog") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("dog") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("dog"));
 
 	log_items_.clear();
 	test_node_["dog"] = 50;
 	test_node_["time"] = "thirty";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("time") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("time") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("time"));
 
 	log_items_.clear();
 	test_node_["time"] = 19;
 	test_node_["state"] = "false";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("state") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("state") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("state"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeMissingKey)
@@ -202,8 +232,9 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeMissingKey)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("dog") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("dog") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("dog"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeIncorrectStructure)
@@ -219,8 +250,9 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeIncorrectStructure)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("time") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("time") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("time"));
 
 	test_node_ = YAML::Load(
 		"data: {test: 10, other: 30}\n"
@@ -229,8 +261,9 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeIncorrectStructure)
 	log_items_.clear();
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("data") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("data") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("data"));
 
 	test_node_ = YAML::Load(
 		"data: test\n"
@@ -241,8 +274,9 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeIncorrectStructure)
 	log_items_.clear();
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("state") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("state") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("state"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeNestedMap1)
@@ -260,21 +294,23 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeNestedMap1)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 
 	test_node_["dog"] = 9.8;
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("dog") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("dog") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("dog"));
 
 	log_items_.clear();
 	test_node_["dog"] = 50;
 	test_node_["time"]["state"] = "true";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("state") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("state") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("state"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeNestedMap2)
@@ -295,8 +331,9 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeNestedMap2)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("meridian") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("meridian") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("meridian"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeNestedMap3)
@@ -322,21 +359,23 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeNestedMap3)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 
 	test_node_["time"]["meridian"]["day"] = "Tuesday";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("day") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("day") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("day"));
 
 	log_items_.clear();
 	test_node_["time"]["meridian"]["day"] = 27;
 	test_node_["time"]["err"] = "no";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("err") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("err") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("err"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefined)
@@ -352,7 +391,7 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefined)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefinedRepeating1)
@@ -370,13 +409,14 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefinedRepeating1)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 
 	test_node_["abc"] = "hello";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("abc") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("abc") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("abc"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeTestMapTruncated)
@@ -391,7 +431,7 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeTestMapTruncated)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefinedRepeating2)
@@ -417,29 +457,32 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefinedRepeating2)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 
 	test_node_["one"]["val"] = "hello";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("val") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("val") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("val"));
 
 	log_items_.clear();
 	test_node_["one"]["val"] = 20.2;
 	test_node_["day"]["trio"] = 0.2;
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("trio") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("trio") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("trio"));
 
 	log_items_.clear();
 	test_node_["day"]["trio"] = 2;
 	test_node_["status"] = "true";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("status") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("status") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("status"));
 }
 
 TEST_F(YamlSchemaValidationTest, TestSequenceSimpleBlock)
@@ -453,19 +496,20 @@ TEST_F(YamlSchemaValidationTest, TestSequenceSimpleBlock)
 
 	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 
 	test_node_.push_back(10);
 	test_node_.push_back(12);
 	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 
 	test_node_.push_back("dog");
 	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("dog") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("dog") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("dog"));
 }
 
 TEST_F(YamlSchemaValidationTest, TestSequenceSchemaMustHaveSingleElement)
@@ -480,8 +524,9 @@ TEST_F(YamlSchemaValidationTest, TestSequenceSchemaMustHaveSingleElement)
 
 	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("Schema") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("Schema") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("Schema"));
 }
 
 TEST_F(YamlSchemaValidationTest, TestSequenceSimpleFlow)
@@ -495,13 +540,14 @@ TEST_F(YamlSchemaValidationTest, TestSequenceSimpleFlow)
 
 	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 
 	test_node_[2] = "false";
 	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("false") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("false") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("false"));
 }
 
 TEST_F(YamlSchemaValidationTest, TestSequenceNullSchema)
@@ -515,8 +561,9 @@ TEST_F(YamlSchemaValidationTest, TestSequenceNullSchema)
 
 	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("Schema") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("Schema") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("Schema"));
 }
 
 TEST_F(YamlSchemaValidationTest, TestSequenceNullTest)
@@ -530,8 +577,9 @@ TEST_F(YamlSchemaValidationTest, TestSequenceNullTest)
 
 	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("Test") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("Test") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("Test"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeSimpleSequence)
@@ -541,13 +589,14 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeSimpleSequence)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 
 	test_node_.push_back("err");
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("err") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("err") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("err"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeNestedSequence1)
@@ -561,7 +610,7 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeNestedSequence1)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeEmptySchemaSequence)
@@ -573,8 +622,9 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeEmptySchemaSequence)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("null") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("null") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("null"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeEmptyTestSequence)
@@ -586,8 +636,9 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeEmptyTestSequence)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("zero") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("zero") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("zero"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeNestedSequence2)
@@ -607,37 +658,41 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeNestedSequence2)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 
 	test_node_[0][1] = "badval";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("badval") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("badval") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("badval"));
 
 	log_items_.clear();
 	test_node_[0][1] = "3511";
 	test_node_[1][0][0] = "badval";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("badval") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("badval") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("badval"));
 
 	log_items_.clear();
 	test_node_[1][0][0] = "54.4";
 	test_node_[1][1][0] = "true";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("true") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("true") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("true"));
 
 	log_items_.clear();
 	test_node_[1][1][0] = "False";
 	test_node_[2][1] = "false";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("false") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("false") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("false"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeMapAndSequence1)
@@ -661,37 +716,41 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeMapAndSequence1)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 
 	test_node_["m1"] = "err";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("m1") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("m1") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("m1"));
 
 	log_items_.clear();
 	test_node_["m1"] = "21";
 	test_node_["m2"][0] = "bad";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("bad") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("bad") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("bad"));
 
 	log_items_.clear();
 	test_node_["m2"][0] = "33.11";
 	test_node_["m3"][1]["mm2"][0] = "true";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("true") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("true") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("true"));
 
 	log_items_.clear();
 	test_node_["m3"][1]["mm2"][0] = "True";
 	test_node_["m4"] = "str";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("m4") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("m4") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("m4"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeMapAndSequenceNotDefined)
@@ -711,35 +770,39 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeMapAndSequenceNotDefined)
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
-	EXPECT_EQ(log_items_.size(), 0);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 
 	test_node_["m2"] = "err";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("err") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("err") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("err"));
 
 	log_items_.clear();
 	test_node_["m2"] = YAML::Load("[2.0, 9.2]");
 	test_node_["mm2"][0] = "notflt";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("notflt") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("notflt") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("notflt"));
 
 	log_items_.clear();
 	test_node_["mm2"][0] = "1.0";
 	test_node_["mm3"][0] = "data";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("data") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("data") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("data"));
 
 	log_items_.clear();
 	test_node_["mm3"][0] = "25.1";
 	test_node_["m3"] = "true";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
-	EXPECT_EQ(log_items_.size(), 1);
-	EXPECT_TRUE(log_items_[0].message.find("m3") != std::string::npos);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	//EXPECT_TRUE(log_items_[0].message.find("m3") != std::string::npos);
+	EXPECT_TRUE(InFirstInfoEntry("m3"));
 }
