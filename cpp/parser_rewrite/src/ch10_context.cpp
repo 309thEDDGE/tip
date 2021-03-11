@@ -39,7 +39,7 @@ Ch10Context::Ch10Context() : absolute_position_(0),
 void Ch10Context::Initialize(const uint64_t& abs_pos, uint16_t id)
 {
 	absolute_position_ = abs_pos;
-	channel_id_ = id;
+	thread_id_ = id;
 }
 
 Ch10Context::~Ch10Context()
@@ -64,12 +64,12 @@ Ch10Status Ch10Context::ContinueWithPacketType(uint8_t data_type)
 		{
 			if (data_type == static_cast<uint8_t>(Ch10PacketType::COMPUTER_GENERATED_DATA_F1))
 			{
-				printf("TMATS found!\n");
+				SPDLOG_DEBUG("({:02d}) TMATS found", thread_id);
 				return Ch10Status::PKT_TYPE_YES;
 			}
 			else if (data_type == static_cast<uint8_t>(Ch10PacketType::TIME_DATA_F1))
 			{
-				printf("TDP found!\n");
+				SPDLOG_DEBUG("({:02d}) TDP found", thread_id);
 				found_tdp_ = true;
 				return Ch10Status::PKT_TYPE_YES;
 			}
@@ -224,9 +224,9 @@ bool Ch10Context::CheckConfiguration(
 				// If a key-value pair does not exist for the current type, return false.
 				if (pkt_type_paths_config.count(it->first) == 0)
 				{
-					printf("Ch10Context::CheckConfiguration(): packet type %hhu is enabled and "
-						"a ManagedPath object does not exist in paths config map!\n",
-						static_cast<uint8_t>(it->first));
+					SPDLOG_INFO("({:02d}) packet type {:d} is enabled and "
+						"a ManagedPath object does not exist in paths config map!",
+						thread_id, static_cast<uint8_t>(it->first));
 
 					// Clear the output map.
 					enabled_paths.clear();
@@ -266,7 +266,7 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 
 			// Create the writer object.
 			milstd1553f1_pq_writer_ = std::make_unique<ParquetMilStd1553F1>(it->second,
-				channel_id_, true);
+				thread_id, true);
 
 			// Creating this publically accessible pointer is probably not the best 
 			// way to make the writer available, since it's now availalbe to everything.

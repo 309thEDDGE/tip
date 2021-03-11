@@ -38,6 +38,11 @@ protected:
         pkt_hdr_fmt_.checksum = 0; // set later
     }
 
+    ~Ch10PacketHeaderComponentTest()
+    {
+        //spdlog::shutdown();
+    }
+
     uint16_t Calculate16BitChecksum()
     {
         // Divide by two for 16bit checksum.

@@ -22,6 +22,7 @@
 #include "metadata.h"
 #include "tmats_parser.h"
 #include "managed_path.h"
+#include "spdlog/spdlog.h"
 
 class ParseManager
 {

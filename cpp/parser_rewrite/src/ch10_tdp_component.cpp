@@ -23,7 +23,8 @@ Ch10Status Ch10TDPComponent::Parse(const uint8_t*& data)
 	{
 		ParseElements(tdp_irig_elem_vec_, data);
 		abs_time = ComputeIRIGTime(*tdp_irig_elem_.element);
-		printf("tdp abs_time_ = %llu\n", abs_time);
+		SPDLOG_DEBUG("({:02d}) time data packet absolute time (abs_time_): {:d}", 
+			ctx_->thread_id, abs_time);
 		doy = 1;
 	}
 	else

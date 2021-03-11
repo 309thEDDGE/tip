@@ -16,6 +16,7 @@
 #include "parquet_milstd1553f1.h"
 #include "ch10_videof0_header_format.h"
 #include "parquet_videodataf0.h"
+#include "spdlog/spdlog.h"
 
 enum class Ch10PacketType : uint8_t
 {
