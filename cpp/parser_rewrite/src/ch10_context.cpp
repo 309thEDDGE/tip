@@ -12,7 +12,8 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
 	channel_id_(UINT32_MAX), channel_id(channel_id_), temp_rtc_(0),
 	chanid_remoteaddr1_map(chanid_remoteaddr1_map_), chanid_remoteaddr2_map(chanid_remoteaddr2_map_),
 	chanid_commwords_map(chanid_commwords_map_), command_word1_(nullptr), command_word2_(nullptr),
-	is_configured_(false), milstd1553f1_pq_writer_(nullptr), milstd1553f1_pq_writer(nullptr)
+	is_configured_(false), milstd1553f1_pq_writer_(nullptr), milstd1553f1_pq_writer(nullptr),
+	videof0_pq_writer_(nullptr), videof0_pq_writer(nullptr)
 {
 	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
@@ -174,6 +175,11 @@ uint64_t Ch10Context::CalculateAbsTimeFromRTCFormat(const uint64_t& rtc1,
 	return tdp_abs_time_ + (temp_rtc_ - tdp_rtc_);
 }
 
+uint64_t Ch10Context::CalculateAbsTimeFromRTCNanoseconds(const uint64_t& rtc_nanoseconds)
+{
+	return tdp_abs_time_ + (rtc_nanoseconds - tdp_rtc_);
+}
+
 void Ch10Context::UpdateChannelIDToLRUAddressMaps(const uint32_t& chanid,
 	const MilStd1553F1DataHeaderCommWordFmt* const data_header)
 {
@@ -270,6 +276,9 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 			// specific and should be held by Ch10Context. This will need careful thinking
 			// and rework at some point.
 			milstd1553f1_pq_writer = milstd1553f1_pq_writer_.get();
+		// case Ch10PacketType::VIDEO_DATA_F0:
+
+		// 	videof0_pq_writer_ = 
 		}
 	}
 }

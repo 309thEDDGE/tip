@@ -46,9 +46,6 @@ private:
 	uint32_t pkt_size_;
 	uint32_t data_size_;
 
-	// Temporary (current message or data) calculate absolute time in nanosecond
-	//uint64_t abs_time_;
-
 	// Temporary RTC time in nanosecond
 	uint64_t temp_rtc_;
 
@@ -128,7 +125,6 @@ public:
 	const uint64_t& rtc;
 	const uint32_t& pkt_size;
 	const uint32_t& data_size;
-	//const uint64_t& abs_time;
 	const bool& tdp_valid;
 	const uint8_t& tdp_doy;
 	const bool& found_tdp;
@@ -140,6 +136,7 @@ public:
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr2_map;
 	const std::map<uint32_t, std::set<uint32_t>>& chanid_commwords_map;
 	ParquetMilStd1553F1* milstd1553f1_pq_writer;
+	const ParquetVideoDataF0* videof0_pq_writer;
 	const uint32_t intrapacket_ts_size_ = 2*sizeof(uint64_t);
 
 	Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
@@ -227,6 +224,13 @@ public:
 	*/
 	uint64_t CalculateAbsTimeFromRTCFormat(const uint64_t& rtc1, const uint64_t& rtc2);
 
+	/*
+	Caculate absolute time from RTC already converted to nanoseconds.  This context
+	must have been updated with UpdateWithTDPData prior to this call
+	in order for absolute time to be calculated correctly.
+	*/
+	uint64_t CalculateAbsTimeFromRTCNanoseconds(const uint64_t& rtc_nanoseconds);
+	
 	/*
 	Update maps of channel ID to remote addresses 1 and 2 as obtained from
 	the 1553 intra-packet data headers.
