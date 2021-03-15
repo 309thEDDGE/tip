@@ -56,7 +56,7 @@ protected:
 
 TEST_F(YamlSchemaValidationTest, AddLogItem)
 {
-	level_ = LogLevel::WARN;
+	level_ = LogLevel::INFO;
 	msg_ = "this message";
 	ysv_.AddLogItem(log_items_, level_, msg_);
 
@@ -67,7 +67,7 @@ TEST_F(YamlSchemaValidationTest, AddLogItem)
 
 TEST_F(YamlSchemaValidationTest, AddLogItemFormatted)
 {
-	level_ = LogLevel::WARN;
+	level_ = LogLevel::INFO;
 	char buff[100];
 	int val = 230;
 	msg_ = "this message %d";
@@ -88,7 +88,7 @@ TEST_F(YamlSchemaValidationTest, ValidateEmptyNodes)
 	EXPECT_FALSE(res_);
 
 	// Log output 
-	EXPECT_EQ(InfoLogEntryCount(), 1);
+	EXPECT_EQ(log_items_.size(), 1);
 }
 
 TEST_F(YamlSchemaValidationTest, VerifyTypeNotAType)
@@ -156,7 +156,7 @@ TEST_F(YamlSchemaValidationTest, VerifyTypeBool)
 
 	test_val = "true";
 	res_ = ysv_.VerifyType(str_type, test_val);
-	EXPECT_FALSE(res_);
+	EXPECT_TRUE(res_);
 
 	test_val = "False";
 	res_ = ysv_.VerifyType(str_type, test_val);
@@ -164,7 +164,7 @@ TEST_F(YamlSchemaValidationTest, VerifyTypeBool)
 
 	test_val = "false";
 	res_ = ysv_.VerifyType(str_type, test_val);
-	EXPECT_FALSE(res_);
+	EXPECT_TRUE(res_);
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeSingleMappedValue)
@@ -210,7 +210,7 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeSingleMultipleMappedValue)
 
 	log_items_.clear();
 	test_node_["time"] = 19;
-	test_node_["state"] = "false";
+	test_node_["state"] = "fals";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(InfoLogEntryCount(), 1);
@@ -305,7 +305,7 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeNestedMap1)
 
 	log_items_.clear();
 	test_node_["dog"] = 50;
-	test_node_["time"]["state"] = "true";
+	test_node_["time"]["state"] = "tru";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(InfoLogEntryCount(), 1);
@@ -388,6 +388,20 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefined)
 		"data: test\n"
 		"dog: 9\n"
 		"val: 23.0\n");
+
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+}
+
+TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefinedAtEnd)
+{
+	schema_node_ = YAML::Load(
+		"data: STR\n"
+		"_NOT_DEFINED_: INT\n");
+	test_node_ = YAML::Load(
+		"data: test\n"
+		"dog: 9\n");
 
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
@@ -477,7 +491,7 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefinedRepeating2)
 
 	log_items_.clear();
 	test_node_["day"]["trio"] = 2;
-	test_node_["status"] = "true";
+	test_node_["status"] = "tru";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(InfoLogEntryCount(), 1);
@@ -542,12 +556,12 @@ TEST_F(YamlSchemaValidationTest, TestSequenceSimpleFlow)
 	EXPECT_TRUE(res_);
 	EXPECT_EQ(InfoLogEntryCount(), 0);
 
-	test_node_[2] = "false";
+	test_node_[2] = "negative";
 	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(InfoLogEntryCount(), 1);
 	//EXPECT_TRUE(log_items_[0].message.find("false") != std::string::npos);
-	EXPECT_TRUE(InFirstInfoEntry("false"));
+	EXPECT_TRUE(InFirstInfoEntry("negative"));
 }
 
 TEST_F(YamlSchemaValidationTest, TestSequenceNullSchema)
@@ -678,21 +692,21 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeNestedSequence2)
 
 	log_items_.clear();
 	test_node_[1][0][0] = "54.4";
-	test_node_[1][1][0] = "true";
+	test_node_[1][1][0] = "positive";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(InfoLogEntryCount(), 1);
 	//EXPECT_TRUE(log_items_[0].message.find("true") != std::string::npos);
-	EXPECT_TRUE(InFirstInfoEntry("true"));
+	EXPECT_TRUE(InFirstInfoEntry("positive"));
 
 	log_items_.clear();
 	test_node_[1][1][0] = "False";
-	test_node_[2][1] = "false";
+	test_node_[2][1] = "negative";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(InfoLogEntryCount(), 1);
 	//EXPECT_TRUE(log_items_[0].message.find("false") != std::string::npos);
-	EXPECT_TRUE(InFirstInfoEntry("false"));
+	EXPECT_TRUE(InFirstInfoEntry("negative"));
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeMapAndSequence1)
@@ -736,12 +750,12 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeMapAndSequence1)
 
 	log_items_.clear();
 	test_node_["m2"][0] = "33.11";
-	test_node_["m3"][1]["mm2"][0] = "true";
+	test_node_["m3"][1]["mm2"][0] = "pos";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(InfoLogEntryCount(), 1);
 	//EXPECT_TRUE(log_items_[0].message.find("true") != std::string::npos);
-	EXPECT_TRUE(InFirstInfoEntry("true"));
+	EXPECT_TRUE(InFirstInfoEntry("pos"));
 
 	log_items_.clear();
 	test_node_["m3"][1]["mm2"][0] = "True";
@@ -799,10 +813,233 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeMapAndSequenceNotDefined)
 
 	log_items_.clear();
 	test_node_["mm3"][0] = "25.1";
-	test_node_["m3"] = "true";
+	test_node_["m3"] = "affirmed";
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(InfoLogEntryCount(), 1);
 	//EXPECT_TRUE(log_items_[0].message.find("m3") != std::string::npos);
 	EXPECT_TRUE(InFirstInfoEntry("m3"));
+}
+
+TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefinedOptional)
+{
+	schema_node_ = YAML::Load(
+		"data: STR\n"
+		"_NOT_DEFINED_OPT_: INT\n"
+		"val: FLT\n");
+	test_node_ = YAML::Load(
+		"data: test\n"
+		"val: 23.0\n");
+
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+
+	test_node_ = YAML::Load(
+		"data: test\n"
+		"dog: 9\n"
+		"val: 23.0\n");
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+
+	test_node_["dog"] = "woof";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	EXPECT_TRUE(InFirstInfoEntry("dog"));
+}
+
+TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefinedOptional2)
+{
+	schema_node_ = YAML::Load(
+		"data: STR\n"
+		"m1: {_NOT_DEFINED_OPT_: BOOL}\n"
+		"val: FLT\n");
+	test_node_ = YAML::Load(
+		"data: test\n"
+		"m1: {}\n"
+		"val: 23.0\n");
+
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+}
+
+TEST_F(YamlSchemaValidationTest, CheckSequenceTypeRawTypes)
+{
+	std::string test_type = "INT";
+	std::string str_type;
+	bool is_opt;
+
+	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(str_type, test_type);
+	EXPECT_FALSE(is_opt);
+
+	test_type = "FLT";
+	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(str_type, test_type);
+	EXPECT_FALSE(is_opt);
+
+	test_type = "BOOL";
+	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(str_type, test_type);
+	EXPECT_FALSE(is_opt);
+
+	test_type = "STR";
+	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(str_type, test_type);
+	EXPECT_FALSE(is_opt);
+
+	test_type = "IN";
+	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(str_type, "");
+	EXPECT_FALSE(is_opt);
+}
+
+TEST_F(YamlSchemaValidationTest, CheckSequenceTypeOptModifier)
+{
+	std::string test_type = "OPTINT";
+	std::string str_type;
+	bool is_opt;
+
+	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(str_type, "INT");
+	EXPECT_TRUE(is_opt);
+
+	test_type = "OPTFLT";
+	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(str_type, "FLT");
+	EXPECT_TRUE(is_opt);
+
+	test_type = "OPTBOOL";
+	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(str_type, "BOOL");
+	EXPECT_TRUE(is_opt);
+
+	test_type = "OPTSTR";
+	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(str_type, "STR");
+	EXPECT_TRUE(is_opt);
+
+	test_type = "OPTIN";
+	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(str_type, "");
+	EXPECT_FALSE(is_opt);
+
+	test_type = "OPBOOL";
+	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(str_type, "");
+	EXPECT_FALSE(is_opt);
+}
+
+TEST_F(YamlSchemaValidationTest, TestSequenceOptBool)
+{
+	schema_node_ = YAML::Load("[BOOL]\n");
+	test_node_ = YAML::Load("[]\n");
+
+	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	EXPECT_TRUE(InFirstInfoEntry("greater than"));
+
+	log_items_.clear();
+	schema_node_[0] = "OPTBOOL";
+	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+}
+
+TEST_F(YamlSchemaValidationTest, TestSequenceOpt)
+{
+	schema_node_ = YAML::Load("[OPTINT]\n");
+	test_node_ = YAML::Load("[]\n");
+
+	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+
+	schema_node_[0] = "OPTSTR";
+	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+
+	schema_node_[0] = "OPTFLT";
+	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+
+	test_node_ = YAML::Load("[23.2, 321]\n");
+	res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+}
+
+
+TEST_F(YamlSchemaValidationTest, ProcessNodeOptBool)
+{
+	schema_node_ = YAML::Load(
+		"data: [BOOL]\n");
+	test_node_ = YAML::Load(
+		"data: []\n");
+
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+
+	log_items_.clear();
+	schema_node_["data"][0] = "OPTBOOL";
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+}
+
+TEST_F(YamlSchemaValidationTest, ProcessNodeOptGeneral)
+{
+	schema_node_ = YAML::Load(
+		"data: BOOL\n"
+		"m1:\n"
+		"  item: [FLT]\n"
+		"  it2: [OPTINT]\n"
+		"val:\n"
+		"  - OPTSTR\n");
+	test_node_ = YAML::Load(
+		"data: true\n"
+		"m1:\n"
+		"  item: [19.2, 3.2]\n"
+		"  it2: [100]\n"
+		"val: [data1, data2, data3]\n");
+
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+
+	test_node_["m1"]["it2"] = YAML::Load("[]\n");
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+
+	test_node_["m1"]["it2"][0] = 24.8;
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	EXPECT_TRUE(InFirstInfoEntry("24.8"));
+
+	log_items_.clear();
+	test_node_["m1"]["it2"][0] = 24;
+	test_node_["val"] = YAML::Load("[]\n");
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
 }

@@ -48,11 +48,11 @@ int main(int argc, char* argv[])
 	YamlSV ysv;
 	bool res = ysv.Validate(test_node, schema_node, log);
 
-	for (std::vector<LogItem>::const_iterator it = log.begin();
+	/*for (std::vector<LogItem>::const_iterator it = log.begin();
 		it != log.end(); ++it)
 	{
-		printf("%s\n", it->message.c_str());
-	}
+		it->Print();
+	}*/
 
 	if (res)
 		printf("\nValidation result: PASS\n");

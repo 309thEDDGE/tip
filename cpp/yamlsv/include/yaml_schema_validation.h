@@ -11,11 +11,14 @@
 class YamlSV
 {
 private:
-	//YAML::Node schema_node_;
 	ParseText parse_text_;
 
 	static const int buff_size_ = 512;
 	char buffer_[buff_size_];
+
+	std::string bool_tolower_;
+	bool sequence_is_opt_;
+	std::string sequence_str_type_;
 
 public:
 	YamlSV();
@@ -62,6 +65,24 @@ public:
 
 	bool TestSequence(const YAML::Node& schema_node, const YAML::Node& test_node, 
 		std::vector<LogItem>& log_output);
+
+	/*
+	Get a string representing the standard schema type, after checking for 
+	any modifier characters.
+
+	Args:
+		test_type	--> String representing the schema type as read from the 
+						schema yaml.
+		str_type	--> The string representation of the schema type if the 
+						test_type is valid.
+		is_opt		--> Set the value to true if the schema is valid
+
+	Return:
+		True if the test_type includes a valid schema type with or without
+		valid modifier characters.
+	*/
+	bool CheckSequenceType(const std::string& test_type, std::string& str_type,
+		bool& is_opt);
 
 };
 

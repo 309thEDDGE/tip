@@ -22,7 +22,11 @@ const std::unordered_map<std::string, uint8_t> string_to_schema_type_map = {
 
 const std::set<std::string> schema_string_type_set = { "STR", "INT", "FLT", "BOOL" };
 
-const std::string not_defined_str = "_NOT_DEFINED_";
+namespace YamlSVSchemaTag
+{
+	const std::string not_defined_str = "_NOT_DEFINED_";
+	const std::string not_defined_opt_str = "_NOT_DEFINED_OPT_";
+}
 
 
 #endif
