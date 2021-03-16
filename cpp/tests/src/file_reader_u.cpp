@@ -75,3 +75,24 @@ TEST_F(FileReaderTest, ReadFileAddMultipleLinesToVector)
 	ASSERT_TRUE(compareVec == fr.GetLines());
 	remove(filename.c_str());
 }
+
+TEST_F(FileReaderTest, GetDocumentAsStringNoReadFile)
+{
+	std::string doc = fr.GetDocumentAsString();
+	ASSERT_TRUE(doc.size() == 0);
+}
+
+TEST_F(FileReaderTest, GetDocumentAsString)
+{
+	std::string filename = "testfile.txt";
+	std::ofstream file;
+	std::string data = "Line1\nLine2\nhere is a line which is [x, y, z]\n";
+	file.open(filename);
+	file << data;
+	file.close();
+
+	EXPECT_EQ(fr.ReadFile(filename), 0);
+	std::string doc = fr.GetDocumentAsString();
+	EXPECT_TRUE(doc.size() > 0);
+	EXPECT_EQ(doc, data);
+}

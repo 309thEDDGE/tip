@@ -16,3 +16,13 @@ int FileReader::ReadFile(std::string file_name)
 	}
 	return 0;
 }
+
+std::string FileReader::GetDocumentAsString()
+{
+	std::stringstream ss;
+	std::for_each(lines.begin(), lines.end(),
+		[&ss](const std::string& s) { ss << s; ss << "\n"; });
+	std::string doc = ss.str();
+
+	return doc;
+}
