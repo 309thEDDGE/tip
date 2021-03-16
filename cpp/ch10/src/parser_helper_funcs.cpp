@@ -16,6 +16,15 @@ bool ValidatePaths(char* arg1, char* arg2, ManagedPath& input_path, ManagedPath&
 {
 	// Get path to ch10 file. 
 	std::string arg_path = arg1;
+
+	// Exit if the path is not UTF-8
+	ParseText pt;
+	if (!pt.IsUTF8(arg_path))
+	{
+		printf("Ch10 path does not conform to utf-8\n");
+		return false;
+	}
+
 	input_path = ManagedPath(arg_path);
 	if (!input_path.is_regular_file())
 	{
@@ -30,7 +39,14 @@ bool ValidatePaths(char* arg1, char* arg2, ManagedPath& input_path, ManagedPath&
 	output_path = input_path.parent_path();
 	if ((arg2 != NULL) && (strlen(arg2) != 0))
 	{
-		output_path = ManagedPath(std::string(arg2));
+		// Check if the path conforms to utf-8
+		std::string temp_out_path = arg2;
+		if (!pt.IsUTF8(temp_out_path))
+		{
+			printf("Ouput path does not conform to utf-8\n");
+			return false;
+		}
+		output_path = ManagedPath(temp_out_path);
 		if (!output_path.is_directory())
 		{
 			printf("User-defined output path is not a directory: %s\n",

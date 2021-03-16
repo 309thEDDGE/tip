@@ -2,6 +2,7 @@
 #include "parse_manager.h"
 #include "parser_config_params.h"
 #include "managed_path.h"
+#include "parse_text.h"
 
 bool ValidateConfig(ParserConfigParams& config, std::string config_path);
 
