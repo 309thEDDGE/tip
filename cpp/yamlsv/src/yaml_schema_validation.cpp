@@ -33,7 +33,7 @@ void YamlSV::AddLogItem(std::vector<LogItem>& log_output, LogLevel level,
 	std::string message)
 {
 	LogItem item(level, message);
-	item.Print();
+	//item.Print();
 	log_output.push_back(item);
 }
 
@@ -356,7 +356,6 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
 	// each element against the schema type.
 	for (YAML::const_iterator it = test_node.begin(); it != test_node.end(); ++it)
 	{
-		//printf("verify type %s, val %s\n", str_type.c_str(), it->as<std::string>().c_str());
 		if (!VerifyType(sequence_str_type_, it->as<std::string>()))
 		{
 			AddLogItem(log_output, LogLevel::INFO,

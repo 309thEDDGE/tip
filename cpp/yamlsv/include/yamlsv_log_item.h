@@ -30,10 +30,12 @@ class LogItem
 {
 public:
 	LogLevel log_level;
+	uint8_t log_value;
 	std::string message;
 
-	LogItem() : log_level(LogLevel::TRACE), message() {}
-	LogItem(LogLevel level, std::string msg) : log_level(level), message(msg) {}
+	LogItem() : log_level(LogLevel::TRACE), message(), log_value(0) {}
+	LogItem(LogLevel level, std::string msg) : log_level(level), 
+		message(msg), log_value(static_cast<uint8_t>(level)) {}
 
 	void Print() const
 	{
