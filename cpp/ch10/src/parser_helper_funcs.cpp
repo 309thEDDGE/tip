@@ -6,7 +6,25 @@ bool ValidateConfig(ParserConfigParams& config, std::string config_path)
 	if (config_path == "")
 		conf_path = conf_path.parent_path() / "conf" / "parse_conf.yaml";
 	else
+	{
+		// Confirm that the user-input config_path is valid utf-8
+		ParseText pt;
+		if (!pt.IsUTF8(config_path))
+		{
+			printf("User-input configuration base path is not valid UTF-8\n");
+			return false;
+		}
 		conf_path = ManagedPath(config_path) / "parse_conf.yaml";
+	}
+
+	// Confirm that configuration path exists.
+	if (!conf_path.is_regular_file())
+	{
+		printf("Configuration file path (%s) does not exist or is not a file\n",
+			conf_path.RawString().c_str());
+		return false;
+	}
+
 	printf("Configuration file path: %s\n", conf_path.RawString().c_str());
 	bool settings_validated = config.Initialize(conf_path.string());
 	return settings_validated;
@@ -15,17 +33,17 @@ bool ValidateConfig(ParserConfigParams& config, std::string config_path)
 bool ValidatePaths(char* arg1, char* arg2, ManagedPath& input_path, ManagedPath& output_path)
 {
 	// Get path to ch10 file. 
-	std::string arg_path = arg1;
+	std::string ch10_path = arg1;
 
 	// Exit if the path is not UTF-8
 	ParseText pt;
-	if (!pt.IsUTF8(arg_path))
+	if (!pt.IsUTF8(ch10_path))
 	{
 		printf("Ch10 path does not conform to utf-8\n");
 		return false;
 	}
 
-	input_path = ManagedPath(arg_path);
+	input_path = ManagedPath(ch10_path);
 	if (!input_path.is_regular_file())
 	{
 		printf("User-defined input path is not a file/does not exist: %s\n",
