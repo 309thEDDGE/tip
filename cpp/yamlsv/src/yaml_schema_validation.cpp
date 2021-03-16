@@ -298,7 +298,8 @@ bool YamlSV::TestMapElement(YAML::const_iterator& schema_it, YAML::const_iterato
 		if (!VerifyType(str_type_, test_it->second.as<std::string>()))
 		{
 			AddLogItem(log_output, LogLevel::INFO,
-				"YamlSV::TestMapElement: Value for key \"%s\" does not match type \"%s\"",
+				"YamlSV::TestMapElement: Value \"%s\" for key \"%s\" does not"
+				" match type \"%s\"", test_it->second.as<std::string>().c_str(),
 				test_it->first.as<std::string>().c_str(), 
 				str_type_.c_str());
 			return false;

@@ -58,8 +58,9 @@ Modifier characters can be prepended to the schema data type strings
 to control test functionality:
 
 - OPT: Indicates that a [sequence is optional](#optional-sequence-example)
-or a [mapped value with a defined key is optional]. In this case the test sequence is present, but
-empty, and the test mapped value is not present, or null.
+or a [mapped value with a defined key is optional](#optional-map-entry-example). In 
+this case the test sequence is present, but empty, and the test mapped value 
+is not present, or null.
 - Nxx: (future release). Specify the sequence size. 
 
 ## Examples
