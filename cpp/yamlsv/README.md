@@ -57,8 +57,9 @@ the data structure hierarchy.
 Modifier characters can be prepended to the schema data type strings
 to control test functionality:
 
-- OPT: Indicates that a sequence is optional or a mapped value with a
-specified key is optional.
+- OPT: Indicates that a [sequence is optional](#optional-sequence-example)
+or a [mapped value with a defined key is optional]. In this case the test sequence is present, but
+empty, and the test mapped value is not present, or null.
 - Nxx: (future release). Specify the sequence size. 
 
 ## Examples
@@ -151,6 +152,67 @@ Test data (validated):
 ```
 ---
 data: 23
+map1: True
+...
+```
+
+### Optional Sequence Example
+
+Test schema:
+
+```
+---
+data: INT
+vals: [OPTFLT]
+map1: BOOL
+...
+```
+
+Test data 1 (validated):
+
+```
+---
+data: 23
+vals: [40.5, 20, 19.8]
+map1: True
+...
+```
+
+Test data 2 (validated):
+
+```
+---
+data: 23
+vals: []
+map1: True
+...
+```
+
+### Optional Map Entry Example
+
+Test schema:
+
+```
+---
+val: OPTFLT
+map1: BOOL
+...
+```
+
+Test data 1 (validated):
+
+```
+---
+val: 99.3
+map1: True
+...
+```
+
+Test data 2 (validated):
+
+```
+---
+val:
 map1: True
 ...
 ```
