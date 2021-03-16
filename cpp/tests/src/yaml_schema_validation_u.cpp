@@ -866,79 +866,79 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeHandleMapNotDefinedOptional2)
 	EXPECT_EQ(InfoLogEntryCount(), 0);
 }
 
-TEST_F(YamlSchemaValidationTest, CheckSequenceTypeRawTypes)
+TEST_F(YamlSchemaValidationTest, CheckDataTypeStringRawTypes)
 {
 	std::string test_type = "INT";
 	std::string str_type;
 	bool is_opt;
 
-	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
 	EXPECT_TRUE(res_);
 	EXPECT_EQ(str_type, test_type);
 	EXPECT_FALSE(is_opt);
 
 	test_type = "FLT";
-	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
 	EXPECT_TRUE(res_);
 	EXPECT_EQ(str_type, test_type);
 	EXPECT_FALSE(is_opt);
 
 	test_type = "BOOL";
-	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
 	EXPECT_TRUE(res_);
 	EXPECT_EQ(str_type, test_type);
 	EXPECT_FALSE(is_opt);
 
 	test_type = "STR";
-	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
 	EXPECT_TRUE(res_);
 	EXPECT_EQ(str_type, test_type);
 	EXPECT_FALSE(is_opt);
 
 	test_type = "IN";
-	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(str_type, "");
 	EXPECT_FALSE(is_opt);
 }
 
-TEST_F(YamlSchemaValidationTest, CheckSequenceTypeOptModifier)
+TEST_F(YamlSchemaValidationTest, CheckDataTypeStringOptModifier)
 {
 	std::string test_type = "OPTINT";
 	std::string str_type;
 	bool is_opt;
 
-	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
 	EXPECT_TRUE(res_);
 	EXPECT_EQ(str_type, "INT");
 	EXPECT_TRUE(is_opt);
 
 	test_type = "OPTFLT";
-	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
 	EXPECT_TRUE(res_);
 	EXPECT_EQ(str_type, "FLT");
 	EXPECT_TRUE(is_opt);
 
 	test_type = "OPTBOOL";
-	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
 	EXPECT_TRUE(res_);
 	EXPECT_EQ(str_type, "BOOL");
 	EXPECT_TRUE(is_opt);
 
 	test_type = "OPTSTR";
-	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
 	EXPECT_TRUE(res_);
 	EXPECT_EQ(str_type, "STR");
 	EXPECT_TRUE(is_opt);
 
 	test_type = "OPTIN";
-	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(str_type, "");
 	EXPECT_FALSE(is_opt);
 
 	test_type = "OPBOOL";
-	res_ = ysv_.CheckSequenceType(test_type, str_type, is_opt);
+	res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
 	EXPECT_FALSE(res_);
 	EXPECT_EQ(str_type, "");
 	EXPECT_FALSE(is_opt);
@@ -1005,7 +1005,7 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeOptBool)
 	EXPECT_EQ(InfoLogEntryCount(), 0);
 }
 
-TEST_F(YamlSchemaValidationTest, ProcessNodeOptGeneral)
+TEST_F(YamlSchemaValidationTest, ProcessNodeSequenceOptGeneral)
 {
 	schema_node_ = YAML::Load(
 		"data: BOOL\n"
@@ -1039,6 +1039,82 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeOptGeneral)
 	log_items_.clear();
 	test_node_["m1"]["it2"][0] = 24;
 	test_node_["val"] = YAML::Load("[]\n");
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+}
+
+TEST_F(YamlSchemaValidationTest, TestMapElementOptGeneral)
+{
+	schema_node_ = YAML::Load(
+		"data: OPTBOOL\n");
+	test_node_ = YAML::Load(
+		"data: true\n");
+
+	YAML::const_iterator it_schema = schema_node_.begin();
+	YAML::const_iterator it_test = test_node_.begin();
+
+	res_ = ysv_.TestMapElement(it_schema, it_test, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+
+	test_node_ = YAML::Load(
+		"data:\n");
+	it_test = test_node_.begin();
+	res_ = ysv_.TestMapElement(it_schema, it_test, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+
+	test_node_["data"] = "fals";
+	res_ = ysv_.TestMapElement(it_schema, it_test, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+	
+	log_items_.clear();
+	schema_node_["data"] = "OPTINT";
+	test_node_["data"] = 500;
+	res_ = ysv_.TestMapElement(it_schema, it_test, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+
+	test_node_ = YAML::Load(
+		"data:\n");
+	it_test = test_node_.begin();
+	res_ = ysv_.TestMapElement(it_schema, it_test, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+
+	test_node_["data"] = 30.3;
+	res_ = ysv_.TestMapElement(it_schema, it_test, log_items_);
+	EXPECT_FALSE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 1);
+}
+
+TEST_F(YamlSchemaValidationTest, ProcessNodeMapOptGeneral)
+{
+	schema_node_ = YAML::Load(
+		"data: OPTBOOL\n"
+		"m1:\n"
+		"  item: [FLT]\n"
+		"  it2: [OPTINT]\n"
+		"val: OPTINT\n");
+	test_node_ = YAML::Load(
+		"data: true\n"
+		"m1:\n"
+		"  item: [19.2, 3.2]\n"
+		"  it2: [100]\n"
+		"val: 23\n");
+
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+
+	test_node_["data"] = YAML::Node(YAML::NodeType::value::Null);
+	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
+	EXPECT_TRUE(res_);
+	EXPECT_EQ(InfoLogEntryCount(), 0);
+
+	test_node_["m1"]["val"] = YAML::Node(YAML::NodeType::value::Null);
 	res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
 	EXPECT_TRUE(res_);
 	EXPECT_EQ(InfoLogEntryCount(), 0);

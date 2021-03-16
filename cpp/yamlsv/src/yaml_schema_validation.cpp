@@ -5,7 +5,7 @@ YamlSV::~YamlSV()
 
 }
 
-YamlSV::YamlSV() : parse_text_(), sequence_is_opt_(false)
+YamlSV::YamlSV() : parse_text_(), is_opt_(false)
 {
 
 }
@@ -256,8 +256,30 @@ bool YamlSV::TestMapElement(YAML::const_iterator& schema_it, YAML::const_iterato
 	// If the mapped type is a scalar, check the value against the schema.
 	if (schema_it->second.IsScalar())
 	{
+		// Check if the string data type is valid.
+		if (!CheckDataTypeString(schema_it->second.as<std::string>(), str_type_,
+			is_opt_))
+		{
+			AddLogItem(log_output, LogLevel::INFO,
+				"YamlSV::TestMapElement: Type \"%s\" invalid",
+				schema_it->second.as<std::string>().c_str());
+			return false;
+		}
+
 		if (!test_it->second.IsScalar())
 		{
+			// If the test value is optional, indicated by is_opt_ = true,
+			// return true if the test value is null.
+			if (is_opt_)
+			{
+				if (test_it->second.IsNull())
+				{
+					AddLogItem(log_output, LogLevel::DDEBUG,
+						"YamlSV::TestMapElement: Test value for key \"%s\" is optional and not present",
+						test_it->first.as<std::string>().c_str());
+					return true;
+				}
+			}
 			AddLogItem(log_output, LogLevel::INFO,
 				"YamlSV::TestMapElement: Value for key \"%s\" is not a scalar as"
 				" indicated by the type \"%s\"",
@@ -272,13 +294,13 @@ bool YamlSV::TestMapElement(YAML::const_iterator& schema_it, YAML::const_iterato
 			test_it->first.as<std::string>().c_str(),
 			schema_it->second.as<std::string>().c_str());
 
-		if (!VerifyType(schema_it->second.as<std::string>(),
-			test_it->second.as<std::string>()))
+
+		if (!VerifyType(str_type_, test_it->second.as<std::string>()))
 		{
 			AddLogItem(log_output, LogLevel::INFO,
 				"YamlSV::TestMapElement: Value for key \"%s\" does not match type \"%s\"",
 				test_it->first.as<std::string>().c_str(), 
-				schema_it->second.as<std::string>().c_str());
+				str_type_.c_str());
 			return false;
 		}
 	}
@@ -315,8 +337,8 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
 
 	// Before iterating over the test sequence, check if the string type
 	// is valid.
-	if (!CheckSequenceType(schema_node[0].as<std::string>(), sequence_str_type_, 
-		sequence_is_opt_))
+	if (!CheckDataTypeString(schema_node[0].as<std::string>(), str_type_,
+		is_opt_))
 	{
 		AddLogItem(log_output, LogLevel::INFO,
 			"YamlSV::TestSequence: Type \"%s\" invalid", 
@@ -337,7 +359,7 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
 	if (!(test_node.size() > 0))
 	{
 		// Unless it is an optional sequence.
-		if (sequence_is_opt_)
+		if (is_opt_)
 		{
 			AddLogItem(log_output, LogLevel::DDEBUG,
 				"YamlSV::TestSequence: Test node is size zero and schema indicates OPT");
@@ -350,24 +372,24 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
 
 	AddLogItem(log_output, LogLevel::DDEBUG,
 		"YamlSV::TestSequence: Test sequence of size %zu for type \"%s\"",
-		test_node.size(), sequence_str_type_.c_str());
+		test_node.size(), str_type_.c_str());
 	
 	// Iterate over the test_node sequence, checking the type of 
 	// each element against the schema type.
 	for (YAML::const_iterator it = test_node.begin(); it != test_node.end(); ++it)
 	{
-		if (!VerifyType(sequence_str_type_, it->as<std::string>()))
+		if (!VerifyType(str_type_, it->as<std::string>()))
 		{
 			AddLogItem(log_output, LogLevel::INFO,
 				"YamlSV::TestSequence: Value \"%s\" does not match type \"%s\"",
-				it->as<std::string>().c_str(), sequence_str_type_.c_str());
+				it->as<std::string>().c_str(), str_type_.c_str());
 			return false;
 		}
 	}
 	return true;
 }
 
-bool YamlSV::CheckSequenceType(const std::string& test_type, std::string& str_type,
+bool YamlSV::CheckDataTypeString(const std::string& test_type, std::string& str_type,
 	bool& is_opt)
 {
 	size_t modifier_pos = 0;

@@ -17,8 +17,8 @@ private:
 	char buffer_[buff_size_];
 
 	std::string bool_tolower_;
-	bool sequence_is_opt_;
-	std::string sequence_str_type_;
+	bool is_opt_;
+	std::string str_type_;
 
 public:
 	YamlSV();
@@ -158,7 +158,7 @@ public:
 		True if the test_type includes a valid schema type with or without
 		valid modifier characters.
 	*/
-	bool CheckSequenceType(const std::string& test_type, std::string& str_type,
+	bool CheckDataTypeString(const std::string& test_type, std::string& str_type,
 		bool& is_opt);
 
 };
