@@ -9,8 +9,40 @@ bool GetArguments(int argc, char* argv[], ManagedPath& input_path,
 		return false;
 	}
 
-	input_path = ManagedPath(std::string(argv[1])); // path to parquet "file" (or .parquet directory)
-	icd_path = ManagedPath(std::string(argv[2]));
+	// Confirm that input strings are valid utf-8.
+	ParseText pt;
+
+	std::string temp_input_path = argv[1];
+	if (!pt.IsUTF8(temp_input_path))
+	{
+		printf("Input path is not valid UTF-8 string encoding\n");
+		return false;
+	}
+
+	std::string temp_icd_path = argv[2];
+	if (!pt.IsUTF8(temp_icd_path))
+	{
+		printf("DTS1553 (ICD) path is not valid UTF-8 string encoding\n");
+		return false;
+	}
+
+	input_path = ManagedPath(temp_input_path); // path to parquet "file" (or .parquet directory)
+	icd_path = ManagedPath(temp_icd_path); // path to DTS1553
+
+	// Proceed only if both files exist
+	if (!input_path.is_regular_file())
+	{
+		printf("Input path (%s) does not exist or is not a file",
+			input_path.RawString().c_str());
+		return false;
+	}
+
+	if (!icd_path.is_regular_file())
+	{
+		printf("DTS1553 path (%s) does not exist or is not a file",
+			icd_path.RawString().c_str());
+		return false;
+	}
 
 	return true;
 }
@@ -24,6 +56,13 @@ bool InitializeConfig(std::string conf_path, TranslationConfigParams& tcp)
 	}
 	else
 	{
+		// Check if user-input configuration file path is valid utf-8
+		ParseText pt;
+		if (!pt.IsUTF8(conf_path))
+		{
+			printf("Configuration file base path is not valid UTF-8 string encoding\n");
+			return false;
+		}
 		config_path = ManagedPath(conf_path);
 		config_path = config_path / "translate_conf.yaml";
 	}

@@ -8,6 +8,7 @@
 #include "parquet_reader.h"
 #include "translation_config_params.h"
 #include "managed_path.h"
+#include "parse_text.h"
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <iostream>
