@@ -96,3 +96,24 @@ TEST_F(FileReaderTest, GetDocumentAsString)
 	EXPECT_TRUE(doc.size() > 0);
 	EXPECT_EQ(doc, data);
 }
+
+TEST_F(FileReaderTest, ReadFileReadNewFile)
+{
+	std::string filename = "testfile.txt";
+	std::ofstream file;
+	file.open(filename);
+	file << "Line1\nLine2\n";
+	file.close();
+
+	EXPECT_EQ(fr.ReadFile(filename), 0);
+	EXPECT_EQ(fr.GetLines().size(), 2);
+	remove(filename.c_str());
+
+	file.open(filename);
+	file << "newline1\nnewline2\n";
+	file.close();
+
+	EXPECT_EQ(fr.ReadFile(filename), 0);
+	EXPECT_EQ(fr.GetLines().size(), 2);
+	remove(filename.c_str());
+}

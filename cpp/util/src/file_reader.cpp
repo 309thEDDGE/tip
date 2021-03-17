@@ -2,6 +2,9 @@
 
 int FileReader::ReadFile(std::string file_name)
 {
+	// Clear previously ready read lines.
+	lines.clear();
+
 	// Connect to the file
 	std::string line;
 	std::ifstream in_file(file_name);
@@ -14,6 +17,10 @@ int FileReader::ReadFile(std::string file_name)
 	{
 	  lines.push_back(line);
 	}
+
+	// Close file
+	in_file.close();
+
 	return 0;
 }
 
