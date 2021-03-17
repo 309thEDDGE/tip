@@ -248,20 +248,6 @@ std::string ParseText::RemoveTrailingChar(const std::string& input_string, char 
 // Returns: false if unsuccessful, true if successful
 bool ParseText::ConvertDouble(const std::string& convert_string, double& output)
 {
-	//// Return invalid if empty string
-	//if (convert_string.length() == 0)
-	//{
-	//	output = 0;
-	//	return false;
-	//}
-
-	//// Return invalid if first character is '-' and length is one
-	//if (convert_string[0] == '-' && convert_string.length() == 1)
-	//{
-	//	output = 0;
-	//	return false;
-	//}
-
 	if (!TextIsFloat(convert_string))
 	{
 		output = 0.0;
@@ -414,4 +400,15 @@ bool ParseText::IsUTF8(const std::string& test_str)
 
 	}
 	return true;
+}
+
+std::string ParseText::ToLower(const std::string& input_str)
+{
+	std::string lower_str = input_str;
+	for (size_t i = 0; i < lower_str.length(); i++)
+	{
+		if (!std::islower(lower_str[i]))
+			lower_str[i] = std::tolower(lower_str[i]);
+	}
+	return lower_str;
 }

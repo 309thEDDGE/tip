@@ -483,7 +483,7 @@ TEST_F(ParseTextTest, IsASCIIEmptyString)
 TEST_F(ParseTextTest, IsASCIIInvalidChar)
 {
 	const int n = 1;
-	char vals[n] = { 130 }; // 130 not in [0, 127]
+	char vals[n] = { char(130) }; // 130 not in [0, 127]
 	test_str = std::string((const char*)&vals, n);
 	res = pt.IsASCII(test_str);
 	EXPECT_FALSE(res);
@@ -492,7 +492,7 @@ TEST_F(ParseTextTest, IsASCIIInvalidChar)
 TEST_F(ParseTextTest, IsASCIIInvalidSequence)
 {
 	const int n = 5;
-	char vals[n] = { 23, 56, 144, 0, 10 }; // 130 not in [0, 127]
+	char vals[n] = { 23, 56, char(144), 0, 10 }; // 144 not in [0, 127]
 	test_str = std::string((const char*)&vals, n);
 	res = pt.IsASCII(test_str);
 	EXPECT_FALSE(res);
@@ -760,3 +760,33 @@ TEST_F(ParseTextTest, IsUTF8DecreasingSuccession)
 		std::string("\xC4\xA2") + std::string("\x5D");
 	EXPECT_FALSE(pt.IsUTF8(test_str));
 }
+
+TEST_F(ParseTextTest, ToLowerEmptyString)
+{
+	test_str = "";
+	std::string ret_str = pt.ToLower(test_str);
+	EXPECT_EQ(ret_str, test_str);
+}
+
+TEST_F(ParseTextTest, ToLowerAllLower)
+{
+	test_str = "this is a string_ with all lower-case";
+	std::string ret_str = pt.ToLower(test_str);
+	EXPECT_EQ(ret_str, test_str);
+}
+
+TEST_F(ParseTextTest, ToLowerMixedCase)
+{
+	test_str = "This is A String_ with MIXed case";
+	std::string ret_str = pt.ToLower(test_str);
+	EXPECT_EQ(ret_str, "this is a string_ with mixed case");
+}
+
+TEST_F(ParseTextTest, ToLowerAllUpper)
+{
+	test_str = "THIS IS A STRING_ WITH ALL UPPER CASE";
+	std::string ret_str = pt.ToLower(test_str);
+	EXPECT_EQ(ret_str, "this is a string_ with all upper case");
+}
+
+

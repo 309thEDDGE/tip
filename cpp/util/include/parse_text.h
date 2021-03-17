@@ -60,6 +60,19 @@ public:
 		test_str	--> Input string to be checked
 	*/
 	bool IsUTF8(const std::string& test_str);
+
+	/*
+	Convert an input string to the lower-case representation of itself.
+
+	Args:
+		input_str	--> Input string to be converted to lower case
+
+	Return:
+		A string in which all of the characters in the original input string
+		have been replaced by the lower-case representation. Does not affect
+		non-alphabetical characters.
+	*/
+	std::string ToLower(const std::string& input_str);
 };
 
 #endif

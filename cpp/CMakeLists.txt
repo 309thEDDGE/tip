@@ -41,6 +41,24 @@ target_compile_features(${util_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} ${parquet_libs} ${linux_libs})
 
 #########################################################
+#                   Build/link yamlsv lib
+#########################################################
+set(yamlsv_lib_name "yamlsv")
+set(yamlsv_dir_name "yamlsv")
+set(yamlsv_src_dir ${yamlsv_dir_name}/${source_dir_name})
+set(yamlsv_inc_dir ${yamlsv_dir_name}/${include_dir_name})
+set(yamlsv_main_dir ${yamlsv_dir_name}/${main_dir_name})
+add_library(${yamlsv_lib_name} STATIC
+            ${yamlsv_src_dir}/yaml_schema_validation.cpp ${yamlsv_inc_dir}/yaml_schema_validation.h
+            ${yamlsv_inc_dir}/yamlsv_log_item.h
+ )
+
+target_include_directories(${yamlsv_lib_name} PUBLIC ${yamlsv_inc_dir} ${yaml_inc_dir} 
+                           ${util_inc_dir})
+target_compile_features(${yamlsv_lib_name} PUBLIC cxx_std_17)
+target_link_libraries(${yamlsv_lib_name} PUBLIC ${yaml_lib_name} ${util_lib_name})
+
+#########################################################
 #              Build/link parquet_context lib
 #########################################################
 set(pqctx_lib_name "parquet_context")
@@ -246,6 +264,7 @@ install(TARGETS ${util_lib_name}
                 ${eth_lib_name}
                 ${ch10parse_lib_name}
                 ${videx_lib_name}
+                ${yamlsv_lib_name}
         DESTINATION ${out_lib_dir}
 )
 
@@ -308,11 +327,12 @@ if(build_tests)
                    ${test_src_dir}/tmats_parser_u.cpp ${test_src_dir}/metadata_u.cpp 
                    ${test_src_dir}/parse_manager_u.cpp ${test_src_dir}/parquet_reader_u.cpp
                    ${test_src_dir}/dts1553_u.cpp
-                   ${test_src_dir}/managed_path_u.cpp)
+                   ${test_src_dir}/managed_path_u.cpp
+                   ${test_src_dir}/yaml_schema_validation_u.cpp)
 #    set_property(TARGET ${test_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
                                ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
-                               ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} )
+                               ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} ${yamlsv_inc_dir})
 
     target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
     target_link_libraries(${test_exe_name}
@@ -323,6 +343,7 @@ if(build_tests)
                           ${comp_lib_name}
                           ${ch10parse_lib_name}
                           ${parquet_libs}
+                          ${yamlsv_lib_name}
               ${linux_libs})
 
     # For Ctest
@@ -371,6 +392,18 @@ add_executable(${bincomp_exe_name} ${comp_main_dir}/binary_comparison.cpp)
 #set_property(TARGET ${bincomp_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 #########################################################
+#                Build/link validate_yaml exe
+#########################################################
+set(yamlsv_exe_name "validate_yaml")
+message(STATUS "Building exe: " "${yamlsv_exe_name}")
+add_executable(${yamlsv_exe_name} ${yamlsv_main_dir}/validate_yaml.cpp)
+
+target_include_directories(${yamlsv_exe_name} PUBLIC ${yamlsv_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
+                            )
+target_compile_features(${yamlsv_exe_name} PUBLIC cxx_std_17)
+target_link_libraries(${yamlsv_exe_name} ${yamlsv_lib_name})
+
+#########################################################
 #                   Install Exes
 #########################################################
 install(DIRECTORY DESTINATION ${out_bin_dir})
@@ -379,6 +412,7 @@ install(TARGETS ${ch10parse_exe_name}
                 ${trans_exe_name}
                 ${comp_exe_name}
                 ${bincomp_exe_name}
+                ${yamlsv_exe_name}
         DESTINATION ${out_bin_dir}
         )
 
