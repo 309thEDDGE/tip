@@ -492,7 +492,7 @@ TEST_F(ParseTextTest, IsASCIIInvalidChar)
 TEST_F(ParseTextTest, IsASCIIInvalidSequence)
 {
 	const int n = 5;
-	char vals[n] = { 23, 56, 144, 0, 10 }; // 130 not in [0, 127]
+	char vals[n] = { 23, 56, char(144), 0, 10 }; // 144 not in [0, 127]
 	test_str = std::string((const char*)&vals, n);
 	res = pt.IsASCII(test_str);
 	EXPECT_FALSE(res);
