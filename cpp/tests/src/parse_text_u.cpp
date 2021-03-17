@@ -483,7 +483,7 @@ TEST_F(ParseTextTest, IsASCIIEmptyString)
 TEST_F(ParseTextTest, IsASCIIInvalidChar)
 {
 	const int n = 1;
-	char vals[n] = { 130 }; // 130 not in [0, 127]
+	char vals[n] = { char(130) }; // 130 not in [0, 127]
 	test_str = std::string((const char*)&vals, n);
 	res = pt.IsASCII(test_str);
 	EXPECT_FALSE(res);
