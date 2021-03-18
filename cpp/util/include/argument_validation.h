@@ -69,10 +69,20 @@ public:
 		const std::string& user_base_path, std::string file_name,
 		ManagedPath& full_path);
 
-	
+	/*
+	Read a file into a string object and test for UTF-8 conformity.
 
+	Args:
+		doc_path	--> ManagedPath object with the full path to the file
+						which ought to be read. 
+		doc_string	--> Output string containing the entire text of the document,
+						newlines included.
 
-	//bool ValidateDocument(const ManagedPath& doc_path, std::string& doc_string);
+	Return:
+		True if the document can be read and tested to conform with UTF-8, 
+		otherwise false.
+	*/
+	bool ValidateDocument(const ManagedPath& doc_path, std::string& doc_string);
 
 };
 
