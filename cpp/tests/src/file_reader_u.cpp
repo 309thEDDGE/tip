@@ -95,6 +95,7 @@ TEST_F(FileReaderTest, GetDocumentAsString)
 	std::string doc = fr.GetDocumentAsString();
 	EXPECT_TRUE(doc.size() > 0);
 	EXPECT_EQ(doc, data);
+	remove(filename.c_str());
 }
 
 TEST_F(FileReaderTest, ReadFileReadNewFile)
