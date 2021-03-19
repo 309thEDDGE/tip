@@ -9,66 +9,116 @@ bool GetArguments(int argc, char* argv[], ManagedPath& input_path,
 		return false;
 	}
 
-	// Confirm that input strings are valid utf-8.
-	ParseText pt;
-
 	std::string temp_input_path = argv[1];
-	if (!pt.IsUTF8(temp_input_path))
-	{
-		printf("Input path is not valid UTF-8 string encoding\n");
-		return false;
-	}
-
 	std::string temp_icd_path = argv[2];
-	if (!pt.IsUTF8(temp_icd_path))
+
+	ArgumentValidation av;
+	if (!av.ValidateDirectoryPath(temp_input_path, input_path))
 	{
-		printf("DTS1553 (ICD) path is not valid UTF-8 string encoding\n");
+		printf("Ch10 input directory does not exist: %s\n", temp_input_path.c_str());
 		return false;
 	}
 
-	input_path = ManagedPath(temp_input_path); // path to parquet "file" (or .parquet directory)
-	icd_path = ManagedPath(temp_icd_path); // path to DTS1553
-
-	// Proceed only if both files exist
-	if (!input_path.is_regular_file())
+	if (!av.ValidateInputFilePath(temp_icd_path, icd_path))
 	{
-		printf("Input path (%s) does not exist or is not a file",
-			input_path.RawString().c_str());
-		return false;
-	}
-
-	if (!icd_path.is_regular_file())
-	{
-		printf("DTS1553 path (%s) does not exist or is not a file",
-			icd_path.RawString().c_str());
+		printf("DTS1553/ICD input directory does not exist: %s\n", 
+			temp_icd_path.c_str());
 		return false;
 	}
 
 	return true;
 }
 
-bool InitializeConfig(std::string conf_path, TranslationConfigParams& tcp)
+bool InitializeConfig(std::string conf_root_path, std::string schema_root_path,
+	TranslationConfigParams& tcp, std::vector<LogItem>& log_items)
 {
-	ManagedPath config_path;
-	if (conf_path == "")
+
+	// Get the configuration yaml path either by default or from a user-input
+	// path to the root of the conf file directory.
+	ManagedPath full_config_path;
+	std::string config_file_name = "translate_conf.yaml";
+	ManagedPath default_root_path({ "..", "conf" });
+
+	ArgumentValidation av;
+	if (!av.ValidateDefaultInputFilePath(default_root_path, conf_root_path,
+		config_file_name, full_config_path))
 	{
-		config_path = config_path.parent_path() / "conf" / "translate_conf.yaml";
-	}
-	else
-	{
-		// Check if user-input configuration file path is valid utf-8
-		ParseText pt;
-		if (!pt.IsUTF8(conf_path))
-		{
-			printf("Configuration file base path is not valid UTF-8 string encoding\n");
-			return false;
-		}
-		config_path = ManagedPath(conf_path);
-		config_path = config_path / "translate_conf.yaml";
+		printf("Failed to create translator configuration file path\n");
+		return false;
 	}
 
-	if (!tcp.Initialize(config_path.string()))
+	// Get the config schema yaml path either by default or from a user-input
+	// base path.
+	ManagedPath full_schema_path;
+	std::string schema_file_name = "tip_translate_conf_schema.yaml";
+	ManagedPath schema_default_path({ "..", "conf", "yaml_schemas" });
+	if (!av.ValidateDefaultInputFilePath(schema_default_path, schema_root_path,
+		schema_file_name, full_schema_path))
+	{
+		printf("Failed to create translator configuration schema file path\n");
 		return false;
+	}
+
+	// Check the file contents for utf8 conformity.
+	std::string config_doc;
+	if (!av.ValidateDocument(full_config_path, config_doc)) return false;
+
+	std::string schema_doc;
+	if (!av.ValidateDocument(full_schema_path, schema_doc)) return false;
+
+	// Validate the config file using the yaml schema validator.
+	YamlSV ysv;
+	if (!ysv.Validate(config_doc, schema_doc, log_items))
+	{
+		printf("Failed to validate configuration file (%s) with schema (%s)\n",
+			full_config_path.RawString().c_str(), full_schema_path.RawString().c_str());
+		return false;
+	}
+
+	// Initialize the configuration file reader and ingest the data.
+	if (!tcp.Initialize(full_config_path.string()))
+		return false;
+
+	return true;
+}
+
+bool ValidateDTS1553YamlSchema(std::string schema_root_path, 
+	const ManagedPath& dts_path, std::vector<LogItem>& log_items)
+{
+	// Do not proceed if the dts_path does not have a yaml or yml
+	// extension.
+	ParseText pt;
+	std::string ext = pt.ToLower(dts_path.extension().RawString());
+	if (!(ext == ".yaml" || ext == ".yml"))
+		return true;
+
+	// Construct the schema file path
+	ArgumentValidation av;
+	std::string schema_file_name = "tip_dts1553_schema.yaml";
+	ManagedPath full_schema_path;
+	ManagedPath default_root_path({ "..", "conf", "yaml_schemas" });
+	if (!av.ValidateDefaultInputFilePath(default_root_path, schema_root_path,
+		schema_file_name, full_schema_path))
+	{
+		printf("Failed to create DTS1553 schema file path\n");
+		return false;
+	}
+
+	// Check the schema and dts1553 documents for utf-8 conformity
+	std::string schema_doc;
+	if (!av.ValidateDocument(full_schema_path, schema_doc)) return false;
+
+	std::string dts_doc;
+	if (!av.ValidateDocument(dts_path, dts_doc)) return false;
+
+	// Validate the dts1553 document using schema validator.
+	YamlSV ysv;
+	if (!ysv.Validate(dts_doc, schema_doc, log_items))
+	{
+		printf("Failed to validate DTS1553 file (%s) with schema (%s)\n",
+			dts_path.RawString().c_str(), full_schema_path.RawString().c_str());
+		return false;
+	}
 
 	return true;
 }

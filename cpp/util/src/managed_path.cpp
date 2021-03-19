@@ -167,6 +167,11 @@ ManagedPath ManagedPath::stem() const
 	return mp;
 }
 
+ManagedPath ManagedPath::extension() const
+{
+	ManagedPath mp(this->fs::path::extension());
+	return mp;
+}
 
 ManagedPath ManagedPath::CreatePathObject(const ManagedPath& output_fname,
 	const std::string& extension_replacement) const

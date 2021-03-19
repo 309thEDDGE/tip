@@ -134,6 +134,15 @@ public:
 	*/
 	ManagedPath stem() const;
 
+	/*
+	Get the extension component of the current object.
+	Same functionality as std::filesystem::path::extension
+
+	Return: A ManagedPath object containing the extension
+	of the current object.
+	*/
+	ManagedPath extension() const;
+
 	//
 	// Mimic other std::filesystem functions.
 	//

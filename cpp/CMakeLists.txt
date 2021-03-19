@@ -151,13 +151,10 @@ add_library(${trans_lib_name} STATIC
     )
 
 target_include_directories(${trans_lib_name} PUBLIC ${trans_inc_dir}
-                            ${util_inc_dir} ${ch10pq_inc_dir})
-
-target_include_directories(${trans_lib_name} PUBLIC  
-                            )
+                            ${util_inc_dir} ${ch10pq_inc_dir} ${yamlsv_inc_dir})
 
 target_link_libraries(${trans_lib_name} PUBLIC
-                        ${util_lib_name} ${ch10pq_lib_name} ${linux_libs})
+                        ${util_lib_name} ${ch10pq_lib_name} ${linux_libs} ${yamlsv_lib_name})
 target_compile_features(${trans_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${trans_lib_name} PRIVATE -fPIE)
 

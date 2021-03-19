@@ -87,7 +87,7 @@ public:
 	bool ValidateDocument(const ManagedPath& doc_path, std::string& doc_string);
 
 	/*
-	Validate a potential output directory by checking that the path string conforms
+	Validate a potential directory by checking that the path string conforms
 	to utf-8 and that it exists.
 
 	Args:
@@ -100,7 +100,7 @@ public:
 		True if the path is validated, i.e., conforms to utf-8 and the dir exists,
 		otherwise false.
 	*/
-	bool ValidateOutputDirPath(std::string output_dir, ManagedPath& mp_output_dir);
+	bool ValidateDirectoryPath(std::string dir, ManagedPath& mp_dir);
 
 };
 

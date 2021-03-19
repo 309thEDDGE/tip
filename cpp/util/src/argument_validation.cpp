@@ -90,26 +90,26 @@ bool ArgumentValidation::ValidateDocument(const ManagedPath& doc_path, std::stri
 	return true;
 }
 
-bool ArgumentValidation::ValidateOutputDirPath(std::string output_dir, 
-	ManagedPath& mp_output_dir)
+bool ArgumentValidation::ValidateDirectoryPath(std::string dir, 
+	ManagedPath& mp_dir)
 {
-	mp_output_dir = ManagedPath(std::string(""));
-	if (!parse_text_.IsUTF8(output_dir))
+	mp_dir = ManagedPath(std::string(""));
+	if (!parse_text_.IsUTF8(dir))
 	{
-		printf("ValidateOutputDirPath: Output dir (%s) does not conform"
-			" with UTF-8 encoding\n", output_dir.c_str());
+		printf("ValidateDirectoryPath: Directory (%s) does not conform"
+			" with UTF-8 encoding\n", dir.c_str());
 		return false;
 	}
 
-	ManagedPath temp_output_dir(output_dir);
-	temp_output_dir = temp_output_dir.absolute();
-	if (!temp_output_dir.is_directory())
+	ManagedPath temp_dir(dir);
+	temp_dir = temp_dir.absolute();
+	if (!temp_dir.is_directory())
 	{
-		printf("ValidateOutputDirPath: Output dir (%s) does not exist"
-			" or is not a directory\n", temp_output_dir.RawString().c_str());
+		printf("ValidateDirectoryPath: Directory dir (%s) does not exist"
+			" or is not a directory\n", temp_dir.RawString().c_str());
 		return false;
 	}
 
-	mp_output_dir = temp_output_dir;
+	mp_dir = temp_dir;
 	return true;
 }

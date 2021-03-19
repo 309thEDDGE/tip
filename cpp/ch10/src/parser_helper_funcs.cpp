@@ -69,7 +69,7 @@ bool ValidatePaths(char* arg1, char* arg2, ManagedPath& input_path, ManagedPath&
 	{
 		// Check if the path conforms to utf-8
 		std::string temp_out_path = arg2;
-		if (!av.ValidateOutputDirPath(temp_out_path, output_path))
+		if (!av.ValidateDirectoryPath(temp_out_path, output_path))
 		{
 			printf("User-defined output path is not a directory: %s\n",
 				temp_out_path.c_str());
