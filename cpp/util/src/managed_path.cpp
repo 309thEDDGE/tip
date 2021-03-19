@@ -18,6 +18,16 @@ fs::path ManagedPath::AmendPath(fs::path input_path) const
 #endif
 }
 
+ManagedPath::ManagedPath(std::initializer_list<std::string> path_components)
+{
+	fs::path temp_path = fs::current_path();
+	for (auto comp : path_components)
+	{
+		temp_path /= comp;
+	}
+	this->assign(temp_path);
+}
+
 ManagedPath& ManagedPath::operator = (const ManagedPath& c)
 {
 	std::string temp_path = c.fs::path::string();

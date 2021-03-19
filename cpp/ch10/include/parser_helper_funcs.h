@@ -5,8 +5,8 @@
 #include "parse_manager.h"
 #include "parser_config_params.h"
 #include "managed_path.h"
-#include "parse_text.h"
-#include "file_reader.h"
+#include "argument_validation.h"
+#include "yaml_schema_validation.h"
 
 bool ValidateConfig(ParserConfigParams& config, std::string config_path,
 	std::string config_schema_path);

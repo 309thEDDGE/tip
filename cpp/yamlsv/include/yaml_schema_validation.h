@@ -29,7 +29,7 @@ public:
 
 	Args:
 		test_node	--> root node of yaml matter under test
-		schema_node	--> root node of yaml schema, see schema readme, above
+		schema_node	--> root node of yaml schema, see schema readme
 		log_output	--> vector of LogItem filled during validation. Facilitates use
 						of arbitrary logging mechanism.
 
@@ -37,6 +37,21 @@ public:
 		True if yaml matter under test is validated, false otherwise.
 	*/
 	bool Validate(const YAML::Node& test_node, const YAML::Node& user_schema_node,
+		std::vector<LogItem>& log_output);
+
+	/*
+	Validate a yaml document against a schema document.
+
+	Args:
+		test_node	--> string containing yaml matter under test
+		schema_node	--> string containing yaml schema, see schema readme
+		log_output	--> vector of LogItem filled during validation. Facilitates use
+						of arbitrary logging mechanism.
+
+	Return:
+		True if yaml matter under test is validated, false otherwise.
+	*/
+	bool Validate(const std::string& test_doc, const std::string& schema_doc,
 		std::vector<LogItem>& log_output);
 
 	/////////////////////////////////////////////////////////////////////////////////

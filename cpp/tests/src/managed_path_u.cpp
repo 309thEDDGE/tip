@@ -74,6 +74,26 @@ std::vector<std::string> CreatePathWithLength(const ManagedPath& mp_relative, si
 	return path_components;
 }
 
+TEST(ManagedPathTest, InitializerListConstructor1Arg)
+{
+	std::string p = "data.txt";
+	ManagedPath expected_path;
+	expected_path /= p;
+	ManagedPath mp({ p });
+	EXPECT_EQ(mp.RawString(), expected_path.RawString());
+}
+
+TEST(ManagedPathTest, InitializerListConstructorMultArg)
+{
+	std::string p1 = "dirname";
+	std::string p2 = "otherdir";
+	std::string p3 = "data.txt";
+	ManagedPath expected_path;
+	expected_path = expected_path / p1 / p2 / p3;
+	ManagedPath mp({ p1, p2, p3 });
+	EXPECT_EQ(mp.RawString(), expected_path.RawString());
+}
+
 TEST(ManagedPathTest, AmendPathInsertsPrefix)
 {
 	ManagedPath mp(std::string("start"));

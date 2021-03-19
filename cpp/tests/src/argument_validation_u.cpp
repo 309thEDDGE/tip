@@ -192,3 +192,30 @@ TEST_F(ArgumentValidationTest, ValidateDocumentCorrectDocString)
 	EXPECT_EQ(doc_string, file_data);
 	EXPECT_TRUE(doc_path.remove());
 }
+
+TEST_F(ArgumentValidationTest, ValidateOutputDirPathNotUTF8)
+{
+	file_path_ = "\xE3\xA2\xA5\xB4";
+	ManagedPath mp_output_dir;
+	EXPECT_FALSE(av_.ValidateOutputDirPath(file_path_, mp_output_dir));
+	EXPECT_EQ(mp_output_dir.RawString(), "");
+}
+
+TEST_F(ArgumentValidationTest, ValidateOutputDirPathNotExist)
+{
+	file_path_ = "test_data";
+	ManagedPath mp_output_dir;
+	EXPECT_FALSE(av_.ValidateOutputDirPath(file_path_, mp_output_dir));
+	EXPECT_EQ(mp_output_dir.RawString(), "");
+}
+
+TEST_F(ArgumentValidationTest, ValidateOutputDirCorrectPath)
+{
+	file_path_ = "test_data";
+	ManagedPath temp_dir({ file_path_ });
+	ASSERT_TRUE(temp_dir.create_directory());
+	ManagedPath mp_output_dir;
+	EXPECT_TRUE(av_.ValidateOutputDirPath(file_path_, mp_output_dir));
+	EXPECT_EQ(mp_output_dir.RawString(), temp_dir.RawString());
+	EXPECT_TRUE(temp_dir.remove());
+}

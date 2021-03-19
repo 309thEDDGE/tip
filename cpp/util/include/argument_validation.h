@@ -9,6 +9,8 @@
 class ArgumentValidation
 {
 private:
+	ParseText parse_text_;
+	FileReader file_reader_;
 
 public:
 	ArgumentValidation() {}
@@ -83,6 +85,22 @@ public:
 		otherwise false.
 	*/
 	bool ValidateDocument(const ManagedPath& doc_path, std::string& doc_string);
+
+	/*
+	Validate a potential output directory by checking that the path string conforms
+	to utf-8 and that it exists.
+
+	Args:
+		output_dir		--> User-input path passed as a string argument
+		mp_output_dir	--> ManagedPath object to be set as the dir
+							path if the path is validated, otherwise set as an
+							emptry string
+
+	Return:
+		True if the path is validated, i.e., conforms to utf-8 and the dir exists,
+		otherwise false.
+	*/
+	bool ValidateOutputDirPath(std::string output_dir, ManagedPath& mp_output_dir);
 
 };
 
