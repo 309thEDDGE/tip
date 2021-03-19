@@ -9,10 +9,13 @@ bool GetArguments(int argc, char* argv[], ManagedPath& input_path,
 		return false;
 	}
 
-	std::string temp_input_path = argv[1];
-	std::string temp_icd_path = argv[2];
-
 	ArgumentValidation av;
+	std::string temp_input_path = argv[1];
+	if (!av.CheckExtension(temp_input_path, "parquet")) return false;
+
+	std::string temp_icd_path = argv[2];
+	if (!av.CheckExtension(temp_icd_path, "txt", "csv", "yaml", "yml")) return false;
+	
 	if (!av.ValidateDirectoryPath(temp_input_path, input_path))
 	{
 		printf("Ch10 input directory does not exist: %s\n", temp_input_path.c_str());
@@ -87,13 +90,11 @@ bool ValidateDTS1553YamlSchema(std::string schema_root_path,
 {
 	// Do not proceed if the dts_path does not have a yaml or yml
 	// extension.
-	ParseText pt;
-	std::string ext = pt.ToLower(dts_path.extension().RawString());
-	if (!(ext == ".yaml" || ext == ".yml"))
+	ArgumentValidation av;
+	if(!av.CheckExtension(dts_path.RawString(), "yaml", "yml"))
 		return true;
 
 	// Construct the schema file path
-	ArgumentValidation av;
 	std::string schema_file_name = "tip_dts1553_schema.yaml";
 	ManagedPath full_schema_path;
 	ManagedPath default_root_path({ "..", "conf", "yaml_schemas" });

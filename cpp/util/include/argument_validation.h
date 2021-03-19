@@ -102,6 +102,61 @@ public:
 	*/
 	bool ValidateDirectoryPath(std::string dir, ManagedPath& mp_dir);
 
+	/*
+	Check that a string has one of the n extensions passed as arguments.
+	Ignore case of extension on input string and extensions passed as 
+	arguments.
+
+	Args:
+		input_path	--> An input path which may or may not have the expected
+						extension
+		exts			--> N many string arguments listing the possible extensions,
+						ex: (input_path, "txt", "data", "csv")
+
+	Return:
+		True if the extension found on the input_path is equal to one of 
+		the extensions supplied as arguments, otherwise false.
+	*/
+	template <typename ...T>
+	bool CheckExtension(const std::string& input_path, T... exts);
+
 };
+
+template <typename ...T>
+bool ArgumentValidation::CheckExtension(const std::string& input_path, T... exts)
+{
+	ManagedPath temp_path(input_path);
+	if (temp_path.extension().RawString() == "")
+	{
+		printf("CheckExtension: Input file/path %s has no extension\n",
+			input_path.c_str());
+		return false;
+	}
+
+	// Get lower case extension from input string with the '.' removed.
+	std::string path_ext = parse_text_.ToLower(
+		temp_path.extension().RawString().substr(1));
+
+	// Iterate over argument pack and compare.
+	std::string lower_opt_ext;
+	for (auto opt_ext : { exts... })
+	{
+		lower_opt_ext = parse_text_.ToLower(opt_ext);
+		if (path_ext == lower_opt_ext)
+			return true;
+	}
+
+	std::string ext_list = "";
+	for (auto opt_ext : { exts... })
+	{
+		ext_list += opt_ext;
+		ext_list += " ";
+	}
+	printf("CheckExtension: Input file/path %s does not have one of the extensions: %s\n",
+		input_path.c_str(), ext_list.c_str());
+
+	return false;
+}
+
 
 #endif

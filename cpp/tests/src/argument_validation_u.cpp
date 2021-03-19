@@ -183,7 +183,7 @@ TEST_F(ArgumentValidationTest, ValidateDocumentCorrectDocString)
 	// constructing invalid UTF-8 byte sequences.
 	file_path_ = "";
 	file_name_ = "data.txt";
-	std::string file_data = "line1\n\line2\n";
+	std::string file_data = "line1\nline2\n";
 	ManagedPath doc_path;
 	doc_path /= file_name_;
 	ASSERT_TRUE(CreateFile(doc_path, file_data));
@@ -218,4 +218,26 @@ TEST_F(ArgumentValidationTest, ValidateDirectoryPathCorrectPath)
 	EXPECT_TRUE(av_.ValidateDirectoryPath(file_path_, mp_output_dir));
 	EXPECT_EQ(mp_output_dir.RawString(), temp_dir.RawString());
 	EXPECT_TRUE(temp_dir.remove());
+}
+
+TEST_F(ArgumentValidationTest, CheckExtensionNoExtensionOnInputPath)
+{
+	file_path_ = "test_data";
+	EXPECT_FALSE(av_.CheckExtension(file_path_, "data", "txt"));
+}
+
+TEST_F(ArgumentValidationTest, CheckExtensionSingleExtension)
+{
+	file_path_ = "test_data.txt";
+	EXPECT_FALSE(av_.CheckExtension(file_path_, "text"));
+	EXPECT_TRUE(av_.CheckExtension(file_path_, "txt"));
+	EXPECT_TRUE(av_.CheckExtension(file_path_, "TXT"));
+}
+
+TEST_F(ArgumentValidationTest, CheckExtensionMultipleExtension)
+{
+	file_path_ = "test_data.Ch10";
+	EXPECT_FALSE(av_.CheckExtension(file_path_, ".Ch10", "bad", "txt"));
+	EXPECT_TRUE(av_.CheckExtension(file_path_, "CCh10", "c10", "ch10"));
+	EXPECT_TRUE(av_.CheckExtension(file_path_, "txt", "csv", "CH10"));
 }
