@@ -1,0 +1,7 @@
+---
+parse_chunk_bytes: INT
+parse_thread_count: INT
+max_chunk_read_count: INT
+worker_offset_wait_ms: INT
+worker_shift_wait_ms: INT
+...

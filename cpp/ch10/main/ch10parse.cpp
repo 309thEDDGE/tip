@@ -34,9 +34,9 @@ int main(int argc, char* argv[])
 	}
 
 	ParserConfigParams config;
-	ManagedPath final_conf_path;
-	std::string config_path = "";
-	if (!ValidateConfig(config, config_path, final_conf_path))
+	std::string tip_root_path = "";
+	std::string config_schema_path = "";
+	if (!ValidateConfig(config, tip_root_path, config_schema_path))
 		return 0;
 
 	// Get the parent dir of the parent dir of the final configuration file

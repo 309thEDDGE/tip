@@ -46,9 +46,13 @@ for root, dirs, files in os.walk(os.path.join(tip_path, 'bin')):
              print(q + " ------> copy done")              
              shutil.copy2(q , os.path.join(output_path, 'deliverable','bin'))
 
-# Copy only default_conf
+# Copy default_conf
 shutil.copytree(os.path.join(tip_path, 'conf', 'default_conf'), os.path.join(output_path, 'deliverable','conf', 'default_conf'))
 print(os.path.join(tip_path, 'conf', 'default_conf') + " ------> copy done") 
+
+# Copy yaml_schemas
+shutil.copytree(os.path.join(tip_path, 'conf', 'yaml_schemas'), os.path.join(output_path, 'deliverable','conf', 'yaml_schemas'))
+print(os.path.join(tip_path, 'conf', 'yaml_schemas') + " ------> copy done") 
 
 # Copy main run script
 shutil.copy2(os.path.join(tip_path, 'parse_and_translate.py'), os.path.join(output_path, 'deliverable'))
