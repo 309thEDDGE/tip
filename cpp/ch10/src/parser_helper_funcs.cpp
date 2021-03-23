@@ -1,8 +1,12 @@
 #include "parser_helper_funcs.h"
 
 bool ValidateConfig(ParserConfigParams& config, std::string config_path,
-	std::string config_schema_path)
+	std::string config_schema_path, ManagedPath& final_config_path,
+	ManagedPath& final_schema_path)
 {
+	final_config_path = ManagedPath(std::string(""));
+	final_schema_path = ManagedPath(std::string(""));
+
 	ArgumentValidation av;
 	std::string conf_file_name = "parse_conf.yaml";
 
@@ -46,6 +50,7 @@ bool ValidateConfig(ParserConfigParams& config, std::string config_path,
 
 	bool settings_validated = config.Initialize(conf_path.string());
 	final_config_path = conf_path;
+	final_schema_path = schema_path;
 	return settings_validated;
 }
 
@@ -62,8 +67,7 @@ bool ValidatePaths(char* arg1, char* arg2, ManagedPath& input_path, ManagedPath&
 			ch10_path.c_str());
 		return false;
 	}
-	spdlog::get("pm_logger")->info("Ch10 file path: {:s}", input_path.RawString());
-
+	
 	// Check for a second argument. If present, this path specifies the output
 	// path. If not present, the output path is the same as the input path.
 	output_path = input_path.parent_path();
@@ -73,14 +77,12 @@ bool ValidatePaths(char* arg1, char* arg2, ManagedPath& input_path, ManagedPath&
 		std::string temp_out_path = arg2;
 		if (!av.ValidateDirectoryPath(temp_out_path, output_path))
 		{
-			spdlog::get("pm_logger")->warn("User-defined output path is not a directory: {:s}",
-				output_path.RawString());
 			printf("User-defined output path is not a directory: %s\n",
 				temp_out_path.c_str());
 			return false;
 		}
 	}
-	spdlog::get("pm_logger")->info("Output path: {:s}", output_path.RawString());
+	
 	return true;
 }
 
@@ -102,7 +104,26 @@ bool StartParse(ManagedPath input_path, ManagedPath output_path,
 	// Get stop time and print duration.
 	auto stop_time = std::chrono::high_resolution_clock::now();
 	duration = (stop_time - start_time).count() / 1.0e9;
-	spdlog::get("pm_logger")->info("Duration: {:.3f} sec", duration);
+	
+	return true;
+}
+
+bool ValidateLogDir(const std::string& user_log_dir, ManagedPath& final_log_dir)
+{
+	// Note: In later iterations, this function may receive optional 
+	// arguments which instruct it to use the %LOCALAPPDIR% (or whatever the
+	// default is in windows) or the linux equivalent.
+
+	// Set up the default logging directory, relative to assumed bin dir.
+	ManagedPath default_log_dir({ "..", "logs" });
+
+	// Create the final log dir object, using the value of user_log_dir
+	// if it is not an empty string.
+	ArgumentValidation av;
+	if (!av.ValidateDefaultOutputDirectory(default_log_dir, user_log_dir,
+		final_log_dir, true))
+		return false;
+
 	return true;
 }
 
