@@ -72,6 +72,33 @@ public:
 		ManagedPath& full_path);
 
 	/*
+	Create an output directory object if the user output directory is an 
+	empty string, or use the default directory object. Confirm that the
+	directory exists and return false if create_dir is set to false. Otherwise,
+	attempt to create the directory and return true if successful, and false
+	otherwise. Set the final_output_dir to the directory which is either
+	created or confirmed to exist if the return is true, otherwise set it
+	equal to an empty string.
+
+	Args:
+		default_output_dir	--> Directory to check or create if the
+								user_output_dir is empty
+		user_output_dir		--> String representing the user's choice of 
+								output directory, which may be an empty string
+		final_output_dir	--> Object in which the directory which is created 
+								or confirmed to exist is stored
+		create_dir			--> Set to true to create the directory if it doesn't
+								exist
+
+	Return:
+		True if the directory is confirmed to exist or created successfully if 
+		create_dir is set to true, false otherwise.
+	*/
+	bool ValidateDefaultOutputDirectory(const ManagedPath& default_output_dir,
+		const std::string& user_output_dir, ManagedPath& final_output_dir,
+		bool create_dir);
+
+	/*
 	Read a file into a string object and test for UTF-8 conformity.
 
 	Args:
