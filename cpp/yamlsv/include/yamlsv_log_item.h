@@ -7,23 +7,23 @@
 
 enum class LogLevel : uint8_t
 {
-	TRACE = 0,
-	DDEBUG = 1,
-	INFO = 2,
-	WARN = 3,
-	ERROR = 4,
-	FATAL = 5,
-	OFF = 6
+	Trace = 0,
+	Debug = 1,
+	Info = 2,
+	Warn = 3,
+	Error = 4,
+	Fatal = 5,
+	Off = 6
 };
 
 const std::map<LogLevel, std::string> loglevel_to_string_map = {
-	{LogLevel::TRACE, "TRACE"},
-	{LogLevel::DDEBUG, "DEBUG"},
-	{LogLevel::INFO, "INFO"},
-	{LogLevel::WARN, "WARN"},
-	{LogLevel::ERROR, "ERROR"},
-	{LogLevel::FATAL, "FATAL"},
-	{LogLevel::OFF, "OFF"}
+	{LogLevel::Trace, "TRACE"},
+	{LogLevel::Debug, "DEBUG"},
+	{LogLevel::Info, "INFO"},
+	{LogLevel::Warn, "WARN"},
+	{LogLevel::Error, "ERROR"},
+	{LogLevel::Fatal, "FATAL"},
+	{LogLevel::Off, "OFF"}
 };
 
 class LogItem
@@ -33,7 +33,7 @@ public:
 	uint8_t log_value;
 	std::string message;
 
-	LogItem() : log_level(LogLevel::TRACE), message(), log_value(0) {}
+	LogItem() : log_level(LogLevel::Trace), message(), log_value(0) {}
 	LogItem(LogLevel level, std::string msg) : log_level(level), 
 		message(msg), log_value(static_cast<uint8_t>(level)) {}
 

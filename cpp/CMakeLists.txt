@@ -33,6 +33,7 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/metadata.cpp             ${util_inc_dir}/metadata.h
             ${util_src_dir}/parquet_reader.cpp       ${util_inc_dir}/parquet_reader.h
             ${util_src_dir}/managed_path.cpp         ${util_inc_dir}/managed_path.h
+            ${util_src_dir}/argument_validation.cpp  ${util_inc_dir}/argument_validation.h
  )
 
 target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} ${yaml_inc_dir} ${parquet_inc_dirs})
@@ -150,13 +151,10 @@ add_library(${trans_lib_name} STATIC
     )
 
 target_include_directories(${trans_lib_name} PUBLIC ${trans_inc_dir}
-                            ${util_inc_dir} ${ch10pq_inc_dir})
-
-target_include_directories(${trans_lib_name} PUBLIC  
-                            )
+                            ${util_inc_dir} ${ch10pq_inc_dir} ${yamlsv_inc_dir})
 
 target_link_libraries(${trans_lib_name} PUBLIC
-                        ${util_lib_name} ${ch10pq_lib_name} ${linux_libs})
+                        ${util_lib_name} ${ch10pq_lib_name} ${linux_libs} ${yamlsv_lib_name})
 target_compile_features(${trans_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${trans_lib_name} PRIVATE -fPIE)
 
@@ -235,19 +233,17 @@ add_library(${ch10parse_lib_name} STATIC
     )
 target_include_directories(${ch10parse_lib_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
-                            ${temp_irig_inc_dir} ${temp_eth_inc_dir}
+                            ${temp_irig_inc_dir} ${temp_eth_inc_dir} ${yamlsv_inc_dir}
                             )
 target_compile_features(${ch10parse_lib_name} PUBLIC cxx_std_17)
-#target_compile_options(${ch10parse_lib_name} PRIVATE -fPIE)
 target_link_libraries(${ch10parse_lib_name} PUBLIC
                         ${util_lib_name}
-                        #${pqctx_lib_name}
                         ${ch10pq_lib_name}
-                        #${parquet_libs}
                         ${linux_libs}
                         ${temp_irig_lib_name}
                         ${temp_tins_libs}
                         ${temp_eth_lib_name}
+                        ${yamlsv_lib_name}
     )
 
 #########################################################
@@ -328,7 +324,8 @@ if(build_tests)
                    ${test_src_dir}/parse_manager_u.cpp ${test_src_dir}/parquet_reader_u.cpp
                    ${test_src_dir}/dts1553_u.cpp
                    ${test_src_dir}/managed_path_u.cpp
-                   ${test_src_dir}/yaml_schema_validation_u.cpp)
+                   ${test_src_dir}/yaml_schema_validation_u.cpp
+                   ${test_src_dir}/argument_validation_u.cpp)
 #    set_property(TARGET ${test_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${test_exe_name} PUBLIC ${gsuite_inc_dirs} ${util_inc_dir} #${yaml_inc_dir} 
                                ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 

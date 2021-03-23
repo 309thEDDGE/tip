@@ -16,17 +16,25 @@ bool YamlSV::Validate(const YAML::Node& test_node, const YAML::Node& user_schema
 	// Return false if nodes are empty.
 	if (test_node.size() == 0)
 	{
-		AddLogItem(log_output, LogLevel::WARN, "test node is empty");
+		AddLogItem(log_output, LogLevel::Warn, "test node is empty");
 		return false;
 	}
 
 	if (user_schema_node.size() == 0)
 	{
-		AddLogItem(log_output, LogLevel::WARN, "schema node is empty");
+		AddLogItem(log_output, LogLevel::Warn, "schema node is empty");
 		return false;
 	}
 
 	return ProcessNode(test_node, user_schema_node, log_output);
+}
+
+bool YamlSV::Validate(const std::string& test_doc, const std::string& schema_doc,
+	std::vector<LogItem>& log_output)
+{
+	YAML::Node test_node = YAML::Load(test_doc);
+	YAML::Node schema_node = YAML::Load(schema_doc);
+	return Validate(test_node, schema_node, log_output);
 }
 
 void YamlSV::AddLogItem(std::vector<LogItem>& log_output, LogLevel level,
@@ -72,23 +80,23 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 					schema_node.size() == 1 &&
 					test_node.size() == 0)
 				{
-					AddLogItem(log_output, LogLevel::DDEBUG,
+					AddLogItem(log_output, LogLevel::Debug,
 						"YamlSV::ProcessNode: Schema node size 1 and test node empty");
 					return true;
 				}
-				AddLogItem(log_output, LogLevel::INFO,
+				AddLogItem(log_output, LogLevel::Info,
 					"YamlSV::ProcessNode: Reached end of test node prior to end of schema node");
 				return false;
 			}
 
-			AddLogItem(log_output, LogLevel::DDEBUG,
+			AddLogItem(log_output, LogLevel::Debug,
 				"YamlSV::ProcessNode: Schema map key = \"%s\"", key.c_str());
 
 			// If the key is the special tag "_NOT_DEFINED_", do not require a
 			// key and rely on the position of the iterators.
 			if (key == YamlSVSchemaTag::not_defined_str || key == YamlSVSchemaTag::not_defined_opt_str)
 			{
-				AddLogItem(log_output, LogLevel::DDEBUG,
+				AddLogItem(log_output, LogLevel::Debug,
 					"YamlSV::ProcessNode: Schema map key is special tag: \"%s\"", key.c_str());
 
 				// While the current test key is not equal to the next schema key,
@@ -97,7 +105,7 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 				schema_next = std::next(it, 1);
 				if (schema_next == schema_node.end())
 				{
-					AddLogItem(log_output, LogLevel::DDEBUG,
+					AddLogItem(log_output, LogLevel::Debug,
 						"YamlSV::ProcessNode: Current schema entry is last in node");
 					while (test_current != test_node.end())
 					{
@@ -113,7 +121,7 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 					while (test_current->first.as<std::string>() !=
 						schema_next->first.as<std::string>())
 					{
-						AddLogItem(log_output, LogLevel::DDEBUG,
+						AddLogItem(log_output, LogLevel::Debug,
 							"YamlSV::ProcessNode: test key \"%s\""
 							" does not equal next non-wildcard schema key \"%s\"", 
 							test_current->first.as<std::string>().c_str(),
@@ -131,7 +139,7 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 			// If the key is not present in the test map, then do not proceed.
 			if (test_current->first.as<std::string>() != key)
 			{
-				AddLogItem(log_output, LogLevel::INFO, 
+				AddLogItem(log_output, LogLevel::Info,
 					"YamlSV::ProcessNode: Key %s in schema not present in yaml",
 					key.c_str());
 				return false;
@@ -205,7 +213,7 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 		// Verify the value against the schema type.
 		if (!VerifyType(schema_node.as<std::string>(), test_node.as<std::string>()))
 		{
-			AddLogItem(log_output, LogLevel::INFO,
+			AddLogItem(log_output, LogLevel::Info,
 				"YamlSV::ProcessNode: Test value %s is not compatible with type %s",
 				test_node.as<std::string>().c_str(),
 				schema_node.as<std::string>().c_str());
@@ -214,7 +222,7 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
 	}
 	else
 	{
-		AddLogItem(log_output, LogLevel::INFO, 
+		AddLogItem(log_output, LogLevel::Info,
 			"YamlSV::ProcessNode: Schema node is not a map, sequence, or scalar");
 		return false;
 	}
@@ -260,7 +268,7 @@ bool YamlSV::TestMapElement(YAML::const_iterator& schema_it, YAML::const_iterato
 		if (!CheckDataTypeString(schema_it->second.as<std::string>(), str_type_,
 			is_opt_))
 		{
-			AddLogItem(log_output, LogLevel::INFO,
+			AddLogItem(log_output, LogLevel::Info,
 				"YamlSV::TestMapElement: Type \"%s\" invalid",
 				schema_it->second.as<std::string>().c_str());
 			return false;
@@ -274,13 +282,13 @@ bool YamlSV::TestMapElement(YAML::const_iterator& schema_it, YAML::const_iterato
 			{
 				if (test_it->second.IsNull())
 				{
-					AddLogItem(log_output, LogLevel::DDEBUG,
+					AddLogItem(log_output, LogLevel::Debug,
 						"YamlSV::TestMapElement: Test value for key \"%s\" is optional and not present",
 						test_it->first.as<std::string>().c_str());
 					return true;
 				}
 			}
-			AddLogItem(log_output, LogLevel::INFO,
+			AddLogItem(log_output, LogLevel::Info,
 				"YamlSV::TestMapElement: Value for key \"%s\" is not a scalar as"
 				" indicated by the type \"%s\"",
 				test_it->first.as<std::string>().c_str(),
@@ -288,7 +296,7 @@ bool YamlSV::TestMapElement(YAML::const_iterator& schema_it, YAML::const_iterato
 			return false;
 		}
 
-		AddLogItem(log_output, LogLevel::DDEBUG,
+		AddLogItem(log_output, LogLevel::Debug,
 			"YamlSV::TestMapElement: Testing value \"%s\" for key \"%s\", type \"%s\"",
 			test_it->second.as<std::string>().c_str(),
 			test_it->first.as<std::string>().c_str(),
@@ -297,7 +305,7 @@ bool YamlSV::TestMapElement(YAML::const_iterator& schema_it, YAML::const_iterato
 
 		if (!VerifyType(str_type_, test_it->second.as<std::string>()))
 		{
-			AddLogItem(log_output, LogLevel::INFO,
+			AddLogItem(log_output, LogLevel::Info,
 				"YamlSV::TestMapElement: Value \"%s\" for key \"%s\" does not"
 				" match type \"%s\"", test_it->second.as<std::string>().c_str(),
 				test_it->first.as<std::string>().c_str(), 
@@ -322,7 +330,7 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
 	// Ensure size of schema_node is 1.
 	if (schema_node.size() != 1)
 	{
-		AddLogItem(log_output, LogLevel::INFO,
+		AddLogItem(log_output, LogLevel::Info,
 			"YamlSV::TestSequence: Schema node must have one element only (not %zu)",
 			schema_node.size());
 		return false;
@@ -331,7 +339,7 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
 	// Error if the first (only) element in the schema is null.
 	if (schema_node[0].IsNull())
 	{
-		AddLogItem(log_output, LogLevel::INFO,
+		AddLogItem(log_output, LogLevel::Info,
 			"YamlSV::TestSequence: Schema node element is null");
 		return false;
 	}
@@ -341,7 +349,7 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
 	if (!CheckDataTypeString(schema_node[0].as<std::string>(), str_type_,
 		is_opt_))
 	{
-		AddLogItem(log_output, LogLevel::INFO,
+		AddLogItem(log_output, LogLevel::Info,
 			"YamlSV::TestSequence: Type \"%s\" invalid", 
 			schema_node[0].as<std::string>().c_str());
 		return false;
@@ -350,7 +358,7 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
 	// Can not evaluate if test node is a scalar.
 	if (test_node.IsScalar())
 	{
-		AddLogItem(log_output, LogLevel::INFO,
+		AddLogItem(log_output, LogLevel::Info,
 			"YamlSV::TestSequence: Test node must be a sequence, not scalar with value \"%s\"",
 			test_node.as<std::string>().c_str());
 		return false;
@@ -362,16 +370,16 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
 		// Unless it is an optional sequence.
 		if (is_opt_)
 		{
-			AddLogItem(log_output, LogLevel::DDEBUG,
+			AddLogItem(log_output, LogLevel::Debug,
 				"YamlSV::TestSequence: Test node is size zero and schema indicates OPT");
 			return true;
 		}
-		AddLogItem(log_output, LogLevel::INFO,
+		AddLogItem(log_output, LogLevel::Info,
 			"YamlSV::TestSequence: Test node must have size greater than zero");
 		return false;
 	}
 
-	AddLogItem(log_output, LogLevel::DDEBUG,
+	AddLogItem(log_output, LogLevel::Debug,
 		"YamlSV::TestSequence: Test sequence of size %zu for type \"%s\"",
 		test_node.size(), str_type_.c_str());
 	
@@ -381,7 +389,7 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
 	{
 		if (!VerifyType(str_type_, it->as<std::string>()))
 		{
-			AddLogItem(log_output, LogLevel::INFO,
+			AddLogItem(log_output, LogLevel::Info,
 				"YamlSV::TestSequence: Value \"%s\" does not match type \"%s\"",
 				it->as<std::string>().c_str(), str_type_.c_str());
 			return false;

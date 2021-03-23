@@ -9,15 +9,24 @@ int main(int argc, char* argv[])
 	ManagedPath input_path;
 	uint8_t thread_count = 0;
 	ManagedPath dts_path;
+	std::vector<LogItem> log_items;
 
 	if (!GetArguments(argc, argv, input_path, dts_path))
 		return 0;
 
 	TranslationConfigParams config;
-	std::string root_path = "";
-	if (!InitializeConfig(root_path, config))
+	std::string conf_root_path = "";
+	std::string schema_root_path = "";
+	if (!InitializeConfig(conf_root_path, schema_root_path, config,
+		log_items))
 		return 1;
 	thread_count = config.translate_thread_count_;
+
+	if (!ValidateDTS1553YamlSchema(schema_root_path, dts_path,
+		log_items))
+		return 0;
+
+	// TODO: handle log_items
 
 	printf("DTS1553 path: %s\n", dts_path.RawString().c_str());
 	printf("Input: %s\n", input_path.RawString().c_str());
