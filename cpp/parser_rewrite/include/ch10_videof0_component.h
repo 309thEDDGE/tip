@@ -28,6 +28,9 @@ public:
     Ch10Status Parse(const uint8_t*& data) override;
 
     ~Ch10VideoF0Component() {}
+
+    uint32_t Ch10VideoF0Component::GetSubPacketSize(bool iph);
+    uint32_t Ch10VideoF0Component::GetSubPacketCount(uint32_t subpacket_size);
 };
 
 #endif
