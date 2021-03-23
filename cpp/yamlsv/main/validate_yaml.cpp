@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 	for (std::vector<LogItem>::const_iterator it = log.begin();
 		it != log.end(); ++it)
 	{
-		if (it->log_value >= static_cast<uint8_t>(LogLevel::LLINFO))
+		if (it->log_value >= static_cast<uint8_t>(LogLevel::Info))
 			it->Print();
 	}
 

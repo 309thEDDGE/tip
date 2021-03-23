@@ -30,7 +30,7 @@ protected:
 	{
 		for (log_it_ = log_items_.begin(); log_it_ != log_items_.end(); ++log_it_)
 		{
-			if (log_it_->log_level == LogLevel::LLINFO)
+			if (log_it_->log_level == LogLevel::Info)
 				return *log_it_;
 		}
 		LogItem li;
@@ -47,7 +47,7 @@ protected:
 		int count = 0;
 		for (log_it_ = log_items_.begin(); log_it_ != log_items_.end(); ++log_it_)
 		{
-			if (log_it_->log_level == LogLevel::LLINFO)
+			if (log_it_->log_level == LogLevel::Info)
 				count++;
 		}
 		return count;
@@ -56,7 +56,7 @@ protected:
 
 TEST_F(YamlSchemaValidationTest, AddLogItem)
 {
-	level_ = LogLevel::LLINFO;
+	level_ = LogLevel::Info;
 	msg_ = "this message";
 	ysv_.AddLogItem(log_items_, level_, msg_);
 
@@ -67,7 +67,7 @@ TEST_F(YamlSchemaValidationTest, AddLogItem)
 
 TEST_F(YamlSchemaValidationTest, AddLogItemFormatted)
 {
-	level_ = LogLevel::LLINFO;
+	level_ = LogLevel::Info;
 	char buff[100];
 	int val = 230;
 	msg_ = "this message %d";
