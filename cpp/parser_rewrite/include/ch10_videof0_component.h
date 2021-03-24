@@ -5,10 +5,18 @@
 #include "ch10_packet_component.h"
 #include "ch10_videof0_header_format.h"
 
+class Ch10VideoF0RTCTimeStampFmt
+{
+public:
+	uint64_t ts1_ : 32;
+	uint64_t ts2_ : 32;
+};
+
 class Ch10VideoF0Component : public Ch10PacketComponent
 {
 private:
     Ch10PacketElement<Ch10VideoF0HeaderFormat> csdw_element_;
+    Ch10PacketElement<Ch10VideoF0RTCTimeStampFmt> timestamp_element_;
 	ElemPtrVec csdw_element_vector_;
 
 // Protected members are accessible to tests via inheritance
@@ -29,8 +37,32 @@ public:
 
     ~Ch10VideoF0Component() {}
 
-    uint32_t Ch10VideoF0Component::GetSubPacketSize(bool iph);
-    uint32_t Ch10VideoF0Component::GetSubPacketCount(uint32_t subpacket_size);
+    /*
+    Return the subpacket size in bytes, including IPH if present.
+
+    Args:
+        iph - whether the packet contains intrapacket time headers
+
+    Returns:
+        size of supackets in bytes
+    */
+    uint32_t GetSubpacketSize(bool iph);
+
+    /*
+    Calculate the number of subpackets given a subpcket size and the total
+    size of the collection of subpackets.
+
+    Args:
+        size_of_whole - size of the data block containing N subpackets
+        size_of_part - size of each subpacket within a data block
+        Note: any unit can be used for size
+
+    Returns:
+        The integer number of parts the whole can be divided exactly into or
+        -1 if the whole is not divisible by the part size
+    */
+    uint32_t DivideExactInteger(uint32_t size_of_whole, uint32_t size_of_part);
+    uint64_t ParseSubpacketTime(Ch10Context &context, const uint8_t* data, bool iph);
 };
 
 #endif

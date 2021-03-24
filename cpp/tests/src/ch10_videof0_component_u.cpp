@@ -144,42 +144,52 @@ protected:
 //     EXPECT_EQ(0, ncp->IPH);
 // }
 
-TEST_F(Ch10VideoF0ComponentTest, GetSubpacketCount)
+TEST_F(Ch10VideoF0ComponentTest, GetSubpacketSize)
 {
-    ASSERT_EQ(188, component_.GetSubPacketCount(false));
-    ASSERT_EQ(188+context_.intrapacket_ts_size_, component_.GetSubPacketSize(true));
+    EXPECT_EQ(188, component_.GetSubpacketSize(false));
+    EXPECT_EQ(188+context_.intrapacket_ts_size_, component_.GetSubpacketSize(true));
 }
 
-TEST_F(Ch10VideoF0ComponentTest, ParseAvancesDataPointer)
+TEST_F(Ch10VideoF0ComponentTest, DivideExactIntegerReturnsNegativeOnNonintegerResult)
 {
-    Ch10Status status;
-    const uint8_t* data_ptr = (uint8_t*)&csdw_;
-    // const uint8_t* data_ptr = bb_.Data();
-    const uint8_t* expected = data_ptr + sizeof(csdw_);
-
-    /********/printf("Calling Parse\n");
-    status = component_.Parse(data_ptr);
-    /********/printf("Done with Parse\n");
-
-    EXPECT_EQ(data_ptr, expected);
+    EXPECT_GT(0, component_.DivideExactInteger(11, 5));
 }
 
-// TEST_F(Ch10VideoF0ComponentTest, ParseCreatesCsdwElement)
+TEST_F(Ch10VideoF0ComponentTest, DivideExactIntegerReturnsCorrectIntegerResult)
+{
+    EXPECT_EQ(2, component_.DivideExactInteger(10, 5));
+}
+
+// TEST_F(Ch10VideoF0ComponentTest, ParseAvancesDataPointer)
 // {
 //     Ch10Status status;
-//     uint8_t* data_ptr = (uint8_t*)&csdw_;
-//     uint8_t* expected = data_ptr;
+//     const uint8_t* data_ptr = (uint8_t*)&csdw_;
+//     // const uint8_t* data_ptr = bb_.Data();
+//     const uint8_t* expected = data_ptr + sizeof(csdw_);
 
-//     status = component_.Parse((const uint8_t* &)data_ptr);
+//     /********/printf("Calling Parse\n");
+//     status = component_.Parse(data_ptr);
+//     /********/printf("Done with Parse\n");
 
-//     // EXPECT_EQ((uint8_t*)component_.csdw_element.element, expected);
-//     EXPECT_EQ((*component_.csdw_element.element)->BA, csdw_.BA);
-//     EXPECT_EQ((*component_.csdw_element.element)->PL, csdw_.PL);
-//     EXPECT_EQ((*component_.csdw_element.element)->KLV, csdw_.KLV);
-//     EXPECT_EQ((*component_.csdw_element.element)->SRS, csdw_.SRS);
-//     EXPECT_EQ((*component_.csdw_element.element)->IPH, csdw_.IPH);
-//     EXPECT_EQ((*component_.csdw_element.element)->ET, csdw_.ET);
+//     EXPECT_EQ(data_ptr, expected);
 // }
+
+// // TEST_F(Ch10VideoF0ComponentTest, ParseCreatesCsdwElement)
+// // {
+// //     Ch10Status status;
+// //     uint8_t* data_ptr = (uint8_t*)&csdw_;
+// //     uint8_t* expected = data_ptr;
+
+// //     status = component_.Parse((const uint8_t* &)data_ptr);
+
+// //     // EXPECT_EQ((uint8_t*)component_.csdw_element.element, expected);
+// //     EXPECT_EQ((*component_.csdw_element.element)->BA, csdw_.BA);
+// //     EXPECT_EQ((*component_.csdw_element.element)->PL, csdw_.PL);
+// //     EXPECT_EQ((*component_.csdw_element.element)->KLV, csdw_.KLV);
+// //     EXPECT_EQ((*component_.csdw_element.element)->SRS, csdw_.SRS);
+// //     EXPECT_EQ((*component_.csdw_element.element)->IPH, csdw_.IPH);
+// //     EXPECT_EQ((*component_.csdw_element.element)->ET, csdw_.ET);
+// // }
 
 TEST_F(Ch10VideoF0ComponentTest, ParseRejectsNonintegerSubpacketCountWithIph)
 {
@@ -193,121 +203,169 @@ TEST_F(Ch10VideoF0ComponentTest, ParseRejectsNonintegerSubpacketCountWithoutIph)
     ValidateSubpacketCount(packet_header_, csdw_, context_, component_);
 }
 
-TEST_F(Ch10VideoF0ComponentTest, ParseWithoutIPHSetsFirstTimeToPacketTime)
+TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketTimesNoIPHReturnPackeTime)
 {
-    packet_header_.data_size = 1 * TransportStream_UNIT_SIZE;
-    context_.UpdateContext(0, &packet_header_);
-    uint64_t expected_absolute_time = context_.tdp_abs_time + (context_.rtc) - context_.tdp_rtc;
+    uint8_t dummy;
+    uint8_t *p_original = &dummy;
+    uint8_t *p_data = &dummy;
+    uint64_t packet_time = context_.GetPacketAbsoluteTime();
 
-    csdw_.IPH = 0;
-    uint8_t* data_ptr = (uint8_t*)&csdw_;
-    component_.Parse((const uint8_t* &)data_ptr);
-    
-    std::vector<uint64_t> times =  component_.GetTimes();
-    EXPECT_EQ(expected_absolute_time, times[0]);
+    // Get subpacket time with no intrapacket header
+    uint64_t subpacket_time = component_.ParseSubpacketTime(context_, p_data, false);
+
+    // Subpacket time should default to the packet time
+    EXPECT_EQ(packet_time, subpacket_time);
+
+    // Data pointer should stay the same, not advanced
+    EXPECT_EQ(p_original, p_data);
 }
 
-// TEST_F(Ch10VideoF0ComponentTest, ParseSetsTimesFromIPHeaders)
+// TEST_F(Ch10VideoF0ComponentTest, GetSubpacketTimesNoIPHReturnsPacketTime)
 // {
-//     csdw_.IPH = 1;
-//     uint8_t subpacket_size = TransportStream_UNIT_SIZE + context_.intrapacket_ts_size_;
-//     uint8_t subpacket_count = 13;
-//     packet_header_.data_size = subpacket_count * subpacket_size;
+//     uint64_t packet_time = 10000;
+//     uint32_t subpacket_size = 50; // arbitrary
+//     std::vector<uint8_t> subpacket;
+//     for (int i=0; i<subpacket_size; i++)
+//     {
+//         subpacket.push_back(i);
+//     }
+//     uint8_t *data = subpacket.data();
+//     uint64_t time = component_.GetSubpacketTime(packet_time, data, false);
+//     ASSERT_EQ(packet_time, time);
+// }
+
+// TEST_F(Ch10VideoF0ComponentTest, GetSubpacketTimesIPHReturnsSubpacketTimes)
+// {
+//     uint64_t packet_time = 10000;
+//     uint32_t subpacket_size = 55; // must be greater than 8 so 2 32-bit RTC words will fit
+//     std::vector<uint8_t> subpacket;
+//     std::vector<uint64_t> expected_times;
+//     for (int i=0; i<subpacket_size; i++)
+//     {
+//         subpacket.push_back(i);
+//     }
+//     uint32_t rtc1 = 1;
+//     uint32_t rtc2 = 2;
+//     uint64_t absolute_time = packet_time + (rtc2 << 32) + rtc1;
+
+//     uint64_t time = component_.GetSubpacketTime(packet_time, subpacket.data(), true);
+// }
+
+// TEST_F(Ch10VideoF0ComponentTest, ParseWithoutIPHSetsFirstTimeToPacketTime)
+// {
+//     packet_header_.data_size = 1 * TransportStream_UNIT_SIZE;
 //     context_.UpdateContext(0, &packet_header_);
+//     uint64_t expected_absolute_time = context_.tdp_abs_time + (context_.rtc) - context_.tdp_rtc;
 
-//     uint32_t rtc_offset = 123;
-//     std::vector<uint8_t> data_vector = GetVideoData(context_, csdw_, subpacket_count, rtc_offset);
-// /******/return;
-//     std::vector<uint64_t> expected_absolute_times(subpacket_count);
-//     uint64_t packet_absolute_time = context_.CalculateAbsTimeFromRTCNanoseconds(context_.rtc);
-//     for (size_t i=0; i < subpacket_count; i++)
-//     {
-//         expected_absolute_times[i] = packet_absolute_time + (i+1) * rtc_offset;
-//     }
-
-//     uint8_t* data_ptr = (uint8_t*)data_vector.data();
-//     mock_component_.Parse((const uint8_t* &)data_ptr);
+//     csdw_.IPH = 0;
+//     uint8_t* data_ptr = (uint8_t*)&csdw_;
+//     component_.Parse((const uint8_t* &)data_ptr);
     
-//     std::vector<uint64_t> actual_times =  mock_component_.GetTimes();
-//     EXPECT_EQ(expected_absolute_times, actual_times);
-
-//     printf("Nothing\n");
-//     printf("Nothing\n");
-//     actual_times[0] = 0;
-//     EXPECT_NE(expected_absolute_times, actual_times);
-//     printf("Nothing more\n");
-//     printf("Nothing more\n");
-//     printf("Nothing more\n");
-//     printf("Nothing more\n");
+//     std::vector<uint64_t> times =  component_.GetTimes();
+//     EXPECT_EQ(expected_absolute_time, times[0]);
 // }
 
-/* Helper functions **********************/
-// std::vector<uint8_t> GetVideoData(
-//     Ch10Context &context, Ch10VideoF0HeaderFormat csdw, uint32_t subpacket_count, uint32_t rtc_offset)
-// {
-//     size_t subpacket_size = TransportStream_UNIT_SIZE;
-//     if(csdw.IPH) subpacket_size += context.intrapacket_ts_size_;
+// // TEST_F(Ch10VideoF0ComponentTest, ParseSetsTimesFromIPHeaders)
+// // {
+// //     csdw_.IPH = 1;
+// //     uint8_t subpacket_size = TransportStream_UNIT_SIZE + context_.intrapacket_ts_size_;
+// //     uint8_t subpacket_count = 13;
+// //     packet_header_.data_size = subpacket_count * subpacket_size;
+// //     context_.UpdateContext(0, &packet_header_);
+
+// //     uint32_t rtc_offset = 123;
+// //     std::vector<uint8_t> data_vector = GetVideoData(context_, csdw_, subpacket_count, rtc_offset);
+// // /******/return;
+// //     std::vector<uint64_t> expected_absolute_times(subpacket_count);
+// //     uint64_t packet_absolute_time = context_.CalculateAbsTimeFromRTCNanoseconds(context_.rtc);
+// //     for (size_t i=0; i < subpacket_count; i++)
+// //     {
+// //         expected_absolute_times[i] = packet_absolute_time + (i+1) * rtc_offset;
+// //     }
+
+// //     uint8_t* data_ptr = (uint8_t*)data_vector.data();
+// //     mock_component_.Parse((const uint8_t* &)data_ptr);
     
-//     char bogus[] = {'b', 'o', 'g', 'u', 's' };
-//     uint32_t rtc1 = (uint32_t)(context.rtc / 100); // convert back from nanoseconds to original RTC
-//     uint32_t rtc2 = (uint32_t)((context.rtc / 100) >> 32);
-//     std::vector<uint8_t> data_vector;
+// //     std::vector<uint64_t> actual_times =  mock_component_.GetTimes();
+// //     EXPECT_EQ(expected_absolute_times, actual_times);
 
-//     AppendBytes<uint32_t>(data_vector, *(uint32_t*)&csdw);
-//     /*****/printf("CSDW: %08X, dv[]: %02X%02X%02X%02X\n", csdw, 
-//     /*****/    data_vector[data_vector.size()-4], 
-//     /*****/    data_vector[data_vector.size()-3],
-//     /*****/    data_vector[data_vector.size()-2], 
-//     /*****/    data_vector[data_vector.size()-1]); 
-//     /*****/for (uint8_t b : data_vector)
-//     /*****/{
-//     /*****/    printf("%02X ", b);
-//     /*****/}
-//     /*****/printf("\n");
+// //     printf("Nothing\n");
+// //     printf("Nothing\n");
+// //     actual_times[0] = 0;
+// //     EXPECT_NE(expected_absolute_times, actual_times);
+// //     printf("Nothing more\n");
+// //     printf("Nothing more\n");
+// //     printf("Nothing more\n");
+// //     printf("Nothing more\n");
+// // }
 
-//     // Fill with bogus data
+// /* Helper functions **********************/
+// // std::vector<uint8_t> GetVideoData(
+// //     Ch10Context &context, Ch10VideoF0HeaderFormat csdw, uint32_t subpacket_count, uint32_t rtc_offset)
+// // {
+// //     size_t subpacket_size = TransportStream_UNIT_SIZE;
+// //     if(csdw.IPH) subpacket_size += context.intrapacket_ts_size_;
+    
+// //     char bogus[] = {'b', 'o', 'g', 'u', 's' };
+// //     uint32_t rtc1 = (uint32_t)(context.rtc / 100); // convert back from nanoseconds to original RTC
+// //     uint32_t rtc2 = (uint32_t)((context.rtc / 100) >> 32);
+// //     std::vector<uint8_t> data_vector;
 
-//     for (uint32_t packet=0; packet < subpacket_count; packet++)
-//     {
-//         if (csdw.IPH) 
-//         {
-//             rtc1 += rtc_offset;
-//             AppendBytes<uint32_t>(data_vector, rtc1);
-//             /*****/printf("rtc1: %08X, dv[]: %02X%02X%02X%02X\n", rtc1, 
-//             /*****/    data_vector[data_vector.size()-4], 
-//             /*****/    data_vector[data_vector.size()-3],
-//             /*****/    data_vector[data_vector.size()-2], 
-//             /*****/    data_vector[data_vector.size()-1]); 
-//     /*****/if(packet==0)for (uint8_t b : data_vector)
-//     /*****/{
-//     /*****/    printf("%02X ", b);
-//     /*****/}
-//     /*****/printf("\n");
+// //     AppendBytes<uint32_t>(data_vector, *(uint32_t*)&csdw);
+// //     /*****/printf("CSDW: %08X, dv[]: %02X%02X%02X%02X\n", csdw, 
+// //     /*****/    data_vector[data_vector.size()-4], 
+// //     /*****/    data_vector[data_vector.size()-3],
+// //     /*****/    data_vector[data_vector.size()-2], 
+// //     /*****/    data_vector[data_vector.size()-1]); 
+// //     /*****/for (uint8_t b : data_vector)
+// //     /*****/{
+// //     /*****/    printf("%02X ", b);
+// //     /*****/}
+// //     /*****/printf("\n");
 
-//             AppendBytes<uint32_t>(data_vector, rtc2);
-//             /*****/printf("rtc2: %08X, dv[]: %02X%02X%02X%02X\n", rtc2, 
-//             /*****/    data_vector[data_vector.size()-4], 
-//             /*****/    data_vector[data_vector.size()-3],
-//             /*****/    data_vector[data_vector.size()-2], 
-//             /*****/    data_vector[data_vector.size()-1]); 
-//     /*****/if(packet==0)for (uint8_t b : data_vector)
-//     /*****/{
-//     /*****/    printf("%02X ", b);
-//     /*****/}
-//     /*****/printf("\n");
-//         }
+// //     // Fill with bogus data
 
-//         for (size_t j=0; j < TransportStream_UNIT_SIZE; j++)
-//         {
-//             size_t i = j % sizeof(bogus);
-//             data_vector.push_back( bogus[i] );
-//             /*****/printf("%c", data_vector[data_vector.size()-1]);
-//         }
-//         /*****/printf("\n");
-//     }
+// //     for (uint32_t packet=0; packet < subpacket_count; packet++)
+// //     {
+// //         if (csdw.IPH) 
+// //         {
+// //             rtc1 += rtc_offset;
+// //             AppendBytes<uint32_t>(data_vector, rtc1);
+// //             /*****/printf("rtc1: %08X, dv[]: %02X%02X%02X%02X\n", rtc1, 
+// //             /*****/    data_vector[data_vector.size()-4], 
+// //             /*****/    data_vector[data_vector.size()-3],
+// //             /*****/    data_vector[data_vector.size()-2], 
+// //             /*****/    data_vector[data_vector.size()-1]); 
+// //     /*****/if(packet==0)for (uint8_t b : data_vector)
+// //     /*****/{
+// //     /*****/    printf("%02X ", b);
+// //     /*****/}
+// //     /*****/printf("\n");
 
-//     return data_vector;
-// }
+// //             AppendBytes<uint32_t>(data_vector, rtc2);
+// //             /*****/printf("rtc2: %08X, dv[]: %02X%02X%02X%02X\n", rtc2, 
+// //             /*****/    data_vector[data_vector.size()-4], 
+// //             /*****/    data_vector[data_vector.size()-3],
+// //             /*****/    data_vector[data_vector.size()-2], 
+// //             /*****/    data_vector[data_vector.size()-1]); 
+// //     /*****/if(packet==0)for (uint8_t b : data_vector)
+// //     /*****/{
+// //     /*****/    printf("%02X ", b);
+// //     /*****/}
+// //     /*****/printf("\n");
+// //         }
+
+// //         for (size_t j=0; j < TransportStream_UNIT_SIZE; j++)
+// //         {
+// //             size_t i = j % sizeof(bogus);
+// //             data_vector.push_back( bogus[i] );
+// //             /*****/printf("%c", data_vector[data_vector.size()-1]);
+// //         }
+// //         /*****/printf("\n");
+// //     }
+
+// //     return data_vector;
+// // }
 
 
 void ValidateSubpacketCount(
@@ -317,122 +375,112 @@ void ValidateSubpacketCount(
     Ch10VideoF0Component component)
 {
     Ch10Status status;
-    uint8_t *data_ptr;
-    uint8_t subpacket_size = TransportStream_UNIT_SIZE;
-
+    uint8_t subpacket_size = 5; // pick an arbitrary size
     if (csdw.IPH) subpacket_size += context.intrapacket_ts_size_;
 
     // Test integer (complete) packet count
-    packet_header.data_size = 5 * subpacket_size;
+    packet_header.data_size = 5 * subpacket_size - 1;
     context.UpdateContext(0, &packet_header);
 
-    data_ptr = (uint8_t*)&csdw;
-    status = component.Parse((const uint8_t* &)data_ptr);
-    EXPECT_EQ(Ch10Status::OK, status);
-
-    // Test noninteger (incomplete) packet count
-    packet_header.data_size -= 1;
-    context.UpdateContext(0, &packet_header);
-
-    data_ptr = (uint8_t*)&csdw;
-    status = component.Parse((const uint8_t* &)data_ptr);
+    const uint8_t* data_ptr = (uint8_t *)&csdw;
+    status = component.Parse(data_ptr);
     EXPECT_EQ(Ch10Status::VIDEOF0_NONINTEGER_SUBPKT_COUNT, status);
 }
 
-// /*
-//     Appends the bytes contained in a number value to the end of a vector of bytes.
-//     The least significant byte is appended first.  
-//     Inputs:
-//         v     -> A vector of bytes to append to
-//         value -> A number whose bytes will be appended to v
-//     Example:
-//         Given: v = {0x01, 0x02, 0x03, 0x04} and value = 0xAABBCCDD
-//         Call:
-//                 AppendBytes(v, value);
-//         Result: v = {0x01, 0x02, 0x03, 0x04, 0xDD, 0xCC, 0xBB, 0xAA}
-// */
-// template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
-// void AppendBytes(std::vector<uint8_t> &v, T value)
-// {
-//     uint64_t mask = 0xFF;
-//     /********/printf("Starting: %016lX\n", value);
-//     for (int8_t i = sizeof(T)-1; i >= 0; i--)
-//     {
-//         /********/ printf("Processing %016lX\n", value);
-//         v.push_back( value & mask );
-//         /********/ printf("%02X added. ", value & mask);
-//         value >>= 8;
-//         /********/ printf("New value %016lX\n", value);
-//     }
-// }
+// // /*
+// //     Appends the bytes contained in a number value to the end of a vector of bytes.
+// //     The least significant byte is appended first.  
+// //     Inputs:
+// //         v     -> A vector of bytes to append to
+// //         value -> A number whose bytes will be appended to v
+// //     Example:
+// //         Given: v = {0x01, 0x02, 0x03, 0x04} and value = 0xAABBCCDD
+// //         Call:
+// //                 AppendBytes(v, value);
+// //         Result: v = {0x01, 0x02, 0x03, 0x04, 0xDD, 0xCC, 0xBB, 0xAA}
+// // */
+// // template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type*>
+// // void AppendBytes(std::vector<uint8_t> &v, T value)
+// // {
+// //     uint64_t mask = 0xFF;
+// //     /********/printf("Starting: %016lX\n", value);
+// //     for (int8_t i = sizeof(T)-1; i >= 0; i--)
+// //     {
+// //         /********/ printf("Processing %016lX\n", value);
+// //         v.push_back( value & mask );
+// //         /********/ printf("%02X added. ", value & mask);
+// //         value >>= 8;
+// //         /********/ printf("New value %016lX\n", value);
+// //     }
+// // }
 
 
-/* Helper function tests *****************/
-// TEST_F(Ch10VideoF0ComponentTest, AppendWorksWithVariousTypes)
-// {
-//     std::vector<uint8_t> vector;
-//     size_t expected_size = 0;
+// /* Helper function tests *****************/
+// // TEST_F(Ch10VideoF0ComponentTest, AppendWorksWithVariousTypes)
+// // {
+// //     std::vector<uint8_t> vector;
+// //     size_t expected_size = 0;
     
-//     AppendBytes(vector, (uint8_t) 0xAA);
-//     AppendBytes(vector, (uint16_t)0xAABB);
-//     AppendBytes(vector, (uint32_t)0xAABBCCDD);
-//     AppendBytes(vector, (uint64_t)0xAABBCCDDEEFF0011);
+// //     AppendBytes(vector, (uint8_t) 0xAA);
+// //     AppendBytes(vector, (uint16_t)0xAABB);
+// //     AppendBytes(vector, (uint32_t)0xAABBCCDD);
+// //     AppendBytes(vector, (uint64_t)0xAABBCCDDEEFF0011);
 
-//     std::vector<uint8_t> expected{ 
-//         0xAA,                   // 0xAA
-//         0xBB, 0xAA,             // 0xAABB
-//         0xDD, 0xCC, 0xBB, 0xAA, // 0xAABBCCDD
-//         0x11, 0x00, 0xFF, 0xEE, 
-//         0xDD, 0xCC, 0xBB, 0xAA  // 0xAABBCCDDEEFF0011
-//     };
-//     ASSERT_EQ(expected, vector);
-// }
+// //     std::vector<uint8_t> expected{ 
+// //         0xAA,                   // 0xAA
+// //         0xBB, 0xAA,             // 0xAABB
+// //         0xDD, 0xCC, 0xBB, 0xAA, // 0xAABBCCDD
+// //         0x11, 0x00, 0xFF, 0xEE, 
+// //         0xDD, 0xCC, 0xBB, 0xAA  // 0xAABBCCDDEEFF0011
+// //     };
+// //     ASSERT_EQ(expected, vector);
+// // }
 
-// TEST_F(Ch10VideoF0ComponentTest, GetVideoData)
-// {
-//     csdw_.IPH = 1;
-//     uint32_t subpacket_count = 5;
-//     uint32_t rtc_offset = 16;
-//     std::vector<uint8_t>  data_vector = 
-//         GetVideoData(context_, csdw_, subpacket_count, rtc_offset);
+// // TEST_F(Ch10VideoF0ComponentTest, GetVideoData)
+// // {
+// //     csdw_.IPH = 1;
+// //     uint32_t subpacket_count = 5;
+// //     uint32_t rtc_offset = 16;
+// //     std::vector<uint8_t>  data_vector = 
+// //         GetVideoData(context_, csdw_, subpacket_count, rtc_offset);
 
 
-//     size_t expected_size =
-//         sizeof(csdw_) + subpacket_count * (context_.intrapacket_ts_size_ + TransportStream_UNIT_SIZE);
-//     ASSERT_EQ(expected_size, data_vector.size());
+// //     size_t expected_size =
+// //         sizeof(csdw_) + subpacket_count * (context_.intrapacket_ts_size_ + TransportStream_UNIT_SIZE);
+// //     ASSERT_EQ(expected_size, data_vector.size());
 
-//     // /*****/printf("CSDW: %08X, dv[]: %02X%02X%02X%02X\n",
-//     // /*****/    csdw_, 
-//     // /*****/    data_vector[0], 
-//     // /*****/    data_vector[1], 
-//     // /*****/    data_vector[2], 
-//     // /*****/    data_vector[3]);
+// //     // /*****/printf("CSDW: %08X, dv[]: %02X%02X%02X%02X\n",
+// //     // /*****/    csdw_, 
+// //     // /*****/    data_vector[0], 
+// //     // /*****/    data_vector[1], 
+// //     // /*****/    data_vector[2], 
+// //     // /*****/    data_vector[3]);
 
-//     uint8_t *data = data_vector.data();
-//     uint8_t *csdw_ptr = (uint8_t*)&csdw_;
-//     for (int i = 0; i < sizeof(csdw_); i++)
-//     {
-//         EXPECT_EQ(*csdw_ptr, *data);
-//     }
+// //     uint8_t *data = data_vector.data();
+// //     uint8_t *csdw_ptr = (uint8_t*)&csdw_;
+// //     for (int i = 0; i < sizeof(csdw_); i++)
+// //     {
+// //         EXPECT_EQ(*csdw_ptr, *data);
+// //     }
 
-//     data += sizeof(csdw_);
-//     uint32_t expected_rtc1 = packet_header_.rtc1 + rtc_offset;
-//     uint32_t expected_rtc2 = packet_header_.rtc2;
-//     for (int packet_no=0; packet_no < subpacket_count; packet_no++)
-//     {
-//         expected_rtc1 += rtc_offset;
-//         uint32_t *rtc_pointer = (uint32_t *)data;
-//         ASSERT_EQ(expected_rtc1, *rtc_pointer);
-//         ASSERT_EQ(expected_rtc2, *(rtc_pointer+1));
+// //     data += sizeof(csdw_);
+// //     uint32_t expected_rtc1 = packet_header_.rtc1 + rtc_offset;
+// //     uint32_t expected_rtc2 = packet_header_.rtc2;
+// //     for (int packet_no=0; packet_no < subpacket_count; packet_no++)
+// //     {
+// //         expected_rtc1 += rtc_offset;
+// //         uint32_t *rtc_pointer = (uint32_t *)data;
+// //         ASSERT_EQ(expected_rtc1, *rtc_pointer);
+// //         ASSERT_EQ(expected_rtc2, *(rtc_pointer+1));
         
-//         data += sizeof(uint32_t) * 2;
+// //         data += sizeof(uint32_t) * 2;
 
-//         for (int j = 0; j < subpacket_count; j++)
-//         {
-//             video_datum *video_datum_ptr = (video_datum*)data;
-//             ASSERT_EQ(packet_no * j, *video_datum_ptr);
+// //         for (int j = 0; j < subpacket_count; j++)
+// //         {
+// //             video_datum *video_datum_ptr = (video_datum*)data;
+// //             ASSERT_EQ(packet_no * j, *video_datum_ptr);
 
-//             data += sizeof(video_datum);
-//         }
-//     }
-// }
+// //             data += sizeof(video_datum);
+// //         }
+// //     }
+// // }

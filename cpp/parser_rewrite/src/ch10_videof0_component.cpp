@@ -9,25 +9,19 @@ void print_location(int loc=-1)
 
 Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
 {
-    /****/print_location(0);
     ParseElements(csdw_element_vector_, data);
-    /****/print_location();
-    Ch10VideoF0HeaderFormat csdw(**(csdw_element_.element));
-    /****/print_location();
+    uint32_t subpacket_size = GetSubpacketSize((*csdw_element_.element)->IPH);
+    uint16_t subpacket_count = DivideExactInteger(ctx_->data_size       , subpacket_size);
 
-    uint32_t subpacket_size = GetSubPacketSize((*csdw_element_.element)->IPH);
-
-    uint16_t subpacket_count = GetSubPacketCount(subpacket_size);
-
-    if (subpacket_size == 0)
+    if (subpacket_count == 0) 
     {
         return Ch10Status::VIDEOF0_NONINTEGER_SUBPKT_COUNT;
     }
 
-    subpacket_absolute_times_.resize(subpacket_count, 0);
+    // subpacket_absolute_times_.resize(subpacket_count, 0);
 
-    // Set time element 0 to the main packet time in case intra-packet time headers are not present
-    subpacket_absolute_times_.push_back( ctx_->CalculateAbsTimeFromRTCNanoseconds(ctx_->rtc) );
+    // // Set time element 0 to the main packet time in case intra-packet time headers are not present
+    // subpacket_absolute_times_.push_back( ctx_->CalculateAbsTimeFromRTCNanoseconds(ctx_->rtc) );
     
     // If intra-packet headers are present, calculate absolute
     // time for each subpacket
@@ -54,17 +48,40 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
     return Ch10Status::OK;
 }
 
-uint32_t Ch10VideoF0Component::GetSubPacketSize(bool iph)
+uint32_t Ch10VideoF0Component::GetSubpacketSize(bool iph)
 {
     uint16_t subpacket_size = TransportStream_UNIT_SIZE;
     if (iph)  subpacket_size += ctx_->intrapacket_ts_size_;
     return subpacket_size;
 }
 
-uint32_t Ch10VideoF0Component::GetSubPacketCount(uint32_t subpacket_size)
+uint32_t Ch10VideoF0Component::DivideExactInteger(uint32_t size_of_whole, uint32_t size_of_part)
 {
-    // // Check for integral number of packet components
-    // bool is_complete = (ctx_->data_size % subpacket_size == 0);
-    // if (!is_complete) return 0;
-    return 0xFFFF;
+    // Check for integral number of packet components
+    bool is_complete = (size_of_whole % size_of_part == 0);
+    if (is_complete)
+    {
+        return size_of_whole / size_of_part;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+uint64_t Ch10VideoF0Component::ParseSubpacketTime(Ch10Context &context, const uint8_t* data, bool iph)
+{
+    // if (iph)
+    // {
+    //     Ch10PacketElement<Ch10VideoF0RTCTimeStampFmt> rtc_element;
+    //     ElemPtrVec rtc_element_vector { &rtc_element };
+    //     ParseElements(rtc_element_vector, data);
+    //     return ctx_->CalculateAbsTimeFromRTCFormat(
+    //         (*rtc_element.element)->ts1_,
+    //         (*rtc_element.element)->ts2_);
+    // }
+    // else
+    {
+        return context.GetPacketAbsoluteTime();
+    }
 }

@@ -170,14 +170,12 @@ uint64_t Ch10Context::CalculateAbsTimeFromRTCFormat(const uint64_t& rtc1,
 	const uint64_t& rtc2)
 {
 	temp_rtc_ = ((rtc2 << 32) + rtc1) * rtc_to_ns_;
-	//printf("tdp abs_time %llu, temprtc %llu, tdprtc %llu\n", tdp_abs_time_, temp_rtc_, tdp_rtc_);
-	//abs_time_ = tdp_abs_time_ + (temp_rtc_ - tdp_rtc_);
 	return tdp_abs_time_ + (temp_rtc_ - tdp_rtc_);
 }
 
-uint64_t Ch10Context::CalculateAbsTimeFromRTCNanoseconds(const uint64_t& rtc_nanoseconds)
+uint64_t Ch10Context::GetPacketAbsoluteTime()
 {
-	return tdp_abs_time_ + (rtc_nanoseconds - tdp_rtc_);
+	return tdp_abs_time_ + (rtc - tdp_rtc_);
 }
 
 void Ch10Context::UpdateChannelIDToLRUAddressMaps(const uint32_t& chanid,

@@ -226,11 +226,12 @@ public:
 	uint64_t CalculateAbsTimeFromRTCFormat(const uint64_t& rtc1, const uint64_t& rtc2);
 
 	/*
-	Caculate absolute time from RTC already converted to nanoseconds.  This context
-	must have been updated with UpdateWithTDPData prior to this call
-	in order for absolute time to be calculated correctly.
+	Caculate this packet's absolute time
+	
+	Return:
+		absolute time this packet was received in nanoseconds since the epoch
 	*/
-	uint64_t CalculateAbsTimeFromRTCNanoseconds(const uint64_t& rtc_nanoseconds);
+	uint64_t GetPacketAbsoluteTime();
 	
 	/*
 	Update maps of channel ID to remote addresses 1 and 2 as obtained from
