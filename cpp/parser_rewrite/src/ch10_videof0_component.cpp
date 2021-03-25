@@ -11,9 +11,12 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
 {
     ParseElements(csdw_element_vector_, data);
     uint32_t subpacket_size = GetSubpacketSize((*csdw_element_.element)->IPH);
-    uint16_t subpacket_count = DivideExactInteger(ctx_->data_size       , subpacket_size);
+    /****/printf("*****data_size: %u; subpacket_size: %u\n", ctx_->data_size, subpacket_size);
+    /*(signed)*/int16_t subpacket_count;
+    subpacket_count = DivideExactInteger(ctx_->data_size, subpacket_size);
+    /****/printf("*****data_size: %u; subpacket_size: %u\n", ctx_->data_size, subpacket_size);
 
-    if (subpacket_count == 0) 
+    if (subpacket_count <= 0) 
     {
         return Ch10Status::VIDEOF0_NONINTEGER_SUBPKT_COUNT;
     }
@@ -55,13 +58,13 @@ uint32_t Ch10VideoF0Component::GetSubpacketSize(bool iph)
     return subpacket_size;
 }
 
-uint32_t Ch10VideoF0Component::DivideExactInteger(uint32_t size_of_whole, uint32_t size_of_part)
+int32_t Ch10VideoF0Component::DivideExactInteger(uint32_t size_of_whole, uint32_t size_of_part)
 {
     // Check for integral number of packet components
     bool is_complete = (size_of_whole % size_of_part == 0);
     if (is_complete)
     {
-        return size_of_whole / size_of_part;
+        return (int32_t) (size_of_whole / size_of_part);
     }
     else
     {

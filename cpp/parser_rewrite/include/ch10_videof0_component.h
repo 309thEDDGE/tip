@@ -61,7 +61,7 @@ public:
         The integer number of parts the whole can be divided exactly into or
         -1 if the whole is not divisible by the part size
     */
-    uint32_t DivideExactInteger(uint32_t size_of_whole, uint32_t size_of_part);
+    /*(signed)*/ int32_t DivideExactInteger(uint32_t size_of_whole, uint32_t size_of_part);
     uint64_t ParseSubpacketTime(Ch10Context &context, const uint8_t* data, bool iph);
 };
 

@@ -220,36 +220,43 @@ TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketTimesNoIPHReturnPackeTime)
     EXPECT_EQ(p_original, p_data);
 }
 
-// TEST_F(Ch10VideoF0ComponentTest, GetSubpacketTimesNoIPHReturnsPacketTime)
-// {
-//     uint64_t packet_time = 10000;
-//     uint32_t subpacket_size = 50; // arbitrary
-//     std::vector<uint8_t> subpacket;
-//     for (int i=0; i<subpacket_size; i++)
-//     {
-//         subpacket.push_back(i);
-//     }
-//     uint8_t *data = subpacket.data();
-//     uint64_t time = component_.GetSubpacketTime(packet_time, data, false);
-//     ASSERT_EQ(packet_time, time);
-// }
+TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketTimesNoIPHReturnsPacketTime)
+{
+    uint64_t packet_time = 10000;
+    uint32_t subpacket_size = 50; // arbitrary
+    std::vector<uint8_t> subpacket;
+    for (int i=0; i<subpacket_size; i++)
+    {
+        subpacket.push_back(i);
+    }
+    uint8_t *data = subpacket.data();
+    uint64_t time = component_.ParseSubpacketTime(context_, data, false);
+    ASSERT_EQ(packet_time, time);
 
-// TEST_F(Ch10VideoF0ComponentTest, GetSubpacketTimesIPHReturnsSubpacketTimes)
-// {
-//     uint64_t packet_time = 10000;
-//     uint32_t subpacket_size = 55; // must be greater than 8 so 2 32-bit RTC words will fit
-//     std::vector<uint8_t> subpacket;
-//     std::vector<uint64_t> expected_times;
-//     for (int i=0; i<subpacket_size; i++)
-//     {
-//         subpacket.push_back(i);
-//     }
-//     uint32_t rtc1 = 1;
-//     uint32_t rtc2 = 2;
-//     uint64_t absolute_time = packet_time + (rtc2 << 32) + rtc1;
+    // Make sure data pointer was not advanced
+    ASSERT_EQ(subpacket.data(), data);
+}
 
-//     uint64_t time = component_.GetSubpacketTime(packet_time, subpacket.data(), true);
-// }
+TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketTimeIPHReturnsSubpacketTime)
+{
+    uint64_t packet_time = 10000;
+    uint32_t subpacket_size = 55; // must be greater than 8 so 2 32-bit RTC words will fit
+    std::vector<uint8_t> subpacket;
+    std::vector<uint64_t> expected_times;
+    for (int i=0; i<subpacket_size; i++)
+    {
+        subpacket.push_back(i);
+    }
+    uint8_t *data = subpacket.data();
+    uint64_t rtc1 = 1;
+    uint64_t rtc2 = 2;
+    uint64_t absolute_time = packet_time + (rtc2 << 32) + rtc1;
+
+    uint64_t time = component_.ParseSubpacketTime(context_, data, true);    
+    
+    // Make sure data pointer was advanced past the timestamp
+    ASSERT_EQ(subpacket.data() + sizeof(Ch10VideoF0RTCTimeStampFmt), data);
+}
 
 // TEST_F(Ch10VideoF0ComponentTest, ParseWithoutIPHSetsFirstTimeToPacketTime)
 // {
@@ -375,7 +382,7 @@ void ValidateSubpacketCount(
     Ch10VideoF0Component component)
 {
     Ch10Status status;
-    uint8_t subpacket_size = 5; // pick an arbitrary size
+    uint8_t subpacket_size = TransportStream_UNIT_SIZE;
     if (csdw.IPH) subpacket_size += context.intrapacket_ts_size_;
 
     // Test integer (complete) packet count
