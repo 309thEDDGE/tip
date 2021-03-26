@@ -203,11 +203,14 @@ TEST_F(Ch10VideoF0ComponentTest, ParseRejectsNonintegerSubpacketCountWithoutIph)
     ValidateSubpacketCount(packet_header_, csdw_, context_, component_);
 }
 
-TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketTimesNoIPHReturnPackeTime)
+TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketTimeNoIPHReturnsPacketTime)
 {
+    // Set up pointers to dummy data to compare before and after
     uint8_t dummy;
     uint8_t *p_original = &dummy;
-    uint8_t *p_data = &dummy;
+    const uint8_t *p_data = &dummy;
+
+    // Get packet time for comparison
     uint64_t packet_time = context_.GetPacketAbsoluteTime();
 
     // Get subpacket time with no intrapacket header
@@ -220,42 +223,21 @@ TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketTimesNoIPHReturnPackeTime)
     EXPECT_EQ(p_original, p_data);
 }
 
-TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketTimesNoIPHReturnsPacketTime)
-{
-    uint64_t packet_time = 10000;
-    uint32_t subpacket_size = 50; // arbitrary
-    std::vector<uint8_t> subpacket;
-    for (int i=0; i<subpacket_size; i++)
-    {
-        subpacket.push_back(i);
-    }
-    uint8_t *data = subpacket.data();
-    uint64_t time = component_.ParseSubpacketTime(context_, data, false);
-    ASSERT_EQ(packet_time, time);
-
-    // Make sure data pointer was not advanced
-    ASSERT_EQ(subpacket.data(), data);
-}
-
 TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketTimeIPHReturnsSubpacketTime)
 {
-    uint64_t packet_time = 10000;
-    uint32_t subpacket_size = 55; // must be greater than 8 so 2 32-bit RTC words will fit
-    std::vector<uint8_t> subpacket;
-    std::vector<uint64_t> expected_times;
-    for (int i=0; i<subpacket_size; i++)
-    {
-        subpacket.push_back(i);
-    }
-    uint8_t *data = subpacket.data();
-    uint64_t rtc1 = 1;
-    uint64_t rtc2 = 2;
-    uint64_t absolute_time = packet_time + (rtc2 << 32) + rtc1;
+    Ch10VideoF0RTCTimeStampFmt time_stamp{ packet_header_.rtc1 + 1, packet_header_.rtc2 };
+    const uint8_t *data = (uint8_t *)&time_stamp;
+    uint8_t *expected_ptr = (uint8_t *)(&time_stamp + 1);
 
-    uint64_t time = component_.ParseSubpacketTime(context_, data, true);    
+    uint64_t expected_time = context_.CalculateAbsTimeFromRTCFormat(time_stamp.ts1_, time_stamp.ts2_);
+
+    // Parse the time with IPH=true so that the time stamp will be used
+    //    to calculate the subpacket absolute time
+    uint64_t subpacket_absolute_time = component_.ParseSubpacketTime(context_, data, true);
+    EXPECT_EQ(expected_time, subpacket_absolute_time);    
     
     // Make sure data pointer was advanced past the timestamp
-    ASSERT_EQ(subpacket.data() + sizeof(Ch10VideoF0RTCTimeStampFmt), data);
+    EXPECT_EQ(expected_ptr, data);
 }
 
 // TEST_F(Ch10VideoF0ComponentTest, ParseWithoutIPHSetsFirstTimeToPacketTime)

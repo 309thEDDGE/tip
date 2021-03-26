@@ -72,18 +72,16 @@ int32_t Ch10VideoF0Component::DivideExactInteger(uint32_t size_of_whole, uint32_
     }
 }
 
-uint64_t Ch10VideoF0Component::ParseSubpacketTime(Ch10Context &context, const uint8_t* data, bool iph)
+uint64_t Ch10VideoF0Component::ParseSubpacketTime(Ch10Context &context, const uint8_t*& data, bool iph)
 {
-    // if (iph)
-    // {
-    //     Ch10PacketElement<Ch10VideoF0RTCTimeStampFmt> rtc_element;
-    //     ElemPtrVec rtc_element_vector { &rtc_element };
-    //     ParseElements(rtc_element_vector, data);
-    //     return ctx_->CalculateAbsTimeFromRTCFormat(
-    //         (*rtc_element.element)->ts1_,
-    //         (*rtc_element.element)->ts2_);
-    // }
-    // else
+    if (iph)
+    {
+        ParseElements(time_stamp_element_vector_, data);
+        return ctx_->CalculateAbsTimeFromRTCFormat(
+            (*time_stamp_element_.element)->ts1_,
+            (*time_stamp_element_.element)->ts2_);
+    }
+    else
     {
         return context.GetPacketAbsoluteTime();
     }

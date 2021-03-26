@@ -16,8 +16,9 @@ class Ch10VideoF0Component : public Ch10PacketComponent
 {
 private:
     Ch10PacketElement<Ch10VideoF0HeaderFormat> csdw_element_;
-    Ch10PacketElement<Ch10VideoF0RTCTimeStampFmt> timestamp_element_;
 	ElemPtrVec csdw_element_vector_;
+    Ch10PacketElement<Ch10VideoF0RTCTimeStampFmt> time_stamp_element_;
+    ElemPtrVec time_stamp_element_vector_;
 
 // Protected members are accessible to tests via inheritance
 protected:
@@ -30,7 +31,10 @@ public:
     Ch10VideoF0Component(Ch10Context* const context) : Ch10PacketComponent(context),
         csdw_element(csdw_element_),
         csdw_element_vector_{
-            dynamic_cast<Ch10PacketElementBase*>(&csdw_element_)}
+            dynamic_cast<Ch10PacketElementBase*>(&csdw_element_)},
+        time_stamp_element_vector_{
+            dynamic_cast<Ch10PacketElementBase*>(&time_stamp_element_)
+        }
         {}
 
     Ch10Status Parse(const uint8_t*& data) override;
@@ -62,7 +66,7 @@ public:
         -1 if the whole is not divisible by the part size
     */
     /*(signed)*/ int32_t DivideExactInteger(uint32_t size_of_whole, uint32_t size_of_part);
-    uint64_t ParseSubpacketTime(Ch10Context &context, const uint8_t* data, bool iph);
+    uint64_t ParseSubpacketTime(Ch10Context &context, const uint8_t*& data, bool iph);
 };
 
 #endif
