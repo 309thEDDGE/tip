@@ -3,10 +3,25 @@
 #include "ch10_videof0_component.h"
 #include "ch10_videof0_test_data.h"
 
+
+/***** Mock Component *****/
+/***** class for inspecting class variables *****/
+class Ch10VideoF0ComponentMock : public Ch10VideoF0Component
+{
+    // Inherits subpacket_absolute_times_
+public:
+    Ch10VideoF0ComponentMock(Ch10Context* context_ptr) : Ch10VideoF0Component(context_ptr) {}
+    std::vector<uint64_t> GetTimes()
+    {
+        return subpacket_absolute_times_;
+    }
+};
+
+/**** Test Class *****/
 class Ch10VideoF0ComponentTest : public ::testing::Test
 {
 protected:
-    Ch10VideoF0Component component_;
+    Ch10VideoF0ComponentMock component_;
     Ch10PacketHeaderFmt packet_header_;
     Ch10Context context_;
     Ch10VideoF0HeaderFormat csdw_;
@@ -39,6 +54,7 @@ protected:
     }
 };
 
+/***** Test Methods *****/
 TEST_F(Ch10VideoF0ComponentTest, GetSubpacketSize)
 {
     EXPECT_EQ(188, component_.GetSubpacketSize(false));
@@ -123,4 +139,31 @@ TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketTimeIPHReturnsSubpacketTime)
     
     // Make sure data pointer was advanced past the timestamp
     EXPECT_EQ(expected_ptr, data);
+}
+
+TEST_F(Ch10VideoF0ComponentTest, ParseNoIPHSetsTimesToPacketTime)
+{
+    csdw_.IPH = 0;
+    
+    // Setup a data vector with csdw in front and subpackets of all zero
+    uint32_t subpacket_count = 3;
+    std::vector<uint8_t> data_vector(sizeof(csdw_) + TransportStream_UNIT_SIZE * 3, 0);
+    // --assign bytes of csdw to first elements of data vector
+    for (int i = 0; i < sizeof(csdw_); i++)
+    {
+        data_vector[i] = ((uint8_t*)&csdw_)[i];
+    }
+
+    // Set up a vector of expected times
+    // One for each subpacket; each set to the packet absolute time
+    uint64_t packet_time = context_.CalculateAbsTimeFromRTCFormat(
+        packet_header_.rtc1, packet_header_.rtc2);
+    std::vector<uint64_t> expected_times(subpacket_count, packet_time);
+    ASSERT_EQ(packet_time, expected_times[0]);
+
+    // Pointer to data that can be incremented
+    const uint8_t *data = data_vector.data();
+    component_.Parse(data);
+
+    ASSERT_EQ(expected_times, component_.GetTimes());
 }
