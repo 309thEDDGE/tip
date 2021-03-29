@@ -53,18 +53,13 @@ uint64_t Ch10VideoF0Component::ParseSubpacketTime(const uint8_t*& data, bool iph
     if (iph)
     {
         ParseElements(time_stamp_element_vector_, data);
-        time = CalculateCurrentElementAbsoluteTime();
+        time = ctx_->CalculateAbsTimeFromRTCFormat(
+            (*time_stamp_element_.element)->ts1_, 
+            (*time_stamp_element_.element)->ts2_);
     }
     else
     {
-        time = packet_absolute_time_;
+        time = ctx_->GetPacketAbsoluteTime();
     }
     return time;
-}
-
-uint64_t Ch10VideoF0Component::CalculateCurrentElementAbsoluteTime()
-{
-    return ctx_->CalculateAbsTimeFromRTCFormat(
-        (*time_stamp_element_.element)->ts1_, 
-        (*time_stamp_element_.element)->ts2_);
 }

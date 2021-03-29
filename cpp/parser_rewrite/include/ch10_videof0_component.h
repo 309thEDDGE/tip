@@ -23,7 +23,6 @@ private:
 
 // Protected members are accessible to tests via inheritance
 protected:
-    uint64_t packet_absolute_time_;
 	std::vector<uint64_t> subpacket_absolute_times_;
 
 
@@ -37,16 +36,13 @@ public:
             dynamic_cast<Ch10PacketElementBase*>(&csdw_element_)},
         time_stamp_element_vector_{
             dynamic_cast<Ch10PacketElementBase*>(&time_stamp_element_)}
-        {
-            packet_absolute_time_ = context->GetPacketAbsoluteTime();
-        }
+        {}
 
     ~Ch10VideoF0Component() {}
 
     Ch10Status Parse(const uint8_t*& data) override;
     Ch10Status ParseSubpacket(const uint8_t*& data, bool iph);
     uint64_t ParseSubpacketTime(const uint8_t*& data, bool iph);
-    uint64_t CalculateCurrentElementAbsoluteTime();
 
     /*
     Return the subpacket size in bytes, including IPH if present.
