@@ -10,12 +10,10 @@ void print_location(int loc=-1)
 Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
 {
     ParseElements(csdw_element_vector_, data);
-    uint32_t subpacket_size = GetSubpacketSize((*csdw_element_.element)->IPH);
-    /****/printf("*****data_size: %u; subpacket_size: %u\n", ctx_->data_size, subpacket_size);
-    /*(signed)*/int16_t subpacket_count;
-    subpacket_count = DivideExactInteger(ctx_->data_size, subpacket_size);
-    /****/printf("*****data_size: %u; subpacket_size: %u\n", ctx_->data_size, subpacket_size);
+    const Ch10VideoF0HeaderFormat csdw = **csdw_element.element;
+    uint32_t subpacket_size = GetSubpacketSize(csdw.IPH);
 
+    /*(signed)*/int16_t subpacket_count = DivideExactInteger(ctx_->data_size, subpacket_size);
     if (subpacket_count <= 0) 
     {
         return Ch10Status::VIDEOF0_NONINTEGER_SUBPKT_COUNT;
@@ -60,29 +58,28 @@ uint32_t Ch10VideoF0Component::GetSubpacketSize(bool iph)
 
 int32_t Ch10VideoF0Component::DivideExactInteger(uint32_t size_of_whole, uint32_t size_of_part)
 {
+    int32_t result = -1;
+
     // Check for integral number of packet components
     bool is_complete = (size_of_whole % size_of_part == 0);
-    if (is_complete)
-    {
-        return (int32_t) (size_of_whole / size_of_part);
-    }
-    else
-    {
-        return -1;
-    }
+    if (is_complete)   result = (int32_t) (size_of_whole / size_of_part);
+    
+    return result;
 }
 
 uint64_t Ch10VideoF0Component::ParseSubpacketTime(Ch10Context &context, const uint8_t*& data, bool iph)
 {
+    uint64_t time;
     if (iph)
     {
         ParseElements(time_stamp_element_vector_, data);
-        return ctx_->CalculateAbsTimeFromRTCFormat(
+        time = ctx_->CalculateAbsTimeFromRTCFormat(
             (*time_stamp_element_.element)->ts1_,
             (*time_stamp_element_.element)->ts2_);
     }
     else
     {
-        return context.GetPacketAbsoluteTime();
+        time = context.GetPacketAbsoluteTime();
     }
+    return time;
 }

@@ -17,6 +17,7 @@ class Ch10VideoF0Component : public Ch10PacketComponent
 private:
     Ch10PacketElement<Ch10VideoF0HeaderFormat> csdw_element_;
 	ElemPtrVec csdw_element_vector_;
+
     Ch10PacketElement<Ch10VideoF0RTCTimeStampFmt> time_stamp_element_;
     ElemPtrVec time_stamp_element_vector_;
 
