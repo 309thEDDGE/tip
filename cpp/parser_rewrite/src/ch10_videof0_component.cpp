@@ -19,31 +19,6 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
         return Ch10Status::VIDEOF0_NONINTEGER_SUBPKT_COUNT;
     }
 
-    // subpacket_absolute_times_.resize(subpacket_count, 0);
-
-    // // Set time element 0 to the main packet time in case intra-packet time headers are not present
-    // subpacket_absolute_times_.push_back( ctx_->CalculateAbsTimeFromRTCNanoseconds(ctx_->rtc) );
-    
-    // If intra-packet headers are present, calculate absolute
-    // time for each subpacket
-    // if (csdw.IPH)
-    // {
-    //     uint64_t subpacket_time;
-    //     uint8_t* subpacket_ptr = (uint8_t*)data; 
-    //     uint64_t* rtc_ptr;
-    //     /*************/ print_location(0);
-    //     for (int i = 0; i < subpacket_count; i++)
-    //     {
-    //         if (csdw.IPH)  
-    //         {
-    //             rtc_ptr = (uint64_t*) subpacket_ptr;
-    //             subpacket_absolute_times_[i] = ctx_->CalculateAbsTimeFromRTCFormat(*rtc_ptr, *(rtc_ptr+1));
-    //         }
-
-    //         subpacket_ptr += subpacket_size;
-    //     }
-    // }
-
    // ctx_->videof0_pq_writer_.append_data(transport_stream_TS, ch10td_ptr_->doy_, 
 	// 	ch10hd_ptr_->channel_id_, data_fmt_ptr_, subpkt_unit_count, transport_stream_data);
     return Ch10Status::OK;
@@ -67,19 +42,29 @@ int32_t Ch10VideoF0Component::DivideExactInteger(uint32_t size_of_whole, uint32_
     return result;
 }
 
-uint64_t Ch10VideoF0Component::ParseSubpacketTime(Ch10Context &context, const uint8_t*& data, bool iph)
+// void Ch10VideoF0Component::ParseSubpacket(const uint8_t*& data, bool iph)
+// {
+//     subpacket_absolute_times_.push_back( ParseSubpacketTime(data, iph) );
+// }
+
+uint64_t Ch10VideoF0Component::ParseSubpacketTime(const uint8_t*& data, bool iph)
 {
     uint64_t time;
     if (iph)
     {
         ParseElements(time_stamp_element_vector_, data);
-        time = ctx_->CalculateAbsTimeFromRTCFormat(
-            (*time_stamp_element_.element)->ts1_,
-            (*time_stamp_element_.element)->ts2_);
+        time = CalculateCurrentElementAbsoluteTime();
     }
     else
     {
-        time = context.GetPacketAbsoluteTime();
+        time = packet_absolute_time_;
     }
     return time;
+}
+
+uint64_t Ch10VideoF0Component::CalculateCurrentElementAbsoluteTime()
+{
+    return ctx_->CalculateAbsTimeFromRTCFormat(
+        (*time_stamp_element_.element)->ts1_, 
+        (*time_stamp_element_.element)->ts2_);
 }
