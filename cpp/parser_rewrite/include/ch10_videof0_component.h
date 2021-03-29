@@ -21,10 +21,12 @@ private:
     Ch10PacketElement<Ch10VideoF0RTCTimeStampFmt> time_stamp_element_;
     ElemPtrVec time_stamp_element_vector_;
 
+    Ch10PacketElement<video_datum> video_elements_[TransportStream_DATA_COUNT];
+
 // Protected members are accessible to tests via inheritance
 protected:
 	std::vector<uint64_t> subpacket_absolute_times_;
-
+    ElemPtrVec video_datum_elements_vector_;
 
 public:
     const Ch10PacketElement<Ch10VideoF0HeaderFormat>& csdw_element;
@@ -36,12 +38,18 @@ public:
             dynamic_cast<Ch10PacketElementBase*>(&csdw_element_)},
         time_stamp_element_vector_{
             dynamic_cast<Ch10PacketElementBase*>(&time_stamp_element_)}
-        {}
+        {
+            for (size_t i = 0; i < TransportStream_DATA_COUNT; i++)
+            {
+                video_datum_elements_vector_.push_back(
+                    dynamic_cast<Ch10PacketElementBase*>(video_elements_ + i));
+            }
+        }
 
     ~Ch10VideoF0Component() {}
 
     Ch10Status Parse(const uint8_t*& data) override;
-    Ch10Status ParseSubpacket(const uint8_t*& data, bool iph);
+    void ParseSubpacket(const uint8_t*& data, bool iph);
     uint64_t ParseSubpacketTime(const uint8_t*& data, bool iph);
 
     /*

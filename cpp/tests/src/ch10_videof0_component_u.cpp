@@ -11,9 +11,27 @@ class Ch10VideoF0ComponentMock : public Ch10VideoF0Component
     // Inherits subpacket_absolute_times_
 public:
     Ch10VideoF0ComponentMock(Ch10Context* context_ptr) : Ch10VideoF0Component(context_ptr) {}
+
     std::vector<uint64_t> GetTimes()
     {
         return subpacket_absolute_times_;
+    }
+
+    // std::vector<video_datum> GetVideoData()
+    // {
+    //     /***/printf("Here goes! Creating video data vector");
+    //     std::vector<video_datum> video_data;
+    //     for (Ch10PacketElementBase *base : video_datum_elements_vector_)
+    //     {
+    //         Ch10PacketElement<video_datum> *element = (Ch10PacketElement<video_datum> *)base;
+    //         video_data.push_back( **(element->element) );
+    //     }
+    //     return video_data;
+    // }
+
+    ElemPtrVec GetVideoDataElements()
+    {
+        return video_datum_elements_vector_;
     }
 };
 
@@ -143,40 +161,54 @@ TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketTimeIPHReturnsSubpacketTime)
 
 TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketNoIPHSetsTimeToPacketTime)
 {
-    // csdw_.IPH = 0;
+    uint64_t packet_time = context_.CalculateAbsTimeFromRTCFormat(packet_header_.rtc1, packet_header_.rtc2);
+
+    // Call ParseSubpacket with a bogus pointer
+    // It shouldn't attempt to read or increment the pointer if we pass false for IPH
+    uint8_t dummy;
+    const uint8_t *data = (uint8_t*)&dummy;
+    component_.ParseSubpacket(data, false);
     
-    // // Setup a data vector with csdw in front and subpackets of all zero
-    // uint32_t subpacket_count = 3;
-    // std::vector<uint8_t> data_vector(sizeof(csdw_) + TransportStream_UNIT_SIZE * 3, 0);
-    // // --assign bytes of csdw to first elements of data vector
-    // for (int i = 0; i < sizeof(csdw_); i++)
-    // {
-    //     data_vector[i] = ((uint8_t*)&csdw_)[i];
-    // }
+    std::vector<uint64_t> times = component_.GetTimes();
+    ASSERT_TRUE(times.size() > 0);
+    ASSERT_EQ(packet_time, times[0]);;
+}
 
-    // // Set up a vector of expected times
-    // // One for each subpacket; each set to the packet absolute time
-    // uint64_t packet_time = context_.CalculateAbsTimeFromRTCFormat(
-    //     packet_header_.rtc1, packet_header_.rtc2);
-    // std::vector<uint64_t> expected_times(subpacket_count, packet_time);
-    // ASSERT_EQ(packet_time, expected_times[0]);
+TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketIPHSetsTimeToSubpacketTime)
+{
+    uint64_t packet_time = context_.CalculateAbsTimeFromRTCFormat(packet_header_.rtc1, packet_header_.rtc2);
 
-    // // Pointer to data that can be incremented
-    // const uint8_t *data = data_vector.data();
-    // component_.Parse(data);
+    Ch10VideoF0RTCTimeStampFmt  rtc;
+    rtc.ts1_ = packet_header_.rtc1 + 1; // Increment least-significant word (first word in VideoF0 timestamp)
+    rtc.ts2_ = packet_header_.rtc2;
 
-    // ASSERT_EQ(expected_times, component_.GetTimes());
-    
+    const uint8_t *data = (uint8_t*)&rtc;
+    component_.ParseSubpacket(data, true);
 
+    std::vector<uint64_t> times = component_.GetTimes();
+    ASSERT_TRUE(times.size() > 0);
+    ASSERT_EQ(packet_time + 100, times[0]);
+}
 
-    // Ch10VideoF0RTCTimeStampFmt  rtc;
-    // rtc.ts1_ = packet_header_.rtc1;
-    // rtc.ts2_ = packet_header_.rtc2;
-    // uint64_t packet_time = context_.CalculateAbsTimeFromRTCFormat(rtc.ts1_, rtc.ts2_);
+TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketNoIPHParsesPayload)
+{
+    const video_datum *data_ptr;
 
-    // const uint8_t *data = (uint8_t*)&rtc;
-    // // component_.ParseSubpacket(data, false);
-    // std::vector<uint64_t> times = component_.GetTimes();
-    // ASSERT_TRUE(times.size() > 0);
-    // ASSERT_EQ(packet_time, times[0]);;
+    std::vector<video_datum> original_vector(TransportStream_DATA_COUNT, 54321);
+    const uint8_t *data = (uint8_t *)original_vector.data();
+
+    component_.ParseSubpacket(data, false);
+
+    ElemPtrVec base_elements = component_.GetVideoDataElements();
+    ASSERT_EQ(TransportStream_DATA_COUNT, base_elements.size());
+
+    Ch10PacketElement<video_datum> *element;
+    for (int i = 0; i < TransportStream_DATA_COUNT; i++)
+    {
+        element = (Ch10PacketElement<video_datum> *)base_elements[i];
+        data_ptr = *element->element;
+
+        ASSERT_NE(nullptr, data);
+        ASSERT_EQ(original_vector.data() + i, data_ptr);
+    }
 }
