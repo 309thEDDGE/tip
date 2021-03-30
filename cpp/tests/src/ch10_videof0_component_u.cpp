@@ -201,4 +201,8 @@ TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketNoIPHParsesPayload)
 
     const video_datum *video_data = component_.GetPointerFromVideoElement();
     ASSERT_EQ(original_vector.data(), video_data);
+    for (int i = 0; i < TransportStream_DATA_COUNT; i++)
+    {
+        ASSERT_EQ(54321, *(video_data + i));
+    }
 }

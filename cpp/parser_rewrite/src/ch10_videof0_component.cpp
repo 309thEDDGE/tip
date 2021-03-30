@@ -21,6 +21,10 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
 
    // ctx_->videof0_pq_writer_.append_data(transport_stream_TS, ch10td_ptr_->doy_, 
 	// 	ch10hd_ptr_->channel_id_, data_fmt_ptr_, subpkt_unit_count, transport_stream_data);
+
+    // ctx_->videof0_pq_writer->append_data(subpacket_absolute_times_, ctx_->tdp_doy, ctx_->channel_id, 
+    //     &csdw, subpacket_count, video_payload_element_.element);
+
     return Ch10Status::OK;
 }
 

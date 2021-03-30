@@ -274,9 +274,13 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 			// specific and should be held by Ch10Context. This will need careful thinking
 			// and rework at some point.
 			milstd1553f1_pq_writer = milstd1553f1_pq_writer_.get();
-		// case Ch10PacketType::VIDEO_DATA_F0:
+		case Ch10PacketType::VIDEO_DATA_F0:
 
-		// 	videof0_pq_writer_ = 
+			// Create the writer object.
+			videof0_pq_writer_ = std::make_unique<ParquetVideoDataF0>(it->second,
+				thread_id, true);
+
+			videof0_pq_writer = videof0_pq_writer_.get();
 		}
 	}
 }
