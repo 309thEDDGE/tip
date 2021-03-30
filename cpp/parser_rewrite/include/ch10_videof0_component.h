@@ -21,12 +21,12 @@ private:
     Ch10PacketElement<Ch10VideoF0RTCTimeStampFmt> time_stamp_element_;
     ElemPtrVec time_stamp_element_vector_;
 
-    Ch10PacketElement<video_datum> video_elements_[TransportStream_DATA_COUNT];
+    Ch10PacketElement<video_datum[TransportStream_DATA_COUNT]> video_payload_element_;
 
 // Protected members are accessible to tests via inheritance
 protected:
 	std::vector<uint64_t> subpacket_absolute_times_;
-    ElemPtrVec video_datum_elements_vector_;
+    ElemPtrVec video_element_vector_;
 
 public:
     const Ch10PacketElement<Ch10VideoF0HeaderFormat>& csdw_element;
@@ -37,14 +37,10 @@ public:
         csdw_element_vector_{
             dynamic_cast<Ch10PacketElementBase*>(&csdw_element_)},
         time_stamp_element_vector_{
-            dynamic_cast<Ch10PacketElementBase*>(&time_stamp_element_)}
-        {
-            for (size_t i = 0; i < TransportStream_DATA_COUNT; i++)
-            {
-                video_datum_elements_vector_.push_back(
-                    dynamic_cast<Ch10PacketElementBase*>(video_elements_ + i));
-            }
-        }
+            dynamic_cast<Ch10PacketElementBase*>(&time_stamp_element_)},
+        video_element_vector_{
+            dynamic_cast<Ch10PacketElementBase*>(&video_payload_element_)}
+        {}
 
     ~Ch10VideoF0Component() {}
 

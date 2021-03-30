@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "ch10_videof0_component.h"
-#include "ch10_videof0_test_data.h"
 
 
 /***** Mock Component *****/
@@ -29,9 +28,10 @@ public:
     //     return video_data;
     // }
 
-    ElemPtrVec GetVideoDataElements()
+    const video_datum* GetPointerFromVideoElement()
     {
-        return video_datum_elements_vector_;
+        Ch10PacketElement<video_datum> *element = (Ch10PacketElement<video_datum>*) video_element_vector_[0];
+        return *element->element;
     }
 };
 
@@ -192,23 +192,13 @@ TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketIPHSetsTimeToSubpacketTime)
 
 TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketNoIPHParsesPayload)
 {
-    const video_datum *data_ptr;
-
     std::vector<video_datum> original_vector(TransportStream_DATA_COUNT, 54321);
-    const uint8_t *data = (uint8_t *)original_vector.data();
+    const uint8_t *data = (uint8_t*)original_vector.data();
 
     component_.ParseSubpacket(data, false);
+    uint8_t *expected_next_ptr = (uint8_t*)(original_vector.data() + TransportStream_DATA_COUNT);
+    ASSERT_EQ(expected_next_ptr, data);
 
-    ElemPtrVec base_elements = component_.GetVideoDataElements();
-    ASSERT_EQ(TransportStream_DATA_COUNT, base_elements.size());
-
-    Ch10PacketElement<video_datum> *element;
-    for (int i = 0; i < TransportStream_DATA_COUNT; i++)
-    {
-        element = (Ch10PacketElement<video_datum> *)base_elements[i];
-        data_ptr = *element->element;
-
-        ASSERT_NE(nullptr, data);
-        ASSERT_EQ(original_vector.data() + i, data_ptr);
-    }
+    const video_datum *video_data = component_.GetPointerFromVideoElement();
+    ASSERT_EQ(original_vector.data(), video_data);
 }

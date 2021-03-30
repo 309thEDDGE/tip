@@ -45,8 +45,7 @@ int32_t Ch10VideoF0Component::DivideExactInteger(uint32_t size_of_whole, uint32_
 void Ch10VideoF0Component::ParseSubpacket(const uint8_t*& data, bool iph)
 {
     subpacket_absolute_times_.push_back( ParseSubpacketTime(data, iph) );
-    ((Ch10PacketElement<video_datum> *)video_datum_elements_vector_[0])->Set(data);
-    ParseElements(video_datum_elements_vector_, data);
+   ParseElements(video_element_vector_, data);
 }
 
 uint64_t Ch10VideoF0Component::ParseSubpacketTime(const uint8_t*& data, bool iph)
