@@ -137,7 +137,7 @@ public:
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr2_map;
 	const std::map<uint32_t, std::set<uint32_t>>& chanid_commwords_map;
 	ParquetMilStd1553F1* milstd1553f1_pq_writer;
-	const ParquetVideoDataF0* videof0_pq_writer;
+	ParquetVideoDataF0* videof0_pq_writer;
 	const uint32_t intrapacket_ts_size_ = 2*sizeof(uint64_t);
 
 	Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
