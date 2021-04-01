@@ -54,6 +54,8 @@ void ParquetVideoDataF0::commit()
 #endif
 #endif
 
+	SPDLOG_INFO("({:02d}) Writing VideoDataF0 to Parquet, {:d} rows", id_, temp_element_count_);
+
 	if (temp_element_count_ > 0)
 	{
 		int n_calls = int(std::ceil(double(temp_element_count_) / double(DEFAULT_ROW_GROUP_COUNT_VIDEO)));
@@ -86,6 +88,7 @@ void ParquetVideoDataF0::append_data(const std::vector<uint64_t>& time_stamp,
 	printf("(%03hu) ParquetVideoDataF0: appending %u packets\n", id_, transport_stream_pkt_count);
 #endif
 #endif
+	SPDLOG_INFO("({:02d}) Writing VideoDataF0 to Parquet, {:d} rows", id_, temp_element_count_);
 
 	for (int i = 0; i < transport_stream_pkt_count; i++)
 	{
@@ -150,6 +153,9 @@ void ParquetVideoDataF0::append_data(
 	
 	channel_id_[temp_element_count_] = channel_id;
 
+	if (temp_element_count_ % 2500 == 0)  SPDLOG_DEBUG("Appending subpacket {:d} to video_data_", temp_element_count_);
+
+
 	std::copy(data, data + TransportStream_DATA_COUNT, 
 		video_data_.data() + temp_element_count_);
 
@@ -158,11 +164,8 @@ void ParquetVideoDataF0::append_data(
 
 	if (temp_element_count_ == max_temp_element_count_)
 	{
-#ifdef DEBUG
-#if DEBUG > 0
-		printf("(%03u) Writing VideoDataF0 to Parquet, %d rows\n", id_, temp_element_count_);
-#endif
-#endif
+		SPDLOG_INFO("({:02d}) Writing VideoDataF0 to Parquet, {:d} rows", id_, temp_element_count_);
+
 		for (int i = 0; i < DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO; i++)
 		{
 			WriteColumns(DEFAULT_ROW_GROUP_COUNT_VIDEO, i * DEFAULT_ROW_GROUP_COUNT_VIDEO);

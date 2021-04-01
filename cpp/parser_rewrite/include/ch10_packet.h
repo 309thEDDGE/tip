@@ -9,6 +9,7 @@
 #include "ch10_tmats_component.h"
 #include "ch10_tdp_component.h"
 #include "ch10_1553f1_component.h"
+#include "ch10_videof0_component.h"
 
 // body
 // footer
@@ -46,6 +47,7 @@ private:
     std::vector<std::string>& tmats_vec_;
     Ch10TDPComponent tdp_component_;
     Ch101553F1Component milstd1553f1_component_;
+    Ch10VideoF0Component videof0_component_;
 
 public:
     const Ch10PacketType& current_pkt_type;
@@ -54,7 +56,8 @@ public:
         bb_(binbuff), ctx_(context), data_ptr_(nullptr), bb_response_(0), 
         status_(Ch10Status::OK), temp_pkt_size_(0),
         pkt_type_(Ch10PacketType::NONE), current_pkt_type(pkt_type_), header_(context), 
-        tmats_(context), tdp_component_(context), milstd1553f1_component_(context) {}
+        tmats_(context), tdp_component_(context), milstd1553f1_component_(context),
+        videof0_component_(context) {}
 
     /*
     Parse the ch10 header at the current location of the buffer.

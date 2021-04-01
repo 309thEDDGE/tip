@@ -197,6 +197,7 @@ void Ch10Packet::ParseBody()
         if (ctx_->pkt_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0))
         {
             pkt_type_ = Ch10PacketType::VIDEO_DATA_F0;
+            videof0_component_.Parse(data_ptr_);
         }
     }
     }
