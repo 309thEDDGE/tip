@@ -1,13 +1,16 @@
+#ifndef TRANSLATOR_HELPER_FUNCS_H_
+#define TRANSLATOR_HELPER_FUNCS_H_
+
 #include "parquet_translation_manager.h"
 #include "translation_master.h"
 #include "yaml_reader.h"
 #include "metadata.h"
-#include "file_reader.h"
 #include "dts1553.h"
 #include "bus_map.h"
 #include "parquet_reader.h"
 #include "translation_config_params.h"
-#include "managed_path.h"
+#include "argument_validation.h"
+#include "yaml_schema_validation.h"
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <iostream>
@@ -16,7 +19,10 @@
 
 bool GetArguments(int argc, char* argv[], ManagedPath& input_path,
 	ManagedPath& icd_path);
-bool InitializeConfig(std::string conf_path, TranslationConfigParams& tcp);
+bool InitializeConfig(std::string conf_root_path, std::string schema_root_path,
+	TranslationConfigParams& tcp, std::vector<LogItem>& log_items);
+bool ValidateDTS1553YamlSchema(std::string schema_root_path, const ManagedPath& dts_path,
+	std::vector<LogItem>& log_items);
 bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
 	const ManagedPath& dts_path, bool stop_after_bus_map, bool prompt_user,
 	uint64_t vote_threshold, bool vote_method_checks_tmats,
@@ -42,3 +48,5 @@ bool RecordMetadata(TranslationConfigParams config, const ManagedPath& translate
 	const ManagedPath& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
 	const std::set<uint64_t>& excluded_channel_ids, const ManagedPath& input_path,
 	const std::set<std::string>& translated_messages);
+
+#endif

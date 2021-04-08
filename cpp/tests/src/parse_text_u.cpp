@@ -473,3 +473,320 @@ TEST_F(ParseTextTest, TextIsFloatScientific)
 	EXPECT_FALSE(return_status);
 }
 
+TEST_F(ParseTextTest, IsASCIIEmptyString)
+{
+	test_str = "";
+	res = pt.IsASCII(test_str);
+	EXPECT_FALSE(res);
+}
+
+TEST_F(ParseTextTest, IsASCIIInvalidChar)
+{
+	const int n = 1;
+	char vals[n] = { char(130) }; // 130 not in [0, 127]
+	test_str = std::string((const char*)&vals, n);
+	res = pt.IsASCII(test_str);
+	EXPECT_FALSE(res);
+}
+
+TEST_F(ParseTextTest, IsASCIIInvalidSequence)
+{
+	const int n = 5;
+	char vals[n] = { 23, 56, char(144), 0, 10 }; // 144 not in [0, 127]
+	test_str = std::string((const char*)&vals, n);
+	res = pt.IsASCII(test_str);
+	EXPECT_FALSE(res);
+
+	vals[2] = 44;
+	vals[0] = -10;
+	test_str = std::string((const char*)&vals, n);
+	res = pt.IsASCII(test_str);
+	EXPECT_FALSE(res);
+}
+
+TEST_F(ParseTextTest, IsASCIIValidSequence)
+{
+	const int n = 5;
+	char vals[n] = { 23, 56, 44, 0, 10 }; // 130 not in [0, 127]
+	test_str = std::string((const char*)&vals, n);
+	res = pt.IsASCII(test_str);
+	EXPECT_TRUE(res);
+}
+
+TEST_F(ParseTextTest, IsUTF8EmptyString)
+{
+	test_str = "";
+	res = pt.IsUTF8(test_str);
+	EXPECT_FALSE(res);
+}
+
+/*
+Examples of well-formted utf-8 byte sequences, from which ill-formed
+sequences are generated for testing: 
+http://www.unicode.org/versions/Unicode6.2.0/ch03.pdf
+*/
+
+TEST_F(ParseTextTest, IsUTF8InvalidFirstByte)
+{
+	// Greater than max first byte.
+	test_str = "\xF5";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// > 1B first byte and < 2B smallest
+	test_str = "\x82";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+}
+
+TEST_F(ParseTextTest, IsUTF8InvalidSecondByte)
+{
+	// Valid 1B seq first byte, second byte belongs
+	// to 2B sequence.
+	test_str = "\x70\x81";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xC2, 0xDF] 2B sequence, 2nd byte small
+	test_str = "\xC5\x2G";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xC2, 0xDF] 2B sequence, 2nd byte large
+	test_str = "\xC5\xD7";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xE0 3B sequence, 2nd byte small
+	test_str = "\xE0\x87";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xE0 3B sequence, 2nd byte large
+	test_str = "\xE0\xD6";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xE1, 0xEC] 3B sequence, 2nd byte small
+	test_str = "\xE2\x6A";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xE1, 0xEC] 3B sequence, 2nd byte large
+	test_str = "\xE2\xCC";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xED 3B sequence, 2nd byte small
+	test_str = "\xED\x4A";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xED 3B sequence, 2nd byte large
+	test_str = "\xED\xB2";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xEE, 0xEF] 3B sequence, 2nd byte small
+	test_str = "\xEE\x4A";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xEE, 0xEF] 3B sequence, 2nd byte small
+	test_str = "\xEF\xD0";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xF0 4B sequence, 2nd byte small
+	test_str = "\xF0\x7A";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xF0 4B sequence, 2nd byte large
+	test_str = "\xF0\xC3";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xF1, 0xF3] 4B sequence, 2nd byte small
+	test_str = "\xF2\x55";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xF1, 0xF3] 4B sequence, 2nd byte large
+	test_str = "\xF3\xF7";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xF4 4B sequence, 2nd byte small
+	test_str = "\xF4\x55";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xF4 4B sequence, 2nd byte large
+	test_str = "\xF4\x90";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+}
+
+TEST_F(ParseTextTest, IsUTF8InvalidThirdByte)
+{
+	// valid 2B sequence with 3B third byte
+	test_str = "\xC7\xA8\x87";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xE0 3B sequence, 3rd byte small
+	test_str = "\xE0\xA0\x77";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xE0 3B sequence, 3rd byte large
+	test_str = "\xE0\xA0\xC3";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xE1, 0xEC] 3B sequence, 3rd byte small
+	test_str = "\xE1\xA0\x77";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xE1, 0xEC] 3B sequence, 3rd byte large
+	test_str = "\xE1\xA0\xC0";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xED 3B sequence, 3rd byte small
+	test_str = "\xED\x95\x77";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xED 3B sequence, 3rd byte large
+	test_str = "\xED\x95\xD6";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xEE, 0xEF] 3B sequence, 3rd byte small
+	test_str = "\xEE\xA0\x77";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xEE, 0xEF] 3B sequence, 3rd byte large
+	test_str = "\xEE\xA0\xD9";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xF0 4B sequence, 3rd byte small
+	test_str = "\xF0\x97\x77";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xF0 4B sequence, 3rd byte large
+	test_str = "\xF0\x97\xEE";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xF1, 0xF3] 4B sequence, 3rd byte small
+	test_str = "\xF1\xA0\x77";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xF1, 0xF3] 4B sequence, 3rd byte large
+	test_str = "\xF1\xA0\xF2";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xF4 4B sequence, 3rd byte small
+	test_str = "\xF4\x97\x77";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+	
+	// 0xF4 4B sequence, 3rd byte large
+	test_str = "\xF4\x97\xC7";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+}
+
+TEST_F(ParseTextTest, IsUTF8InvalidFourthByte)
+{
+	// Valid 3B sequence with 4B sequence fourth byte.
+	test_str = "\xE3\xA2\xA5\xB4";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xF0 4B sequence, fourth byte small
+	test_str = "\xF0\xAA\x89\x4F";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xF0 4B sequence, fourth byte large
+	test_str = "\xF0\xAA\x89\xC6";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xF1, 0xF3] 4B sequence, fourth byte small
+	test_str = "\xF2\x87\x89\x4F";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// [0xF1, 0xF3] 4B sequence, fourth byte large
+	test_str = "\xF2\x87\x89\xD2";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xF4 4B sequence, fourth byte small
+	test_str = "\xF4\x88\x89\x4F";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// 0xF4 4B sequence, fourth byte large
+	test_str = "\xF4\x88\x89\xCB";
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+}
+
+TEST_F(ParseTextTest, IsUTF8IncreasingSuccession)
+{
+	// Valid increasing succession.
+	// 1B + 2B + 3B + 4B
+	test_str = std::string("\x5D") + std::string("\xC4\xA2") + 
+		std::string("\xEB\x88\x9D") + std::string("\xF0\x91\x87\xBA");
+	EXPECT_TRUE(pt.IsUTF8(test_str));
+
+	// Invalid 1B seq
+	test_str = std::string("\x92") + std::string("\xC4\xA2") + 
+		std::string("\xEB\x88\x9D") + std::string("\xF0\x91\x87\xBA");
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// Invalid 2B seq
+	test_str = std::string("\x5D") + std::string("\xC4\x5D") + 
+		std::string("\xEB\x88\x9D") + std::string("\xF0\x91\x87\xBA");
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// Invalid 3B seq
+	test_str = std::string("\x5D") + std::string("\xC4\xA2") + 
+		std::string("\xEB\xC3\x9D") + std::string("\xF0\x91\x87\xBA");
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// Invalid 4B seq
+	test_str = std::string("\x5D") + std::string("\xC4\xA2") + 
+		std::string("\xEB\x88\x9D") + std::string("\xF0\x91\x87\xCA");
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+}
+
+TEST_F(ParseTextTest, IsUTF8DecreasingSuccession)
+{
+	// Valid increasing succession.
+	// 4B + 3B + 2B + 1B
+	test_str = std::string("\xF0\x91\x87\xBA") + std::string("\xEB\x88\x9D") +
+		std::string("\xC4\xA2") + std::string("\x5D");
+	EXPECT_TRUE(pt.IsUTF8(test_str));
+
+	// Invalid 1B seq
+	test_str = std::string("\xF0\x91\x87\xBA") + std::string("\xEB\x88\x9D") +
+		std::string("\xC4\xA2") + std::string("\x92");
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// Invalid 2B seq
+	test_str = std::string("\xF0\x91\x87\xBA") + std::string("\xEB\x88\x9D") +
+		std::string("\xC4\x5D") + std::string("\x5D");
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// Invalid 3B seq
+	test_str = std::string("\xF0\x91\x87\xBA") + std::string("\xEB\xC3\x9D") +
+		std::string("\xC4\xA2") + std::string("\x5D");
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+
+	// Invalid 4B seq
+	test_str = std::string("\xF0\x91\x87\xCA") + std::string("\xEB\x88\x9D") +
+		std::string("\xC4\xA2") + std::string("\x5D");
+	EXPECT_FALSE(pt.IsUTF8(test_str));
+}
+
+TEST_F(ParseTextTest, ToLowerEmptyString)
+{
+	test_str = "";
+	std::string ret_str = pt.ToLower(test_str);
+	EXPECT_EQ(ret_str, test_str);
+}
+
+TEST_F(ParseTextTest, ToLowerAllLower)
+{
+	test_str = "this is a string_ with all lower-case";
+	std::string ret_str = pt.ToLower(test_str);
+	EXPECT_EQ(ret_str, test_str);
+}
+
+TEST_F(ParseTextTest, ToLowerMixedCase)
+{
+	test_str = "This is A String_ with MIXed case";
+	std::string ret_str = pt.ToLower(test_str);
+	EXPECT_EQ(ret_str, "this is a string_ with mixed case");
+}
+
+TEST_F(ParseTextTest, ToLowerAllUpper)
+{
+	test_str = "THIS IS A STRING_ WITH ALL UPPER CASE";
+	std::string ret_str = pt.ToLower(test_str);
+	EXPECT_EQ(ret_str, "this is a string_ with all upper case");
+}
+
+

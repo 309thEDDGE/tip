@@ -248,20 +248,6 @@ std::string ParseText::RemoveTrailingChar(const std::string& input_string, char 
 // Returns: false if unsuccessful, true if successful
 bool ParseText::ConvertDouble(const std::string& convert_string, double& output)
 {
-	//// Return invalid if empty string
-	//if (convert_string.length() == 0)
-	//{
-	//	output = 0;
-	//	return false;
-	//}
-
-	//// Return invalid if first character is '-' and length is one
-	//if (convert_string[0] == '-' && convert_string.length() == 1)
-	//{
-	//	output = 0;
-	//	return false;
-	//}
-
 	if (!TextIsFloat(convert_string))
 	{
 		output = 0.0;
@@ -336,4 +322,93 @@ bool ParseText::TextIsFloat(const std::string& input_string)
 		}
 	}
 	return true;
+}
+
+bool ParseText::IsASCII(const std::string& test_str)
+{
+	// Return false for empty strings.
+	if (test_str.length() == 0)
+		return false;
+
+	// Check each character in test_str
+	for (int i = 0; i < test_str.length(); i++)
+	{
+		if (test_str.at(i) < 0)
+			return false;
+	}
+	return true;
+}
+
+bool ParseText::IsUTF8(const std::string& test_str)
+{
+	// See table 3-7, "Well-Formed UTF-8 Byte Sequences"
+	// in http://www.unicode.org/versions/Unicode6.2.0/ch03.pdf
+
+	// Return false for empty strings.
+	if (test_str.length() == 0)
+		return false;
+
+	uint8_t byte_val = 0;
+	uint8_t seq_count = 0;
+	uint8_t seq_ind = 0;
+	for (int i = 0; i < test_str.length(); i++)
+	{
+		byte_val = test_str.at(i);
+
+		// Check for single byte (1B) sequence
+		if (byte_val >= 0x00 && byte_val <= 0x7F)
+			seq_count = 1;
+		// 2B sequence
+		else if (byte_val >= 0xC2 && byte_val <= 0xDF)
+			seq_count = 2;
+		// 3B sequence
+		else if (byte_val >= 0xE0 && byte_val <= 0xEF)
+		{
+			seq_count = 3;
+
+			// 0xE0 case
+			if (byte_val == 0xE0 && (uint8_t)test_str.at(i + 1) < 0xA0)
+				return false;
+
+			// 0xED case
+			if (byte_val == 0xED && (uint8_t)test_str.at(i + 1) > 0x9F)
+				return false;
+		}
+		// 4B sequence
+		else if (byte_val >= 0xF0 && byte_val <= 0xF4)
+		{
+			seq_count = 4;
+
+			// 0xF0 case
+			if (byte_val == 0xF0 && (uint8_t)test_str.at(i + 1) < 0x90)
+				return false;
+
+			// 0xF4 case
+			if (byte_val == 0xF4 && (uint8_t)test_str.at(i + 1) > 0x8F)
+				return false;
+		}
+		else
+			return false;
+		
+		for (seq_ind = 1; seq_ind < seq_count; seq_ind++)
+		{
+			i++;
+			byte_val = test_str.at(i);
+			if (byte_val < 0x80 || byte_val > 0xBF)
+				return false;
+		}
+
+	}
+	return true;
+}
+
+std::string ParseText::ToLower(const std::string& input_str)
+{
+	std::string lower_str = input_str;
+	for (size_t i = 0; i < lower_str.length(); i++)
+	{
+		if (!std::islower(lower_str[i]))
+			lower_str[i] = std::tolower(lower_str[i]);
+	}
+	return lower_str;
 }

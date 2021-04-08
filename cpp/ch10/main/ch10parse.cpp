@@ -35,7 +35,8 @@ int main(int argc, char* argv[])
 
 	ParserConfigParams config;
 	std::string tip_root_path = "";
-	if (!ValidateConfig(config, tip_root_path))
+	std::string config_schema_path = "";
+	if (!ValidateConfig(config, tip_root_path, config_schema_path))
 		return 0;
 
 	ManagedPath input_path;
