@@ -1,40 +1,122 @@
+# Legend:
+# - (O)  = optional map with specific key
+# - (R)  = required map with specific key
+# - (WR) = wildcard placeholder for required user-defined input
+# - (WO) = wildcard placeholder for optional user-defined input
+
+# Wildcards represent user-defined strings and are used to 
+# give names to 1553 messages or elements. Within a structure,
+# a wildcard may be repeated many times to define all necessary 
+# message and/or message elements.
+
+# The inclusion requirement applies at each level of the structure 
+# to the current level and down to lower-level structures. For example,
+# the optional wildcard which is value mapped to the word_elem key
+# may not be relevant for the current message, in which case 
+# the word_elem key is mapped to a null value. It may also 
+# be the case that the word_elem key maps to multiple 1553 
+# word elements, in which case word_elem maps to another
+# map with multiple key:value pairs, each of which is mapped
+# to another a map which contains the keys off, cnt, schema, etc.
+
+# See additional definitions below.
+
 ---
-translatable_message_definitions:
-  _NOT_DEFINED_:
-    msg_data: 
-      command: [INT]
-      lru_addr: [INT]
-      lru_subaddr: [INT]
-      lru_name: [STR]
-      bus: STR
-      wrdcnt: INT
-      rate: FLT
-      mode_code: BOOL
-      desc: STR
-    word_elem:
-      _NOT_DEFINED_OPT_: 
-        off: INT
-        cnt: INT
-        schema: STR
-        msbval: FLT
-        desc: STR
-        uom: STR
-        multifmt: BOOL
-        class: INT
-    bit_elem:
-      _NOT_DEFINED_OPT_:
-        off: INT
-        cnt: INT
-        schema: STR
-        msbval: FLT
-        desc: STR
-        uom: STR
-        multifmt: BOOL
-        class: INT
-        msb: INT
-        lsb: INT
-        bitcnt: INT
-supplemental_bus_map_command_words:
-  _NOT_DEFINED_:
-    - [INT]
+translatable_message_definitions:           # (R)
+  _NOT_DEFINED_:                            # (WR), alias: msg_name = 1553 message name
+    msg_data:                               # (R) 
+      command: [INT]                        # (R)
+      lru_addr: [INT]                       # (R)
+      lru_subaddr: [INT]                    # (R)
+      lru_name: [STR]                       # (R)
+      bus: STR                              # (R)
+      wrdcnt: INT                           # (R)
+      rate: FLT                             # (R)
+      mode_code: BOOL                       # (R)
+      desc: STR                             # (R)
+    word_elem:                              # (R)
+      _NOT_DEFINED_OPT_:                    # (WO), alias: wrd_elem = word/multiple word element
+        off: INT                            # (R)
+        cnt: INT                            # (R)
+        schema: STR                         # (R)
+        msbval: FLT                         # (R)
+        desc: STR                           # (R)
+        uom: STR                            # (R)
+        multifmt: BOOL                      # (R)
+        class: INT                          # (R)
+    bit_elem:                               # (R)
+      _NOT_DEFINED_OPT_:                    # (WO), alias: bit_elem = bit/multiple bit element
+        off: INT                            # (R)
+        cnt: INT                            # (R)
+        schema: STR                         # (R)
+        msbval: FLT                         # (R)
+        desc: STR                           # (R)
+        uom: STR                            # (R)
+        multifmt: BOOL                      # (R)
+        class: INT                          # (R)
+        msb: INT                            # (R)
+        lsb: INT                            # (R)
+        bitcnt: INT                         # (R)
+supplemental_bus_map_command_words:         # (O) 
+  _NOT_DEFINED_:                            # (WR), alias: bus_name = name of a bus from which 1553 data were recorded
+    - [INT]                                 # (R)
 ...	
+
+#### Parameter Definitions ####
+
+#
+# translatable_message_definitions
+# 
+# Required, structure included exactly once in 1553
+# data translation specification (DTS1553)
+# 
+# Required top level key which indicates that all 
+# structure below it defines 1553 messages to be 
+# translated.
+#
+
+# 
+# _NOT_DEFINED_ 
+# alias: msg_name
+#
+# Required, structure included at least in the 
+# translatable_message_definitions structure
+#
+# Required wildcard to be replaced by the user with a 1553
+# message name. The data structure to which this key maps is 
+# relevant to this message alone. The lower map with keys msg_data,
+# word_elem and bit_elem are immediately below the 
+# message name and are required. There may be as few as a single
+# msg_name data structure or hundreds, depending on the content
+# of the ch10.
+#
+
+# 
+# msg_data
+#
+# Required, structure included at least once in msg_name structure
+#
+# Contains data relevant to identifying a 1553 message. This key 
+# maps to a lower map with the keys: command, lru_addr, lru_subaddr,
+# lru_name, bus, wrdcnt, rate, mode_code, and desc.
+# 
+
+#
+# command
+# 
+# Required, structure included exactly once in the current map
+#
+# Key maps to a sequence of two integers, the 1553 transmit command
+# word followed the receive command word. If the 1553 message is a 
+# transmit type message, then the receive command word position 
+# filled with a zero. If receive message, the transmit position
+# shall contain a zero. An RT-to-RT type message shall include 
+# both non-zero values.
+#
+
+# 
+# lru_addr
+# 
+# Required, structure included exactly once in the current map
+#
+# Key maps to a sequence of 
