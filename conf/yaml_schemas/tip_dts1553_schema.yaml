@@ -19,7 +19,8 @@
 # map with multiple key:value pairs, each of which is mapped
 # to another a map which contains the keys off, cnt, schema, etc.
 
-# See additional definitions below.
+# See additional definitions below and the example DTS1553 yaml file at
+# 
 
 ---
 translatable_message_definitions:           # (R)
@@ -35,7 +36,7 @@ translatable_message_definitions:           # (R)
       mode_code: BOOL                       # (R)
       desc: STR                             # (R)
     word_elem:                              # (R)
-      _NOT_DEFINED_OPT_:                    # (WO), alias: wrd_elem = word/multiple word element
+      _NOT_DEFINED_OPT_:                    # (WO), alias: wrd_elem_name = word/multiple word element
         off: INT                            # (R)
         cnt: INT                            # (R)
         schema: STR                         # (R)
@@ -45,7 +46,7 @@ translatable_message_definitions:           # (R)
         multifmt: BOOL                      # (R)
         class: INT                          # (R)
     bit_elem:                               # (R)
-      _NOT_DEFINED_OPT_:                    # (WO), alias: bit_elem = bit/multiple bit element
+      _NOT_DEFINED_OPT_:                    # (WO), alias: bit_elem_name = bit/multiple bit element
         off: INT                            # (R)
         cnt: INT                            # (R)
         schema: STR                         # (R)
@@ -64,6 +65,36 @@ supplemental_bus_map_command_words:         # (O)
 
 #### Parameter Definitions ####
 
+###############################
+#            Notes            #
+#
+# Command word breakdown:
+#
+# 1...RT address (bits 1-5)
+# 2...
+# 3...
+# 4...
+# 5...
+# 6...Transmit/Recieve (1 transmit, 0 recieve)
+# 7...Subaddress (bits 7-11)
+# 8...
+# 9...
+# 10..
+# 11..
+# 12..Word Count/Mode Code (bits 12-16)
+# 13..
+# 14..
+# 15..
+# 16..
+#
+# Boolean values shall be denoted by strings. True shall
+# be indicated by True or true and false shall be indicated
+# by False or false. 
+#
+##############################
+#       end notes            #
+##############################
+
 #
 # translatable_message_definitions
 # 
@@ -79,7 +110,7 @@ supplemental_bus_map_command_words:         # (O)
 # _NOT_DEFINED_ 
 # alias: msg_name
 #
-# Required, structure included at least in the 
+# Required, structure included at least once in the 
 # translatable_message_definitions structure
 #
 # Required wildcard to be replaced by the user with a 1553
@@ -119,4 +150,247 @@ supplemental_bus_map_command_words:         # (O)
 # 
 # Required, structure included exactly once in the current map
 #
-# Key maps to a sequence of 
+# Key maps to a sequence of two integers, the transmitting lru 
+# address and the receiving lru address. These are the addresses 
+# that can be determined from the a break down of the command 
+# words. The bus controller always takes the address zero in 
+# the pair of command words. In example, a RT to BC message
+# has an lru pair consisting of the RT lru address followed by
+# zero. A BC to RT message has those values swapped, and an 
+# RT to RT message has two non-zero lru addresses. 
+# 
+
+# 
+# lru_subaddr 
+#
+# Required, structure included exactly once in the current map
+# 
+# Key maps to a sequence of two integers, the transmitting 
+# lru subaddress followed by the receiving lru subaddress. This 
+# mapping follows the convention that the BC utilizes the 
+# lru subaddress of zero like other pairs. The subaddresses may 
+# also be obtained from the command words. 
+#
+
+#
+# lru_name
+# 
+# Required, structure included exactly once in the current map
+# 
+# Key maps to a sequence of two strings, the transmitting
+# lru name or label followed by the receiving lru name or label.
+# 
+
+# 
+# bus
+# 
+# Required, structure included exactly once in the current map
+#
+# Key maps to a string which is the name of the bus on which the 
+# relevant message occurs. This string ought to match the name 
+# of the bus that is given in TMATS data, or at least be a substring
+# of a possible bus name found in TMATS. 
+#
+
+# 
+# wrdcnt
+# 
+# Required, structure included exactly once in the current map
+#
+# Key maps to an integer which is the count of data words transmitted
+# in the current message. It does not include command or status words
+# transmitted as part of the complete 1553 message transmission. This 
+# value can also be determined from the command word(s). 
+# 
+
+#
+# rate
+# 
+# Required, structure included exactly once in the current map
+#
+# Key maps to a float value which gives the message transmission
+# rate with Hz unit.
+#
+
+#
+# mode_code 
+#
+# Required, structure included exactly once in the current map
+# 
+# Key maps to a boolean value. True indicates that the message 
+# is a mode code type 1553 message and false indicates that the
+# message is not a mode code. This boolean can be determined from
+# command word by a combination of the subaddress field and 
+# word count/mode code field. 
+#
+
+# 
+# desc 
+# 
+# Required, structure included exactly once in the current map
+# 
+# Key maps to a string description of the 1553 message.
+#
+
+#
+# word_elem
+# 
+# Required, structure included exactly once in the current map
+#
+# Key is one of three keys at the current level of the data structure.
+# The other two keys in the map are msg_data (see above) and 
+# bit_elem (see below). The key maps to a map which has keys that 
+# are the names of the 1553 message elements which are comprised of 
+# an integer number of uint16 payload words. Examples include 
+# uint16, int16, uint32, int32, uint64, int64, etc. There is another
+# data structure to identify and intepret bit-level elements, those
+# elements which are comprised of a single bit or multiple bits which
+# do not compose an integer number of 1553 payload words.
+#
+
+# 
+# _NOT_DEFINED_OPT_
+# alias: wrd_elem_name
+# 
+# Optional, structure may be included if the 1553 message contains
+# payload data which ought to be interpreted as an integer number
+# of uint16 words.
+#
+# Optional wildcard key to be replaced by the user-defined name of the 
+# element to be translated from the raw 1553 payload. There may 
+# be 0 or many of these data structures, where each structure
+# defines exactly one element to be interpreted or translated 
+# out of the payload for the given message.
+#
+
+# 
+# off
+# 
+# Required, structure included exactly once in the current map
+# 
+# Key maps to an integer which is the offset within the 1553 
+# message data payload of the word(s) to be used to translate
+# the current element. This value is zero-indexed such that 
+# first word in a 1553 message payload has offset zero.
+#
+
+# 
+# cnt
+# 
+# Required, structure included exactly once in the current map
+# 
+# Key maps to an integer which is the count of uint16 1553 message
+# payload words to be used to interpret the value of the element.
+#
+
+# 
+# schema
+# 
+# Required, structure included exactly once in the current map
+#
+# Key maps to a string which identifies a specific algorithm 
+# for intepreting the word(s) defined as part of the current 
+# element. The optional values are:
+# 
+#   // IEEE standard twos-complement signed 16-bit integer.
+#   SIGNED16
+#
+#	// IEEE standard two-complement signed 32-bit integer.
+#	SIGNED32
+#
+#	// IEEE standard unsigned 16-bit integer.
+#	UNSIGNED16
+#
+#	// IEEE standard unsigned 32-bit integer.
+#	UNSIGNED32
+#
+#	// MilStd1750 32-bit floating point value.
+#	FLOAT32_1750
+#
+#	// IEEE 32-bit floating point value.
+#	FLOAT32_IEEE
+#
+#	// IEEE 64-bit floating point value.
+#	FLOAT64_IEEE
+#
+#	// 16-bit floating point value -- standard currently uknown.
+#	FLOAT16
+#
+#	// Two or more consecutive bits to be interpreted as a twos-complement signed integer.
+#	// SIGNEDBITS or UNSIGNEDBITS schema should be used when is_bitlevel_ = true.
+#	SIGNEDBITS
+#
+#	// Single-bit boolean or multiple bits to be interpreted as unsigned integer.
+#	// SIGNEDBITS or UNSIGNEDBITS schema should be used when is_bitlevel_ = true.
+#	UNSIGNEDBITS
+#
+#	// Collins Adaptive Processing System (CAPS) 48-bit floating point value.
+#	CAPS
+#
+#	// 32-bit floating point value -- standard currently unknown.
+#	FLOAT32_GPS
+#
+#	// 64-bit floating point value -- standard currently unknown.
+#	FLOAT64_GPS
+#
+
+#
+# msbval
+#
+# Required, structure included exactly once in the current map
+#
+# Key maps to a floating point value giving the (potentially scaled)
+# value of the most significant bit (MSB) in the value to be interpreted
+# by the word(s). An example is an interpreted value which provides 
+# a high-precision datum with a value between 0 and 1, indicates a 
+# single data payload (wrdcnt = 1) and uint16 schema (schema = UNSIGNED16)
+# and an msbval of 0.5. An msbval of 0.5 implies a scale factor 
+# of 0.5 / 2^15 = 1.52588e-5. If this word were to have all 16 bits high
+# then the intended value is (2^16 - 1) * 1.5288e-5 ~= 1.0. The most 
+# significant bit of signed values is the one bit lower than the highest
+# bit which is designated as the sign bit. Currently, floating point
+# values do not use the msbval and a value of 1 ought to be used as 
+# placeholder.
+#
+
+#
+# desc
+# 
+# Required, structure included exactly once in the current map
+# 
+# Key maps to a string value describing the value to be interpreted
+# or extracted from the raw payload. Ex: "height above ground".
+#
+
+# 
+# uom
+# 
+# Required, structure included exactly once in the current map
+#
+# Key maps to a string value indicating the unit of the translated
+# element. This string is not currently used at translation time. 
+# If unknown or not relevant, a placeholder ought to be used. 
+#
+
+# 
+# multifmt
+# 
+# Required, structure included exactly once in the current map
+#
+# Key maps to a boolean value indicating that the element is a 
+# multi-format type element. This only applies to certain platforms
+# and the default value ought to be false.
+#
+
+#
+# class
+#
+# Required, structure included exactly once in the current map
+#
+# Key maps to an integer which indicates the security classification of 
+# the element. This value is not currently utilized. The default value 
+# ought to be zero. 
+#
+
+
+
