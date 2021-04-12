@@ -509,3 +509,50 @@ supplemental_bus_map_command_words:         # (O)
 # to be extracted from the the word(s) at offset 'off'. This 
 # value is redudant and ought to be equal to lsb - msb + 1. 
 #
+
+#
+# supplemental_bus_map_command_words
+#
+# Optional, structure included once if desired
+#
+# Key maps to another map, to be described below. This 
+# optional data structure can assist in automatic bus-mapping 
+# which occurs during translation. Lists of transmit/recieve 
+# command words may be provided for the user. These command
+# words are particularly useful when multiple platform subsystems
+# are not turned on during recording of the ch10 and only a small 
+# subset of the possible messages are transmitted during the recording.
+#
+
+# 
+# _NOT_DEFINED_
+# alias: bus_name
+#
+# Required, if the supplemental_bus_map_command_words structure is 
+# utilized then at least one bus_name must be given.
+#
+# User-defined key, which is the name of a bus given in 'bus' name
+# map of the 'msg_data' mapping. There may be multiple such mappings,
+# the set of which represent a unique set of bus names, where each bus
+# here that matches a bus given in the 'bus' map above must represent
+# same actual bus. In other words, use consistent bus names between
+# this data structure and the bus names used in 'translatable_message_definitions'.
+#
+# Each user-defined bus name shall map to a sequence. Each entry in the
+# sequence shall be a sequence of two integers, the transmit command 
+# word followed by the receive command word of message that may
+# be transmitted on the bus. The message is not required to be present
+# in the data. A user may provide all transmit/receive command
+# word combinations that are possible on the bus. 
+# 
+# In general, the majority of command words relevant to a given bus
+# are determined from the 'translatable_message_definitions', but
+# some command words, such as non-data mode code type 1553 messages,
+# are not included because of the lack of data. It can be very helpful
+# to bus mapping to include those command words in this section.
+#
+# Additionally, there may be a bus which describes classified data. We do not
+# include the message and elements description in the unclass data translation
+# specification. If the command words are not classified, those values can
+# be included here to assist in bus mappping. 
+#
