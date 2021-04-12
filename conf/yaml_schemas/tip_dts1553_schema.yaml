@@ -249,7 +249,7 @@ supplemental_bus_map_command_words:         # (O)
 #
 
 # 
-# _NOT_DEFINED_OPT_
+# _NOT_DEFINED_OPT_ 
 # alias: wrd_elem_name
 # 
 # Optional, structure may be included if the 1553 message contains
@@ -264,7 +264,7 @@ supplemental_bus_map_command_words:         # (O)
 #
 
 # 
-# off
+# off (relative to wrd_elem_name data structure)
 # 
 # Required, structure included exactly once in the current map
 # 
@@ -275,7 +275,7 @@ supplemental_bus_map_command_words:         # (O)
 #
 
 # 
-# cnt
+# cnt (relative to wrd_elem_name data structure)
 # 
 # Required, structure included exactly once in the current map
 # 
@@ -284,7 +284,7 @@ supplemental_bus_map_command_words:         # (O)
 #
 
 # 
-# schema
+# schema (relative to wrd_elem_name data structure)
 # 
 # Required, structure included exactly once in the current map
 #
@@ -335,7 +335,7 @@ supplemental_bus_map_command_words:         # (O)
 #
 
 #
-# msbval
+# msbval (relative to wrd_elem_name data structure)
 #
 # Required, structure included exactly once in the current map
 #
@@ -354,7 +354,7 @@ supplemental_bus_map_command_words:         # (O)
 #
 
 #
-# desc
+# desc (relative to wrd_elem_name data structure)
 # 
 # Required, structure included exactly once in the current map
 # 
@@ -363,7 +363,7 @@ supplemental_bus_map_command_words:         # (O)
 #
 
 # 
-# uom
+# uom (relative to wrd_elem_name data structure)
 # 
 # Required, structure included exactly once in the current map
 #
@@ -373,7 +373,7 @@ supplemental_bus_map_command_words:         # (O)
 #
 
 # 
-# multifmt
+# multifmt (relative to wrd_elem_name data structure)
 # 
 # Required, structure included exactly once in the current map
 #
@@ -383,7 +383,7 @@ supplemental_bus_map_command_words:         # (O)
 #
 
 #
-# class
+# class (relative to wrd_elem_name data structure)
 #
 # Required, structure included exactly once in the current map
 #
@@ -392,5 +392,120 @@ supplemental_bus_map_command_words:         # (O)
 # ought to be zero. 
 #
 
+# 
+# _NOT_DEFINED_OPT_
+# alias: bit_elem_name
+# 
+# Optional, structure may be included if the 1553 message contains
+# payload data which ought to be interpreted from a collection of 
+# contiguous bits.
+#
+# Optional wildcard key to be replaced by the user-defined name of the 
+# element to be translated from the raw 1553 payload. There may 
+# be 0 or many of these data structures, where each structure
+# defines exactly one element to be interpreted or translated 
+# out of the payload for the given message.
+#
 
+#
+# off (relative to bit_elem_name data structure)
+# 
+# Required, structure included exactly once in the current map
+# 
+# Same meaning as defined in the wrd_elem_name data structure.
+#
 
+# 
+# cnt (relative to bit_elem_name data structure)
+# 
+# Required, structure included exactly once in the current map
+# 
+# Same meaning as defined in the wrd_elem_name data structure.
+#
+
+# 
+# schema (relative to bit_elem_name data structure)
+# 
+# Required, structure included exactly once in the current map
+#
+# Same meaning as defined in the wrd_elem_name data structure.
+#
+
+#
+# msbval (relative to bit_elem_name data structure)
+#
+# Required, structure included exactly once in the current map
+#
+# Same meaning as defined in the wrd_elem_name data structure.
+#
+
+#
+# desc (relative to bit_elem_name data structure)
+# 
+# Required, structure included exactly once in the current map
+# 
+# Same meaning as defined in the wrd_elem_name data structure.
+#
+
+# 
+# uom (relative to bit_elem_name data structure)
+# 
+# Required, structure included exactly once in the current map
+#
+# Same meaning as defined in the wrd_elem_name data structure.
+#
+
+# 
+# multifmt (relative to bit_elem_name data structure)
+# 
+# Required, structure included exactly once in the current map
+#
+# Same meaning as defined in the wrd_elem_name data structure.
+#
+
+#
+# class (relative to bit_elem_name data structure)
+#
+# Required, structure included exactly once in the current map
+#
+# Same meaning as defined in the wrd_elem_name data structure.
+#
+
+#
+# msb
+#
+# Required, structure included exactly once in the current map
+#
+# Key maps to an integer which identifies the most significant bit
+# within the first word (often the only word) from which bits
+# shall be extracted to form the intended value. Bits within 
+# each 16-bit word are 1-indexed beginning at the MSB of the 
+# word. In example, bit 1 is the MSB and bit 16 is the LSB in 
+# the 16-bit word. 
+#
+
+#
+# lsb
+#
+# Required, structure included exactly once in the current map
+#
+# Key maps to an integer which identifies the least significant bit 
+# within the final word (often the first and only word) from which
+# bits shall be extracted to from the intended value, following a 
+# 1-indexed convention with bit 1 the MSB and bit 16 the LSB
+# within the 16-bit word. In example, a four bit sequence which represents,
+# via the raw bits, a value in the range 0--15, may be specified by
+# bits msb=4 and lsb=7. Bit 4, fourth most signficant, through bit 
+# 7, 7th most significant, comprise four bits which shall be extracted
+# by the translator and scaled according to the msbval.
+#
+
+#
+# bitcnt
+#
+# Required, structure included exactly once in the current map
+#
+# Key maps to a integer which gives the explicit count of bits  
+# to be extracted from the the word(s) at offset 'off'. This 
+# value is redudant and ought to be equal to lsb - msb + 1. 
+#
