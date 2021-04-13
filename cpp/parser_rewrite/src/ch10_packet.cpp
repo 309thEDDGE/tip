@@ -175,6 +175,7 @@ void Ch10Packet::ParseBody()
             pkt_type_ = Ch10PacketType::COMPUTER_GENERATED_DATA_F1;
             tmats_.Parse(data_ptr_, tmats_vec_);
         }
+        break;
     }
     case static_cast<uint8_t>(Ch10PacketType::TIME_DATA_F1):
     {
@@ -183,6 +184,7 @@ void Ch10Packet::ParseBody()
             pkt_type_ = Ch10PacketType::TIME_DATA_F1;
             tdp_component_.Parse(data_ptr_);
         }
+        break;
     }
     case static_cast<uint8_t>(Ch10PacketType::MILSTD1553_F1):
     {
@@ -191,6 +193,7 @@ void Ch10Packet::ParseBody()
             pkt_type_ = Ch10PacketType::MILSTD1553_F1;
             milstd1553f1_component_.Parse(data_ptr_);
         }
+        break;
     }
     case static_cast<uint8_t>(Ch10PacketType::VIDEO_DATA_F0):
     {
@@ -199,6 +202,7 @@ void Ch10Packet::ParseBody()
             pkt_type_ = Ch10PacketType::VIDEO_DATA_F0;
             videof0_component_.Parse(data_ptr_);
         }
+        break;
     }
     }
 

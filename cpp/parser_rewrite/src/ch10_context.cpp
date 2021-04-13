@@ -258,7 +258,7 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 		switch (it->first)
 		{
 		case Ch10PacketType::MILSTD1553_F1:
-
+		{
 			// Store the file writer status for this type as enabled.
 			pkt_type_file_writers_enabled_map_[Ch10PacketType::MILSTD1553_F1] = true;
 
@@ -274,8 +274,10 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 			// specific and should be held by Ch10Context. This will need careful thinking
 			// and rework at some point.
 			milstd1553f1_pq_writer = milstd1553f1_pq_writer_.get();
+			break;
+		}
 		case Ch10PacketType::VIDEO_DATA_F0:
-
+		{
 			pkt_type_file_writers_enabled_map_[Ch10PacketType::VIDEO_DATA_F0] = true;
 
 			// Create the writer object.
@@ -283,6 +285,8 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 				thread_id, true);
 
 			videof0_pq_writer = videof0_pq_writer_.get();
+			break;
+		}
 		}
 	}
 }
@@ -298,9 +302,13 @@ void Ch10Context::CloseFileWriters()
 		case Ch10PacketType::MILSTD1553_F1:
 			if(pkt_type_file_writers_enabled_map_.at(Ch10PacketType::MILSTD1553_F1))
 				milstd1553f1_pq_writer_->commit();
+			break;
 		case Ch10PacketType::VIDEO_DATA_F0:
 			if (pkt_type_file_writers_enabled_map_.at(Ch10PacketType::VIDEO_DATA_F0))
+			{
 				videof0_pq_writer_->commit();
+			}
+			break;
 		}
 	}
 }

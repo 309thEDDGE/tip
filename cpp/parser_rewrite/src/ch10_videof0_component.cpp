@@ -4,8 +4,8 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
 {
     // Parse channel-specific data word
     ParseElements(csdw_element_vector_, data);
-    const Ch10VideoF0HeaderFormat csdw = **csdw_element.element;
-    uint32_t subpacket_size = GetSubpacketSize(csdw.IPH);
+    //const Ch10VideoF0HeaderFormat csdw = **csdw_element.element;
+    uint32_t subpacket_size = GetSubpacketSize((*csdw_element.element)->IPH);
 
     /*(signed)*/int16_t subpacket_count = DivideExactInteger(
         ctx_->data_size - csdw_element.size, subpacket_size);
@@ -24,7 +24,7 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
         ParseSubpacket(data, (*csdw_element.element)->IPH);
 
         ctx_->videof0_pq_writer->append_data(subpacket_absolute_times_[i], ctx_->tdp_doy, ctx_->channel_id, 
-            csdw, **video_payload_element_.element);
+            **csdw_element.element, **video_payload_element_.element);
     }
     
     return Ch10Status::OK;

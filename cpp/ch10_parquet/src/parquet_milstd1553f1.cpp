@@ -341,7 +341,7 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy,
 
 void ParquetMilStd1553F1::commit()
 {
-	SPDLOG_INFO("({:02d}) temp_element_count_ = {:d}", id_, temp_element_count_);
+	//SPDLOG_INFO("({:02d}) temp_element_count_ = {:d}", id_, temp_element_count_);
 
 	if (temp_element_count_ > 0)
 	{
