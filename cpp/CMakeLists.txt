@@ -43,6 +43,7 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/tmats_parser.cpp         ${util_inc_dir}/tmats_parser.h
             ${util_src_dir}/metadata.cpp             ${util_inc_dir}/metadata.h
             ${util_src_dir}/managed_path.cpp         ${util_inc_dir}/managed_path.h
+            ${util_src_dir}/argument_validation.cpp  ${util_inc_dir}/argument_validation.h
  )
 
 target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir}
@@ -53,6 +54,24 @@ target_compile_features(${util_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} 
                       ${parquet_libs} ${linux_libs} ${spdlog_lib_name}
                       )
+
+#########################################################
+#                   Build/link yamlsv lib
+#########################################################
+set(yamlsv_lib_name "yamlsv")
+set(yamlsv_dir_name "yamlsv")
+set(yamlsv_src_dir ${yamlsv_dir_name}/${source_dir_name})
+set(yamlsv_inc_dir ${yamlsv_dir_name}/${include_dir_name})
+set(yamlsv_main_dir ${yamlsv_dir_name}/${main_dir_name})
+add_library(${yamlsv_lib_name} STATIC
+            ${yamlsv_src_dir}/yaml_schema_validation.cpp ${yamlsv_inc_dir}/yaml_schema_validation.h
+            ${yamlsv_inc_dir}/yamlsv_log_item.h
+ )
+
+target_include_directories(${yamlsv_lib_name} PUBLIC ${yamlsv_inc_dir} ${yaml_inc_dir} 
+                           ${util_inc_dir})
+target_compile_features(${yamlsv_lib_name} PUBLIC cxx_std_17)
+target_link_libraries(${yamlsv_lib_name} PUBLIC ${yaml_lib_name} ${util_lib_name})
 
 #########################################################
 #              Build/link parquet_context lib
@@ -150,13 +169,10 @@ add_library(${trans_lib_name} STATIC
     )
 
 target_include_directories(${trans_lib_name} PUBLIC ${trans_inc_dir}
-                            ${util_inc_dir} ${ch10pq_inc_dir})
-
-target_include_directories(${trans_lib_name} PUBLIC  
-                            )
+                            ${util_inc_dir} ${ch10pq_inc_dir} ${yamlsv_inc_dir})
 
 target_link_libraries(${trans_lib_name} PUBLIC
-                        ${util_lib_name} ${ch10pq_lib_name} ${linux_libs})
+                        ${util_lib_name} ${ch10pq_lib_name} ${linux_libs} ${yamlsv_lib_name})
 target_compile_features(${trans_lib_name} PUBLIC cxx_std_17)
 #target_compile_options(${trans_lib_name} PRIVATE -fPIE)
 
@@ -200,6 +216,7 @@ if(parser_rewrite)
                ${parserw_inc_dir}/ch10_status.h ${parserw_src_dir}/ch10_status.cpp 
                ${parserw_inc_dir}/ch10_header_format.h
                ${parserw_inc_dir}/ch10_1553f1_msg_hdr_format.h
+               ${parserw_inc_dir}/ch10_videof0_header_format.h
                ${parserw_inc_dir}/ch10_packet_element_base.h
                ${parserw_inc_dir}/ch10_packet_element.h
                ${parserw_inc_dir}/ch10_videof0_header_format.h               ${parserw_inc_dir}/ch10_packet_component.h ${parserw_src_dir}/ch10_packet_component.cpp
@@ -263,18 +280,19 @@ add_library(${ch10parse_lib_name} STATIC
 target_include_directories(${ch10parse_lib_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
                             ${temp_irig_inc_dir} ${temp_eth_inc_dir} ${parserw_inc_dir}
-                            ${spdlog_inc_dir})
+                            ${spdlog_inc_dir} ${yamlsv_inc_dir})
+
 target_compile_features(${ch10parse_lib_name} PUBLIC cxx_std_17)
-#target_compile_options(${ch10parse_lib_name} PRIVATE -fPIE)
 target_link_libraries(${ch10parse_lib_name} PUBLIC
-                        ${ch10pq_lib_name}
-                        ${util_lib_name}
-                        ${linux_libs}
-                        ${temp_irig_lib_name}
-                        ${temp_tins_libs}
-                        ${temp_eth_lib_name}
-                        ${parserw_lib_name}
-                        ${spdlog_lib_name}
+                      ${util_lib_name}
+                      ${ch10pq_lib_name}
+                      ${linux_libs}
+                      ${temp_irig_lib_name}
+                      ${temp_tins_libs}
+                      ${temp_eth_lib_name}
+                      ${parserw_lib_name}
+                      ${spdlog_lib_name}
+                      ${yamlsv_lib_name}
     )
 
 
@@ -294,6 +312,7 @@ install(TARGETS ${pqctx_lib_name}
                 ${ch10parse_lib_name}
                 ${videx_lib_name}
                 ${parserw_lib_name}
+                ${yamlsv_lib_name}
         DESTINATION ${out_lib_dir}
 )
 
@@ -373,12 +392,14 @@ if(build_tests)
                    ${test_src_dir}/managed_path_u.cpp
                    ${test_inc_dir}/spdlog_setup_helper_funcs.h
                    ${parserw_test_sources}        
-                   )
+                   ${test_src_dir}/yaml_schema_validation_u.cpp
+                   ${test_src_dir}/argument_validation_u.cpp)
+
 #    set_property(TARGET ${test_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir} 
                                ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
                                ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} ${parserw_inc_dir}
-                               ${spdlog_inc_dir})
+                               ${spdlog_inc_dir} ${yamlsv_inc_dir})
 
     target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
     target_link_libraries(${test_exe_name}
@@ -391,7 +412,8 @@ if(build_tests)
                           ${parquet_libs}
                           ${parserw_lib_name}
                           ${spdlog_lib_name}
-              ${linux_libs})
+                          ${yamlsv_lib_name}
+                          ${linux_libs})
 
     # For Ctest
     #include(CTest)
@@ -439,6 +461,18 @@ add_executable(${bincomp_exe_name} ${comp_main_dir}/binary_comparison.cpp)
 #set_property(TARGET ${bincomp_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 #########################################################
+#                Build/link validate_yaml exe
+#########################################################
+set(yamlsv_exe_name "validate_yaml")
+message(STATUS "Building exe: " "${yamlsv_exe_name}")
+add_executable(${yamlsv_exe_name} ${yamlsv_main_dir}/validate_yaml.cpp)
+
+target_include_directories(${yamlsv_exe_name} PUBLIC ${yamlsv_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
+                            )
+target_compile_features(${yamlsv_exe_name} PUBLIC cxx_std_17)
+target_link_libraries(${yamlsv_exe_name} ${yamlsv_lib_name})
+
+#########################################################
 #                   Install Exes
 #########################################################
 install(DIRECTORY DESTINATION ${out_bin_dir})
@@ -447,6 +481,7 @@ install(TARGETS ${ch10parse_exe_name}
                 ${trans_exe_name}
                 ${comp_exe_name}
                 ${bincomp_exe_name}
+                ${yamlsv_exe_name}
         DESTINATION ${out_bin_dir}
         )
 

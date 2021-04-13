@@ -102,6 +102,17 @@ public:
 		const uint32_t& transport_stream_pkt_count,
 		std::vector<video_datum>& data_vec);
 
+#ifdef PARSER_REWRITE
+
+	void append_data(
+		const uint64_t& time_stamp, 
+		const uint8_t& doy,
+		const uint32_t& channel_id, 
+		const Ch10VideoF0HeaderFormat& vid_flags, 
+		const video_datum* const data);
+
+#endif
+
 };
 
 #endif

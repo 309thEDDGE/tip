@@ -7,6 +7,7 @@
 #include <string>
 #include <cstdio>
 #include <cstdint>
+#include <initializer_list>
 #include "iterable_tools.h"
 
 namespace fs = std::filesystem;
@@ -43,6 +44,10 @@ public:
 
 	// Initialize with fs::path
 	ManagedPath(fs::path input_path) : fs::path(input_path) { }
+
+	// Initialize with cwd and each of the arguments appended
+	// via "/"
+	ManagedPath(std::initializer_list<std::string> path_components);
 
 	// Assignment
 	ManagedPath& operator = (const ManagedPath& c);
@@ -128,6 +133,15 @@ public:
 	of the current object.
 	*/
 	ManagedPath stem() const;
+
+	/*
+	Get the extension component of the current object.
+	Same functionality as std::filesystem::path::extension
+
+	Return: A ManagedPath object containing the extension
+	of the current object.
+	*/
+	ManagedPath extension() const;
 
 	//
 	// Mimic other std::filesystem functions.

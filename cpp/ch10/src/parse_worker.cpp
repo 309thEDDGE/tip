@@ -93,13 +93,14 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 		// Configure packet parsing.
 		std::map<Ch10PacketType, bool> pkt_type_conf = {
 			{Ch10PacketType::MILSTD1553_F1, true},
-			{Ch10PacketType::VIDEO_DATA_F0, false}
+			{Ch10PacketType::VIDEO_DATA_F0, true}
 		};
 		ctx.SetPacketTypeConfig(pkt_type_conf);
 
 		// Configure output file paths.
 		std::map<Ch10PacketType, ManagedPath> output_paths = {
-			{Ch10PacketType::MILSTD1553_F1, output_file_paths_[Ch10DataType::MILSTD1553_DATA_F1]}
+			{Ch10PacketType::MILSTD1553_F1, output_file_paths_[Ch10DataType::MILSTD1553_DATA_F1]},
+			{Ch10PacketType::VIDEO_DATA_F0, output_file_paths_[Ch10DataType::VIDEO_DATA_F0]}
 		};
 
 		// Check configuration. Are the packet parse and output paths configs

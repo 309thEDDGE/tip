@@ -170,14 +170,12 @@ uint64_t Ch10Context::CalculateAbsTimeFromRTCFormat(const uint64_t& rtc1,
 	const uint64_t& rtc2)
 {
 	temp_rtc_ = ((rtc2 << 32) + rtc1) * rtc_to_ns_;
-	//printf("tdp abs_time %llu, temprtc %llu, tdprtc %llu\n", tdp_abs_time_, temp_rtc_, tdp_rtc_);
-	//abs_time_ = tdp_abs_time_ + (temp_rtc_ - tdp_rtc_);
 	return tdp_abs_time_ + (temp_rtc_ - tdp_rtc_);
 }
 
-uint64_t Ch10Context::CalculateAbsTimeFromRTCNanoseconds(const uint64_t& rtc_nanoseconds)
+uint64_t Ch10Context::GetPacketAbsoluteTime()
 {
-	return tdp_abs_time_ + (rtc_nanoseconds - tdp_rtc_);
+	return tdp_abs_time_ + (rtc - tdp_rtc_);
 }
 
 void Ch10Context::UpdateChannelIDToLRUAddressMaps(const uint32_t& chanid,
@@ -276,9 +274,13 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 			// specific and should be held by Ch10Context. This will need careful thinking
 			// and rework at some point.
 			milstd1553f1_pq_writer = milstd1553f1_pq_writer_.get();
-		// case Ch10PacketType::VIDEO_DATA_F0:
+		case Ch10PacketType::VIDEO_DATA_F0:
 
-		// 	videof0_pq_writer_ = 
+			// Create the writer object.
+			videof0_pq_writer_ = std::make_unique<ParquetVideoDataF0>(it->second,
+				thread_id, true);
+
+			videof0_pq_writer = videof0_pq_writer_.get();
 		}
 	}
 }

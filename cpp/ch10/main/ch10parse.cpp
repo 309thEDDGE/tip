@@ -34,27 +34,21 @@ int main(int argc, char* argv[])
 	}
 
 	ParserConfigParams config;
-	ManagedPath final_conf_path;
-	std::string config_path = "";
-	if (!ValidateConfig(config, config_path, final_conf_path))
+	std::string tip_root_path = "";
+	std::string config_schema_path = "";
+	ManagedPath final_config_path;
+	ManagedPath final_schema_path;
+	if (!ValidateConfig(config, tip_root_path, config_schema_path, final_config_path,
+		final_schema_path))
 		return 0;
 
-	// Get the parent dir of the parent dir of the final configuration file
-	// path. In the future, it may be useful to create a function which 
-	// returns the log output path. It could take the config from yaml 
-	// and the final_conf_path as arguments. The options may include using
-	// a path taken from the yaml config or using a traditional directory 
-	// such as %LOCALAPPDATA% in windows or /home/<user>/.tip/logs or similar
-	// or to create a log dir in the same directory as the conf directory,
-	// which can be determined from final_conf_path, as is the only option
-	// used now.
-	ManagedPath log_dir = final_conf_path.parent_path().parent_path();
-	log_dir /= std::string("logs");
+	std::string user_log_dir = "";
+	ManagedPath log_dir;
+	if (!ValidateLogDir(user_log_dir, log_dir))
+		return 0;
 
 	if (!SetupLogging(log_dir))
 		return 0;
-	spdlog::get("pm_logger")->info("Configuration file path: {:s}", final_conf_path.RawString());
-	spdlog::get("pm_logger")->info("Log directory: {:s}", log_dir.RawString());
 
 	ManagedPath input_path;
 	ManagedPath output_path;
@@ -64,8 +58,17 @@ int main(int argc, char* argv[])
 	if (!ValidatePaths(argv[1], arg2, input_path, output_path))
 		return 0;
 
+	spdlog::get("pm_logger")->info("Ch10 file path: {:s}", input_path.RawString());
+	spdlog::get("pm_logger")->info("Output path: {:s}", output_path.RawString());
+	spdlog::get("pm_logger")->info("Configuration file path: {:s}",
+		final_config_path.RawString());
+	spdlog::get("pm_logger")->info("Configuration schema path: {:s}",
+		final_schema_path.RawString());
+	spdlog::get("pm_logger")->info("Log directory: {:s}", log_dir.RawString());
+
 	double duration;
 	StartParse(input_path, output_path, config, duration);
+	spdlog::get("pm_logger")->info("Duration: {:.3f} sec", duration);
 
 	// Avoid deadlock in windows, see 
 	// http://stackoverflow.com/questions/10915233/stdthreadjoin-hangs-if-called-after-main-exits-when-using-vs2012-rc

@@ -250,6 +250,38 @@ TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
 	ASSERT_EQ(calculated_abs_time, expected_abs_time);
 }
 
+TEST(Ch10ContextTest, GetPacketAbsoluteTime)
+{
+	Ch10Context ctx(0);
+	Ch10PacketHeaderFmt hdr_fmt;
+	uint64_t tdp_abs_time = 1000000;
+	uint64_t tdp_rtc1 = 1;
+	uint64_t tdp_rtc2 = 2;
+	uint64_t abs_pos = 0;
+	hdr_fmt.pkt_size = 4320;
+	hdr_fmt.data_size = 3399;
+	hdr_fmt.rtc1 = tdp_rtc1;
+	hdr_fmt.rtc2 = tdp_rtc2;
+	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
+	hdr_fmt.intrapkt_ts_source = 0;
+	hdr_fmt.time_format = 1;
+	uint8_t tdp_doy = 1;
+
+	// Update Context to assign rtc value internally
+	bool tdp_valid = true;
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
+	ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+
+	// Update context as if with a following non-TDP packet
+	hdr_fmt.rtc1 += 20;
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
+
+	uint64_t rtc_to_ns = 100;
+	uint64_t expected_time = tdp_abs_time + 20 * rtc_to_ns;
+	uint64_t packet_time = ctx.GetPacketAbsoluteTime();
+	ASSERT_EQ(expected_time, packet_time);
+}
+
 TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsRTtoRT)
 {
 	Ch10Context ctx(0);
