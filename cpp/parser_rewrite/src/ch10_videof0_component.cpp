@@ -18,10 +18,21 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
         return Ch10Status::VIDEOF0_NONINTEGER_SUBPKT_COUNT;
     }
 
+    if (subpacket_count > MAX_TransportStream_UNITS)
+    {
+        SPDLOG_ERROR("({:02d}) subpacket_count = {:d}, greater than "
+            "MAX_TransportStream_UNITS ({:d})", ctx_->thread_id, subpacket_count,
+            MAX_TransportStream_UNITS);
+        return Ch10Status::VIDEOF0_SUBPKT_COUNT_BIG;
+    }
+
     // Parse subpackets and send one-by-one to the writer
     for (int i = 0; i < subpacket_count; i++)
     {
-        ParseSubpacket(data, (*csdw_element.element)->IPH);
+        //ParseSubpacket(data, (*csdw_element.element)->IPH);
+
+        subpacket_absolute_times_[i] = ParseSubpacketTime(data, (*csdw_element.element)->IPH);
+        ParseElements(video_element_vector_, data);
 
         ctx_->videof0_pq_writer->append_data(subpacket_absolute_times_[i], ctx_->tdp_doy, ctx_->channel_id, 
             **csdw_element.element, **video_payload_element_.element);

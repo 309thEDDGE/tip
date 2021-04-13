@@ -33,6 +33,7 @@ public:
 
     Ch10VideoF0Component(Ch10Context* const context) : 
         Ch10PacketComponent(context),
+        subpacket_absolute_times_(MAX_TransportStream_UNITS),
         csdw_element(csdw_element_),
         csdw_element_vector_{
             dynamic_cast<Ch10PacketElementBase*>(&csdw_element_)},
