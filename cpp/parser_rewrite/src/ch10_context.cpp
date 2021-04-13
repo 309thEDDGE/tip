@@ -276,6 +276,8 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 			milstd1553f1_pq_writer = milstd1553f1_pq_writer_.get();
 		case Ch10PacketType::VIDEO_DATA_F0:
 
+			pkt_type_file_writers_enabled_map_[Ch10PacketType::VIDEO_DATA_F0] = true;
+
 			// Create the writer object.
 			videof0_pq_writer_ = std::make_unique<ParquetVideoDataF0>(it->second,
 				thread_id, true);
@@ -296,6 +298,9 @@ void Ch10Context::CloseFileWriters()
 		case Ch10PacketType::MILSTD1553_F1:
 			if(pkt_type_file_writers_enabled_map_.at(Ch10PacketType::MILSTD1553_F1))
 				milstd1553f1_pq_writer_->commit();
+		case Ch10PacketType::VIDEO_DATA_F0:
+			if (pkt_type_file_writers_enabled_map_.at(Ch10PacketType::VIDEO_DATA_F0))
+				videof0_pq_writer_->commit();
 		}
 	}
 }
