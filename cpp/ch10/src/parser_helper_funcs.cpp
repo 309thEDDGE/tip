@@ -54,7 +54,7 @@ bool ValidatePaths(char* arg1, char* arg2, ManagedPath& input_path, ManagedPath&
 
 	// Get path to ch10 file. 
 	std::string ch10_path = arg1;
-	if (!av.CheckExtension(ch10_path, "ch10")) return false;
+	if (!av.CheckExtension(ch10_path, "ch10", "c10")) return false;
 	if (!av.ValidateInputFilePath(ch10_path, input_path))
 	{
 		printf("User-defined input path is not a file/does not exist: %s\n",
