@@ -470,3 +470,60 @@ TEST(Ch10ContextTest, CheckConfigurationPathsRequired)
 
 // Test InitializeFileWriters, this function and the other code it impacts
 // probably needs re-factoring prior.
+
+TEST(Ch10ContextTest, RecordMinVideoTimeStampChannelIDNotPresent)
+{
+	Ch10Context ctx(0);
+	Ch10PacketHeaderFmt hdr_fmt;
+	hdr_fmt.chanID = 9;
+	uint64_t abs_pos = 0;
+
+	// For this test, we're only concerned with setting a specific channel ID.
+	// None of the other parameters in the Ch10PacketHeaderFmt are used.
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
+
+	uint64_t ts = 3939292991;
+
+	// The Ch10Context instance is new, therefore the map should be initially empty.
+	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.size(), 0);
+	ctx.RecordMinVideoTimeStamp(ts);
+	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.count(hdr_fmt.chanID), 1);
+}
+
+TEST(Ch10ContextTest, RecordMinVideoTimeStampLessThan)
+{
+	Ch10Context ctx(0);
+	Ch10PacketHeaderFmt hdr_fmt;
+	hdr_fmt.chanID = 9;
+	uint64_t abs_pos = 0;
+
+	// For this test, we're only concerned with setting a specific channel ID.
+	// None of the other parameters in the Ch10PacketHeaderFmt are used.
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
+
+	uint64_t ts = 3939292991;
+	ctx.RecordMinVideoTimeStamp(ts);
+	ts = 3939291991;
+	ctx.RecordMinVideoTimeStamp(ts);
+	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.count(hdr_fmt.chanID), 1);
+	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.at(hdr_fmt.chanID), ts);
+}
+
+TEST(Ch10ContextTest, RecordMinVideoTimeStampGreaterThan)
+{
+	Ch10Context ctx(0);
+	Ch10PacketHeaderFmt hdr_fmt;
+	hdr_fmt.chanID = 9;
+	uint64_t abs_pos = 0;
+
+	// For this test, we're only concerned with setting a specific channel ID.
+	// None of the other parameters in the Ch10PacketHeaderFmt are used.
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
+
+	uint64_t ts1 = 3939292991;
+	ctx.RecordMinVideoTimeStamp(ts1);
+	uint64_t ts2 = 3939294991;
+	ctx.RecordMinVideoTimeStamp(ts2);
+	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.count(hdr_fmt.chanID), 1);
+	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.at(hdr_fmt.chanID), ts1);
+}

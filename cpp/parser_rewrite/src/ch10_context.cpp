@@ -13,7 +13,8 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
 	chanid_remoteaddr1_map(chanid_remoteaddr1_map_), chanid_remoteaddr2_map(chanid_remoteaddr2_map_),
 	chanid_commwords_map(chanid_commwords_map_), command_word1_(nullptr), command_word2_(nullptr),
 	is_configured_(false), milstd1553f1_pq_writer_(nullptr), milstd1553f1_pq_writer(nullptr),
-	videof0_pq_writer_(nullptr), videof0_pq_writer(nullptr)
+	videof0_pq_writer_(nullptr), videof0_pq_writer(nullptr), 
+	chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_)
 {
 	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
@@ -31,7 +32,8 @@ Ch10Context::Ch10Context() : absolute_position_(0),
 	channel_id_(UINT32_MAX), channel_id(channel_id_), temp_rtc_(0),
 	chanid_remoteaddr1_map(chanid_remoteaddr1_map_), chanid_remoteaddr2_map(chanid_remoteaddr2_map_),
 	chanid_commwords_map(chanid_commwords_map_), command_word1_(nullptr), command_word2_(nullptr),
-	is_configured_(false), milstd1553f1_pq_writer_(nullptr), milstd1553f1_pq_writer(nullptr)
+	is_configured_(false), milstd1553f1_pq_writer_(nullptr), milstd1553f1_pq_writer(nullptr),
+	chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_)
 {
 	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
@@ -310,5 +312,16 @@ void Ch10Context::CloseFileWriters()
 			}
 			break;
 		}
+	}
+}
+
+void Ch10Context::RecordMinVideoTimeStamp(const uint64_t& ts)
+{
+	if (chanid_minvideotimestamp_map_.count(channel_id_) == 0)
+		chanid_minvideotimestamp_map_[channel_id_] = ts;
+	else
+	{
+		if (ts < chanid_minvideotimestamp_map_.at(channel_id_))
+			chanid_minvideotimestamp_map_[channel_id_] = ts;
 	}
 }

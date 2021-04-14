@@ -102,6 +102,9 @@ private:
 	// word values.
 	std::map<uint32_t, std::set<uint32_t>> chanid_commwords_map_;
 
+	// Track the minimum (earliest) video timestamp per channel ID
+	std::map<uint16_t, uint64_t> chanid_minvideotimestamp_map_;
+
 	// Reference command words 1 and 2 in the 1553
 	// message data header.
 	const uint16_t* command_word1_;
@@ -136,6 +139,7 @@ public:
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr1_map;
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr2_map;
 	const std::map<uint32_t, std::set<uint32_t>>& chanid_commwords_map;
+	const std::map<uint16_t, uint64_t>& chanid_minvideotimestamp_map;
 	ParquetMilStd1553F1* milstd1553f1_pq_writer;
 	ParquetVideoDataF0* videof0_pq_writer;
 	const uint32_t intrapacket_ts_size_ = sizeof(uint64_t);
@@ -289,6 +293,19 @@ public:
 	InitializeFileWriters and stored as a private member var.
 	*/
 	void CloseFileWriters();
+
+	/*
+	Submit a video timestamp, relative to the current channel ID (channel_id_),
+	to be compared against previously submitted timestamps with same channel ID.
+	The minimum of the current timestamp and the previously submitted timestamp
+	will be recorded such that only the minimum of all timestamps for a given
+	channel ID will be recorded.
+
+	Args:
+		ts		--> Video timestamp in nanosecond unit, counting from the 
+					unix epoch
+	*/
+	void RecordMinVideoTimeStamp(const uint64_t& ts);
 };
 
 

@@ -201,6 +201,16 @@ void Ch10Packet::ParseBody()
         {
             pkt_type_ = Ch10PacketType::VIDEO_DATA_F0;
             videof0_component_.Parse(data_ptr_);
+
+            // Get the earliest subpacket absolute time that was parsed
+            // out of the Ch10 video packet. If there are no intra-packet 
+            // headers, then all all of the subpacket times will be the same
+            // and the first element in the subpacket_absolute_times vector
+            // is still the earliest time stamp. 
+            //
+            // Use the Ch10Context to keep a record of minimum timestamp
+            // per channel ID.
+            ctx_->RecordMinVideoTimeStamp(videof0_component_.subpacket_absolute_times.at(0));
         }
         break;
     }

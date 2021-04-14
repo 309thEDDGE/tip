@@ -4,7 +4,6 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
 {
     // Parse channel-specific data word
     ParseElements(csdw_element_vector_, data);
-    //const Ch10VideoF0HeaderFormat csdw = **csdw_element.element;
     uint32_t subpacket_size = GetSubpacketSize((*csdw_element.element)->IPH);
 
     /*(signed)*/int16_t subpacket_count = DivideExactInteger(

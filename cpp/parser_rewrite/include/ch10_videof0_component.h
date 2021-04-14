@@ -30,10 +30,12 @@ protected:
 
 public:
     const Ch10PacketElement<Ch10VideoF0HeaderFormat>& csdw_element;
+    const std::vector<uint64_t>& subpacket_absolute_times;
 
     Ch10VideoF0Component(Ch10Context* const context) : 
         Ch10PacketComponent(context),
         subpacket_absolute_times_(MAX_TransportStream_UNITS),
+        subpacket_absolute_times(subpacket_absolute_times_),
         csdw_element(csdw_element_),
         csdw_element_vector_{
             dynamic_cast<Ch10PacketElementBase*>(&csdw_element_)},
