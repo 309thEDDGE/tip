@@ -143,6 +143,13 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 
 		// Parse body if the header is parsed and validated.
 		packet.ParseBody();
+
+		/*****SPDLOG_INFO("Parsed packet. Before: ch {:d} has {:d} times",
+		//*****	ctx.channel_id, chanid_minvideotimestamp_map_[ctx.channel_id]);
+		/***** Need to only set if less than current ******/
+		/****/ chanid_minvideotimestamp_map_[ctx.channel_id] = packet.GetMinVideoTime();
+		//*****SPDLOG_INFO("Set time for channel {:d} to {:d}", ctx.channel_id, 
+		//****	chanid_minvideotimestamp_map_[ctx.channel_id]);
 	}
 
 	// Update last_position;
