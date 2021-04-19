@@ -167,7 +167,7 @@ TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketNoIPHSetsTimeToPacketTime)
     // It shouldn't attempt to read or increment the pointer if we pass false for IPH
     uint8_t dummy;
     const uint8_t *data = (uint8_t*)&dummy;
-    component_.ParseSubpacket(data, false);
+    component_.ParseSubpacket(data, false, 0);
     
     std::vector<uint64_t> times = component_.GetTimes();
     ASSERT_TRUE(times.size() > 0);
@@ -183,7 +183,7 @@ TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketIPHSetsTimeToSubpacketTime)
     rtc.ts2_ = packet_header_.rtc2;
 
     const uint8_t *data = (uint8_t*)&rtc;
-    component_.ParseSubpacket(data, true);
+    component_.ParseSubpacket(data, true, 0);
 
     std::vector<uint64_t> times = component_.GetTimes();
     ASSERT_TRUE(times.size() > 0);
@@ -195,7 +195,7 @@ TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketNoIPHParsesPayload)
     std::vector<video_datum> original_vector(TransportStream_DATA_COUNT, 54321);
     const uint8_t *data = (uint8_t*)original_vector.data();
 
-    component_.ParseSubpacket(data, false);
+    component_.ParseSubpacket(data, false, 0);
     uint8_t *expected_next_ptr = (uint8_t*)(original_vector.data() + TransportStream_DATA_COUNT);
     ASSERT_EQ(expected_next_ptr, data);
 

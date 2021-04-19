@@ -28,10 +28,7 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
     // Parse subpackets and send one-by-one to the writer
     for (int i = 0; i < subpacket_count; i++)
     {
-        //ParseSubpacket(data, (*csdw_element.element)->IPH);
-
-        subpacket_absolute_times_[i] = ParseSubpacketTime(data, (*csdw_element.element)->IPH);
-        ParseElements(video_element_vector_, data);
+        ParseSubpacket(data, (*csdw_element.element)->IPH, i);
 
         ctx_->videof0_pq_writer->append_data(subpacket_absolute_times_[i], ctx_->tdp_doy, ctx_->channel_id, 
             **csdw_element.element, **video_payload_element_.element);
@@ -40,10 +37,10 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
     return Ch10Status::OK;
 }
 
-void Ch10VideoF0Component::ParseSubpacket(const uint8_t*& data, bool iph)
+void Ch10VideoF0Component::ParseSubpacket(const uint8_t*& data, bool iph, const int& pkt_index)
 {
     
-    subpacket_absolute_times_.push_back( ParseSubpacketTime(data, iph) );
+    subpacket_absolute_times_[pkt_index] = ParseSubpacketTime(data, iph);
     ParseElements(video_element_vector_, data);
 }
 

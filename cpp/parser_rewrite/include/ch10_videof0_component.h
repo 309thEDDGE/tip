@@ -48,7 +48,7 @@ public:
     ~Ch10VideoF0Component() {}
 
     Ch10Status Parse(const uint8_t*& data) override;
-    void ParseSubpacket(const uint8_t*& data, bool iph);
+    void ParseSubpacket(const uint8_t*& data, bool iph, const int& pkt_index);
     uint64_t ParseSubpacketTime(const uint8_t*& data, bool iph);
 
     /*
