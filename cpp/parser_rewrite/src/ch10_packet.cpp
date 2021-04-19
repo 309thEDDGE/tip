@@ -219,7 +219,3 @@ void Ch10Packet::ParseBody()
     // Return status?
 }
 
-uint64_t Ch10Packet::GetMinVideoTime()
-{
-    return videof0_component_.subpacket_absolute_times.at(0);
-}

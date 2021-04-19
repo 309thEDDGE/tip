@@ -135,10 +135,6 @@ public:
     */
     void ParseBody();
 
-    /*
-    Retrieve the earliest timestamp frpm this packet
-    */
-    uint64_t GetMinVideoTime();
 };
 
 #endif

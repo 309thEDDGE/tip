@@ -144,12 +144,6 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 		// Parse body if the header is parsed and validated.
 		packet.ParseBody();
 
-		/*****SPDLOG_INFO("Parsed packet. Before: ch {:d} has {:d} times",
-		//*****	ctx.channel_id, chanid_minvideotimestamp_map_[ctx.channel_id]);
-		/***** Need to only set if less than current ******/
-		/****/ chanid_minvideotimestamp_map_[ctx.channel_id] = packet.GetMinVideoTime();
-		//*****SPDLOG_INFO("Set time for channel {:d} to {:d}", ctx.channel_id, 
-		//****	chanid_minvideotimestamp_map_[ctx.channel_id]);
 	}
 
 	// Update last_position;
@@ -1034,7 +1028,7 @@ void ParseWorker::append_chanid_comwmwords_map(std::map<uint32_t, std::set<uint3
 const std::map<uint16_t, uint64_t>& ParseWorker::GetChannelIDToMinTimeStampMap()
 {
 #ifdef PARSER_REWRITE
-	return chanid_minvideotimestamp_map_;
+	return ctx.chanid_minvideotimestamp_map;
 #else
 	return video->GetChannelIDToMinTimeStampMap();
 #endif
