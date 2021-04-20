@@ -242,12 +242,6 @@ void ParseManager::start_workers()
 	// Get the channel ID to minimum time stamp map.
 	std::map<uint16_t, uint64_t> min_timestamp_map;
 	CollectVideoMetadata(min_timestamp_map);
-	SPDLOG_INFO("Min timestamps:");
-	for (auto const pair : min_timestamp_map)
-	{
-		SPDLOG_INFO("Channel {:d} min time: {:d}");
-	}
-
 	// Record the map in the Yaml writer and write the 
 	// total yaml text to file.
 	vmd.RecordSimpleMap(min_timestamp_map, "chanid_to_first_timestamp");
@@ -265,7 +259,6 @@ void ParseManager::CollectVideoMetadata(
 {
 	// Gather the maps from each worker and combine them into one, 
 	//keeping only the lowest time stamps for each channel ID.
-	SPDLOG_INFO("ParseManager collecting min times");
 	for (int i = 0; i < n_reads; i++)
 	{
 		std::map<uint16_t, uint64_t> temp_map = workers[i].GetChannelIDToMinTimeStampMap();

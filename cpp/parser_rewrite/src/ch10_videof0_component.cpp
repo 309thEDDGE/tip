@@ -37,10 +37,9 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
     return Ch10Status::OK;
 }
 
-void Ch10VideoF0Component::ParseSubpacket(const uint8_t*& data, bool iph, const int& pkt_index)
+void Ch10VideoF0Component::ParseSubpacket(const uint8_t*& data, bool iph, const size_t& subpacket_index)
 {
-    
-    subpacket_absolute_times_[pkt_index] = ParseSubpacketTime(data, iph);
+    subpacket_absolute_times_[subpacket_index] = ParseSubpacketTime(data, iph);
     ParseElements(video_element_vector_, data);
 }
 

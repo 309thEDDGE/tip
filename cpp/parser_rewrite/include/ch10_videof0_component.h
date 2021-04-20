@@ -48,14 +48,37 @@ public:
     ~Ch10VideoF0Component() {}
 
     Ch10Status Parse(const uint8_t*& data) override;
-    void ParseSubpacket(const uint8_t*& data, bool iph, const int& pkt_index);
+
+    /*
+    Parse the video subpacket pointed to by <data>.  
+        Set video_element_vector_ to point to <data>.
+        Set <supbacket_absolute_times_[]> at the specified index
+        to the subpacket time.
+
+    Args:
+        data - pointer to a video subpacket
+        iph - true if the subpacket contains a time header
+        pkt_index - the index where to store the time
+    */
+    void ParseSubpacket(const uint8_t*& data, bool iph, const size_t& subpacket_index);
+    
+    /*
+    Return the absolute time for the subpacket pointed to by <data>.
+        If iph==true, read the subpacket time from the IPH and advance <data>.
+        If iph is false, return the absolute time for the containing 
+        packet, leaving <data> unchanged.
+
+    Args:
+        data - pointer to a video subpacket
+        iph - true if the subpacket contains a time header
+    */
     uint64_t ParseSubpacketTime(const uint8_t*& data, bool iph);
 
     /*
     Return the subpacket size in bytes, including IPH if present.
 
     Args:
-        iph - whether the packet contains intrapacket time headers
+        iph - true if the subpacket contains a time header
 
     Returns:
         size of supackets in bytes
@@ -63,19 +86,18 @@ public:
     uint32_t GetSubpacketSize(bool iph);
 
     /*
-    Calculate the number of subpackets given a subpcket size and the total
-    size of the collection of subpackets.
+    Calculate the number of times an integer <whole> can be divided exactly
+    by <divisor>.  If <whole> is not divisible by <divisor>, return -1.
 
     Args:
-        size_of_whole - size of the data block containing N subpackets
-        size_of_part - size of each subpacket within a data block
-        Note: any unit can be used for size
+        whole - the integer to be divided
+        divisor - integer to divide <whole> by
 
     Returns:
-        The integer number of parts the whole can be divided exactly into or
-        -1 if the whole is not divisible by the part size
+        -1 if <whole> is not divisible by <divisor>
+        otherwise the number divisions 
     */
-    /*(signed)*/ int32_t DivideExactInteger(uint32_t size_of_whole, uint32_t size_of_part);
+    /*(signed)*/ int32_t DivideExactInteger(uint32_t whole, uint32_t divisor);
 };
 
 #endif
