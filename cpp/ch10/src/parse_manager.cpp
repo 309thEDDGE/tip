@@ -242,6 +242,7 @@ void ParseManager::start_workers()
 	// Get the channel ID to minimum time stamp map.
 	std::map<uint16_t, uint64_t> min_timestamp_map;
 	CollectVideoMetadata(min_timestamp_map);
+
 	// Record the map in the Yaml writer and write the 
 	// total yaml text to file.
 	vmd.RecordSimpleMap(min_timestamp_map, "chanid_to_first_timestamp");

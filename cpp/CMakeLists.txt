@@ -219,7 +219,7 @@ if(parser_rewrite)
                ${parserw_inc_dir}/ch10_videof0_header_format.h
                ${parserw_inc_dir}/ch10_packet_element_base.h
                ${parserw_inc_dir}/ch10_packet_element.h
-               ${parserw_inc_dir}/ch10_videof0_header_format.h               ${parserw_inc_dir}/ch10_packet_component.h ${parserw_src_dir}/ch10_packet_component.cpp
+               ${parserw_inc_dir}/ch10_packet_component.h ${parserw_src_dir}/ch10_packet_component.cpp
                ${parserw_inc_dir}/ch10_packet_header_component.h ${parserw_src_dir}/ch10_packet_header_component.cpp
                ${parserw_inc_dir}/ch10_packet.h ${parserw_src_dir}/ch10_packet.cpp
                ${parserw_inc_dir}/ch10_context.h ${parserw_src_dir}/ch10_context.cpp

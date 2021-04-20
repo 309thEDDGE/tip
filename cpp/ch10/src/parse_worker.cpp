@@ -143,7 +143,6 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 
 		// Parse body if the header is parsed and validated.
 		packet.ParseBody();
-
 	}
 
 	// Update last_position;

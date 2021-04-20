@@ -50,7 +50,7 @@ public:
     Ch10Status Parse(const uint8_t*& data) override;
 
     /*
-    Parse the video subpacket pointed to by <data>.  
+    Parse a video subpacket.  
         Set video_element_vector_ to point to <data>.
         Set <supbacket_absolute_times_[]> at the specified index
         to the subpacket time.
@@ -63,8 +63,8 @@ public:
     void ParseSubpacket(const uint8_t*& data, bool iph, const size_t& subpacket_index);
     
     /*
-    Return the absolute time for the subpacket pointed to by <data>.
-        If iph==true, read the subpacket time from the IPH and advance <data>.
+    Return the absolute time for a video subpacket.
+        If iph==true, read the subpacket time from the IPH at <data> and advance <data>.
         If iph is false, return the absolute time for the containing 
         packet, leaving <data> unchanged.
 
@@ -78,7 +78,7 @@ public:
     Return the subpacket size in bytes, including IPH if present.
 
     Args:
-        iph - true if the subpacket contains a time header
+        iph - true if the subpackets contain time headers
 
     Returns:
         size of supackets in bytes
@@ -91,11 +91,11 @@ public:
 
     Args:
         whole - the integer to be divided
-        divisor - integer to divide <whole> by
+        divisor - an integer to divide <whole> by
 
     Returns:
+        The number divisions if <whole> is divisible by <divisor>
         -1 if <whole> is not divisible by <divisor>
-        otherwise the number divisions 
     */
     /*(signed)*/ int32_t DivideExactInteger(uint32_t whole, uint32_t divisor);
 };

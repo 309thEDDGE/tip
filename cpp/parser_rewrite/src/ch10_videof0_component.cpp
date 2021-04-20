@@ -26,7 +26,7 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
     }
 
     // Parse subpackets and send one-by-one to the writer
-    for (int i = 0; i < subpacket_count; i++)
+    for (size_t i = 0; i < subpacket_count; i++)
     {
         ParseSubpacket(data, (*csdw_element.element)->IPH, i);
 

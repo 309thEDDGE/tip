@@ -169,34 +169,27 @@ void Ch10Packet::ParseBody()
     switch ((*header_.std_hdr_elem.element)->data_type)
     {
     case static_cast<uint8_t>(Ch10PacketType::COMPUTER_GENERATED_DATA_F1):
-    {
         if (ctx_->pkt_type_config_map.at(Ch10PacketType::COMPUTER_GENERATED_DATA_F1))
         {
             pkt_type_ = Ch10PacketType::COMPUTER_GENERATED_DATA_F1;
             tmats_.Parse(data_ptr_, tmats_vec_);
         }
         break;
-    }
     case static_cast<uint8_t>(Ch10PacketType::TIME_DATA_F1):
-    {
         if (ctx_->pkt_type_config_map.at(Ch10PacketType::TIME_DATA_F1))
         {
             pkt_type_ = Ch10PacketType::TIME_DATA_F1;
             tdp_component_.Parse(data_ptr_);
         }
         break;
-    }
     case static_cast<uint8_t>(Ch10PacketType::MILSTD1553_F1):
-    {
         if (ctx_->pkt_type_config_map.at(Ch10PacketType::MILSTD1553_F1))
         {
             pkt_type_ = Ch10PacketType::MILSTD1553_F1;
             milstd1553f1_component_.Parse(data_ptr_);
         }
         break;
-    }
     case static_cast<uint8_t>(Ch10PacketType::VIDEO_DATA_F0):
-    {
         if (ctx_->pkt_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0))
         {
             pkt_type_ = Ch10PacketType::VIDEO_DATA_F0;
@@ -213,7 +206,6 @@ void Ch10Packet::ParseBody()
             ctx_->RecordMinVideoTimeStamp(videof0_component_.subpacket_absolute_times.at(0));
         }
         break;
-    }
     }
 
     // Return status?
