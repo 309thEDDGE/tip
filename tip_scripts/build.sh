@@ -12,7 +12,9 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
 trap 'echo "\"${last_command}\" command failed with exit code $?."' ERR
 
-#Third-party jermalloc requirements for Linux
+#Third-party jemalloc requirements for Linux
+#These were already installed on my machine; uncomment these lines if autoconf or glibc-static are not already installed
+
 #dnf install autoconf
 #dnf install glibc-static
 
@@ -55,6 +57,8 @@ BZIP2_VERSION=bzip2-1.0.8
 GOOGLE_TEST_VERSION=googletest-release-1.8.1
 YAML_CPP_VERSION=yaml-cpp-yaml-cpp-0.6.0
 LIBIRIG106_VERSION=libirig106-hill
+
+#Use PCAP and TINS when building with ethernet on
 #PCAP_VERSION=libpcap-1.9.1
 #TINS_VERSION=libtins-4.2
 
@@ -182,7 +186,7 @@ else
 	export CFLAGS=-pthread
 	export CXX=g++
 	export CXXFLAGS=-pthread -fPIC
-    export LDFLAGS='static'
+	export LDFLAGS='static'
 
 	echo
 	echo "...Running cmake for Arrow"
@@ -250,6 +254,7 @@ make # must use regular make
 
 # #
 # # Build PCAP
+# # Use PCAP and TINS when building with ethernet on
 # #
 
 # PCAP_LIB=$VENDOR/$PCAP_VERSION/build
@@ -275,6 +280,7 @@ make # must use regular make
 # 	-DLIBTINS_BUILD_SHARED=0 \
 # 	-DPCAP_LIBRARY=$PCAP_LIB/libpcap.a \
 # 	-DPCAP_INCLUDE_DIR=$PCAP_INCLUDE \
+#   -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
 # 	..
 # $MAKE
 
@@ -324,6 +330,10 @@ cd $LIBIRIG106_INCLUDE
 find . -type f -name \*.h -exec install -D {} $LIBIRIG106_INC_DEST/{} \;
 cd $LIBIRIG106_LIB
 find . -type f -name \*.a -exec install -D {} $LIBIRIG106_LIB_DEST/{} \;
+
+# #
+# # Use PCAP and TINS when building with ethernet on
+# #
 
 # echo "...pcap"
 # PCAP_INCLUDE_DEST=$TIP_DEPS_DIR/pcap/include
