@@ -157,7 +157,10 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 	SPDLOG_DEBUG("({:02d}) End of shift, absolute position: {:d}", id, last_position);
 	complete = true;
 }
-#else
+#endif
+
+#ifndef PARSER_REWRITE
+#ifndef LIBIRIG106
 void ParseWorker::operator()(BinBuff& bb, bool append_mode)
 {
 #ifdef DEBUG
@@ -433,7 +436,8 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode)
 #endif
 #endif
 }
-#endif // end non-parser-rewrite non-libirig106 
+#endif
+#endif
 
 #ifdef LIBIRIG106
 void ParseWorker::operator()(BinBuff& bb, bool append_mode, std::vector<std::string>& tmats_body_vec)
