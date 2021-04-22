@@ -209,9 +209,8 @@ else
 	echo
 	echo "...Running $MAKE for Arrow"
 #	sudo $CMAKE --build . --target install --config release
-	$MAKE
+	make -j4 build_lib_static
 fi
-make -j4 build_lib_static
 
 #
 # Build gtest
