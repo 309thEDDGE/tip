@@ -111,10 +111,8 @@ class ParseWorker
 #endif
 	void append_mode_initialize(uint32_t read, uint16_t binbuff_ind, uint64_t start_pos);
 	uint16_t get_binbuff_ind();
+	
 	void operator()(BinBuff& bb, bool append_mode, std::vector<std::string>& tmats_body_vec);
-#ifdef LIBIRIG106
-	void operator()(BinBuff& bb, bool append_mode, std::vector<std::string>& tmats_body_vec);
-#endif
 	//void operator()(BinBuff& bb, uint16_t ID, TMATS& tmatsdata);
 	uint64_t& get_last_position();
 	void time_info(uint64_t&&, uint64_t&&);
