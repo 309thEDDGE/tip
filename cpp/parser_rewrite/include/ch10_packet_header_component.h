@@ -123,8 +123,8 @@ public:
         checksum_data_ptr16_(nullptr), checksum_value16_(0),
         checksum_data_ptr32_(nullptr), checksum_value32_(0),
         checksum_data_ptr8_(nullptr), checksum_value8_(0) {}
-    Ch10Status Parse(const uint8_t*& data, uint64_t& loc) override;
-    Ch10Status ParseSecondaryHeader(const uint8_t*& data, uint64_t& loc);
+    Ch10Status Parse(const uint8_t*& data) override;
+    Ch10Status ParseSecondaryHeader(const uint8_t*& data);
     Ch10Status VerifyHeaderChecksum(const uint8_t* pkt_data, const uint32_t& checksum_value);
     Ch10Status VerifyDataChecksum(const uint8_t* body_data, const uint32_t& checksum_existence,
         const uint32_t& pkt_size, const uint32_t& secondary_hdr);

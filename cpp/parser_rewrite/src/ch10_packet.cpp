@@ -89,9 +89,6 @@ Ch10Status Ch10Packet::ManageSecondaryHeaderParseStatus(const Ch10Status& status
 
 Ch10Status Ch10Packet::ParseHeader()
 {
-    // Reset relative pos for the current ch10 packet.
-    relative_pos_ = 0;
-
     // Check if there are sufficient bytes in the buffer to
     // interpret the entire header, assuming initially that 
     // that there is no secondary header.
@@ -103,7 +100,7 @@ Ch10Status Ch10Packet::ParseHeader()
     data_ptr_ = bb_->Data();
 
     // parse header
-    status_ = header_.Parse(data_ptr_, relative_pos_);
+    status_ = header_.Parse(data_ptr_);
     temp_pkt_size_ = (uint64_t)(*header_.std_hdr_elem.element)->pkt_size;
     status_ = ManageHeaderParseStatus(status_, temp_pkt_size_);
     if (status_ != Ch10Status::OK)
@@ -124,7 +121,7 @@ Ch10Status Ch10Packet::ParseHeader()
     // values now instead of waiting until after the body has been parsed will allow
     // skipping to next header if other problems occur, for example by 'continue'ing
     // in the main loop if a certain status is returned. The various parsers needed
-    // to parse the packet body will use data_ptr_ and relative_pos_ to track position.
+    // to parse the packet body will use data_ptr_ to track position.
     status_ = AdvanceBuffer(temp_pkt_size_);
     if (status_ == Ch10Status::BUFFER_LIMITED)
         return status_;
@@ -149,7 +146,7 @@ Ch10Status Ch10Packet::ParseHeader()
 
     // Handle parsing of the secondary header. This is currently not 
     // completed. Data parsed in this step are not utilized.
-    status_ = header_.ParseSecondaryHeader(data_ptr_, relative_pos_);
+    status_ = header_.ParseSecondaryHeader(data_ptr_);
     status_ = ManageSecondaryHeaderParseStatus(status_, temp_pkt_size_);
     if (status_ != Ch10Status::OK)
         return status_;
@@ -172,37 +169,45 @@ void Ch10Packet::ParseBody()
     switch ((*header_.std_hdr_elem.element)->data_type)
     {
     case static_cast<uint8_t>(Ch10PacketType::COMPUTER_GENERATED_DATA_F1):
-    {
         if (ctx_->pkt_type_config_map.at(Ch10PacketType::COMPUTER_GENERATED_DATA_F1))
         {
             pkt_type_ = Ch10PacketType::COMPUTER_GENERATED_DATA_F1;
-            tmats_.Parse(data_ptr_, relative_pos_, tmats_vec_);
+            tmats_.Parse(data_ptr_, tmats_vec_);
         }
-    }
+        break;
     case static_cast<uint8_t>(Ch10PacketType::TIME_DATA_F1):
-    {
         if (ctx_->pkt_type_config_map.at(Ch10PacketType::TIME_DATA_F1))
         {
             pkt_type_ = Ch10PacketType::TIME_DATA_F1;
-            tdp_component_.Parse(data_ptr_, relative_pos_);
+            tdp_component_.Parse(data_ptr_);
         }
-    }
+        break;
     case static_cast<uint8_t>(Ch10PacketType::MILSTD1553_F1):
-    {
         if (ctx_->pkt_type_config_map.at(Ch10PacketType::MILSTD1553_F1))
         {
             pkt_type_ = Ch10PacketType::MILSTD1553_F1;
-            milstd1553f1_component_.Parse(data_ptr_, relative_pos_);
+            milstd1553f1_component_.Parse(data_ptr_);
         }
-    }
+        break;
     case static_cast<uint8_t>(Ch10PacketType::VIDEO_DATA_F0):
-    {
         if (ctx_->pkt_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0))
         {
             pkt_type_ = Ch10PacketType::VIDEO_DATA_F0;
+            videof0_component_.Parse(data_ptr_);
+
+            // Get the earliest subpacket absolute time that was parsed
+            // out of the Ch10 video packet. If there are no intra-packet 
+            // headers, then all all of the subpacket times will be the same
+            // and the first element in the subpacket_absolute_times vector
+            // is still the earliest time stamp. 
+            //
+            // Use the Ch10Context to keep a record of minimum timestamp
+            // per channel ID.
+            ctx_->RecordMinVideoTimeStamp(videof0_component_.subpacket_absolute_times.at(0));
         }
-    }
+        break;
     }
 
     // Return status?
 }
+

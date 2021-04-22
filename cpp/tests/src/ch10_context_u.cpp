@@ -250,6 +250,38 @@ TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
 	ASSERT_EQ(calculated_abs_time, expected_abs_time);
 }
 
+TEST(Ch10ContextTest, GetPacketAbsoluteTime)
+{
+	Ch10Context ctx(0);
+	Ch10PacketHeaderFmt hdr_fmt;
+	uint64_t tdp_abs_time = 1000000;
+	uint64_t tdp_rtc1 = 1;
+	uint64_t tdp_rtc2 = 2;
+	uint64_t abs_pos = 0;
+	hdr_fmt.pkt_size = 4320;
+	hdr_fmt.data_size = 3399;
+	hdr_fmt.rtc1 = tdp_rtc1;
+	hdr_fmt.rtc2 = tdp_rtc2;
+	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
+	hdr_fmt.intrapkt_ts_source = 0;
+	hdr_fmt.time_format = 1;
+	uint8_t tdp_doy = 1;
+
+	// Update Context to assign rtc value internally
+	bool tdp_valid = true;
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
+	ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+
+	// Update context as if with a following non-TDP packet
+	hdr_fmt.rtc1 += 20;
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
+
+	uint64_t rtc_to_ns = 100;
+	uint64_t expected_time = tdp_abs_time + 20 * rtc_to_ns;
+	uint64_t packet_time = ctx.GetPacketAbsoluteTime();
+	ASSERT_EQ(expected_time, packet_time);
+}
+
 TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsRTtoRT)
 {
 	Ch10Context ctx(0);
@@ -438,3 +470,60 @@ TEST(Ch10ContextTest, CheckConfigurationPathsRequired)
 
 // Test InitializeFileWriters, this function and the other code it impacts
 // probably needs re-factoring prior.
+
+TEST(Ch10ContextTest, RecordMinVideoTimeStampChannelIDNotPresent)
+{
+	Ch10Context ctx(0);
+	Ch10PacketHeaderFmt hdr_fmt;
+	hdr_fmt.chanID = 9;
+	uint64_t abs_pos = 0;
+
+	// For this test, we're only concerned with setting a specific channel ID.
+	// None of the other parameters in the Ch10PacketHeaderFmt are used.
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
+
+	uint64_t ts = 3939292991;
+
+	// The Ch10Context instance is new, therefore the map should be initially empty.
+	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.size(), 0);
+	ctx.RecordMinVideoTimeStamp(ts);
+	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.count(hdr_fmt.chanID), 1);
+}
+
+TEST(Ch10ContextTest, RecordMinVideoTimeStampLessThan)
+{
+	Ch10Context ctx(0);
+	Ch10PacketHeaderFmt hdr_fmt;
+	hdr_fmt.chanID = 9;
+	uint64_t abs_pos = 0;
+
+	// For this test, we're only concerned with setting a specific channel ID.
+	// None of the other parameters in the Ch10PacketHeaderFmt are used.
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
+
+	uint64_t ts = 3939292991;
+	ctx.RecordMinVideoTimeStamp(ts);
+	ts = 3939291991;
+	ctx.RecordMinVideoTimeStamp(ts);
+	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.count(hdr_fmt.chanID), 1);
+	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.at(hdr_fmt.chanID), ts);
+}
+
+TEST(Ch10ContextTest, RecordMinVideoTimeStampGreaterThan)
+{
+	Ch10Context ctx(0);
+	Ch10PacketHeaderFmt hdr_fmt;
+	hdr_fmt.chanID = 9;
+	uint64_t abs_pos = 0;
+
+	// For this test, we're only concerned with setting a specific channel ID.
+	// None of the other parameters in the Ch10PacketHeaderFmt are used.
+	ctx.UpdateContext(abs_pos, &hdr_fmt);
+
+	uint64_t ts1 = 3939292991;
+	ctx.RecordMinVideoTimeStamp(ts1);
+	uint64_t ts2 = 3939294991;
+	ctx.RecordMinVideoTimeStamp(ts2);
+	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.count(hdr_fmt.chanID), 1);
+	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.at(hdr_fmt.chanID), ts1);
+}

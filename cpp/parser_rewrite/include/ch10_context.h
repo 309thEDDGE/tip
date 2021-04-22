@@ -14,6 +14,8 @@
 #include "ch10_header_format.h"
 #include "ch10_1553f1_msg_hdr_format.h"
 #include "parquet_milstd1553f1.h"
+#include "ch10_videof0_header_format.h"
+#include "parquet_videodataf0.h"
 #include "spdlog/spdlog.h"
 
 enum class Ch10PacketType : uint8_t
@@ -44,9 +46,6 @@ private:
 	uint64_t rtc_;  // nanosecond
 	uint32_t pkt_size_;
 	uint32_t data_size_;
-
-	// Temporary (current message or data) calculate absolute time in nanosecond
-	//uint64_t abs_time_;
 
 	// Temporary RTC time in nanosecond
 	uint64_t temp_rtc_;
@@ -103,6 +102,9 @@ private:
 	// word values.
 	std::map<uint32_t, std::set<uint32_t>> chanid_commwords_map_;
 
+	// Track the minimum (earliest) video timestamp per channel ID
+	std::map<uint16_t, uint64_t> chanid_minvideotimestamp_map_;
+
 	// Reference command words 1 and 2 in the 1553
 	// message data header.
 	const uint16_t* command_word1_;
@@ -116,6 +118,7 @@ private:
 	// File writers are owned by Ch10Context to maintain state
 	//
 	std::unique_ptr<ParquetMilStd1553F1> milstd1553f1_pq_writer_;
+	std::unique_ptr<ParquetVideoDataF0> videof0_pq_writer_;
 
 
 public:
@@ -126,7 +129,6 @@ public:
 	const uint64_t& rtc;
 	const uint32_t& pkt_size;
 	const uint32_t& data_size;
-	//const uint64_t& abs_time;
 	const bool& tdp_valid;
 	const uint8_t& tdp_doy;
 	const bool& found_tdp;
@@ -137,7 +139,10 @@ public:
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr1_map;
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr2_map;
 	const std::map<uint32_t, std::set<uint32_t>>& chanid_commwords_map;
+	const std::map<uint16_t, uint64_t>& chanid_minvideotimestamp_map;
 	ParquetMilStd1553F1* milstd1553f1_pq_writer;
+	ParquetVideoDataF0* videof0_pq_writer;
+	const uint32_t intrapacket_ts_size_ = sizeof(uint64_t);
 
 	Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
 	Ch10Context();
@@ -225,6 +230,14 @@ public:
 	uint64_t CalculateAbsTimeFromRTCFormat(const uint64_t& rtc1, const uint64_t& rtc2);
 
 	/*
+	Caculate this packet's absolute time
+	
+	Return:
+		absolute time this packet was received in nanoseconds since the epoch
+	*/
+	uint64_t GetPacketAbsoluteTime();
+	
+	/*
 	Update maps of channel ID to remote addresses 1 and 2 as obtained from
 	the 1553 intra-packet data headers.
 
@@ -280,6 +293,19 @@ public:
 	InitializeFileWriters and stored as a private member var.
 	*/
 	void CloseFileWriters();
+
+	/*
+	Submit a video timestamp, relative to the current channel ID (channel_id_),
+	to be compared against previously submitted timestamps with same channel ID.
+	The minimum of the current timestamp and the previously submitted timestamp
+	will be recorded such that only the minimum of all timestamps for a given
+	channel ID will be recorded.
+
+	Args:
+		ts		--> Video timestamp in nanosecond unit, counting from the 
+					unix epoch
+	*/
+	void RecordMinVideoTimeStamp(const uint64_t& ts);
 };
 
 

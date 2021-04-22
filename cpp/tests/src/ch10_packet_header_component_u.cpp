@@ -8,7 +8,6 @@ protected:
     Ch10PacketHeaderFmt pkt_hdr_fmt_;
     Ch10Context ctx_;
     Ch10PacketHeaderComponent ch10_pkt_hdr_comp_;
-    uint64_t loc_;
     const uint8_t* data_ptr_;
     const uint8_t* orig_data_ptr_;
     const uint8_t* body_ptr_;
@@ -17,7 +16,7 @@ protected:
     std::vector<uint16_t> fake_body_and_footer16_;
     std::vector<uint32_t> fake_body_and_footer32_;
 
-    Ch10PacketHeaderComponentTest() : loc_(0), data_ptr_(nullptr), orig_data_ptr_(nullptr),
+    Ch10PacketHeaderComponentTest() : data_ptr_(nullptr), orig_data_ptr_(nullptr),
         status_(Ch10Status::NONE), body_ptr_(nullptr), ctx_(0, 0), ch10_pkt_hdr_comp_(&ctx_)
     {
         // Fill out values for fake header data.
@@ -159,15 +158,14 @@ TEST_F(Ch10PacketHeaderComponentTest, ParseGoodSync)
     uint16_t checksum = Calculate16BitChecksum();
     pkt_hdr_fmt_.checksum = checksum;
 
-    status_ = ch10_pkt_hdr_comp_.Parse(data_ptr_, loc_);
+    status_ = ch10_pkt_hdr_comp_.Parse(data_ptr_);
 
     // Check a few elements.
     EXPECT_EQ((*ch10_pkt_hdr_comp_.std_hdr_elem.element)->chanID, 1);
     EXPECT_EQ((*ch10_pkt_hdr_comp_.std_hdr_elem.element)->data_size, 800);
     EXPECT_EQ((*ch10_pkt_hdr_comp_.std_hdr_elem.element)->data_type, 0x01);
 
-    // Check that loc_ and pointer have been incremented.
-    EXPECT_EQ(loc_, ch10_pkt_hdr_comp_.std_hdr_elem.size);
+    // Check that pointer has been incremented.
     EXPECT_EQ(data_ptr_, orig_data_ptr_ + ch10_pkt_hdr_comp_.std_hdr_elem.size);
 
     EXPECT_EQ(status_, Ch10Status::OK);
@@ -180,7 +178,7 @@ TEST_F(Ch10PacketHeaderComponentTest, ParseBadSync)
 
     // Parse pre-defined fake header and check data.
     data_ptr_ = (const uint8_t*)&pkt_hdr_fmt_;
-    status_ = ch10_pkt_hdr_comp_.Parse(data_ptr_, loc_);
+    status_ = ch10_pkt_hdr_comp_.Parse(data_ptr_);
 
     // There is no need to check that the raw bits are parsed
     // correctly, as is done in ParseGoodSync since the basic
@@ -202,10 +200,10 @@ TEST_F(Ch10PacketHeaderComponentTest, ParseSecondaryHeaderNotPresent)
     // Parse pre-defined fake header and check data.
     data_ptr_ = (const uint8_t*)&pkt_hdr_fmt_;
     orig_data_ptr_ = data_ptr_;
-    status_ = ch10_pkt_hdr_comp_.Parse(data_ptr_, loc_);
+    status_ = ch10_pkt_hdr_comp_.Parse(data_ptr_);
     EXPECT_EQ(status_, Ch10Status::OK);
 
-    status_ = ch10_pkt_hdr_comp_.ParseSecondaryHeader(data_ptr_, loc_);
+    status_ = ch10_pkt_hdr_comp_.ParseSecondaryHeader(data_ptr_);
     EXPECT_EQ(status_, Ch10Status::OK);
 }
 
@@ -223,10 +221,10 @@ TEST_F(Ch10PacketHeaderComponentTest, ParseSecondaryHeaderInvalidFormat)
     // Parse pre-defined fake header and check data.
     data_ptr_ = (const uint8_t*)&pkt_hdr_fmt_;
     orig_data_ptr_ = data_ptr_;
-    status_ = ch10_pkt_hdr_comp_.Parse(data_ptr_, loc_);
+    status_ = ch10_pkt_hdr_comp_.Parse(data_ptr_);
     EXPECT_EQ(status_, Ch10Status::OK);
 
-    status_ = ch10_pkt_hdr_comp_.ParseSecondaryHeader(data_ptr_, loc_);
+    status_ = ch10_pkt_hdr_comp_.ParseSecondaryHeader(data_ptr_);
     EXPECT_EQ(status_, Ch10Status::INVALID_SECONDARY_HDR_FMT);
 }
 

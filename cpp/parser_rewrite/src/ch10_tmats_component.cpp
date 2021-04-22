@@ -1,12 +1,12 @@
 #include "ch10_tmats_component.h"
 
-Ch10Status Ch10TMATSComponent::Parse(const uint8_t*& data, uint64_t& loc,
+Ch10Status Ch10TMATSComponent::Parse(const uint8_t*& data,
 	std::vector<std::string>& tmats_vec)
 {
 	// Parse the TMATS CSDW. Currently, data parsed during this call are not used.
-	// Keep the call in because it advances the data pointer and loc by the 
+	// Keep the call in because it advances the data pointer by the 
 	// size of the TMATS CSDW.
-	ParseElements(tmats_elems_vec_, data, loc);
+	ParseElements(tmats_elems_vec_, data);
 
 	// Calculate TMATS body (read: payload) size and save string 
 	// in vector that is passed in as argument.

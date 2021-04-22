@@ -91,7 +91,7 @@ public:
 		tdp_nonirig_elem_vec_{ dynamic_cast<Ch10PacketElementBase*>(&tdp_nonirig_elem_) },
 		tdp_csdw_elem(tdp_csdw_elem_), tdp_irig_elem(tdp_irig_elem_),
 		tdp_nonirig_elem(tdp_nonirig_elem_) {}
-	Ch10Status Parse(const uint8_t*& data, uint64_t& loc) override;
+	Ch10Status Parse(const uint8_t*& data) override;
 
 	/*
 	Compute absolute time with the assumption that the year is 1970 using 

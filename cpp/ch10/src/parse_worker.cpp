@@ -93,13 +93,14 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 		// Configure packet parsing.
 		std::map<Ch10PacketType, bool> pkt_type_conf = {
 			{Ch10PacketType::MILSTD1553_F1, true},
-			{Ch10PacketType::VIDEO_DATA_F0, false}
+			{Ch10PacketType::VIDEO_DATA_F0, true}
 		};
 		ctx.SetPacketTypeConfig(pkt_type_conf);
 
 		// Configure output file paths.
 		std::map<Ch10PacketType, ManagedPath> output_paths = {
-			{Ch10PacketType::MILSTD1553_F1, output_file_paths_[Ch10DataType::MILSTD1553_DATA_F1]}
+			{Ch10PacketType::MILSTD1553_F1, output_file_paths_[Ch10DataType::MILSTD1553_DATA_F1]},
+			{Ch10PacketType::VIDEO_DATA_F0, output_file_paths_[Ch10DataType::VIDEO_DATA_F0]}
 		};
 
 		// Check configuration. Are the packet parse and output paths configs
@@ -156,7 +157,10 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 	SPDLOG_DEBUG("({:02d}) End of shift, absolute position: {:d}", id, last_position);
 	complete = true;
 }
-#else
+#endif
+
+#ifndef PARSER_REWRITE
+#ifndef LIBIRIG106
 void ParseWorker::operator()(BinBuff& bb, bool append_mode)
 {
 #ifdef DEBUG
@@ -432,7 +436,8 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode)
 #endif
 #endif
 }
-#endif // end non-parser-rewrite non-libirig106 
+#endif
+#endif
 
 #ifdef LIBIRIG106
 void ParseWorker::operator()(BinBuff& bb, bool append_mode, std::vector<std::string>& tmats_body_vec)
@@ -1026,7 +1031,7 @@ void ParseWorker::append_chanid_comwmwords_map(std::map<uint32_t, std::set<uint3
 const std::map<uint16_t, uint64_t>& ParseWorker::GetChannelIDToMinTimeStampMap()
 {
 #ifdef PARSER_REWRITE
-	return chanid_minvideotimestamp_map_;
+	return ctx.chanid_minvideotimestamp_map;
 #else
 	return video->GetChannelIDToMinTimeStampMap();
 #endif

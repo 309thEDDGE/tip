@@ -23,6 +23,8 @@ enum class Ch10Status : uint8_t
 	MILSTD1553_TS_NOT_HANDLED,
 	MILSTD1553_MSG_COUNT,
 	MILSTD1553_MSG_LENGTH,
+	VIDEOF0_NONINTEGER_SUBPKT_COUNT,
+	VIDEOF0_SUBPKT_COUNT_BIG
 };
 
 const std::unordered_map<Ch10Status, std::string> ch10status_to_string_map = {
