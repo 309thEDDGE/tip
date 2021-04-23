@@ -2,6 +2,13 @@
 #ifndef CH10_CONTEXT_H_
 #define CH10_CONTEXT_H_
 
+// Important to include the following two
+// headers prior to others which include spdlog.h.
+// There is a redefinition error with 
+// some of the types defined in Arrow.
+#include "parquet_milstd1553f1.h"
+#include "parquet_videodataf0.h"
+
 #include <cstdint>
 #include <cstdio>
 #include <map>
@@ -13,9 +20,9 @@
 #include "ch10_status.h"
 #include "ch10_header_format.h"
 #include "ch10_1553f1_msg_hdr_format.h"
-#include "parquet_milstd1553f1.h"
+
 #include "ch10_videof0_header_format.h"
-#include "parquet_videodataf0.h"
+
 #include "spdlog/spdlog.h"
 
 enum class Ch10PacketType : uint8_t

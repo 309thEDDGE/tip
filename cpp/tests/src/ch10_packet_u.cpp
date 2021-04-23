@@ -1,8 +1,13 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "binbuff.h"
+
+// Important to include the following two
+// headers prior to binbuff.h, which includes
+// spdlog. There is a redefinition error with 
+// some of the types defined in Arrow.
 #include "ch10_context.h"
 #include "ch10_packet.h"
+#include "binbuff.h"
 
 using ::testing::Return;
 

@@ -2,14 +2,16 @@
 #ifndef CH10_PACKET_H_
 #define CH10_PACKET_H_
 
+#include "ch10_context.h"
+#include "ch10_1553f1_component.h"
+#include "ch10_videof0_component.h"
 #include "binbuff.h"
 #include "ch10_status.h"
-#include "ch10_context.h"
+
 #include "ch10_packet_header_component.h"
 #include "ch10_tmats_component.h"
 #include "ch10_tdp_component.h"
-#include "ch10_1553f1_component.h"
-#include "ch10_videof0_component.h"
+
 
 // body
 // footer
