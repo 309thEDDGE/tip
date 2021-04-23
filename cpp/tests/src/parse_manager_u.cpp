@@ -18,7 +18,6 @@ protected:
 	std::string filename = "_TMATS.txt";
 	std::ifstream file;
 	std::string line;
-	
 
 	ParseManagerTest() 
 	{
@@ -30,7 +29,6 @@ protected:
 			remove(filename.c_str());
 		}
 		file.close();
-		
 	}
 	~ParseManagerTest()
 	{

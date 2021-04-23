@@ -2,7 +2,8 @@
 
 I106Ch10EthernetF0::I106Ch10EthernetF0() : I106ParseContext(), frame_index_(0),
 frame_len_(0), frame_len_ptr_((uint8_t*)&frame_len_), type_len_ptr_(nullptr), 
-i106_status_(I106Status::I106_OK), npp(), pq_eth_writer_()
+i106_status_(I106Status::I106_OK), npp(), 
+pq_eth_writer_()
 {
 
 }

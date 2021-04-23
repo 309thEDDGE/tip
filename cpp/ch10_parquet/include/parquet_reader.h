@@ -7,6 +7,7 @@
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/schema.h>
 #include <parquet/arrow/writer.h>
+#include "spdlog/spdlog.h"
 #include <string>
 #include <vector>
 #include "managed_path.h"

@@ -4,9 +4,10 @@
 #include <cstdint>
 #include <cstddef>
 #include <cstdio>
-#include <vector>
 #include <fstream>
 #include <vector>
+
+#include "spdlog/spdlog.h"
 
 class BinBuff
 {
@@ -40,7 +41,7 @@ class BinBuff
 	
 	public:
 		BinBuff();
-		~BinBuff();
+		virtual ~BinBuff();
 
 		// Convenient access to the current position within the buffer.
 		const uint64_t& position_;
@@ -74,7 +75,7 @@ class BinBuff
 
 		// Get a pointer to the raw buffer data at the current
 		// read position. 
-		const uint8_t* Data() const; 
+		virtual const uint8_t* Data() const; 
 
 		// Advance the read position relative to the current position.
 		// The beginning of a new buffer is initialized at position
@@ -84,7 +85,7 @@ class BinBuff
 		// 
 		// Return 0 if read position was moved by the requested
 		// count and 1 if the move failed.
-		uint8_t AdvanceReadPos(const uint64_t& count);
+		virtual uint8_t AdvanceReadPos(const uint64_t& count);
 
 		// Set the absolute read position without regard
 		// to the current position of the buffer.
@@ -98,7 +99,7 @@ class BinBuff
 		// without reading beyond the buffer size.
 		// The count of bytes available includes the
 		// byte at the current position.
-		bool BytesAvailable(const uint64_t& count) const;
+		virtual bool BytesAvailable(const uint64_t& count) const;
 
 		// Return true if Initialize() has been called.
 		bool IsInitialized() const;

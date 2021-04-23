@@ -1,15 +1,17 @@
 #ifndef CH10VIDEODATAF0_H
 #define CH10VIDEODATAF0_H
 
-#include "parse_context.h"
-#include "managed_path.h"
-#include "VideoDataF0Format.h"
-
 #ifdef LOCALDB
 #ifdef PARQUET
 #include "parquet_videodataf0.h"
 #endif
 #endif 
+
+#include "parse_context.h"
+#include "managed_path.h"
+#include "VideoDataF0Format.h"
+
+
 
 #ifdef LIBIRIG106
 extern "C" {

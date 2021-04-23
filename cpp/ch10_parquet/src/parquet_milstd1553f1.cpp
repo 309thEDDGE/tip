@@ -204,12 +204,9 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, c
 	temp_element_count_++;
 
 	if (temp_element_count_ == max_temp_element_count_)
-	{
-#ifdef DEBUG
-#if DEBUG > 0	
-		printf("(%03u) Writing MilStd1553F1 to Parquet, %d rows\n", id_, temp_element_count_);
-#endif
-#endif
+	{	
+		SPDLOG_INFO("({:02d}) Writing MilStd1553F1 to Parquet, {:d} rows", id_, temp_element_count_);
+
 		for (int i = 0; i < DEFAULT_BUFFER_SIZE_MULTIPLIER; i++)
 		{
 			//printf("write offset %d\n", i * DEFAULT_ROW_GROUP_COUNT);
@@ -224,14 +221,126 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy, c
 	}
 }
 
-void ParquetMilStd1553F1::commit()
+#ifdef PARSER_REWRITE
+void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy,
+	const MilStd1553F1CSDWFmt* const chan_spec,
+	const MilStd1553F1DataHeaderCommWordFmt* msg, const uint16_t* const data,
+	const uint16_t& chanid, int8_t calcwrdcnt, uint8_t payload_incomplete)
 {
-#ifdef DEBUG
-#if DEBUG > 0
-	printf("(%03u) ParquetMilStd1553F1::commit(): temp_element_count_ = %d\n", id_, temp_element_count_);
-#endif
+	WE_[temp_element_count_] = msg->WE;
+	SE_[temp_element_count_] = msg->SE;
+	WCE_[temp_element_count_] = msg->WCE;
+	TO_[temp_element_count_] = msg->TO;
+	FE_[temp_element_count_] = msg->FE;
+	RR_[temp_element_count_] = msg->RR;
+	ME_[temp_element_count_] = msg->ME;
+	gap1_[temp_element_count_] = msg->gap1;
+	gap2_[temp_element_count_] = msg->gap2;
+	ttb_[temp_element_count_] = chan_spec->ttb;
+	doy_[temp_element_count_] = doy;
+	time_stamp_[temp_element_count_] = time_stamp;
+
+	// Get full command words. Intepret the MilStd1553MsgCommword pointer
+	// as a uint16_t pointer. 48 bits (= 3 * uint16_t) later is the beginning
+	// of the data where the command words are located.
+	commword_ptr_ = ((uint16_t*)msg) + 3;
+
+	// Set the TX/RX command words and their data components differently
+	// according to the message type.
+	if (msg->RR)
+	{
+		// RT to RT, [ RX ][ TX ][ TX STAT ][ DATA0 ] ... [ DATAN ][ RX STAT ]
+		comm_word1_[temp_element_count_] = commword_ptr_[1];
+		comm_word2_[temp_element_count_] = commword_ptr_[0];
+
+		rtaddr1_[temp_element_count_] = msg->remote_addr2;
+		tr1_[temp_element_count_] = msg->tx2;
+		subaddr1_[temp_element_count_] = msg->sub_addr2;
+		wrdcnt1_[temp_element_count_] = msg->word_count2;
+
+		rtaddr2_[temp_element_count_] = msg->remote_addr1;
+		tr2_[temp_element_count_] = msg->tx1;
+		subaddr2_[temp_element_count_] = msg->sub_addr1;
+		wrdcnt2_[temp_element_count_] = msg->word_count1;
+	}
+	else
+	{
+		if (msg->tx1)
+		{
+			// RT to BC, [ TX ][ STAT ][ DATA0 ] ... [ DATAN ]
+			comm_word1_[temp_element_count_] = commword_ptr_[0];
+			comm_word2_[temp_element_count_] = 0;
+
+			rtaddr1_[temp_element_count_] = msg->remote_addr1;
+			tr1_[temp_element_count_] = msg->tx1;
+			subaddr1_[temp_element_count_] = msg->sub_addr1;
+			wrdcnt1_[temp_element_count_] = msg->word_count1;
+
+			rtaddr2_[temp_element_count_] = 0;
+			tr2_[temp_element_count_] = 0;
+			subaddr2_[temp_element_count_] = 0;
+			wrdcnt2_[temp_element_count_] = 0;
+		}
+		else
+		{
+			// BC to RT, [ RX ][ DATA0 ] ... [ DATAN ][ STAT ]
+			comm_word1_[temp_element_count_] = 0;
+			comm_word2_[temp_element_count_] = commword_ptr_[0];
+
+			rtaddr1_[temp_element_count_] = 0;
+			tr1_[temp_element_count_] = 0;
+			subaddr1_[temp_element_count_] = 0;
+			wrdcnt1_[temp_element_count_] = 0;
+
+			rtaddr2_[temp_element_count_] = msg->remote_addr1;
+			tr2_[temp_element_count_] = msg->tx1;
+			subaddr2_[temp_element_count_] = msg->sub_addr1;
+			wrdcnt2_[temp_element_count_] = msg->word_count1;
+		}
+	}
+
+	channel_id_[temp_element_count_] = chanid;
+	totwrdcnt_[temp_element_count_] = msg->length/2;
+	calcwrdcnt_[temp_element_count_] = calcwrdcnt;
+	payload_incomplete_[temp_element_count_] = payload_incomplete;
+
+	// If the calculated word count is less than or equal to zero,
+	// do not copy any data. The payload for the current row shall
+	// remain all zeros.
+	if (calcwrdcnt > 0)
+	{
+		std::copy(data, data + calcwrdcnt, data_.data() + temp_element_count_ * DATA_PAYLOAD_LIST_COUNT);
+	}
+
+	// Check for mode code.
+	if (msg->sub_addr1 > 0 && msg->sub_addr1 < 31)
+		mode_code_[temp_element_count_] = 0;
+	else
+		mode_code_[temp_element_count_] = 1;
+
+	// Increment the count variable.
+	temp_element_count_++;
+
+	if (temp_element_count_ == max_temp_element_count_)
+	{
+		SPDLOG_INFO("({:02d}) Writing MilStd1553F1 to Parquet, {:d} rows", id_, temp_element_count_);
+		for (int i = 0; i < DEFAULT_BUFFER_SIZE_MULTIPLIER; i++)
+		{
+			//printf("write offset %d\n", i * DEFAULT_ROW_GROUP_COUNT);
+			WriteColumns(DEFAULT_ROW_GROUP_COUNT, i * DEFAULT_ROW_GROUP_COUNT);
+		}
+
+		// Set all of the data_ values to zero to ensure that only word_count_ 
+		// values in each set of 32 are non-zero.
+		std::fill(data_.begin(), data_.end(), 0);
+
+		temp_element_count_ = 0;
+	}
+}
 #endif
 
+void ParquetMilStd1553F1::commit()
+{
 	if (temp_element_count_ > 0)
 	{
 		//printf("(%03u) ParquetMilStd1553F1::commit(): total remaining to write = %u\n", id_, temp_element_count_);

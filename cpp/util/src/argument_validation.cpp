@@ -42,6 +42,80 @@ bool ArgumentValidation::ValidateDefaultInputFilePath(
 	return true;
 }
 
+bool ArgumentValidation::ValidateDefaultOutputDirectory(const ManagedPath& default_output_dir,
+	const std::string& user_output_dir, ManagedPath& final_output_dir,
+	bool create_dir)
+{
+	final_output_dir = ManagedPath(std::string(""));
+
+	// Use default directory
+	if (user_output_dir == "")
+	{
+		if (!default_output_dir.is_directory())
+		{
+			if (create_dir)
+			{
+				if (!default_output_dir.create_directory())
+				{
+					printf("ValidateDefaultOutputDirectory: Failed to create default directory %s\n",
+						default_output_dir.RawString().c_str());
+					return false;
+				}
+
+				// Check if directory was created
+				if (default_output_dir.is_directory())
+				{
+					final_output_dir = default_output_dir.absolute();
+					return true;
+				}
+			}
+
+			printf("ValidateDefaultOutputDirectory: Default directory (%s) does not exist\n",
+				default_output_dir.RawString().c_str());
+			return false;
+		}
+
+		final_output_dir = default_output_dir.absolute();
+	}
+	else
+	{
+		if (!parse_text_.IsUTF8(user_output_dir))
+		{
+			printf("ValidateDefaultOutputDirectory: User directory (%s) is not valid UTF-8\n",
+				user_output_dir.c_str());
+			return false;
+		}
+
+		ManagedPath temp_user_dir(user_output_dir);
+		temp_user_dir = temp_user_dir.absolute();
+		if (!temp_user_dir.is_directory())
+		{
+			if (create_dir)
+			{
+				if (!temp_user_dir.create_directory())
+				{
+					printf("ValidateDefaultOutputDirectory: Failed to create user directory %s\n",
+						temp_user_dir.RawString().c_str());
+					return false;
+				}
+
+				// Check if directory was created
+				if (temp_user_dir.is_directory())
+				{
+					final_output_dir = temp_user_dir.absolute();
+					return true;
+				}
+			}
+
+			printf("ValidateDefaultOutputDirectory: User directory (%s) does not exist\n",
+				temp_user_dir.RawString().c_str());
+			return false;
+		}
+		final_output_dir = temp_user_dir;
+	}
+	return true;
+}
+
 bool ArgumentValidation::ValidateInputFilePath(std::string input_path, ManagedPath& mp_input_path)
 {
 	mp_input_path = ManagedPath(std::string(""));

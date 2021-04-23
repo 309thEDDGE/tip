@@ -198,7 +198,6 @@ protected:
 		int tot_row_groups = row_count / row_group_count;
 		for (int i = 0; i < tot_row_groups; i++)
 		{
-			printf("in here?\n");
 			pc.WriteColumns(row_group_count, i * row_group_count);
 		}
 
