@@ -17,9 +17,12 @@ winsock.h is loaded again and redefinition errors occur.
 
 Include the following three headers prior to tins.h.
 */
+
+#ifdef __WIN64
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
+#endif 
 
 #include "tins/tins.h"
 #include "ethernet_data.h"
