@@ -128,14 +128,14 @@ set(ch10pq_inc_dir ${ch10pq_lib_name}/${include_dir_name})
 
 if(ethernet_data)
     add_library(${ch10pq_lib_name} STATIC
-                ${util_src_dir}/parquet_reader.cpp       ${util_inc_dir}/parquet_reader.h
+                ${ch10pq_src_dir}/parquet_reader.cpp       ${ch10pq_inc_dir}/parquet_reader.h
                 ${ch10pq_src_dir}/parquet_milstd1553f1.cpp ${ch10pq_inc_dir}/parquet_milstd1553f1.h
                 ${ch10pq_src_dir}/parquet_videodataf0.cpp  ${ch10pq_inc_dir}/parquet_videodataf0.h
                 ${ch10pq_src_dir}/parquet_ethernetf0.cpp ${ch10pq_inc_dir}/parquet_ethernetf0.h
         )
 else()
     add_library(${ch10pq_lib_name} STATIC
-                ${util_src_dir}/parquet_reader.cpp       ${util_inc_dir}/parquet_reader.h
+                ${ch10pq_src_dir}/parquet_reader.cpp       ${ch10pq_inc_dir}/parquet_reader.h
                 ${ch10pq_src_dir}/parquet_milstd1553f1.cpp ${ch10pq_inc_dir}/parquet_milstd1553f1.h
                 ${ch10pq_src_dir}/parquet_videodataf0.cpp  ${ch10pq_inc_dir}/parquet_videodataf0.h
         )
