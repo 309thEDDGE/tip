@@ -22,11 +22,11 @@ I think a better solution is to break off all parquet/arrow related classes
 into a separate library, call it parquet_util, in which case the parquet/arrow
 headers will be included first in each class. 
 */
-#include <arrow/api.h>
-#include <arrow/io/api.h>
-#include <parquet/arrow/reader.h>
-#include <parquet/arrow/schema.h>
-#include <parquet/arrow/writer.h>
+//#include <arrow/api.h>
+//#include <arrow/io/api.h>
+//#include <parquet/arrow/reader.h>
+//#include <parquet/arrow/schema.h>
+//#include <parquet/arrow/writer.h>
 #include "spdlog/spdlog.h"
 
 class BinBuff

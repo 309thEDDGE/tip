@@ -1,6 +1,14 @@
 #ifndef PARSEWORKER_H
 #define PARSEWORKER_H
 
+#ifdef VIDEO_DATA
+#include "ch10_videodataf0.h"
+#endif
+
+#ifdef ETHERNET_DATA
+#include "i106_ch10_ethernetf0.h"
+#endif
+
 #include <string>
 #include <cstdio>
 #include <set>
@@ -15,16 +23,8 @@
 #include "managed_path.h"
 #include "spdlog/spdlog.h"
 
-#ifdef VIDEO_DATA
-#include "ch10_videodataf0.h"
-#endif
-
 #ifdef LIBIRIG106
 #include "i106_parse_context.h"
-
-#ifdef ETHERNET_DATA
-#include "i106_ch10_ethernetf0.h"
-#endif
 
 extern "C" {
 #include "i106_decode_tmats.h"

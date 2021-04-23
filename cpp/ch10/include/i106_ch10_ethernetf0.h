@@ -3,7 +3,6 @@
 #define I106_CH10_ETHERNETF0_H
 
 #include <sstream>
-#include "i106_parse_context.h"
 
 // Must include parquet_ethernetf0.h prior to network_packet_parser.h
 #include "parquet_ethernetf0.h"
@@ -11,6 +10,7 @@
 extern "C" {
 #include "i106_decode_ethernet.h"
 }
+#include "i106_parse_context.h"
 
 class Ch10EthernetF0CSDWFormat
 {

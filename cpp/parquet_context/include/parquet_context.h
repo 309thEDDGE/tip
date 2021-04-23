@@ -1,15 +1,15 @@
 #ifndef PARQUET_CONTEXT_H
 #define PARQUET_CONTEXT_H
 
+#include <arrow/api.h>
+#include <arrow/io/api.h>
+#include <parquet/arrow/writer.h>
+#include <parquet/arrow/schema.h>
 #include <vector>
 #include <cstdint>
 #include <cstdio>
 #include <cmath>
 #include <map>
-#include <arrow/api.h>
-#include <arrow/io/api.h>
-#include <parquet/arrow/writer.h>
-#include <parquet/arrow/schema.h>
 #include <typeinfo>
 #include "column_data.h"
 #include "spdlog/spdlog.h"

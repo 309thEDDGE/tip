@@ -60,7 +60,7 @@ if(DEFINED VIDEO)
 endif()
 
 if(DEFINED ETHERNET)
-    if("${ETHERNET}" MATCHES "OFF")
+    if(ETHERNET MATCHES "OFF")
         message(STATUS "ETHERNET set to OFF")
         set(ethernet_data false)
     endif()

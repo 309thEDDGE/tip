@@ -88,7 +88,6 @@ void ParquetVideoDataF0::append_data(const std::vector<uint64_t>& time_stamp,
 	printf("(%03hu) ParquetVideoDataF0: appending %u packets\n", id_, transport_stream_pkt_count);
 #endif
 #endif
-	SPDLOG_INFO("({:02d}) Writing VideoDataF0 to Parquet, {:d} rows", id_, temp_element_count_);
 
 	for (int i = 0; i < transport_stream_pkt_count; i++)
 	{
