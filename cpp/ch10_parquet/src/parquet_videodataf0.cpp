@@ -160,7 +160,7 @@ void ParquetVideoDataF0::append_data(
 
 	if (temp_element_count_ == max_temp_element_count_)
 	{
-		SPDLOG_DEBUG("({:02d}) Writing VideoDataF0 to Parquet, {:d} rows", id_, temp_element_count_);
+		SPDLOG_INFO("({:02d}) Writing VideoDataF0 to Parquet, {:d} rows", id_, temp_element_count_);
 
 		for (int i = 0; i < DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO; i++)
 		{
