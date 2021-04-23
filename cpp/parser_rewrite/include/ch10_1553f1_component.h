@@ -5,7 +5,6 @@
 #include <cstdint>
 #include "ch10_1553f1_msg_hdr_format.h"
 #include "ch10_packet_component.h"
-//#include "parquet_milstd1553f1.h"
 
 class MilStd1553F1DataRTCTimeStampFmt
 {
@@ -74,12 +73,6 @@ private:
 	// indicates a 32-word payload.
 	int8_t expected_payload_word_count_;
 
-	//
-	// Parquet writer
-	//
-	//std::shared_ptr<ParquetMilStd1553F1> pq_writer_;
-
-
 public:
 
 	const uint32_t& abs_time;
@@ -107,7 +100,6 @@ public:
 		expected_payload_word_count(expected_payload_word_count_),
 		calc_payload_word_count(calc_payload_word_count_),
 		is_payload_incomplete(is_payload_incomplete_), abs_time(abs_time_),
-		//pq_writer_(nullptr), 
 		milstd1553f1_data_hdr_commword_ptr_(nullptr),
 		payload_ptr_ptr(&payload_ptr_)
 	{	}
