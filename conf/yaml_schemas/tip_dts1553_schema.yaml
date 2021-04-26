@@ -138,10 +138,11 @@ supplemental_bus_map_command_words:         # (O)
 # Required, structure included exactly once in the current map
 #
 # Key maps to a sequence of two integers, the 1553 transmit command
-# word followed the receive command word. If the 1553 message is a 
-# transmit type message, then the receive command word position 
-# filled with a zero. If receive message, the transmit position
-# shall contain a zero. An RT-to-RT type message shall include 
+# word followed by the receive command word. If the 1553 message is a 
+# transmit type message, then the receive command word position is
+# filled with a zero as a placeholder. If the message type is a 
+# receive message, the transmit position
+# shall contain filled a zero. An RT-to-RT type message shall include 
 # both non-zero values.
 #
 
@@ -152,12 +153,14 @@ supplemental_bus_map_command_words:         # (O)
 #
 # Key maps to a sequence of two integers, the transmitting lru 
 # address and the receiving lru address. These are the addresses 
-# that can be determined from the a break down of the command 
-# words. The bus controller always takes the address zero in 
-# the pair of command words. In example, a RT to BC message
-# has an lru pair consisting of the RT lru address followed by
-# zero. A BC to RT message has those values swapped, and an 
-# RT to RT message has two non-zero lru addresses. 
+# that can be determined from a decomposition of the command 
+# words. BC-to-RT or RT-to-BC messages only utilize one command
+# word, either receive or transmit, respectively, in which case the 
+# transmit and receive command word, again respectively, are given
+# the placeholder value of zero (see 'command' definition above).
+# The same is true for the lru address, which is filled with the 
+# placeholder value zero if the transmit or
+# recieve command word is also zero. 
 # 
 
 # 
@@ -167,9 +170,9 @@ supplemental_bus_map_command_words:         # (O)
 # 
 # Key maps to a sequence of two integers, the transmitting 
 # lru subaddress followed by the receiving lru subaddress. This 
-# mapping follows the convention that the BC utilizes the 
-# lru subaddress of zero like other pairs. The subaddresses may 
-# also be obtained from the command words. 
+# mapping follows the convention that the lru subaddress is zero
+# if the transmit or receive command word or lru address is also
+# zero.
 #
 
 #
@@ -200,7 +203,15 @@ supplemental_bus_map_command_words:         # (O)
 # Key maps to an integer which is the count of data words transmitted
 # in the current message. It does not include command or status words
 # transmitted as part of the complete 1553 message transmission. This 
-# value can also be determined from the command word(s). 
+# value can also be determined from the command word(s). One exception
+# to this definition is single-word payload mode code messages. It is
+# possible that 'mode_code' (see below) is true and the value of the word
+# count determined from the command word is not representative of the
+# actual count of transmitted data words. Mode code type message word 
+# count can only be zero or one and is not determined directly
+# from decomposed bits of the command word. In this case, the user 
+# must explicitly insert the correct word count in this field, either 
+# zero or one. 
 # 
 
 #
@@ -220,8 +231,8 @@ supplemental_bus_map_command_words:         # (O)
 # Key maps to a boolean value. True indicates that the message 
 # is a mode code type 1553 message and false indicates that the
 # message is not a mode code. This boolean can be determined from
-# command word by a combination of the subaddress field and 
-# word count/mode code field. 
+# command word by the value of the subaddress field, which is 0 
+# or 31 for mode_code = true and false otherwise.
 #
 
 # 
@@ -245,7 +256,10 @@ supplemental_bus_map_command_words:         # (O)
 # uint16, int16, uint32, int32, uint64, int64, etc. There is another
 # data structure to identify and intepret bit-level elements, those
 # elements which are comprised of a single bit or multiple bits which
-# do not compose an integer number of 1553 payload words.
+# do not compose an integer number of 1553 payload words. A bit-level
+# element may be a the first several bits in a word, the last several
+# bits in a word, or some number of bits in the middle of a word or
+# span an entire word plus the first several bits of the next word.
 #
 
 # 
@@ -290,12 +304,13 @@ supplemental_bus_map_command_words:         # (O)
 #
 # Key maps to a string which identifies a specific algorithm 
 # for intepreting the word(s) defined as part of the current 
-# element. The optional values are:
+# element. All string values below are to be used only with the 
+# 'wrd_elem_name' map unless otherwise noted. The optional values are:
 # 
 #   // IEEE standard twos-complement signed 16-bit integer.
 #   SIGNED16
 #
-#	// IEEE standard two-complement signed 32-bit integer.
+#	// IEEE standard twos-complement signed 32-bit integer.
 #	SIGNED32
 #
 #	// IEEE standard unsigned 16-bit integer.
@@ -318,10 +333,14 @@ supplemental_bus_map_command_words:         # (O)
 #
 #	// Two or more consecutive bits to be interpreted as a twos-complement signed integer.
 #	// SIGNEDBITS or UNSIGNEDBITS schema should be used when is_bitlevel_ = true.
+#   // This schema ought to be used only for bit-level elements defined under the 
+#   // 'bit_elem_name' map (see below).
 #	SIGNEDBITS
 #
 #	// Single-bit boolean or multiple bits to be interpreted as unsigned integer.
 #	// SIGNEDBITS or UNSIGNEDBITS schema should be used when is_bitlevel_ = true.
+#   // This schema ought to be used only for bit-level elements defined under the 
+#   // 'bit_elem_name' map (see below).
 #	UNSIGNEDBITS
 #
 #	// Collins Adaptive Processing System (CAPS) 48-bit floating point value.
@@ -345,10 +364,14 @@ supplemental_bus_map_command_words:         # (O)
 # a high-precision datum with a value between 0 and 1, indicates a 
 # single data payload (wrdcnt = 1) and uint16 schema (schema = UNSIGNED16)
 # and an msbval of 0.5. An msbval of 0.5 implies a scale factor 
-# of 0.5 / 2^15 = 1.52588e-5. If this word were to have all 16 bits high
-# then the intended value is (2^16 - 1) * 1.5288e-5 ~= 1.0. The most 
-# significant bit of signed values is the one bit lower than the highest
-# bit which is designated as the sign bit. Currently, floating point
+# of 0.5 / 2^15 = 1.52588e-5, following the generic formula:
+#         msbval / (2 ^ (msb_position - 1)) = scale_factor
+# If this word were to have all 16 bits high (word_value = 2^16 - 1)
+# then the intended value is word_value * 1.5288e-5 ~= 1.0. The most 
+# significant bit of signed values is one bit lower than the highest
+# bit which is designated as the sign bit. Using a signed 16 bit word 
+# as an example, scale_factor = msbval / 2^14. An unsigned 32-bit scale
+# factor is computed by scale_factor = msbval / 2^31. Currently, floating point
 # values do not use the msbval and a value of 1 ought to be used as 
 # placeholder.
 #
@@ -480,8 +503,12 @@ supplemental_bus_map_command_words:         # (O)
 # within the first word (often the only word) from which bits
 # shall be extracted to form the intended value. Bits within 
 # each 16-bit word are 1-indexed beginning at the MSB of the 
-# word. In example, bit 1 is the MSB and bit 16 is the LSB in 
-# the 16-bit word. 
+# word. For example, bit 1 is the MSB and bit 16 is the LSB in 
+# the 16-bit word. The msb is the sign bit for signed elements.
+#
+# Example 1: bit level element starting at word 3 bit 2 has 
+# msb = 2
+# Example 2: single bit element at word 3 bit 4 has msb = 4
 #
 
 #
@@ -493,12 +520,26 @@ supplemental_bus_map_command_words:         # (O)
 # within the final word (often the first and only word) from which
 # bits shall be extracted to from the intended value, following a 
 # 1-indexed convention with bit 1 the MSB and bit 16 the LSB
-# within the 16-bit word. In example, a four bit sequence which represents,
+# within the 16-bit word. For example, a four bit sequence which represents,
 # via the raw bits, a value in the range 0--15, may be specified by
 # bits msb=4 and lsb=7. Bit 4, fourth most signficant, through bit 
 # 7, 7th most significant, comprise four bits which shall be extracted
 # by the translator and scaled according to the msbval.
 #
+# If the bits which comprise the value span multiple words, the
+# lsb shall represent the least significant bit in the final word
+# and thus always have a value in the range [1, 16].
+# Example 1: bit level element from word 3 bit 2 -> word 4 bit 5 
+# has lsb = 5.
+# Example 2: single bit element at word 3 bit 4 has lsb = 4
+# Example 3: multiple bit element which spans multiple words 
+# has cnt = 3, msb = 15 and lsb = 2. Two bits are extracted
+# from the first word (15, 16), all 16 bits from the second word,
+# and two bits from the third word (1, 2) for a total of 
+# 20 bits. Bit 15 from the first word is the most significant bit,
+# the bits from the second word are in the middle, and the least 
+# signficant bit is bit 2 from the third word. 
+# 
 
 #
 # bitcnt
@@ -507,7 +548,11 @@ supplemental_bus_map_command_words:         # (O)
 #
 # Key maps to a integer which gives the explicit count of bits  
 # to be extracted from the the word(s) at offset 'off'. This 
-# value is redudant and ought to be equal to lsb - msb + 1. 
+# value is redudant and ought to be equal to lsb - msb + 1 for 
+# bit-level elements which span only a single word. The generic 
+# formula which includes the possibility of multi-word bit-level
+# elements is bitcnt = (lsb - msb + 1) + (16 * (cnt - 1)), where 
+# cnt is the word count defined above.
 #
 
 #
@@ -518,10 +563,16 @@ supplemental_bus_map_command_words:         # (O)
 # Key maps to another map, to be described below. This 
 # optional data structure can assist in automatic bus-mapping 
 # which occurs during translation. Lists of transmit/recieve 
-# command words may be provided for the user. These command
+# command words may be provided by the user. These command
 # words are particularly useful when multiple platform subsystems
 # are not turned on during recording of the ch10 and only a small 
 # subset of the possible messages are transmitted during the recording.
+# In which case, mode code Transmit/Receive command words added to 
+# supplemental_bus_map_command_words may be the only data available to 
+# the auto bus map utility (aside from TMATS).  
+# supplemental_bus_map_command_words are also helpful for mapping 1553 buses 
+# recorded in the chapter 10 that are not included in
+# translatable_message_definitions.
 #
 
 # 
@@ -531,16 +582,20 @@ supplemental_bus_map_command_words:         # (O)
 # Required, if the supplemental_bus_map_command_words structure is 
 # utilized then at least one bus_name must be given.
 #
-# User-defined key, which is the name of a bus given in 'bus' name
+# User-defined key, which is the name of a bus given in the 'bus' name
 # map of the 'msg_data' mapping. There may be multiple such mappings,
 # the set of which represent a unique set of bus names, where each bus
 # here that matches a bus given in the 'bus' map above must represent
-# same actual bus. In other words, use consistent bus names between
+# the same actual bus. In other words, use consistent bus names between
 # this data structure and the bus names used in 'translatable_message_definitions'.
+# The user may also add bus names, and the corresponding data, which do
+# not exist in 'translatable_message_definitions'. This is a way to 
+# communicate bus to message mapping information to the automatic bus-mapping algorithm
+# if data are intentionally not included in 'translatable_message_definitions'.
 #
 # Each user-defined bus name shall map to a sequence. Each entry in the
 # sequence shall be a sequence of two integers, the transmit command 
-# word followed by the receive command word of message that may
+# word followed by the receive command word of a message that may
 # be transmitted on the bus. The message is not required to be present
 # in the data. A user may provide all transmit/receive command
 # word combinations that are possible on the bus. 
