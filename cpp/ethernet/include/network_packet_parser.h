@@ -1,13 +1,36 @@
 #ifndef NETWORK_PACKET_PARSER_H
 #define NETWORK_PACKET_PARSER_H
 
+/*
+There is a special order in which the following three
+headers must be included if winsock2.h is used. Tins
+includes these headers via the npcap (Windows version of
+libpcap) library. Without spdlog and/or Arrow headers
+tins is fine but each of those libs also include winsock2.h
+and something about the order or maybe a partial include of 
+the required three below is left out in those other headers,
+while the macros are defined to avoid repeat includes, 
+such that the complete set, in the proper order, is not 
+included in libtins. When libtins loads these files, the 
+macros defined to avoid repeat includes somehow fails and 
+winsock.h is loaded again and redefinition errors occur.
+
+Include the following three headers prior to tins.h.
+*/
+
+#ifdef __WIN64
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+#endif 
+
+#include "tins/tins.h"
+#include "ethernet_data.h"
 #include <cstdint>
 #include <cstdio>
 #include <string>
 #include <algorithm> // copy
 #include <map>
-#include "tins/tins.h"
-#include "ethernet_data.h"
 
 class NetworkPacketParser
 {

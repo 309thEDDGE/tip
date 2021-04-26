@@ -7,6 +7,12 @@
 #ifndef CH10MILSTD1553F1_H
 #define CH10MILSTD1553F1_H
 
+#ifdef LOCALDB
+#ifdef PARQUET
+#include "parquet_milstd1553f1.h"
+#endif
+#endif
+
 #include "parse_context.h"
 #include "MilStd1553F1Format.h"
 #include "ch10_milstd1553f1stats.h"
@@ -15,11 +21,7 @@
 #include <ctime>
 #include <cstring>
 
-#ifdef LOCALDB
-#ifdef PARQUET
-#include "parquet_milstd1553f1.h"
-#endif
-#endif
+
 
 #ifdef LIBIRIG106
 extern "C" {

@@ -27,11 +27,7 @@ ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const Par
 	input_path.GetFileSize(success, total_size);
 	if (success)
 	{
-#ifdef DEBUG
-#if DEBUG > 0
-		printf("File size: %llu MB\n\n", total_size / (1024 * 1024));
-#endif
-#endif
+		spdlog::get("pm_logger")->info("File size: {:d} MB", total_size / (1024 * 1024));
 		create_output_dirs();
 	}
 	else
@@ -41,7 +37,8 @@ ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const Par
 void ParseManager::create_output_dirs()
 {
 	ManagedPath parquet_1553_path = output_path.CreatePathObject(input_path, "_1553.parquet");
-	printf("Parquet 1553 output path: %s\n", parquet_1553_path.RawString().c_str());
+	spdlog::get("pm_logger")->info("Parquet 1553 output path: {:s}", 
+		parquet_1553_path.RawString());
 	if (!parquet_1553_path.create_directory())
 		error_set = true;
 	output_dir_map_[Ch10DataType::MILSTD1553_DATA_F1] = parquet_1553_path;
@@ -49,7 +46,8 @@ void ParseManager::create_output_dirs()
 #ifdef VIDEO_DATA
 
 	ManagedPath parquet_vid_path = output_path.CreatePathObject(input_path, "_video.parquet");
-	printf("Parquet video output path: %s\n", parquet_vid_path.RawString().c_str());
+	spdlog::get("pm_logger")->info("Parquet video output path: {:s}", 
+		parquet_vid_path.RawString());
 	if (!parquet_vid_path.create_directory())
 		error_set = true;
 	output_dir_map_[Ch10DataType::VIDEO_DATA_F0] = parquet_vid_path;
@@ -59,7 +57,8 @@ void ParseManager::create_output_dirs()
 #ifdef ETHERNET_DATA
 
 	ManagedPath parquet_eth_path = output_path.CreatePathObject(input_path, "_ethernet.parquet");
-	printf("Parquet ethernet output path: %s\n", parquet_eth_path.RawString().c_str());
+	spdlog::get("pm_logger")->info("Parquet ethernet output path: {:s}", 
+		parquet_eth_path.RawString());
 	if (!parquet_eth_path.create_directory())
 		error_set = true;
 	output_dir_map_[Ch10DataType::ETHERNET_DATA_F0] = parquet_eth_path;
@@ -125,7 +124,7 @@ void ParseManager::start_workers()
 	ifile.open(input_path.string().c_str(), std::ios::binary);
 	if (!(ifile.is_open()))
 	{
-		printf("Error opening file: %s\n", input_path.RawString().c_str());
+		spdlog::get("pm_logger")->error("Error opening file: {:s}", input_path.RawString());
 		error_set = true;
 		return;
 	}
@@ -148,21 +147,16 @@ void ParseManager::start_workers()
 
 	create_output_file_paths();
 
-	printf("\nInput file: %s\n", input_path.RawString().c_str());
-	printf("Using %u threads\n", n_threads);
-#ifdef DEBUG
-	if (DEBUG > 0)
-	{
-		printf("Created %u workers\n", n_reads);
-		printf("Created %u binary buffers\n", n_reads);
-	}
-#endif	
+	spdlog::get("pm_logger")->info("Input file: {:s}", input_path.RawString());
+	spdlog::get("pm_logger")->info("Using {:d} threads", n_threads);
+	spdlog::get("pm_logger")->debug("Created {:d} workers", n_reads);
+	spdlog::get("pm_logger")->debug("Created {:d} binary buffers", n_reads);
 
 	// Start queue to activate all workers, limiting the quantity of 
 	// concurrent threads to n_threads.
 	bool append = false;
 	worker_queue(append);
-	printf("after worker_queue\n");
+	spdlog::get("pm_logger")->debug("after worker_queue");
 
 	// Wait for all active workers to finish.
 	worker_retire_queue();
@@ -181,10 +175,8 @@ void ParseManager::start_workers()
 	delete[] threads;
 	threads = new std::thread[n_reads];
 
-#ifdef DEBUG
-	if (DEBUG > 0)
-		printf("\n-- Parsing dangling packets --\n");
-#endif
+	spdlog::get("pm_logger")->info("Parsing dangling packets");
+
 	append = true;
 	worker_queue(append);
 
@@ -224,10 +216,7 @@ void ParseManager::start_workers()
 	collect_chanid_to_commwords_metadata(output_chanid_commwords_map);
 	md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
 
-
-
-
-#ifdef LIBIRIG106
+#if defined(LIBIRIG106) || defined(PARSER_REWRITE)
 	ProcessTMATS();
 
 	// Record the TMATS channel ID to source map.
@@ -346,16 +335,14 @@ std::streamsize ParseManager::activate_worker(uint16_t binbuff_ind, uint16_t ID,
 		is_final_worker);
 #endif
 
-	#ifdef DEBUG
-	if (DEBUG > 1)
-	{
-		printf("Init. worker %u: start = %llu, read size = %u, bb ind = %u\n", 
-			ID, start_pos, n_read, binbuff_ind);
-	}
-	#endif
+	spdlog::get("pm_logger")->debug("Init. worker {:d}: start = {:d}, read size = {:d}, bb ind = {:d}",
+		ID, start_pos, n_read, binbuff_ind);
 		
 	// Start this instance of ParseWorker. Append mode false.
-#ifdef LIBIRIG106
+#if defined PARSER_REWRITE
+	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
+		false, std::ref(tmats_body_vec_));
+#elif defined LIBIRIG106
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
 		false, std::ref(tmats_body_vec_));
 #else
@@ -373,13 +360,8 @@ std::streamsize ParseManager::activate_append_mode_worker(uint16_t binbuff_ind, 
 	uint64_t last_pos = workers[ID].get_last_position();
 	workers[ID].reset_completion_status();
 
-	#ifdef DEBUG
-	if (DEBUG > 1)
-	{
-		printf("Init. append mode worker %u: start = %llu, read size = %u, bb ind = %u\n",
-			ID, last_pos, n_read, binbuff_ind);
-	}
-	#endif
+	spdlog::get("pm_logger")->debug("Init. append mode worker {:d}: start = {:d}, read size = {:d}, bb ind = {:d}",
+		ID, last_pos, n_read, binbuff_ind);
 
 	uint64_t read_count = binary_buffers[binbuff_ind].Initialize(ifile,
 		total_size, last_pos, n_read);
@@ -387,7 +369,10 @@ std::streamsize ParseManager::activate_append_mode_worker(uint16_t binbuff_ind, 
 	workers[ID].append_mode_initialize(n_read, binbuff_ind, last_pos);
 
 	// Start this instance of ParseWorker. Append mode true.
-#ifdef LIBIRIG106
+#if defined PARSER_REWRITE
+	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
+		true, std::ref(tmats_body_vec_));
+#elif defined LIBIRIG106
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
 		true, std::ref(tmats_body_vec_));
 #else
@@ -411,11 +396,7 @@ void ParseManager::worker_queue(bool append_mode)
 	std::streamsize current_read_count = 0;
 	uint16_t bb_ind = 0;
 	int concurrent_thread_count = 0;
-
-	#ifdef DEBUG
-	if (DEBUG > 0)
-		printf("Starting worker threads\n");
-	#endif
+	spdlog::get("pm_logger")->debug("worker_queue: Starting worker threads");
 
 	// Create and wait for workers until the entire input file 
 	// is parsed.
@@ -447,10 +428,7 @@ void ParseManager::worker_queue(bool append_mode)
 		{
 			if (!all_threads_active)
 			{
-				#ifdef DEBUG
-				if (DEBUG > 1)
-					printf("\nAll threads NOT ACTIVE (%u active).\n", active_thread_count);
-				#endif
+				spdlog::get("pm_logger")->debug("All threads NOT ACTIVE ({:d} active)", active_thread_count);
 
 				// Immediately activate a new worker.
 				if (append_mode)
@@ -471,16 +449,15 @@ void ParseManager::worker_queue(bool append_mode)
 					if (current_read_count != append_read_size)
 					{
 						eof_reached = true;
-						printf("Current read count %Iu, not equal to expected size %u\n", current_read_count, append_read_size);
+						spdlog::get("pm_logger")->debug("Current read count {:d}, not equal to expected size {:d}", 
+							current_read_count, append_read_size);
 					}
 				}
 				else if (current_read_count != read_size)
 				{
 					eof_reached = true;
-					#ifdef DEBUG
-					if (DEBUG > 1)
-						printf("EOF reached: %Iu/%u read\n", current_read_count, read_size);
-					#endif
+					spdlog::get("pm_logger")->debug("EOF reached: {:d}/{:d} read", 
+						current_read_count, read_size);
 				}
 
 				// Put worker in active workers list.
@@ -507,10 +484,7 @@ void ParseManager::worker_queue(bool append_mode)
 			}
 			else
 			{
-				#ifdef DEBUG
-				if (DEBUG > 1)
-					printf("\nAll threads ACTIVE (%u active).\n", active_thread_count);
-				#endif
+				spdlog::get("pm_logger")->debug("All threads ACTIVE ({:d} active)", active_thread_count);
 				// Check active workers to see if they are ready to be joined.
 				for (size_t act_work_ind = 0; act_work_ind < active_workers.size(); act_work_ind++)
 				{
@@ -518,11 +492,8 @@ void ParseManager::worker_queue(bool append_mode)
 					// Join workers that are complete
 					if (workers[active_workers[act_work_ind]].completion_status() == true)
 					{
-						#ifdef DEBUG
-						if (DEBUG > 1)
-							printf("Worker %u INACTIVE/COMPLETE -- joining now\n", active_workers[act_work_ind]);
-
-						#endif
+						spdlog::get("pm_logger")->debug("Worker {:d} INACTIVE/COMPLETE -- joining now", 
+							active_workers[act_work_ind]);
 
 						bb_ind = workers[active_workers[act_work_ind]].get_binbuff_ind();
 						threads[active_workers[act_work_ind]].join();
@@ -545,42 +516,35 @@ void ParseManager::worker_queue(bool append_mode)
 						{
 							if (current_read_count != append_read_size)
 							{
-								printf("Worker %hu Error: %Iu bytes read, %u bytes indicated\n",
+								spdlog::get("pm_logger")->debug(
+									"Worker {:d} Error: {:d} bytes read, {:d} bytes indicated",
 									read_ind, current_read_count, append_read_size);
 							}
 						}
 						else if (current_read_count != read_size)
 						{
 							eof_reached = true;
-							#ifdef DEBUG
-							if (DEBUG > 1)
-								printf("EOF reached: %Iu/%u read\n", current_read_count, read_size);
-							#endif
+							spdlog::get("pm_logger")->debug("EOF reached: {:d}/{:d} read", 
+								current_read_count, read_size);
 						}
 
 						// Place new worker among active workers.
 						active_workers.push_back(read_ind);
-						//max_worker_ind = read_ind;
 
 						thread_started = true;
 						break;
 					}
 					else
 					{
-						#ifdef DEBUG
-						if (DEBUG > 1)
-							printf("Worker %u STILL ACTIVE\n", active_workers[act_work_ind]);
-						#endif
+						spdlog::get("pm_logger")->debug("Worker {:d} STILL ACTIVE", 
+							active_workers[act_work_ind]);
 					}
 
 				}
 			}
 
 			// Wait before checking for available workers.
-			#ifdef DEBUG
-			if (DEBUG > 1)
-				printf("Waiting for workers\n");
-			#endif
+			spdlog::get("pm_logger")->trace("Waiting for workers");
 			std::this_thread::sleep_for(worker_wait);
 
 		} // end while 
@@ -596,10 +560,7 @@ void ParseManager::worker_queue(bool append_mode)
 
 void ParseManager::worker_retire_queue()
 {
-	#ifdef DEBUG
-	if (DEBUG > 0)
-		printf("\n-- Joining all remaining workers --\n");
-	#endif
+	spdlog::get("pm_logger")->debug("Joining all remaining workers");
 	while (active_workers.size() > 0)
 	{
 		for (size_t act_work_ind = 0; act_work_ind < active_workers.size(); act_work_ind++)
@@ -607,22 +568,12 @@ void ParseManager::worker_retire_queue()
 			// Join workers that are complete
 			if (workers[active_workers[act_work_ind]].completion_status() == true)
 			{
-				#ifdef DEBUG
-				if (DEBUG > 0)
-					printf("Worker %hu INACTIVE/COMPLETE -- joining now\n", active_workers[act_work_ind]);
-				#endif
+				spdlog::get("pm_logger")->debug("Worker {:d} INACTIVE/COMPLETE -- joining now", 
+					active_workers[act_work_ind]);
 			
 				threads[active_workers[act_work_ind]].join();
 
-#ifdef PARQUET
-#endif
-
-				#ifdef DEBUG
-				if (DEBUG > 2)
-				{
-					printf("Worker %u joined\n", active_workers[act_work_ind]);
-				}
-				#endif
+				spdlog::get("pm_logger")->debug("Worker {:d} joined", active_workers[act_work_ind]);
 				if (n_reads == 1)
 					active_workers.resize(0);
 				else
@@ -630,25 +581,16 @@ void ParseManager::worker_retire_queue()
 			}
 			else
 			{
-				#ifdef DEBUG
-				if (DEBUG > 1)
-					printf("Worker %u STILL ACTIVE\n", active_workers[act_work_ind]);
-				#endif
+				spdlog::get("pm_logger")->debug("Worker {:d} STILL ACTIVE", active_workers[act_work_ind]);
 			}
 		}
 
 		// Wait before checking for available workers.
-		#ifdef DEBUG
-		if (DEBUG > 1)
-			printf("Waiting for workers to complete\n");
-		#endif
+		spdlog::get("pm_logger")->debug("Waiting for workers to complete");
 		std::this_thread::sleep_for(worker_wait);
 	}
 
-	#ifdef DEBUG
-	if (DEBUG > 0)
-		printf("\n-- All workers joined --\n");
-	#endif
+	spdlog::get("pm_logger")->debug("All workers joined ");
 }
 
 void ParseManager::collect_stats()
@@ -727,21 +669,14 @@ void ParseManager::collect_stats()
 ParseManager::~ParseManager()
 {
 	ifile.close();
-	//printf("in destructor ... \n");
 	if(workers_allocated)
 	{
-		#ifdef DEBUG
-		if (DEBUG > 1)
-			printf("ParseManager: Deleting \"workers\", \"binary_buffers\", \"threads\"\n");
-		#endif
+		spdlog::get("pm_logger")->debug(
+			"ParseManager: Deleting \"workers\", \"binary_buffers\", \"threads\"");
 		
 		delete[] threads;
-		//printf("after delete threads\n");
 		delete[] workers;
-		//printf("after delete workers\n");
 		delete[] binary_buffers;
-		//printf("after delete binary_buffers\n");
-		
 	}
 }
 
@@ -750,7 +685,7 @@ void ParseManager::ProcessTMATS()
 	// if tmats doesn't exist return
 	if (tmats_body_vec_.size() == 0)
 	{
-		printf("\nNo TMATS Present\n");
+		spdlog::get("pm_logger")->warn("No TMATS Present");
 		return;
 	}
 
@@ -767,7 +702,7 @@ void ParseManager::ProcessTMATS()
 	tmats.open(tmats_path.string(), std::ios::trunc | std::ios::binary);
 	if (tmats.good())
 	{
-		printf("\nWriting TMATS to %s\n", tmats_path.RawString().c_str());
+		spdlog::get("pm_logger")->info("Writing TMATS to {:s}", tmats_path.RawString());
 		tmats << full_TMATS_string;
 	}
 

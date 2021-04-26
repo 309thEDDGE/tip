@@ -15,7 +15,11 @@ project(TIP
 
 set(CMAKE_PLATFORM_INDEPENDENT_CODE ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+	message(STATUS "Setting -s flag to strip symbols")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
+endif()
 
 #########################################################
 #                      Build Options
@@ -27,6 +31,13 @@ set(debug 1)
 set(libirig106 true)
 set(video_data false)
 set(ethernet_data true)
+set(parser_rewrite false)
+
+if(DEFINED PARSER_REWRITE)
+    message(STATUS "PARSER_REWRITE defined")
+    set(ignore ${PARSER_REWRITE})
+    set(parser_rewrite true)
+endif()
 
 if (DEFINED DEBUG)
     message(STATUS "DEBUG defined")
@@ -49,7 +60,7 @@ if(DEFINED VIDEO)
 endif()
 
 if(DEFINED ETHERNET)
-    if("${ETHERNET}" MATCHES "OFF")
+    if(ETHERNET MATCHES "OFF")
         message(STATUS "ETHERNET set to OFF")
         set(ethernet_data false)
     endif()
@@ -83,6 +94,12 @@ endif()
 
 if(ethernet_data AND NOT libirig106)
     message(FATAL_ERROR "LIBIRIG106 (default ON) must be ON if ETHERNET (default ON) is ON")
+endif()
+
+if(parser_rewrite AND libirig106)
+    message(STATUS "PARSER_REWRITE defined, undefining LIBIRIG106 and ETHERNET")
+    set(libirig106 false)
+    set(ethernet_data false)
 endif()
 
 get_filename_component(deps_dir "../deps" ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
@@ -186,6 +203,15 @@ if(libirig106)
         add_compile_definitions(LIBIRIG106)
     endif()
 endif()
+
+if(parser_rewrite)
+    if(linux)
+        add_definitions(-DPARSER_REWRITE)
+    else()
+        add_compile_definitions(PARSER_REWRITE)
+    endif()
+endif()
+
 
 if(ethernet_data)
     if(linux)

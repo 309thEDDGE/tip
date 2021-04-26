@@ -25,10 +25,6 @@ public:
 		{
 			return false;
 		}
-		else
-		{
-			printf("\nConfig file found %s\n", file_path.c_str());
-		}
 
 		std::set<bool> success;
 
