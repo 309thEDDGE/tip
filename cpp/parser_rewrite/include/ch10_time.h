@@ -122,7 +122,7 @@ public:
 
     Args:
         data    --> pointer to a position in the binary data which points
-                    appropriately formatted time block
+                    to appropriately formatted time block
         time_ns --> Output time stamp in nanosecond units
     */
     void ParseIEEE1588Time(const uint8_t*& data, uint64_t& time_ns);
@@ -135,7 +135,7 @@ public:
 
     Args:
         data    --> pointer to a position in the binary data which points
-                    appropriately formatted time block
+                    to appropriately formatted time block
         time_ns --> Output time stamp in nanosecond units
     */
     void ParseERTCTime(const uint8_t*& data, uint64_t& time_ns);
@@ -147,11 +147,41 @@ public:
 
     Args:
         data    --> pointer to a position in the binary data which points
-                    appropriately formatted time block
+                    to appropriately formatted time block
         time_ns --> Output time stamp in nanosecond units
     */
     void ParseRTCTime(const uint8_t*& data, uint64_t& time_ns);
 
+    /*
+    Parse an Intra-Packet Time Stamp (IPTS). Decide if IPTS is
+    RTC type or secondary header type and parse appropriately. 
+    Return relative time via time_ns variable that is passed
+    by reference. 
+
+    Note: It is currently uknown if secondary header-type time
+    stamps are all relative, mixed relative and absolute, or
+    all absolute. If the secondary header type indicated by
+    intrapkt_ts_src and time_fmt is an absolute type, the 
+    time_ns returned value will have to be handled differently
+    than relative types.
+
+    Args:
+         data               --> Pointer to a position in the binary 
+                                data which points to appropriately formatted 
+                                time block. This pointer is advanced to the
+                                byte immediately following the time bytes.
+         time_ns            --> Output time stamp in nanosecond units
+         intrapkt_ts_src    --> Value from ch10 packet header, parsed into
+                                Ch10PacketHeaderFmt::intrapkt_ts_source. 
+                                Indicates 0 if RTC time and 1 for secondary
+                                header type time format.
+        time_fmt            --> Value from ch10 packet header, parsed into
+                                Ch10PacketHeaderFmt::time_format. Enum which
+                                indicates the secondary header time type.
+
+    Return:
+        Ch10Status
+    */
     Ch10Status ParseIPTS(const uint8_t*& data, uint64_t& time_ns,
         uint8_t intrapkt_ts_src, uint8_t time_fmt);
 };

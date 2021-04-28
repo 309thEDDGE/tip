@@ -28,6 +28,7 @@ private:
 	Ch10PacketElement<MilStd1553F1DataHeaderFmt> milstd1553f1_data_hdr_elem_;
 
 	ElemPtrVec milstd1553f1_csdw_elem_vec_;
+	ElemPtrVec milstd1553f1_ip_data_hdr_elem_vec_;
 	ElemPtrVec milstd1553f1_rtctime_data_hdr_elem_vec_;
 
 	const MilStd1553F1DataHeaderCommWordFmt* milstd1553f1_data_hdr_commword_ptr_;
@@ -39,6 +40,9 @@ private:
 	// Hold absolute time of current message in units of nanoseconds
 	// since the epoch.
 	uint64_t abs_time_; 
+
+	// Relative time obtained from IPTS, nanosecond units
+	uint64_t ipts_rel_time_;
 
 	//
 	// Vars for parsing the 1553 message payloads
@@ -74,6 +78,8 @@ private:
 	// indicates a 32-word payload.
 	int8_t expected_payload_word_count_;
 
+	Ch10Time ch10_time_;
+
 public:
 
 	const uint32_t& abs_time;
@@ -92,6 +98,8 @@ public:
 		milstd1553f1_rtctime_data_hdr_elem_vec_{
 			dynamic_cast<Ch10PacketElementBase*>(&milstd1553f1_rtctime_elem_),
 			dynamic_cast<Ch10PacketElementBase*>(&milstd1553f1_data_hdr_elem_) },
+		milstd1553f1_ip_data_hdr_elem_vec_{ 
+			dynamic_cast<Ch10PacketElementBase*>(&milstd1553f1_data_hdr_elem_) },
 		milstd1553f1_csdw_elem(milstd1553f1_csdw_elem_),
 		milstd1553f1_rtctime_elem(milstd1553f1_rtctime_elem_),
 		milstd1553f1_data_hdr_elem(milstd1553f1_data_hdr_elem_),
@@ -102,7 +110,7 @@ public:
 		calc_payload_word_count(calc_payload_word_count_),
 		is_payload_incomplete(is_payload_incomplete_), abs_time(abs_time_),
 		milstd1553f1_data_hdr_commword_ptr_(nullptr),
-		payload_ptr_ptr(&payload_ptr_)
+		payload_ptr_ptr(&payload_ptr_), ch10_time_(), ipts_rel_time_(0)
 	{	}
 	Ch10Status Parse(const uint8_t*& data) override;
 
@@ -124,6 +132,25 @@ public:
 		Status of parsing
 	*/
 	Ch10Status ParseRTCTimeMessages(const uint32_t& msg_count, const uint8_t*& data);
+
+	/*
+	Parse all of the messages in the body of the 1553 packet that
+	follows the CSDW. Each message is composed of an intra-packet time
+	stamp and a header, followed by n bytes of message payload. This
+	function parses intra-packet matter and the message payload for
+	all messages in the case of RTC format intra-packet time stamps.
+	It also sets the private member var abs_time_.
+
+	Args:
+		msg_count	--> count of messages, each with time and header,
+						in the packet
+		data		--> pointer to the first byte in the series of
+						messages
+
+	Return:
+		Status of parsing
+	*/
+	Ch10Status ParseMessages(const uint32_t& msg_count, const uint8_t*& data);
 
 	Ch10Status ParsePayload(const uint8_t*& data,
 		const MilStd1553F1DataHeaderCommWordFmt* data_header);

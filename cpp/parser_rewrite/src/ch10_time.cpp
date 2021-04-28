@@ -34,6 +34,7 @@ Ch10Status Ch10Time::ParseSecondaryHeaderTime(const uint8_t*& data, uint8_t time
     }
     default:
     {
+        time_ns = 0;
         SPDLOG_ERROR("Invalid time_format = {:d}", time_format);
         return Ch10Status::INVALID_SECONDARY_HDR_FMT;
         break;
@@ -78,4 +79,26 @@ void Ch10Time::ParseRTCTime(const uint8_t*& data, uint64_t& time_ns)
 {
     rtc_time_ptr_ = (const Ch10RTCTimeStampFmt*)data;
     time_ns = ((uint64_t(rtc_time_ptr_->ts2_) << 32) + uint64_t(rtc_time_ptr_->ts1_))* rtc_to_ns_;
+}
+
+Ch10Status Ch10Time::ParseIPTS(const uint8_t*& data, uint64_t& time_ns,
+    uint8_t intrapkt_ts_src, uint8_t time_fmt)
+{
+    if (intrapkt_ts_src == 0)
+    {
+        ParseRTCTime(data, time_ns);
+        data += time_data_size_;
+    }
+    else if (intrapkt_ts_src == 1)
+    {
+        return ParseSecondaryHeaderTime(data, time_fmt, time_ns);
+    }
+    else
+    {
+        time_ns = 0;
+        SPDLOG_WARN("Invalid intrapkt_ts_src = {:d}", intrapkt_ts_src);
+        return Ch10Status::INVALID_INTRAPKT_TS_SRC;
+    }
+
+    return Ch10Status::OK;
 }

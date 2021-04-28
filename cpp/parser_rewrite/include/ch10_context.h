@@ -54,6 +54,9 @@ private:
 	uint32_t pkt_size_;
 	uint32_t data_size_;
 
+	// Temporary abs time for return by ref
+	uint64_t temp_abs_time_;
+
 	// Temporary RTC time in nanosecond
 	uint64_t temp_rtc_;
 	
@@ -243,7 +246,7 @@ public:
 	Return:
 		Absolute time in nanoseconds since the epoch
 	*/
-	uint64_t CalculateAbsTimeFromRTCFormat(const uint64_t& current_rtc);
+	uint64_t& CalculateAbsTimeFromRTCFormat(const uint64_t& current_rtc);
 
 	/*
 	Calculate this packet's absolute time
@@ -251,23 +254,26 @@ public:
 	Return:
 		Absolute time this packet was received in nanoseconds since the epoch
 	*/
-	uint64_t GetPacketAbsoluteTime();
+	uint64_t& GetPacketAbsoluteTime();
 
 	/*
-	Calculate and return the absolute time of an intra-packet time stamp (IPTS).
-	Determine if the data to be parsed is RTC format or other and parse,
-	calculate, then return absolute time.
+	Calculate and return the absolute time of an intra-packet time stamp (IPTS)
+	using the input time. 
+
+	The only validated form of time is the non-secondary header time RTC-type
+	IPTS. In this case we know it is relative time and therefore the time data
+	packet relative time and absolute time are used to calculate the absolute
+	time. There may need to be additional logic for the various secondary
+	header types.
 
 	Args:
-		data	--> pointer to a position in the binary data which is currently
-					expected to contain IPTS data
-		abs_time--> input variable which is set to the calculated absolute time
-		            value in units of nanosecond since the epoch
+		ipts_time--> input variable which is set to the calculated absolute time
+   		             value in units of nanosecond since the epoch
 
-	Return:
-		A Ch10Status value
+	Return: 
+		Absolute time in units of nanoseconds since the epoch
 	*/
-	Ch10Status CalculateIPTSAbsTime(const uint8_t*& data, uint64_t& abs_time);
+	uint64_t& CalculateIPTSAbsTime(const uint64_t& ipts_time);
 	
 	/*
 	Update maps of channel ID to remote addresses 1 and 2 as obtained from

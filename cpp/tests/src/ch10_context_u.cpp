@@ -288,7 +288,8 @@ TEST(Ch10ContextTest, GetPacketAbsoluteTime)
 	hdr_fmt.data_size = 3399;
 	hdr_fmt.rtc1 = tdp_rtc1;
 	hdr_fmt.rtc2 = tdp_rtc2;
-	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
+	uint64_t rtc_to_ns = 100;
+	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * rtc_to_ns;
 	hdr_fmt.intrapkt_ts_source = 0;
 	hdr_fmt.time_format = 1;
 	uint8_t tdp_doy = 1;
@@ -301,14 +302,52 @@ TEST(Ch10ContextTest, GetPacketAbsoluteTime)
 
 	// Update context as if with a following non-TDP packet
 	hdr_fmt.rtc1 += 20;
-	rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
+	rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * rtc_to_ns;
 	status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
 
-	uint64_t rtc_to_ns = 100;
+	
 	uint64_t expected_time = tdp_abs_time + 20 * rtc_to_ns;
 	uint64_t packet_time = ctx.GetPacketAbsoluteTime();
 	ASSERT_EQ(expected_time, packet_time);
 }
+
+TEST(Ch10ContextTest, CalculateIPTSAbsTimeRTCSource)
+{
+	Ch10Context ctx(0);
+	Ch10PacketHeaderFmt hdr_fmt;
+	uint64_t tdp_abs_time = 1000000;
+	uint64_t tdp_rtc1 = 1;
+	uint64_t tdp_rtc2 = 2;
+	uint64_t abs_pos = 0;
+	hdr_fmt.pkt_size = 4320;
+	hdr_fmt.data_size = 3399;
+	hdr_fmt.rtc1 = tdp_rtc1;
+	hdr_fmt.rtc2 = tdp_rtc2;
+	uint64_t rtc_to_ns = 100;
+	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * rtc_to_ns;
+	hdr_fmt.intrapkt_ts_source = 0;
+	uint8_t tdp_doy = 1;
+
+	// Update Context to assign rtc value internally
+	bool tdp_valid = true;
+	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+	EXPECT_EQ(status, Ch10Status::OK);
+	ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+
+	// Update context as if with a following non-TDP packet
+	hdr_fmt.rtc1 += 20;
+	rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * rtc_to_ns;
+	status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+
+	uint64_t expected_time = tdp_abs_time + 20 * rtc_to_ns;
+	uint64_t packet_time = ctx.CalculateIPTSAbsTime(rtc);
+	ASSERT_EQ(expected_time, packet_time);
+}
+
+// Needs tests for CalculateIPTSAbsTime for secondary header time
+// sources. Exactly how to calculate abs time from these sources has
+// not been determined, mostly due to lack of knowledge 
+// regarding relative or absolute nature of these sources.
 
 TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsRTtoRT)
 {

@@ -16,7 +16,7 @@ protected:
 	const uint8_t* data_ptr_;
 
 	Ch10TimeTest() : time_(), ns_time_(0), expected_ns_time_(0), time_format_(0),
-		time_data_(8), data_ptr_(time_data_.data())
+		time_data_({ 123, 31, 72, 192, 201, 17, 99, 56 }), data_ptr_(time_data_.data())
 	{ }
 };
 
@@ -55,6 +55,39 @@ TEST_F(Ch10TimeTest, ParseSecondaryHeaderTimeAdvancesPointer)
 	const uint8_t* temp_ptr_ = data_ptr_;
 	status_ = time_.ParseSecondaryHeaderTime(data_ptr_, time_format_, ns_time_);
 	EXPECT_EQ(temp_ptr_ + 8, data_ptr_);
+}
+
+TEST_F(Ch10TimeTest, ParseSecondaryHeaderTimeCorrectFormat)
+{
+	const uint8_t* temp_ptr_ = data_ptr_;
+
+	// binary weighted time
+	time_format_ = 0;
+	status_ = time_.ParseSecondaryHeaderTime(temp_ptr_, time_format_, ns_time_);
+	EXPECT_EQ(status_, Ch10Status::OK);
+
+	// subract 8 because temp_ptr_ is advanced by ParseSecondaryHeaderTime
+	temp_ptr_ -= 8;
+	time_.ParseBinaryWeightedTime(temp_ptr_, expected_ns_time_);
+	EXPECT_EQ(expected_ns_time_, ns_time_);
+
+	// IEEE 1588 time
+	temp_ptr_ = data_ptr_;
+	time_format_ = 1;
+	status_ = time_.ParseSecondaryHeaderTime(temp_ptr_, time_format_, ns_time_);
+	EXPECT_EQ(status_, Ch10Status::OK);
+	temp_ptr_ -= 8;
+	time_.ParseIEEE1588Time(temp_ptr_, expected_ns_time_);
+	EXPECT_EQ(expected_ns_time_, ns_time_);
+
+	// ERTC time
+	temp_ptr_ = data_ptr_;
+	time_format_ = 2;
+	status_ = time_.ParseSecondaryHeaderTime(temp_ptr_, time_format_, ns_time_);
+	EXPECT_EQ(status_, Ch10Status::OK);
+	temp_ptr_ -= 8;
+	time_.ParseERTCTime(temp_ptr_, expected_ns_time_);
+	EXPECT_EQ(expected_ns_time_, ns_time_);
 }
 
 TEST_F(Ch10TimeTest, ParseBinaryWeightedTime)
@@ -111,4 +144,40 @@ TEST_F(Ch10TimeTest, ParseRTCTime)
 	expected_ns_time_ = ((uint64_t(rtc_data->ts2_) << 32) + uint64_t(rtc_data->ts1_)) * 100;
 	time_.ParseRTCTime(data_ptr_, ns_time_);
 	EXPECT_EQ(expected_ns_time_, ns_time_);
+}
+
+TEST_F(Ch10TimeTest, ParseIPTSRTCSource)
+{
+	const uint8_t* temp_ptr_ = data_ptr_;
+	uint8_t intrapkt_src = 0;
+	uint8_t time_fmt = 0;
+	status_ = time_.ParseIPTS(temp_ptr_, ns_time_, intrapkt_src, time_fmt);
+	EXPECT_EQ(status_, Ch10Status::OK);
+	EXPECT_EQ(data_ptr_ + 8, temp_ptr_);
+
+	temp_ptr_ -= 8;
+	time_.ParseRTCTime(temp_ptr_, expected_ns_time_);
+	EXPECT_EQ(expected_ns_time_, ns_time_);
+}
+
+TEST_F(Ch10TimeTest, ParseIPTSSecondaryHeaderSource)
+{
+	const uint8_t* temp_ptr_ = data_ptr_;
+	uint8_t intrapkt_src = 1;
+	uint8_t time_fmt = 1; // IEEE 1588 format
+	status_ = time_.ParseIPTS(temp_ptr_, ns_time_, intrapkt_src, time_fmt);
+	EXPECT_EQ(status_, Ch10Status::OK);
+	EXPECT_EQ(data_ptr_ + 8, temp_ptr_);
+
+	temp_ptr_ -= 8;
+	time_.ParseIEEE1588Time(temp_ptr_, expected_ns_time_);
+	EXPECT_EQ(expected_ns_time_, ns_time_);
+}
+
+TEST_F(Ch10TimeTest, ParseIPTSInvalidSource)
+{
+	uint8_t intrapkt_src = 3; // not allowed > 2
+	uint8_t time_fmt = 1; // IEEE 1588 format
+	status_ = time_.ParseIPTS(data_ptr_, ns_time_, intrapkt_src, time_fmt);
+	EXPECT_EQ(status_, Ch10Status::INVALID_INTRAPKT_TS_SRC);
 }
