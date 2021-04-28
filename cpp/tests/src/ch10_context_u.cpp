@@ -149,16 +149,38 @@ TEST(Ch10ContextTest, UpdateContextSetVars)
 	hdr_fmt.data_type = static_cast<uint8_t>(Ch10PacketType::MILSTD1553_F1);
 	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
 	hdr_fmt.intrapkt_ts_source = 0;
-	hdr_fmt.time_format = 1;
+	hdr_fmt.secondary_hdr = 0;
+	hdr_fmt.time_format = 0;
 
-	ctx.UpdateContext(abs_pos, &hdr_fmt);
+	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+	EXPECT_EQ(status, Ch10Status::OK);
 	EXPECT_EQ(abs_pos, ctx.absolute_position);
 	EXPECT_EQ(hdr_fmt.pkt_size, ctx.pkt_size);
 	EXPECT_EQ(hdr_fmt.data_size, ctx.data_size);
 	EXPECT_EQ(rtc, ctx.rtc);
 	EXPECT_EQ(hdr_fmt.intrapkt_ts_source, ctx.intrapkt_ts_src);
 	EXPECT_EQ(hdr_fmt.time_format, ctx.time_format);
+	EXPECT_EQ(hdr_fmt.secondary_hdr, ctx.secondary_hdr);
 	EXPECT_TRUE(ctx.chanid_remoteaddr1_map.count(hdr_fmt.chanID) == 1);
+}
+
+TEST(Ch10ContextTest, UpdateContextInconclusiveTimeFormat)
+{
+	Ch10Context ctx(0);
+	Ch10PacketHeaderFmt hdr_fmt;
+	uint64_t abs_pos = 344199919;
+	uint64_t rtc = 0;
+	hdr_fmt.intrapkt_ts_source = 0;
+	hdr_fmt.secondary_hdr = 1;
+	hdr_fmt.time_format = 1;
+
+	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+	EXPECT_EQ(status, Ch10Status::TIME_FORMAT_INCONCLUSIVE);
+
+	hdr_fmt.intrapkt_ts_source = 1;
+	hdr_fmt.secondary_hdr = 0;
+	status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+	EXPECT_EQ(status, Ch10Status::TIME_FORMAT_INCONCLUSIVE);
 }
 
 TEST(Ch10ContextTest, UpdateWithTDPDataTDPIsNone)
@@ -173,11 +195,13 @@ TEST(Ch10ContextTest, UpdateWithTDPDataTDPIsNone)
 	hdr_fmt.rtc2 = 502976;
 	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
 	hdr_fmt.intrapkt_ts_source = 0;
+	hdr_fmt.secondary_hdr = 0;
 	hdr_fmt.time_format = 1;
 	uint8_t tdp_doy = 1;
 
 	// Update Context to assign rtc value internally
-	ctx.UpdateContext(abs_pos, &hdr_fmt);
+	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+	EXPECT_EQ(status, Ch10Status::OK);
 	
 	// Update with TDP, but set tdp_valid bool to false = invalid.
 	bool tdp_valid = false;
@@ -203,11 +227,13 @@ TEST(Ch10ContextTest, UpdateWithTDPDataVarsUpdated)
 	hdr_fmt.rtc2 = 502976;
 	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
 	hdr_fmt.intrapkt_ts_source = 0;
-	hdr_fmt.time_format = 1;
+	hdr_fmt.secondary_hdr = 0;
+	hdr_fmt.time_format = 0;
 	uint8_t tdp_doy = 1;
 
 	// Update Context to assign rtc value internally
-	ctx.UpdateContext(abs_pos, &hdr_fmt);
+	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+	EXPECT_EQ(status, Ch10Status::OK);
 
 	// Update with TDP valid
 	bool tdp_valid = true;
@@ -233,7 +259,8 @@ TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
 	hdr_fmt.rtc2 = 502976;
 	uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
 	uint64_t abs_pos = 4823829394;
-	ctx.UpdateContext(abs_pos, &hdr_fmt);
+	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+	EXPECT_EQ(status, Ch10Status::OK);
 
 	// Update context with TDP-specific data.
 	uint64_t tdp_abs_time = 344199919;
@@ -245,8 +272,7 @@ TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
 	uint64_t current_rtc2 = 502999;
 	uint64_t current_rtc = ((uint64_t(current_rtc2) << 32) + uint64_t(current_rtc1)) * 100;
 	uint64_t expected_abs_time = tdp_abs_time + (current_rtc - rtc);
-	uint64_t calculated_abs_time = ctx.CalculateAbsTimeFromRTCFormat(current_rtc1,
-		current_rtc2);
+	uint64_t calculated_abs_time = ctx.CalculateAbsTimeFromRTCFormat(current_rtc);
 	ASSERT_EQ(calculated_abs_time, expected_abs_time);
 }
 
@@ -269,12 +295,14 @@ TEST(Ch10ContextTest, GetPacketAbsoluteTime)
 
 	// Update Context to assign rtc value internally
 	bool tdp_valid = true;
-	ctx.UpdateContext(abs_pos, &hdr_fmt);
+	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+	EXPECT_EQ(status, Ch10Status::OK);
 	ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
 
 	// Update context as if with a following non-TDP packet
 	hdr_fmt.rtc1 += 20;
-	ctx.UpdateContext(abs_pos, &hdr_fmt);
+	rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
+	status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
 
 	uint64_t rtc_to_ns = 100;
 	uint64_t expected_time = tdp_abs_time + 20 * rtc_to_ns;
@@ -292,7 +320,9 @@ TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsRTtoRT)
 	Ch10PacketHeaderFmt hdr_fmt;
 	hdr_fmt.chanID = 4;
 	uint64_t abs_pos = 4823829394;
-	ctx.UpdateContext(abs_pos, &hdr_fmt);
+	uint64_t rtc = 0;
+	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+	EXPECT_EQ(status, Ch10Status::OK);
 
 	// Update the maps. If RTtoRT (RR) is 1, then both addr maps 1 and 2 
 	// will be updated.
@@ -334,7 +364,8 @@ TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsNotRTtoRT)
 	hdr_fmt.chanID = 4;
 	hdr_fmt.data_type = static_cast<uint8_t>(Ch10PacketType::MILSTD1553_F1);
 	uint64_t abs_pos = 4823829394;
-	ctx.UpdateContext(abs_pos, &hdr_fmt);
+	uint64_t rtc = 0;
+	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
 
 	// Update the maps. If RTtoRT is 1, then both addr maps 1 and 2 
 	// will be updated.
@@ -477,10 +508,12 @@ TEST(Ch10ContextTest, RecordMinVideoTimeStampChannelIDNotPresent)
 	Ch10PacketHeaderFmt hdr_fmt;
 	hdr_fmt.chanID = 9;
 	uint64_t abs_pos = 0;
+	uint64_t rtc = 0;
 
 	// For this test, we're only concerned with setting a specific channel ID.
 	// None of the other parameters in the Ch10PacketHeaderFmt are used.
-	ctx.UpdateContext(abs_pos, &hdr_fmt);
+	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+	EXPECT_EQ(status, Ch10Status::OK);
 
 	uint64_t ts = 3939292991;
 
@@ -496,10 +529,12 @@ TEST(Ch10ContextTest, RecordMinVideoTimeStampLessThan)
 	Ch10PacketHeaderFmt hdr_fmt;
 	hdr_fmt.chanID = 9;
 	uint64_t abs_pos = 0;
+	uint64_t rtc = 0;
 
 	// For this test, we're only concerned with setting a specific channel ID.
 	// None of the other parameters in the Ch10PacketHeaderFmt are used.
-	ctx.UpdateContext(abs_pos, &hdr_fmt);
+	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+	EXPECT_EQ(status, Ch10Status::OK);
 
 	uint64_t ts = 3939292991;
 	ctx.RecordMinVideoTimeStamp(ts);
@@ -515,10 +550,11 @@ TEST(Ch10ContextTest, RecordMinVideoTimeStampGreaterThan)
 	Ch10PacketHeaderFmt hdr_fmt;
 	hdr_fmt.chanID = 9;
 	uint64_t abs_pos = 0;
+	uint64_t rtc = 0;
 
 	// For this test, we're only concerned with setting a specific channel ID.
 	// None of the other parameters in the Ch10PacketHeaderFmt are used.
-	ctx.UpdateContext(abs_pos, &hdr_fmt);
+	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
 
 	uint64_t ts1 = 3939292991;
 	ctx.RecordMinVideoTimeStamp(ts1);
@@ -527,3 +563,28 @@ TEST(Ch10ContextTest, RecordMinVideoTimeStampGreaterThan)
 	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.count(hdr_fmt.chanID), 1);
 	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.at(hdr_fmt.chanID), ts1);
 }
+
+//TEST(Ch10ContextTest, CalculateIPTSAbsTimeRTCFormatInconclusive)
+//{
+//	Ch10Context ctx(0);
+//	Ch10PacketHeaderFmt hdr_fmt;
+//	uint64_t abs_pos = 123456110;
+//	uint64_t abs_time = 0;
+//	std::vector<uint8_t> raw_data(100);
+//	const uint8_t* data_ptr = raw_data.data();
+//
+//	// Set value 0 indicating RTC time format
+//	hdr_fmt.intrapkt_ts_source = 0;
+//	hdr_fmt.time_format = 0;
+//	// Secondary header is indicated and ought not to be with RTC time format.
+//	hdr_fmt.secondary_hdr = 1;
+//
+//	// Update state with current header properties via hdr_fmt.
+//	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt);
+//  EXPECT_EQ(status, Ch10Status::OK);
+//
+//	Ch10Status stat = ctx.CalculateIPTSAbsTime(data_ptr, abs_time);
+//	EXPECT_EQ(stat, Ch10Status::TIME_FORMAT_INCONCLUSIVE);
+//
+//
+//}

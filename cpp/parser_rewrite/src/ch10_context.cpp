@@ -4,9 +4,9 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
 	absolute_position(absolute_position_),
 	tdp_rtc_(0), tdp_rtc(tdp_rtc_), tdp_abs_time_(0), tdp_abs_time(tdp_abs_time_),
 	searching_for_tdp_(false), found_tdp_(false), pkt_type_config_map(pkt_type_config_map_),
-	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), //abs_time_(0),
-	//abs_time(abs_time_), 
-	rtc_(0), rtc(rtc_), rtc_to_ns_(100), thread_id_(id), thread_id(thread_id_),
+	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), secondary_hdr_(0),
+	secondary_hdr(secondary_hdr_),
+	rtc_(0), rtc(rtc_), thread_id_(id), thread_id(thread_id_),
 	tdp_valid_(false), tdp_valid(tdp_valid_), tdp_doy_(0), tdp_doy(tdp_doy_), found_tdp(found_tdp_),
 	intrapkt_ts_src_(0), intrapkt_ts_src(intrapkt_ts_src_), time_format_(0), time_format(time_format_),
 	channel_id_(UINT32_MAX), channel_id(channel_id_), temp_rtc_(0),
@@ -23,9 +23,9 @@ Ch10Context::Ch10Context() : absolute_position_(0),
 	absolute_position(absolute_position_),
 	tdp_rtc_(0), tdp_rtc(tdp_rtc_), tdp_abs_time_(0), tdp_abs_time(tdp_abs_time_),
 	searching_for_tdp_(false), found_tdp_(false), pkt_type_config_map(pkt_type_config_map_),
-	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), //abs_time_(0),
-	//abs_time(abs_time_), 
-	rtc_(0), rtc(rtc_), rtc_to_ns_(100), thread_id_(UINT32_MAX), 
+	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), secondary_hdr_(0),
+	secondary_hdr(secondary_hdr_),
+	rtc_(0), rtc(rtc_), thread_id_(UINT32_MAX), 
 	thread_id(thread_id_),
 	tdp_valid_(false), tdp_valid(tdp_valid_), tdp_doy_(0), tdp_doy(tdp_doy_), found_tdp(found_tdp_),
 	intrapkt_ts_src_(0), intrapkt_ts_src(intrapkt_ts_src_), time_format_(0), time_format(time_format_),
@@ -89,16 +89,30 @@ Ch10Status Ch10Context::ContinueWithPacketType(uint8_t data_type)
 	return Ch10Status::PKT_TYPE_YES;
 }
 
-void Ch10Context::UpdateContext(const uint64_t& abs_pos, const Ch10PacketHeaderFmt* const hdr_fmt_ptr)
+Ch10Status Ch10Context::UpdateContext(const uint64_t& abs_pos, 
+	const Ch10PacketHeaderFmt* const hdr_fmt_ptr, const uint64_t& rtc_time)
 {
 	absolute_position_ = abs_pos;
 	pkt_size_ = hdr_fmt_ptr->pkt_size;
 	data_size_ = hdr_fmt_ptr->data_size;
 	intrapkt_ts_src_ = hdr_fmt_ptr->intrapkt_ts_source;
 	time_format_ = hdr_fmt_ptr->time_format;
+	secondary_hdr_ = hdr_fmt_ptr->secondary_hdr;
 	channel_id_ = hdr_fmt_ptr->chanID;
+	rtc_ = rtc_time;
 
-	rtc_ = ((uint64_t(hdr_fmt_ptr->rtc2) << 32) + uint64_t(hdr_fmt_ptr->rtc1)) * rtc_to_ns_;
+	// Time format is undefined or inconclusive if the intrapkt_ts_source = 0
+	// and secondary_hdr = 1 or intrapkt_ts_source = 1 and secondary_hdr = 0.
+	// It is not clear from the ch10 spec what value the time_format_ field
+	// ought to take if intrapkt_ts_source = 0 so it is not tested here.
+	if ((intrapkt_ts_src_ == 0 && secondary_hdr_ == 1) ||
+		(intrapkt_ts_src_ == 1 && secondary_hdr_ == 0))
+	{
+		SPDLOG_ERROR("({:02d}) intrapkt_ts_src_ = {:d} and secondary_hdr_ = {:d}, "
+			"secondary header and intra-packet source inconclusive",
+			thread_id, intrapkt_ts_src_, secondary_hdr_);
+		return Ch10Status::TIME_FORMAT_INCONCLUSIVE;
+	}
 
 	// If the channel ID to remote LRU address maps don't have a mapping for the
 	// current channel id, then add it, but only if the current packet type is 
@@ -115,6 +129,13 @@ void Ch10Context::UpdateContext(const uint64_t& abs_pos, const Ch10PacketHeaderF
 			chanid_commwords_map_[channel_id_] = temp_set2;
 		}
 	}
+
+	return Ch10Status::OK;
+}
+
+void Ch10Context::UpdateWithSecondaryHeaderTime(const uint64_t& time_ns)
+{
+	rtc_ = time_ns;
 }
 
 void Ch10Context::CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketType, bool>& input)
@@ -168,16 +189,25 @@ void Ch10Context::UpdateWithTDPData(const uint64_t& tdp_abs_time, uint8_t tdp_do
 	}
 }
 
-uint64_t Ch10Context::CalculateAbsTimeFromRTCFormat(const uint64_t& rtc1,
-	const uint64_t& rtc2)
+uint64_t Ch10Context::CalculateAbsTimeFromRTCFormat(const uint64_t& current_rtc)
 {
-	temp_rtc_ = ((rtc2 << 32) + rtc1) * rtc_to_ns_;
-	return tdp_abs_time_ + (temp_rtc_ - tdp_rtc_);
+	return tdp_abs_time_ + (current_rtc - tdp_rtc_);
 }
 
 uint64_t Ch10Context::GetPacketAbsoluteTime()
 {
 	return tdp_abs_time_ + (rtc - tdp_rtc_);
+}
+
+Ch10Status Ch10Context::CalculateIPTSAbsTime(const uint8_t*& data, uint64_t& abs_time)
+{
+	// Handle RTC time or other format indicated by time_format_. RTC time is indicated
+	// by intrapkt_ts_src_ = 0.
+	if (intrapkt_ts_src_ == 0)
+	{
+		
+	}
+	return Ch10Status::OK;
 }
 
 void Ch10Context::UpdateChannelIDToLRUAddressMaps(const uint32_t& chanid,

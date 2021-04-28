@@ -50,8 +50,9 @@ uint64_t Ch10VideoF0Component::ParseSubpacketTime(const uint8_t*& data, bool iph
     {
         ParseElements(time_stamp_element_vector_, data);
         time = ctx_->CalculateAbsTimeFromRTCFormat(
+            ch10_time_.CalculateRTCTimeFromComponents(
             (*time_stamp_element_.element)->ts1_, 
-            (*time_stamp_element_.element)->ts2_);
+            (*time_stamp_element_.element)->ts2_));
     }
     else
     {

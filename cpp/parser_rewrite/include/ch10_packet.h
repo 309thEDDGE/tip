@@ -3,6 +3,7 @@
 #define CH10_PACKET_H_
 
 #include "ch10_context.h"
+#include "ch10_time.h"
 #include "ch10_1553f1_component.h"
 #include "ch10_videof0_component.h"
 #include "binbuff.h"
@@ -44,6 +45,10 @@ private:
     // Track packet type if a packet is being parsed.
     Ch10PacketType pkt_type_;
 
+    // Secondary header time, relative time in nanoseconds.
+    // Note the assumption of relative time is not confirmed.
+    uint64_t secondary_hdr_time_ns_;
+
     // Various packet parser instances.
     Ch10TMATSComponent tmats_;
     std::vector<std::string>& tmats_vec_;
@@ -51,10 +56,14 @@ private:
     Ch101553F1Component milstd1553f1_component_;
     Ch10VideoF0Component videof0_component_;
 
+    Ch10Time ch10_time_;
+
+
+
 public:
     const Ch10PacketType& current_pkt_type;
     Ch10Packet(BinBuff* binbuff, Ch10Context* context, std::vector<std::string>& tmats_vec) 
-        : tmats_vec_(tmats_vec),
+        : tmats_vec_(tmats_vec), ch10_time_(), secondary_hdr_time_ns_(0),
         bb_(binbuff), ctx_(context), data_ptr_(nullptr), bb_response_(0), 
         status_(Ch10Status::OK), temp_pkt_size_(0),
         pkt_type_(Ch10PacketType::NONE), current_pkt_type(pkt_type_), header_(context), 

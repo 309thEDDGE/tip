@@ -224,6 +224,7 @@ if(parser_rewrite)
                ${parserw_inc_dir}/ch10_videof0_header_format.h
                ${parserw_inc_dir}/ch10_packet_element_base.h
                ${parserw_inc_dir}/ch10_packet_element.h
+               ${parserw_inc_dir}/ch10_time.h ${parserw_src_dir}/ch10_time.cpp
                ${parserw_inc_dir}/ch10_packet_component.h ${parserw_src_dir}/ch10_packet_component.cpp
                ${parserw_inc_dir}/ch10_packet_header_component.h ${parserw_src_dir}/ch10_packet_header_component.cpp
                ${parserw_inc_dir}/ch10_packet.h ${parserw_src_dir}/ch10_packet.cpp
@@ -380,6 +381,7 @@ if(build_tests)
                    ${test_src_dir}/ch10_tdp_component_u.cpp
                    ${test_src_dir}/ch10_1553f1_component_u.cpp
                    ${test_src_dir}/ch10_videof0_component_u.cpp
+                   ${test_src_dir}/ch10_time_u.cpp
                    )
     endif()
     add_executable(${test_exe_name}

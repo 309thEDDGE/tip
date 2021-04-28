@@ -21,31 +21,40 @@ Ch10Status Ch10PacketHeaderComponent::Parse(const uint8_t*& data)
     return Ch10Status::OK;
 }
 
-Ch10Status Ch10PacketHeaderComponent::ParseSecondaryHeader(const uint8_t*& data)
+void Ch10PacketHeaderComponent::ParseTimeStampNS(const uint8_t*& data, uint64_t& time_ns)
+{
+
+}
+
+Ch10Status Ch10PacketHeaderComponent::ParseSecondaryHeader(const uint8_t*& data, uint64_t& time_ns)
 {
     // Only parse if the secondary header option is enabled.
     if ((*std_hdr_elem_.element)->secondary_hdr == 1)
     {
-        SPDLOG_WARN("({:02d}) Secondary header parsing/utilization not implemented", ctx_->thread_id);
-        switch ((*std_hdr_elem_.element)->time_format)
+        // Parse the time portion of the secondary header only.
+        status_ = ch10_time_.ParseSecondaryHeaderTime(data,
+            (*std_hdr_elem_.element)->time_format, time_ns);
+
+        // If the status is not OK, return the failed status code.
+        if (status_ != Ch10Status::OK)
         {
-        case 0:
-        {
-            ParseElements(secondary_binwt_elems_vec_, data);
+            time_ns = 0;
+            return status_;
         }
-        case 1: 
+
+        // Calculate the secondary header checksum value. First
+        // parse the position in memory that is located immediately
+        // after the time data, which ought to be the current position of 
+        // the data pointer after the call to ParseSecondaryHeaderTime.
+        // Then verify the checksum value by passing a pointer that is 
+        // time_data_size_ bytes prior.
+        ParseElements(secondary_checksum_elems_vec_, data);
+        status_ = VerifySecondaryHeaderChecksum(data - ch10_time_.time_data_size_,
+            (*secondary_checksum_elem_.element)->checksum);
+        if (status_ != Ch10Status::CHECKSUM_TRUE)
         {
-            ParseElements(secondary_ieee_elems_vec_, data);
-        }
-        case 2:
-        {
-            ParseElements(secondary_ertc_elems_vec_, data);
-        }
-        default:
-        {
-            SPDLOG_ERROR("({:02d}) Invalid secondary header format", ctx_->thread_id);
-            return Ch10Status::INVALID_SECONDARY_HDR_FMT;
-        }
+            time_ns = 0;
+            return status_;
         }
     }
     return Ch10Status::OK;
@@ -64,6 +73,22 @@ Ch10Status Ch10PacketHeaderComponent::VerifyHeaderChecksum(const uint8_t* pkt_da
         return Ch10Status::CHECKSUM_TRUE;
 
     SPDLOG_WARN("({:02d}) Header checksum fail", ctx_->thread_id);
+    return Ch10Status::CHECKSUM_FALSE;
+}
+
+Ch10Status Ch10PacketHeaderComponent::VerifySecondaryHeaderChecksum(const uint8_t* pkt_data,
+    const uint16_t& checksum_value)
+{
+    checksum_data_ptr16_ = (const uint16_t*)pkt_data;
+    checksum_value16_ = 0;
+    for (uint8_t i = 0; i < 4; i++)
+        checksum_value16_ += checksum_data_ptr16_[i];
+
+    if (checksum_value16_ == checksum_value)
+        return Ch10Status::CHECKSUM_TRUE;
+    
+    SPDLOG_WARN("({:02d}) Secondary header checksum fail: calculated value = {:d}, "
+        "expected value = {:d}", ctx_->thread_id, checksum_value16_, checksum_value);
     return Ch10Status::CHECKSUM_FALSE;
 }
 

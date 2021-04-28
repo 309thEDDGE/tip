@@ -59,9 +59,9 @@ Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count,
 
 		// Calculate the absolute time using data that were obtained
 		// from the TDP.
-		abs_time_ = ctx_->CalculateAbsTimeFromRTCFormat(
+		/*abs_time_ = ctx_->CalculateAbsTimeFromRTCFormat(
 			(*milstd1553f1_rtctime_elem_.element)->ts1_,
-			(*milstd1553f1_rtctime_elem_.element)->ts2_);
+			(*milstd1553f1_rtctime_elem_.element)->ts2_);*/
 		//printf("abs_time_ = %llu\n", abs_time_);
 		//length = (*milstd1553f1_data_hdr_elem_.element)->length;
 		//printf("msg_index %u: length %hu, loc %llu\n", msg_index_, length);

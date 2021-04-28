@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "ch10_videof0_component.h"
-
+#include "ch10_time.h"
 
 /***** Mock Component *****/
 /***** class for inspecting class variables *****/
@@ -43,25 +43,29 @@ protected:
     Ch10PacketHeaderFmt packet_header_;
     Ch10Context context_;
     Ch10VideoF0HeaderFormat csdw_;
+    uint64_t rtc_;
+    Ch10Time ch10_time_;
 
     const uint32_t TDP_RTC1 = 3210500;
     const uint32_t TDP_RTC2 = 502976;
     const uint64_t TDP_ABSOLUTE_TIME = 344199919;
     const uint8_t TDP_DAY_OF_YEAR = 0;
 
-    Ch10VideoF0ComponentTest() : component_(&context_)
+    Ch10VideoF0ComponentTest() : component_(&context_), rtc_(0), ch10_time_()
     {
         // Set up packet as if with a TDP packet
         packet_header_.rtc1 = TDP_RTC1;
         packet_header_.rtc2 = TDP_RTC2;
-        context_.UpdateContext(0, &packet_header_);
+        context_.UpdateContext(0, &packet_header_, 
+            ch10_time_.CalculateRTCTimeFromComponents(packet_header_.rtc1, packet_header_.rtc2));
         context_.UpdateWithTDPData(TDP_ABSOLUTE_TIME, TDP_DAY_OF_YEAR, true);
 
         // Now update context as if with a new non-TDP packet
         packet_header_.rtc1 = TDP_RTC1 + 100;
         packet_header_.rtc2 = TDP_RTC2;
         packet_header_.chanID = 4;
-        context_.UpdateContext(0, &packet_header_);
+        context_.UpdateContext(0, &packet_header_,
+            ch10_time_.CalculateRTCTimeFromComponents(packet_header_.rtc1, packet_header_.rtc2));
 
         csdw_.BA = 0;
         csdw_.PL = 1;
@@ -100,7 +104,7 @@ TEST_F(Ch10VideoF0ComponentTest, ParseRejectsNonintegerSubpacketCountIPH)
 
     // Test integer (complete) packet count
     packet_header_.data_size = 5 * subpacket_size - 1;
-    context_.UpdateContext(0, &packet_header_);
+    context_.UpdateContext(0, &packet_header_, rtc_);
 
     const uint8_t* data_ptr = (uint8_t *)&csdw_;
     status = component_.Parse(data_ptr);
@@ -115,7 +119,7 @@ TEST_F(Ch10VideoF0ComponentTest, ParseRejectsNonintegerSubpacketCountNoIPH)
 
     // Test integer (complete) packet count
     packet_header_.data_size = 5 * subpacket_size - 1;
-    context_.UpdateContext(0, &packet_header_);
+    context_.UpdateContext(0, &packet_header_, rtc_);
 
     const uint8_t* data_ptr = (uint8_t *)&csdw_;
     status = component_.Parse(data_ptr);
@@ -148,7 +152,8 @@ TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketTimeIPHReturnsSubpacketTime)
     const uint8_t *data = (uint8_t *)&time_stamp;
     uint8_t *expected_ptr = (uint8_t *)(&time_stamp + 1);
 
-    uint64_t expected_time = context_.CalculateAbsTimeFromRTCFormat(time_stamp.ts1_, time_stamp.ts2_);
+    uint64_t current_rtc = ((uint64_t(time_stamp.ts2_) << 32) + uint64_t(time_stamp.ts1_)) * 100;
+    uint64_t expected_time = context_.CalculateAbsTimeFromRTCFormat(current_rtc);
 
     // Parse the time with IPH=true so that the time stamp will be used
     //    to calculate the subpacket absolute time
@@ -161,7 +166,8 @@ TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketTimeIPHReturnsSubpacketTime)
 
 TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketNoIPHSetsTimeToPacketTime)
 {
-    uint64_t packet_time = context_.CalculateAbsTimeFromRTCFormat(packet_header_.rtc1, packet_header_.rtc2);
+    uint64_t current_rtc = ((uint64_t(packet_header_.rtc2) << 32) + uint64_t(packet_header_.rtc1)) * 100;
+    uint64_t packet_time = context_.CalculateAbsTimeFromRTCFormat(current_rtc);
 
     // Call ParseSubpacket with a bogus pointer
     // It shouldn't attempt to read or increment the pointer if we pass false for IPH
@@ -176,7 +182,8 @@ TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketNoIPHSetsTimeToPacketTime)
 
 TEST_F(Ch10VideoF0ComponentTest, ParseSubpacketIPHSetsTimeToSubpacketTime)
 {
-    uint64_t packet_time = context_.CalculateAbsTimeFromRTCFormat(packet_header_.rtc1, packet_header_.rtc2);
+    uint64_t current_rtc = ((uint64_t(packet_header_.rtc2) << 32) + uint64_t(packet_header_.rtc1)) * 100;
+    uint64_t packet_time = context_.CalculateAbsTimeFromRTCFormat(current_rtc);
 
     Ch10VideoF0RTCTimeStampFmt  rtc;
     rtc.ts1_ = packet_header_.rtc1 + 1; // Increment least-significant word (first word in VideoF0 timestamp)

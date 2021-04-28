@@ -313,7 +313,7 @@ TEST_F(Ch10TDPComponentTest, ParseIRIGTime)
     hdr_fmt.intrapkt_ts_source = 0;
     hdr_fmt.time_format = 1;
 
-    ctx_.UpdateContext(abs_pos, &hdr_fmt);
+    ctx_.UpdateContext(abs_pos, &hdr_fmt, rtc);
 
     // Ch10Context::UpdateWithTDPData will be called by Parse().
 
@@ -356,7 +356,7 @@ TEST_F(Ch10TDPComponentTest, ParseNonIRIGTime)
     hdr_fmt.intrapkt_ts_source = 0;
     hdr_fmt.time_format = 1;
 
-    ctx_.UpdateContext(abs_pos, &hdr_fmt);
+    ctx_.UpdateContext(abs_pos, &hdr_fmt, rtc);
 
     // Ch10Context::UpdateWithTDPData will be called by Parse().
 

@@ -56,11 +56,6 @@ private:
 
 	// Temporary RTC time in nanosecond
 	uint64_t temp_rtc_;
-
-	// Conversion factor for relative time counter (RTC)
-	// to nanoseconds.
-	// Unit: count/ns
-	const uint64_t rtc_to_ns_;
 	
 	// Reference map for packet type on/off state.
 	// This map must include all elements of Ch10PacketType to
@@ -96,6 +91,12 @@ private:
 	// if present (indicated by Ch10PacketHeaderFmt::secondary_hdr = 1)
 	uint8_t time_format_;
 
+	// Indicates the presence of a secondary header in the ch10 packet
+	// header if value is 1, otherwise zero. If present, any intra-packet
+	// time stamps will use the secondary header time as the time source.
+	// This bit must be high if intrapkt_ts_src_ is 1.
+	uint8_t secondary_hdr_;
+
 	// Channel ID from Ch10PacketHeaderFmt (chanID), identifies data
 	// source for the contents of the packet.
 	uint32_t channel_id_;
@@ -121,6 +122,9 @@ private:
 	// and its return value was true. 
 	bool is_configured_;
 
+	// Calculate relative and absolute time.
+	//Ch10TimeComponent ch10_time_;
+
 	// 
 	// File writers are owned by Ch10Context to maintain state
 	//
@@ -141,6 +145,7 @@ public:
 	const bool& found_tdp;
 	const uint8_t& intrapkt_ts_src;
 	const uint8_t& time_format;
+	const uint8_t& secondary_hdr;
 	const uint32_t& channel_id;
 	const std::unordered_map<Ch10PacketType, bool>& pkt_type_config_map;
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr1_map;
@@ -180,9 +185,14 @@ public:
 
 		abs_pos			--> absolute byte position within the Ch10
 		hdr_fmt_ptr_	--> pointer to Ch10PacketHeaderFmt
+		rtc_time		--> current RTC time in nanosecond units
+
+	Return:
+		Ch10Status value
 
 	*/
-	void UpdateContext(const uint64_t& abs_pos, const Ch10PacketHeaderFmt* const hdr_fmt_ptr_);
+	Ch10Status UpdateContext(const uint64_t& abs_pos, 
+		const Ch10PacketHeaderFmt* const hdr_fmt_ptr_, const uint64_t& rtc_time);
 
 
 	void CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketType, bool>& input);
@@ -223,26 +233,41 @@ public:
 		bool tdp_valid);
 
 	/*
-	Calculate absolute time from RTC time format components. This context
+	Calculate absolute time from RTC time format. This context
 	must have been updated with UpdateWithTDPData prior to this call
 	in order for absolute time to be calculated correctly.
 
 	Args:
-		rtc1	--> first 32-bit component of rtc counter
-		rtc2	--> second 32-bit component of rtc counter
+		current_rtc	--> Current RTC time in nanosecond units
 
 	Return:
-		absolute time in nanoseconds since the epoch
+		Absolute time in nanoseconds since the epoch
 	*/
-	uint64_t CalculateAbsTimeFromRTCFormat(const uint64_t& rtc1, const uint64_t& rtc2);
+	uint64_t CalculateAbsTimeFromRTCFormat(const uint64_t& current_rtc);
 
 	/*
-	Caculate this packet's absolute time
+	Calculate this packet's absolute time
 	
 	Return:
-		absolute time this packet was received in nanoseconds since the epoch
+		Absolute time this packet was received in nanoseconds since the epoch
 	*/
 	uint64_t GetPacketAbsoluteTime();
+
+	/*
+	Calculate and return the absolute time of an intra-packet time stamp (IPTS).
+	Determine if the data to be parsed is RTC format or other and parse,
+	calculate, then return absolute time.
+
+	Args:
+		data	--> pointer to a position in the binary data which is currently
+					expected to contain IPTS data
+		abs_time--> input variable which is set to the calculated absolute time
+		            value in units of nanosecond since the epoch
+
+	Return:
+		A Ch10Status value
+	*/
+	Ch10Status CalculateIPTSAbsTime(const uint8_t*& data, uint64_t& abs_time);
 	
 	/*
 	Update maps of channel ID to remote addresses 1 and 2 as obtained from
@@ -313,6 +338,33 @@ public:
 					unix epoch
 	*/
 	void RecordMinVideoTimeStamp(const uint64_t& ts);
+
+	/*
+	Set the current packet secondary header time. Currently,
+	this function sets the relative time counter (rtc_) variable
+	in an assumption that the secondary header is both relative and 
+	in units of nanoseconds. This may not be true and there may be other
+	illogical conditions, such that the TDP rtc from the TDP header did
+	not have a secondary header time.
+
+	Once more is learned about the secondary header time, this function
+	may have to use the time_format_ to modify how absolute time
+	is calculated or possibly neglect use of the TDP data if the 
+	time_format_ indicates a time format which is absolute time. The two
+	primary questions that need answers before this can be done:
+
+	1) Is the current calculation of the time in nanoseconds correct
+	   in Ch10Time class
+	2) Is the time relative or absolute for the various secondary 
+	   header formats.
+
+	Note this will also impact how absolute time is calculated for
+	IPTS.
+
+	Args:
+		time_ns		--> Secondary header time, nanosecond unit
+	*/
+	void UpdateWithSecondaryHeaderTime(const uint64_t& time_ns);
 };
 
 

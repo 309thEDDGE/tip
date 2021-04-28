@@ -5,6 +5,7 @@
 #include <cstdint>
 #include "ch10_1553f1_msg_hdr_format.h"
 #include "ch10_packet_component.h"
+#include "ch10_time.h"
 
 class MilStd1553F1DataRTCTimeStampFmt
 {

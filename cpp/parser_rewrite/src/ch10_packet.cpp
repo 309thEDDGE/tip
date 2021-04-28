@@ -127,8 +127,12 @@ Ch10Status Ch10Packet::ParseHeader()
         return status_;
 
     // Configure context to prepare for use by the packet body parsers.
-    ctx_->UpdateContext(ctx_->absolute_position + temp_pkt_size_,
-        *header_.std_hdr_elem.element);
+    status_ = ctx_->UpdateContext(ctx_->absolute_position + temp_pkt_size_,
+        *header_.std_hdr_elem.element,
+        ch10_time_.CalculateRTCTimeFromComponents((*header_.std_hdr_elem.element)->rtc1,
+            (*header_.std_hdr_elem.element)->rtc2));
+    if (status_ != Ch10Status::OK)
+        return Ch10Status::PKT_TYPE_NO;
 
     // Check the data checksum now that it's known there are sufficient
     // bytes remaining to fully parse the packet. Do not proceed if the
@@ -146,10 +150,23 @@ Ch10Status Ch10Packet::ParseHeader()
 
     // Handle parsing of the secondary header. This is currently not 
     // completed. Data parsed in this step are not utilized.
-    status_ = header_.ParseSecondaryHeader(data_ptr_);
+    status_ = header_.ParseSecondaryHeader(data_ptr_, secondary_hdr_time_ns_);
     status_ = ManageSecondaryHeaderParseStatus(status_, temp_pkt_size_);
     if (status_ != Ch10Status::OK)
         return status_;
+
+    // Replace the relative time submitted in UpdateContext with the 
+    // secondary header time. This assumes that the secondary header
+    // time is relative, which may not be true. Under this assumption,
+    // absolute time determined from the TDP, relative time from the TDP
+    // packet header and the current packet header time or IPTS are used
+    // to calculate the absolute time. This calculation breaks down if
+    // the secondary header time is not relative or it is relative and the 
+    // TDP header did not have a secondary header because a difference in 
+    // time resolution will exist between the non-secondary header TDP relative
+    // time and secondary header relative time obtained in the current packet.
+    if (secondary_hdr_time_ns_ != 0)
+        ctx_->UpdateWithSecondaryHeaderTime(secondary_hdr_time_ns_);
 
     // Continue to parse depending on the context.
     return ctx_->ContinueWithPacketType((*header_.std_hdr_elem.element)->data_type);

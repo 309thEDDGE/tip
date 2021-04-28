@@ -4,6 +4,7 @@
 #include <cstdint>
 #include "ch10_packet_component.h"
 #include "ch10_videof0_header_format.h"
+#include "ch10_time.h"
 
 class Ch10VideoF0RTCTimeStampFmt
 {
@@ -23,6 +24,8 @@ private:
 
     Ch10PacketElement<video_datum[TransportStream_DATA_COUNT]> video_payload_element_;
 
+    Ch10Time ch10_time_;
+
 // Protected members are accessible to tests via inheritance
 protected:
 	std::vector<uint64_t> subpacket_absolute_times_;
@@ -33,7 +36,7 @@ public:
     const std::vector<uint64_t>& subpacket_absolute_times;
 
     Ch10VideoF0Component(Ch10Context* const context) : 
-        Ch10PacketComponent(context),
+        Ch10PacketComponent(context), ch10_time_(),
         subpacket_absolute_times_(MAX_TransportStream_UNITS),
         subpacket_absolute_times(subpacket_absolute_times_),
         csdw_element(csdw_element_),
