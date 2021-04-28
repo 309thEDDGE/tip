@@ -1,6 +1,8 @@
 #ifndef PARSEWORKER_H
 #define PARSEWORKER_H
 
+#include "ch10_milstd1553f1.h"
+
 #ifdef VIDEO_DATA
 #include "ch10_videodataf0.h"
 #endif
@@ -18,7 +20,6 @@
 #include "ch10_packet_header.h"
 #include "ch10_packet_stats.h"
 #include "ch10_tdf1.h"
-#include "ch10_milstd1553f1.h"
 #include "iterable_tools.h"
 #include "managed_path.h"
 #include "spdlog/spdlog.h"

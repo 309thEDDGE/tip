@@ -2,10 +2,9 @@
 #ifndef I106_CH10_ETHERNETF0_H
 #define I106_CH10_ETHERNETF0_H
 
-#include <sstream>
-
 // Must include parquet_ethernetf0.h prior to network_packet_parser.h
 #include "parquet_ethernetf0.h"
+#include <sstream>
 #include "network_packet_parser.h"
 extern "C" {
 #include "i106_decode_ethernet.h"
