@@ -58,8 +58,8 @@ translatable_message_definitions:           # (R)
         msb: INT                            # (R)
         lsb: INT                            # (R)
         bitcnt: INT                         # (R)
-supplemental_bus_map_command_words:         # (O) 
-  _NOT_DEFINED_:                            # (WR), alias: bus_name = name of a bus from which 1553 data were recorded
+supplemental_bus_map_command_words:         # (R) 
+  _NOT_DEFINED_OPT_:                        # (WO), alias: bus_name = name of a bus from which 1553 data were recorded
     - [INT]                                 # (R)
 ...	
 
@@ -231,7 +231,7 @@ supplemental_bus_map_command_words:         # (O)
 # Key maps to a boolean value. True indicates that the message 
 # is a mode code type 1553 message and false indicates that the
 # message is not a mode code. This boolean can be determined from
-# command word by the value of the subaddress field, which is 0 
+# the command word by the value of the subaddress field, which is 0 
 # or 31 for mode_code = true and false otherwise.
 #
 
@@ -257,7 +257,7 @@ supplemental_bus_map_command_words:         # (O)
 # data structure to identify and intepret bit-level elements, those
 # elements which are comprised of a single bit or multiple bits which
 # do not compose an integer number of 1553 payload words. A bit-level
-# element may be a the first several bits in a word, the last several
+# element may be the first several bits in a word, the last several
 # bits in a word, or some number of bits in the middle of a word or
 # span an entire word plus the first several bits of the next word.
 #
@@ -330,6 +330,9 @@ supplemental_bus_map_command_words:         # (O)
 #
 #	// 16-bit floating point value -- standard currently uknown.
 #	FLOAT16
+#
+#   // 8-bit ASCII
+#	ASCII
 #
 #	// Two or more consecutive bits to be interpreted as a twos-complement signed integer.
 #	// SIGNEDBITS or UNSIGNEDBITS schema should be used when is_bitlevel_ = true.
@@ -534,8 +537,8 @@ supplemental_bus_map_command_words:         # (O)
 # Example 2: single bit element at word 3 bit 4 has lsb = 4
 # Example 3: multiple bit element which spans multiple words 
 # has cnt = 3, msb = 15 and lsb = 2. Two bits are extracted
-# from the first word (15, 16), all 16 bits from the second word,
-# and two bits from the third word (1, 2) for a total of 
+# from the first word [15, 16], all 16 bits from the second word,
+# and two bits from the third word [1, 2] for a total of 
 # 20 bits. Bit 15 from the first word is the most significant bit,
 # the bits from the second word are in the middle, and the least 
 # signficant bit is bit 2 from the third word. 
@@ -558,7 +561,7 @@ supplemental_bus_map_command_words:         # (O)
 #
 # supplemental_bus_map_command_words
 #
-# Optional, structure included once if desired
+# Required, structure included once
 #
 # Key maps to another map, to be described below. This 
 # optional data structure can assist in automatic bus-mapping 
@@ -576,16 +579,16 @@ supplemental_bus_map_command_words:         # (O)
 #
 
 # 
-# _NOT_DEFINED_
+# _NOT_DEFINED_OPT_
 # alias: bus_name
 #
-# Required, if the supplemental_bus_map_command_words structure is 
-# utilized then at least one bus_name must be given.
+# Optional, if the user wishes the supplemental_bus_map_command_words 
+# structure to be utilized then at least one bus_name must be given.
 #
 # User-defined key, which is the name of a bus given in the 'bus' name
 # map of the 'msg_data' mapping. There may be multiple such mappings,
 # the set of which represent a unique set of bus names, where each bus
-# here that matches a bus given in the 'bus' map above must represent
+# name that matches a bus name given in the 'bus' map above must represent
 # the same actual bus. In other words, use consistent bus names between
 # this data structure and the bus names used in 'translatable_message_definitions'.
 # The user may also add bus names, and the corresponding data, which do
@@ -596,7 +599,9 @@ supplemental_bus_map_command_words:         # (O)
 # Each user-defined bus name shall map to a sequence. Each entry in the
 # sequence shall be a sequence of two integers, the transmit command 
 # word followed by the receive command word of a message that may
-# be transmitted on the bus. The message is not required to be present
+# be transmitted on the bus. If the message contains a transmit or
+# receive command word only, the other absent command word shall be 
+# represented by a zero. The message is not required to be present
 # in the data. A user may provide all transmit/receive command
 # word combinations that are possible on the bus. 
 # 
@@ -609,5 +614,10 @@ supplemental_bus_map_command_words:         # (O)
 # Additionally, there may be a bus which describes classified data. We do not
 # include the message and elements description in the unclass data translation
 # specification. If the command words are not classified, those values can
-# be included here to assist in bus mappping. 
+# be included here to assist in bus mappping.
+#
+# The best practice for this map is to include all command word pairs that
+# can possibly be transmitted on the bus and only include message information
+# in 'translatable_message_definitions' for which the user wishes to extract
+# translated, i.e., engineering units, data.
 #
