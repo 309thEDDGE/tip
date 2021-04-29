@@ -61,10 +61,10 @@ public:
     // Conversion factor for relative time counter (RTC)
     // to nanoseconds.
     // Unit: count/ns
-    const uint64_t rtc_to_ns_;
+    const uint64_t rtc_to_ns_ = 100;
 
     // Standard size in bytes of formatted time data in the Ch10
-    const size_t time_data_size_;
+    const size_t time_data_size_ = 8;
 
     Ch10Time();
 
@@ -94,7 +94,7 @@ public:
         time_ns     --> Output time stamp in nanosecond units
 
     Return:
-        Ch10Status
+        Ch10Status::OK if no problems, otherwise a different Ch10Status code.
     */
     Ch10Status ParseSecondaryHeaderTime(const uint8_t*& data, uint8_t time_format,
         uint64_t& time_ns);
@@ -180,7 +180,7 @@ public:
                                 indicates the secondary header time type.
 
     Return:
-        Ch10Status
+        Ch10Status::OK if no problems, otherwise a different Ch10Status code.
     */
     Ch10Status ParseIPTS(const uint8_t*& data, uint64_t& time_ns,
         uint8_t intrapkt_ts_src, uint8_t time_fmt);

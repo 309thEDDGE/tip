@@ -1,7 +1,7 @@
 #include "ch10_time.h"
 
 Ch10Time::Ch10Time() : 
-	rtc_to_ns_(100), temp_ns_time_(0), time_data_size_(8),
+	temp_ns_time_(0),
 	rtc_time_ptr_(nullptr), binwt_time_ptr_(nullptr), ieee_time_ptr_(nullptr), 
     ertc_time_ptr_(nullptr), high_order_ns_(0), low_order_ns_(0)
 {}

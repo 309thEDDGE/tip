@@ -602,28 +602,3 @@ TEST(Ch10ContextTest, RecordMinVideoTimeStampGreaterThan)
 	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.count(hdr_fmt.chanID), 1);
 	EXPECT_EQ(ctx.chanid_minvideotimestamp_map.at(hdr_fmt.chanID), ts1);
 }
-
-//TEST(Ch10ContextTest, CalculateIPTSAbsTimeRTCFormatInconclusive)
-//{
-//	Ch10Context ctx(0);
-//	Ch10PacketHeaderFmt hdr_fmt;
-//	uint64_t abs_pos = 123456110;
-//	uint64_t abs_time = 0;
-//	std::vector<uint8_t> raw_data(100);
-//	const uint8_t* data_ptr = raw_data.data();
-//
-//	// Set value 0 indicating RTC time format
-//	hdr_fmt.intrapkt_ts_source = 0;
-//	hdr_fmt.time_format = 0;
-//	// Secondary header is indicated and ought not to be with RTC time format.
-//	hdr_fmt.secondary_hdr = 1;
-//
-//	// Update state with current header properties via hdr_fmt.
-//	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt);
-//  EXPECT_EQ(status, Ch10Status::OK);
-//
-//	Ch10Status stat = ctx.CalculateIPTSAbsTime(data_ptr, abs_time);
-//	EXPECT_EQ(stat, Ch10Status::TIME_FORMAT_INCONCLUSIVE);
-//
-//
-//}
