@@ -5,11 +5,13 @@
 #include <climits>
 #include <string>
 #include <thread>
+#include <map>
 
 class ParserConfigParams
 {
 public:
 	// Parameters (refer to parse_conf.yaml for more detail)
+	std::map<std::string, std::string> ch10_packet_type_map_;
 	int parse_chunk_bytes_;
 	int	parse_thread_count_;
 	int	max_chunk_read_count_;
@@ -33,6 +35,7 @@ public:
 		// TMATS maximum packet size is 134.22 MB. Set the minimum chunk size
 		// to slightly bigger than the tmats packet so it doesn't span multiple
 		// workers.
+		success.insert(yr.GetParams("ch10_packet_type", ch10_packet_type_map_, true));
 		success.insert(yr.GetParams("parse_chunk_bytes", parse_chunk_bytes_, 135, 1000, true));
 		success.insert(yr.GetParams("parse_thread_count", parse_thread_count_, 1, (int)(std::thread::hardware_concurrency() * 1.5), true));
 		success.insert(yr.GetParams("max_chunk_read_count", max_chunk_read_count_, 1, INT_MAX, true));
