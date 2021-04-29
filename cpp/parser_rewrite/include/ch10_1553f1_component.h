@@ -39,8 +39,8 @@ private:
 	// since the epoch.
 	uint64_t abs_time_; 
 
-	// Relative time obtained from IPTS, nanosecond units
-	uint64_t ipts_rel_time_;
+	// Time obtained from IPTS, nanosecond units
+	uint64_t ipts_time_;
 
 	//
 	// Vars for parsing the 1553 message payloads
@@ -103,7 +103,7 @@ public:
 		calc_payload_word_count(calc_payload_word_count_),
 		is_payload_incomplete(is_payload_incomplete_), abs_time(abs_time_),
 		milstd1553f1_data_hdr_commword_ptr_(nullptr),
-		payload_ptr_ptr(&payload_ptr_), ch10_time_(), ipts_rel_time_(0)
+		payload_ptr_ptr(&payload_ptr_), ch10_time_(), ipts_time_(0)
 	{	}
 	Ch10Status Parse(const uint8_t*& data) override;
 

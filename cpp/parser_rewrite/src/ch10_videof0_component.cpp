@@ -48,7 +48,7 @@ Ch10Status Ch10VideoF0Component::ParseSubpacket(const uint8_t*& data, bool iph,
         // data pointer will updated to the position immediately following
         // the time bytes block. In the case of video data, format 0, the 
         // intra-packet header consists of only the time block.
-        status_ = ch10_time_.ParseIPTS(data, ipts_rel_time_, ctx_->intrapkt_ts_src,
+        status_ = ch10_time_.ParseIPTS(data, ipts_time_, ctx_->intrapkt_ts_src,
             ctx_->time_format);
         if (status_ != Ch10Status::OK)
             return status_;
@@ -56,11 +56,11 @@ Ch10Status Ch10VideoF0Component::ParseSubpacket(const uint8_t*& data, bool iph,
         // Calculate the absolute time using data that were obtained
         // from the IPTS and TDP data that were previously recorded in
         // the context.
-        subpacket_absolute_times_[subpacket_index] = ctx_->CalculateIPTSAbsTime(ipts_rel_time_);
+        subpacket_absolute_times_[subpacket_index] = ctx_->CalculateIPTSAbsTime(ipts_time_);
     }
     else
     {
-        subpacket_absolute_times_[subpacket_index] = ctx_->GetPacketAbsoluteTime();
+        subpacket_absolute_times_[subpacket_index] = ctx_->GetPacketAbsoluteTimeFromHeaderRTC();
     }
 
     // Parse the transport stream packet

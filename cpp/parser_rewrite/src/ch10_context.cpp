@@ -5,7 +5,7 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
 	tdp_rtc_(0), tdp_rtc(tdp_rtc_), tdp_abs_time_(0), tdp_abs_time(tdp_abs_time_),
 	searching_for_tdp_(false), found_tdp_(false), pkt_type_config_map(pkt_type_config_map_),
 	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), secondary_hdr_(0),
-	secondary_hdr(secondary_hdr_), temp_abs_time_(0),
+	secondary_hdr(secondary_hdr_), temp_abs_time_(0), packet_abs_time_(0),
 	rtc_(0), rtc(rtc_), thread_id_(id), thread_id(thread_id_),
 	tdp_valid_(false), tdp_valid(tdp_valid_), tdp_doy_(0), tdp_doy(tdp_doy_), found_tdp(found_tdp_),
 	intrapkt_ts_src_(0), intrapkt_ts_src(intrapkt_ts_src_), time_format_(0), time_format(time_format_),
@@ -24,7 +24,7 @@ Ch10Context::Ch10Context() : absolute_position_(0),
 	tdp_rtc_(0), tdp_rtc(tdp_rtc_), tdp_abs_time_(0), tdp_abs_time(tdp_abs_time_),
 	searching_for_tdp_(false), found_tdp_(false), pkt_type_config_map(pkt_type_config_map_),
 	pkt_size_(0), pkt_size(pkt_size_), data_size_(0), data_size(data_size_), secondary_hdr_(0),
-	secondary_hdr(secondary_hdr_),
+	secondary_hdr(secondary_hdr_), packet_abs_time_(0),
 	rtc_(0), rtc(rtc_), thread_id_(UINT32_MAX), 
 	thread_id(thread_id_), temp_abs_time_(0),
 	tdp_valid_(false), tdp_valid(tdp_valid_), tdp_doy_(0), tdp_doy(tdp_doy_), found_tdp(found_tdp_),
@@ -135,7 +135,7 @@ Ch10Status Ch10Context::UpdateContext(const uint64_t& abs_pos,
 
 void Ch10Context::UpdateWithSecondaryHeaderTime(const uint64_t& time_ns)
 {
-	rtc_ = time_ns;
+	packet_abs_time_ = time_ns;
 }
 
 void Ch10Context::CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketType, bool>& input)
@@ -195,7 +195,7 @@ uint64_t& Ch10Context::CalculateAbsTimeFromRTCFormat(const uint64_t& current_rtc
 	return temp_abs_time_;
 }
 
-uint64_t& Ch10Context::GetPacketAbsoluteTime()
+uint64_t& Ch10Context::GetPacketAbsoluteTimeFromHeaderRTC()
 {
 	temp_abs_time_ = tdp_abs_time_ + (rtc_ - tdp_rtc_);
 	return temp_abs_time_;
@@ -211,10 +211,11 @@ uint64_t& Ch10Context::CalculateIPTSAbsTime(const uint64_t& ipts_time)
 	}
 	else
 	{
-		SPDLOG_WARN("({:02d}) intrapkt_ts_src_ = {:d} - Assuming relative time and "
-			"using CalculateAbsTimeFromRTCFormat() to calculate IPTS absolute time",
-			thread_id, intrapkt_ts_src_);
-		return CalculateAbsTimeFromRTCFormat(ipts_time);
+		// If the time source is the packet secondary header, 
+		// the time calculated from the IPTS is already absolute time.
+		// Simply return the input time.
+		temp_abs_time_ = ipts_time;
+		return temp_abs_time_;
 	}
 }
 

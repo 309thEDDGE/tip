@@ -59,6 +59,12 @@ private:
 
 	// Temporary RTC time in nanosecond
 	uint64_t temp_rtc_;
+
+	// If a secondary header is present, then absolute time
+	// does not need to be calculated from the TDP, it is given
+	// directly from the secondary header time. This variable
+	// holds the absolute secondary header time.
+	uint64_t packet_abs_time_; // nanosecond
 	
 	// Reference map for packet type on/off state.
 	// This map must include all elements of Ch10PacketType to
@@ -249,12 +255,14 @@ public:
 	uint64_t& CalculateAbsTimeFromRTCFormat(const uint64_t& current_rtc);
 
 	/*
-	Calculate this packet's absolute time
+	Calculate this packet's absolute time using the time data packet
+	relative time counter (RTC) and absolute time, and the this packet's
+	relative time counter.
 	
 	Return:
 		Absolute time this packet was received in nanoseconds since the epoch
 	*/
-	uint64_t& GetPacketAbsoluteTime();
+	uint64_t& GetPacketAbsoluteTimeFromHeaderRTC();
 
 	/*
 	Calculate and return the absolute time of an intra-packet time stamp (IPTS)
@@ -263,8 +271,11 @@ public:
 	The only validated form of time is the non-secondary header time RTC-type
 	IPTS. In this case we know it is relative time and therefore the time data
 	packet relative time and absolute time are used to calculate the absolute
-	time. There may need to be additional logic for the various secondary
-	header types.
+	time. 
+
+	Information from the Ch10 suggest *all* non-RTC source (i.e., secondary
+	header time) time formats are absolute. In this case a calculation is 
+	not necessary.
 
 	Args:
 		ipts_time--> input variable which is set to the calculated absolute time
@@ -346,26 +357,8 @@ public:
 	void RecordMinVideoTimeStamp(const uint64_t& ts);
 
 	/*
-	Set the current packet secondary header time. Currently,
-	this function sets the relative time counter (rtc_) variable
-	in an assumption that the secondary header is both relative and 
-	in units of nanoseconds. This may not be true and there may be other
-	illogical conditions, such that the TDP rtc from the TDP header did
-	not have a secondary header time.
-
-	Once more is learned about the secondary header time, this function
-	may have to use the time_format_ to modify how absolute time
-	is calculated or possibly neglect use of the TDP data if the 
-	time_format_ indicates a time format which is absolute time. The two
-	primary questions that need answers before this can be done:
-
-	1) Is the current calculation of the time in nanoseconds correct
-	   in Ch10Time class
-	2) Is the time relative or absolute for the various secondary 
-	   header formats.
-
-	Note this will also impact how absolute time is calculated for
-	IPTS.
+	Set the current packet secondary header time, which is 
+	absolute time.
 
 	Args:
 		time_ns		--> Secondary header time, nanosecond unit

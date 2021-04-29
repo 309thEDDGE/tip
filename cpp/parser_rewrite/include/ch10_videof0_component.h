@@ -24,7 +24,7 @@ private:
     Ch10Time ch10_time_;
 
     // Temporary holder for IPTS time
-    uint64_t ipts_rel_time_;
+    uint64_t ipts_time_;
 
 // Protected members are accessible to tests via inheritance
 protected:
@@ -36,7 +36,7 @@ public:
     const std::vector<uint64_t>& subpacket_absolute_times;
 
     Ch10VideoF0Component(Ch10Context* const context) :
-        Ch10PacketComponent(context), ch10_time_(), ipts_rel_time_(0),
+        Ch10PacketComponent(context), ch10_time_(), ipts_time_(0),
         subpacket_absolute_times_(MAX_TransportStream_UNITS),
         subpacket_absolute_times(subpacket_absolute_times_),
         csdw_element(csdw_element_),

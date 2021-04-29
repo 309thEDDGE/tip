@@ -36,15 +36,14 @@ Ch10Status Ch101553F1Component::ParseMessages(const uint32_t& msg_count, const u
 		// Parse the time component of the intra-packet header. The
 		// data pointer will updated to the position immediately following
 		// the time bytes block.
-		status_ = ch10_time_.ParseIPTS(data, ipts_rel_time_, ctx_->intrapkt_ts_src,
+		status_ = ch10_time_.ParseIPTS(data, ipts_time_, ctx_->intrapkt_ts_src,
 			ctx_->time_format);
 		if (status_ != Ch10Status::OK)
 			return status_;
 
 		// Calculate the absolute time using data that were obtained
-		// from the IPTS and TDP data that were previously recorded in
-		// the context.
-		abs_time_ = ctx_->CalculateIPTSAbsTime(ipts_rel_time_);
+		// from the IPTS.
+		abs_time_ = ctx_->CalculateIPTSAbsTime(ipts_time_);
 
 		// Parse the intra-packet data header prior to each
 		// message payload. The data pointer will be updated to

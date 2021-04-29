@@ -276,7 +276,7 @@ TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
 	ASSERT_EQ(calculated_abs_time, expected_abs_time);
 }
 
-TEST(Ch10ContextTest, GetPacketAbsoluteTime)
+TEST(Ch10ContextTest, GetPacketAbsoluteTimeFromHeaderRTC)
 {
 	Ch10Context ctx(0);
 	Ch10PacketHeaderFmt hdr_fmt;
@@ -307,7 +307,7 @@ TEST(Ch10ContextTest, GetPacketAbsoluteTime)
 
 	
 	uint64_t expected_time = tdp_abs_time + 20 * rtc_to_ns;
-	uint64_t packet_time = ctx.GetPacketAbsoluteTime();
+	uint64_t packet_time = ctx.GetPacketAbsoluteTimeFromHeaderRTC();
 	ASSERT_EQ(expected_time, packet_time);
 }
 
