@@ -32,6 +32,16 @@ ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const Par
 	}
 	else
 		error_set = true;
+
+	// Convert ch10_packet_type configuration map.
+	success = ConvertCh10PacketTypeMap(config_->ch10_packet_type_map_, packet_type_config_map_);
+	if (!success)
+		error_set = true;
+	IterableTools iter_tools;
+	std::vector<std::string> config_map_columns = { "Ch10PacketType", "Enabled T/F" };
+	std::string converted_packet_type_map_stringrepr = iter_tools.PrintMapWithHeader_KeyToValue(
+		packet_type_config_map_, config_map_columns, "packet_type_config_map_");
+	spdlog::get("pm_logger")->info(converted_packet_type_map_stringrepr);
 }
 
 void ParseManager::create_output_dirs()
@@ -714,3 +724,52 @@ void ParseManager::ProcessTMATS()
 	TMATsChannelIDToSourceMap_ = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\DSI-n");
 	TMATsChannelIDToTypeMap_ = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n");
 }
+
+
+bool ParseManager::ConvertCh10PacketTypeMap(const std::map<std::string, std::string>& input_map,
+	std::map<Ch10PacketType, bool>& output_map)
+{
+	// The ch10 can't be parsed if there is no packet type configuration.
+	// If the input_map is empty, return false.
+	if (input_map.size() == 0)
+		return false;
+
+	// Define string to Ch10PacketType map
+	std::map<std::string, Ch10PacketType> conversion_map = {
+		{"MILSTD1553_FORMAT1", Ch10PacketType::MILSTD1553_F1},
+		{"VIDEO_FORMAT0", Ch10PacketType::VIDEO_DATA_F0}
+	};
+
+	ParseText pt;
+	std::string bool_string; 
+	for (std::map<std::string, std::string>::const_iterator it = input_map.cbegin();
+		it != input_map.cend(); ++it)
+	{
+		// If the name of the packet type from the conversion map is not present,
+		// clear the output map and return false.
+		if (conversion_map.count(it->first) == 0)
+		{
+			output_map.clear();
+			spdlog::get("pm_logger")->warn("ch10_packet_type configuration key {:s} not "
+				"in conversion_map", it->first);
+			return false;
+		}
+
+		// Check for valid boolean string
+		bool_string = pt.ToLower(it->second);
+		if (bool_string == "true")
+			output_map[conversion_map.at(it->first)] = true;
+		else if (bool_string == "false")
+			output_map[conversion_map.at(it->first)] = false;
+		else
+		{
+			output_map.clear();
+			spdlog::get("pm_logger")->warn("ch10_packet_type configuration boolean "
+				"string {:s} not valid, must spell \"true\" or \"false\", upper or "
+				"lower chars", it->second);
+			return false;
+		}
+	}
+	return true;
+}
+
