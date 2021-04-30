@@ -726,7 +726,7 @@ void ParseManager::ProcessTMATS()
 	TMATsChannelIDToTypeMap_ = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n");
 }
 
-
+#ifdef PARSER_REWRITE
 bool ParseManager::ConvertCh10PacketTypeMap(const std::map<std::string, std::string>& input_map,
 	std::map<Ch10PacketType, bool>& output_map)
 {
@@ -774,7 +774,6 @@ bool ParseManager::ConvertCh10PacketTypeMap(const std::map<std::string, std::str
 	return true;
 }
 
-#ifdef PARSER_REWRITE
 void ParseManager::LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map)
 {
 	// Convert the Ch10PacketType to bool --> string to bool
