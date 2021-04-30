@@ -35,6 +35,7 @@ extern "C" {
 #endif
 
 #ifdef PARSER_REWRITE
+#include "ch10_packet_type.h"
 #include "ch10_context.h"
 #include "ch10_packet.h"
 #endif
@@ -116,7 +117,8 @@ class ParseWorker
 #ifdef LIBIRIG106
 	void operator()(BinBuff& bb, bool append_mode, std::vector<std::string>& tmats_body_vec);
 #elif defined PARSER_REWRITE
-	void operator()(BinBuff& bb, bool append_mode, std::vector<std::string>& tmats_body_vec);
+	void operator()(BinBuff& bb, bool append_mode, std::vector<std::string>& tmats_body_vec,
+		std::map<Ch10PacketType, bool> ch10_packet_type_map);
 #else
 	void ParseWorker::operator()(BinBuff& bb, bool append_mode)
 #endif

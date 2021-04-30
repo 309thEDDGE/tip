@@ -72,7 +72,7 @@ void ParseWorker::append_mode_initialize(uint32_t read, uint16_t binbuff_ind,
 
 #ifdef PARSER_REWRITE
 void ParseWorker::operator()(BinBuff& bb, bool append_mode, 
-	std::vector<std::string>& tmats_body_vec)
+	std::vector<std::string>& tmats_body_vec, std::map<Ch10PacketType, bool> ch10_packet_type_map)
 {
 	if (append_mode)
 		SPDLOG_INFO("({:02d}) APPEND MODE ParseWorker now active", id);
@@ -91,11 +91,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 	if (!ctx.IsConfigured())
 	{
 		// Configure packet parsing.
-		std::map<Ch10PacketType, bool> pkt_type_conf = {
-			{Ch10PacketType::MILSTD1553_F1, true},
-			{Ch10PacketType::VIDEO_DATA_F0, true}
-		};
-		ctx.SetPacketTypeConfig(pkt_type_conf);
+		ctx.SetPacketTypeConfig(ch10_packet_type_map);
 
 		// Configure output file paths.
 		std::map<Ch10PacketType, ManagedPath> output_paths = {

@@ -37,11 +37,8 @@ ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const Par
 	success = ConvertCh10PacketTypeMap(config_->ch10_packet_type_map_, packet_type_config_map_);
 	if (!success)
 		error_set = true;
-	IterableTools iter_tools;
-	std::vector<std::string> config_map_columns = { "Ch10PacketType", "Enabled T/F" };
-	std::string converted_packet_type_map_stringrepr = iter_tools.PrintMapWithHeader_KeyToValue(
-		packet_type_config_map_, config_map_columns, "packet_type_config_map_");
-	spdlog::get("pm_logger")->info(converted_packet_type_map_stringrepr);
+	LogPacketTypeConfig(packet_type_config_map_);
+	
 }
 
 void ParseManager::create_output_dirs()
@@ -206,6 +203,7 @@ void ParseManager::start_workers()
 		"_metadata");
 
 	// Record Config options used
+	md.RecordSimpleMap(config_->ch10_packet_type_map_, "ch10_packet_type");
 	md.RecordSingleKeyValuePair("parse_chunk_bytes", config_->parse_chunk_bytes_);
 	md.RecordSingleKeyValuePair("parse_thread_count", config_->parse_thread_count_);
 	md.RecordSingleKeyValuePair("max_chunk_read_count", config_->max_chunk_read_count_);
@@ -351,7 +349,7 @@ std::streamsize ParseManager::activate_worker(uint16_t binbuff_ind, uint16_t ID,
 	// Start this instance of ParseWorker. Append mode false.
 #if defined PARSER_REWRITE
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
-		false, std::ref(tmats_body_vec_));
+		false, std::ref(tmats_body_vec_), packet_type_config_map_);
 #elif defined LIBIRIG106
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
 		false, std::ref(tmats_body_vec_));
@@ -381,7 +379,7 @@ std::streamsize ParseManager::activate_append_mode_worker(uint16_t binbuff_ind, 
 	// Start this instance of ParseWorker. Append mode true.
 #if defined PARSER_REWRITE
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
-		true, std::ref(tmats_body_vec_));
+		true, std::ref(tmats_body_vec_), packet_type_config_map_);
 #elif defined LIBIRIG106
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
 		true, std::ref(tmats_body_vec_));
@@ -771,5 +769,31 @@ bool ParseManager::ConvertCh10PacketTypeMap(const std::map<std::string, std::str
 		}
 	}
 	return true;
+}
+
+void ParseManager::LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map)
+{
+	// Convert the Ch10PacketType to bool --> string to bool
+	IterableTools iter_tools;
+	std::map<std::string, bool> str_packet_type_map;
+	for (std::map<Ch10PacketType, bool>::const_iterator it = packet_type_config_map_.cbegin();
+		it != packet_type_config_map_.cend(); ++it)
+	{
+		str_packet_type_map[ch10packettype_to_string_map.at(it->first)] = it->second;
+	}
+
+	// Get string representation of key-value pairs
+	std::string stringrepr = iter_tools.GetPrintableMapElements_KeyToBool(
+		str_packet_type_map);
+
+	// Log the map information.
+	spdlog::get("pm_logger")->info("Ch10 packet configuration:");
+	ParseText pt;
+	std::vector<std::string> splitstr = pt.Split(stringrepr, '\n');
+	for (std::vector<std::string>::const_iterator it = splitstr.cbegin();
+		it != splitstr.cend(); ++it)
+	{
+		spdlog::get("pm_logger")->info(*it);
+	}
 }
 

@@ -120,6 +120,16 @@ class ParseManager
 	bool ConvertCh10PacketTypeMap(const std::map<std::string, std::string>& input_map,
 		std::map<Ch10PacketType, bool>& output_map);
 
+	/*
+	Log the ch10_packet_type_map_. This is a convenience function to clean up
+	the clutter that this code introduces.
+
+	Args:
+		pkt_type_config_map	--> Input map of Ch10PacketType to bool that 
+								represents the enable state of ch10 packet types
+	*/
+	void LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map);
+
 };
 
 #endif
