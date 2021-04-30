@@ -33,12 +33,13 @@ ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const Par
 	else
 		error_set = true;
 
+#ifdef PARSER_REWRITE
 	// Convert ch10_packet_type configuration map.
 	success = ConvertCh10PacketTypeMap(config_->ch10_packet_type_map_, packet_type_config_map_);
 	if (!success)
 		error_set = true;
 	LogPacketTypeConfig(packet_type_config_map_);
-	
+#endif
 }
 
 void ParseManager::create_output_dirs()
@@ -203,7 +204,9 @@ void ParseManager::start_workers()
 		"_metadata");
 
 	// Record Config options used
+#ifdef PARSER_REWRITE
 	md.RecordSimpleMap(config_->ch10_packet_type_map_, "ch10_packet_type");
+#endif
 	md.RecordSingleKeyValuePair("parse_chunk_bytes", config_->parse_chunk_bytes_);
 	md.RecordSingleKeyValuePair("parse_thread_count", config_->parse_thread_count_);
 	md.RecordSingleKeyValuePair("max_chunk_read_count", config_->max_chunk_read_count_);
@@ -771,6 +774,7 @@ bool ParseManager::ConvertCh10PacketTypeMap(const std::map<std::string, std::str
 	return true;
 }
 
+#ifdef PARSER_REWRITE
 void ParseManager::LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map)
 {
 	// Convert the Ch10PacketType to bool --> string to bool
@@ -796,4 +800,4 @@ void ParseManager::LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt
 		spdlog::get("pm_logger")->info(*it);
 	}
 }
-
+#endif

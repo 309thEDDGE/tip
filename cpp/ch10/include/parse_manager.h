@@ -25,7 +25,10 @@
 #include "tmats_parser.h"
 #include "managed_path.h"
 #include "spdlog/spdlog.h"
+
+#ifdef PARSER_REWRITE
 #include "ch10_packet_type.h"
+#endif
 
 class ParseManager
 {
@@ -63,7 +66,10 @@ class ParseManager
 	bool milstd1553_msg_selection;
 	std::vector<std::string> milstd1553_sorted_msg_selection;
 	std::string chanid_to_lruaddrs_metadata_string_;
+
+#ifdef PARSER_REWRITE
 	std::map<Ch10PacketType, bool> packet_type_config_map_;
+#endif
 
 	std::streamsize activate_worker(uint16_t binbuff_ind, uint16_t ID,
 		uint64_t start_pos, uint32_t n_read);
@@ -117,8 +123,10 @@ class ParseManager
 	Return:
 		True if the conversion is successful, false otherwise.
 	*/
+#ifdef PARSER_REWRITE
 	bool ConvertCh10PacketTypeMap(const std::map<std::string, std::string>& input_map,
 		std::map<Ch10PacketType, bool>& output_map);
+#endif
 
 	/*
 	Log the ch10_packet_type_map_. This is a convenience function to clean up
@@ -128,7 +136,9 @@ class ParseManager
 		pkt_type_config_map	--> Input map of Ch10PacketType to bool that 
 								represents the enable state of ch10 packet types
 	*/
+#ifdef PARSER_REWRITE
 	void LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map);
+#endif
 
 };
 
