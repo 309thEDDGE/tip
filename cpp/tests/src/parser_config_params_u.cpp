@@ -39,6 +39,9 @@ TEST_F(ParserConfigParamsTest, NonexistantFile)
 TEST_F(ParserConfigParamsTest, ValidEntries)
 {
 	uint64_t thread_count_estimate = std::thread::hardware_concurrency();
+	file << "ch10_packet_type:\n";
+	file << "  MILSTD1553_FORMAT1: true\n";
+	file << "  VIDEO_FORMAT0: true\n";
 	file << "parse_chunk_bytes : 150\n";
 	file << "parse_thread_count : " << thread_count_estimate << "\n";
 	file << "max_chunk_read_count : 5\n";
