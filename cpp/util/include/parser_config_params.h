@@ -18,16 +18,19 @@ public:
 	int	worker_offset_wait_ms_;
 	int	worker_shift_wait_ms_;
 
-	bool Initialize(std::string file_path)
+	/*
+	Attempt to read the required parameters from the 
+	yaml object. This function is tested though the
+	Initialize function.
+
+	Args:
+		yr	--> YamlReader already initialized with yaml data
+
+	Return:
+	True if all values are read with the proper data types. False otherwise.
+	*/
+	bool ValidateConfigParams(YamlReader& yr)
 	{
-		YamlReader yr;
-
-		// If the file is bad return
-		if (!yr.LinkFile(file_path))
-		{
-			return false;
-		}
-
 		std::set<bool> success;
 
 		// Add one parameter at a time with boundary conditions if required
@@ -47,6 +50,40 @@ public:
 			return false;
 		else
 			return true;
+	}
+
+	bool Initialize(std::string file_path)
+	{
+		YamlReader yr;
+
+		// If the file is bad return
+		if (!yr.LinkFile(file_path))
+		{
+			return false;
+		}
+
+		return ValidateConfigParams(yr);
+	}
+
+	/*
+	Ingest yaml matter as a string instead of reading from a file,
+	then validate the params. An alternate to Initialize().
+
+	Args:
+		yaml_matter	--> Input string with yaml content
+
+	Return:
+		True if input string could be interpreted as yaml and 
+		the yaml content contained all of the required parameters.
+		False otherwise.
+	*/
+	bool InitializeWithConfigString(const std::string& yaml_matter)
+	{
+		YamlReader yr;
+		if (!yr.IngestYamlAsString(yaml_matter))
+			return false;
+
+		return ValidateConfigParams(yr);
 	}
 };
 

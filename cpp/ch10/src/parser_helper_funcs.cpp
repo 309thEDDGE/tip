@@ -48,7 +48,7 @@ bool ValidateConfig(ParserConfigParams& config, std::string config_path,
 		return false;
 	}
 
-	bool settings_validated = config.Initialize(conf_path.string());
+	bool settings_validated = config.InitializeWithConfigString(config_doc);
 	final_config_path = conf_path;
 	final_schema_path = schema_path;
 	return settings_validated;
