@@ -79,7 +79,7 @@ bool InitializeConfig(std::string conf_root_path, std::string schema_root_path,
 	}
 
 	// Initialize the configuration file reader and ingest the data.
-	if (!tcp.Initialize(full_config_path.string()))
+	if (!tcp.InitializeWithConfigString(config_doc))
 		return false;
 
 	return true;
