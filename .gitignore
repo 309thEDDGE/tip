@@ -58,3 +58,4 @@ tip_scripts/__pycache__
 **/dist
 **/*.egg-info
 /cpp/out/build/x64-Debug (default)
+!Sample_DTS.yaml
