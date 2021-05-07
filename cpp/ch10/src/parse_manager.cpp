@@ -7,7 +7,7 @@ ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const Par
 	input_path(fname), 
 	output_path(output_path), 
 	read_size(10000), 
-	append_read_size(10000000), 
+	append_read_size(100000000), 
 	total_size(0), 
 	total_read_pos(0),
 	n_threads(1), 

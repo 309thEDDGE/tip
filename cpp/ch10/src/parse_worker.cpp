@@ -146,8 +146,11 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 
 	// Close all file writers if append_mode is true or
 	// this is the final worker which has no append mode.
-	if(append_mode || final_worker)
+	if (append_mode || final_worker)
+	{
+		SPDLOG_DEBUG("({:02d}) Closing file writers", id);
 		ctx.CloseFileWriters();
+	}
 	
 	SPDLOG_INFO("({:02d}) End of worker's shift", id);
 	SPDLOG_DEBUG("({:02d}) End of shift, absolute position: {:d}", id, last_position);

@@ -155,6 +155,15 @@ public:
 	Ch10Status ContinueWithPacketType(uint8_t data_type);
 
 	/*
+	Advance the absolute position by advance_bytes.
+
+	Args: 
+		advance_bytes	--> Count of bytes by which to advance/increase
+							the absolute_position_
+	*/
+	void AdvanceAbsPos(uint64_t advance_bytes);
+
+	/*
 	Update the members that are of primary importance for conveyance
 	to the packet body parsers, including re-calculation of the current
 	packet absolute time based on TDP abs time, RTC, and the current packet

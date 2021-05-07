@@ -48,7 +48,7 @@ Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count,
 	const uint8_t*& data)
 {
 	// Iterate over messages
-	uint16_t length = 0;
+	//uint16_t length = 0;
 	for (msg_index_ = 0; msg_index_ < msg_count; msg_index_++)
 	{
 		// Parse the intra-packet time and header prior to each
