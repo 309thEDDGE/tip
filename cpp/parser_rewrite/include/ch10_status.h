@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <unordered_map>
+#include <string>
 
 enum class Ch10Status : uint8_t
 {

@@ -13,6 +13,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "iterable_tools.h"
+#include "parse_text.h"
 #include "parse_worker.h"
 #include "ch10.h"
 #include "ch10_milstd1553f1stats.h"
@@ -23,6 +25,10 @@
 #include "tmats_parser.h"
 #include "managed_path.h"
 #include "spdlog/spdlog.h"
+
+#ifdef PARSER_REWRITE
+#include "ch10_packet_type.h"
+#endif
 
 class ParseManager
 {
@@ -60,6 +66,10 @@ class ParseManager
 	bool milstd1553_msg_selection;
 	std::vector<std::string> milstd1553_sorted_msg_selection;
 	std::string chanid_to_lruaddrs_metadata_string_;
+
+#ifdef PARSER_REWRITE
+	std::map<Ch10PacketType, bool> packet_type_config_map_;
+#endif
 
 	std::streamsize activate_worker(uint16_t binbuff_ind, uint16_t ID,
 		uint64_t start_pos, uint32_t n_read);
@@ -100,6 +110,35 @@ class ParseManager
 	};
 	std::map<std::string, std::string> GetTMATsChannelIDToSourceMap() { return TMATsChannelIDToSourceMap_; };
 	std::map<std::string, std::string> GetTMATsChannelIDToTypeMap() { return TMATsChannelIDToTypeMap_; };
+
+	/*
+	Convert the ch10_packet_type configuration map that is read from the
+	parse_conf.yaml as a map<std::string, std::string> to a map<Ch10PacketType, bool>.
+
+	Args: 
+		input_map	--> map<string, string> of the raw ch10_packet_type data 
+						structure found in the parse_conf.yaml file
+		output_map	--> map<Ch10PacketType, bool> passed by reference
+
+	Return:
+		True if the conversion is successful, false otherwise.
+	*/
+#ifdef PARSER_REWRITE
+	bool ConvertCh10PacketTypeMap(const std::map<std::string, std::string>& input_map,
+		std::map<Ch10PacketType, bool>& output_map);
+#endif
+
+	/*
+	Log the ch10_packet_type_map_. This is a convenience function to clean up
+	the clutter that this code introduces.
+
+	Args:
+		pkt_type_config_map	--> Input map of Ch10PacketType to bool that 
+								represents the enable state of ch10 packet types
+	*/
+#ifdef PARSER_REWRITE
+	void LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map);
+#endif
 
 };
 

@@ -117,3 +117,64 @@ TEST_F(ParseManagerTest, TMATSParsed)
 	ASSERT_TRUE(map_compare(source_map_test, source_map_truth));
 	ASSERT_TRUE(map_compare(type_map_test, type_map_truth));
 }
+
+#ifdef PARSER_REWRITE
+TEST_F(ParseManagerTest, ConvertCh10PacketTypeMapEmptyMap)
+{
+	std::map<std::string, std::string> input_map;
+	std::map<Ch10PacketType, bool> output_map;
+	bool res = pm.ConvertCh10PacketTypeMap(input_map, output_map);
+	EXPECT_FALSE(res);
+}
+
+TEST_F(ParseManagerTest, ConvertCh10PacketTypeMapInvalidPacketName)
+{
+	std::map<std::string, std::string> input_map = {
+		{"MILSTD1553_FORMAT1", "true"},
+		{"VIDEO_FORMAT", "true"} // VIDEO_FORMAT0 is possible, not without trailing "0"
+	};
+	std::map<Ch10PacketType, bool> output_map;
+	bool res = pm.ConvertCh10PacketTypeMap(input_map, output_map);
+	EXPECT_FALSE(res);
+	EXPECT_EQ(output_map.size(), 0);
+}
+
+TEST_F(ParseManagerTest, ConvertCh10PacketTypeMapInvalidBooleanString)
+{
+	std::map<std::string, std::string> input_map = {
+		{"MILSTD1553_FORMAT1", "tru"}, // "tru" is not a valid boolean string
+		{"VIDEO_FORMAT0", "true"}
+	};
+	std::map<Ch10PacketType, bool> output_map;
+	bool res = pm.ConvertCh10PacketTypeMap(input_map, output_map);
+	EXPECT_FALSE(res);
+	EXPECT_EQ(output_map.size(), 0);
+}
+
+TEST_F(ParseManagerTest, ConvertCh10PacketTypeMapCorrectMapping)
+{
+	std::map<std::string, std::string> input_map = {
+		{"MILSTD1553_FORMAT1", "false"},
+		{"VIDEO_FORMAT0", "true"}
+	};
+	std::map<Ch10PacketType, bool> output_map;
+	bool res = pm.ConvertCh10PacketTypeMap(input_map, output_map);
+	EXPECT_TRUE(res);
+	EXPECT_EQ(output_map.count(Ch10PacketType::MILSTD1553_F1), 1);
+	EXPECT_EQ(output_map.count(Ch10PacketType::VIDEO_DATA_F0), 1);
+
+	EXPECT_EQ(output_map.at(Ch10PacketType::MILSTD1553_F1), false);
+	EXPECT_EQ(output_map.at(Ch10PacketType::VIDEO_DATA_F0), true);
+
+	input_map["MILSTD1553_FORMAT1"] = "True";
+	input_map["VIDEO_FORMAT0"] = "fAlse";
+	output_map.clear();
+	res = pm.ConvertCh10PacketTypeMap(input_map, output_map);
+	EXPECT_TRUE(res);
+	EXPECT_EQ(output_map.count(Ch10PacketType::MILSTD1553_F1), 1);
+	EXPECT_EQ(output_map.count(Ch10PacketType::VIDEO_DATA_F0), 1);
+
+	EXPECT_EQ(output_map.at(Ch10PacketType::MILSTD1553_F1), true);
+	EXPECT_EQ(output_map.at(Ch10PacketType::VIDEO_DATA_F0), false);
+}
+#endif

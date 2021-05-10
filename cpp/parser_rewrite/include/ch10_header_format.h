@@ -3,7 +3,7 @@
 #ifndef CH10_HEADER_FORMAT_H_
 #define CH10_HEADER_FORMAT_H_
 
-#include<cstdint>
+#include <cstdint>
 
 class Ch10PacketHeaderFmt
 {

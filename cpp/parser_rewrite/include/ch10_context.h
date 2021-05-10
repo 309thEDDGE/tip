@@ -17,6 +17,7 @@
 #include <cmath>
 #include <memory>
 #include "managed_path.h"
+#include "ch10_packet_type.h"
 #include "ch10_status.h"
 #include "ch10_header_format.h"
 #include "ch10_1553f1_msg_hdr_format.h"
@@ -24,20 +25,6 @@
 #include "ch10_videof0_header_format.h"
 
 #include "spdlog/spdlog.h"
-
-enum class Ch10PacketType : uint8_t
-{
-	/*
-	WARNING! Update CreatePacketTypeConfigReference with
-	any packet types that are added to this enum! Also update
-	relevant unit tests in ch10_context_u.cpp.
-	*/
-	NONE					   = 0xFF,
-	COMPUTER_GENERATED_DATA_F1 = 0x01,
-	TIME_DATA_F1               = 0x11,
-	MILSTD1553_F1              = 0x19,
-	VIDEO_DATA_F0              = 0x40,
-};
 
 class Ch10Context
 {
@@ -166,6 +153,15 @@ public:
 
 	void SetSearchingForTDP(bool should_search);
 	Ch10Status ContinueWithPacketType(uint8_t data_type);
+
+	/*
+	Advance the absolute position by advance_bytes.
+
+	Args: 
+		advance_bytes	--> Count of bytes by which to advance/increase
+							the absolute_position_
+	*/
+	void AdvanceAbsPos(uint64_t advance_bytes);
 
 	/*
 	Update the members that are of primary importance for conveyance
