@@ -372,7 +372,7 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 	if (isList) 
 		listCount = columnData.list_size_;
 
-	SPDLOG_DEBUG("AppendColumn(): name {:s}, datatypename {:s}", columnData.field_name_,
+	SPDLOG_TRACE("AppendColumn(): name {:s}, datatypename {:s}", columnData.field_name_,
 		columnData.type_->name());
 
 	append_row_count_ = rows;

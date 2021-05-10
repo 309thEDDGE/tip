@@ -181,11 +181,13 @@ endif()
 if(linux)
     add_definitions(-DPARQUET_STATIC
                     -DPARQUET
-                    -DARROW_STATIC)
+                    -DARROW_STATIC
+                    -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 else()
     add_compile_definitions(PARQUET_STATIC
                         PARQUET
-                        ARROW_STATIC)
+                        ARROW_STATIC
+                        SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 endif()
 
 if(video_data)

@@ -3,6 +3,7 @@
 #define CH10_1553F1_COMPONENT_H_
 
 #include <cstdint>
+#include <set>
 #include "ch10_1553f1_msg_hdr_format.h"
 #include "ch10_packet_component.h"
 #include "ch10_time.h"
@@ -22,7 +23,6 @@ to parse Ch10 "Mil-Std-1553 Bus Data Packets, Format 1".
 class Ch101553F1Component : public Ch10PacketComponent
 {
 private:
-
 	Ch10PacketElement<MilStd1553F1CSDWFmt> milstd1553f1_csdw_elem_;
 	Ch10PacketElement<MilStd1553F1DataHeaderFmt> milstd1553f1_data_hdr_elem_;
 

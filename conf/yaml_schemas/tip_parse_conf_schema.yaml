@@ -1,4 +1,7 @@
 ---
+ch10_packet_type:
+  MILSTD1553_FORMAT1: BOOL
+  VIDEO_FORMAT0: BOOL
 parse_chunk_bytes: INT
 parse_thread_count: INT
 max_chunk_read_count: INT

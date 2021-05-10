@@ -89,7 +89,12 @@ Ch10Status Ch10Context::ContinueWithPacketType(uint8_t data_type)
 	return Ch10Status::PKT_TYPE_YES;
 }
 
-Ch10Status Ch10Context::UpdateContext(const uint64_t& abs_pos, 
+void Ch10Context::AdvanceAbsPos(uint64_t advance_bytes)
+{
+	absolute_position_ += advance_bytes;
+}
+
+Ch10Status Ch10Context::UpdateContext(const uint64_t& abs_pos,
 	const Ch10PacketHeaderFmt* const hdr_fmt_ptr, const uint64_t& rtc_time)
 {
 	absolute_position_ = abs_pos;

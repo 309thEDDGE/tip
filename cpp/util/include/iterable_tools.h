@@ -295,6 +295,16 @@ public:
 	template<typename Key, typename Val>
 	std::string GetPrintableMapElements_KeyToValue(const std::map<Key, Val>& input_map);
 
+	// Formats the map elements into a string. The input map can be a key to a bool value
+	// Returns: the printable string
+	//
+	// Ex: input_map =  key:3 --> val:true
+	//                  key:4 --> val:false
+	// return value   = 3:    true
+	//                  4:    false
+	template<typename Key>
+	std::string GetPrintableMapElements_KeyToBool(const std::map<Key, bool>& input_map);
+
 	// Prints map with header. The input map can be a key to a set
 	// Returns: the printed string
 	//
@@ -327,6 +337,22 @@ public:
 	//                   4:    sorry
 	template<typename Key, typename Val>
 	std::string PrintMapWithHeader_KeyToValue(const std::map<Key, Val>& input_map, std::vector<std::string> columns, std::string map_name);
+
+	// Prints map with header. The input map can be a key to a value
+	// Returns: the printed string
+	//
+	// Ex: input_map =  key:3 --> val:true, 
+	//                  key:4 --> val:false 
+	//     columns   = {"Col1", "Col2"}
+	//     map_name  = "map name"
+	//
+	// return value  =    map name
+	//                   (Col1) | (Col2)
+	//                  ---------------------------
+	//                   3:    true
+	//                   4:    false
+	template<typename Key>
+	std::string PrintMapWithHeader_KeyToBool(const std::map<Key, bool>& input_map, std::vector<std::string> columns, std::string map_name);
 
 	// Returns a header with a title, column(s), and header bar
 	//
@@ -1133,6 +1159,20 @@ std::string IterableTools::GetPrintableMapElements_KeyToValue(const std::map<Key
 	return ss.str();
 }
 
+template<typename Key>
+std::string IterableTools::GetPrintableMapElements_KeyToBool(const std::map<Key, bool>& input_map)
+{
+	std::stringstream ss;
+	for (typename std::map<Key, bool>::const_iterator it = input_map.begin(); it != input_map.end(); it++)
+	{
+		ss << " " << it->first << ":\t";
+		ss << std::boolalpha << it->second;
+		ss << "\n";
+	}
+
+	return ss.str();
+}
+
 template<typename Key, typename Val>
 std::string IterableTools::PrintMapWithHeader_KeyToSet(const std::map<Key, std::set<Val>>& input_map, std::vector<std::string> columns, std::string map_name)
 {
@@ -1149,6 +1189,16 @@ std::string IterableTools::PrintMapWithHeader_KeyToValue(const std::map<Key, Val
 	std::stringstream ss;
 	ss << GetHeader(columns, map_name);
 	ss << GetPrintableMapElements_KeyToValue(input_map);
+	ss << GetPrintBar() << "\n\n";
+	return print(ss.str());
+}
+
+template<typename Key>
+std::string IterableTools::PrintMapWithHeader_KeyToBool(const std::map<Key, bool>& input_map, std::vector<std::string> columns, std::string map_name)
+{
+	std::stringstream ss;
+	ss << GetHeader(columns, map_name);
+	ss << GetPrintableMapElements_KeyToBool(input_map);
 	ss << GetPrintBar() << "\n\n";
 	return print(ss.str());
 }

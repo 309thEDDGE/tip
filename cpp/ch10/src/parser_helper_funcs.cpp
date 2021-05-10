@@ -48,7 +48,7 @@ bool ValidateConfig(ParserConfigParams& config, std::string config_path,
 		return false;
 	}
 
-	bool settings_validated = config.Initialize(conf_path.string());
+	bool settings_validated = config.InitializeWithConfigString(config_doc);
 	final_config_path = conf_path;
 	final_schema_path = schema_path;
 	return settings_validated;
@@ -134,6 +134,9 @@ bool SetupLogging(const ManagedPath& log_dir)
 
 	try
 	{
+		// Set global logging level
+		spdlog::set_level(spdlog::level::debug);
+
 		// Setup async thread pool.
 		spdlog::init_thread_pool(8192, 2);
 
@@ -158,6 +161,7 @@ bool SetupLogging(const ManagedPath& log_dir)
 
 		// Create and register the logger for ParseManager log and console.
 		auto pm_logger = std::make_shared<spdlog::logger>("pm_logger", pm_sinks.begin(), pm_sinks.end());
+		pm_logger->set_level(spdlog::level::debug);
 		spdlog::register_logger(pm_logger);
 
 		// Parser primary threaded file sink.
@@ -175,6 +179,7 @@ bool SetupLogging(const ManagedPath& log_dir)
 		// Create and register async parser, consoler logger
 		auto parser_logger = std::make_shared<spdlog::async_logger>("parser_logger", parser_sinks,
 			spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+		parser_logger->set_level(spdlog::level::debug);
 		spdlog::register_logger(parser_logger);
 
 		// Register as default logger to simplify calls in ParseWorker and deeper where

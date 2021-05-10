@@ -33,13 +33,18 @@ Ch10Status Ch10Packet::ManageHeaderParseStatus(const Ch10Status& status,
         if (status == Ch10Status::BAD_SYNC || status == Ch10Status::CHECKSUM_FALSE)
         {
             if (ctx_->thread_id == 0)
+            {
                 SPDLOG_DEBUG("({:02d}) status = {:s}", ctx_->thread_id,
                     Ch10StatusString(status));
+            }
             status_ = AdvanceBuffer(1);
 
             // If the buffer can't be advanced, return this status.
             if (status_ == Ch10Status::BUFFER_LIMITED)
                 return status_;
+
+            // Advance the absolute position the same amount.
+            ctx_->AdvanceAbsPos(1);
 
             // Otherwise indicate the bad sync status.
             return Ch10Status::BAD_SYNC;
@@ -58,6 +63,9 @@ Ch10Status Ch10Packet::ManageHeaderParseStatus(const Ch10Status& status,
             if (status_ == Ch10Status::BUFFER_LIMITED)
                 return status_;
 
+            // Advance the absolute position the same amount.
+            ctx_->AdvanceAbsPos(pkt_size);
+
             // Otherwise return a status indicating that the packet body should be 
             // skipped.
             return Ch10Status::PKT_TYPE_NO;
@@ -75,6 +83,9 @@ Ch10Status Ch10Packet::ManageSecondaryHeaderParseStatus(const Ch10Status& status
         // This may not be the best way to handle this situation. Amend if necessary.
         //if (status == Ch10Status::INVALID_SECONDARY_HDR_FMT)
         status_ = AdvanceBuffer(pkt_size);
+
+        // Advance the absolute position the same amount.
+        ctx_->AdvanceAbsPos(pkt_size);
 
         // If the buffer can't be advanced, return this status.
         if (status_ == Ch10Status::BUFFER_LIMITED)

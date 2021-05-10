@@ -219,6 +219,7 @@ target_compile_features(${videx_lib_name} PUBLIC cxx_std_17)
 if(parser_rewrite)
     add_library(${parserw_lib_name} STATIC
                ${parserw_inc_dir}/ch10_status.h ${parserw_src_dir}/ch10_status.cpp 
+               ${parserw_inc_dir}/ch10_packet_type.h
                ${parserw_inc_dir}/ch10_header_format.h
                ${parserw_inc_dir}/ch10_1553f1_msg_hdr_format.h
                ${parserw_inc_dir}/ch10_videof0_header_format.h

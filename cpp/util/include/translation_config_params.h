@@ -25,6 +25,59 @@ public:
 	int translate_thread_count_;
 	std::vector<std::string> bus_name_exclusions_;
 
+	/*
+	Attempt to read the required parameters from the
+	yaml object. This function is tested though the
+	Initialize function.
+
+	Args:
+		yr	--> YamlReader already initialized with yaml data
+
+	Return:
+	True if all values are read with the proper data types. False otherwise.
+	*/
+	bool ValidateConfigParams(YamlReader& yr)
+	{
+		std::set<bool> success;
+
+		// Add one parameter at a time
+		success.insert(yr.GetParams("use_tmats_busmap",
+			use_tmats_busmap_, true));
+
+		success.insert(yr.GetParams("tmats_busname_corrections",
+			tmats_busname_corrections_, true));
+
+		success.insert(yr.GetParams("select_specific_messages",
+			select_specific_messages_, true));
+
+		success.insert(yr.GetParams("exit_after_table_creation",
+			exit_after_table_creation_, true));
+
+		success.insert(yr.GetParams("stop_after_bus_map",
+			stop_after_bus_map_, true));
+
+		success.insert(yr.GetParams("vote_method_checks_tmats",
+			vote_method_checks_tmats_, true));
+
+		success.insert(yr.GetParams("vote_threshold",
+			vote_threshold_, 1, INT_MAX, true));
+
+		success.insert(yr.GetParams("bus_name_exclusions",
+			bus_name_exclusions_, true));
+
+		success.insert(yr.GetParams("prompt_user",
+			prompt_user_, true));
+
+		success.insert(yr.GetParams("translate_thread_count",
+			translate_thread_count_, 1, (int)(std::thread::hardware_concurrency() * 2), true));
+
+		// If one config option was not read correctly return false
+		if (success.find(false) != success.end())
+			return false;
+
+		return true;
+	}
+
 
 	bool Initialize(std::string file_path)
 	{
@@ -39,46 +92,30 @@ public:
 		}
 
 		// Intermediate data types
-		std::map<std::string, std::vector<int>> inter_comet_busmap_replacement;
+		//std::map<std::string, std::vector<int>> inter_comet_busmap_replacement;
 
-		std::set<bool> success;
+		return ValidateConfigParams(yr);
+	}
 
-		// Add one parameter at a time
-		success.insert(yr.GetParams("use_tmats_busmap", 
-			use_tmats_busmap_, true));
+	/*
+	Ingest yaml matter as a string instead of reading from a file,
+	then validate the params. An alternate to Initialize().
 
-		success.insert(yr.GetParams("tmats_busname_corrections", 
-			tmats_busname_corrections_, true));
+	Args:
+		yaml_matter	--> Input string with yaml content
 
-		success.insert(yr.GetParams("select_specific_messages", 
-			select_specific_messages_, true));
-
-		success.insert(yr.GetParams("exit_after_table_creation", 
-			exit_after_table_creation_, true));
-
-		success.insert(yr.GetParams("stop_after_bus_map", 
-			stop_after_bus_map_, true));
-
-		success.insert(yr.GetParams("vote_method_checks_tmats",
-			vote_method_checks_tmats_, true));
-
-		success.insert(yr.GetParams("vote_threshold",
-			vote_threshold_, 1, INT_MAX, true));
-
-		success.insert(yr.GetParams("bus_name_exclusions",
-			bus_name_exclusions_, true));
-
-		success.insert(yr.GetParams("prompt_user", 
-			prompt_user_, true));
-
-		success.insert(yr.GetParams("translate_thread_count", 
-			translate_thread_count_, 1, (int)(std::thread::hardware_concurrency() * 2), true));
-
-		// If one config option was not read correctly return false
-		if (success.find(false) != success.end())
+	Return:
+		True if input string could be interpreted as yaml and
+		the yaml content contained all of the required parameters.
+		False otherwise.
+	*/
+	bool InitializeWithConfigString(const std::string& yaml_matter)
+	{
+		YamlReader yr;
+		if (!yr.IngestYamlAsString(yaml_matter))
 			return false;
 
-		return true;
+		return ValidateConfigParams(yr);
 	}
 };
 

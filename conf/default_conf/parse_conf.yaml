@@ -5,6 +5,15 @@
 # <executable location>..\conf\translate_conf.yaml
 #
 
+#
+# ch10_packet_type
+#
+# Enable ch10 packets by setting the mapped value to 'true'. 
+# Set to 'false' to disable.
+#
+ch10_packet_type:
+  MILSTD1553_FORMAT1: true
+  VIDEO_FORMAT0: true
 
 #
 # parse_chunk_bytes
