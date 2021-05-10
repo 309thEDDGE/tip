@@ -15,9 +15,11 @@ protected:
     std::vector<uint8_t> fake_body_and_footer8_;
     std::vector<uint16_t> fake_body_and_footer16_;
     std::vector<uint32_t> fake_body_and_footer32_;
+    uint64_t time_ns_;
 
     Ch10PacketHeaderComponentTest() : data_ptr_(nullptr), orig_data_ptr_(nullptr),
-        status_(Ch10Status::NONE), body_ptr_(nullptr), ctx_(0, 0), ch10_pkt_hdr_comp_(&ctx_)
+        status_(Ch10Status::NONE), body_ptr_(nullptr), ctx_(0, 0), ch10_pkt_hdr_comp_(&ctx_),
+        time_ns_(0)
     {
         // Fill out values for fake header data.
         pkt_hdr_fmt_.sync = ch10_pkt_hdr_comp_.sync_;
@@ -41,6 +43,15 @@ protected:
     ~Ch10PacketHeaderComponentTest()
     {
         //spdlog::shutdown();
+    }
+
+    uint16_t CalculateSecondaryHeaderChecksum(const uint8_t* hdr_data)
+    {
+        uint16_t checksum = 0;
+        const uint16_t* sum_unit = (const uint16_t*)hdr_data;
+        for (uint8_t i = 0; i < 4; i++)
+            checksum += sum_unit[i];
+        return checksum;
     }
 
     uint16_t Calculate16BitChecksum()
@@ -203,8 +214,9 @@ TEST_F(Ch10PacketHeaderComponentTest, ParseSecondaryHeaderNotPresent)
     status_ = ch10_pkt_hdr_comp_.Parse(data_ptr_);
     EXPECT_EQ(status_, Ch10Status::OK);
 
-    status_ = ch10_pkt_hdr_comp_.ParseSecondaryHeader(data_ptr_);
+    status_ = ch10_pkt_hdr_comp_.ParseSecondaryHeader(data_ptr_, time_ns_);
     EXPECT_EQ(status_, Ch10Status::OK);
+    EXPECT_EQ(0, time_ns_);
 }
 
 TEST_F(Ch10PacketHeaderComponentTest, ParseSecondaryHeaderInvalidFormat)
@@ -224,8 +236,9 @@ TEST_F(Ch10PacketHeaderComponentTest, ParseSecondaryHeaderInvalidFormat)
     status_ = ch10_pkt_hdr_comp_.Parse(data_ptr_);
     EXPECT_EQ(status_, Ch10Status::OK);
 
-    status_ = ch10_pkt_hdr_comp_.ParseSecondaryHeader(data_ptr_);
+    status_ = ch10_pkt_hdr_comp_.ParseSecondaryHeader(data_ptr_, time_ns_);
     EXPECT_EQ(status_, Ch10Status::INVALID_SECONDARY_HDR_FMT);
+    EXPECT_EQ(0, time_ns_);
 }
 
 TEST_F(Ch10PacketHeaderComponentTest, VerifyHeaderChecksumTrue)
@@ -409,5 +422,14 @@ TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum32BitWithSecondaryTrue)
 
     status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
         pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
+    EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
+}
+
+TEST_F(Ch10PacketHeaderComponentTest, VerifySecondaryHeaderChecksumTrue)
+{
+    std::vector<uint8_t> header_data = { 23, 45, 67, 89, 76, 54, 32, 11 };
+    const uint8_t* header_data_ptr = (const uint8_t*)header_data.data();
+    status_ = ch10_pkt_hdr_comp_.VerifySecondaryHeaderChecksum(header_data_ptr,
+        CalculateSecondaryHeaderChecksum(header_data_ptr));
     EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
 }

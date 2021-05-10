@@ -5,30 +5,7 @@
 
 #include "ch10_header_format.h"
 #include "ch10_packet_component.h"
-
-class Ch10PacketSecondaryHeaderBinWtFmt
-{
-public:
-    uint16_t            : 16;
-    uint16_t microsec;
-    uint16_t low_order;
-    uint16_t high_order;
-
-};
-
-class Ch10PacketSecondaryHeaderIEEE1588Fmt
-{
-public:
-    uint32_t ns_word;
-    uint32_t sec_word;
-};
-
-class Ch10PacketSecondaryHeaderERTCFmt
-{
-public:
-    uint32_t lslw;
-    uint32_t mslw;
-};
+#include "ch10_time.h"
 
 class Ch10PacketSecondaryHeaderChecksum
 {
@@ -36,7 +13,6 @@ public:
     uint16_t            : 16;
     uint16_t checksum; 
 };
-
 
 /*
 Handle all parsing related to the structures or classes of bits
@@ -58,18 +34,15 @@ private:
     // the possible presence of a packet secondary header, which is indicated
     // via the secondary_hdr flag in Ch10PacketHeaderFmt.
     Ch10PacketElement<Ch10PacketHeaderFmt> std_hdr_elem_;
-    Ch10PacketElement<Ch10PacketSecondaryHeaderBinWtFmt> secondary_binwt_elem_;
-    Ch10PacketElement<Ch10PacketSecondaryHeaderIEEE1588Fmt> secondary_ieee_elem_;
-    Ch10PacketElement<Ch10PacketSecondaryHeaderERTCFmt> secondary_ertc_elem_;
     Ch10PacketElement<Ch10PacketSecondaryHeaderChecksum> secondary_checksum_elem_;
     
     // Vectors of pointers to Ch10PacketElementBase. Used to hold pointers
     // to objects derived from the base class such that multiple elements
     // can be parsed with a single call to Ch10PacketComponent::ParseElements().
     ElemPtrVec std_elems_vec_;
-    ElemPtrVec secondary_binwt_elems_vec_;
-    ElemPtrVec secondary_ieee_elems_vec_;
-    ElemPtrVec secondary_ertc_elems_vec_;
+    ElemPtrVec secondary_checksum_elems_vec_;
+
+    Ch10Time ch10_time_;
 
     //
     // Vars for checksum calculation.
@@ -96,39 +69,69 @@ public:
 
     // Publically available parsed data.
     const Ch10PacketElement<Ch10PacketHeaderFmt>& std_hdr_elem;
-    const Ch10PacketElement<Ch10PacketSecondaryHeaderBinWtFmt>& secondary_binwt_elem;
-    const Ch10PacketElement<Ch10PacketSecondaryHeaderIEEE1588Fmt>& secondary_ieee_elem;
-    const Ch10PacketElement<Ch10PacketSecondaryHeaderERTCFmt>& secondary_ertc_elem;
     const Ch10PacketElement<Ch10PacketSecondaryHeaderChecksum>& secondary_checksum_elem;
     
     const uint64_t std_hdr_size_;
     const uint64_t secondary_hdr_size_;
     Ch10PacketHeaderComponent(Ch10Context* const ch10ctx) : Ch10PacketComponent(ch10ctx),
-        std_hdr_elem_(), secondary_binwt_elem_(), secondary_ieee_elem_(),
-        secondary_ertc_elem_(), secondary_checksum_elem_(),
-        std_hdr_elem(std_hdr_elem_), secondary_binwt_elem(secondary_binwt_elem_),
-        secondary_ieee_elem(secondary_ieee_elem_), 
-        secondary_ertc_elem(secondary_ertc_elem_), 
+        std_hdr_elem_(), secondary_checksum_elem_(), ch10_time_(),
+        std_hdr_elem(std_hdr_elem_),
         secondary_checksum_elem(secondary_checksum_elem_),
         std_elems_vec_{dynamic_cast<Ch10PacketElementBase*>(&std_hdr_elem_)},
-        secondary_binwt_elems_vec_{dynamic_cast<Ch10PacketElementBase*>(&secondary_binwt_elem_),
-                                   dynamic_cast<Ch10PacketElementBase*>(&secondary_checksum_elem_)},
-        secondary_ieee_elems_vec_{dynamic_cast<Ch10PacketElementBase*>(&secondary_ieee_elem_),
-                                  dynamic_cast<Ch10PacketElementBase*>(&secondary_checksum_elem_)},
-        secondary_ertc_elems_vec_{dynamic_cast<Ch10PacketElementBase*>(&secondary_ertc_elem_),
-                                  dynamic_cast<Ch10PacketElementBase*>(&secondary_checksum_elem_)},
+        secondary_checksum_elems_vec_{dynamic_cast<Ch10PacketElementBase*>(&secondary_checksum_elem_)},
         sync_(0xEB25), std_hdr_size_(std_hdr_elem_.size), 
-        secondary_hdr_size_(secondary_binwt_elem_.size + secondary_checksum_elem_.size),
+        secondary_hdr_size_(12),
         header_checksum_byte_count_(std_hdr_elem_.size - 2), checksum_unit_count_(0),
         checksum_data_ptr16_(nullptr), checksum_value16_(0),
         checksum_data_ptr32_(nullptr), checksum_value32_(0),
         checksum_data_ptr8_(nullptr), checksum_value8_(0) {}
     Ch10Status Parse(const uint8_t*& data) override;
-    Ch10Status ParseSecondaryHeader(const uint8_t*& data);
+
+    /*
+    Parse a position in memory with the assumption that the binary data
+    pointed by the data variable is secondary header matter. Calculate the
+    secondary header and return the time in nanoseconds via the time_ns
+    variable. Set the output time in variable time_ns to zero if there
+    is an error or the secondary header is not present.
+
+    Args:
+        data    --> pointer to a position in the binary data which points
+                    appropriately formatted secondary header block
+        time_ns --> Output time stamp in nanosecond units
+
+    Return:
+        Ch10Status indicator
+    */
+    Ch10Status ParseSecondaryHeader(const uint8_t*& data, uint64_t& time_ns);
+
+    /*
+    Verify the secondary header checksum.
+
+    Args:
+        pkt_data        --> Pointer to the beginning of the secondary header
+        checksum_value  --> Value of the secondary header checksum as obtained
+                            from the ch10 data
+    Return:
+        Either Ch10Status::CHECKSUM_TRUE or Ch10Status::CHECKSUM_FALSE
+    */
+    Ch10Status VerifySecondaryHeaderChecksum(const uint8_t* pkt_data, 
+        const uint16_t& checksum_value);
+
     Ch10Status VerifyHeaderChecksum(const uint8_t* pkt_data, const uint32_t& checksum_value);
     Ch10Status VerifyDataChecksum(const uint8_t* body_data, const uint32_t& checksum_existence,
         const uint32_t& pkt_size, const uint32_t& secondary_hdr);
 
+    /*
+    Parse a block of raw binary data beginning at the 'data' pointer
+    according to the Ch10PacketHeaderFmt::intrapkt_ts_source and 
+    Ch10PacketHeaderFmt::time_format. 
+
+    Args:
+        data	--> pointer to a position in the binary data which is currently
+					expected to contain IPTS data
+        time_ns --> 
+    */
+    void ParseTimeStampNS(const uint8_t*& data, uint64_t& time_ns);
 };
 
 

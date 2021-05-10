@@ -4,6 +4,7 @@
 #include <cstdint>
 #include "ch10_packet_component.h"
 #include "ch10_videof0_header_format.h"
+#include "ch10_time.h"
 
 class Ch10VideoF0RTCTimeStampFmt
 {
@@ -18,10 +19,12 @@ private:
     Ch10PacketElement<Ch10VideoF0HeaderFormat> csdw_element_;
 	ElemPtrVec csdw_element_vector_;
 
-    Ch10PacketElement<Ch10VideoF0RTCTimeStampFmt> time_stamp_element_;
-    ElemPtrVec time_stamp_element_vector_;
-
     Ch10PacketElement<video_datum[TransportStream_DATA_COUNT]> video_payload_element_;
+
+    Ch10Time ch10_time_;
+
+    // Temporary holder for IPTS time
+    uint64_t ipts_time_;
 
 // Protected members are accessible to tests via inheritance
 protected:
@@ -32,15 +35,13 @@ public:
     const Ch10PacketElement<Ch10VideoF0HeaderFormat>& csdw_element;
     const std::vector<uint64_t>& subpacket_absolute_times;
 
-    Ch10VideoF0Component(Ch10Context* const context) : 
-        Ch10PacketComponent(context),
+    Ch10VideoF0Component(Ch10Context* const context) :
+        Ch10PacketComponent(context), ch10_time_(), ipts_time_(0),
         subpacket_absolute_times_(MAX_TransportStream_UNITS),
         subpacket_absolute_times(subpacket_absolute_times_),
         csdw_element(csdw_element_),
         csdw_element_vector_{
             dynamic_cast<Ch10PacketElementBase*>(&csdw_element_)},
-        time_stamp_element_vector_{
-            dynamic_cast<Ch10PacketElementBase*>(&time_stamp_element_)},
         video_element_vector_{
             dynamic_cast<Ch10PacketElementBase*>(&video_payload_element_)}
         {}
@@ -50,7 +51,8 @@ public:
     Ch10Status Parse(const uint8_t*& data) override;
 
     /*
-    Parse a video subpacket.  
+    Parse a video subpacket. Handles video packets of both variants, 
+    those with or without intra-packet headers (IPH).
         Set video_element_vector_ to point to <data>.
         Set <supbacket_absolute_times_[]> at the specified index
         to the subpacket time.
@@ -59,20 +61,11 @@ public:
         data - pointer to a video subpacket
         iph - true if the subpacket contains a time header
         pkt_index - the index where to store the time
-    */
-    void ParseSubpacket(const uint8_t*& data, bool iph, const size_t& subpacket_index);
-    
-    /*
-    Return the absolute time for a video subpacket.
-        If iph==true, read the subpacket time from the IPH at <data> and advance <data>.
-        If iph is false, return the absolute time for the containing 
-        packet, leaving <data> unchanged.
 
-    Args:
-        data - pointer to a video subpacket
-        iph - true if the subpacket contains a time header
+    Return 
+        Ch10Status::OK if no problems, otherwise a different Ch10Status code.
     */
-    uint64_t ParseSubpacketTime(const uint8_t*& data, bool iph);
+    Ch10Status ParseSubpacket(const uint8_t*& data, bool iph, const size_t& subpacket_index);
 
     /*
     Return the subpacket size in bytes, including IPH if present.

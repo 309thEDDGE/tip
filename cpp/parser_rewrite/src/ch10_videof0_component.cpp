@@ -28,7 +28,9 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
     // Parse subpackets and send one-by-one to the writer
     for (size_t i = 0; i < subpacket_count; i++)
     {
-        ParseSubpacket(data, (*csdw_element.element)->IPH, i);
+        status_ = ParseSubpacket(data, (*csdw_element.element)->IPH, i);
+        if (status_ != Ch10Status::OK)
+            return status_;
 
         ctx_->videof0_pq_writer->append_data(subpacket_absolute_times_[i], ctx_->tdp_doy, ctx_->channel_id, 
             **csdw_element.element, **video_payload_element_.element);
@@ -37,27 +39,34 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
     return Ch10Status::OK;
 }
 
-void Ch10VideoF0Component::ParseSubpacket(const uint8_t*& data, bool iph, const size_t& subpacket_index)
+Ch10Status Ch10VideoF0Component::ParseSubpacket(const uint8_t*& data, bool iph, 
+    const size_t& subpacket_index)
 {
-    subpacket_absolute_times_[subpacket_index] = ParseSubpacketTime(data, iph);
-    ParseElements(video_element_vector_, data);
-}
-
-uint64_t Ch10VideoF0Component::ParseSubpacketTime(const uint8_t*& data, bool iph)
-{
-    uint64_t time;
     if (iph)
     {
-        ParseElements(time_stamp_element_vector_, data);
-        time = ctx_->CalculateAbsTimeFromRTCFormat(
-            (*time_stamp_element_.element)->ts1_, 
-            (*time_stamp_element_.element)->ts2_);
+        // Parse the time component of the intra - packet header.The
+        // data pointer will updated to the position immediately following
+        // the time bytes block. In the case of video data, format 0, the 
+        // intra-packet header consists of only the time block.
+        status_ = ch10_time_.ParseIPTS(data, ipts_time_, ctx_->intrapkt_ts_src,
+            ctx_->time_format);
+        if (status_ != Ch10Status::OK)
+            return status_;
+
+        // Calculate the absolute time using data that were obtained
+        // from the IPTS and TDP data that were previously recorded in
+        // the context.
+        subpacket_absolute_times_[subpacket_index] = ctx_->CalculateIPTSAbsTime(ipts_time_);
     }
     else
     {
-        time = ctx_->GetPacketAbsoluteTime();
+        subpacket_absolute_times_[subpacket_index] = ctx_->GetPacketAbsoluteTimeFromHeaderRTC();
     }
-    return time;
+
+    // Parse the transport stream packet
+    ParseElements(video_element_vector_, data);
+
+    return Ch10Status::OK;
 }
 
 uint32_t Ch10VideoF0Component::GetSubpacketSize(bool iph)

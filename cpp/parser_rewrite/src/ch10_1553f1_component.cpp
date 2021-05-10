@@ -18,53 +18,38 @@ Ch10Status Ch101553F1Component::Parse(const uint8_t*& data)
 		return Ch10Status::MILSTD1553_MSG_COUNT;
 	}
 
-	// Process each 1553 message. If the packet header intrapkt_ts_src is zero,
-	// then process each message in the current packet with time stamp format
-	// that conforms to the 48-bit RTC standard. Otherwise process each 8-byte
-	// time stamp according to the packet header secondary time format (not implemented).
-	if (ctx_->intrapkt_ts_src == 0)
-	{
-		uint32_t count = (*milstd1553f1_csdw_elem_.element)->count;
-		//printf("msg count: %u\n", count);
-		status_ = ParseRTCTimeMessages(count,
-			data);
-		if (status_ != Ch10Status::OK)
-			return status_;
-	}
-	else
-	{	
-		SPDLOG_WARN("({:02d}) Time stamp type not handled: {:d}", 
-			ctx_->thread_id, ctx_->time_format);
-		return Ch10Status::MILSTD1553_TS_NOT_HANDLED;
-		// TODO
-		// switch on Ch10Context::time_format type, utilize other ParseXXTimeMessages
-		// functions, which have not been created yet.
-	}
+	// Process each 1553 message with its intra-packet header, including 
+	// the time stamp and data header.
+	status_ = ParseMessages((*milstd1553f1_csdw_elem_.element)->count, data);
+	if (status_ != Ch10Status::OK)
+		return status_;
 
 	return Ch10Status::OK;
 }
 
-Ch10Status Ch101553F1Component::ParseRTCTimeMessages(const uint32_t& msg_count, 
-	const uint8_t*& data)
+Ch10Status Ch101553F1Component::ParseMessages(const uint32_t& msg_count, const uint8_t*& data)
 {
 	// Iterate over messages
 	//uint16_t length = 0;
 	for (msg_index_ = 0; msg_index_ < msg_count; msg_index_++)
 	{
-		// Parse the intra-packet time and header prior to each
+		// Parse the time component of the intra-packet header. The
+		// data pointer will updated to the position immediately following
+		// the time bytes block.
+		status_ = ch10_time_.ParseIPTS(data, ipts_time_, ctx_->intrapkt_ts_src,
+			ctx_->time_format);
+		if (status_ != Ch10Status::OK)
+			return status_;
+
+		// Calculate the absolute time using data that were obtained
+		// from the IPTS.
+		abs_time_ = ctx_->CalculateIPTSAbsTime(ipts_time_);
+
+		// Parse the intra-packet data header prior to each
 		// message payload. The data pointer will be updated to
 		// the byte immediately following the header, which is the 
 		// first byte of the payload.
-		ParseElements(milstd1553f1_rtctime_data_hdr_elem_vec_, data);
-
-		// Calculate the absolute time using data that were obtained
-		// from the TDP.
-		abs_time_ = ctx_->CalculateAbsTimeFromRTCFormat(
-			(*milstd1553f1_rtctime_elem_.element)->ts1_,
-			(*milstd1553f1_rtctime_elem_.element)->ts2_);
-		//printf("abs_time_ = %llu\n", abs_time_);
-		//length = (*milstd1553f1_data_hdr_elem_.element)->length;
-		//printf("msg_index %u: length %hu, loc %llu\n", msg_index_, length);
+		ParseElements(milstd1553f1_ip_data_hdr_elem_vec_, data);
 
 		// Parse the payload. This function also checks for payload inconsistencies
 		// so it is useful to call before updating the channel ID to LRU address
