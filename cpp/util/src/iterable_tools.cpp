@@ -63,3 +63,17 @@ std::string IterableTools::GetIterablePrintString<std::vector<std::string>>(
 	ret_val += "\n";
 	return ret_val;
 }
+
+//template<typename Key>
+//std::string IterableTools::GetPrintableMapElements_KeyToValue<Key, bool>(const std::map<Key, bool>& input_map)
+//{
+//	std::stringstream ss;
+//	for (typename std::map<Key, Val>::const_iterator it = input_map.begin(); it != input_map.end(); it++)
+//	{
+//		ss << " " << it->first << ":\t";
+//		ss << std::boolalpha << it->second;
+//		ss << "\n";
+//	}
+//
+//	return ss.str();
+//}

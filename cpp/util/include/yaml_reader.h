@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include "yaml-cpp/yaml.h"
+#include "yaml-cpp/exceptions.h"
 
 class YamlReader {
 
@@ -19,6 +20,20 @@ public:
 	~YamlReader() {};
 
 	bool LinkFile(std::string file_name);
+
+	/*
+	Ingest yaml from an input string as an alternative to reading from a
+	file. After YamlReader is instantiated, exactly one of LinkFile or
+	IngestYamlAsString must called in order to use Read or GetParams.
+
+	Args:
+		yaml_matter	--> Input string with yaml content
+
+	Return:
+		True if ingest succeeded and input matter can be interpreted
+		as yaml. False otherwise.
+	*/
+	bool IngestYamlAsString(const std::string& yaml_matter);
 
 	// GetParams reads the parameter specified from the yaml file
 	// The value is returned through the output parameter passed by reference

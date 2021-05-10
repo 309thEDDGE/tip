@@ -241,3 +241,82 @@ TEST_F(ArgumentValidationTest, CheckExtensionMultipleExtension)
 	EXPECT_TRUE(av_.CheckExtension(file_path_, "CCh10", "c10", "ch10"));
 	EXPECT_TRUE(av_.CheckExtension(file_path_, "txt", "csv", "CH10"));
 }
+
+TEST_F(ArgumentValidationTest, ValidateDefaultOutputDirectoryDefaultDirNotPresentNoCreate)
+{
+	base_path_ = "temp_dir";
+	ManagedPath default_dir(base_path_);
+	ManagedPath final_path;
+	std::string user_dir = "";
+	EXPECT_FALSE(av_.ValidateDefaultOutputDirectory(default_dir, user_dir, final_path, false));
+	EXPECT_EQ(final_path.RawString(), "");
+}
+
+TEST_F(ArgumentValidationTest, ValidateDefaultOutputDirectoryDefaultDirNotPresentDoCreate)
+{
+	base_path_ = "temp_dir";
+	ManagedPath default_dir({ base_path_ });
+	ManagedPath final_path;
+	std::string user_dir = "";
+	ASSERT_FALSE(default_dir.is_directory());
+	EXPECT_TRUE(av_.ValidateDefaultOutputDirectory(default_dir, user_dir, final_path, true));
+	EXPECT_EQ(final_path.RawString(), default_dir.absolute().RawString());
+	EXPECT_TRUE(final_path.remove());
+}
+
+TEST_F(ArgumentValidationTest, ValidateDefaultOutputDirectoryUserDirNotUTF8)
+{
+	base_path_ = "temp_dir";
+	ManagedPath default_dir({ base_path_ });
+	ManagedPath final_path;
+	std::string user_dir = "\xE3\xA2\xA5\xB4";
+	EXPECT_FALSE(av_.ValidateDefaultOutputDirectory(default_dir, user_dir, final_path, false));
+	EXPECT_EQ(final_path.RawString(), "");
+}
+
+TEST_F(ArgumentValidationTest, ValidateDefaultOutputDirectoryUserDirNotPresentNoCreate)
+{
+	base_path_ = "temp_dir";
+	ManagedPath default_dir({ base_path_ });
+	ManagedPath final_path;
+	std::string user_dir = "temp_user_dir";
+	EXPECT_FALSE(av_.ValidateDefaultOutputDirectory(default_dir, user_dir, final_path, false));
+	EXPECT_EQ(final_path.RawString(), "");
+}
+
+TEST_F(ArgumentValidationTest, ValidateDefaultOutputDirectoryUserDirNotPresentDoCreate)
+{
+	base_path_ = "temp_dir";
+	ManagedPath default_dir({ base_path_ });
+	ManagedPath final_path;
+	std::string user_dir = "temp_user_dir";
+	ManagedPath user_full_path({ user_dir });
+	EXPECT_TRUE(av_.ValidateDefaultOutputDirectory(default_dir, user_dir, final_path, true));
+	EXPECT_EQ(final_path.RawString(), user_full_path.RawString());
+	EXPECT_TRUE(final_path.remove());
+}
+
+TEST_F(ArgumentValidationTest, ValidateDefaultOutputDirectoryDefaultDirPresent)
+{
+	base_path_ = "temp_dir";
+	ManagedPath default_dir({ base_path_ });
+	ASSERT_TRUE(default_dir.create_directory());
+	ManagedPath final_path;
+	std::string user_dir = "";
+	EXPECT_TRUE(av_.ValidateDefaultOutputDirectory(default_dir, user_dir, final_path, false));
+	EXPECT_EQ(final_path.RawString(), default_dir.RawString());
+	EXPECT_TRUE(default_dir.remove());
+}
+
+TEST_F(ArgumentValidationTest, ValidateDefaultOutputDirectoryUserDirPresent)
+{
+	base_path_ = "temp_dir";
+	ManagedPath default_dir({ base_path_ });
+	ManagedPath final_path;
+	std::string user_dir = "temp_user_dir";
+	ManagedPath user_full_path({ user_dir });
+	ASSERT_TRUE(user_full_path.create_directory());
+	EXPECT_TRUE(av_.ValidateDefaultOutputDirectory(default_dir, user_dir, final_path, false));
+	EXPECT_EQ(final_path.RawString(), user_full_path.RawString());
+	EXPECT_TRUE(final_path.remove());
+}

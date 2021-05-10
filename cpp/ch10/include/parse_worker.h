@@ -1,6 +1,16 @@
 #ifndef PARSEWORKER_H
 #define PARSEWORKER_H
 
+#include "ch10_milstd1553f1.h"
+
+#ifdef VIDEO_DATA
+#include "ch10_videodataf0.h"
+#endif
+
+#ifdef ETHERNET_DATA
+#include "i106_ch10_ethernetf0.h"
+#endif
+
 #include <string>
 #include <cstdio>
 #include <set>
@@ -10,19 +20,12 @@
 #include "ch10_packet_header.h"
 #include "ch10_packet_stats.h"
 #include "ch10_tdf1.h"
-#include "ch10_milstd1553f1.h"
 #include "iterable_tools.h"
 #include "managed_path.h"
-#ifdef VIDEO_DATA
-#include "ch10_videodataf0.h"
-#endif
+#include "spdlog/spdlog.h"
 
 #ifdef LIBIRIG106
 #include "i106_parse_context.h"
-
-#ifdef ETHERNET_DATA
-#include "i106_ch10_ethernetf0.h"
-#endif
 
 extern "C" {
 #include "i106_decode_tmats.h"
@@ -30,6 +33,13 @@ extern "C" {
 #include "i106_decode_1553f1.h"
 }
 #endif
+
+#ifdef PARSER_REWRITE
+#include "ch10_packet_type.h"
+#include "ch10_context.h"
+#include "ch10_packet.h"
+#endif
+
 
 class ParseWorker
 {
@@ -54,6 +64,10 @@ class ParseWorker
 		I106Ch10EthernetF0 i106_ethernetf0_;
 #endif
 
+#endif
+#ifdef PARSER_REWRITE
+		Ch10Context ctx;
+		std::map<uint16_t, uint64_t> chanid_minvideotimestamp_map_;
 #endif
 	uint8_t retcode;
 	bool continue_parsing;
@@ -99,11 +113,16 @@ class ParseWorker
 #endif
 	void append_mode_initialize(uint32_t read, uint16_t binbuff_ind, uint64_t start_pos);
 	uint16_t get_binbuff_ind();
-	void operator()(BinBuff& bb, bool append_mode);
+	
 #ifdef LIBIRIG106
 	void operator()(BinBuff& bb, bool append_mode, std::vector<std::string>& tmats_body_vec);
+#elif defined PARSER_REWRITE
+	void operator()(BinBuff& bb, bool append_mode, std::vector<std::string>& tmats_body_vec,
+		std::map<Ch10PacketType, bool> ch10_packet_type_map);
+#else
+	void ParseWorker::operator()(BinBuff& bb, bool append_mode)
 #endif
-	//void operator()(BinBuff& bb, uint16_t ID, TMATS& tmatsdata);
+	
 	uint64_t& get_last_position();
 	void time_info(uint64_t&&, uint64_t&&);
 	PacketStats* get_packet_ledger();

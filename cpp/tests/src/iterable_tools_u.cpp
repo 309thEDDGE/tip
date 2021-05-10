@@ -1339,6 +1339,27 @@ TEST(UserInputOutput, PrintMapWithHeader_KeyToValue)
 	EXPECT_EQ(compare_output, output);
 }
 
+TEST(UserInputOutput, PrintMapWithHeader_KeyToBool)
+{
+	IterableTools iterable_tools_;
+	std::map<uint64_t, bool> map_to_print;
+	map_to_print[1] = true;
+	map_to_print[2] = false;
+	map_to_print[3] = true;
+	map_to_print[4] = false;
+
+	std::vector<std::string> columns;
+	columns.push_back("column1");
+	columns.push_back("column2");
+
+	std::string output = iterable_tools_.PrintMapWithHeader_KeyToBool(map_to_print, columns, "map name");
+
+	std::string compare_output = "\n  map name\n (column1) | (column2) \n" + iterable_tools_.GetPrintBar() + "\n 1:\ttrue\n 2:\tfalse\n 3:\ttrue\n 4:\tfalse\n" + iterable_tools_.GetPrintBar() + "\n\n";
+
+	EXPECT_EQ(compare_output, output);
+}
+
+
 // Test fixture and NullEventHandler class stolen from yaml-cpp tests:
 // https://github.com/jbeder/yaml-cpp/blob/master/test/integration/emitter_test.cpp
 

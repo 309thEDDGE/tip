@@ -24,7 +24,7 @@ main() {
 	if [[ -f /usr/local/bin/ninja ]] ; then
 		echo "yes"
 		CMAKE="cmake -G Ninja"
-		MAKE=ninja
+		MAKE="ninja -j2"
 	else
 		echo "no.  Using make"
 		CMAKE="cmake"
@@ -77,7 +77,7 @@ main() {
 
 	mkdir -p $BUILD_DIR
 	cd $BUILD_DIR
-	$CMAKE -DLIBIRIG106=ON -DVIDEO=ON ..
+	$CMAKE -DVIDEO=ON ..
 
 	echo "Running '$MAKE'"
 	$MAKE -v install

@@ -70,7 +70,10 @@ def parse_duration_from_stdout(stdout_lines):
         return None
 
     for l in stdout_lines:
-        parts = l.rstrip().split(':')
+        i = l.find("Duration:")
+        if (i < 0):
+            continue
+        parts = l[i:].rstrip().split(':')
         if parts[0] == 'Duration':
             # -3 to ignore the 'sec' string at the end
             return float(parts[1][:-3])

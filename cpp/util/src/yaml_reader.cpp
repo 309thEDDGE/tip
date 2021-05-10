@@ -28,3 +28,28 @@ bool YamlReader::LinkFile(std::string file_name)
 
 	return true;	
 }
+
+
+bool YamlReader::IngestYamlAsString(const std::string& yaml_matter)
+{
+	if (yaml_matter.size() == 0)
+	{
+		printf("YamlReader::IngestYamlAsString: Empty string\n");
+		return false;
+	}
+
+	// Set YAML node
+	std::stringstream ss;
+	ss.str(yaml_matter);
+
+	try
+	{
+		node = YAML::Load(ss);
+	}
+	catch (YAML::Exception& e)
+	{
+		printf("YamlReader::IngestYamlAsString: YAML exception: %s\n", e.what());
+		return false;
+	}
+	return true;
+}

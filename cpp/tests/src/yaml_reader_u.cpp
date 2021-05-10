@@ -47,6 +47,36 @@ TEST_F(YamlReaderTest, LinkFileReturnsValidFileFlag)
 	ASSERT_TRUE(yr.LinkFile(filename));
 }
 
+TEST_F(YamlReaderTest, IngestYamlAsStringEmptyString)
+{
+	std::string yaml_matter = "";
+	bool status = yr.IngestYamlAsString(yaml_matter);
+	EXPECT_FALSE(status);
+}
+
+TEST_F(YamlReaderTest, IngestYamlAsStringNodeLoaded)
+{
+	std::string yaml_matter = "data: 10";
+	bool status = yr.IngestYamlAsString(yaml_matter);
+	EXPECT_TRUE(status);
+
+	int val = 0;
+	status = yr.GetParams("data", val, false);
+	EXPECT_TRUE(status);
+	EXPECT_EQ(10, val);
+}
+
+TEST_F(YamlReaderTest, IngestYamlAsStringInvalidYaml)
+{
+	std::string yaml_matter = {
+	"parse_chunk_bytes: 150\n"
+	"parse_thread_count: 2"
+	"max_chunk_read_count: 5\n"
+	};
+	bool status = yr.IngestYamlAsString(yaml_matter);
+	EXPECT_FALSE(status);
+}
+
 TEST_F(YamlReaderTest, GetParamsReturnsFalseWhenParamDoesNotExist)
 {
 	file << "Param1 : 1\n";
