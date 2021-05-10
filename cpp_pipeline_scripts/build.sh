@@ -28,7 +28,7 @@ main() {
 	else
 		echo "no.  Using make"
 		CMAKE="cmake"
-		MAKE="make -j8"
+		MAKE="make -j2"
 	fi
 
 	# Get paths to all cached libraries
