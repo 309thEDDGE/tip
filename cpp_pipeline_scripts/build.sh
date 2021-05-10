@@ -24,7 +24,7 @@ main() {
 	if [[ -f /usr/local/bin/ninja ]] ; then
 		echo "yes"
 		CMAKE="cmake -G Ninja"
-		MAKE=ninja
+		MAKE="ninja -j2"
 	else
 		echo "no.  Using make"
 		CMAKE="cmake"
