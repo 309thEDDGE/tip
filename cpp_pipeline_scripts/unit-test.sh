@@ -128,7 +128,7 @@ main() {
 		fi
 
 		# Run end-to-end validator
-		python tip_scripts/e2e_validation/run_end_to_end_validator.py --video $E2E_TEST/truth $E2E_TEST/test $E2E_TEST/log
+		python tip_scripts/e2e_validation/run_end_to_end_validator.py $E2E_TEST/truth $E2E_TEST/test $E2E_TEST/log
 
 		# get newest log file
 		LOG_FILE="$(ls -1t $E2E_TEST/log/* | head -1)"
