@@ -2,8 +2,8 @@
 #define PARQUET_VIDEODATAF0_H
 
 #include "parquet_context.h"
-#include "VideoDataF0Format.h"
 #include "managed_path.h"
+#include "ch10_videof0_header_format.h"
 #include <cmath>
 
 const int DEFAULT_ROW_GROUP_COUNT_VIDEO = 10000;
@@ -95,23 +95,12 @@ public:
 		Writes to parquet once the added entries sum to:
 			DEFAULT_ROW_GROUP_COUNT* DEFAULT_BUFFER_SIZE_MULTIPLIER
 	*/
-	void append_data(const std::vector<uint64_t>& time_stamp,
-		const uint8_t& doy,
-		const uint32_t& channel_id,
-		const VideoDataF0ChanSpecFormat* vid_flags,
-		const uint32_t& transport_stream_pkt_count,
-		std::vector<video_datum>& data_vec);
-
-#ifdef PARSER_REWRITE
-
 	void append_data(
 		const uint64_t& time_stamp, 
 		const uint8_t& doy,
 		const uint32_t& channel_id, 
 		const Ch10VideoF0HeaderFormat& vid_flags, 
 		const video_datum* const data);
-
-#endif
 
 };
 

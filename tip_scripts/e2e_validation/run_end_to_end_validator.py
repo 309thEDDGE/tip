@@ -27,8 +27,6 @@ if __name__ == '__main__':
                          help='Full path to directory in which logs shall be written')
     aparse.add_argument('-l', '--log-string', type=str, default=None,
                         help='Provide a string to be inserted into the log name')
-    aparse.add_argument('-v', '--video', action='store_true', default=False,
-                        help='Generate raw video parquet files (validation not implemented)')
     aparse.add_argument('--no-yaml', action='store_true', default=False, 
                         help='Turn off Yaml dependency import (deepdiff) and do not compare yaml files')
 
@@ -43,5 +41,5 @@ if __name__ == '__main__':
         config.COMPARE_YAML = False
 
     from tip_scripts.e2e_validation.end_to_end_validator import E2EValidator
-    e = E2EValidator(args.truth_dir, args.test_dir, args.log_dir, log_desc=log_desc, video=args.video)
+    e = E2EValidator(args.truth_dir, args.test_dir, args.log_dir, log_desc=log_desc)
     e.validate()

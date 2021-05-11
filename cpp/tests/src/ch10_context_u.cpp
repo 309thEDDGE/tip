@@ -358,6 +358,8 @@ TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsRTtoRT)
 	// set.
 	Ch10PacketHeaderFmt hdr_fmt;
 	hdr_fmt.chanID = 4;
+	hdr_fmt.intrapkt_ts_source = 0;
+	hdr_fmt.secondary_hdr = 0;
 	uint64_t abs_pos = 4823829394;
 	uint64_t rtc = 0;
 	Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
@@ -401,6 +403,8 @@ TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsNotRTtoRT)
 	// set.
 	Ch10PacketHeaderFmt hdr_fmt;
 	hdr_fmt.chanID = 4;
+	hdr_fmt.intrapkt_ts_source = 0;
+	hdr_fmt.secondary_hdr = 0;
 	hdr_fmt.data_type = static_cast<uint8_t>(Ch10PacketType::MILSTD1553_F1);
 	uint64_t abs_pos = 4823829394;
 	uint64_t rtc = 0;

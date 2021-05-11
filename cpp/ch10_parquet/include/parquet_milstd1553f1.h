@@ -2,11 +2,8 @@
 #define PARQUET_MILSTD1553F1_H
 
 #include "parquet_context.h"
-#include "MilStd1553F1Format.h"
 #include "managed_path.h"
-#ifdef PARSER_REWRITE
 #include "ch10_1553f1_msg_hdr_format.h"
-#endif
 #include <set>
 #include <cmath>
 
@@ -58,17 +55,11 @@ private:
 public:
 	ParquetMilStd1553F1();
 	ParquetMilStd1553F1(ManagedPath outfile, uint16_t ID, bool truncate);
-#ifdef PARSER_REWRITE
 	void append_data(const uint64_t& time_stamp, uint8_t doy,
 		const MilStd1553F1CSDWFmt* const chan_spec,
 		const MilStd1553F1DataHeaderCommWordFmt* msg, const uint16_t* const data,
 		const uint16_t& chanid, int8_t calcwrdcnt, 
 		uint8_t payload_incomplete);
-#endif
-	void append_data(const uint64_t& time_stamp, uint8_t doy, const char* name, 
-		const MilStd1553F1ChanSpecFormat* chan_spec,
-		const MilStd1553F1MsgCommWord* msg, const uint16_t* data, const uint16_t& chanid, 
-		int8_t totwrdcnt, int8_t calcwrdcnt, uint8_t payload_incomplete);
 	void commit();
 };
 

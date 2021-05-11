@@ -28,7 +28,7 @@ main() {
 	else
 		echo "no.  Using make"
 		CMAKE="cmake"
-		MAKE="make -j8"
+		MAKE="make -j2"
 	fi
 
 	# Get paths to all cached libraries
@@ -77,7 +77,7 @@ main() {
 
 	mkdir -p $BUILD_DIR
 	cd $BUILD_DIR
-	$CMAKE -DVIDEO=ON ..
+	$CMAKE ..
 
 	echo "Running '$MAKE'"
 	$MAKE -v install

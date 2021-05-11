@@ -76,65 +76,6 @@ void ParquetVideoDataF0::commit()
 	}
 }
 
-void ParquetVideoDataF0::append_data(const std::vector<uint64_t>& time_stamp, 
-	const uint8_t& doy,
-	const uint32_t& channel_id, 
-	const VideoDataF0ChanSpecFormat* vid_flags, 
-	const uint32_t& transport_stream_pkt_count, 
-	std::vector<video_datum>& data_vec)
-{
-#ifdef DEBUG
-#if DEBUG > 2
-	printf("(%03hu) ParquetVideoDataF0: appending %u packets\n", id_, transport_stream_pkt_count);
-#endif
-#endif
-
-	for (int i = 0; i < transport_stream_pkt_count; i++)
-	{
-		doy_[temp_element_count_] = doy;
-		ET_[temp_element_count_] = vid_flags->ET;
-		IPH_[temp_element_count_] = vid_flags->IPH;
-		KLV_[temp_element_count_] = vid_flags->KLV;
-		PL_[temp_element_count_] = vid_flags->PL;
-		SRS_[temp_element_count_] = vid_flags->SRS;
-
-		if (vid_flags->IPH)
-		{
-			time_[temp_element_count_] = time_stamp[i];
-		}
-		else
-		{
-			time_[temp_element_count_] = time_stamp[0];
-		}
-		
-		channel_id_[temp_element_count_] = channel_id;
-
-		std::copy(data_vec.begin() + i * TransportStream_DATA_COUNT,
-			data_vec.begin() + (i + 1) * TransportStream_DATA_COUNT, 
-			video_data_.data() + temp_element_count_ * TransportStream_DATA_COUNT);
-
-		// Increment the count variable.
-		temp_element_count_++;
-
-		if (temp_element_count_ == max_temp_element_count_)
-		{
-#ifdef DEBUG
-#if DEBUG > 0
-			printf("(%03u) Writing VideoDataF0 to Parquet, %d rows\n", id_, temp_element_count_);
-#endif
-#endif
-			for (int i = 0; i < DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO; i++)
-			{
-				WriteColumns(DEFAULT_ROW_GROUP_COUNT_VIDEO, i * DEFAULT_ROW_GROUP_COUNT_VIDEO);
-			}
-
-			temp_element_count_ = 0;
-		}
-	}
-}
-
-#ifdef PARSER_REWRITE
-
 void ParquetVideoDataF0::append_data(
 	const uint64_t& time_stamp, 
 	const uint8_t& doy,
@@ -170,5 +111,3 @@ void ParquetVideoDataF0::append_data(
 		temp_element_count_ = 0;
 	}
 }
-
-#endif // PARSER_REWRITE

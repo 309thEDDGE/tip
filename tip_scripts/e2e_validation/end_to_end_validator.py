@@ -63,13 +63,12 @@ from tip_scripts.exec import Exec
 
 class E2EValidator(object):
 
-    def __init__(self, truth_set_dir, test_set_dir, log_file_path, log_desc='', video=False):
+    def __init__(self, truth_set_dir, test_set_dir, log_file_path, log_desc=''):
         
         self.run_tip = False
         self.truth_set_dir = truth_set_dir
         self.test_set_dir = test_set_dir
         self.log_file_path = log_file_path
-        self.video = video
         self.save_stdout = False
         self.all_validation_obj = {}
         self.duration_data = {}
@@ -157,12 +156,8 @@ class E2EValidator(object):
                 print(msg)
                 continue
 
-            if self.video:
-                 call_list = ['python', script_path, ch10_full_path,
-                         icd_full_path, '-o', test_dir, '--video', '--no-ts']
-            else:
-                call_list = ['python', script_path, ch10_full_path,
-                        icd_full_path, '-o', test_dir]
+            call_list = ['python', script_path, ch10_full_path,
+                         icd_full_path, '-o', test_dir]
             call_string = ' '.join(call_list)
             print(call_string)
             e = Exec()
@@ -240,8 +235,7 @@ class E2EValidator(object):
         # Create validation objects for 1553 data
         self._create_raw1553_validation_objects()
         self._create_transl1553_validation_objects()
-        if self.video:
-            self._create_rawvideo_validation_objects()
+        self._create_rawvideo_validation_objects()
 
         # Validate all objects 
         self._validate_objects()
@@ -269,8 +263,7 @@ class E2EValidator(object):
             self.all_validation_obj[ch10name]['transl1553'].print_results(self.print)
 
             ########### video ###########
-            if self.video:
-                self.all_validation_obj[ch10name]['rawvideo'].print_results(self.print)
+            self.all_validation_obj[ch10name]['rawvideo'].print_results(self.print)
 
             ########### super set ##########
             msg = '\nTotal Ch10 result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['ch10']))
@@ -383,8 +376,7 @@ class E2EValidator(object):
             data1553_stats['transl1553'].append(single_ch10_bulk_transl1553_pass)
 
             ########### video ###########
-            if self.video:
-                single_ch10_video_pass = self.all_validation_obj[ch10name]['rawvideo'].get_test_result()
+            single_ch10_video_pass = self.all_validation_obj[ch10name]['rawvideo'].get_test_result()
 
             ########### super set ##########
 
@@ -429,10 +421,9 @@ class E2EValidator(object):
             ################################
             #            video 
             ################################
-            if self.video:
-                video_validation_obj = self.all_validation_obj[ch10name]['rawvideo']
-                self.print('\n-- Raw Video Comparison --\n')
-                video_validation_obj.validate_dir(self.print)
+            video_validation_obj = self.all_validation_obj[ch10name]['rawvideo']
+            self.print('\n-- Raw Video Comparison --\n')
+            video_validation_obj.validate_dir(self.print)
 
 
     def _create_raw1553_validation_objects(self):

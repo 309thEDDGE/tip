@@ -128,7 +128,7 @@ main() {
 		fi
 
 		# Run end-to-end validator
-		python tip_scripts/e2e_validation/run_end_to_end_validator.py --video $E2E_TEST/truth $E2E_TEST/test $E2E_TEST/log
+		python tip_scripts/e2e_validation/run_end_to_end_validator.py $E2E_TEST/truth $E2E_TEST/test $E2E_TEST/log
 
 		# get newest log file
 		LOG_FILE="$(ls -1t $E2E_TEST/log/* | head -1)"
@@ -182,8 +182,8 @@ main() {
 		readelf -x .txtrp ./bin/bincompare | grep 0x -m3
 		ldd ./bin/tests
 		readelf -x .txtrp ./bin/tests | grep 0x -m3
-		ldd ./bin/tip_parse_video
-		readelf -x .txtrp ./bin/tip_parse_video | grep 0x -m3
+		ldd ./bin/tip_parse
+		readelf -x .txtrp ./bin/tip_parse | grep 0x -m3
 		ldd ./bin/tip_translate
 		readelf -x .txtrp ./bin/tip_translate | grep 0x -m3
 	else
