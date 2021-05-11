@@ -77,7 +77,7 @@ main() {
 
 	mkdir -p $BUILD_DIR
 	cd $BUILD_DIR
-	$CMAKE -DVIDEO=ON ..
+	$CMAKE ..
 
 	echo "Running '$MAKE'"
 	$MAKE -v install
