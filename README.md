@@ -46,14 +46,8 @@ Use `markdown_to_html.py` in the tip_scripts directory to convert md file to htm
 * `cmake .. -GNinja -D<option>=<value>`
 	- add `-GNinja` for faster build
 * Default options: 
-	- no video output
-	- build tests
+	- CONTAINER=OFF (see below)
 * Options given with `-D<option>=<value>`, multiple options with `-D<option1>=<val1> -D<option2>=<val2> ...`:
-	- Ethernet Off (`-DETHERNET=OFF`) - turn ethernet parsing off, default ON
-		- Ethernet parsing requires npcap and libtins dependencies!!
-	- Video (`-DVIDEO=ON`) - extract video from Ch10 and build video extractor executable , default OFF
-		- must be set if --video argument is passed to `parse_and_translate.py` (see "Helper Script" below)
-	- Turn off tests (`-DNOTESTS=ON`) - without this option tests are built by default
 	- Container mode (`-DCONTAINER=ON`) - use shared libs in Linux-standard lib directories, default OFF
 		- linux standard builds outside of a container are in progress
 	
