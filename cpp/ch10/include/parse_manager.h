@@ -13,33 +13,26 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <chrono>
 #include "iterable_tools.h"
 #include "parse_text.h"
 #include "parse_worker.h"
-#include "ch10.h"
-#include "ch10_milstd1553f1stats.h"
-#include "ch10_packet_stats.h"
-#include <chrono>
+
 #include "parser_config_params.h"
 #include "metadata.h"
 #include "tmats_parser.h"
 #include "managed_path.h"
 #include "spdlog/spdlog.h"
 
-#ifdef PARSER_REWRITE
 #include "ch10_packet_type.h"
-#endif
 
 class ParseManager
 {
 	private:
-#ifdef PARQUET
-	std::set<std::string> name_set;
-#endif
 
 	// TMATS processing
 	std::vector<std::string> tmats_body_vec_;
-	void ProcessTMATS();
+	
 	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
 	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
 
@@ -51,7 +44,6 @@ class ParseManager
 	uint64_t total_read_pos;
 	uint8_t n_threads;
 	uint16_t n_reads;
-	//bool tmats_present;
 	bool error_set;
 	bool check_word_count;
 	std::ifstream ifile;
@@ -61,21 +53,18 @@ class ParseManager
 	bool workers_allocated;
 	const ParserConfigParams * const config_;
 	
-	std::map<Ch10DataType, ManagedPath> output_dir_map_;
-	std::vector<std::map<Ch10DataType, ManagedPath>> output_file_path_vec_;
+	std::map<Ch10PacketType, ManagedPath> output_dir_map_;
+	std::vector<std::map<Ch10PacketType, ManagedPath>> output_file_path_vec_;
 	bool milstd1553_msg_selection;
 	std::vector<std::string> milstd1553_sorted_msg_selection;
 	std::string chanid_to_lruaddrs_metadata_string_;
 
-#ifdef PARSER_REWRITE
 	std::map<Ch10PacketType, bool> packet_type_config_map_;
-#endif
 
 	std::streamsize activate_worker(uint16_t binbuff_ind, uint16_t ID,
 		uint64_t start_pos, uint32_t n_read);
 	std::streamsize activate_append_mode_worker(uint16_t binbuff_ind, uint16_t ID,
 		uint32_t n_read);
-	void collect_stats();
 
 	// worker automation
 	std::vector<uint16_t> active_workers;
@@ -90,9 +79,8 @@ class ParseManager
 	void collect_chanid_to_commwords_metadata(
 		std::map<uint32_t, std::vector<std::vector<uint32_t>>>& output_chanid_commwords_map);
 	
-#ifdef VIDEO_DATA
 	void CollectVideoMetadata(std::map<uint16_t, uint64_t>& channel_id_to_min_timestamp_map);
-#endif
+	void ProcessTMATS();
 
 	public:
 
@@ -123,10 +111,8 @@ class ParseManager
 	Return:
 		True if the conversion is successful, false otherwise.
 	*/
-#ifdef PARSER_REWRITE
 	bool ConvertCh10PacketTypeMap(const std::map<std::string, std::string>& input_map,
 		std::map<Ch10PacketType, bool>& output_map);
-#endif
 
 	/*
 	Log the ch10_packet_type_map_. This is a convenience function to clean up
@@ -136,9 +122,7 @@ class ParseManager
 		pkt_type_config_map	--> Input map of Ch10PacketType to bool that 
 								represents the enable state of ch10 packet types
 	*/
-#ifdef PARSER_REWRITE
 	void LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map);
-#endif
 
 };
 

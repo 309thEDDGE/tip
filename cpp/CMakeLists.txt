@@ -272,16 +272,8 @@ endif()
 
 add_library(${ch10parse_lib_name} STATIC 
     ${parse_ethernet_src}
-    ${ch10_inc_dir}/ch10.h ${ch10_inc_dir}/ch10_milstd1553f1.h ${ch10_inc_dir}/ch10_milstd1553f1stats.h
-    ${ch10_inc_dir}/ch10_packet_header.h ${ch10_inc_dir}/ch10_packet_header_format.h
-    ${ch10_inc_dir}/ch10_packet_stats.h ${ch10_inc_dir}/ch10_tdf1.h ${ch10_inc_dir}/ch10_videodataf0.h
-    ${ch10_inc_dir}/MilStd1553F1Format.h ${ch10_inc_dir}/parse_context.h ${ch10_inc_dir}/parse_manager.h
-    ${ch10_inc_dir}/parse_util.h ${ch10_inc_dir}/parse_worker.h
-    ${ch10_inc_dir}/TDF1Format.h ${ch10_inc_dir}/VideoDataF0Format.h
-    ${ch10_src_dir}/ch10_milstd1553f1.cpp ${ch10_src_dir}/ch10_milstd1553f1stats.cpp
-    ${ch10_src_dir}/ch10_packet_header.cpp ${ch10_src_dir}/ch10_tdf1.cpp 
-    ${ch10_src_dir}/ch10_videodataf0.cpp ${ch10_src_dir}/parse_manager.cpp ${ch10_src_dir}/parse_util.cpp
-    ${ch10_src_dir}/parse_worker.cpp
+    ${ch10_inc_dir}/parse_manager.h ${ch10_src_dir}/parse_manager.cpp
+    ${ch10_inc_dir}/parse_worker.h ${ch10_src_dir}/parse_worker.cpp
     ${ch10_src_dir}/parser_helper_funcs.cpp ${ch10_inc_dir}/parser_helper_funcs.h
     )
 target_include_directories(${ch10parse_lib_name} PUBLIC ${ch10_inc_dir} ${temp_eth_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
@@ -392,7 +384,7 @@ if(build_tests)
                    ${test_src_dir}/iterable_tools_u.cpp ${test_src_dir}/parse_text_u.cpp
                    ${test_src_dir}/parser_config_params_u.cpp ${test_src_dir}/translation_config_params_u.cpp
                    ${test_src_dir}/user_input_u.cpp ${test_src_dir}/yaml_reader_u.cpp
-                   ${test_src_dir}/binbuff_u.cpp ${test_src_dir}/parse_context_u.cpp
+                   ${test_src_dir}/binbuff_u.cpp
                    ${test_src_dir}/parquet_arrow_validator_u.cpp ${test_src_dir}/parquet_context_u.cpp
                    ${test_src_dir}/tmats_parser_u.cpp ${test_src_dir}/metadata_u.cpp 
                    ${test_src_dir}/parse_manager_u.cpp ${test_src_dir}/parquet_reader_u.cpp

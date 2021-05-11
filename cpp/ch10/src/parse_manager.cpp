@@ -33,13 +33,11 @@ ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const Par
 	else
 		error_set = true;
 
-#ifdef PARSER_REWRITE
 	// Convert ch10_packet_type configuration map.
 	success = ConvertCh10PacketTypeMap(config_->ch10_packet_type_map_, packet_type_config_map_);
 	if (!success)
 		error_set = true;
 	LogPacketTypeConfig(packet_type_config_map_);
-#endif
 }
 
 void ParseManager::create_output_dirs()
@@ -49,18 +47,14 @@ void ParseManager::create_output_dirs()
 		parquet_1553_path.RawString());
 	if (!parquet_1553_path.create_directory())
 		error_set = true;
-	output_dir_map_[Ch10DataType::MILSTD1553_DATA_F1] = parquet_1553_path;
-
-#ifdef VIDEO_DATA
+	output_dir_map_[Ch10PacketType::MILSTD1553_F1] = parquet_1553_path;
 
 	ManagedPath parquet_vid_path = output_path.CreatePathObject(input_path, "_video.parquet");
 	spdlog::get("pm_logger")->info("Parquet video output path: {:s}", 
 		parquet_vid_path.RawString());
 	if (!parquet_vid_path.create_directory())
 		error_set = true;
-	output_dir_map_[Ch10DataType::VIDEO_DATA_F0] = parquet_vid_path;
-
-#endif
+	output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] = parquet_vid_path;
 
 #ifdef ETHERNET_DATA
 
@@ -69,7 +63,7 @@ void ParseManager::create_output_dirs()
 		parquet_eth_path.RawString());
 	if (!parquet_eth_path.create_directory())
 		error_set = true;
-	output_dir_map_[Ch10DataType::ETHERNET_DATA_F0] = parquet_eth_path;
+	output_dir_map_[Ch10PacketType::ETHERNET_DATA_F0] = parquet_eth_path;
 
 #endif
 }
@@ -89,30 +83,25 @@ void ParseManager::create_output_file_paths()
 
 		// Create a temporary map to hold all of the output file paths for the 
 		// current index.
-		std::map<Ch10DataType, ManagedPath> temp_output_file_map;
+		std::map<Ch10PacketType, ManagedPath> temp_output_file_map;
 
 		// Get a copy of the output dir path for simplification.
-		temp_output_dir = output_dir_map_[Ch10DataType::MILSTD1553_DATA_F1];
+		temp_output_dir = output_dir_map_[Ch10PacketType::MILSTD1553_F1];
 
-		// Create the output file path.
-		temp_output_file_map[Ch10DataType::MILSTD1553_DATA_F1] = temp_output_dir.CreatePathObject(
+		// Create the 1553 output file path.
+		temp_output_file_map[Ch10PacketType::MILSTD1553_F1] = temp_output_dir.CreatePathObject(
 			temp_output_dir, replacement_ext);
 
-		/*printf("Create output file path: %s\n",
-			temp_output_file_map[Ch10DataType::MILSTD1553_DATA_F1].RawString().c_str());*/
-
-#ifdef VIDEO_DATA
-
-		temp_output_dir = output_dir_map_[Ch10DataType::VIDEO_DATA_F0];
-		temp_output_file_map[Ch10DataType::VIDEO_DATA_F0] = temp_output_dir.CreatePathObject(
+		// Create video f0 output path.
+		temp_output_dir = output_dir_map_[Ch10PacketType::VIDEO_DATA_F0];
+		temp_output_file_map[Ch10PacketType::VIDEO_DATA_F0] = temp_output_dir.CreatePathObject(
 			temp_output_dir, replacement_ext);
 
-#endif
 
 #ifdef ETHERNET_DATA
 
-		temp_output_dir = output_dir_map_[Ch10DataType::ETHERNET_DATA_F0];
-		temp_output_file_map[Ch10DataType::ETHERNET_DATA_F0] = temp_output_dir.CreatePathObject(
+		temp_output_dir = output_dir_map_[Ch10PacketType::ETHERNET_DATA_F0];
+		temp_output_file_map[Ch10PacketType::ETHERNET_DATA_F0] = temp_output_dir.CreatePathObject(
 			temp_output_dir, replacement_ext);
 
 #endif
@@ -190,23 +179,16 @@ void ParseManager::start_workers()
 
 	// Wait for all active workers to finish.
 	worker_retire_queue();
-
-#ifdef COLLECT_STATS
-	collect_stats();
-#endif
 	
-#ifdef PARQUET
 	// Create metadata object and create output path name for metadata
 	// to be recorded in 1553 output directory.
 	Metadata md;
 	ManagedPath md_path = md.GetYamlMetadataPath(
-		output_dir_map_[Ch10DataType::MILSTD1553_DATA_F1],
+		output_dir_map_[Ch10PacketType::MILSTD1553_F1],
 		"_metadata");
 
 	// Record Config options used
-#ifdef PARSER_REWRITE
 	md.RecordSimpleMap(config_->ch10_packet_type_map_, "ch10_packet_type");
-#endif
 	md.RecordSingleKeyValuePair("parse_chunk_bytes", config_->parse_chunk_bytes_);
 	md.RecordSingleKeyValuePair("parse_thread_count", config_->parse_thread_count_);
 	md.RecordSingleKeyValuePair("max_chunk_read_count", config_->max_chunk_read_count_);
@@ -227,7 +209,6 @@ void ParseManager::start_workers()
 	collect_chanid_to_commwords_metadata(output_chanid_commwords_map);
 	md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
 
-#if defined(LIBIRIG106) || defined(PARSER_REWRITE)
 	ProcessTMATS();
 
 	// Record the TMATS channel ID to source map.
@@ -235,7 +216,6 @@ void ParseManager::start_workers()
 
 	// Record the TMATS channel ID to type map.
 	md.RecordSimpleMap(TMATsChannelIDToTypeMap_, "tmats_chanid_to_type");
-#endif
 
 	// Write the complete Yaml record to the metadata file.
 	std::ofstream stream_1553_metadata(md_path.string(), 
@@ -243,11 +223,10 @@ void ParseManager::start_workers()
 	stream_1553_metadata << md.GetMetadataString();
 	stream_1553_metadata.close();
 
-#ifdef VIDEO_DATA
 	// Create metadata object for video metadata.
 	Metadata vmd;
 	md_path = vmd.GetYamlMetadataPath(
-		output_dir_map_[Ch10DataType::VIDEO_DATA_F0],
+		output_dir_map_[Ch10PacketType::VIDEO_DATA_F0],
 		"_metadata");
 
 	// Get the channel ID to minimum time stamp map.
@@ -261,11 +240,8 @@ void ParseManager::start_workers()
 		std::ofstream::out | std::ofstream::trunc);
 	stream_video_metadata << vmd.GetMetadataString();
 	stream_video_metadata.close();
-#endif
-#endif
 }
 
-#ifdef VIDEO_DATA
 void ParseManager::CollectVideoMetadata(
 	std::map<uint16_t, uint64_t>& channel_id_to_min_timestamp_map)
 {
@@ -284,7 +260,6 @@ void ParseManager::CollectVideoMetadata(
 		}
 	}
 }
-#endif
 
 void ParseManager::collect_chanid_to_lruaddrs_metadata(
 	std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map)
@@ -336,7 +311,6 @@ std::streamsize ParseManager::activate_worker(uint16_t binbuff_ind, uint16_t ID,
 	uint64_t start_pos, uint32_t n_read)
 {
 	uint64_t read_count = binary_buffers[binbuff_ind].Initialize(ifile, total_size, start_pos, n_read);
-#ifdef PARQUET
 	bool is_final_worker = false;
 	if (ID == n_reads - 1)
 	{
@@ -344,23 +318,13 @@ std::streamsize ParseManager::activate_worker(uint16_t binbuff_ind, uint16_t ID,
 	}
 	workers[ID].initialize(ID, start_pos, n_read, binbuff_ind, output_file_path_vec_[ID],
 		is_final_worker);
-#endif
 
 	spdlog::get("pm_logger")->debug("Init. worker {:d}: start = {:d}, read size = {:d}, bb ind = {:d}",
 		ID, start_pos, n_read, binbuff_ind);
 		
 	// Start this instance of ParseWorker. Append mode false.
-#if defined PARSER_REWRITE
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
 		false, std::ref(tmats_body_vec_), packet_type_config_map_);
-#elif defined LIBIRIG106
-	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
-		false, std::ref(tmats_body_vec_));
-#else
-	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
-		false);
-#endif
-	
 	return read_count;
 }
 
@@ -380,16 +344,8 @@ std::streamsize ParseManager::activate_append_mode_worker(uint16_t binbuff_ind, 
 	workers[ID].append_mode_initialize(n_read, binbuff_ind, last_pos);
 
 	// Start this instance of ParseWorker. Append mode true.
-#if defined PARSER_REWRITE
 	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
 		true, std::ref(tmats_body_vec_), packet_type_config_map_);
-#elif defined LIBIRIG106
-	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
-		true, std::ref(tmats_body_vec_));
-#else
-	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
-		true);
-#endif
 	return read_count;
 }
 
@@ -604,79 +560,6 @@ void ParseManager::worker_retire_queue()
 	spdlog::get("pm_logger")->debug("All workers joined ");
 }
 
-void ParseManager::collect_stats()
-{
-	PacketStats pstats;
-	PacketStats pstats_error;
-	PacketStats* pstats_temp;
-	//Ch10MilStd1553F1Stats milstdstats;
-	Ch10MilStd1553F1Stats* milstdstats = workers[0].milstd1553_stats();
-
-	// Loop over all workers and collect stats from each.
-	for (uint16_t worker_ind = 0; worker_ind < n_reads; worker_ind++)
-	{
-		// Get present workers packet stats and sum with final count.
-		pstats_temp = workers[worker_ind].get_packet_ledger();
-		pstats.time_data_count += pstats_temp->time_data_count;
-		pstats.milstd_1553pkt_count += pstats_temp->milstd_1553pkt_count;
-		pstats.video_data_count += pstats_temp->video_data_count;
-		pstats.discrete_data_count += pstats_temp->discrete_data_count;
-		pstats.analog_data_count += pstats_temp->analog_data_count;
-
-		pstats_temp = workers[worker_ind].get_packet_error_ledger();
-		pstats_error.time_data_count += pstats_temp->time_data_count;
-		pstats_error.milstd_1553pkt_count += pstats_temp->milstd_1553pkt_count;
-		pstats_error.video_data_count += pstats_temp->video_data_count;
-		pstats_error.discrete_data_count += pstats_temp->discrete_data_count;
-		pstats_error.analog_data_count += pstats_temp->analog_data_count;
-
-		// Get present workers mil std 1553 message stats.
-		if (worker_ind > 0)
-			milstdstats->add_stats(workers[worker_ind].milstd1553_stats());
-		/*milstdstats_temp = workers[worker_ind].milstd1553_stats();
-		milstdstats.msg_identity_fail += milstdstats_temp->msg_identity_fail;
-		milstdstats.wrd_count_mismatch += milstdstats_temp->wrd_count_mismatch;
-		milstdstats.ts_not_impl += milstdstats_temp->ts_not_impl;
-		milstdstats.ts_reserved += milstdstats_temp->ts_reserved;*/
-	}
-
-	#ifdef DEBUG
-	if (DEBUG > 0)
-	{
-		uint32_t err = 0;
-		uint32_t noerr = 0;
-		err = pstats_error.time_data_count;
-		noerr = pstats.time_data_count;
-		printf("\n-- Packet Type Stats (err/total : %%) --\n");
-		printf("Time data          : %02u/%05u : %f\n", err, err + noerr, float(err) / (err + noerr));
-
-		err = pstats_error.milstd_1553pkt_count;
-		noerr = pstats.milstd_1553pkt_count;
-		printf("MilStd 1553        : %02u/%05u : %f\n", err, err + noerr, float(err) / (err + noerr));
-
-		err = pstats_error.video_data_count;
-		noerr = pstats.video_data_count;
-		printf("Video data         : %02u/%05u : %f\n", err, err + noerr, float(err) / (err + noerr));
-
-		err = pstats_error.discrete_data_count;
-		noerr = pstats.discrete_data_count;
-		printf("Discrete data      : %02u/%05u : %f\n", err, err + noerr, float(err) / (err + noerr));
-
-		err = pstats_error.analog_data_count;
-		noerr = pstats.analog_data_count;
-		printf("Analog data        : %02u/%05u : %f\n", err, err + noerr, float(err) / (err + noerr));
-
-		printf("\n-- MilStd 1553 Error Stats --\n");
-		printf("MSG_IDENTITY_FAIL  : %03u\n", milstdstats->msg_identity_fail);
-		printf("WRD_COUNT_MISMATCH : %03u\n", milstdstats->wrd_count_mismatch);
-		printf("TS_NOT_IMPL        : %03u\n", milstdstats->ts_not_impl);
-		printf("TS_RESERVED        : %03u\n\n", milstdstats->ts_reserved);
-	}
-	#endif
-
-	milstdstats->print_msg_stats();
-}
-
 ParseManager::~ParseManager()
 {
 	ifile.close();
@@ -707,7 +590,7 @@ void ParseManager::ProcessTMATS()
 	}
 
 	ManagedPath tmats_path;
-	tmats_path = output_dir_map_[Ch10DataType::MILSTD1553_DATA_F1] /
+	tmats_path = output_dir_map_[Ch10PacketType::MILSTD1553_F1] /
 		"_TMATS.txt";
 	std::ofstream tmats;
 	tmats.open(tmats_path.string(), std::ios::trunc | std::ios::binary);
@@ -726,7 +609,6 @@ void ParseManager::ProcessTMATS()
 	TMATsChannelIDToTypeMap_ = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n");
 }
 
-#ifdef PARSER_REWRITE
 bool ParseManager::ConvertCh10PacketTypeMap(const std::map<std::string, std::string>& input_map,
 	std::map<Ch10PacketType, bool>& output_map)
 {
@@ -799,4 +681,3 @@ void ParseManager::LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt
 		spdlog::get("pm_logger")->info(*it);
 	}
 }
-#endif
