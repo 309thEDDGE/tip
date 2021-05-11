@@ -1,24 +1,11 @@
 // ch10parse.h
 
-// Require logical/reasonable preprocessor definitions.
-
-#ifndef PARQUET
-#error PARQUET must be defined!
-#endif
-
-#ifdef XDAT
-#ifndef LOCALDB
-#error XDAT can only be defined in conjunction with LOCALDB
-#endif
-#endif
-
-#ifdef PARQUET
 #ifndef ARROW_STATIC
 #error ARROW_STATIC must be defined in conjunction with PARQUET
 #endif
+
 #ifndef PARQUET_STATIC
 #error PARQUET_STATIC must be defined in conjunction with PARQUET
-#endif
 #endif
 
 #include "parser_helper_funcs.h"

@@ -118,7 +118,6 @@ TEST_F(ParseManagerTest, TMATSParsed)
 	ASSERT_TRUE(map_compare(type_map_test, type_map_truth));
 }
 
-#ifdef PARSER_REWRITE
 TEST_F(ParseManagerTest, ConvertCh10PacketTypeMapEmptyMap)
 {
 	std::map<std::string, std::string> input_map;
@@ -177,4 +176,3 @@ TEST_F(ParseManagerTest, ConvertCh10PacketTypeMapCorrectMapping)
 	EXPECT_EQ(output_map.at(Ch10PacketType::MILSTD1553_F1), true);
 	EXPECT_EQ(output_map.at(Ch10PacketType::VIDEO_DATA_F0), false);
 }
-#endif

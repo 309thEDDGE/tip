@@ -28,20 +28,10 @@ endif()
 set(linux false)
 set(container false)
 set(debug 1)
-set(libirig106 true)
-set(video_data false)
-set(ethernet_data true)
-set(parser_rewrite false)
-
-if(DEFINED PARSER_REWRITE)
-    message(STATUS "PARSER_REWRITE defined")
-    set(ignore ${PARSER_REWRITE})
-    set(parser_rewrite true)
-endif()
+set(ethernet_data false)
 
 if (DEFINED DEBUG)
     message(STATUS "DEBUG defined")
-    #set(ignore ${DEBUG})
     set(debug ${DEBUG})
 endif()
 
@@ -51,55 +41,12 @@ if(DEFINED CONTAINER)
     set(container true)
 endif()
 
-# Default def video_data = false. Set the VIDEO_DATA preproc 
-# def if true. User can set -DVIDEO=1 to set this property.
-if(DEFINED VIDEO)
-    message(STATUS "VIDEO defined")
-    set(ignore ${VIDEO})
-    set(video_data true)
-endif()
-
 if(DEFINED ETHERNET)
-    if(ETHERNET MATCHES "OFF")
-        message(STATUS "ETHERNET set to OFF")
-        set(ethernet_data false)
+    if(ETHERNET MATCHES "ON")
+        message(STATUS "ETHERNET set to ON")
+        set(ethernet_data true)
     endif()
     set(ignore ${ETHERNET})
-endif()
-    
-if(ethernet_data)
-     message(STATUS "ETHERNET set to ON")
-endif()
-
-# Default def build_tests = true. If TESTS is defined by the
-# user via -DNOTESTS=1 then tests will not be built.
-set(build_tests true)
-if(DEFINED NOTESTS)
-    message(STATUS "Not building tests")
-    set(ignore ${NOTESTS})
-    set(build_tests false)
-endif()
-
-if(DEFINED LIBIRIG106)
-    if("${LIBIRIG106}" MATCHES "OFF")
-        message(STATUS "LIBIRIG106 set to OFF")
-        set(libirig106 false)
-    endif()
-    set(ignore LIBIRIG106)
-endif()
-
-if(libirig106)
-    message(STATUS "Using libirig106, defining LIBIRIG106")
-endif()
-
-if(ethernet_data AND NOT libirig106)
-    message(FATAL_ERROR "LIBIRIG106 (default ON) must be ON if ETHERNET (default ON) is ON")
-endif()
-
-if(parser_rewrite AND libirig106)
-    message(STATUS "PARSER_REWRITE defined, undefining LIBIRIG106 and ETHERNET")
-    set(libirig106 false)
-    set(ethernet_data false)
 endif()
 
 get_filename_component(deps_dir "../deps" ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
@@ -169,12 +116,10 @@ endif()
 if(linux)
     add_definitions(-DLOCALDB
                     -DDEBUG=${debug}
-                #-D_CRT_SECURE_NO_WARNINGS   
 )
 else()
     add_compile_definitions(LOCALDB
                         DEBUG=${debug}
-                #_CRT_SECURE_NO_WARNINGS   
 )
 endif()
 
@@ -189,31 +134,6 @@ else()
                         ARROW_STATIC
                         SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 endif()
-
-if(video_data)
-    if(linux)
-        add_definitions(-DVIDEO_DATA)
-    else()
-	    add_compile_definitions(VIDEO_DATA)
-    endif()
-endif()
-
-if(libirig106)
-    if(linux)
-        add_definitions(-DLIBIRIG106)
-    else()
-        add_compile_definitions(LIBIRIG106)
-    endif()
-endif()
-
-if(parser_rewrite)
-    if(linux)
-        add_definitions(-DPARSER_REWRITE)
-    else()
-        add_compile_definitions(PARSER_REWRITE)
-    endif()
-endif()
-
 
 if(ethernet_data)
     if(linux)
