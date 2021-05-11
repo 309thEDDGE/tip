@@ -28,43 +28,51 @@ ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const Par
 	if (success)
 	{
 		spdlog::get("pm_logger")->info("File size: {:d} MB", total_size / (1024 * 1024));
+
+		// Convert ch10_packet_type configuration map.
+		success = ConvertCh10PacketTypeMap(config_->ch10_packet_type_map_, packet_type_config_map_);
+		if (!success)
+			error_set = true;
+		LogPacketTypeConfig(packet_type_config_map_);
+
 		create_output_dirs();
 	}
 	else
 		error_set = true;
-
-	// Convert ch10_packet_type configuration map.
-	success = ConvertCh10PacketTypeMap(config_->ch10_packet_type_map_, packet_type_config_map_);
-	if (!success)
-		error_set = true;
-	LogPacketTypeConfig(packet_type_config_map_);
 }
 
 void ParseManager::create_output_dirs()
 {
-	ManagedPath parquet_1553_path = output_path.CreatePathObject(input_path, "_1553.parquet");
-	spdlog::get("pm_logger")->info("Parquet 1553 output path: {:s}", 
-		parquet_1553_path.RawString());
-	if (!parquet_1553_path.create_directory())
-		error_set = true;
-	output_dir_map_[Ch10PacketType::MILSTD1553_F1] = parquet_1553_path;
+	if (packet_type_config_map_.at(Ch10PacketType::MILSTD1553_F1))
+	{
+		ManagedPath parquet_1553_path = output_path.CreatePathObject(input_path, "_1553.parquet");
+		spdlog::get("pm_logger")->info("Parquet 1553 output path: {:s}",
+			parquet_1553_path.RawString());
+		if (!parquet_1553_path.create_directory())
+			error_set = true;
+		output_dir_map_[Ch10PacketType::MILSTD1553_F1] = parquet_1553_path;
+	}
 
-	ManagedPath parquet_vid_path = output_path.CreatePathObject(input_path, "_video.parquet");
-	spdlog::get("pm_logger")->info("Parquet video output path: {:s}", 
-		parquet_vid_path.RawString());
-	if (!parquet_vid_path.create_directory())
-		error_set = true;
-	output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] = parquet_vid_path;
+	if (packet_type_config_map_.at(Ch10PacketType::VIDEO_DATA_F0))
+	{
+		ManagedPath parquet_vid_path = output_path.CreatePathObject(input_path, "_video.parquet");
+		spdlog::get("pm_logger")->info("Parquet video output path: {:s}",
+			parquet_vid_path.RawString());
+		if (!parquet_vid_path.create_directory())
+			error_set = true;
+		output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] = parquet_vid_path;
+	}
 
 #ifdef ETHERNET_DATA
-
-	ManagedPath parquet_eth_path = output_path.CreatePathObject(input_path, "_ethernet.parquet");
-	spdlog::get("pm_logger")->info("Parquet ethernet output path: {:s}", 
-		parquet_eth_path.RawString());
-	if (!parquet_eth_path.create_directory())
-		error_set = true;
-	output_dir_map_[Ch10PacketType::ETHERNET_DATA_F0] = parquet_eth_path;
-
+	if (packet_type_config_map_.at(Ch10PacketType::ETHERNET_DATA_F0))
+	{
+		ManagedPath parquet_eth_path = output_path.CreatePathObject(input_path, "_ethernet.parquet");
+		spdlog::get("pm_logger")->info("Parquet ethernet output path: {:s}",
+			parquet_eth_path.RawString());
+		if (!parquet_eth_path.create_directory())
+			error_set = true;
+		output_dir_map_[Ch10PacketType::ETHERNET_DATA_F0] = parquet_eth_path;
+	}
 #endif
 }
 
@@ -85,25 +93,30 @@ void ParseManager::create_output_file_paths()
 		// current index.
 		std::map<Ch10PacketType, ManagedPath> temp_output_file_map;
 
-		// Get a copy of the output dir path for simplification.
-		temp_output_dir = output_dir_map_[Ch10PacketType::MILSTD1553_F1];
-
 		// Create the 1553 output file path.
-		temp_output_file_map[Ch10PacketType::MILSTD1553_F1] = temp_output_dir.CreatePathObject(
-			temp_output_dir, replacement_ext);
+		if (packet_type_config_map_.at(Ch10PacketType::MILSTD1553_F1))
+		{
+			temp_output_dir = output_dir_map_[Ch10PacketType::MILSTD1553_F1];
+			temp_output_file_map[Ch10PacketType::MILSTD1553_F1] = temp_output_dir.CreatePathObject(
+				temp_output_dir, replacement_ext);
+		}
 
 		// Create video f0 output path.
-		temp_output_dir = output_dir_map_[Ch10PacketType::VIDEO_DATA_F0];
-		temp_output_file_map[Ch10PacketType::VIDEO_DATA_F0] = temp_output_dir.CreatePathObject(
-			temp_output_dir, replacement_ext);
+		if (packet_type_config_map_.at(Ch10PacketType::VIDEO_DATA_F0))
+		{
+			temp_output_dir = output_dir_map_[Ch10PacketType::VIDEO_DATA_F0];
+			temp_output_file_map[Ch10PacketType::VIDEO_DATA_F0] = temp_output_dir.CreatePathObject(
+				temp_output_dir, replacement_ext);
+		}
 
 
 #ifdef ETHERNET_DATA
-
-		temp_output_dir = output_dir_map_[Ch10PacketType::ETHERNET_DATA_F0];
-		temp_output_file_map[Ch10PacketType::ETHERNET_DATA_F0] = temp_output_dir.CreatePathObject(
-			temp_output_dir, replacement_ext);
-
+		if (packet_type_config_map_.at(Ch10PacketType::ETHERNET_DATA_F0))
+		{
+			temp_output_dir = output_dir_map_[Ch10PacketType::ETHERNET_DATA_F0];
+			temp_output_file_map[Ch10PacketType::ETHERNET_DATA_F0] = temp_output_dir.CreatePathObject(
+				temp_output_dir, replacement_ext);
+		}
 #endif
 
 		// Add the temp map to the vector maps.
@@ -182,64 +195,70 @@ void ParseManager::start_workers()
 	
 	// Create metadata object and create output path name for metadata
 	// to be recorded in 1553 output directory.
-	Metadata md;
-	ManagedPath md_path = md.GetYamlMetadataPath(
-		output_dir_map_[Ch10PacketType::MILSTD1553_F1],
-		"_metadata");
+	if (packet_type_config_map_.at(Ch10PacketType::MILSTD1553_F1))
+	{
+		Metadata md;
+		ManagedPath md_path = md.GetYamlMetadataPath(
+			output_dir_map_[Ch10PacketType::MILSTD1553_F1],
+			"_metadata");
 
-	// Record Config options used
-	md.RecordSimpleMap(config_->ch10_packet_type_map_, "ch10_packet_type");
-	md.RecordSingleKeyValuePair("parse_chunk_bytes", config_->parse_chunk_bytes_);
-	md.RecordSingleKeyValuePair("parse_thread_count", config_->parse_thread_count_);
-	md.RecordSingleKeyValuePair("max_chunk_read_count", config_->max_chunk_read_count_);
-	md.RecordSingleKeyValuePair("worker_offset_wait_ms", config_->worker_offset_wait_ms_);
-	md.RecordSingleKeyValuePair("worker_shift_wait_ms", config_->worker_shift_wait_ms_);
+		// Record Config options used
+		md.RecordSimpleMap(config_->ch10_packet_type_map_, "ch10_packet_type");
+		md.RecordSingleKeyValuePair("parse_chunk_bytes", config_->parse_chunk_bytes_);
+		md.RecordSingleKeyValuePair("parse_thread_count", config_->parse_thread_count_);
+		md.RecordSingleKeyValuePair("max_chunk_read_count", config_->max_chunk_read_count_);
+		md.RecordSingleKeyValuePair("worker_offset_wait_ms", config_->worker_offset_wait_ms_);
+		md.RecordSingleKeyValuePair("worker_shift_wait_ms", config_->worker_shift_wait_ms_);
 
-	// Record the input ch10 path.
-	md.RecordSingleKeyValuePair("ch10_input_file_path", input_path.RawString());
+		// Record the input ch10 path.
+		md.RecordSingleKeyValuePair("ch10_input_file_path", input_path.RawString());
 
-	// Obtain the tx and rx combined channel ID to LRU address map and
-	// record it to the Yaml writer.
-	std::map<uint32_t, std::set<uint16_t>> output_chanid_remoteaddr_map;
-	collect_chanid_to_lruaddrs_metadata(output_chanid_remoteaddr_map);
-	md.RecordCompoundMapToSet(output_chanid_remoteaddr_map, "chanid_to_lru_addrs");
+		// Obtain the tx and rx combined channel ID to LRU address map and
+		// record it to the Yaml writer.
+		std::map<uint32_t, std::set<uint16_t>> output_chanid_remoteaddr_map;
+		collect_chanid_to_lruaddrs_metadata(output_chanid_remoteaddr_map);
+		md.RecordCompoundMapToSet(output_chanid_remoteaddr_map, "chanid_to_lru_addrs");
 
-	// Obtain the channel ID to command words set map.
-	std::map<uint32_t, std::vector<std::vector<uint32_t>>> output_chanid_commwords_map;
-	collect_chanid_to_commwords_metadata(output_chanid_commwords_map);
-	md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
+		// Obtain the channel ID to command words set map.
+		std::map<uint32_t, std::vector<std::vector<uint32_t>>> output_chanid_commwords_map;
+		collect_chanid_to_commwords_metadata(output_chanid_commwords_map);
+		md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
 
-	ProcessTMATS();
+		ProcessTMATS();
 
-	// Record the TMATS channel ID to source map.
-	md.RecordSimpleMap(TMATsChannelIDToSourceMap_, "tmats_chanid_to_source");
+		// Record the TMATS channel ID to source map.
+		md.RecordSimpleMap(TMATsChannelIDToSourceMap_, "tmats_chanid_to_source");
 
-	// Record the TMATS channel ID to type map.
-	md.RecordSimpleMap(TMATsChannelIDToTypeMap_, "tmats_chanid_to_type");
+		// Record the TMATS channel ID to type map.
+		md.RecordSimpleMap(TMATsChannelIDToTypeMap_, "tmats_chanid_to_type");
 
-	// Write the complete Yaml record to the metadata file.
-	std::ofstream stream_1553_metadata(md_path.string(), 
-		std::ofstream::out | std::ofstream::trunc);
-	stream_1553_metadata << md.GetMetadataString();
-	stream_1553_metadata.close();
+		// Write the complete Yaml record to the metadata file.
+		std::ofstream stream_1553_metadata(md_path.string(),
+			std::ofstream::out | std::ofstream::trunc);
+		stream_1553_metadata << md.GetMetadataString();
+		stream_1553_metadata.close();
+	}
 
 	// Create metadata object for video metadata.
-	Metadata vmd;
-	md_path = vmd.GetYamlMetadataPath(
-		output_dir_map_[Ch10PacketType::VIDEO_DATA_F0],
-		"_metadata");
+	if (packet_type_config_map_.at(Ch10PacketType::VIDEO_DATA_F0))
+	{
+		Metadata vmd;
+		ManagedPath video_md_path = vmd.GetYamlMetadataPath(
+			output_dir_map_[Ch10PacketType::VIDEO_DATA_F0],
+			"_metadata");
 
-	// Get the channel ID to minimum time stamp map.
-	std::map<uint16_t, uint64_t> min_timestamp_map;
-	CollectVideoMetadata(min_timestamp_map);
+		// Get the channel ID to minimum time stamp map.
+		std::map<uint16_t, uint64_t> min_timestamp_map;
+		CollectVideoMetadata(min_timestamp_map);
 
-	// Record the map in the Yaml writer and write the 
-	// total yaml text to file.
-	vmd.RecordSimpleMap(min_timestamp_map, "chanid_to_first_timestamp");
-	std::ofstream stream_video_metadata(md_path.string(),
-		std::ofstream::out | std::ofstream::trunc);
-	stream_video_metadata << vmd.GetMetadataString();
-	stream_video_metadata.close();
+		// Record the map in the Yaml writer and write the 
+		// total yaml text to file.
+		vmd.RecordSimpleMap(min_timestamp_map, "chanid_to_first_timestamp");
+		std::ofstream stream_video_metadata(video_md_path.string(),
+			std::ofstream::out | std::ofstream::trunc);
+		stream_video_metadata << vmd.GetMetadataString();
+		stream_video_metadata.close();
+	}
 }
 
 void ParseManager::CollectVideoMetadata(

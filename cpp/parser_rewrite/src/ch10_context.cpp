@@ -301,9 +301,13 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 	using MapIt = std::map<Ch10PacketType, ManagedPath>::const_iterator;
 	for (MapIt it = enabled_paths.cbegin(); it != enabled_paths.cend(); ++it)
 	{
+		SPDLOG_DEBUG("({:02d}) Enabling writer for {:s}",
+			thread_id, ch10packettype_to_string_map.at(it->first));
+
 		switch (it->first)
 		{
 		case Ch10PacketType::MILSTD1553_F1:
+			
 			// Store the file writer status for this type as enabled.
 			pkt_type_file_writers_enabled_map_[Ch10PacketType::MILSTD1553_F1] = true;
 
@@ -321,6 +325,7 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 			milstd1553f1_pq_writer = milstd1553f1_pq_writer_.get();
 			break;
 		case Ch10PacketType::VIDEO_DATA_F0:
+
 			pkt_type_file_writers_enabled_map_[Ch10PacketType::VIDEO_DATA_F0] = true;
 
 			// Create the writer object.
