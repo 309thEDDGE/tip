@@ -118,13 +118,11 @@ if __name__ == '__main__':
 
     if active_plat == 'windows':
         parser_exe_name = 'tip_parse.exe'
-        parser_video_exe_name = 'tip_parse_video.exe'
         translator_exe_name = 'tip_translate.exe'
         #comet_exe_name = 'cometparse.exe'
         video_extr_exe_name = 'parquet_video_extractor.exe'
     elif active_plat == 'linux':
         parser_exe_name = 'tip_parse'
-        parser_video_exe_name = 'tip_parse_video'
         translator_exe_name = 'tip_translate'
         #comet_exe_name = 'cometparse'
         video_extr_exe_name = 'parquet_video_extractor'
@@ -161,10 +159,7 @@ if __name__ == '__main__':
                         'Default is path of Ch10 file.')
 
     aparse.add_argument('--video', action='store_true', default=False, 
-                        help='Parse video data and extract to transport stream files.')
-
-    aparse.add_argument('--no-ts', action='store_true', default=False, 
-                        help='Prevent extraction of TS files from video Parquet files.')
+                        help='Extract video to transport stream files.')
 
     aparse.add_argument('--dry-run', action='store_true', 
                         help='Test input arguments. Do not parse or translate.')
@@ -187,14 +182,6 @@ if __name__ == '__main__':
     
 
     args = aparse.parse_args()
-
-    if args.video:
-        rmcomet_parser_exe_name = parser_video_exe_name
-    else:
-        rmcomet_parser_exe_name = parser_exe_name
-
-    # if args.comet_path is not None:
-        # args.legacy_mode = True
 
     # Copy configuration files from the default directory
     # to the working configuration file directory.
@@ -231,17 +218,6 @@ if __name__ == '__main__':
         print("Ch10 path \'{:s}\' does not exist".format(args.ch10_path))
         sys.exit(0)
 
-    # if args.legacy_mode:
-        # if args.comet_path is None:
-            # print('Legacy mode: Must use \'-c\' option. Use \'-h\' flag for more info.')
-            # sys.exit(0)
-        # if args.comet_search_string is None:
-            # print('Legacy mode: Must use \'-s\' option. Use \'-h\' flag for more info.')
-            # sys.exit(0)
-        # use_parser_exe = parser_exe_name
-        # use_translator_exe = translator_exe_name
-        # use_parse_conf = legacy_parse_conf
-    # else:
     use_parser_exe = rmcomet_parser_exe_name
     use_translator_exe = rmcomet_translator_exe_name
     use_parse_conf = parse_conf
@@ -386,7 +362,7 @@ if __name__ == '__main__':
         #
         # Set up TS extractor call (if --video)
         #
-        if args.video and not args.no_ts:
+        if args.video:
             if native_python:
                 video_extr_dir_exists = os.path.isdir(TS_path)
                 if not video_extr_dir_exists or args.overwrite:
