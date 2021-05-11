@@ -182,8 +182,8 @@ main() {
 		readelf -x .txtrp ./bin/bincompare | grep 0x -m3
 		ldd ./bin/tests
 		readelf -x .txtrp ./bin/tests | grep 0x -m3
-		ldd ./bin/tip_parse_video
-		readelf -x .txtrp ./bin/tip_parse_video | grep 0x -m3
+		ldd ./bin/tip_parse
+		readelf -x .txtrp ./bin/tip_parse | grep 0x -m3
 		ldd ./bin/tip_translate
 		readelf -x .txtrp ./bin/tip_translate | grep 0x -m3
 	else
