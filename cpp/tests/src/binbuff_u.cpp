@@ -204,6 +204,12 @@ TEST_F(BinBuffTest, InitializeActualReadLTExpected)
 	infile_.close();
 }
 
+TEST_F(BinBuffTest, DataNotInitialized)
+{
+	const uint8_t* data_ptr = bb_.Data();
+	EXPECT_EQ(data_ptr, nullptr);
+}
+
 TEST_F(BinBuffTest, InitializeBufferDataCorrect)
 {
 	// Note: this test also tests re-initialization.
@@ -220,6 +226,7 @@ TEST_F(BinBuffTest, InitializeBufferDataCorrect)
 		expected_data[i] = i;
 	EXPECT_EQ(bb_.Initialize(infile_, seek_file_size_,
 		requested_read_pos_, requested_read_size_), 100);
+	EXPECT_EQ(bb_.buffer_size_, requested_read_size_);
 	EXPECT_THAT(std::vector<uint8_t>(bb_.Data(), bb_.Data()+requested_read_size_),
 		::testing::ElementsAreArray(expected_data));
 
@@ -484,5 +491,31 @@ TEST_F(BinBuffTest, FindAllPatternFloat)
 	// No calls have been made to change the read position. Confirm it 
 	// hasn't changed.
 	EXPECT_EQ(bb_.position_, requested_read_pos_);
+	infile_.close();
+}
+
+TEST_F(BinBuffTest, Clear)
+{
+	// File size
+	size_t write_count = 100;
+	CreateByteIndexTempFile(write_count);
+	ASSERT_TRUE(OpenIFStream());
+
+	requested_read_pos_ = 50;
+	requested_read_size_ = 50;
+	EXPECT_EQ(bb_.Initialize(infile_, seek_file_size_,
+		requested_read_pos_, requested_read_size_), requested_read_size_);
+
+	// Confirm data were read into the buffer as expected
+	EXPECT_EQ(bb_.BytesAvailable(50), true);
+
+	// Clear, then confirm variables are reset
+	bb_.Clear();
+	EXPECT_EQ(bb_.buffer_size_, 0);
+	EXPECT_FALSE(bb_.IsInitialized());
+	EXPECT_EQ(bb_.Size(), 0);
+	EXPECT_EQ(bb_.BytesAvailable(5), false);
+	EXPECT_EQ(bb_.Data(), nullptr);
+
 	infile_.close();
 }

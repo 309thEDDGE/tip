@@ -38,6 +38,9 @@ class BinBuff
 		// with either the requested count or all the byte remaining
 		// in the file pointed to by the ifstream passed to Initialize.
 		bool is_initialized_;
+
+		// Buffer size, bytes
+		uint64_t buff_size_;
 	
 	public:
 		BinBuff();
@@ -45,6 +48,9 @@ class BinBuff
 
 		// Convenient access to the current position within the buffer.
 		const uint64_t& position_;
+
+		// Public reference for current allocated buffer size, bytes
+		const uint64_t& buffer_size_;
 
 		// Read binary 'read_count' bytes at position 'read_pos' from 'infile' into 
 		// buffer. 'file_size' is the byte count of the input file connected to 
@@ -108,6 +114,9 @@ class BinBuff
 		// after initialization. This is the functional size
 		// of the buffer.
 		uint64_t Size() const;
+
+		// Free the memory in the buffer and reset state
+		void Clear();
 	
 };
 
