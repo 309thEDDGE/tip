@@ -29,46 +29,40 @@ private:
 	// Track Ch10 state and manipulate metadata
 	Ch10Context ctx_;
 
-	//// The 0-indexed ParseWorker index
-	//uint16_t worker_index_;
-
-	//// 0-indexed buffer index from which ch10 binary data are read
-	//uint16_t buffer_index_;
-
-	//// Absolute position in ch10 at which ParseWorker begins parsing
-	//uint64_t start_position_;
-
-	//// Absolute position in ch10 at which ParseWorker ends parsing
-	//uint64_t last_position_;
-	//
-	//// True if worker is the final worker used to parse a Ch10
-	//bool final_worker_;
-	//
-	//// Output paths for each Ch10 packet type, specific to the 
-	//// ParseWorker for which the map is created.
-	//std::map<Ch10PacketType, ManagedPath> output_file_paths_;
-
 	
 public:
+
+	// Used to obtain public data from this worker's Ch10Context instance
+	const Ch10Context& ch10_context_;
+
 	ParseWorker();
-	std::atomic<bool>& completion_status();
-	void reset_completion_status();
 
-	/*void initialize(uint16_t worker_index,
-		uint64_t start_pos, uint32_t read, uint16_t buffer_index,
-		std::map<Ch10PacketType, ManagedPath>& file_path_map, bool is_final_worker);
-	void append_mode_initialize(uint32_t read, uint16_t buffer_index, uint64_t start_pos);*/
-	//uint16_t get_binbuff_ind();
-	
-	//void operator()(BinBuff& bb, bool append_mode, std::vector<std::string>& tmats_body_vec,
-		//std::map<Ch10PacketType, bool> ch10_packet_type_map);
+	/*
+	Worker job completion status.
 
+	Return:
+		True if the worker has completed parsing or an error has occurred
+		that caused parsing to cease early, false otherwise.
+	*/
+	std::atomic<bool>& CompletionStatus();
+
+	/*
+	The primary function of ParseWorker. To be called by passing an instance
+	of ParseWorker as the first argument to the std::thread constructor, in which
+	this operator() function is automatically executed. 
+
+	Parses the Ch10 binary data loaded into the BinBuff object encapsulated in
+	the WorkerConfig object. Uses other encapsulated data to initialize the Ch10Context
+	owned by ParseWorker instance. Any matter from TMATs packets found by the worker
+	are appended to the tmats_body_vec.
+
+	Args:
+		worker_config	--> WorkerConfig object defining the worker configuration
+							state and binary data to be parsed
+		tmats_body_vec	--> Vector to which any TMATs matter found in the binary 
+							data are appended
+	*/
 	void operator()(WorkerConfig& worker_config, std::vector<std::string>& tmats_body_vec);
-	
-	//uint64_t& get_last_position();
-	void append_chanid_remoteaddr_maps(std::map<uint32_t, std::set<uint16_t>>& out1, std::map<uint32_t, std::set<uint16_t>>& out2);
-	void append_chanid_comwmwords_map(std::map<uint32_t, std::set<uint32_t>>& out);
-	const std::map<uint16_t, uint64_t>& GetChannelIDToMinTimeStampMap();
 };
 
 #endif 

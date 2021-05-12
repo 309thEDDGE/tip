@@ -11,14 +11,12 @@ class WorkerConfig
 {
 public:
 
-	// The 0-indexed ParseWorker index
+	// The 0-indexed ParseWorker index to which this configuration
+	// is associated.
 	uint16_t worker_index_;
 
 	// Buffer which holds ch10 binary data to be parsed
 	BinBuff bb_;
-
-	// 0-indexed buffer index from which ch10 binary data are read
-	uint16_t buffer_index_;
 
 	// Absolute position in ch10 at which ParseWorker begins parsing
 	uint64_t start_position_;
@@ -43,7 +41,7 @@ public:
 	// Ch10 packet type configuration
 	std::map<Ch10PacketType, bool> ch10_packet_type_map_;
 
-	WorkerConfig() : worker_index_(0), buffer_index_(0), start_position_(0),
+	WorkerConfig() : worker_index_(0), start_position_(0),
 		last_position_(0), final_worker_(false), append_mode_(false), bb_()
 	{}
 };

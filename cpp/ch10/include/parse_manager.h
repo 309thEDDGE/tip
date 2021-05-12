@@ -31,8 +31,11 @@ class ParseManager
 {
 	private:
 
-	// TMATS processing
+	// TMATS raw data
 	std::vector<std::string> tmats_body_vec_;
+
+	// Metadata manipulation
+	IterableTools it_;
 	
 	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
 	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
@@ -63,10 +66,10 @@ class ParseManager
 
 	std::map<Ch10PacketType, bool> packet_type_config_map_;
 
-	std::streamsize activate_worker(uint16_t binbuff_ind, uint16_t ID,
+	/*std::streamsize activate_worker(uint16_t binbuff_ind, uint16_t ID,
 		uint64_t start_pos, uint32_t n_read);
 	std::streamsize activate_append_mode_worker(uint16_t binbuff_ind, uint16_t ID,
-		uint32_t n_read);
+		uint32_t n_read);*/
 
 	std::streamsize new_activate_worker(ParseWorker* worker_vec, WorkerConfig* worker_config,
 		uint16_t worker_index, uint64_t& read_pos, uint32_t& read_size);
@@ -77,9 +80,9 @@ class ParseManager
 	std::vector<uint16_t> active_workers;
 	std::chrono::milliseconds worker_wait;
 	std::chrono::milliseconds worker_start_offset;
-	void worker_queue(bool append_mode);
+	//void worker_queue(bool append_mode);
 	void new_worker_queue(bool append_mode);
-	void worker_retire_queue();
+	//void worker_retire_queue();
 	void new_worker_retire_queue();
 	void create_output_dirs();
 	void create_output_file_paths();

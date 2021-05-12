@@ -1,31 +1,15 @@
 // parse_worker.cpp
 #include "parse_worker.h"
 
-ParseWorker::ParseWorker() : complete_(false)
+ParseWorker::ParseWorker() : complete_(false), ch10_context_(ctx_), ctx_()
 { }
-
-//void ParseWorker::initialize(uint16_t worker_index,
-//	uint64_t start_pos, uint32_t read, uint16_t buffer_index,
-//	std::map<Ch10PacketType, ManagedPath>& file_path_map,
-//	bool is_final_worker)
-//{
-//	worker_index_ = worker_index;
-//	start_position_ = start_pos;
-//	buffer_index_ = buffer_index;
-//	final_worker_ = is_final_worker;
-//	output_file_paths_ = file_path_map;
-//}
-//
-//void ParseWorker::append_mode_initialize(uint32_t read, uint16_t buffer_index,
-//	uint64_t start_pos)
-//{
-//	buffer_index_ = buffer_index;
-//	start_position_ = start_pos;
-//}
 
 void ParseWorker::operator()(WorkerConfig& worker_config, 
 	std::vector<std::string>& tmats_body_vec)
 {
+	// Reset completion status.
+	complete_ = false;
+
 	if (worker_config.append_mode_)
 		SPDLOG_INFO("({:02d}) APPEND MODE ParseWorker now active", worker_config.worker_index_);
 	else
@@ -36,8 +20,8 @@ void ParseWorker::operator()(WorkerConfig& worker_config,
 
 	// Initialize Ch10Context object. Note that this Ch10Context instance
 	// created in the ParseWorker constructor is persistent until the 
-	// ParseWorker instance is garbage-collected to maintain file writer
-	// (read: Parquet file writer) state.
+	// ParseWorker instance is garbage-collected to maintain/retain file
+	// writer state.
 	ctx_.Initialize(worker_config.start_position_, worker_config.worker_index_);
 	ctx_.SetSearchingForTDP(!worker_config.append_mode_);
 
@@ -45,12 +29,6 @@ void ParseWorker::operator()(WorkerConfig& worker_config,
 	{
 		// Configure packet parsing.
 		ctx_.SetPacketTypeConfig(worker_config.ch10_packet_type_map_);
-
-		// Configure output file paths.
-		/*std::map<Ch10PacketType, ManagedPath> output_paths = {
-			{Ch10PacketType::MILSTD1553_F1, output_file_paths_[Ch10PacketType::MILSTD1553_F1]},
-			{Ch10PacketType::VIDEO_DATA_F0, output_file_paths_[Ch10PacketType::VIDEO_DATA_F0]}
-		};*/
 
 		// Check configuration. Are the packet parse and output paths configs
 		// consistent?
@@ -111,39 +89,8 @@ void ParseWorker::operator()(WorkerConfig& worker_config,
 	complete_ = true;
 }
 
-std::atomic<bool>& ParseWorker::completion_status()
+std::atomic<bool>& ParseWorker::CompletionStatus()
 {
 	return complete_;
 }
 
-void ParseWorker::reset_completion_status()
-{
-	complete_ = false;
-}
-
-//uint16_t ParseWorker::get_binbuff_ind()
-//{ return buffer_index_; }
-//
-//uint64_t& ParseWorker::get_last_position()
-//{
-//	return last_position_;
-//}
-
-void ParseWorker::append_chanid_remoteaddr_maps(std::map<uint32_t, std::set<uint16_t>>& out1,
-	std::map<uint32_t, std::set<uint16_t>>&out2)
-{
-	IterableTools it;
-	out1 = it.CombineCompoundMapsToSet(out1, ctx_.chanid_remoteaddr1_map);
-	out2 = it.CombineCompoundMapsToSet(out2, ctx_.chanid_remoteaddr2_map);
-}
-
-void ParseWorker::append_chanid_comwmwords_map(std::map<uint32_t, std::set<uint32_t>>& out)
-{
-	IterableTools it;
-	out = it.CombineCompoundMapsToSet(out, ctx_.chanid_commwords_map);
-}
-
-const std::map<uint16_t, uint64_t>& ParseWorker::GetChannelIDToMinTimeStampMap()
-{
-	return ctx_.chanid_minvideotimestamp_map;
-}
