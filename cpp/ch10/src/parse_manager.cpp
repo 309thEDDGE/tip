@@ -16,7 +16,8 @@ ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const Par
 	worker_wait(config->worker_shift_wait_ms_),
 	worker_start_offset(config->worker_offset_wait_ms_), 
 	ifile(),
-	binary_buffers(nullptr), 
+	//binary_buffers(nullptr), 
+	worker_config_(nullptr),
 	check_word_count(true),
 	n_reads(0), 
 	threads(nullptr), 
@@ -152,7 +153,8 @@ void ParseManager::start_workers()
 		n_reads = max_workers;
 	workers = new ParseWorker[n_reads];
 	threads = new std::thread[n_reads];
-	binary_buffers = new BinBuff[n_reads];
+	//binary_buffers = new BinBuff[n_reads];
+	worker_config_ = new WorkerConfig[n_reads];
 	workers_allocated = true;
 
 	create_output_file_paths();
@@ -165,11 +167,11 @@ void ParseManager::start_workers()
 	// Start queue to activate all workers, limiting the quantity of 
 	// concurrent threads to n_threads.
 	bool append = false;
-	worker_queue(append);
+	new_worker_queue(append);
 	spdlog::get("pm_logger")->debug("after worker_queue");
 
 	// Wait for all active workers to finish.
-	worker_retire_queue();
+	new_worker_retire_queue();
 
 	// After all workers have finished and joined, each worker except the
 	// last will parse the dangling packets that occur at the end of each 
@@ -188,10 +190,10 @@ void ParseManager::start_workers()
 	spdlog::get("pm_logger")->info("Parsing dangling packets");
 
 	append = true;
-	worker_queue(append);
+	new_worker_queue(append);
 
 	// Wait for all active workers to finish.
-	worker_retire_queue();
+	new_worker_retire_queue();
 	
 	// Create metadata object and create output path name for metadata
 	// to be recorded in 1553 output directory.
@@ -329,21 +331,76 @@ void ParseManager::collect_chanid_to_commwords_metadata(
 std::streamsize ParseManager::activate_worker(uint16_t binbuff_ind, uint16_t ID,
 	uint64_t start_pos, uint32_t n_read)
 {
-	uint64_t read_count = binary_buffers[binbuff_ind].Initialize(ifile, total_size, start_pos, n_read);
-	bool is_final_worker = false;
+	uint64_t read_count = worker_config_[binbuff_ind].bb_.Initialize(ifile, total_size, start_pos, n_read);
+	worker_config_[binbuff_ind].final_worker_ = false;
 	if (ID == n_reads - 1)
 	{
-		is_final_worker = true;
+		worker_config_[binbuff_ind].final_worker_ = true;
 	}
-	workers[ID].initialize(ID, start_pos, n_read, binbuff_ind, output_file_path_vec_[ID],
-		is_final_worker);
+	/*workers[ID].initialize(ID, start_pos, n_read, binbuff_ind, output_file_path_vec_[ID],
+		is_final_worker);*/
+	worker_config_[binbuff_ind].worker_index_ = ID;
+	worker_config_[binbuff_ind].buffer_index_ = binbuff_ind;
+	worker_config_[binbuff_ind].start_position_ = start_pos;
+	worker_config_[binbuff_ind].append_mode_ = false;
+	worker_config_[binbuff_ind].output_file_paths_ = output_file_path_vec_[ID];
+	worker_config_[binbuff_ind].ch10_packet_type_map_ = packet_type_config_map_;
 
 	spdlog::get("pm_logger")->debug("Init. worker {:d}: start = {:d}, read size = {:d}, bb ind = {:d}",
 		ID, start_pos, n_read, binbuff_ind);
 		
 	// Start this instance of ParseWorker. Append mode false.
-	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
-		false, std::ref(tmats_body_vec_), packet_type_config_map_);
+	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(worker_config_[binbuff_ind]),
+		std::ref(tmats_body_vec_));
+	return read_count;
+}
+
+std::streamsize ParseManager::new_activate_worker(ParseWorker* worker_vec, WorkerConfig* worker_config,
+	uint16_t worker_index, uint64_t& read_pos, uint32_t& read_size)
+{
+	uint64_t read_count = worker_config[worker_index].bb_.Initialize(ifile, total_size, 
+		read_pos, read_size);
+	worker_config_[worker_index].final_worker_ = false;
+	if (worker_index == n_reads - 1)
+	{
+		worker_config_[worker_index].final_worker_ = true;
+	}
+	
+	worker_config_[worker_index].worker_index_ = worker_index;
+	//worker_config_[worker_index].buffer_index_ = binbuff_ind;
+	worker_config_[worker_index].start_position_ = read_pos;
+	worker_config_[worker_index].append_mode_ = false;
+	worker_config_[worker_index].output_file_paths_ = output_file_path_vec_[worker_index];
+	worker_config_[worker_index].ch10_packet_type_map_ = packet_type_config_map_;
+
+	spdlog::get("pm_logger")->debug("Init. worker {:d}: start = {:d}, read size = {:d}",
+		worker_index, read_pos, read_size);
+
+	// Start this instance of ParseWorker. Append mode false.
+	threads[worker_index] = std::thread(std::ref(worker_vec[worker_index]), 
+		std::ref(worker_config_[worker_index]), std::ref(tmats_body_vec_));
+	return read_count;
+}
+
+std::streamsize ParseManager::new_activate_append_mode_worker(ParseWorker* worker_vec,
+	WorkerConfig* worker_config, uint16_t worker_index, uint32_t& read_size)
+{
+	// Reset parse worker completion status.
+	uint64_t last_pos = worker_config_[worker_index].last_position_;
+	//workers[ID].reset_completion_status();
+
+	spdlog::get("pm_logger")->debug("Init. append mode worker {:d}: start = {:d}, read size = {:d}",
+		worker_index, last_pos, read_size);
+
+	uint64_t read_count = worker_config_[worker_index].bb_.Initialize(ifile,
+		total_size, last_pos, read_size);
+	worker_config_[worker_index].start_position_ = last_pos;
+	worker_config_[worker_index].append_mode_ = true;
+	//worker_config_[worker_index].buffer_index_ = binbuff_ind;
+
+	// Start this instance of ParseWorker. Append mode true.
+	threads[worker_index] = std::thread(std::ref(worker_vec[worker_index]), 
+		std::ref(worker_config_[worker_index]), std::ref(tmats_body_vec_));
 	return read_count;
 }
 
@@ -351,20 +408,22 @@ std::streamsize ParseManager::activate_append_mode_worker(uint16_t binbuff_ind, 
 	uint32_t n_read)
 {
 	// Reset parse worker completion status.
-	uint64_t last_pos = workers[ID].get_last_position();
+	uint64_t last_pos = worker_config_[binbuff_ind].last_position_;
 	workers[ID].reset_completion_status();
 
 	spdlog::get("pm_logger")->debug("Init. append mode worker {:d}: start = {:d}, read size = {:d}, bb ind = {:d}",
 		ID, last_pos, n_read, binbuff_ind);
 
-	uint64_t read_count = binary_buffers[binbuff_ind].Initialize(ifile,
+	uint64_t read_count = worker_config_[binbuff_ind].bb_.Initialize(ifile,
 		total_size, last_pos, n_read);
+	worker_config_[binbuff_ind].start_position_ = last_pos;
+	worker_config_[binbuff_ind].buffer_index_ = binbuff_ind;
 
-	workers[ID].append_mode_initialize(n_read, binbuff_ind, last_pos);
+	//workers[ID].append_mode_initialize(n_read, binbuff_ind, last_pos);
 
 	// Start this instance of ParseWorker. Append mode true.
-	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(binary_buffers[binbuff_ind]),
-		true, std::ref(tmats_body_vec_), packet_type_config_map_);
+	threads[ID] = std::thread(std::ref(workers[ID]), std::ref(worker_config_[binbuff_ind]),
+		std::ref(tmats_body_vec_));
 	return read_count;
 }
 
@@ -481,7 +540,8 @@ void ParseManager::worker_queue(bool append_mode)
 						spdlog::get("pm_logger")->debug("Worker {:d} INACTIVE/COMPLETE -- joining now", 
 							active_workers[act_work_ind]);
 
-						bb_ind = workers[active_workers[act_work_ind]].get_binbuff_ind();
+						//bb_ind = workers[active_workers[act_work_ind]].get_binbuff_ind();
+						bb_ind = worker_config_[active_workers[act_work_ind]].buffer_index_;
 						threads[active_workers[act_work_ind]].join();
 						active_workers.erase(active_workers.begin() + act_work_ind);
 
@@ -544,6 +604,222 @@ void ParseManager::worker_queue(bool append_mode)
 	} // end for loop over all worker indices.
 }
 
+void ParseManager::new_worker_queue(bool append_mode)
+{
+	// Initially load all threads by keeping track of the
+	// the number activated. Afterwards only activate new 
+	// threads when an active thread finishes.
+	uint16_t active_thread_count = 0;
+	uint16_t current_active_worker = 0;
+	bool thread_started = false;
+	bool all_threads_active = false;
+	bool eof_reached = false;
+	uint16_t max_worker_ind = 0;
+	std::streamsize current_read_count = 0;
+	uint16_t bb_ind = 0;
+	int concurrent_thread_count = 0;
+	spdlog::get("pm_logger")->debug("worker_queue: Starting worker threads");
+
+	// Create and wait for workers until the entire input file 
+	// is parsed.
+
+	// Loop over each block of data that is to be read and parsed. There is a 1:1
+	// relationship between a worker and a block of data--each worker consumes a 
+	// single data block. In the append_mode = true
+	// case, the very last worker doesn't have any dangling packets because presumably
+	// it parsed data until the ch10 file ended. Only [worker 1, worker last) need to
+	// append data to their respective files. 
+	uint16_t n_read_limit = n_reads;
+	if (append_mode)
+	{
+		// If there is only 1 worker, then there is no need to 
+		// append data. Also, there is no reason to append data
+		// to the last worker (i.e., the worker that read the last 
+		// portion of the Ch10 file) so only append data for all
+		// workers except the last worker. 
+		if (n_read_limit > 1)
+			n_read_limit--;
+		else
+			return;
+	}
+	for (uint16_t worker_ind = 0; worker_ind < n_read_limit; worker_ind++)
+	{
+		thread_started = false;
+		// Stay in while loop until another worker is started. 
+		while (!thread_started)
+		{
+			if (!all_threads_active)
+			{
+				spdlog::get("pm_logger")->debug("All threads NOT ACTIVE ({:d} active)", active_thread_count);
+
+				// Immediately activate a new worker.
+				if (append_mode)
+				{
+					//printf("Ready to activate_append_mode_worker, active_thread_count = %hu, read_ind = %hu\n", active_thread_count, read_ind);
+					current_read_count = new_activate_append_mode_worker(workers, worker_config_,
+						worker_ind, append_read_size);
+				}
+				else
+				{
+					current_read_count = new_activate_worker(workers, worker_config_, 
+						worker_ind, total_read_pos, read_size);
+				}
+
+				// Check if the correct number of bytes were read.
+				if (append_mode)
+				{
+					if (current_read_count != append_read_size)
+					{
+						eof_reached = true;
+						spdlog::get("pm_logger")->debug("Current read count {:d}, not equal to expected size {:d}",
+							current_read_count, append_read_size);
+					}
+				}
+				else if (current_read_count != read_size)
+				{
+					eof_reached = true;
+					spdlog::get("pm_logger")->debug("EOF reached: {:d}/{:d} read",
+						current_read_count, read_size);
+				}
+
+				// Put worker in active workers list.
+				active_workers.push_back(worker_ind);
+
+				//max_worker_ind = read_ind;
+
+				active_thread_count += 1;
+				if (active_thread_count == n_threads)
+					all_threads_active = true;
+
+				thread_started = true;
+
+				// Stagger start time of initial worker threads. Because workers parse large chunks
+				// of data and there are potentially 1e5 or 1e6 messages, the law of averages applies
+				// and workers tend to take nearly identical amount of time to complete. This means
+				// that the OS tries to write any remaining unwritten data to disk for each worker
+				// then start a series of new workers which requires reading large amount of data 
+				// from the disk, which results in an IO bottleneck that occurs every time the current
+				// shift of workers finishes. Stagger the initial start time of workers to avoid this
+				// bottleneck.
+				if (!append_mode && active_thread_count != n_reads)
+					std::this_thread::sleep_for(worker_start_offset);
+			}
+			else
+			{
+				spdlog::get("pm_logger")->debug("All threads ACTIVE ({:d} active)", active_thread_count);
+				// Check active workers to see if they are ready to be joined.
+				for (size_t active_worker_ind = 0; active_worker_ind < active_workers.size(); 
+					active_worker_ind++)
+				{
+					current_active_worker = active_workers[active_worker_ind];
+					// Join workers that are complete
+					if (workers[current_active_worker].completion_status() == true)
+					{
+						spdlog::get("pm_logger")->debug("Worker {:d} INACTIVE/COMPLETE -- joining now",
+							current_active_worker);
+
+						//bb_ind = workers[active_workers[act_work_ind]].get_binbuff_ind();
+						//bb_ind = worker_config_[active_workers[act_work_ind]].buffer_index_;
+						threads[current_active_worker].join();
+						active_workers.erase(active_workers.begin() + active_worker_ind);
+
+						// Clear the buffer
+						worker_config_[current_active_worker].bb_.Clear();
+
+						// Immediately start a new worker.
+						if (append_mode)
+						{
+							current_read_count = new_activate_append_mode_worker(workers,
+								worker_config_, worker_ind, append_read_size);
+						}
+						else
+						{
+							current_read_count = new_activate_worker(workers, worker_config_,
+								worker_ind, total_read_pos, read_size);
+						}
+
+						// Check if the correct number of bytes were read.
+						if (append_mode)
+						{
+							if (current_read_count != append_read_size)
+							{
+								spdlog::get("pm_logger")->debug(
+									"Worker {:d} Error: {:d} bytes read, {:d} bytes indicated",
+									worker_ind, current_read_count, append_read_size);
+							}
+						}
+						else if (current_read_count != read_size)
+						{
+							eof_reached = true;
+							spdlog::get("pm_logger")->debug("EOF reached: {:d}/{:d} read",
+								current_read_count, read_size);
+						}
+
+						// Place new worker among active workers.
+						active_workers.push_back(worker_ind);
+
+						thread_started = true;
+						break;
+					}
+					else
+					{
+						spdlog::get("pm_logger")->debug("Worker {:d} STILL ACTIVE",
+							current_active_worker);
+					}
+
+				}
+			}
+
+			// Wait before checking for available workers.
+			spdlog::get("pm_logger")->trace("Waiting for workers");
+			std::this_thread::sleep_for(worker_wait);
+
+		} // end while 
+
+		// Increase the total read position.
+		total_read_pos += current_read_count;
+
+		if (eof_reached)
+			break;
+
+	} // end for loop over all worker indices.
+}
+
+void ParseManager::new_worker_retire_queue()
+{
+	spdlog::get("pm_logger")->debug("Joining all remaining workers");
+	while (active_workers.size() > 0)
+	{
+		for (size_t act_work_ind = 0; act_work_ind < active_workers.size(); act_work_ind++)
+		{
+			// Join workers that are complete
+			if (workers[active_workers[act_work_ind]].completion_status() == true)
+			{
+				spdlog::get("pm_logger")->debug("Worker {:d} INACTIVE/COMPLETE -- joining now",
+					active_workers[act_work_ind]);
+
+				threads[active_workers[act_work_ind]].join();
+
+				spdlog::get("pm_logger")->debug("Worker {:d} joined", active_workers[act_work_ind]);
+				if (n_reads == 1)
+					active_workers.resize(0);
+				else
+					active_workers.erase(active_workers.begin() + act_work_ind);
+			}
+			else
+			{
+				spdlog::get("pm_logger")->debug("Worker {:d} STILL ACTIVE", active_workers[act_work_ind]);
+			}
+		}
+
+		// Wait before checking for available workers.
+		spdlog::get("pm_logger")->debug("Waiting for workers to complete");
+		std::this_thread::sleep_for(worker_wait);
+	}
+
+	spdlog::get("pm_logger")->debug("All workers joined ");
+}
+
 void ParseManager::worker_retire_queue()
 {
 	spdlog::get("pm_logger")->debug("Joining all remaining workers");
@@ -589,7 +865,8 @@ ParseManager::~ParseManager()
 		
 		delete[] threads;
 		delete[] workers;
-		delete[] binary_buffers;
+		//delete[] binary_buffers;
+		delete[] worker_config_;
 	}
 }
 

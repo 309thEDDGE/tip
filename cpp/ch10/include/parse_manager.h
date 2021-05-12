@@ -22,6 +22,7 @@
 #include "metadata.h"
 #include "tmats_parser.h"
 #include "managed_path.h"
+#include "worker_config.h"
 #include "spdlog/spdlog.h"
 
 #include "ch10_packet_type.h"
@@ -48,7 +49,8 @@ class ParseManager
 	bool check_word_count;
 	std::ifstream ifile;
 	ParseWorker* workers;
-	BinBuff* binary_buffers;
+	//BinBuff* binary_buffers;
+	WorkerConfig* worker_config_;
 	std::thread* threads;
 	bool workers_allocated;
 	const ParserConfigParams * const config_;
@@ -66,12 +68,19 @@ class ParseManager
 	std::streamsize activate_append_mode_worker(uint16_t binbuff_ind, uint16_t ID,
 		uint32_t n_read);
 
+	std::streamsize new_activate_worker(ParseWorker* worker_vec, WorkerConfig* worker_config,
+		uint16_t worker_index, uint64_t& read_pos, uint32_t& read_size);
+	std::streamsize new_activate_append_mode_worker(ParseWorker* worker_vec, 
+		WorkerConfig* worker_config, uint16_t worker_index, uint32_t& read_size);
+
 	// worker automation
 	std::vector<uint16_t> active_workers;
 	std::chrono::milliseconds worker_wait;
 	std::chrono::milliseconds worker_start_offset;
 	void worker_queue(bool append_mode);
+	void new_worker_queue(bool append_mode);
 	void worker_retire_queue();
+	void new_worker_retire_queue();
 	void create_output_dirs();
 	void create_output_file_paths();
 	void collect_chanid_to_lruaddrs_metadata(

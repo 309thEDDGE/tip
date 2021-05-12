@@ -1,51 +1,50 @@
 // parse_worker.cpp
 #include "parse_worker.h"
 
-ParseWorker::ParseWorker() : start_position_(0), 
-	last_position_(0), worker_index_(UINT16_MAX), complete_(false),
-	buffer_index_(UINT16_MAX), final_worker_(false)
+ParseWorker::ParseWorker() : complete_(false)
 { }
 
-void ParseWorker::initialize(uint16_t worker_index,
-	uint64_t start_pos, uint32_t read, uint16_t buffer_index,
-	std::map<Ch10PacketType, ManagedPath>& file_path_map,
-	bool is_final_worker)
-{
-	worker_index_ = worker_index;
-	start_position_ = start_pos;
-	buffer_index_ = buffer_index;
-	final_worker_ = is_final_worker;
-	output_file_paths_ = file_path_map;
-}
+//void ParseWorker::initialize(uint16_t worker_index,
+//	uint64_t start_pos, uint32_t read, uint16_t buffer_index,
+//	std::map<Ch10PacketType, ManagedPath>& file_path_map,
+//	bool is_final_worker)
+//{
+//	worker_index_ = worker_index;
+//	start_position_ = start_pos;
+//	buffer_index_ = buffer_index;
+//	final_worker_ = is_final_worker;
+//	output_file_paths_ = file_path_map;
+//}
+//
+//void ParseWorker::append_mode_initialize(uint32_t read, uint16_t buffer_index,
+//	uint64_t start_pos)
+//{
+//	buffer_index_ = buffer_index;
+//	start_position_ = start_pos;
+//}
 
-void ParseWorker::append_mode_initialize(uint32_t read, uint16_t buffer_index,
-	uint64_t start_pos)
+void ParseWorker::operator()(WorkerConfig& worker_config, 
+	std::vector<std::string>& tmats_body_vec)
 {
-	buffer_index_ = buffer_index;
-	start_position_ = start_pos;
-}
-
-void ParseWorker::operator()(BinBuff& bb, bool append_mode, 
-	std::vector<std::string>& tmats_body_vec, std::map<Ch10PacketType, bool> ch10_packet_type_map)
-{
-	if (append_mode)
-		SPDLOG_INFO("({:02d}) APPEND MODE ParseWorker now active", worker_index_);
+	if (worker_config.append_mode_)
+		SPDLOG_INFO("({:02d}) APPEND MODE ParseWorker now active", worker_config.worker_index_);
 	else
-		SPDLOG_INFO("({:02d}) ParseWorker now active", worker_index_);
+		SPDLOG_INFO("({:02d}) ParseWorker now active", worker_config.worker_index_);
 	
-	SPDLOG_DEBUG("({:02d}) Beginning of shift, absolute position: {:d}", worker_index_, start_position_);
+	SPDLOG_DEBUG("({:02d}) Beginning of shift, absolute position: {:d}", 
+		worker_config.worker_index_, worker_config.start_position_);
 
 	// Initialize Ch10Context object. Note that this Ch10Context instance
 	// created in the ParseWorker constructor is persistent until the 
 	// ParseWorker instance is garbage-collected to maintain file writer
 	// (read: Parquet file writer) state.
-	ctx_.Initialize(start_position_, worker_index_);
-	ctx_.SetSearchingForTDP(!append_mode);
+	ctx_.Initialize(worker_config.start_position_, worker_config.worker_index_);
+	ctx_.SetSearchingForTDP(!worker_config.append_mode_);
 
 	if (!ctx_.IsConfigured())
 	{
 		// Configure packet parsing.
-		ctx_.SetPacketTypeConfig(ch10_packet_type_map);
+		ctx_.SetPacketTypeConfig(worker_config.ch10_packet_type_map_);
 
 		// Configure output file paths.
 		/*std::map<Ch10PacketType, ManagedPath> output_paths = {
@@ -57,7 +56,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 		// consistent?
 		std::map<Ch10PacketType, ManagedPath> enabled_paths;
 		bool config_ok = ctx_.CheckConfiguration(ctx_.pkt_type_config_map,
-			output_file_paths_, enabled_paths);
+			worker_config.output_file_paths_, enabled_paths);
 		if (!config_ok)
 		{
 			complete_ = true;
@@ -73,7 +72,7 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 	}
 
 	// Instantiate Ch10Packet object
-	Ch10Packet packet(&bb, &ctx_, tmats_body_vec);
+	Ch10Packet packet(&worker_config.bb_, &ctx_, tmats_body_vec);
 
 	// Parse packets until error or end of buffer.
 	bool continue_parsing = true;
@@ -96,18 +95,19 @@ void ParseWorker::operator()(BinBuff& bb, bool append_mode,
 	}
 
 	// Update last_position_;
-	last_position_ = ctx_.absolute_position;
+	worker_config.last_position_ = ctx_.absolute_position;
 
 	// Close all file writers if append_mode is true or
 	// this is the final worker which has no append mode.
-	if (append_mode || final_worker_)
+	if (worker_config.append_mode_ || worker_config.final_worker_)
 	{
-		SPDLOG_DEBUG("({:02d}) Closing file writers", worker_index_);
+		SPDLOG_DEBUG("({:02d}) Closing file writers", worker_config.worker_index_);
 		ctx_.CloseFileWriters();
 	}
 	
-	SPDLOG_INFO("({:02d}) End of worker's shift", worker_index_);
-	SPDLOG_DEBUG("({:02d}) End of shift, absolute position: {:d}", worker_index_, last_position_);
+	SPDLOG_INFO("({:02d}) End of worker's shift", worker_config.worker_index_);
+	SPDLOG_DEBUG("({:02d}) End of shift, absolute position: {:d}", 
+		worker_config.worker_index_, worker_config.last_position_);
 	complete_ = true;
 }
 
@@ -121,13 +121,13 @@ void ParseWorker::reset_completion_status()
 	complete_ = false;
 }
 
-uint16_t ParseWorker::get_binbuff_ind()
-{ return buffer_index_; }
-
-uint64_t& ParseWorker::get_last_position()
-{
-	return last_position_;
-}
+//uint16_t ParseWorker::get_binbuff_ind()
+//{ return buffer_index_; }
+//
+//uint64_t& ParseWorker::get_last_position()
+//{
+//	return last_position_;
+//}
 
 void ParseWorker::append_chanid_remoteaddr_maps(std::map<uint32_t, std::set<uint16_t>>& out1,
 	std::map<uint32_t, std::set<uint16_t>>&out2)
