@@ -172,7 +172,6 @@ else
 	export ARROW_JEMALLOC_URL=$VENDOR/jemalloc-5.2.1.tar.bz2
 	export ARROW_LZ4_URL=$VENDOR/lz4-1.8.3.tar.gz
 	export ARROW_PROTOBUF_URL=$VENDOR/protobuf-all-3.7.1.tar.gz
-	# Uncomment below line when running
 	export ARROW_RAPIDJSON_URL=$VENDOR/rapidjson-2bbd33b33217ff4a73434ebf10cdac41e2ef5e34.tar.gz
 	export ARROW_RE2_URL=$VENDOR/re2-2019-04-01.tar.gz
 	export ARROW_SNAPPY_URL=$VENDOR/snappy-1.1.7.tar.gz
