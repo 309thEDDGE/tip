@@ -33,6 +33,7 @@ Ch10Context::Ch10Context() : absolute_position_(0),
 	chanid_remoteaddr1_map(chanid_remoteaddr1_map_), chanid_remoteaddr2_map(chanid_remoteaddr2_map_),
 	chanid_commwords_map(chanid_commwords_map_), command_word1_(nullptr), command_word2_(nullptr),
 	is_configured_(false), milstd1553f1_pq_writer_(nullptr), milstd1553f1_pq_writer(nullptr),
+	videof0_pq_writer_(nullptr), videof0_pq_writer(nullptr),
 	chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_)
 {
 	CreateDefaultPacketTypeConfig(pkt_type_config_map_);

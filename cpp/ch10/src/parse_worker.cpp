@@ -25,52 +25,13 @@ void ParseWorker::operator()(WorkerConfig& worker_config,
 	ctx_.Initialize(worker_config.start_position_, worker_config.worker_index_);
 	ctx_.SetSearchingForTDP(!worker_config.append_mode_);
 
-	if (!ctx_.IsConfigured())
+	if (!ConfigureContext(ctx_, worker_config.ch10_packet_type_map_, worker_config.output_file_paths_))
 	{
-		// Configure packet parsing.
-		ctx_.SetPacketTypeConfig(worker_config.ch10_packet_type_map_);
-
-		// Check configuration. Are the packet parse and output paths configs
-		// consistent?
-		std::map<Ch10PacketType, ManagedPath> enabled_paths;
-		bool config_ok = ctx_.CheckConfiguration(ctx_.pkt_type_config_map,
-			worker_config.output_file_paths_, enabled_paths);
-		if (!config_ok)
-		{
-			complete_ = true;
-			return;
-		}
-
-		// For each packet type that is enabled and has an output path specified,
-		// create a file writer object that is owned by Ch10Context to maintain
-		// state between regular and append mode calls to this worker's operator().
-		// Pass a pointer to the file writer to the relevant parser for use in 
-		// writing data to disk.
-		ctx_.InitializeFileWriters(enabled_paths);
+		complete_ = true;
+		return;
 	}
 
-	// Instantiate Ch10Packet object
-	Ch10Packet packet(&worker_config.bb_, &ctx_, tmats_body_vec);
-
-	// Parse packets until error or end of buffer.
-	bool continue_parsing = true;
-	Ch10Status status;
-	while (continue_parsing)
-	{
-		status = packet.ParseHeader();
-		if (status == Ch10Status::BAD_SYNC || status == Ch10Status::PKT_TYPE_NO)
-		{
-			continue;
-		}
-		else if (status == Ch10Status::PKT_TYPE_EXIT || status == Ch10Status::BUFFER_LIMITED)
-		{
-			continue_parsing = false;
-			continue;
-		}
-
-		// Parse body if the header is parsed and validated.
-		packet.ParseBody();
-	}
+	ParseBufferData(&ctx_, &worker_config.bb_, tmats_body_vec);
 
 	// Update last_position_;
 	worker_config.last_position_ = ctx_.absolute_position;
@@ -92,5 +53,59 @@ void ParseWorker::operator()(WorkerConfig& worker_config,
 std::atomic<bool>& ParseWorker::CompletionStatus()
 {
 	return complete_;
+}
+
+bool ParseWorker::ConfigureContext(Ch10Context& ctx,
+	const std::map<Ch10PacketType, bool>& ch10_packet_type_map,
+	const std::map<Ch10PacketType, ManagedPath>& output_file_paths_map)
+{
+	if (!ctx.IsConfigured())
+	{
+		// Configure packet parsing.
+		ctx.SetPacketTypeConfig(ch10_packet_type_map);
+
+		// Check configuration. Are the packet parse and output paths configs
+		// consistent?
+		std::map<Ch10PacketType, ManagedPath> enabled_paths;
+		bool config_ok = ctx.CheckConfiguration(ctx.pkt_type_config_map,
+			output_file_paths_map, enabled_paths);
+		if (!config_ok)
+			return false;
+
+		// For each packet type that is enabled and has an output path specified,
+		// create a file writer object that is owned by Ch10Context to maintain
+		// state between regular and append mode calls to this worker's operator().
+		// Pass a pointer to the file writer to the relevant parser for use in 
+		// writing data to disk.
+		ctx.InitializeFileWriters(enabled_paths);
+	}
+	return true;
+}
+
+void ParseWorker::ParseBufferData(Ch10Context* ctx, BinBuff* bb,
+	std::vector<std::string>& tmats_vec)
+{
+	// Instantiate Ch10Packet object
+	Ch10Packet packet(bb, ctx, tmats_vec);
+
+	// Parse packets until error or end of buffer.
+	bool continue_parsing = true;
+	Ch10Status status;
+	while (continue_parsing)
+	{
+		status = packet.ParseHeader();
+		if (status == Ch10Status::BAD_SYNC || status == Ch10Status::PKT_TYPE_NO)
+		{
+			continue;
+		}
+		else if (status == Ch10Status::PKT_TYPE_EXIT || status == Ch10Status::BUFFER_LIMITED)
+		{
+			continue_parsing = false;
+			continue;
+		}
+
+		// Parse body if the header is parsed and validated.
+		packet.ParseBody();
+	}
 }
 
