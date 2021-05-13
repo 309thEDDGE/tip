@@ -136,6 +136,32 @@ class ParseManager
 	*/
 	void LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map);
 
+	/*
+	Create and verify output directories for enabled ch10 packet types.
+
+	Args:
+		output_dir			--> ManagedPath object giving the output directory into 
+								which packet type-specific dirs will be created
+		base_file_name		--> ManagedPath object with the base file name on which
+								to build the output directory name. May be a complete 
+								path to a file, in which case the parent path will be 
+								stripped and only the file name used, or a file name
+								only.
+		packet_enabled_map	--> Map of Ch10PacketType to boolean. True = enabled,
+								False = disabled
+		append_str_map		--> Map of Ch10PacketType to string. The mapped string is
+								appended to the base_file_name prior and ought to
+								include an extension if necessary, such as ".parquet"
+								in the case of Parquet files.
+
+	Return:
+		True if successful and all output directories were created; false otherwise.
+	*/
+	bool CreateCh10PacketOutputDirs(const ManagedPath& output_dir,
+		const ManagedPath& base_file_name,
+		const std::map<Ch10PacketType, bool>& packet_enabled_map,
+		const std::map<Ch10PacketType, std::string>& append_str_map);
+
 };
 
 #endif
