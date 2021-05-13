@@ -84,7 +84,7 @@ class ParseManager
 	void new_worker_queue(bool append_mode);
 	//void worker_retire_queue();
 	void new_worker_retire_queue();
-	void create_output_dirs();
+	//void create_output_dirs();
 	void create_output_file_paths();
 	void collect_chanid_to_lruaddrs_metadata(
 		std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map);
@@ -137,7 +137,7 @@ class ParseManager
 	void LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map);
 
 	/*
-	Create and verify output directories for enabled ch10 packet types.
+	Create and verify output directories for enabled ch10 packet types. 
 
 	Args:
 		output_dir			--> ManagedPath object giving the output directory into 
@@ -152,7 +152,13 @@ class ParseManager
 		append_str_map		--> Map of Ch10PacketType to string. The mapped string is
 								appended to the base_file_name prior and ought to
 								include an extension if necessary, such as ".parquet"
-								in the case of Parquet files.
+								in the case of Parquet files. Map must contain at 
+								least all of the keys in the packet_enabled_map which
+								are also mapped to true.
+		pkt_type_output_dir_map --> Map of Ch10PacketType to specific output directory,
+									the product of this function
+		create_dir				--> True if the directory ought to be created, false
+									otherwise
 
 	Return:
 		True if successful and all output directories were created; false otherwise.
@@ -160,7 +166,39 @@ class ParseManager
 	bool CreateCh10PacketOutputDirs(const ManagedPath& output_dir,
 		const ManagedPath& base_file_name,
 		const std::map<Ch10PacketType, bool>& packet_enabled_map,
-		const std::map<Ch10PacketType, std::string>& append_str_map);
+		const std::map<Ch10PacketType, std::string>& append_str_map,
+		std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map, bool create_dir);
+
+	/*
+	This function is an easily testable helper function to be used
+	in CreateCh10PacketOutputDirs.
+
+	Create an output directory object specific to a Ch10PacketType based on a
+	output directory, base file name and string to be appended to 
+	base file name. Optionally create the directory in the file system.
+
+	Log the name of the directory created.
+
+	Args:
+		output_dir			--> ManagedPath object giving the output directory into
+								which packet type-specific dirs will be created
+		base_file_name		--> ManagedPath object with the base file name on which
+								to build the output directory name. May be a complete
+								path to a file, in which case the parent path will be
+								stripped and only the file name used, or a file name
+								only.
+		append_str			--> String to be appended to the base_file_name
+		pkt_type_output_dir --> ManagedPath object with the final output directory object
+		create_dir			--> True if the directory ought to be created, false otherwise
+
+	Return:
+		True if create_dir is true and the pkt_type_output_dir output path is 
+		created in the filesystem. Also true if create_dir is false and there
+		were no errors creating pkt_type_output_dir. False otherwise.
+	*/
+	bool CreateCh10PacketOutputDirObject(const ManagedPath& output_dir,
+		const ManagedPath& base_file_name, const std::string& append_str,
+		ManagedPath& pkt_type_output_dir, bool create_dir);
 
 };
 

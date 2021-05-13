@@ -37,46 +37,55 @@ ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const Par
 			error_set = true;
 		LogPacketTypeConfig(packet_type_config_map_);
 
-		create_output_dirs();
+		// Hard-code packet type directory extensions now. Later, import from
+		// config yaml.
+		std::map<Ch10PacketType, std::string> append_str_map = {
+			{Ch10PacketType::MILSTD1553_F1, "_1553.parquet"},
+			{Ch10PacketType::VIDEO_DATA_F0, "_video.parquet"}
+		};
+		success = CreateCh10PacketOutputDirs(output_path, input_path, 
+			packet_type_config_map_, append_str_map, output_dir_map_, true);
+		if (!success)
+			error_set = true;
 	}
 	else
 		error_set = true;
 }
 
-void ParseManager::create_output_dirs()
-{
-	if (packet_type_config_map_.at(Ch10PacketType::MILSTD1553_F1))
-	{
-		ManagedPath parquet_1553_path = output_path.CreatePathObject(input_path, "_1553.parquet");
-		spdlog::get("pm_logger")->info("Parquet 1553 output path: {:s}",
-			parquet_1553_path.RawString());
-		if (!parquet_1553_path.create_directory())
-			error_set = true;
-		output_dir_map_[Ch10PacketType::MILSTD1553_F1] = parquet_1553_path;
-	}
-
-	if (packet_type_config_map_.at(Ch10PacketType::VIDEO_DATA_F0))
-	{
-		ManagedPath parquet_vid_path = output_path.CreatePathObject(input_path, "_video.parquet");
-		spdlog::get("pm_logger")->info("Parquet video output path: {:s}",
-			parquet_vid_path.RawString());
-		if (!parquet_vid_path.create_directory())
-			error_set = true;
-		output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] = parquet_vid_path;
-	}
-
-#ifdef ETHERNET_DATA
-	if (packet_type_config_map_.at(Ch10PacketType::ETHERNET_DATA_F0))
-	{
-		ManagedPath parquet_eth_path = output_path.CreatePathObject(input_path, "_ethernet.parquet");
-		spdlog::get("pm_logger")->info("Parquet ethernet output path: {:s}",
-			parquet_eth_path.RawString());
-		if (!parquet_eth_path.create_directory())
-			error_set = true;
-		output_dir_map_[Ch10PacketType::ETHERNET_DATA_F0] = parquet_eth_path;
-	}
-#endif
-}
+//void ParseManager::create_output_dirs()
+//{
+//	if (packet_type_config_map_.at(Ch10PacketType::MILSTD1553_F1))
+//	{
+//		ManagedPath parquet_1553_path = output_path.CreatePathObject(input_path, "_1553.parquet");
+//		spdlog::get("pm_logger")->info("Parquet 1553 output path: {:s}",
+//			parquet_1553_path.RawString());
+//		if (!parquet_1553_path.create_directory())
+//			error_set = true;
+//		output_dir_map_[Ch10PacketType::MILSTD1553_F1] = parquet_1553_path;
+//	}
+//
+//	if (packet_type_config_map_.at(Ch10PacketType::VIDEO_DATA_F0))
+//	{
+//		ManagedPath parquet_vid_path = output_path.CreatePathObject(input_path, "_video.parquet");
+//		spdlog::get("pm_logger")->info("Parquet video output path: {:s}",
+//			parquet_vid_path.RawString());
+//		if (!parquet_vid_path.create_directory())
+//			error_set = true;
+//		output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] = parquet_vid_path;
+//	}
+//
+//#ifdef ETHERNET_DATA
+//	if (packet_type_config_map_.at(Ch10PacketType::ETHERNET_DATA_F0))
+//	{
+//		ManagedPath parquet_eth_path = output_path.CreatePathObject(input_path, "_ethernet.parquet");
+//		spdlog::get("pm_logger")->info("Parquet ethernet output path: {:s}",
+//			parquet_eth_path.RawString());
+//		if (!parquet_eth_path.create_directory())
+//			error_set = true;
+//		output_dir_map_[Ch10PacketType::ETHERNET_DATA_F0] = parquet_eth_path;
+//	}
+//#endif
+//}
 
 void ParseManager::create_output_file_paths()
 {
@@ -984,4 +993,66 @@ void ParseManager::LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt
 	{
 		spdlog::get("pm_logger")->info(*it);
 	}
+}
+
+bool ParseManager::CreateCh10PacketOutputDirs(const ManagedPath& output_dir,
+	const ManagedPath& base_file_name,
+	const std::map<Ch10PacketType, bool>& packet_enabled_map,
+	const std::map<Ch10PacketType, std::string>& append_str_map,
+	std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map, bool create_dir)
+{
+	// Check for present of append_str_map entry for each packet_enabled_map
+	// entry which maps to true.
+	std::map<Ch10PacketType, bool>::const_iterator it;
+	bool result = false;
+	ManagedPath pkt_type_output_dir;
+	for (it = packet_enabled_map.cbegin(); it != packet_enabled_map.cend(); ++it)
+	{
+		if (it->second)
+		{
+			if (append_str_map.count(it->first) == 0)
+			{
+				spdlog::get("pm_logger")->info("CreateCh10PacketOutputDirs: No append "
+					"string map entry for {:s}", ch10packettype_to_string_map.at(it->first));
+				return false;
+			}
+
+			// Fill pkt_type_output_dir_map for each packet type in packet_enabled_map.
+			result = CreateCh10PacketOutputDirObject(output_dir, base_file_name,
+				append_str_map.at(it->first), pkt_type_output_dir, create_dir);
+			if (!result)
+			{
+				pkt_type_output_dir_map.clear();
+				return false;
+			}
+			spdlog::get("pm_logger")->info("Create {:s} output dir: {:s}",
+				ch10packettype_to_string_map.at(it->first), pkt_type_output_dir.RawString());
+			pkt_type_output_dir_map[it->first] = pkt_type_output_dir;
+		}
+	}
+
+	return true;
+}
+
+bool ParseManager::CreateCh10PacketOutputDirObject(const ManagedPath& output_dir,
+	const ManagedPath& base_file_name, const std::string& append_str,
+	ManagedPath& pkt_type_output_dir, bool create_dir)
+{
+	if (output_dir.RawString() == "")
+		return false;
+
+	if (base_file_name.RawString() == "")
+		return false;
+
+	// Create the path object.
+	pkt_type_output_dir = output_dir.CreatePathObject(base_file_name, append_str);
+	
+	// Create directory and confirm. Note that the function below automatically
+	// confirms creation.
+	if (create_dir)
+	{
+		if (!pkt_type_output_dir.create_directory())
+			return false;
+	}
+	return true;
 }
