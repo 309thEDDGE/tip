@@ -15,6 +15,7 @@
 #include <vector>
 #include <chrono>
 #include <sstream>
+#include <iomanip>
 #include "iterable_tools.h"
 #include "parse_text.h"
 #include "parse_worker.h"
