@@ -92,14 +92,18 @@ bool StartParse(ManagedPath input_path, ManagedPath output_path,
 	// Get start time.
 	auto start_time = std::chrono::high_resolution_clock::now();
 
-	// Initialization includes parsing of TMATS data.
-	ParseManager pm(input_path, output_path, &config);
-
-	if (!pm.Setup())
+	// Configure checks configuration, prepares output paths,
+	// and calculates internal quantities in preparation for
+	// parsing.
+	ParseManager pm;
+	if (!pm.Configure(input_path, output_path, &config))
 		return false;
 
 	// Begin parsing of Ch10 data by starting workers.
-	pm.start_workers();
+	pm.Parse();
+
+	// Record metadata
+	pm.RecordMetadata();
 
 	// Get stop time and print duration.
 	auto stop_time = std::chrono::high_resolution_clock::now();

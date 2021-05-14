@@ -13,7 +13,8 @@ protected:
 	ParserConfigParams config;
 	std::string input_path = "";
 	std::string output_path = "";
-	ParseManager pm = ParseManager(input_path, output_path, &config);
+	//ParseManager pm = ParseManager(input_path, output_path, &config);
+	ParseManager pm;
 	std::string filename = "_TMATS.txt";
 	std::ifstream file;
 	std::string line;
@@ -49,6 +50,22 @@ protected:
 		return lhs.size() == rhs.size()
 			&& std::equal(lhs.begin(), lhs.end(),
 				rhs.begin());
+	}
+
+	bool InitializeParserConfig()
+	{
+		std::string config_yaml = {
+			"ch10_packet_type:\n"
+			"  MILSTD1553_FORMAT1: true\n"
+			"  VIDEO_FORMAT0 : true\n"
+			"parse_chunk_bytes: 500\n"
+			"parse_thread_count: 4\n"
+			"max_chunk_read_count: 1000\n"
+			"worker_offset_wait_ms: 200\n"
+			"worker_shift_wait_ms: 200\n"
+		};
+
+		return config.InitializeWithConfigString(config_yaml);
 	}
 
 };
@@ -291,4 +308,28 @@ TEST_F(ParseManagerTest, CreateCh10PacketWorkerFileNamesMultipleTypes)
 		Ch10PacketType::VIDEO_DATA_F0).RawString());
 	EXPECT_EQ(expected2.RawString(), vec_mapped_paths[5].at(
 		Ch10PacketType::MILSTD1553_F1).RawString());
+}
+
+TEST_F(ParseManagerTest, AllocateResourcesValidateCalculatedParams)
+{
+	EXPECT_TRUE(InitializeParserConfig());
+	uint64_t file_size = 1e9;
+	result_ = pm.AllocateResources((const ParserConfigParams*)&config, file_size);
+	EXPECT_TRUE(result_);
+	EXPECT_EQ(config.parse_chunk_bytes_ * 1e6, pm.worker_chunk_size_bytes);
+
+	uint16_t expected_worker_count = int(ceil(float(file_size) /
+		float(pm.worker_chunk_size_bytes)));
+	EXPECT_EQ(expected_worker_count, pm.worker_count);
+}
+
+TEST_F(ParseManagerTest, AllocateResourcesConfirmVectorAllocations)
+{
+	EXPECT_TRUE(InitializeParserConfig());
+	uint64_t file_size = 1e9;
+	result_ = pm.AllocateResources((const ParserConfigParams*)&config, file_size);
+	EXPECT_TRUE(result_);
+	EXPECT_EQ(pm.worker_count, pm.workers_vec.size());
+	EXPECT_EQ(pm.worker_count, pm.threads_vec.size());
+	EXPECT_EQ(pm.worker_count, pm.worker_config_vec.size());
 }

@@ -2,18 +2,22 @@
 
 #include "parse_manager.h"
 
-ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const ParserConfigParams * const config) :
-	config_(config),
-	input_path(fname), 
-	output_path(output_path), 
+ParseManager::ParseManager() :
+	//config_(config),
+	//input_path(fname), 
+	//output_path(output_path),
+	worker_count_(0), worker_count(worker_count_),
+	worker_chunk_size_bytes_(0), worker_chunk_size_bytes(worker_chunk_size_bytes_),
+	workers_vec(workers_vec_), threads_vec(threads_vec_), 
+	worker_config_vec(worker_config_vec_), ch10_input_stream_(),
 	read_size(10000), 
 	append_read_size(100000000), 
-	total_size(0), 
+	//total_size(0), 
 	total_read_pos(0),
 	n_threads(1), 
 	workers_allocated(false),
-	worker_wait(config->worker_shift_wait_ms_),
-	worker_start_offset(config->worker_offset_wait_ms_), 
+	//worker_wait(config->worker_shift_wait_ms_),
+	//worker_start_offset(config->worker_offset_wait_ms_), 
 	ifile(),
 	it_(),
 	worker_config_(nullptr),
@@ -26,17 +30,20 @@ ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const Par
 	
 }
 
-bool ParseManager::Setup()
+bool ParseManager::Configure(ManagedPath input_ch10_file_path, ManagedPath output_dir,
+	const ParserConfigParams* config)
 {
 	bool success = false;
-	input_path.GetFileSize(success, total_size);
+	uint64_t ch10_file_size = 0;
+	input_ch10_file_path.GetFileSize(success, ch10_file_size);
 	if (!success)
 		return false;
-	spdlog::get("pm_logger")->info("File size: {:d} MB", total_size / (1024 * 1024));
+	spdlog::get("pm_logger")->info("Ch10 file size: {:d} MiB", ch10_file_size / (1024 * 1024));
 
 	// Convert ch10_packet_type configuration map from string --> string to 
 	// Ch10PacketType --> bool
-	if (!ConvertCh10PacketTypeMap(config_->ch10_packet_type_map_, packet_type_config_map_))
+	std::map<Ch10PacketType, bool> packet_type_config_map;
+	if (!ConvertCh10PacketTypeMap(config->ch10_packet_type_map_, packet_type_config_map))
 		return false;
 
 	// Hard-code packet type directory extensions now. Later, import from
@@ -45,17 +52,63 @@ bool ParseManager::Setup()
 		{Ch10PacketType::MILSTD1553_F1, "_1553.parquet"},
 		{Ch10PacketType::VIDEO_DATA_F0, "_video.parquet"}
 	};
-	if (!CreateCh10PacketOutputDirs(output_path, input_path,
-		packet_type_config_map_, append_str_map, output_dir_map_, true))
+
+	if (!CreateCh10PacketOutputDirs(output_dir, input_ch10_file_path,
+		packet_type_config_map, append_str_map, output_dir_map_, true))
+		return false;
+
+	if (!AllocateResources(config, ch10_file_size))
 		return false;
 
 	// Create output file names. A map of Ch10PacketType to
 	// ManagedPath will be created for each worker.
-	//CreateCh10PacketWorkerFileNames(worker_count, output_dir_map_, output_file_path_vec_,
-		//"parquet");
+	CreateCh10PacketWorkerFileNames(worker_count_, output_dir_map_, output_file_path_vec_,
+		"parquet");
 
 	// Record the packet type config map in metadata and logs.
-	LogPacketTypeConfig(packet_type_config_map_);
+	LogPacketTypeConfig(packet_type_config_map);
+
+	// Open the input file stream
+	ch10_input_stream_.open(input_ch10_file_path.string().c_str(), std::ios::binary);
+	if (!(ch10_input_stream_.is_open()))
+	{
+		spdlog::get("pm_logger")->error("Error opening file: {:s}", 
+			input_ch10_file_path.RawString());
+		ch10_input_stream_.close();
+		return false;
+	}
+
+	return true;
+}
+
+bool ParseManager::AllocateResources(const ParserConfigParams* config,
+	const uint64_t& ch10_file_size)
+{
+	/*
+	Note that ParserConfigParams has limits applied to the parameters so there
+	is no need to check range, etc.
+	*/
+
+	// Multiply by 1e6 because this configuration parameters is in units
+	// of MB.
+	worker_chunk_size_bytes_ = config->parse_chunk_bytes_ * 1e6;
+
+	// Calculate the number of workers necessary to parse the entire file
+	// based on the chunk of binary that each worker will parse.
+	worker_count_ = int(ceil(float(ch10_file_size) / float(worker_chunk_size_bytes_)));
+
+	spdlog::get("pm_logger")->info("Using {:d} threads", config->parse_thread_count_);
+	spdlog::get("pm_logger")->debug("Creating {:d} workers", worker_count_);
+
+	// If the user-specified max_chunk_read_count is less the calculated worker_count_,
+	// decrease the worker_count_ to max_chunk_read_count.
+	if (config->max_chunk_read_count_ < worker_count_)
+		worker_count_ = config->max_chunk_read_count_;
+
+	// Allocate objects necessary to parse each chunk
+	workers_vec_.resize(worker_count_);
+	threads_vec_.resize(worker_count_);
+	worker_config_vec_.resize(worker_count_);
 
 	return true;
 }
@@ -105,6 +158,110 @@ void ParseManager::create_output_file_paths()
 
 		// Add the temp map to the vector maps.
 		output_file_path_vec_.push_back(temp_output_file_map);
+	}
+}
+
+bool ParseManager::Parse()
+{
+	// Start queue to activate all workers, limiting the quantity of 
+	// concurrent threads to n_threads.
+	bool append = false;
+	new_worker_queue(append);
+	spdlog::get("pm_logger")->debug("after worker_queue");
+
+	// Wait for all active workers to finish.
+	new_worker_retire_queue();
+
+	// After all workers have finished and joined, each worker except the
+	// last will parse the dangling packets that occur at the end of each 
+	// worker's section of raw data and at the beginning of the following 
+	// worker's section of data that occurs at the beginning of it's data
+	// payload before it finds the time data packet to establish absolute
+	// time. 
+
+	// Delete current threads, then allocate new threads for each worker.
+	// Quantity of threads is n_reads-1 because the last worker, which 
+	// reaches the end of the file, does not leave dangling packets and thus
+	// doesn't require another thread to be run again. 
+	delete[] threads;
+	threads = new std::thread[n_reads];
+
+	spdlog::get("pm_logger")->info("Parsing dangling packets");
+
+	append = true;
+	new_worker_queue(append);
+
+	// Wait for all active workers to finish.
+	new_worker_retire_queue();
+}
+
+bool ParseManager::RecordMetadata()
+{
+	// Create metadata object and create output path name for metadata
+	// to be recorded in 1553 output directory.
+	if (packet_type_config_map_.at(Ch10PacketType::MILSTD1553_F1))
+	{
+		Metadata md;
+		ManagedPath md_path = md.GetYamlMetadataPath(
+			output_dir_map_[Ch10PacketType::MILSTD1553_F1],
+			"_metadata");
+
+		// Record Config options used
+		md.RecordSimpleMap(config_->ch10_packet_type_map_, "ch10_packet_type");
+		md.RecordSingleKeyValuePair("parse_chunk_bytes", config_->parse_chunk_bytes_);
+		md.RecordSingleKeyValuePair("parse_thread_count", config_->parse_thread_count_);
+		md.RecordSingleKeyValuePair("max_chunk_read_count", config_->max_chunk_read_count_);
+		md.RecordSingleKeyValuePair("worker_offset_wait_ms", config_->worker_offset_wait_ms_);
+		md.RecordSingleKeyValuePair("worker_shift_wait_ms", config_->worker_shift_wait_ms_);
+
+		// Record the input ch10 path.
+		md.RecordSingleKeyValuePair("ch10_input_file_path", input_path.RawString());
+
+		// Obtain the tx and rx combined channel ID to LRU address map and
+		// record it to the Yaml writer.
+		std::map<uint32_t, std::set<uint16_t>> output_chanid_remoteaddr_map;
+		collect_chanid_to_lruaddrs_metadata(output_chanid_remoteaddr_map);
+		md.RecordCompoundMapToSet(output_chanid_remoteaddr_map, "chanid_to_lru_addrs");
+
+		// Obtain the channel ID to command words set map.
+		std::map<uint32_t, std::vector<std::vector<uint32_t>>> output_chanid_commwords_map;
+		collect_chanid_to_commwords_metadata(output_chanid_commwords_map);
+		md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
+
+		ProcessTMATS();
+
+		// Record the TMATS channel ID to source map.
+		md.RecordSimpleMap(TMATsChannelIDToSourceMap_, "tmats_chanid_to_source");
+
+		// Record the TMATS channel ID to type map.
+		md.RecordSimpleMap(TMATsChannelIDToTypeMap_, "tmats_chanid_to_type");
+
+		// Write the complete Yaml record to the metadata file.
+		std::ofstream stream_1553_metadata(md_path.string(),
+			std::ofstream::out | std::ofstream::trunc);
+		stream_1553_metadata << md.GetMetadataString();
+		stream_1553_metadata.close();
+	}
+
+	// Create metadata object for video metadata.
+	if (packet_type_config_map_.at(Ch10PacketType::VIDEO_DATA_F0))
+	{
+		Metadata vmd;
+		ManagedPath video_md_path = vmd.GetYamlMetadataPath(
+			output_dir_map_[Ch10PacketType::VIDEO_DATA_F0],
+			"_metadata");
+
+		// Get the channel ID to minimum time stamp map.
+		std::map<uint16_t, uint64_t> min_timestamp_map;
+		CollectVideoMetadata(min_timestamp_map);
+
+		// Record the map in the Yaml writer and write the 
+		// total yaml text to file.
+		vmd.RecordSimpleMap(min_timestamp_map, "chanid_to_first_timestamp");
+		std::ofstream stream_video_metadata(video_md_path.string(),
+			std::ofstream::out | std::ofstream::trunc);
+		stream_video_metadata << vmd.GetMetadataString();
+		stream_video_metadata.close();
 	}
 }
 
@@ -585,7 +742,12 @@ std::streamsize ParseManager::new_activate_append_mode_worker(ParseWorker* worke
 //	} // end for loop over all worker indices.
 //}
 
-void ParseManager::new_worker_queue(bool append_mode)
+void ParseManager::new_worker_queue(bool append_mode, uint16_t worker_count, 
+	const uint64_t& worker_chunk_size_bytes, const uint64_t& append_read_size,
+	std::vector<std::unique_ptr<ParseWorker>>& workers_vec,
+	std::vector<WorkerConfig>& worker_config_vec, std::vector<uint16_t>& active_workers_vec,
+	std::vector<std::thread>& threads_vec,
+	uint8_t thread_count)
 {
 	// Initially load all threads by keeping track of the
 	// the number activated. Afterwards only activate new 
@@ -595,10 +757,10 @@ void ParseManager::new_worker_queue(bool append_mode)
 	bool thread_started = false;
 	bool all_threads_active = false;
 	bool eof_reached = false;
-	uint16_t max_worker_ind = 0;
 	std::streamsize current_read_count = 0;
 	uint16_t bb_ind = 0;
 	int concurrent_thread_count = 0;
+	uint64_t total_read_pos = 0;
 	spdlog::get("pm_logger")->debug("worker_queue: Starting worker threads");
 
 	// Create and wait for workers until the entire input file 
@@ -610,7 +772,7 @@ void ParseManager::new_worker_queue(bool append_mode)
 	// case, the very last worker doesn't have any dangling packets because presumably
 	// it parsed data until the ch10 file ended. Only [worker 1, worker last) need to
 	// append data to their respective files. 
-	uint16_t n_read_limit = n_reads;
+	uint16_t n_read_limit = worker_count;
 	if (append_mode)
 	{
 		// If there is only 1 worker, then there is no need to 
@@ -637,13 +799,13 @@ void ParseManager::new_worker_queue(bool append_mode)
 				if (append_mode)
 				{
 					//printf("Ready to activate_append_mode_worker, active_thread_count = %hu, read_ind = %hu\n", active_thread_count, read_ind);
-					current_read_count = new_activate_append_mode_worker(workers, worker_config_,
-						worker_ind, append_read_size);
+					current_read_count = new_activate_append_mode_worker(workers_vec, 
+						worker_config_vec, worker_ind, append_read_size);
 				}
 				else
 				{
-					current_read_count = new_activate_worker(workers, worker_config_, 
-						worker_ind, total_read_pos, read_size);
+					current_read_count = new_activate_worker(workers_vec, worker_config_vec, 
+						worker_ind, total_read_pos, worker_chunk_size_bytes);
 				}
 
 				// Check if the correct number of bytes were read.
@@ -656,20 +818,18 @@ void ParseManager::new_worker_queue(bool append_mode)
 							current_read_count, append_read_size);
 					}
 				}
-				else if (current_read_count != read_size)
+				else if (current_read_count != worker_chunk_size_bytes)
 				{
 					eof_reached = true;
 					spdlog::get("pm_logger")->debug("EOF reached: {:d}/{:d} read",
-						current_read_count, read_size);
+						current_read_count, worker_chunk_size_bytes);
 				}
 
 				// Put worker in active workers list.
-				active_workers.push_back(worker_ind);
-
-				//max_worker_ind = read_ind;
+				active_workers_vec.push_back(worker_ind);
 
 				active_thread_count += 1;
-				if (active_thread_count == n_threads)
+				if (active_thread_count == thread_count)
 					all_threads_active = true;
 
 				thread_started = true;
@@ -682,41 +842,39 @@ void ParseManager::new_worker_queue(bool append_mode)
 				// from the disk, which results in an IO bottleneck that occurs every time the current
 				// shift of workers finishes. Stagger the initial start time of workers to avoid this
 				// bottleneck.
-				if (!append_mode && active_thread_count != n_reads)
+				if (!append_mode && active_thread_count != thread_count)
 					std::this_thread::sleep_for(worker_start_offset);
 			}
 			else
 			{
 				spdlog::get("pm_logger")->debug("All threads ACTIVE ({:d} active)", active_thread_count);
 				// Check active workers to see if they are ready to be joined.
-				for (size_t active_worker_ind = 0; active_worker_ind < active_workers.size(); 
+				for (size_t active_worker_ind = 0; active_worker_ind < active_workers_vec.size(); 
 					active_worker_ind++)
 				{
-					current_active_worker = active_workers[active_worker_ind];
+					current_active_worker = active_workers_vec[active_worker_ind];
 					// Join workers that are complete
 					if (workers[current_active_worker].CompletionStatus() == true)
 					{
 						spdlog::get("pm_logger")->debug("Worker {:d} INACTIVE/COMPLETE -- joining now",
 							current_active_worker);
 
-						//bb_ind = workers[active_workers[act_work_ind]].get_binbuff_ind();
-						//bb_ind = worker_config_[active_workers[act_work_ind]].buffer_index_;
-						threads[current_active_worker].join();
-						active_workers.erase(active_workers.begin() + active_worker_ind);
+						threads_vec[current_active_worker].join();
+						active_workers_vec.erase(active_workers_vec.begin() + active_worker_ind);
 
 						// Clear the buffer
-						worker_config_[current_active_worker].bb_.Clear();
+						worker_config_vec[current_active_worker].bb_.Clear();
 
 						// Immediately start a new worker.
 						if (append_mode)
 						{
-							current_read_count = new_activate_append_mode_worker(workers,
-								worker_config_, worker_ind, append_read_size);
+							current_read_count = new_activate_append_mode_worker(workers_vec,
+								worker_config_vec, worker_ind, append_read_size);
 						}
 						else
 						{
-							current_read_count = new_activate_worker(workers, worker_config_,
-								worker_ind, total_read_pos, read_size);
+							current_read_count = new_activate_worker(workers_vec, 
+								worker_config_vec, worker_ind, total_read_pos, worker_chunk_size_bytes);
 						}
 
 						// Check if the correct number of bytes were read.
@@ -729,15 +887,15 @@ void ParseManager::new_worker_queue(bool append_mode)
 									worker_ind, current_read_count, append_read_size);
 							}
 						}
-						else if (current_read_count != read_size)
+						else if (current_read_count != worker_chunk_size_bytes)
 						{
 							eof_reached = true;
 							spdlog::get("pm_logger")->debug("EOF reached: {:d}/{:d} read",
-								current_read_count, read_size);
+								current_read_count, worker_chunk_size_bytes);
 						}
 
 						// Place new worker among active workers.
-						active_workers.push_back(worker_ind);
+						active_workers_vec.push_back(worker_ind);
 
 						thread_started = true;
 						break;

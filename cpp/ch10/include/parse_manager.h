@@ -16,6 +16,7 @@
 #include <chrono>
 #include <sstream>
 #include <iomanip>
+#include <memory>
 #include "iterable_tools.h"
 #include "parse_text.h"
 #include "parse_worker.h"
@@ -36,6 +37,37 @@ class ParseManager
 
 	// Metadata manipulation
 	IterableTools it_;
+
+	// Count of bytes of raw ch10 data to be parsed by each
+	// worker
+	uint64_t worker_chunk_size_bytes_;
+
+	// Count of workers necessary to parse the entire ch10
+	// based on worker_chunk_size_bytes_ and the total
+	// file size.
+	uint16_t worker_count_;
+
+	// Workers necessary to parse the ch10 based on user
+	// configuration. Use unique_ptr to avoid creating a copy
+	// assignment operator for ParseWorker and Ch10Context.
+	std::vector<std::unique_ptr<ParseWorker>> workers_vec_;
+
+	// One thread in which each worker can execute
+	std::vector<std::thread> threads_vec_;
+
+	// One WorkerConfig for each worker
+	std::vector<WorkerConfig> worker_config_vec_;
+
+	// Read ch10 binary data
+	std::ifstream ch10_input_stream_;
+
+	// Base output directory per Ch10PacketType
+	std::map<Ch10PacketType, ManagedPath> output_dir_map_;
+
+	// Configured file paths. The worker at index x in workers_vec_ shall
+	// create output files according to the paths in the map at index x
+	// in this vector.
+	std::vector<std::map<Ch10PacketType, ManagedPath>> output_file_path_vec_;
 	
 	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
 	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
@@ -55,10 +87,10 @@ class ParseManager
 	WorkerConfig* worker_config_;
 	std::thread* threads;
 	bool workers_allocated;
-	const ParserConfigParams * const config_;
+	const ParserConfigParams * config_;
 	
 	std::map<Ch10PacketType, ManagedPath> output_dir_map_;
-	std::vector<std::map<Ch10PacketType, ManagedPath>> output_file_path_vec_;
+	
 	bool milstd1553_msg_selection;
 	std::vector<std::string> milstd1553_sorted_msg_selection;
 	std::string chanid_to_lruaddrs_metadata_string_;
@@ -79,7 +111,7 @@ class ParseManager
 	std::vector<uint16_t> active_workers;
 	std::chrono::milliseconds worker_wait;
 	std::chrono::milliseconds worker_start_offset;
-	//void worker_queue(bool append_mode);
+	void worker_queue(bool append_mode);
 	void new_worker_queue(bool append_mode);
 	//void worker_retire_queue();
 	void new_worker_retire_queue();
@@ -93,19 +125,42 @@ class ParseManager
 	void ProcessTMATS();
 
 	public:
-
-	ParseManager(ManagedPath fname, ManagedPath output_path, const ParserConfigParams * const config);
+		const uint64_t& worker_chunk_size_bytes;
+		const uint16_t& worker_count;
+		const std::vector<std::unique_ptr<ParseWorker>>& workers_vec;
+		const std::vector<std::thread>& threads_vec;
+		const std::vector<WorkerConfig>& worker_config_vec;
+	ParseManager();
 	void start_workers();
 	~ParseManager();
 
 	/*
-	Collect misc setup functions for readability
+	Collect misc setup functions and validate configuration.
+
+	Args:
+		input_ch10_file_path	--> Ch10 file to parse
+		output_dir				--> Directory in which to place
+									parsed data
+		config					--> ParserConfigParams object which has
+									been pre-configured with data from 
+									the parser_conf.yaml file
 
 	Return:
 		True if no errors, false if errors occur and
 		execution ought to stop.
 	*/
-	bool Setup();
+	bool Configure(ManagedPath input_ch10_file_path, ManagedPath output_dir, 
+		const ParserConfigParams* config);
+
+	/*
+	
+	*/
+	bool Parse();
+
+	/*
+	
+	*/
+	bool RecordMetadata();
 
 	// Used for unit tests
 	void ProcessTMATsTest(const std::vector<std::string>& input)
@@ -200,6 +255,12 @@ class ParseManager
 		const std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map,
 		std::vector< std::map<Ch10PacketType, ManagedPath>>& output_vec_mapped_paths,
 		std::string file_extension);
+
+	/*
+	
+	*/
+	bool AllocateResources(const ParserConfigParams* config,
+		const uint64_t& ch10_file_size);
 
 };
 
