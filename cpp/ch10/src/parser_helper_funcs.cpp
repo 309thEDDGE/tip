@@ -95,7 +95,7 @@ bool StartParse(ManagedPath input_path, ManagedPath output_path,
 	// Initialization includes parsing of TMATS data.
 	ParseManager pm(input_path, output_path, &config);
 
-	if (pm.error_state())
+	if (!pm.Setup())
 		return false;
 
 	// Begin parsing of Ch10 data by starting workers.

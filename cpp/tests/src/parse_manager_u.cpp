@@ -179,100 +179,6 @@ TEST_F(ParseManagerTest, ConvertCh10PacketTypeMapCorrectMapping)
 	EXPECT_EQ(output_map.at(Ch10PacketType::VIDEO_DATA_F0), false);
 }
 
-TEST_F(ParseManagerTest, CreateCh10PacketOutputDirObjectEmptyPaths)
-{
-	std::string append_str;
-	// Set base_output_dir to current dir, leave base_name_ empty.
-	base_output_dir_ = ManagedPath();
-	base_name_ = ManagedPath(std::string(""));
-	result_ = pm.CreateCh10PacketOutputDirObject(base_output_dir_, base_name_,
-		append_str, full_output_dir_, false);
-	EXPECT_FALSE(result_);
-
-	// Flip, set base_output_dir empty, base_nam_ to current dir
-	base_output_dir_ = ManagedPath(std::string(""));
-	base_name_ = ManagedPath();
-	result_ = pm.CreateCh10PacketOutputDirObject(base_output_dir_, base_name_,
-		append_str, full_output_dir_, false);
-	EXPECT_FALSE(result_);
-}
-
-TEST_F(ParseManagerTest, CreateCh10PacketOutputDirObjectEmptyAppendStr)
-{
-	std::string append_str;
-	std::string expect;
-
-	// base file name is just a file, not a path
-	base_output_dir_ = ManagedPath();
-	base_name_ = ManagedPath(std::string("my_file"));
-	expect = (base_output_dir_ / base_name_).RawString();
-	result_ = pm.CreateCh10PacketOutputDirObject(base_output_dir_, base_name_,
-		append_str, full_output_dir_, false);
-	EXPECT_TRUE(result_);
-	EXPECT_EQ(expect, full_output_dir_.RawString());
-
-	// base file name is a path with file name
-	base_name_ = ManagedPath(std::string("data"));
-	base_name_ /= ManagedPath(std::string("my_file.txt"));
-	expect = (base_output_dir_ / base_name_.filename()).RawString();
-	result_ = pm.CreateCh10PacketOutputDirObject(base_output_dir_, base_name_,
-		append_str, full_output_dir_, false);
-	EXPECT_TRUE(result_);
-	EXPECT_EQ(expect, full_output_dir_.RawString());
-}
-
-TEST_F(ParseManagerTest, CreateCh10PacketOutputDirObjectNonEmptyAppendStr)
-{
-	std::string append_str = ".pq";
-	std::string expect;
-
-	// base file name is just a file, not a path
-	base_output_dir_ = ManagedPath();
-	base_name_ = ManagedPath(std::string("my_file"));
-	expect = (base_output_dir_ / base_name_).RawString() + ".pq";
-	result_ = pm.CreateCh10PacketOutputDirObject(base_output_dir_, base_name_,
-		append_str, full_output_dir_, false);
-	EXPECT_TRUE(result_);
-	EXPECT_EQ(expect, full_output_dir_.RawString());
-
-	// base file name is a path with file name
-	base_name_ = ManagedPath(std::string("data"));
-	base_name_ /= ManagedPath(std::string("my_file.txt"));
-	expect = (base_output_dir_ / base_name_.stem()).RawString() + ".pq";
-	result_ = pm.CreateCh10PacketOutputDirObject(base_output_dir_, base_name_,
-		append_str, full_output_dir_, false);
-	EXPECT_TRUE(result_);
-	EXPECT_EQ(expect, full_output_dir_.RawString());
-}
-
-TEST_F(ParseManagerTest, CreateCh10PacketOutputDirCreateDir)
-{
-	std::string append_str = ".pq";
-
-	base_output_dir_ = ManagedPath();
-	base_name_ = ManagedPath(std::string("my_file"));
-	result_ = pm.CreateCh10PacketOutputDirObject(base_output_dir_, base_name_,
-		append_str, full_output_dir_, true);
-	EXPECT_TRUE(result_);
-	EXPECT_TRUE(full_output_dir_.is_directory());
-}
-
-TEST_F(ParseManagerTest, CreateCh10PacketOutputDirCreateDirFail)
-{
-	std::string append_str = ".pq";
-
-	// base dir does not exist, so dir creation will fail
-	base_output_dir_ = ManagedPath() / "test" / "data";
-	base_name_ = ManagedPath(std::string("my_file"));
-	result_ = pm.CreateCh10PacketOutputDirObject(base_output_dir_, base_name_,
-		append_str, full_output_dir_, true);
-	EXPECT_FALSE(result_);
-}
-
-std::map<Ch10PacketType, bool> pkt_enabled_map_;
-std::map<Ch10PacketType, std::string> append_str_map_;
-std::map<Ch10PacketType, ManagedPath> output_dir_map_;
-
 TEST_F(ParseManagerTest, CreateCh10PacketOutputDirsMissingAppendStr)
 {
 	pkt_enabled_map_[Ch10PacketType::MILSTD1553_F1] = true;
@@ -323,4 +229,66 @@ TEST_F(ParseManagerTest, CreateCh10PacketOutputDirsCorrectDirs)
 	EXPECT_EQ(output_dir_map_.size(), 2);
 	EXPECT_EQ(expected_video, output_dir_map_.at(Ch10PacketType::VIDEO_DATA_F0));
 	EXPECT_EQ(expected_1553, output_dir_map_.at(Ch10PacketType::MILSTD1553_F1));
+}
+
+TEST_F(ParseManagerTest, CreateCh10PacketWorkerFileNamesEmptyDirMap)
+{
+	// output_dir_map_ is empty by default
+	uint16_t worker_count = 3;
+	std::vector< std::map<Ch10PacketType, ManagedPath>> vec_mapped_paths;
+	std::string ext = "";
+
+	pm.CreateCh10PacketWorkerFileNames(worker_count, output_dir_map_,
+		vec_mapped_paths, ext);
+	EXPECT_EQ(0, vec_mapped_paths.size());
+}
+
+TEST_F(ParseManagerTest, CreateCh10PacketWorkerFileNamesEmptyExtension)
+{
+	output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] = ManagedPath() / "video_data";
+	uint16_t worker_count = 3;
+	std::vector< std::map<Ch10PacketType, ManagedPath>> vec_mapped_paths;
+	std::string ext = "";
+	ManagedPath expected = ManagedPath() / "video_data" / "video_data__000";
+	pm.CreateCh10PacketWorkerFileNames(worker_count, output_dir_map_,
+		vec_mapped_paths, ext);
+	EXPECT_EQ(worker_count, vec_mapped_paths.size());
+	EXPECT_EQ(expected.RawString(), vec_mapped_paths[0].at(
+		Ch10PacketType::VIDEO_DATA_F0).RawString());
+}
+
+TEST_F(ParseManagerTest, CreateCh10PacketWorkerFileNamesNonEmptyExtension)
+{
+	output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] = ManagedPath() / "video_data";
+	uint16_t worker_count = 3;
+	std::vector< std::map<Ch10PacketType, ManagedPath>> vec_mapped_paths;
+	std::string ext = "Extension";
+	std::string full_ext = ".";
+	full_ext += ext;
+	ManagedPath expected = ManagedPath() / "video_data" / ("video_data__000" + full_ext);
+	pm.CreateCh10PacketWorkerFileNames(worker_count, output_dir_map_,
+		vec_mapped_paths, ext);
+	EXPECT_EQ(worker_count, vec_mapped_paths.size());
+	EXPECT_EQ(expected.RawString(), vec_mapped_paths[0].at(
+		Ch10PacketType::VIDEO_DATA_F0).RawString());
+}
+
+TEST_F(ParseManagerTest, CreateCh10PacketWorkerFileNamesMultipleTypes)
+{
+	output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] = ManagedPath() / "video_data";
+	output_dir_map_[Ch10PacketType::MILSTD1553_F1] = ManagedPath() / "1553_data";
+	uint16_t worker_count = 20;
+	std::vector< std::map<Ch10PacketType, ManagedPath>> vec_mapped_paths;
+	std::string ext = "pq";
+	std::string full_ext = ".";
+	full_ext += ext;
+	ManagedPath expected1 = ManagedPath() / "video_data" / ("video_data__015" + full_ext);
+	ManagedPath expected2 = ManagedPath() / "1553_data" / ("1553_data__005" + full_ext);
+	pm.CreateCh10PacketWorkerFileNames(worker_count, output_dir_map_,
+		vec_mapped_paths, ext);
+	EXPECT_EQ(worker_count, vec_mapped_paths.size());
+	EXPECT_EQ(expected1.RawString(), vec_mapped_paths[15].at(
+		Ch10PacketType::VIDEO_DATA_F0).RawString());
+	EXPECT_EQ(expected2.RawString(), vec_mapped_paths[5].at(
+		Ch10PacketType::MILSTD1553_F1).RawString());
 }

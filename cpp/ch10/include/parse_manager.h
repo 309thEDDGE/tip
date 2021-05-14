@@ -14,17 +14,16 @@
 #include <thread>
 #include <vector>
 #include <chrono>
+#include <sstream>
 #include "iterable_tools.h"
 #include "parse_text.h"
 #include "parse_worker.h"
-
 #include "parser_config_params.h"
 #include "metadata.h"
 #include "tmats_parser.h"
 #include "managed_path.h"
 #include "worker_config.h"
 #include "spdlog/spdlog.h"
-
 #include "ch10_packet_type.h"
 
 class ParseManager
@@ -48,7 +47,6 @@ class ParseManager
 	uint64_t total_read_pos;
 	uint8_t n_threads;
 	uint16_t n_reads;
-	bool error_set;
 	bool check_word_count;
 	std::ifstream ifile;
 	ParseWorker* workers;
@@ -84,7 +82,6 @@ class ParseManager
 	void new_worker_queue(bool append_mode);
 	//void worker_retire_queue();
 	void new_worker_retire_queue();
-	//void create_output_dirs();
 	void create_output_file_paths();
 	void collect_chanid_to_lruaddrs_metadata(
 		std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map);
@@ -96,11 +93,18 @@ class ParseManager
 
 	public:
 
-	//ParseManager(ACPlatform plat, std::string fname, std::string output_path, ConfigManager& cm_parse, ConfigManager& cm_1553);
 	ParseManager(ManagedPath fname, ManagedPath output_path, const ParserConfigParams * const config);
-	bool error_state();
 	void start_workers();
 	~ParseManager();
+
+	/*
+	Collect misc setup functions for readability
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
+	*/
+	bool Setup();
 
 	// Used for unit tests
 	void ProcessTMATsTest(const std::vector<std::string>& input)
@@ -170,35 +174,31 @@ class ParseManager
 		std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map, bool create_dir);
 
 	/*
-	This function is an easily testable helper function to be used
-	in CreateCh10PacketOutputDirs.
-
-	Create an output directory object specific to a Ch10PacketType based on a
-	output directory, base file name and string to be appended to 
-	base file name. Optionally create the directory in the file system.
-
-	Log the name of the directory created.
+	Generate a vector of maps of Ch10PacketType to ManagedPath. The path object
+	is a file path to which data for the given Ch10PacketType
+	ought to be written by the worker associated with the index of the vector
+	from which the map was retrieved. 
 
 	Args:
-		output_dir			--> ManagedPath object giving the output directory into
-								which packet type-specific dirs will be created
-		base_file_name		--> ManagedPath object with the base file name on which
-								to build the output directory name. May be a complete
-								path to a file, in which case the parent path will be
-								stripped and only the file name used, or a file name
-								only.
-		append_str			--> String to be appended to the base_file_name
-		pkt_type_output_dir --> ManagedPath object with the final output directory object
-		create_dir			--> True if the directory ought to be created, false otherwise
-
-	Return:
-		True if create_dir is true and the pkt_type_output_dir output path is 
-		created in the filesystem. Also true if create_dir is false and there
-		were no errors creating pkt_type_output_dir. False otherwise.
+		total_worker_count			--> Count of workers expected to be
+										created to parse according to 
+										configuration settings
+		pkt_type_output_dir_map		--> Map of Ch10PacketType to base output
+										directory to which files associated
+										with the packet type ought to be written.
+										This is the pkt_type_output_dir_map from
+										CreateCh10PacketOutputDirs.
+		output_vec_mapped_paths		--> Vector of maps in which the index in
+										the vector is the same as the worker which
+										ought to utilize the mapped output file
+										paths.
+		file_extension				--> String not including the '.'.
+										Ex: file_extension = 'txt'
 	*/
-	bool CreateCh10PacketOutputDirObject(const ManagedPath& output_dir,
-		const ManagedPath& base_file_name, const std::string& append_str,
-		ManagedPath& pkt_type_output_dir, bool create_dir);
+	void CreateCh10PacketWorkerFileNames(const uint16_t& total_worker_count,
+		const std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map,
+		std::vector< std::map<Ch10PacketType, ManagedPath>>& output_vec_mapped_paths,
+		std::string file_extension);
 
 };
 

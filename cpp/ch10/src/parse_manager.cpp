@@ -11,13 +11,11 @@ ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const Par
 	total_size(0), 
 	total_read_pos(0),
 	n_threads(1), 
-	error_set(false),
 	workers_allocated(false),
 	worker_wait(config->worker_shift_wait_ms_),
 	worker_start_offset(config->worker_offset_wait_ms_), 
 	ifile(),
 	it_(),
-	//binary_buffers(nullptr), 
 	worker_config_(nullptr),
 	check_word_count(true),
 	n_reads(0), 
@@ -25,67 +23,42 @@ ParseManager::ParseManager(ManagedPath fname, ManagedPath output_path, const Par
 	workers(nullptr), 
 	milstd1553_msg_selection(false)
 {
-	bool success = false;
-	input_path.GetFileSize(success, total_size);
-	if (success)
-	{
-		spdlog::get("pm_logger")->info("File size: {:d} MB", total_size / (1024 * 1024));
-
-		// Convert ch10_packet_type configuration map.
-		success = ConvertCh10PacketTypeMap(config_->ch10_packet_type_map_, packet_type_config_map_);
-		if (!success)
-			error_set = true;
-		LogPacketTypeConfig(packet_type_config_map_);
-
-		// Hard-code packet type directory extensions now. Later, import from
-		// config yaml.
-		std::map<Ch10PacketType, std::string> append_str_map = {
-			{Ch10PacketType::MILSTD1553_F1, "_1553.parquet"},
-			{Ch10PacketType::VIDEO_DATA_F0, "_video.parquet"}
-		};
-		success = CreateCh10PacketOutputDirs(output_path, input_path, 
-			packet_type_config_map_, append_str_map, output_dir_map_, true);
-		if (!success)
-			error_set = true;
-	}
-	else
-		error_set = true;
+	
 }
 
-//void ParseManager::create_output_dirs()
-//{
-//	if (packet_type_config_map_.at(Ch10PacketType::MILSTD1553_F1))
-//	{
-//		ManagedPath parquet_1553_path = output_path.CreatePathObject(input_path, "_1553.parquet");
-//		spdlog::get("pm_logger")->info("Parquet 1553 output path: {:s}",
-//			parquet_1553_path.RawString());
-//		if (!parquet_1553_path.create_directory())
-//			error_set = true;
-//		output_dir_map_[Ch10PacketType::MILSTD1553_F1] = parquet_1553_path;
-//	}
-//
-//	if (packet_type_config_map_.at(Ch10PacketType::VIDEO_DATA_F0))
-//	{
-//		ManagedPath parquet_vid_path = output_path.CreatePathObject(input_path, "_video.parquet");
-//		spdlog::get("pm_logger")->info("Parquet video output path: {:s}",
-//			parquet_vid_path.RawString());
-//		if (!parquet_vid_path.create_directory())
-//			error_set = true;
-//		output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] = parquet_vid_path;
-//	}
-//
-//#ifdef ETHERNET_DATA
-//	if (packet_type_config_map_.at(Ch10PacketType::ETHERNET_DATA_F0))
-//	{
-//		ManagedPath parquet_eth_path = output_path.CreatePathObject(input_path, "_ethernet.parquet");
-//		spdlog::get("pm_logger")->info("Parquet ethernet output path: {:s}",
-//			parquet_eth_path.RawString());
-//		if (!parquet_eth_path.create_directory())
-//			error_set = true;
-//		output_dir_map_[Ch10PacketType::ETHERNET_DATA_F0] = parquet_eth_path;
-//	}
-//#endif
-//}
+bool ParseManager::Setup()
+{
+	bool success = false;
+	input_path.GetFileSize(success, total_size);
+	if (!success)
+		return false;
+	spdlog::get("pm_logger")->info("File size: {:d} MB", total_size / (1024 * 1024));
+
+	// Convert ch10_packet_type configuration map from string --> string to 
+	// Ch10PacketType --> bool
+	if (!ConvertCh10PacketTypeMap(config_->ch10_packet_type_map_, packet_type_config_map_))
+		return false;
+
+	// Hard-code packet type directory extensions now. Later, import from
+	// config yaml.
+	std::map<Ch10PacketType, std::string> append_str_map = {
+		{Ch10PacketType::MILSTD1553_F1, "_1553.parquet"},
+		{Ch10PacketType::VIDEO_DATA_F0, "_video.parquet"}
+	};
+	if (!CreateCh10PacketOutputDirs(output_path, input_path,
+		packet_type_config_map_, append_str_map, output_dir_map_, true))
+		return false;
+
+	// Create output file names. A map of Ch10PacketType to
+	// ManagedPath will be created for each worker.
+	//CreateCh10PacketWorkerFileNames(worker_count, output_dir_map_, output_file_path_vec_,
+		//"parquet");
+
+	// Record the packet type config map in metadata and logs.
+	LogPacketTypeConfig(packet_type_config_map_);
+
+	return true;
+}
 
 void ParseManager::create_output_file_paths()
 {
@@ -135,18 +108,13 @@ void ParseManager::create_output_file_paths()
 	}
 }
 
-bool ParseManager::error_state()
-{
-	return error_set;
-}
-
 void ParseManager::start_workers()
 {
 	ifile.open(input_path.string().c_str(), std::ios::binary);
 	if (!(ifile.is_open()))
 	{
 		spdlog::get("pm_logger")->error("Error opening file: {:s}", input_path.RawString());
-		error_set = true;
+		//error_set = true;
 		return;
 	}
 
@@ -1018,7 +986,7 @@ bool ParseManager::CreateCh10PacketOutputDirs(const ManagedPath& output_dir,
 			}
 
 			// Fill pkt_type_output_dir_map for each packet type in packet_enabled_map.
-			result = CreateCh10PacketOutputDirObject(output_dir, base_file_name,
+			result = ManagedPath::CreateDirectoryFromComponents(output_dir, base_file_name,
 				append_str_map.at(it->first), pkt_type_output_dir, create_dir);
 			if (!result)
 			{
@@ -1034,25 +1002,39 @@ bool ParseManager::CreateCh10PacketOutputDirs(const ManagedPath& output_dir,
 	return true;
 }
 
-bool ParseManager::CreateCh10PacketOutputDirObject(const ManagedPath& output_dir,
-	const ManagedPath& base_file_name, const std::string& append_str,
-	ManagedPath& pkt_type_output_dir, bool create_dir)
+void ParseManager::CreateCh10PacketWorkerFileNames(const uint16_t& total_worker_count,
+	const std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map,
+	std::vector< std::map<Ch10PacketType, ManagedPath>>& output_vec_mapped_paths,
+	std::string file_extension)
 {
-	if (output_dir.RawString() == "")
-		return false;
+	std::string replacement_ext = "";
+	std::map<Ch10PacketType, ManagedPath>::const_iterator it;
 
-	if (base_file_name.RawString() == "")
-		return false;
-
-	// Create the path object.
-	pkt_type_output_dir = output_dir.CreatePathObject(base_file_name, append_str);
-	
-	// Create directory and confirm. Note that the function below automatically
-	// confirms creation.
-	if (create_dir)
+	for (uint16_t worker_index = 0; worker_index < total_worker_count; worker_index++)
 	{
-		if (!pkt_type_output_dir.create_directory())
-			return false;
+		// Create the replacement extension for the current index.
+		std::stringstream ss;
+		ss << "__" << std::setfill('0') << std::setw(3) << worker_index;
+		if (file_extension != "")
+		{
+			ss << "." << file_extension;
+		}
+		replacement_ext = ss.str();
+
+		// Create a temporary map to hold all of the output file paths for the 
+		// current index.
+		std::map<Ch10PacketType, ManagedPath> temp_output_file_map;
+
+		// Add an output file path for each Ch10PacketType and output dir
+		// in pkt_type_output_dir_map.
+		for (it = pkt_type_output_dir_map.cbegin(); it != pkt_type_output_dir_map.cend(); ++it)
+		{
+			temp_output_file_map[it->first] = it->second.CreatePathObject(
+				it->second, replacement_ext);
+		}
+
+		// Add the temp map to the vector maps if the temp map has items.
+		if(temp_output_file_map.size() > 0)
+			output_vec_mapped_paths.push_back(temp_output_file_map);
 	}
-	return true;
 }

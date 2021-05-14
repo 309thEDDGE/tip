@@ -308,6 +308,34 @@ public:
 	*/
 	static std::vector<ManagedPath> SelectDirectories(const std::vector<ManagedPath>& input_paths);
 
+	/*
+	Create a directory object specific to a given
+	output directory, base file name and string to be appended to the
+	base file name. Optionally create the directory in the file system.
+
+	Log the name of the directory created.
+
+	Args:
+		base_dir			--> ManagedPath object giving the directory into
+								which the output directory will be created
+		base_file_name		--> ManagedPath object with the base file name on which
+								to build the output directory name. May be a complete
+								path to a file, in which case the parent path will be
+								stripped and only the file name used, or a file name
+								only.
+		append_str			--> String to be appended to the base_file_name
+		output_dir			--> ManagedPath object with the final output directory object
+		create_dir			--> True if the directory ought to be created, false otherwise
+
+	Return:
+		True if create_dir is true and the output_dir output path is
+		created in the filesystem. Also true if create_dir is false and there
+		were no errors creating output_dir. False otherwise.
+	*/
+	static bool CreateDirectoryFromComponents(const ManagedPath& base_dir,
+		const ManagedPath& base_file_name, const std::string& append_str,
+		ManagedPath& output_dir, bool create_dir);
+
 
 	//////////////////////////////////////////
 	// Functions below not intended to be utilized directly.
