@@ -14,24 +14,28 @@
 #include <thread>
 #include <vector>
 #include <chrono>
+#include <sstream>
+#include <iomanip>
 #include "iterable_tools.h"
 #include "parse_text.h"
 #include "parse_worker.h"
-
 #include "parser_config_params.h"
 #include "metadata.h"
 #include "tmats_parser.h"
 #include "managed_path.h"
+#include "worker_config.h"
 #include "spdlog/spdlog.h"
-
 #include "ch10_packet_type.h"
 
 class ParseManager
 {
 	private:
 
-	// TMATS processing
+	// TMATS raw data
 	std::vector<std::string> tmats_body_vec_;
+
+	// Metadata manipulation
+	IterableTools it_;
 	
 	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
 	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
@@ -44,11 +48,11 @@ class ParseManager
 	uint64_t total_read_pos;
 	uint8_t n_threads;
 	uint16_t n_reads;
-	bool error_set;
 	bool check_word_count;
 	std::ifstream ifile;
 	ParseWorker* workers;
-	BinBuff* binary_buffers;
+	//BinBuff* binary_buffers;
+	WorkerConfig* worker_config_;
 	std::thread* threads;
 	bool workers_allocated;
 	const ParserConfigParams * const config_;
@@ -61,18 +65,24 @@ class ParseManager
 
 	std::map<Ch10PacketType, bool> packet_type_config_map_;
 
-	std::streamsize activate_worker(uint16_t binbuff_ind, uint16_t ID,
+	/*std::streamsize activate_worker(uint16_t binbuff_ind, uint16_t ID,
 		uint64_t start_pos, uint32_t n_read);
 	std::streamsize activate_append_mode_worker(uint16_t binbuff_ind, uint16_t ID,
-		uint32_t n_read);
+		uint32_t n_read);*/
+
+	std::streamsize new_activate_worker(ParseWorker* worker_vec, WorkerConfig* worker_config,
+		uint16_t worker_index, uint64_t& read_pos, uint32_t& read_size);
+	std::streamsize new_activate_append_mode_worker(ParseWorker* worker_vec, 
+		WorkerConfig* worker_config, uint16_t worker_index, uint32_t& read_size);
 
 	// worker automation
 	std::vector<uint16_t> active_workers;
 	std::chrono::milliseconds worker_wait;
 	std::chrono::milliseconds worker_start_offset;
-	void worker_queue(bool append_mode);
-	void worker_retire_queue();
-	void create_output_dirs();
+	//void worker_queue(bool append_mode);
+	void new_worker_queue(bool append_mode);
+	//void worker_retire_queue();
+	void new_worker_retire_queue();
 	void create_output_file_paths();
 	void collect_chanid_to_lruaddrs_metadata(
 		std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map);
@@ -84,11 +94,18 @@ class ParseManager
 
 	public:
 
-	//ParseManager(ACPlatform plat, std::string fname, std::string output_path, ConfigManager& cm_parse, ConfigManager& cm_1553);
 	ParseManager(ManagedPath fname, ManagedPath output_path, const ParserConfigParams * const config);
-	bool error_state();
 	void start_workers();
 	~ParseManager();
+
+	/*
+	Collect misc setup functions for readability
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
+	*/
+	bool Setup();
 
 	// Used for unit tests
 	void ProcessTMATsTest(const std::vector<std::string>& input)
@@ -123,6 +140,66 @@ class ParseManager
 								represents the enable state of ch10 packet types
 	*/
 	void LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map);
+
+	/*
+	Create and verify output directories for enabled ch10 packet types. 
+
+	Args:
+		output_dir			--> ManagedPath object giving the output directory into 
+								which packet type-specific dirs will be created
+		base_file_name		--> ManagedPath object with the base file name on which
+								to build the output directory name. May be a complete 
+								path to a file, in which case the parent path will be 
+								stripped and only the file name used, or a file name
+								only.
+		packet_enabled_map	--> Map of Ch10PacketType to boolean. True = enabled,
+								False = disabled
+		append_str_map		--> Map of Ch10PacketType to string. The mapped string is
+								appended to the base_file_name prior and ought to
+								include an extension if necessary, such as ".parquet"
+								in the case of Parquet files. Map must contain at 
+								least all of the keys in the packet_enabled_map which
+								are also mapped to true.
+		pkt_type_output_dir_map --> Map of Ch10PacketType to specific output directory,
+									the product of this function
+		create_dir				--> True if the directory ought to be created, false
+									otherwise
+
+	Return:
+		True if successful and all output directories were created; false otherwise.
+	*/
+	bool CreateCh10PacketOutputDirs(const ManagedPath& output_dir,
+		const ManagedPath& base_file_name,
+		const std::map<Ch10PacketType, bool>& packet_enabled_map,
+		const std::map<Ch10PacketType, std::string>& append_str_map,
+		std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map, bool create_dir);
+
+	/*
+	Generate a vector of maps of Ch10PacketType to ManagedPath. The path object
+	is a file path to which data for the given Ch10PacketType
+	ought to be written by the worker associated with the index of the vector
+	from which the map was retrieved. 
+
+	Args:
+		total_worker_count			--> Count of workers expected to be
+										created to parse according to 
+										configuration settings
+		pkt_type_output_dir_map		--> Map of Ch10PacketType to base output
+										directory to which files associated
+										with the packet type ought to be written.
+										This is the pkt_type_output_dir_map from
+										CreateCh10PacketOutputDirs.
+		output_vec_mapped_paths		--> Vector of maps in which the index in
+										the vector is the same as the worker which
+										ought to utilize the mapped output file
+										paths.
+		file_extension				--> String not including the '.'.
+										Ex: file_extension = 'txt'
+	*/
+	void CreateCh10PacketWorkerFileNames(const uint16_t& total_worker_count,
+		const std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map,
+		std::vector< std::map<Ch10PacketType, ManagedPath>>& output_vec_mapped_paths,
+		std::string file_extension);
 
 };
 

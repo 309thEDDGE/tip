@@ -347,3 +347,26 @@ std::vector<ManagedPath> ManagedPath::SelectDirectories(const std::vector<Manage
 	}
 	return return_paths;
 }
+
+bool ManagedPath::CreateDirectoryFromComponents(const ManagedPath& base_dir,
+	const ManagedPath& base_file_name, const std::string& append_str,
+	ManagedPath& output_dir, bool create_dir)
+{
+	if (base_dir.RawString() == "")
+		return false;
+
+	if (base_file_name.RawString() == "")
+		return false;
+
+	// Create the path object.
+	output_dir = base_dir.CreatePathObject(base_file_name, append_str);
+
+	// Create directory and confirm. Note that the function below automatically
+	// confirms creation.
+	if (create_dir)
+	{
+		if (!output_dir.create_directory())
+			return false;
+	}
+	return true;
+}

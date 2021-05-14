@@ -3,7 +3,7 @@
 #include "binbuff.h"
 
 BinBuff::BinBuff() : source_pos_(0), read_count_(0), pos_(0), is_initialized_(false),
-	position_(pos_)
+	position_(pos_), buffer_size_(buff_size_), buff_size_(0)
 {}
 
 BinBuff::~BinBuff()
@@ -28,6 +28,7 @@ uint64_t BinBuff::Initialize(std::ifstream& infile, const uint64_t& file_size,
 	pos_ = 0;
 	read_count_ = read_count;
 	file_size_ = file_size;
+	buff_size_ = 0;
 
 	if (source_pos_ > file_size_)
 	{
@@ -74,12 +75,14 @@ uint64_t BinBuff::Initialize(std::ifstream& infile, const uint64_t& file_size,
 		// has already been computed and ought to succeed.
 		return UINT64_MAX;
 	}
-
+	buff_size_ = uint64_t(bytes_.size());
 	return read_count_;
 }
 
 const uint8_t* BinBuff::Data() const
 {
+	if (!is_initialized_)
+		return nullptr;
 	return bytes_.data() + pos_;
 }
 
@@ -119,4 +122,13 @@ uint64_t BinBuff::Size() const
 		return read_count_;
 	else
 		return uint64_t(0);
+}
+
+void BinBuff::Clear()
+{
+	bytes_.clear();
+	buff_size_ = 0;
+	pos_ = 0;
+	read_count_ = 0;
+	is_initialized_ = false;
 }

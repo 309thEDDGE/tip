@@ -872,5 +872,113 @@ TEST(ManagedPathTest, SelectDirectories)
 	std::filesystem::remove_all(rm_path);
 }
 
+TEST(ManagedPathTest, CreateDirectoryFromComponentsEmptyPaths)
+{
+	std::string append_str;
+	ManagedPath base_output_dir;
+	ManagedPath base_name;
+	ManagedPath full_output_dir;
+	bool result = false;
 
+	// Set base_output_dir to current dir, leave base_name empty.
+	base_name = ManagedPath(std::string(""));
+	result = ManagedPath::CreateDirectoryFromComponents(base_output_dir, base_name,
+		append_str, full_output_dir, false);
+	EXPECT_FALSE(result);
+
+	// Flip, set base_output_dir empty, base_nam_ to current dir
+	base_output_dir = ManagedPath(std::string(""));
+	base_name = ManagedPath();
+	result = ManagedPath::CreateDirectoryFromComponents(base_output_dir, base_name,
+		append_str, full_output_dir, false);
+	EXPECT_FALSE(result);
+}
+
+TEST(ManagedPathTest, CreateDirectoryFromComponentsEmptyAppendStr)
+{
+	std::string append_str;
+	std::string expect;
+	ManagedPath base_output_dir;
+	ManagedPath base_name;
+	ManagedPath full_output_dir;
+	bool result = false;
+
+	// base file name is just a file, not a path
+	base_output_dir = ManagedPath();
+	base_name = ManagedPath(std::string("my_file"));
+	expect = (base_output_dir / base_name).RawString();
+	result = ManagedPath::CreateDirectoryFromComponents(base_output_dir, base_name,
+		append_str, full_output_dir, false);
+	EXPECT_TRUE(result);
+	EXPECT_EQ(expect, full_output_dir.RawString());
+
+	// base file name is a path with file name
+	base_name = ManagedPath(std::string("data"));
+	base_name /= ManagedPath(std::string("my_file.txt"));
+	expect = (base_output_dir / base_name.filename()).RawString();
+	result = ManagedPath::CreateDirectoryFromComponents(base_output_dir, base_name,
+		append_str, full_output_dir, false);
+	EXPECT_TRUE(result);
+	EXPECT_EQ(expect, full_output_dir.RawString());
+}
+
+TEST(ManagedPathTest, CreateDirectoryFromComponentsNonEmptyAppendStr)
+{
+	std::string append_str = ".pq";
+	std::string expect;
+	ManagedPath base_output_dir;
+	ManagedPath base_name;
+	ManagedPath full_output_dir;
+	bool result = false;
+
+	// base file name is just a file, not a path
+	base_output_dir = ManagedPath();
+	base_name = ManagedPath(std::string("my_file"));
+	expect = (base_output_dir / base_name).RawString() + ".pq";
+	result = ManagedPath::CreateDirectoryFromComponents(base_output_dir, base_name,
+		append_str, full_output_dir, false);
+	EXPECT_TRUE(result);
+	EXPECT_EQ(expect, full_output_dir.RawString());
+
+	// base file name is a path with file name
+	base_name = ManagedPath(std::string("data"));
+	base_name /= ManagedPath(std::string("my_file.txt"));
+	expect = (base_output_dir / base_name.stem()).RawString() + ".pq";
+	result = ManagedPath::CreateDirectoryFromComponents(base_output_dir, base_name,
+		append_str, full_output_dir, false);
+	EXPECT_TRUE(result);
+	EXPECT_EQ(expect, full_output_dir.RawString());
+}
+
+TEST(ManagedPathTest, CreateDirectoryFromComponentsCreateDir)
+{
+	std::string append_str = ".pq";
+	ManagedPath base_output_dir;
+	ManagedPath base_name;
+	ManagedPath full_output_dir;
+	bool result = false;
+
+	base_output_dir = ManagedPath();
+	base_name = ManagedPath(std::string("my_file"));
+	result = ManagedPath::CreateDirectoryFromComponents(base_output_dir, base_name,
+		append_str, full_output_dir, true);
+	EXPECT_TRUE(result);
+	EXPECT_TRUE(full_output_dir.is_directory());
+}
+
+TEST(ManagedPathTest, CreateDirectoryFromComponentsCreateDirFail)
+{
+	std::string append_str = ".pq";
+	ManagedPath base_output_dir;
+	ManagedPath base_name;
+	ManagedPath full_output_dir;
+	bool result = false;
+
+	// base dir does not exist, so dir creation will fail
+	base_output_dir = ManagedPath() / "test" / "data";
+	base_name = ManagedPath(std::string("my_file"));
+	result = ManagedPath::CreateDirectoryFromComponents(base_output_dir, base_name,
+		append_str, full_output_dir, true);
+	EXPECT_FALSE(result);
+}
 

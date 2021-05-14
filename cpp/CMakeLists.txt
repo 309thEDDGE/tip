@@ -253,6 +253,7 @@ endif()
 
 add_library(${ch10parse_lib_name} STATIC 
     ${parse_ethernet_src}
+    ${ch10_inc_dir}/worker_config.h
     ${ch10_inc_dir}/parse_manager.h ${ch10_src_dir}/parse_manager.cpp
     ${ch10_inc_dir}/parse_worker.h ${ch10_src_dir}/parse_worker.cpp
     ${ch10_src_dir}/parser_helper_funcs.cpp ${ch10_inc_dir}/parser_helper_funcs.h
@@ -367,7 +368,8 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/ch10_videof0_component_u.cpp
                 ${test_src_dir}/ch10_time_u.cpp        
                 ${test_src_dir}/yaml_schema_validation_u.cpp
-                ${test_src_dir}/argument_validation_u.cpp)
+                ${test_src_dir}/argument_validation_u.cpp
+                ${test_src_dir}/parse_worker_u.cpp)
 
 # set_property(TARGET ${test_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir} 
