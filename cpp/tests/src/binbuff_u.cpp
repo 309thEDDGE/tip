@@ -514,6 +514,7 @@ TEST_F(BinBuffTest, Clear)
 	EXPECT_EQ(bb_.buffer_size_, 0);
 	EXPECT_FALSE(bb_.IsInitialized());
 	EXPECT_EQ(bb_.Size(), 0);
+	EXPECT_EQ(bb_.Capacity(), 0);
 	EXPECT_EQ(bb_.BytesAvailable(5), false);
 	EXPECT_EQ(bb_.Data(), nullptr);
 

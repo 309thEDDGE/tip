@@ -96,14 +96,16 @@ bool StartParse(ManagedPath input_path, ManagedPath output_path,
 	// and calculates internal quantities in preparation for
 	// parsing.
 	ParseManager pm;
-	if (!pm.Configure(input_path, output_path, &config))
+	if (!pm.Configure(input_path, output_path, config))
 		return false;
 
 	// Begin parsing of Ch10 data by starting workers.
-	pm.Parse();
+	if (!pm.Parse(config))
+		return false;
 
 	// Record metadata
-	pm.RecordMetadata();
+	if (!pm.RecordMetadata(input_path, config))
+		return false;
 
 	// Get stop time and print duration.
 	auto stop_time = std::chrono::high_resolution_clock::now();
@@ -151,6 +153,7 @@ bool SetupLogging(const ManagedPath& log_dir)
 		// Console sink
 		auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 		console_sink->set_level(spdlog::level::info);
+		//console_sink->set_level(spdlog::level::debug);
 		console_sink->set_pattern("%^[%T] [%n] [%l] %v%$");
 
 		// ParseManager log

@@ -25,6 +25,7 @@ protected:
 	std::map<Ch10PacketType, bool> pkt_enabled_map_;
 	std::map<Ch10PacketType, std::string> append_str_map_;
 	std::map<Ch10PacketType, ManagedPath> output_dir_map_;
+	WorkerConfig worker_config_;
 
 	ParseManagerTest() : result_(false) {}
 
@@ -314,7 +315,7 @@ TEST_F(ParseManagerTest, AllocateResourcesValidateCalculatedParams)
 {
 	EXPECT_TRUE(InitializeParserConfig());
 	uint64_t file_size = 1e9;
-	result_ = pm.AllocateResources((const ParserConfigParams*)&config, file_size);
+	result_ = pm.AllocateResources(config, file_size);
 	EXPECT_TRUE(result_);
 	EXPECT_EQ(config.parse_chunk_bytes_ * 1e6, pm.worker_chunk_size_bytes);
 
@@ -327,9 +328,99 @@ TEST_F(ParseManagerTest, AllocateResourcesConfirmVectorAllocations)
 {
 	EXPECT_TRUE(InitializeParserConfig());
 	uint64_t file_size = 1e9;
-	result_ = pm.AllocateResources((const ParserConfigParams*)&config, file_size);
+	result_ = pm.AllocateResources(config, file_size);
 	EXPECT_TRUE(result_);
 	EXPECT_EQ(pm.worker_count, pm.workers_vec.size());
 	EXPECT_EQ(pm.worker_count, pm.threads_vec.size());
 	EXPECT_EQ(pm.worker_count, pm.worker_config_vec.size());
+}
+
+TEST_F(ParseManagerTest, AllocateResourcesConfirmParseWorkerAllocation)
+{
+	EXPECT_TRUE(InitializeParserConfig());
+	uint64_t file_size = 1e9;
+	result_ = pm.AllocateResources(config, file_size);
+	EXPECT_TRUE(result_);
+	EXPECT_EQ(pm.worker_count, pm.workers_vec.size());
+	for (uint16_t worker_ind; worker_ind < pm.worker_count; worker_ind++)
+	{
+		EXPECT_TRUE(pm.workers_vec[worker_ind].get() != nullptr);
+	}
+}
+
+TEST_F(ParseManagerTest, ConfigureWorkerNotFinalWorker)
+{
+	pkt_enabled_map_[Ch10PacketType::MILSTD1553_F1] = true;
+
+	// Note that elsewhere this map is used as the base path for various packet types,
+	// whereas the map with the same prototype is used in ConfigureWorker to hold
+	// the output paths specific to a worker. Here I'll use this map to hold some
+	// arbitrary path for the sake of testing.
+	output_dir_map_[Ch10PacketType::MILSTD1553_F1] = ManagedPath(std::string("test"));
+
+	uint16_t worker_index = 5;
+	uint16_t worker_count = 10;
+	uint64_t read_pos = 13456641;
+	uint64_t read_size = 250e6;
+
+	result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos, 
+		read_size, output_dir_map_, pkt_enabled_map_);
+	EXPECT_TRUE(result_);
+
+	EXPECT_EQ(false, worker_config_.final_worker_);
+	EXPECT_EQ(worker_index, worker_config_.worker_index_);
+	EXPECT_EQ(read_pos, worker_config_.start_position_);
+	EXPECT_EQ(false, worker_config_.append_mode_);
+	EXPECT_EQ(output_dir_map_, worker_config_.output_file_paths_);
+	EXPECT_EQ(pkt_enabled_map_, worker_config_.ch10_packet_type_map_);
+}
+
+TEST_F(ParseManagerTest, ConfigureWorkerFinalWorker)
+{
+	pkt_enabled_map_[Ch10PacketType::MILSTD1553_F1] = true;
+
+	// Note that elsewhere this map is used as the base path for various packet types,
+	// whereas the map with the same prototype is used in ConfigureWorker to hold
+	// the output paths specific to a worker. Here I'll use this map to hold some
+	// arbitrary path for the sake of testing.
+	output_dir_map_[Ch10PacketType::MILSTD1553_F1] = ManagedPath(std::string("test"));
+
+	uint16_t worker_index = 9; // = worker_count - 1
+	uint16_t worker_count = 10;
+	uint64_t read_pos = 13456641;
+	uint64_t read_size = 250e6;
+
+	result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos, 
+		read_size, output_dir_map_, pkt_enabled_map_);
+	EXPECT_TRUE(result_);
+
+	EXPECT_EQ(true, worker_config_.final_worker_);
+	EXPECT_EQ(worker_index, worker_config_.worker_index_);
+	EXPECT_EQ(read_pos, worker_config_.start_position_);
+	EXPECT_EQ(false, worker_config_.append_mode_);
+	EXPECT_EQ(output_dir_map_, worker_config_.output_file_paths_);
+	EXPECT_EQ(pkt_enabled_map_, worker_config_.ch10_packet_type_map_);
+}
+
+TEST_F(ParseManagerTest, ConfigureWorkerWorkerIndexLarge)
+{
+	uint16_t worker_index = 10; // > worker_count - 1
+	uint16_t worker_count = 10;
+	uint64_t read_pos = 13456641;
+	uint64_t read_size = 250e6;
+
+	result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
+		read_size, output_dir_map_, pkt_enabled_map_);
+	EXPECT_FALSE(result_);
+}
+
+TEST_F(ParseManagerTest, ConfigureAppendWorker)
+{
+	worker_config_.last_position_ = 4311993045;
+	uint16_t worker_index = 10; // > worker_count - 1
+	uint64_t read_size = 250e6;
+
+	pm.ConfigureAppendWorker(worker_config_, worker_index, read_size);
+	EXPECT_EQ(worker_config_.last_position_, worker_config_.start_position_);
+	EXPECT_EQ(true, worker_config_.append_mode_);
 }

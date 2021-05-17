@@ -30,7 +30,10 @@
 
 class ParseManager
 {
-	private:
+private:
+
+	// Total ch10 file size, bytes
+	uint64_t ch10_file_size_;
 
 	// TMATS raw data
 	std::vector<std::string> tmats_body_vec_;
@@ -41,6 +44,10 @@ class ParseManager
 	// Count of bytes of raw ch10 data to be parsed by each
 	// worker
 	uint64_t worker_chunk_size_bytes_;
+
+	// Count of bytes of raw ch10 data to be parsed by
+	// each worker in append mode
+	uint32_t append_chunk_size_bytes_;
 
 	// Count of workers necessary to parse the entire ch10
 	// based on worker_chunk_size_bytes_ and the total
@@ -72,66 +79,14 @@ class ParseManager
 	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
 	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
 
-	ManagedPath input_path;
-	ManagedPath output_path;
-	uint32_t read_size;
-	uint32_t append_read_size;
-	uint64_t total_size;
-	uint64_t total_read_pos;
-	uint8_t n_threads;
-	uint16_t n_reads;
-	bool check_word_count;
-	std::ifstream ifile;
-	ParseWorker* workers;
-	//BinBuff* binary_buffers;
-	WorkerConfig* worker_config_;
-	std::thread* threads;
-	bool workers_allocated;
-	const ParserConfigParams * config_;
-	
-	std::map<Ch10PacketType, ManagedPath> output_dir_map_;
-	
-	bool milstd1553_msg_selection;
-	std::vector<std::string> milstd1553_sorted_msg_selection;
-	std::string chanid_to_lruaddrs_metadata_string_;
-
-	std::map<Ch10PacketType, bool> packet_type_config_map_;
-
-	/*std::streamsize activate_worker(uint16_t binbuff_ind, uint16_t ID,
-		uint64_t start_pos, uint32_t n_read);
-	std::streamsize activate_append_mode_worker(uint16_t binbuff_ind, uint16_t ID,
-		uint32_t n_read);*/
-
-	std::streamsize new_activate_worker(ParseWorker* worker_vec, WorkerConfig* worker_config,
-		uint16_t worker_index, uint64_t& read_pos, uint32_t& read_size);
-	std::streamsize new_activate_append_mode_worker(ParseWorker* worker_vec, 
-		WorkerConfig* worker_config, uint16_t worker_index, uint32_t& read_size);
-
-	// worker automation
-	std::vector<uint16_t> active_workers;
-	std::chrono::milliseconds worker_wait;
-	std::chrono::milliseconds worker_start_offset;
-	void worker_queue(bool append_mode);
-	void new_worker_queue(bool append_mode);
-	//void worker_retire_queue();
-	void new_worker_retire_queue();
-	void create_output_file_paths();
-	void collect_chanid_to_lruaddrs_metadata(
-		std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map);
-	void collect_chanid_to_commwords_metadata(
-		std::map<uint32_t, std::vector<std::vector<uint32_t>>>& output_chanid_commwords_map);
-	
-	void CollectVideoMetadata(std::map<uint16_t, uint64_t>& channel_id_to_min_timestamp_map);
-	void ProcessTMATS();
-
 	public:
 		const uint64_t& worker_chunk_size_bytes;
 		const uint16_t& worker_count;
 		const std::vector<std::unique_ptr<ParseWorker>>& workers_vec;
 		const std::vector<std::thread>& threads_vec;
 		const std::vector<WorkerConfig>& worker_config_vec;
+
 	ParseManager();
-	void start_workers();
 	~ParseManager();
 
 	/*
@@ -150,26 +105,65 @@ class ParseManager
 		execution ought to stop.
 	*/
 	bool Configure(ManagedPath input_ch10_file_path, ManagedPath output_dir, 
-		const ParserConfigParams* config);
+		const ParserConfigParams& user_config);
 
 	/*
 	
 	*/
-	bool Parse();
+	bool Parse(const ParserConfigParams& user_config);
 
 	/*
 	
 	*/
-	bool RecordMetadata();
+	bool RecordMetadata(ManagedPath input_ch10_file_path, 
+		const ParserConfigParams& user_config);
 
-	// Used for unit tests
-	void ProcessTMATsTest(const std::vector<std::string>& input)
-	{
-		tmats_body_vec_ = input;
-		ProcessTMATS();
-	};
-	std::map<std::string, std::string> GetTMATsChannelIDToSourceMap() { return TMATsChannelIDToSourceMap_; };
-	std::map<std::string, std::string> GetTMATsChannelIDToTypeMap() { return TMATsChannelIDToTypeMap_; };
+	//////////////////////////////////////////////////////////////////////////////
+	// Functions below are considered to be internal functions. They
+	// are public to help facilitate testing.
+	//////////////////////////////////////////////////////////////////////////////
+
+	/*
+	
+	*/
+	bool ConfigureWorker(WorkerConfig& worker_config, const uint16_t& worker_index,
+		const uint16_t& worker_count, const uint64_t& read_pos, const uint64_t& read_size,
+		const std::map<Ch10PacketType, ManagedPath>& output_file_path_map,
+		const std::map<Ch10PacketType, bool>& packet_type_config_map);
+
+	/*
+	
+	*/
+	void ConfigureAppendWorker(WorkerConfig& worker_config, const uint16_t& worker_index,
+		const uint64_t& read_size);
+
+	/*
+	
+	*/
+	bool WorkerQueue(bool append_mode, std::ifstream& ch10_input_stream,
+		std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
+		std::vector<uint16_t>& active_workers_vec,
+		std::vector<WorkerConfig>& worker_config_vec,
+		const uint16_t& worker_count,
+		const uint64_t& read_size, const uint64_t& append_read_size,
+		const uint64_t& total_size,
+		const std::vector<std::map<Ch10PacketType, ManagedPath>>& output_file_path_vec,
+		const std::map<Ch10PacketType, bool>& packet_type_config_map,
+		std::vector<std::thread>& threads_vec,
+		std::vector<std::string>& tmats_vec,
+		const ParserConfigParams& user_config);
+
+	/*
+	
+	*/
+	bool WorkerRetireQueue(std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
+		std::vector<uint16_t>& active_workers_vec,
+		std::vector<WorkerConfig>& worker_config_vec,
+		const uint16_t& worker_count,
+		std::vector<std::thread>& threads_vec,
+		int worker_shift_wait);
+
+	
 
 	/*
 	Convert the ch10_packet_type configuration map that is read from the
@@ -259,9 +253,33 @@ class ParseManager
 	/*
 	
 	*/
-	bool AllocateResources(const ParserConfigParams* config,
+	bool AllocateResources(const ParserConfigParams& user_config,
 		const uint64_t& ch10_file_size);
 
+	void collect_chanid_to_lruaddrs_metadata(
+		std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map,
+		std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
+		const uint16_t& worker_count);
+
+	void collect_chanid_to_commwords_metadata(
+		std::map<uint32_t, std::vector<std::vector<uint32_t>>>& output_chanid_commwords_map,
+		std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
+		const uint16_t& worker_count);
+
+	void CollectVideoMetadata(
+		std::map<uint16_t, uint64_t>& channel_id_to_min_timestamp_map,
+		std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
+		const uint16_t& worker_count);
+	void ProcessTMATS();
+
+	// Used for unit tests
+	void ProcessTMATsTest(const std::vector<std::string>& input)
+	{
+		tmats_body_vec_ = input;
+		ProcessTMATS();
+	};
+	std::map<std::string, std::string> GetTMATsChannelIDToSourceMap() { return TMATsChannelIDToSourceMap_; };
+	std::map<std::string, std::string> GetTMATsChannelIDToTypeMap() { return TMATsChannelIDToTypeMap_; };
 };
 
 #endif
