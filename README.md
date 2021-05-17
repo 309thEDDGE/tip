@@ -5,7 +5,7 @@ Government or integration into licensed services for the US Government
 (1/1/2021). Other requests shall be referred to (309th Software Engineering 
 Group - Hill AFB).
 
-# Ch10 Parser Notes
+# Ch10 Parser Notes 
 
 ## Table of Contents
 - [Markdown](#markdown)
