@@ -1,6 +1,8 @@
 #include "gtest/gtest.h"
 #include "parse_manager.h"
 #include "parser_config_params.h"
+#include "ch10_header_format.h"
+#include "ch10_1553f1_msg_hdr_format.h"
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -15,28 +17,34 @@ protected:
 	std::string output_path = "";
 	//ParseManager pm = ParseManager(input_path, output_path, &config);
 	ParseManager pm;
-	std::string filename = "_TMATS.txt";
+	std::string tmats_filename_ = "_TMATS.txt";
 	std::ifstream file;
 	std::string line;
 	ManagedPath base_output_dir_;
 	ManagedPath base_name_;
 	ManagedPath full_output_dir_;
+	ManagedPath tmats_path_;
 	bool result_;
 	std::map<Ch10PacketType, bool> pkt_enabled_map_;
 	std::map<Ch10PacketType, std::string> append_str_map_;
 	std::map<Ch10PacketType, ManagedPath> output_dir_map_;
+	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
+	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
 	WorkerConfig worker_config_;
 
-	ParseManagerTest() : result_(false) {}
+	ParseManagerTest() : result_(false), tmats_path_() 
+	{
+		tmats_path_ /= tmats_filename_;
+	}
 
 	void RemoveFile()
 	{
 		// delete previous file if it exists
-		file.open(filename);
+		file.open(tmats_filename_);
 		if (file.good())
 		{
 			file.close();
-			remove(filename.c_str());
+			remove(tmats_filename_.c_str());
 		}
 		file.close();
 	}
@@ -73,7 +81,7 @@ protected:
 
 TEST_F(ParseManagerTest, NoTMATSLeftFromPriorTests)
 {
-	file.open(filename);
+	file.open(tmats_filename_);
 	ASSERT_FALSE(file.good());
 	RemoveFile();
 }
@@ -81,8 +89,9 @@ TEST_F(ParseManagerTest, NoTMATSLeftFromPriorTests)
 TEST_F(ParseManagerTest, NoTMATSPresent)
 {
 	std::vector<std::string> tmats;
-	pm.ProcessTMATsTest(tmats);
-	file.open(filename);
+	pm.ProcessTMATS(tmats, tmats_path_, TMATsChannelIDToSourceMap_,
+		TMATsChannelIDToTypeMap_);
+	file.open(tmats_filename_);
 	// file shouldn't exist if tmats did
 	// not exist
 	ASSERT_FALSE(file.good());
@@ -92,8 +101,9 @@ TEST_F(ParseManagerTest, NoTMATSPresent)
 TEST_F(ParseManagerTest, TMATSWritten)
 {
 	std::vector<std::string> tmats = { "line1\nline2\n", "line3\nline4\n" };
-	pm.ProcessTMATsTest(tmats);
-	file.open(filename);
+	pm.ProcessTMATS(tmats, tmats_path_, TMATsChannelIDToSourceMap_,
+		TMATsChannelIDToTypeMap_);
+	file.open(tmats_filename_);
 	ASSERT_TRUE(file.good());
 	std::ostringstream ss;
 	ss << file.rdbuf(); 
@@ -120,12 +130,8 @@ TEST_F(ParseManagerTest, TMATSParsed)
 										"comment;\n",
 										"Junk-1\\Junk1-1;\n\n",
 									 };
-	pm.ProcessTMATsTest(tmats);
-	std::map<std::string,std::string> source_map_test = 
-		pm.GetTMATsChannelIDToSourceMap();
-
-	std::map<std::string, std::string> type_map_test =
-		pm.GetTMATsChannelIDToTypeMap();
+	pm.ProcessTMATS(tmats, tmats_path_, TMATsChannelIDToSourceMap_,
+		TMATsChannelIDToTypeMap_);
 
 	std::map<std::string, std::string> source_map_truth = 
 	{ {"1" , "Bus1"}, {"2" , "Bus2"}, {"3" , "Bus3"} };
@@ -133,8 +139,8 @@ TEST_F(ParseManagerTest, TMATSParsed)
 	std::map<std::string, std::string> type_map_truth = 
 	{ {"1" , "type1"}, {"2" , "type2"}, {"3" , "type3"} };
 
-	ASSERT_TRUE(map_compare(source_map_test, source_map_truth));
-	ASSERT_TRUE(map_compare(type_map_test, type_map_truth));
+	ASSERT_TRUE(map_compare(TMATsChannelIDToSourceMap_, source_map_truth));
+	ASSERT_TRUE(map_compare(TMATsChannelIDToTypeMap_, type_map_truth));
 	RemoveFile();
 }
 
@@ -342,7 +348,7 @@ TEST_F(ParseManagerTest, AllocateResourcesConfirmParseWorkerAllocation)
 	result_ = pm.AllocateResources(config, file_size);
 	EXPECT_TRUE(result_);
 	EXPECT_EQ(pm.worker_count, pm.workers_vec.size());
-	for (uint16_t worker_ind; worker_ind < pm.worker_count; worker_ind++)
+	for (uint16_t worker_ind = 0; worker_ind < pm.worker_count; worker_ind++)
 	{
 		EXPECT_TRUE(pm.workers_vec[worker_ind].get() != nullptr);
 	}
@@ -423,4 +429,59 @@ TEST_F(ParseManagerTest, ConfigureAppendWorker)
 	pm.ConfigureAppendWorker(worker_config_, worker_index, read_size);
 	EXPECT_EQ(worker_config_.last_position_, worker_config_.start_position_);
 	EXPECT_EQ(true, worker_config_.append_mode_);
+}
+
+TEST_F(ParseManagerTest, CombineChannelIDToLRUAddressesMetadataUnequalLengthVectors)
+{
+	std::map<uint32_t, std::set<uint16_t>> output;
+	std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_lruaddr1_maps;
+	std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_lruaddr2_maps;
+	std::map<uint32_t, std::set<uint16_t>> map1_0;
+	chanid_lruaddr1_maps.push_back(map1_0);
+
+	result_ = pm.CombineChannelIDToLRUAddressesMetadata(output, chanid_lruaddr1_maps,
+		chanid_lruaddr2_maps);
+	EXPECT_FALSE(result_);
+}
+
+TEST_F(ParseManagerTest, CombineChannelIDToLRUAddressesMetadata)
+{
+	std::map<uint32_t, std::set<uint16_t>> output;
+	std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_lruaddr1_maps;
+	std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_lruaddr2_maps;
+	std::map<uint32_t, std::set<uint16_t>> map1_0 = {
+		{5, {10, 12}},
+		{10, {11, 13}}
+	};
+	std::map<uint32_t, std::set<uint16_t>> map1_1 = {
+		{5, {10, 15}},
+	};
+	std::map<uint32_t, std::set<uint16_t>> map2_0 = {
+		{6, {10, 12}},
+		{7, {9, 10}}
+	};
+	std::map<uint32_t, std::set<uint16_t>> map2_1 = {
+		{8, {1, 2}},
+		{9, {3, 4}}
+	};
+
+	chanid_lruaddr1_maps.push_back(map1_0);
+	chanid_lruaddr1_maps.push_back(map1_1);
+
+	chanid_lruaddr2_maps.push_back(map2_0);
+	chanid_lruaddr2_maps.push_back(map2_1);
+
+	std::map<uint32_t, std::set<uint16_t>> expected = {
+		{5, {10, 12, 15}},
+		{6, {10, 12}},
+		{7, {9, 10}},
+		{8, {1, 2}},
+		{9, {3, 4}},
+		{10, {11, 13}}
+	};
+
+	result_ = pm.CombineChannelIDToLRUAddressesMetadata(output, chanid_lruaddr1_maps,
+		chanid_lruaddr2_maps);
+	EXPECT_TRUE(result_);
+	EXPECT_EQ(expected, output);
 }

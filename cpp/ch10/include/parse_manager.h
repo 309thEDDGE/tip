@@ -375,10 +375,32 @@ public:
 	bool AllocateResources(const ParserConfigParams& user_config,
 		const uint64_t& ch10_file_size);
 
-	void collect_chanid_to_lruaddrs_metadata(
-		std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map,
-		std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
-		const uint16_t& worker_count);
+	/*
+	Combine channel ID to LRU address maps from vector of maps, 
+	where each map in the vector corresponds to a map retrieved from
+	a worker. The output map is recorded to metadata.
+
+	Args:
+		output_chanid_lruaddr_map	--> Output map, ch10 channel ID to set of 
+										all LRU addresses observed on the bus 
+										identifed by the given channel ID
+		chanid_lruaddr1_maps		--> Vector of maps of channel ID to set of 
+										LRU addresses associated with the channel
+										ID for the TX/RX command word
+		chanid_lruaddr2_maps		--> Vector of maps of channel ID to set of
+										LRU addresses associated with the channel
+										ID for the RX command word for RT to RT 
+										messages. Must have size() equal to 
+										chanid_lruaddr1_maps.
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
+	*/
+	bool CombineChannelIDToLRUAddressesMetadata(
+		std::map<uint32_t, std::set<uint16_t>>& output_chanid_lruaddr_map,
+		const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_lruaddr1_maps,
+		const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_lruaddr2_maps);
 
 	void collect_chanid_to_commwords_metadata(
 		std::map<uint32_t, std::vector<std::vector<uint32_t>>>& output_chanid_commwords_map,
@@ -398,17 +420,14 @@ public:
 	Args:
 	tmats_vec					--> Vector of strings into which workers will push
 									TMATS matter
-	pkt_type_output_dir_map		--> Map of Ch10PacketType to base output
-									directory to which files associated
-									with the packet type ought to be written.
-									This is the pkt_type_output_dir_map from
-									CreateCh10PacketOutputDirs.
+	tmats_file_path				--> Complete path including the output file name
+									to which TMATS matter is recorded
 	TMATsChannelIDToSourceMap	--> Output artifact maps channel ID to source
 	TMATsChannelIDToTypeMap		--> Output artifact maps channel ID to type
 
 	*/
 	void ProcessTMATS(const std::vector<std::string>& tmats_vec,
-		const std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map,
+		const ManagedPath& tmats_file_path,
 		std::map<std::string, std::string>& TMATsChannelIDToSourceMap,
 		std::map<std::string, std::string>& TMATsChannelIDToTypeMap);
 

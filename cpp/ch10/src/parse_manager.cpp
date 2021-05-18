@@ -204,10 +204,21 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
 			md.RecordSingleKeyValuePair("ch10_input_file_path", input_ch10_file_path.RawString());
 
 			// Obtain the tx and rx combined channel ID to LRU address map and
-			// record it to the Yaml writer.
+			// record it to the Yaml writer. First compile all the channel ID to 
+			// LRU address maps from the workers.
+			std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_lruaddr1_maps;
+			std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_lruaddr2_maps;
+			for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
+			{
+				chanid_lruaddr1_maps.push_back(
+					workers_vec_[worker_ind]->ch10_context_.chanid_remoteaddr1_map);
+				chanid_lruaddr2_maps.push_back(
+					workers_vec_[worker_ind]->ch10_context_.chanid_remoteaddr2_map);
+			}
 			std::map<uint32_t, std::set<uint16_t>> output_chanid_remoteaddr_map;
-			collect_chanid_to_lruaddrs_metadata(output_chanid_remoteaddr_map,
-				workers_vec_, worker_count_);
+			if (!CombineChannelIDToLRUAddressesMetadata(output_chanid_remoteaddr_map,
+				chanid_lruaddr1_maps, chanid_lruaddr2_maps))
+				return false;
 			md.RecordCompoundMapToSet(output_chanid_remoteaddr_map, "chanid_to_lru_addrs");
 
 			// Obtain the channel ID to command words set map.
@@ -216,9 +227,14 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
 				workers_vec_, worker_count_);
 			md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
 
+			// Create the output path for TMATs
+			ManagedPath tmats_path = output_dir_map_[Ch10PacketType::MILSTD1553_F1] / "_TMATS.txt";
+
+			// Process TMATs matter and record 
 			std::map<std::string, std::string> TMATsChannelIDToSourceMap;
 			std::map<std::string, std::string> TMATsChannelIDToTypeMap;
-			ProcessTMATS();
+			ProcessTMATS(tmats_body_vec_, tmats_path, TMATsChannelIDToSourceMap,
+				TMATsChannelIDToTypeMap);
 
 			// Record the TMATS channel ID to source map.
 			md.RecordSimpleMap(TMATsChannelIDToSourceMap, "tmats_chanid_to_source");
@@ -589,7 +605,7 @@ ParseManager::~ParseManager()
 }
 
 void ParseManager::ProcessTMATS(const std::vector<std::string>& tmats_vec,
-	const std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map,
+	const ManagedPath& tmats_file_path,
 	std::map<std::string, std::string>& TMATsChannelIDToSourceMap,
 	std::map<std::string, std::string>& TMATsChannelIDToTypeMap)
 {
@@ -606,14 +622,12 @@ void ParseManager::ProcessTMATS(const std::vector<std::string>& tmats_vec,
 		full_TMATS_string += tmats_vec[i];
 	}
 
-	ManagedPath tmats_path;
-	tmats_path = pkt_type_output_dir_map[Ch10PacketType::MILSTD1553_F1] /
-		"_TMATS.txt";
 	std::ofstream tmats;
-	tmats.open(tmats_path.string(), std::ios::trunc | std::ios::binary);
+	tmats.open(tmats_file_path.string(), std::ios::trunc | std::ios::binary);
 	if (tmats.good())
 	{
-		spdlog::get("pm_logger")->info("ProcessTMATS: writing TMATS to {:s}", tmats_path.RawString());
+		spdlog::get("pm_logger")->info("ProcessTMATS: writing TMATS to {:s}", 
+			tmats_file_path.RawString());
 		tmats << full_TMATS_string;
 	}
 
@@ -797,27 +811,39 @@ void ParseManager::CollectVideoMetadata(
 	}
 }
 
-void ParseManager::collect_chanid_to_lruaddrs_metadata(
-	std::map<uint32_t, std::set<uint16_t>>& output_chanid_remoteaddr_map,
-	std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
-	const uint16_t& worker_count)
+bool ParseManager::CombineChannelIDToLRUAddressesMetadata(
+	std::map<uint32_t, std::set<uint16_t>>& output_chanid_lruaddr_map,
+	const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_lruaddr1_maps,
+	const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_lruaddr2_maps)
 {
+	// Input vectors must have the same length.
+	if (chanid_lruaddr1_maps.size() != chanid_lruaddr2_maps.size())
+	{
+		spdlog::get("pm_logger")->warn("CombineChannelIDToLRUAddressesMetadata: "
+			"Input vectors are not the same size, chanid_lruaddr1_maps ({:d}) "
+			"chanid_lruaddr2_maps ({:d})", chanid_lruaddr1_maps.size(),
+			chanid_lruaddr2_maps.size());
+		return false;
+	}
+
 	// Collect and combine the channel ID to LRU address maps
 	// assembled by each worker.
 	std::map<uint32_t, std::set<uint16_t>> chanid_remoteaddr_map1;
 	std::map<uint32_t, std::set<uint16_t>> chanid_remoteaddr_map2;
-	for (uint16_t worker_ind = 0; worker_ind < worker_count; worker_ind++)
+	for (size_t i = 0; i < chanid_lruaddr1_maps.size(); i++)
 	{
 		//workers[read_ind].append_chanid_remoteaddr_maps(chanid_remoteaddr_map1, chanid_remoteaddr_map2);
 		chanid_remoteaddr_map1 = it_.CombineCompoundMapsToSet(
-			chanid_remoteaddr_map1, worker_vec[worker_ind]->ch10_context_.chanid_remoteaddr1_map);
+			chanid_remoteaddr_map1, chanid_lruaddr1_maps[i]);
 		chanid_remoteaddr_map2 = it_.CombineCompoundMapsToSet(
-			chanid_remoteaddr_map2, worker_vec[worker_ind]->ch10_context_.chanid_remoteaddr2_map);
+			chanid_remoteaddr_map2, chanid_lruaddr2_maps[i]);
 	}
 
 	// Combine the tx and rx maps into a single map.
-	output_chanid_remoteaddr_map = it_.CombineCompoundMapsToSet(
+	output_chanid_lruaddr_map = it_.CombineCompoundMapsToSet(
 		chanid_remoteaddr_map1, chanid_remoteaddr_map2);
+
+	return true;
 }
 
 void ParseManager::collect_chanid_to_commwords_metadata(
