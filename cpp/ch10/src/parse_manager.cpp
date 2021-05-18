@@ -118,7 +118,7 @@ bool ParseManager::Parse(const ParserConfigParams& user_config)
 	std::vector<uint16_t> active_workers_vec;
 	spdlog::get("pm_logger")->debug("Parse: begin parsing with workers");
 	if (!WorkerQueue(append, ch10_input_stream_, workers_vec_, active_workers_vec,
-		worker_config_vec_, worker_count_, worker_chunk_size_bytes_, 
+		worker_config_vec_, worker_chunk_size_bytes_, 
 		append_chunk_size_bytes_, ch10_file_size_, output_file_path_vec_, 
 		packet_type_config_map, threads_vec_, tmats_body_vec_, user_config))
 	{
@@ -129,7 +129,7 @@ bool ParseManager::Parse(const ParserConfigParams& user_config)
 
 	// Wait for all active workers to finish.
 	if (!WorkerRetireQueue(workers_vec_, active_workers_vec, worker_config_vec_,
-		worker_count_, threads_vec_, user_config.worker_shift_wait_ms_))
+		threads_vec_, user_config.worker_shift_wait_ms_))
 	{
 		return false;
 	}
@@ -151,7 +151,7 @@ bool ParseManager::Parse(const ParserConfigParams& user_config)
 	spdlog::get("pm_logger")->debug("Parse: begin parsing in append mode");
 	append = true;
 	if (!WorkerQueue(append, ch10_input_stream_, workers_vec_, active_workers_vec,
-		worker_config_vec_, worker_count_, worker_chunk_size_bytes_, 
+		worker_config_vec_, worker_chunk_size_bytes_, 
 		append_chunk_size_bytes_, ch10_file_size_, output_file_path_vec_, 
 		packet_type_config_map, threads_vec_, tmats_body_vec_, user_config))
 	{
@@ -162,7 +162,7 @@ bool ParseManager::Parse(const ParserConfigParams& user_config)
 
 	// Wait for all active workers to finish.
 	if (!WorkerRetireQueue(workers_vec_, active_workers_vec, worker_config_vec_,
-		worker_count_, threads_vec_, user_config.worker_shift_wait_ms_))
+		threads_vec_, user_config.worker_shift_wait_ms_))
 	{
 		return false;
 	}
@@ -216,13 +216,15 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
 				workers_vec_, worker_count_);
 			md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
 
+			std::map<std::string, std::string> TMATsChannelIDToSourceMap;
+			std::map<std::string, std::string> TMATsChannelIDToTypeMap;
 			ProcessTMATS();
 
 			// Record the TMATS channel ID to source map.
-			md.RecordSimpleMap(TMATsChannelIDToSourceMap_, "tmats_chanid_to_source");
+			md.RecordSimpleMap(TMATsChannelIDToSourceMap, "tmats_chanid_to_source");
 
 			// Record the TMATS channel ID to type map.
-			md.RecordSimpleMap(TMATsChannelIDToTypeMap_, "tmats_chanid_to_type");
+			md.RecordSimpleMap(TMATsChannelIDToTypeMap, "tmats_chanid_to_type");
 
 			// Write the complete Yaml record to the metadata file.
 			std::ofstream stream_1553_metadata(md_path.string(),
@@ -291,12 +293,12 @@ bool ParseManager::ConfigureWorker(WorkerConfig& worker_config, const uint16_t& 
 }
 
 void ParseManager::ConfigureAppendWorker(WorkerConfig& worker_config, const uint16_t& worker_index,
-	const uint64_t& read_size)
+	const uint64_t& append_read_size)
 {
 	uint64_t last_pos = worker_config.last_position_;
 
 	spdlog::get("pm_logger")->debug("ConfigureAppendWorker {:d}: start = {:d}, read size = {:d}",
-		worker_index, last_pos, read_size);
+		worker_index, last_pos, append_read_size);
 
 	worker_config.start_position_ = last_pos;
 	worker_config.append_mode_ = true;
@@ -308,7 +310,6 @@ bool ParseManager::WorkerQueue(bool append_mode, std::ifstream& ch10_input_strea
 	std::vector<std::unique_ptr<ParseWorker>>& worker_vec, 
 	std::vector<uint16_t>& active_workers_vec,
 	std::vector<WorkerConfig>& worker_config_vec,
-	const uint16_t& worker_count,
 	const uint64_t& read_size, const uint64_t& append_read_size, 
 	const uint64_t& total_size,
 	const std::vector<std::map<Ch10PacketType, ManagedPath>>& output_file_path_vec,
@@ -320,6 +321,8 @@ bool ParseManager::WorkerQueue(bool append_mode, std::ifstream& ch10_input_strea
 	// Load sleep duration from user config
 	std::chrono::milliseconds worker_offset_wait_ms(user_config.worker_offset_wait_ms_);
 	std::chrono::milliseconds worker_shift_wait_ms(user_config.worker_shift_wait_ms_);
+
+	uint16_t worker_count = worker_vec.size();
 
 	// Initially load all threads by keeping track of the
 	// the number activated. Afterwards only activate new 
@@ -532,10 +535,10 @@ bool ParseManager::WorkerQueue(bool append_mode, std::ifstream& ch10_input_strea
 bool ParseManager::WorkerRetireQueue(std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
 	std::vector<uint16_t>& active_workers_vec,
 	std::vector<WorkerConfig>& worker_config_vec,
-	const uint16_t& worker_count,
 	std::vector<std::thread>& threads_vec,
 	int worker_shift_wait)
 {
+	uint16_t worker_count = worker_vec.size();
 	std::chrono::milliseconds worker_shift_wait_ms(worker_shift_wait);
 	spdlog::get("pm_logger")->debug("WorkerRetireQueue: Joining all remaining workers");
 	uint16_t current_active_worker = 0;
@@ -585,29 +588,32 @@ ParseManager::~ParseManager()
 	ch10_input_stream_.close();
 }
 
-void ParseManager::ProcessTMATS()
+void ParseManager::ProcessTMATS(const std::vector<std::string>& tmats_vec,
+	const std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map,
+	std::map<std::string, std::string>& TMATsChannelIDToSourceMap,
+	std::map<std::string, std::string>& TMATsChannelIDToTypeMap)
 {
 	// if tmats doesn't exist return
-	if (tmats_body_vec_.size() == 0)
+	if (tmats_vec.size() == 0)
 	{
-		spdlog::get("pm_logger")->warn("No TMATS Present");
+		spdlog::get("pm_logger")->warn("ProcessTMATS: no TMATS Present");
 		return;
 	}
 
 	std::string full_TMATS_string;
-	for (int i = 0; i < tmats_body_vec_.size(); i++)
+	for (int i = 0; i < tmats_vec.size(); i++)
 	{
-		full_TMATS_string += tmats_body_vec_[i];
+		full_TMATS_string += tmats_vec[i];
 	}
 
 	ManagedPath tmats_path;
-	tmats_path = output_dir_map_[Ch10PacketType::MILSTD1553_F1] /
+	tmats_path = pkt_type_output_dir_map[Ch10PacketType::MILSTD1553_F1] /
 		"_TMATS.txt";
 	std::ofstream tmats;
 	tmats.open(tmats_path.string(), std::ios::trunc | std::ios::binary);
 	if (tmats.good())
 	{
-		spdlog::get("pm_logger")->info("Writing TMATS to {:s}", tmats_path.RawString());
+		spdlog::get("pm_logger")->info("ProcessTMATS: writing TMATS to {:s}", tmats_path.RawString());
 		tmats << full_TMATS_string;
 	}
 
@@ -616,8 +622,8 @@ void ParseManager::ProcessTMATS()
 	// Gather TMATs attributes of interest
 	// for metadata
 	TMATSParser tmats_parser = TMATSParser(full_TMATS_string);
-	TMATsChannelIDToSourceMap_ = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\DSI-n");
-	TMATsChannelIDToTypeMap_ = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n");
+	TMATsChannelIDToSourceMap = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\DSI-n");
+	TMATsChannelIDToTypeMap = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n");
 }
 
 bool ParseManager::ConvertCh10PacketTypeMap(const std::map<std::string, std::string>& input_map,

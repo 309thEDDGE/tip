@@ -75,21 +75,21 @@ private:
 	// create output files according to the paths in the map at index x
 	// in this vector.
 	std::vector<std::map<Ch10PacketType, ManagedPath>> output_file_path_vec_;
-	
-	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
-	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
 
-	public:
-		const uint64_t& worker_chunk_size_bytes;
-		const uint16_t& worker_count;
-		const std::vector<std::unique_ptr<ParseWorker>>& workers_vec;
-		const std::vector<std::thread>& threads_vec;
-		const std::vector<WorkerConfig>& worker_config_vec;
+public:
+	const uint64_t& worker_chunk_size_bytes;
+	const uint16_t& worker_count;
+	const std::vector<std::unique_ptr<ParseWorker>>& workers_vec;
+	const std::vector<std::thread>& threads_vec;
+	const std::vector<WorkerConfig>& worker_config_vec;
 
 	ParseManager();
 	~ParseManager();
 
 	/*
+	** High-level function which coordinates lower-level functions. Intended
+	** to be called first by the user.
+
 	Collect misc setup functions and validate configuration.
 
 	Args:
@@ -108,23 +108,71 @@ private:
 		const ParserConfigParams& user_config);
 
 	/*
+	** High-level function which coordinates lower-level functions. Intended
+	** to be called by the user after Configure.
 	
+	Parse the ch10 file and record data to the configured file type.
+
+	Args:
+		config					--> ParserConfigParams object which has
+									been pre-configured with data from 
+									the parser_conf.yaml file
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
 	*/
 	bool Parse(const ParserConfigParams& user_config);
 
 	/*
+	**High-level function which coordinates lower-level functions. Intended
+	**to be called by the user after Parse.
 	
+	Finalize the parse process by recording metadata.
+
+	Args:
+		input_ch10_file_path	--> Ch10 file that was parsed
+		config					--> ParserConfigParams object which has
+									been pre-configured with data from
+									the parser_conf.yaml file
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
 	*/
 	bool RecordMetadata(ManagedPath input_ch10_file_path, 
 		const ParserConfigParams& user_config);
+
 
 	//////////////////////////////////////////////////////////////////////////////
 	// Functions below are considered to be internal functions. They
 	// are public to help facilitate testing.
 	//////////////////////////////////////////////////////////////////////////////
 
+
 	/*
-	
+	Initialize parameters in the relevant WorkerConfig object in preparation
+	for parsing by a worker.
+
+	Args:
+		worker_config		--> WorkerConfig object which will be configured
+								for the relevant ParseWorker
+		worker_index		--> Index of the objects in worker_vecs_, threads_vec_, 
+								and worker_config_vec_ which are being configured
+								for parsing
+		worker_count		--> Total count of workers, also equal to .size() of 
+								worker_vecs_, threads_vec_, and worker_config_vec_
+		read_pos			--> Position in bytes from which ch10 is read into
+								the buffer in preparation for parsing
+		read_size			--> Size of chunk in bytes of ch10 to parse for each
+								first-pass worker
+		output_file_path_vec--> Output file path for each configured Ch10PacketType
+		packet_type_config_map> Map of Ch10PacketType to boolean. True = enabled,
+								False = disabled.
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
 	*/
 	bool ConfigureWorker(WorkerConfig& worker_config, const uint16_t& worker_index,
 		const uint16_t& worker_count, const uint64_t& read_pos, const uint64_t& read_size,
@@ -132,19 +180,65 @@ private:
 		const std::map<Ch10PacketType, bool>& packet_type_config_map);
 
 	/*
-	
+	Initialize parameters in the relevant WorkerConfig object in preparation
+	for parsing in append mode by a worker.
+
+	Args:
+		worker_config		--> WorkerConfig object which will be configured
+								for the relevant ParseWorker
+		worker_index		--> Index of the objects in worker_vecs_, threads_vec_, 
+								and worker_config_vec_ which are being configured
+								for parsing
+		append_read_size	--> Size of chunk in bytes of ch10 to parse for each 
+								append-mode worker
 	*/
 	void ConfigureAppendWorker(WorkerConfig& worker_config, const uint16_t& worker_index,
-		const uint64_t& read_size);
+		const uint64_t& append_read_size);
 
 	/*
-	
+	Start workers in a queue in quantity up to the user-configured thread
+	count. Wait for available threads and start additional workers until
+	worker_count workers have run their course. Differentiate between 
+	first-pass and append-mode workers.
+
+	Args:
+		append_mode			--> True if append_mode workers are to be started,
+								false otherwise
+		ch10_input_stream	--> Initialized input stream for the ch10 file to 
+								be parsed
+		worker_vec			--> Vector of ParseWorker pointers, each of which
+								parse a chunk of the ch10. 
+		active_workers_vec	--> Track the index of active workers
+		worker_config_vec	--> Worker configuration objects which are associated
+								by index to worker_vec ParseWorkers. Must have size()
+								equal to worker_vec.size().
+		read_size			--> Size of chunk in bytes of ch10 to parse for each 
+								first-pass worker
+		append_read_size	--> Size of chunk in bytes of ch10 to parse for each 
+								append-mode worker
+		total_size			--> Total size of the ch10 in bytes
+		output_file_path_vec--> Vector of maps in which the index in
+								the vector is the same as the worker which
+								ought to utilize the mapped output file paths.
+		packet_type_config_map> Map of Ch10PacketType to boolean. True = enabled,
+								False = disabled.
+		threads_vec			--> Vector of std::thread objects. Must have size()
+								equal to worker_vec.size().
+		tmats_vec			--> Vector of strings into which workers will push
+								TMATS matter
+		user_config			--> ParserConfigParams object which has been
+								pre-configured with data from the 
+								parser_conf.yaml file
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
+
 	*/
 	bool WorkerQueue(bool append_mode, std::ifstream& ch10_input_stream,
 		std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
 		std::vector<uint16_t>& active_workers_vec,
 		std::vector<WorkerConfig>& worker_config_vec,
-		const uint16_t& worker_count,
 		const uint64_t& read_size, const uint64_t& append_read_size,
 		const uint64_t& total_size,
 		const std::vector<std::map<Ch10PacketType, ManagedPath>>& output_file_path_vec,
@@ -154,16 +248,30 @@ private:
 		const ParserConfigParams& user_config);
 
 	/*
-	
+	Wait for each worker to finish before returning. As each worker completes
+	the parsing job asynchronously, join the thread and deallocate the buffer.
+
+	Args:
+	worker_vec				--> Vector of ParseWorker pointers, each of which
+								parse a chunk of the ch10.
+	active_workers_vec		--> Track the index of active workers
+	worker_config_vec		--> Worker configuration objects which are associated
+								by index to worker_vec ParseWorkers. Must have size()
+								equal to worker_vec.size().
+	threads_vec				--> Vector of std::thread objects. Must have size()
+								equal to worker_vec.size().
+	worker_shift_wait		--> Main thread sleep duration in loop after 
+								checking for any completed workers, millisecond
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
 	*/
 	bool WorkerRetireQueue(std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
 		std::vector<uint16_t>& active_workers_vec,
 		std::vector<WorkerConfig>& worker_config_vec,
-		const uint16_t& worker_count,
 		std::vector<std::thread>& threads_vec,
 		int worker_shift_wait);
-
-	
 
 	/*
 	Convert the ch10_packet_type configuration map that is read from the
@@ -251,7 +359,18 @@ private:
 		std::string file_extension);
 
 	/*
-	
+	Calculate paramaters from user configuration and do initial
+	vector allocation.
+
+	Args:
+		user_config			--> ParserConfigParams object which has been
+								pre-configured with data from the 
+								parser_conf.yaml file
+		ch10_file_size		--> Total size of the ch10 in bytes
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
 	*/
 	bool AllocateResources(const ParserConfigParams& user_config,
 		const uint64_t& ch10_file_size);
@@ -270,16 +389,29 @@ private:
 		std::map<uint16_t, uint64_t>& channel_id_to_min_timestamp_map,
 		std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
 		const uint16_t& worker_count);
-	void ProcessTMATS();
 
-	// Used for unit tests
-	void ProcessTMATsTest(const std::vector<std::string>& input)
-	{
-		tmats_body_vec_ = input;
-		ProcessTMATS();
-	};
-	std::map<std::string, std::string> GetTMATsChannelIDToSourceMap() { return TMATsChannelIDToSourceMap_; };
-	std::map<std::string, std::string> GetTMATsChannelIDToTypeMap() { return TMATsChannelIDToTypeMap_; };
+	/*
+	Collect raw TMATS strings into a single string and write to disk.
+	Use TMATSParser to parse and associate TMATS metadata into maps
+	in preparation for recording to yaml metadata file.
+
+	Args:
+	tmats_vec					--> Vector of strings into which workers will push
+									TMATS matter
+	pkt_type_output_dir_map		--> Map of Ch10PacketType to base output
+									directory to which files associated
+									with the packet type ought to be written.
+									This is the pkt_type_output_dir_map from
+									CreateCh10PacketOutputDirs.
+	TMATsChannelIDToSourceMap	--> Output artifact maps channel ID to source
+	TMATsChannelIDToTypeMap		--> Output artifact maps channel ID to type
+
+	*/
+	void ProcessTMATS(const std::vector<std::string>& tmats_vec,
+		const std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map,
+		std::map<std::string, std::string>& TMATsChannelIDToSourceMap,
+		std::map<std::string, std::string>& TMATsChannelIDToTypeMap);
+
 };
 
 #endif
