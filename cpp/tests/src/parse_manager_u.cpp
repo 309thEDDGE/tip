@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #include "parse_manager.h"
 #include "parser_config_params.h"
 #include "ch10_header_format.h"
@@ -484,4 +485,81 @@ TEST_F(ParseManagerTest, CombineChannelIDToLRUAddressesMetadata)
 		chanid_lruaddr2_maps);
 	EXPECT_TRUE(result_);
 	EXPECT_EQ(expected, output);
+}
+
+TEST_F(ParseManagerTest, CombineChannelIDToCommandWordsMetadata)
+{
+	std::vector<std::map<uint32_t, std::set<uint32_t>>> chanid_commwords_maps;
+	std::map<uint32_t, std::vector<std::vector<uint32_t>>> orig_commwords1 = {
+		{16, {{10, 4211}, {752, 1511}}},
+		{17, {{9, 23}}}
+	};
+	std::map<uint32_t, std::vector<std::vector<uint32_t>>> orig_commwords2 = {
+		{16, {{10, 4211}, {1992, 1066}}},
+		{18, {{900, 211}, {11, 9341}, {41, 55}}}
+	};
+
+	std::map<uint32_t, std::vector<std::vector<uint32_t>>>::const_iterator it;
+	std::map<uint32_t, std::set<uint32_t>> chanid_commwords_map1;
+	for (it = orig_commwords1.cbegin(); it != orig_commwords1.cend(); ++it)
+	{
+		std::set<uint32_t> temp_set;
+		for (std::vector<std::vector<uint32_t>>::const_iterator it2 = it->second.cbegin();
+			it2 != it->second.cend(); ++it2)
+		{
+			temp_set.insert((it2->at(0) << 16) + it2->at(1));
+		}
+		chanid_commwords_map1[it->first] = temp_set;
+	}
+	chanid_commwords_maps.push_back(chanid_commwords_map1);
+
+	std::map<uint32_t, std::set<uint32_t>> chanid_commwords_map2;
+	for (it = orig_commwords2.cbegin(); it != orig_commwords2.cend(); ++it)
+	{
+		std::set<uint32_t> temp_set;
+		for (std::vector<std::vector<uint32_t>>::const_iterator it2 = it->second.cbegin();
+			it2 != it->second.cend(); ++it2)
+		{
+			temp_set.insert((it2->at(0) << 16) + it2->at(1));
+		}
+		chanid_commwords_map2[it->first] = temp_set;
+	}
+	chanid_commwords_maps.push_back(chanid_commwords_map2);
+
+	std::map<uint32_t, std::vector<std::vector<uint32_t>>> output_map;
+	result_ = pm.CombineChannelIDToCommandWordsMetadata(output_map, chanid_commwords_maps);
+	EXPECT_TRUE(result_);
+	EXPECT_EQ(3, output_map.size());
+	EXPECT_THAT(output_map.at(16),
+		::testing::Contains(::testing::ElementsAreArray({ 10, 4211 })));
+	EXPECT_THAT(output_map.at(16),
+		::testing::Contains(::testing::ElementsAreArray({ 752, 1511 })));
+	EXPECT_THAT(output_map.at(16),
+		::testing::Contains(::testing::ElementsAreArray({ 1992, 1066 })));
+
+	EXPECT_THAT(output_map.at(17),
+		::testing::Contains(::testing::ElementsAreArray({ 9, 23 })));
+
+	EXPECT_THAT(output_map.at(18),
+		::testing::Contains(::testing::ElementsAreArray({ 900, 211 })));
+	EXPECT_THAT(output_map.at(18),
+		::testing::Contains(::testing::ElementsAreArray({ 11, 9341 })));
+	EXPECT_THAT(output_map.at(18),
+		::testing::Contains(::testing::ElementsAreArray({ 41, 55 })));
+}
+
+TEST_F(ParseManagerTest, CreateChannelIDToMinVideoTimestampsMetadata)
+{
+	std::map<uint16_t, uint64_t> output_map;
+	std::vector<std::map<uint16_t, uint64_t>> input_maps = {
+		{{12, 100}, {13, 120}, {14, 98}},
+		{{12, 100}, {13, 110}, {14, 200}},
+		{{12, 120}, {13, 108}, {14, 150}}
+	};
+	std::map<uint16_t, uint64_t> expected = {
+		{12, 100}, {13, 108}, {14, 98}
+	};
+	pm.CreateChannelIDToMinVideoTimestampsMetadata(output_map,
+		input_maps);
+	EXPECT_EQ(expected, output_map);
 }

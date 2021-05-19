@@ -222,9 +222,15 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
 			md.RecordCompoundMapToSet(output_chanid_remoteaddr_map, "chanid_to_lru_addrs");
 
 			// Obtain the channel ID to command words set map.
+			std::vector<std::map<uint32_t, std::set<uint32_t>>> chanid_commwords_maps;
+			for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
+				chanid_commwords_maps.push_back(
+					workers_vec_[worker_ind]->ch10_context_.chanid_commwords_map);
+
 			std::map<uint32_t, std::vector<std::vector<uint32_t>>> output_chanid_commwords_map;
-			collect_chanid_to_commwords_metadata(output_chanid_commwords_map,
-				workers_vec_, worker_count_);
+			if (!CombineChannelIDToCommandWordsMetadata(output_chanid_commwords_map,
+				chanid_commwords_maps))
+				return false;
 			md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
 
 			// Create the output path for TMATs
@@ -262,12 +268,19 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
 				"_metadata");
 
 			// Get the channel ID to minimum time stamp map.
-			std::map<uint16_t, uint64_t> min_timestamp_map;
-			CollectVideoMetadata(min_timestamp_map, workers_vec_, worker_count_);
+			std::vector<std::map<uint16_t, uint64_t>> worker_chanid_to_mintimestamps_maps;
+			for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
+			{
+				worker_chanid_to_mintimestamps_maps.push_back(
+					workers_vec_[worker_ind]->ch10_context_.chanid_minvideotimestamp_map);
+			}
+			std::map<uint16_t, uint64_t> output_min_timestamp_map;
+			CreateChannelIDToMinVideoTimestampsMetadata(output_min_timestamp_map,
+				worker_chanid_to_mintimestamps_maps);
 
 			// Record the map in the Yaml writer and write the 
 			// total yaml text to file.
-			vmd.RecordSimpleMap(min_timestamp_map, "chanid_to_first_timestamp");
+			vmd.RecordSimpleMap(output_min_timestamp_map, "chanid_to_first_timestamp");
 			std::ofstream stream_video_metadata(video_md_path.string(),
 				std::ofstream::out | std::ofstream::trunc);
 			stream_video_metadata << vmd.GetMetadataString();
@@ -789,24 +802,22 @@ void ParseManager::CreateCh10PacketWorkerFileNames(const uint16_t& total_worker_
 	}
 }
 
-void ParseManager::CollectVideoMetadata(
-	std::map<uint16_t, uint64_t>& channel_id_to_min_timestamp_map,
-	std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
-	const uint16_t& worker_count)
+void ParseManager::CreateChannelIDToMinVideoTimestampsMetadata(
+	std::map<uint16_t, uint64_t>& output_chanid_to_mintimestamp_map,
+	const std::vector<std::map<uint16_t, uint64_t>>& chanid_mintimestamp_maps)
 {
 	// Gather the maps from each worker and combine them into one, 
 	//keeping only the lowest time stamps for each channel ID.
-	for (uint16_t worker_ind = 0; worker_ind < worker_count; worker_ind++)
+	for (size_t i = 0; i < chanid_mintimestamp_maps.size(); i++)
 	{
-		std::map<uint16_t, uint64_t> temp_map =
-			worker_vec[worker_ind]->ch10_context_.chanid_minvideotimestamp_map;
+		std::map<uint16_t, uint64_t> temp_map = chanid_mintimestamp_maps.at(i);
 		for (std::map<uint16_t, uint64_t>::const_iterator it = temp_map.begin();
 			it != temp_map.end(); ++it)
 		{
-			if (channel_id_to_min_timestamp_map.count(it->first) == 0)
-				channel_id_to_min_timestamp_map[it->first] = it->second;
-			else if (it->second < channel_id_to_min_timestamp_map[it->first])
-				channel_id_to_min_timestamp_map[it->first] = it->second;
+			if (output_chanid_to_mintimestamp_map.count(it->first) == 0)
+				output_chanid_to_mintimestamp_map[it->first] = it->second;
+			else if (it->second < output_chanid_to_mintimestamp_map[it->first])
+				output_chanid_to_mintimestamp_map[it->first] = it->second;
 		}
 	}
 }
@@ -834,9 +845,9 @@ bool ParseManager::CombineChannelIDToLRUAddressesMetadata(
 	{
 		//workers[read_ind].append_chanid_remoteaddr_maps(chanid_remoteaddr_map1, chanid_remoteaddr_map2);
 		chanid_remoteaddr_map1 = it_.CombineCompoundMapsToSet(
-			chanid_remoteaddr_map1, chanid_lruaddr1_maps[i]);
+			chanid_remoteaddr_map1, chanid_lruaddr1_maps.at(i));
 		chanid_remoteaddr_map2 = it_.CombineCompoundMapsToSet(
-			chanid_remoteaddr_map2, chanid_lruaddr2_maps[i]);
+			chanid_remoteaddr_map2, chanid_lruaddr2_maps.at(i));
 	}
 
 	// Combine the tx and rx maps into a single map.
@@ -846,18 +857,16 @@ bool ParseManager::CombineChannelIDToLRUAddressesMetadata(
 	return true;
 }
 
-void ParseManager::collect_chanid_to_commwords_metadata(
+bool ParseManager::CombineChannelIDToCommandWordsMetadata(
 	std::map<uint32_t, std::vector<std::vector<uint32_t>>>& output_chanid_commwords_map,
-	std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
-	const uint16_t& worker_count)
+	const std::vector<std::map<uint32_t, std::set<uint32_t>>>& chanid_commwords_maps)
 {
 	// Collect maps into one.
 	std::map<uint32_t, std::set<uint32_t>> chanid_commwords_map;
-	for (uint16_t worker_ind = 0; worker_ind < worker_count; worker_ind++)
+	for (size_t i = 0; i < chanid_commwords_maps.size(); i++)
 	{
-		//workers[read_ind].append_chanid_comwmwords_map(chanid_commwords_map);
 		chanid_commwords_map = it_.CombineCompoundMapsToSet(chanid_commwords_map,
-			worker_vec[worker_ind]->ch10_context_.chanid_commwords_map);
+			chanid_commwords_maps.at(i));
 	}
 
 	// Break compound command words each into a set of two command words,
@@ -876,4 +885,5 @@ void ParseManager::collect_chanid_to_commwords_metadata(
 		}
 		output_chanid_commwords_map[it->first] = temp_vec_of_vec;
 	}
+	return true;
 }

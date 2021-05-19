@@ -378,7 +378,8 @@ public:
 	/*
 	Combine channel ID to LRU address maps from vector of maps, 
 	where each map in the vector corresponds to a map retrieved from
-	a worker. The output map is recorded to metadata.
+	a worker. The output map is used in another function where it is 
+	recorded to metadata.
 
 	Args:
 		output_chanid_lruaddr_map	--> Output map, ch10 channel ID to set of 
@@ -402,15 +403,56 @@ public:
 		const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_lruaddr1_maps,
 		const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_lruaddr2_maps);
 
-	void collect_chanid_to_commwords_metadata(
-		std::map<uint32_t, std::vector<std::vector<uint32_t>>>& output_chanid_commwords_map,
-		std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
-		const uint16_t& worker_count);
+	/*
+	Combine channel ID to command words maps from a vector maps,
+	where each map in the vector corresponds to a map of observed channel ID
+	to command words retrieved from a worker. The output map is used in 
+	another function where it is recorded to metadata. 
 
-	void CollectVideoMetadata(
-		std::map<uint16_t, uint64_t>& channel_id_to_min_timestamp_map,
-		std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
-		const uint16_t& worker_count);
+	Args:
+	output_chanid_commwords_map	--> Output map, ch10 channel ID to a vector
+									of vectors. Each final vector must have size() 
+									equal to 2, where the first entry is TX/RX 
+									command word and second entry is the RX 
+									command word in the case of RT to RT type 
+									messages. So each channel ID is mapped to a 
+									vector of command words that were observed 
+									on the bus during parsing. The bus is not 
+									known at this time, only the channel ID 
+									which represents a specific bus.
+	chanid_commwords_maps		--> Vector of maps of channel ID to set of 
+									uint32_t value which is: commword1 << 16
+									+ commword2, where commword1 will be placed
+									in the first position of the size-2 vector
+									mentioned in the argument above, and
+									commword2 will be placed in the second 
+									position.
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
+	*/
+	bool CombineChannelIDToCommandWordsMetadata(
+		std::map<uint32_t, std::vector<std::vector<uint32_t>>>& output_chanid_commwords_map,
+		const std::vector<std::map<uint32_t, std::set<uint32_t>>>& chanid_commwords_maps);
+
+	/*
+	Combine the channel ID to minimum timestamps map from each worker, already
+	compiled as a vector maps, into the channel ID to absolute minimum timestamps
+	map.
+
+	output_chanid_to_mintimestamp_map	--> Output map, channel ID to minimum
+											video packet timestamp for the channel
+											ID. Timestamps in units of nanoseconds
+											since the epoch (Unit time).
+	chanid_mintimestamp_maps			--> Vector of maps of channel ID to minimum
+											video packet time as observed by each
+											worker.
+
+	*/
+	void CreateChannelIDToMinVideoTimestampsMetadata(
+		std::map<uint16_t, uint64_t>& output_chanid_to_mintimestamp_map,
+		const std::vector<std::map<uint16_t, uint64_t>>& chanid_mintimestamp_maps);
 
 	/*
 	Collect raw TMATS strings into a single string and write to disk.
