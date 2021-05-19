@@ -200,10 +200,66 @@ public:
 								for parsing
 		append_read_size	--> Size of chunk in bytes of ch10 to parse for each 
 								append-mode worker
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
 	*/
 	bool ConfigureAppendWorker(WorkerConfig& worker_config, const uint16_t& worker_index,
 		const uint64_t& append_read_size, const uint64_t& total_size, BinBuff* binbuff_ptr,
 		std::ifstream& ch10_input_stream, std::streamsize& actual_read_size);
+
+	/*
+	Configure and activate worker to parse a chunk of the ch10.
+
+	Not tested due to difficulty of mocking std::thread. Utilizes
+	tested functions.
+
+	Args:
+		append_mode			--> True if append_mode workers are to be started,
+								false otherwise
+		parse_worker_ptr	--> Pointer to ParseWorker object in which to 
+								parse the chunk indicated by other args to this
+								function
+		worker_thread		--> Thread in which to execute the ParseWorker
+		worker_config		--> WorkerConfig object which will be configured
+								for the relevant ParseWorker
+		worker_index		--> Index of the objects in worker_vecs_, threads_vec_,
+								and worker_config_vec_ which are being configured
+								for parsing
+		worker_count		--> Total count of workers, also equal to .size() of
+								worker_vecs_, threads_vec_, and worker_config_vec_
+		read_pos			--> Position in bytes from which ch10 is read into
+								the buffer in preparation for parsing
+		read_size			--> Size of chunk in bytes of ch10 to parse for each
+								first-pass worker
+		append_read_size	--> Size of chunk in bytes of ch10 to parse for each
+								append-mode worker
+		total_size			--> Total size of the ch10 in bytes
+		binbuff_ptr			--> Pointer to buffer object into which data shall
+								be read for this worker to consume
+		ch10_input_stream	--> Initialized input stream for the ch10 file to
+								be parsed
+		actual_read_size	--> Output variable to hold the size of bytes actually
+								read into the buffer
+		output_file_path_vec--> Output file path for each configured Ch10PacketType
+		packet_type_config_map> Map of Ch10PacketType to boolean. True = enabled,
+								False = disabled.
+		tmats_vec			--> Vector of strings into which workers will push
+								TMATS matter
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
+	*/
+	bool ActivateWorker(bool append_mode, std::unique_ptr<ParseWorker>& parse_worker_ptr,
+		std::thread& worker_thread, WorkerConfig& worker_config, const uint16_t& worker_index,
+		const uint16_t& worker_count, const uint64_t& read_pos, const uint64_t& read_size,
+		const uint64_t& append_read_size, const uint64_t& total_size, BinBuff* binbuff_ptr,
+		std::ifstream& ch10_input_stream, std::streamsize& actual_read_size,
+		const std::map<Ch10PacketType, ManagedPath>& output_file_path_map,
+		const std::map<Ch10PacketType, bool>& packet_type_config_map,
+		std::vector<std::string>& tmats_vec);
 
 	/*
 	Start workers in a queue in quantity up to the user-configured thread
@@ -222,6 +278,10 @@ public:
 		worker_config_vec	--> Worker configuration objects which are associated
 								by index to worker_vec ParseWorkers. Must have size()
 								equal to worker_vec.size().
+		effective_worker_count> Maximum count of workers to start. Useful for
+								append_mode = true, in which case there is one 
+								fewer worker because the last worker reached the 
+								end of the file so there is no append mode.
 		read_size			--> Size of chunk in bytes of ch10 to parse for each 
 								first-pass worker
 		append_read_size	--> Size of chunk in bytes of ch10 to parse for each 
@@ -249,6 +309,7 @@ public:
 		std::vector<std::unique_ptr<ParseWorker>>& worker_vec,
 		std::vector<uint16_t>& active_workers_vec,
 		std::vector<WorkerConfig>& worker_config_vec,
+		const uint16_t& effective_worker_count,
 		const uint64_t& read_size, const uint64_t& append_read_size,
 		const uint64_t& total_size,
 		const std::vector<std::map<Ch10PacketType, ManagedPath>>& output_file_path_vec,

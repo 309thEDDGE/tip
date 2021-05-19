@@ -116,10 +116,11 @@ bool ParseManager::Parse(const ParserConfigParams& user_config)
 	// Start queue to activate all workers, limiting the quantity of 
 	// concurrent threads to n_threads.
 	bool append = false;
+	uint16_t effective_worker_count = workers_vec_.size();
 	std::vector<uint16_t> active_workers_vec;
 	spdlog::get("pm_logger")->debug("Parse: begin parsing with workers");
 	if (!WorkerQueue(append, ch10_input_stream_, workers_vec_, active_workers_vec,
-		worker_config_vec_, worker_chunk_size_bytes_, 
+		worker_config_vec_, effective_worker_count, worker_chunk_size_bytes_, 
 		append_chunk_size_bytes_, ch10_file_size_, output_file_path_vec_, 
 		packet_type_config_map, threads_vec_, tmats_body_vec_, user_config))
 	{
@@ -146,13 +147,24 @@ bool ParseManager::Parse(const ParserConfigParams& user_config)
 	// Quantity of threads is n_reads-1 because the last worker, which 
 	// reaches the end of the file, does not leave dangling packets and thus
 	// doesn't require another thread to be run again. 
+
+	// If there is only 1 worker, then there is no need to 
+	// append data. Also, there is no reason to append data
+	// to the last worker (i.e., the worker that read the last 
+	// portion of the Ch10 file) so only append data for all
+	// workers except the last worker. 
+	append = true;
+	if (effective_worker_count > 1)
+		effective_worker_count--;
+	else
+		return true;
 	threads_vec_.clear();
-	threads_vec_.resize(worker_count_ - 1);
+	threads_vec_.resize(effective_worker_count);
 
 	spdlog::get("pm_logger")->debug("Parse: begin parsing in append mode");
-	append = true;
+	
 	if (!WorkerQueue(append, ch10_input_stream_, workers_vec_, active_workers_vec,
-		worker_config_vec_, worker_chunk_size_bytes_, 
+		worker_config_vec_, effective_worker_count, worker_chunk_size_bytes_, 
 		append_chunk_size_bytes_, ch10_file_size_, output_file_path_vec_, 
 		packet_type_config_map, threads_vec_, tmats_body_vec_, user_config))
 	{
@@ -367,6 +379,12 @@ bool ParseManager::ConfigureAppendWorker(WorkerConfig& worker_config, const uint
 	if (actual_read_size == UINT64_MAX)
 		return false;
 
+	// Append mode workers ought to never read to the end of the file.
+	// The final append mode worker parses the data beginning at the location
+	// where the second to last first-pass worker stopped parsing due to
+	// an incomplete packet in the buffer. If a read failure occurs, indicated
+	// by the following logic, during configuration of an append-mode worker, 
+	// then an error has occurred.
 	if (actual_read_size != append_read_size)
 	{
 		spdlog::get("pm_logger")->warn(
@@ -379,10 +397,50 @@ bool ParseManager::ConfigureAppendWorker(WorkerConfig& worker_config, const uint
 	return true;
 }
 
+bool ParseManager::ActivateWorker(bool append_mode, std::unique_ptr<ParseWorker>& parse_worker_ptr,
+	std::thread& worker_thread, WorkerConfig& worker_config, const uint16_t& worker_index,
+	const uint16_t& worker_count, const uint64_t& read_pos, const uint64_t& read_size,
+	const uint64_t& append_read_size, const uint64_t& total_size, BinBuff* binbuff_ptr,
+	std::ifstream& ch10_input_stream, std::streamsize& actual_read_size,
+	const std::map<Ch10PacketType, ManagedPath>& output_file_path_map,
+	const std::map<Ch10PacketType, bool>& packet_type_config_map,
+	std::vector<std::string>& tmats_vec)
+{
+	if (append_mode)
+	{
+		if (!ConfigureAppendWorker(worker_config, worker_index,
+			append_read_size, total_size, binbuff_ptr,
+			ch10_input_stream, actual_read_size))
+		{
+			spdlog::get("pm_logger")->warn("ActivateWorker: ConfigureAppendWorker failed during "
+				"initial thread loading");
+			return false;
+		}
+	}
+	else
+	{
+		if (!ConfigureWorker(worker_config, worker_index, worker_count,
+			read_pos, read_size, total_size, binbuff_ptr,
+			ch10_input_stream, actual_read_size, output_file_path_map,
+			packet_type_config_map))
+		{
+			spdlog::get("pm_logger")->warn("ActivateWorker: ConfigureWorker failed during "
+				"initial thread loading");
+			return false;
+		}
+	}
+
+	worker_thread = std::thread(std::ref(*parse_worker_ptr),
+		std::ref(worker_config), std::ref(tmats_vec));
+
+	return true;
+}
+
 bool ParseManager::WorkerQueue(bool append_mode, std::ifstream& ch10_input_stream,
 	std::vector<std::unique_ptr<ParseWorker>>& worker_vec, 
 	std::vector<uint16_t>& active_workers_vec,
 	std::vector<WorkerConfig>& worker_config_vec,
+	const uint16_t& effective_worker_count,
 	const uint64_t& read_size, const uint64_t& append_read_size, 
 	const uint64_t& total_size,
 	const std::vector<std::map<Ch10PacketType, ManagedPath>>& output_file_path_vec,
@@ -396,46 +454,18 @@ bool ParseManager::WorkerQueue(bool append_mode, std::ifstream& ch10_input_strea
 	std::chrono::milliseconds worker_shift_wait_ms(user_config.worker_shift_wait_ms_);
 
 	uint16_t worker_count = worker_vec.size();
-
-	// Initially load all threads by keeping track of the
-	// the number activated. Afterwards only activate new 
-	// threads when an active thread finishes.
 	uint16_t active_thread_count = 0;
-	uint16_t current_active_worker = 0;
 	bool thread_started = false;
 	bool all_threads_active = false;
-	bool eof_reached = false;
 	std::streamsize actual_read_size = 0;
-	uint16_t bb_ind = 0;
-	int concurrent_thread_count = 0;
 	uint64_t total_read_pos = 0;
+
+	// Start each worker as threads are available
 	spdlog::get("pm_logger")->debug("WorkerQueue: Starting worker threads");
-
-	// Create and wait for workers until the entire input file 
-	// is parsed.
-
-	// Loop over each block of data that is to be read and parsed. There is a 1:1
-	// relationship between a worker and a block of data--each worker consumes a 
-	// single data block. In the append_mode = true
-	// case, the very last worker doesn't have any dangling packets because presumably
-	// it parsed data until the ch10 file ended. Only [worker 1, worker last) need to
-	// append data to their respective files. 
-	uint16_t n_read_limit = worker_count;
-	if (append_mode)
-	{
-		// If there is only 1 worker, then there is no need to 
-		// append data. Also, there is no reason to append data
-		// to the last worker (i.e., the worker that read the last 
-		// portion of the Ch10 file) so only append data for all
-		// workers except the last worker. 
-		if (n_read_limit > 1)
-			n_read_limit--;
-		else
-			return true;
-	}
-	for (uint16_t worker_ind = 0; worker_ind < n_read_limit; worker_ind++)
+	for (uint16_t worker_ind = 0; worker_ind < effective_worker_count; worker_ind++)
 	{
 		thread_started = false;
+
 		// Stay in while loop until another worker is started. 
 		while (!thread_started)
 		{
@@ -444,51 +474,12 @@ bool ParseManager::WorkerQueue(bool append_mode, std::ifstream& ch10_input_strea
 				spdlog::get("pm_logger")->debug("WorkerQueue: All threads NOT ACTIVE ({:d} active)",
 					active_thread_count);
 
-				// Immediately activate a new worker.
-				if (append_mode)
-				{
-					if (!ConfigureAppendWorker(worker_config_vec[worker_ind], worker_ind,
-						append_read_size, total_size, &worker_config_vec[worker_ind].bb_,
-						ch10_input_stream, actual_read_size))
-					{
-						spdlog::get("pm_logger")->warn("WorkerQueue: ConfigureAppendWorker failed during "
-							"initial thread loading");
-						return false;
-					}
-				}
-				else
-				{
-					if (!ConfigureWorker(worker_config_vec[worker_ind], worker_ind, worker_count,
-						total_read_pos, read_size, total_size, &worker_config_vec[worker_ind].bb_,
-						ch10_input_stream, actual_read_size, output_file_path_vec[worker_ind], 
-						packet_type_config_map))
-					{
-						spdlog::get("pm_logger")->warn("WorkerQueue: ConfigureWorker failed during "
-							"initial thread loading");
-						return false;
-					}
-				}
-
-				// Check if the correct number of bytes were read.
-				/*if (append_mode)
-				{
-					if (actual_read_size != append_read_size)
-					{
-						spdlog::get("pm_logger")->warn(
-							"WorkerQueue: worker {:d} Error: {:d} bytes read, {:d} bytes indicated",
-							worker_ind, actual_read_size, append_read_size);
-						return false;
-					}
-				}*/
-				/*else if (actual_read_size != read_size)
-				{
-					eof_reached = true;
-					spdlog::get("pm_logger")->debug("WorkerQueue: EOF reached: {:d}/{:d} read",
-						actual_read_size, read_size);
-				}*/
-
-				threads_vec[worker_ind] = std::thread(std::ref(*worker_vec[worker_ind]),
-					std::ref(worker_config_vec[worker_ind]), std::ref(tmats_vec));
+				if (!ActivateWorker(append_mode, worker_vec[worker_ind], threads_vec[worker_ind],
+					worker_config_vec[worker_ind], worker_ind, worker_count, total_read_pos,
+					read_size, append_read_size, total_size, &worker_config_vec[worker_ind].bb_,
+					ch10_input_stream, actual_read_size, output_file_path_vec[worker_ind],
+					packet_type_config_map, tmats_vec))
+					return false;
 
 				// Put worker in active workers list.
 				active_workers_vec.push_back(worker_ind);
@@ -513,68 +504,36 @@ bool ParseManager::WorkerQueue(bool append_mode, std::ifstream& ch10_input_strea
 			else
 			{
 				spdlog::get("pm_logger")->debug("All threads ACTIVE ({:d} active)", active_thread_count);
+
 				// Check active workers to see if they are ready to be joined.
+				uint16_t current_active_worker = 0;
 				for (uint16_t active_worker_ind = 0; active_worker_ind < active_workers_vec.size(); 
 					active_worker_ind++)
 				{
 					current_active_worker = active_workers_vec[active_worker_ind];
-					// Join workers that are complete
+
+					// Join workers that are complete and start the worker associated
+					// with the current worker_ind
 					if (workers_vec[current_active_worker]->CompletionStatus() == true)
 					{
 						spdlog::get("pm_logger")->debug("WorkerQueue: worker {:d} "
 							"INACTIVE/COMPLETE -- joining now", current_active_worker);
 
+						// Join the recently completed worker
 						threads_vec[current_active_worker].join();
-						active_workers_vec.erase(active_workers_vec.begin() + active_worker_ind);
 
 						// Clear the buffer
 						worker_config_vec[current_active_worker].bb_.Clear();
 
-						// Immediately start a new worker.
-						if (append_mode)
-						{
-							if (!ConfigureAppendWorker(worker_config_vec[worker_ind], worker_ind,
-								append_read_size, total_size, &worker_config_vec[worker_ind].bb_,
-								ch10_input_stream, actual_read_size))
-							{
-								spdlog::get("pm_logger")->warn("WorkerQueue: ConfigureAppendWorker "
-									"failed during opportunistic thread loading");
-								return false;
-							}
-						}
-						else
-						{
-							if (!ConfigureWorker(worker_config_vec[worker_ind], worker_ind, worker_count,
-								total_read_pos, read_size, total_size, &worker_config_vec[worker_ind].bb_,
-								ch10_input_stream, actual_read_size, output_file_path_vec[worker_ind],
-								packet_type_config_map))
-							{
-								spdlog::get("pm_logger")->warn("WorkerQueue: ConfigureWorker failed during "
-									"opportunistic thread loading");
-								return false;
-							}
-						}
+						// Update the vector of active worker indices
+						active_workers_vec.erase(active_workers_vec.begin() + active_worker_ind);
 
-						// Check if the correct number of bytes were read.
-						/*if (append_mode)
-						{
-							if (actual_read_size != append_read_size)
-							{
-								spdlog::get("pm_logger")->warn(
-									"WorkerQueue: worker {:d} Error: {:d} bytes read, {:d} bytes indicated",
-									worker_ind, actual_read_size, append_read_size);
-								return false;
-							}
-						}*/
-						/*else if (actual_read_size != read_size)
-						{
-							eof_reached = true;
-							spdlog::get("pm_logger")->debug("WorkerQueue: EOF reached: {:d}/{:d} read",
-								actual_read_size, read_size);
-						}*/
-
-						threads_vec[worker_ind] = std::thread(std::ref(*worker_vec[worker_ind]),
-							std::ref(worker_config_vec[worker_ind]), std::ref(tmats_vec));
+						if (!ActivateWorker(append_mode, worker_vec[worker_ind], threads_vec[worker_ind],
+							worker_config_vec[worker_ind], worker_ind, worker_count, total_read_pos,
+							read_size, append_read_size, total_size, &worker_config_vec[worker_ind].bb_,
+							ch10_input_stream, actual_read_size, output_file_path_vec[worker_ind],
+							packet_type_config_map, tmats_vec))
+							return false;
 
 						// Place new worker among active workers.
 						active_workers_vec.push_back(worker_ind);
@@ -587,7 +546,6 @@ bool ParseManager::WorkerQueue(bool append_mode, std::ifstream& ch10_input_strea
 						spdlog::get("pm_logger")->debug("WorkerQueue: worker {:d} STILL ACTIVE",
 							current_active_worker);
 					}
-
 				}
 			}
 
@@ -599,9 +557,6 @@ bool ParseManager::WorkerQueue(bool append_mode, std::ifstream& ch10_input_strea
 
 		// Increase the total read position.
 		total_read_pos += actual_read_size;
-
-		if (eof_reached)
-			break;
 
 	} // end for loop over all worker indices.
 	return true;
