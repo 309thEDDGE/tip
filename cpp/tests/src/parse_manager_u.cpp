@@ -9,6 +9,16 @@
 #include <iostream>
 #include <sstream>
 
+// Mock BinBuff
+class MockBinBuffParseManager : public BinBuff
+{
+public:
+	MockBinBuffParseManager() : BinBuff() {}
+	MOCK_METHOD4(Initialize, uint64_t(std::ifstream& file,
+		const uint64_t& file_size, const uint64_t& read_pos, 
+		const uint64_t& read_count));
+};
+
 class ParseManagerTest : public ::testing::Test
 {
 protected:
@@ -32,8 +42,10 @@ protected:
 	std::map<std::string, std::string> TMATsChannelIDToSourceMap_;
 	std::map<std::string, std::string> TMATsChannelIDToTypeMap_;
 	WorkerConfig worker_config_;
+	BinBuff* bb_ptr_;
+	MockBinBuffParseManager mock_bb_;
 
-	ParseManagerTest() : result_(false), tmats_path_() 
+	ParseManagerTest() : result_(false), tmats_path_(), mock_bb_(), bb_ptr_(&mock_bb_), file()
 	{
 		tmats_path_ /= tmats_filename_;
 	}
@@ -369,15 +381,22 @@ TEST_F(ParseManagerTest, ConfigureWorkerNotFinalWorker)
 	uint16_t worker_count = 10;
 	uint64_t read_pos = 13456641;
 	uint64_t read_size = 250e6;
+	std::streamsize actual_read_size = 0;
+	uint64_t total_size = 500e6;
 
-	result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos, 
-		read_size, output_dir_map_, pkt_enabled_map_);
+	EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size, read_pos, read_size))
+		.Times(1).WillOnce(::testing::Return(read_size));
+
+	result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
+		read_size, total_size, bb_ptr_, file, actual_read_size,
+		output_dir_map_, pkt_enabled_map_);
 	EXPECT_TRUE(result_);
 
 	EXPECT_EQ(false, worker_config_.final_worker_);
 	EXPECT_EQ(worker_index, worker_config_.worker_index_);
 	EXPECT_EQ(read_pos, worker_config_.start_position_);
 	EXPECT_EQ(false, worker_config_.append_mode_);
+	EXPECT_EQ(actual_read_size, read_size);
 	EXPECT_EQ(output_dir_map_, worker_config_.output_file_paths_);
 	EXPECT_EQ(pkt_enabled_map_, worker_config_.ch10_packet_type_map_);
 }
@@ -396,40 +415,183 @@ TEST_F(ParseManagerTest, ConfigureWorkerFinalWorker)
 	uint16_t worker_count = 10;
 	uint64_t read_pos = 13456641;
 	uint64_t read_size = 250e6;
+	std::streamsize actual_read_size = 0;
+	uint64_t total_size = 500e6;
 
-	result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos, 
-		read_size, output_dir_map_, pkt_enabled_map_);
+	EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size, read_pos, read_size))
+		.Times(1).WillOnce(::testing::Return(read_size));
+
+	result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
+		read_size, total_size, bb_ptr_, file, actual_read_size,
+		output_dir_map_, pkt_enabled_map_);
 	EXPECT_TRUE(result_);
 
 	EXPECT_EQ(true, worker_config_.final_worker_);
 	EXPECT_EQ(worker_index, worker_config_.worker_index_);
 	EXPECT_EQ(read_pos, worker_config_.start_position_);
 	EXPECT_EQ(false, worker_config_.append_mode_);
+	EXPECT_EQ(actual_read_size, read_size);
 	EXPECT_EQ(output_dir_map_, worker_config_.output_file_paths_);
 	EXPECT_EQ(pkt_enabled_map_, worker_config_.ch10_packet_type_map_);
 }
 
-TEST_F(ParseManagerTest, ConfigureWorkerWorkerIndexLarge)
+TEST_F(ParseManagerTest, ConfigureWorkeIndexLarge)
 {
 	uint16_t worker_index = 10; // > worker_count - 1
 	uint16_t worker_count = 10;
 	uint64_t read_pos = 13456641;
 	uint64_t read_size = 250e6;
+	std::streamsize actual_read_size = 0;
+	uint64_t total_size = 500e6;
 
 	result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
-		read_size, output_dir_map_, pkt_enabled_map_);
+		read_size, total_size, bb_ptr_, file, actual_read_size,
+		output_dir_map_, pkt_enabled_map_);
 	EXPECT_FALSE(result_);
 }
 
-TEST_F(ParseManagerTest, ConfigureAppendWorker)
+TEST_F(ParseManagerTest, ConfigureWorkerBufferNoInitError)
+{
+	uint16_t worker_index = 5;
+	uint16_t worker_count = 10;
+	uint64_t read_pos = 13456641;
+	uint64_t read_size = 250e6;
+	std::streamsize actual_read_size = 0;
+	uint64_t total_size = 500e6;
+	
+	// Note the use of ::testing::Ref here! This took a couple hours of digging
+	// and this test won't compile without it. Apparently in the EXPECT_CALL
+	// construction, all of the expected values are passed by value, which of
+	// course breaks when trying to pass something that doesn't have a copy
+	// constructor such as std::ifstream. It was very confusing because the 
+	// mocked function for Initialize is defined with a std::ifstream& pass
+	// by reference. That is different that what is used when one constructs
+	// the expected values within the test.
+	EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size, read_pos, read_size))
+		.Times(1).WillOnce(::testing::Return(read_size));
+
+	result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
+		read_size, total_size, bb_ptr_, file, actual_read_size, 
+		output_dir_map_, pkt_enabled_map_);
+	EXPECT_TRUE(result_);
+	
+	EXPECT_EQ(actual_read_size, read_size);
+}
+
+TEST_F(ParseManagerTest, ConfigureWorkerBufferInitError)
+{
+	uint16_t worker_index = 5;
+	uint16_t worker_count = 10;
+	uint64_t read_pos = 13456641;
+
+	// Note: read_size > total_size. This value isn't actually used to determine
+	// error or cause the error condition to be returned from BinBuff::Initialize.
+	// I've set the value in example that it would cause an error condition in practice.
+	// The error is set explicitly in EXPECT_CALL below.
+	uint64_t read_size = 501e6;
+	std::streamsize actual_read_size = 0;
+	uint64_t total_size = 500e6;
+
+	EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size, read_pos, read_size))
+		.Times(1).WillOnce(::testing::Return(UINT64_MAX));
+
+	result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
+		read_size, total_size, bb_ptr_, file, actual_read_size,
+		output_dir_map_, pkt_enabled_map_);
+	EXPECT_FALSE(result_);
+
+	EXPECT_EQ(UINT64_MAX, actual_read_size);
+}
+
+TEST_F(ParseManagerTest, ConfigureWorkerUnequalReadSizeLastWorker)
+{
+	uint16_t worker_index = 9; // Last worker
+	uint16_t worker_count = 10;
+	uint64_t read_pos = 13456641;
+	uint64_t read_size = 20e6;
+	std::streamsize actual_read_size = 0;
+	uint64_t total_size = 500e6;
+
+	// Returning 15e6 < read_size = 20e6
+	EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size, read_pos, read_size))
+		.Times(1).WillOnce(::testing::Return(15e6));
+
+	result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
+		read_size, total_size, bb_ptr_, file, actual_read_size,
+		output_dir_map_, pkt_enabled_map_);
+	EXPECT_TRUE(result_);
+
+	EXPECT_EQ(15e6, actual_read_size);
+}
+
+TEST_F(ParseManagerTest, ConfigureWorkerUnequalReadSizeNotLastWorker)
+{
+	uint16_t worker_index = 6; // not ast worker
+	uint16_t worker_count = 10;
+	uint64_t read_pos = 13456641;
+	uint64_t read_size = 20e6;
+	std::streamsize actual_read_size = 0;
+	uint64_t total_size = 500e6;
+
+	// Returning 15e6 < read_size = 20e6
+	EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size, read_pos, read_size))
+		.Times(1).WillOnce(::testing::Return(15e6));
+
+	result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
+		read_size, total_size, bb_ptr_, file, actual_read_size,
+		output_dir_map_, pkt_enabled_map_);
+	EXPECT_FALSE(result_);
+
+	EXPECT_EQ(15e6, actual_read_size);
+}
+
+TEST_F(ParseManagerTest, ConfigureAppendWorkerNoInitError)
 {
 	worker_config_.last_position_ = 4311993045;
-	uint16_t worker_index = 10; // > worker_count - 1
+	uint16_t worker_index = 1;
 	uint64_t read_size = 250e6;
+	std::streamsize actual_read_size = 0;
+	uint64_t total_size = 500e6;
 
-	pm.ConfigureAppendWorker(worker_config_, worker_index, read_size);
+	EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size, 
+		worker_config_.last_position_, read_size)).Times(1).WillOnce(::testing::Return(read_size));
+	result_ = pm.ConfigureAppendWorker(worker_config_, worker_index, read_size, total_size,
+		bb_ptr_, file, actual_read_size);
+	EXPECT_TRUE(result_);
 	EXPECT_EQ(worker_config_.last_position_, worker_config_.start_position_);
-	EXPECT_EQ(true, worker_config_.append_mode_);
+	EXPECT_EQ(read_size, actual_read_size);
+}
+
+TEST_F(ParseManagerTest, ConfigureAppendWorkerInitError)
+{
+	worker_config_.last_position_ = 4311993045;
+	uint16_t worker_index = 1;
+	uint64_t read_size = 250e6;
+	std::streamsize actual_read_size = 0;
+	uint64_t total_size = 500e6;
+
+	EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size,
+		worker_config_.last_position_, read_size)).Times(1).WillOnce(::testing::Return(UINT64_MAX));
+	result_ = pm.ConfigureAppendWorker(worker_config_, worker_index, read_size, total_size,
+		bb_ptr_, file, actual_read_size);
+	EXPECT_FALSE(result_);
+	EXPECT_EQ(UINT64_MAX, actual_read_size);
+}
+
+TEST_F(ParseManagerTest, ConfigureAppendWorkerUnequalReadSize)
+{
+	worker_config_.last_position_ = 4311993045;
+	uint16_t worker_index = 1;
+	uint64_t read_size = 250e6;
+	std::streamsize actual_read_size = 0;
+	uint64_t total_size = 500e6;
+
+	// Return 260e6 != read_size
+	EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size,
+		worker_config_.last_position_, read_size)).Times(1).WillOnce(::testing::Return(260e6));
+	result_ = pm.ConfigureAppendWorker(worker_config_, worker_index, read_size, total_size,
+		bb_ptr_, file, actual_read_size);
+	EXPECT_FALSE(result_);
 }
 
 TEST_F(ParseManagerTest, CombineChannelIDToLRUAddressesMetadataUnequalLengthVectors)

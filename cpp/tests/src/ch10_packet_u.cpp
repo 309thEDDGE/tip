@@ -12,10 +12,10 @@
 using ::testing::Return;
 
 // Mock BinBuff
-class MockBinBuff : public BinBuff
+class MockBinBuffCh10Packet : public BinBuff
 {
 public:
-	MockBinBuff() : BinBuff() {}
+	MockBinBuffCh10Packet() : BinBuff() {}
 	MOCK_CONST_METHOD1(BytesAvailable, bool(const uint64_t& count));
 	MOCK_METHOD1(AdvanceReadPos, uint8_t(const uint64_t& count));
 };
@@ -24,7 +24,7 @@ public:
 class Ch10PacketTest : public ::testing::Test
 {
 protected:
-    MockBinBuff mock_bb_;
+    MockBinBuffCh10Packet mock_bb_;
 	BinBuff* bb_ptr_;
     Ch10Context ch10_ctx_;
     Ch10Status status_;
@@ -33,6 +33,8 @@ protected:
     Ch10PacketTest() : status_(Ch10Status::NONE), mock_bb_(), ch10_ctx_(0), bb_ptr_(&mock_bb_)
     {
     }
+
+	~Ch10PacketTest() {}
 };
 
 TEST_F(Ch10PacketTest, AdvanceBufferBinBuffGoodAdvance)

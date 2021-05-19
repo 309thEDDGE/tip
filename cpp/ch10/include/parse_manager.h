@@ -146,7 +146,7 @@ public:
 
 	//////////////////////////////////////////////////////////////////////////////
 	// Functions below are considered to be internal functions. They
-	// are public to help facilitate testing.
+	// are made public to help facilitate testing.
 	//////////////////////////////////////////////////////////////////////////////
 
 
@@ -166,6 +166,13 @@ public:
 								the buffer in preparation for parsing
 		read_size			--> Size of chunk in bytes of ch10 to parse for each
 								first-pass worker
+		total_size			--> Total size of the ch10 in bytes
+		binbuff_ptr			--> Pointer to buffer object into which data shall
+								be read for this worker to consume
+		ch10_input_stream	--> Initialized input stream for the ch10 file to
+								be parsed
+		actual_read_size	--> Output variable to hold the size of bytes actually 
+								read into the buffer
 		output_file_path_vec--> Output file path for each configured Ch10PacketType
 		packet_type_config_map> Map of Ch10PacketType to boolean. True = enabled,
 								False = disabled.
@@ -176,6 +183,8 @@ public:
 	*/
 	bool ConfigureWorker(WorkerConfig& worker_config, const uint16_t& worker_index,
 		const uint16_t& worker_count, const uint64_t& read_pos, const uint64_t& read_size,
+		const uint64_t& total_size, BinBuff* binbuff_ptr, 
+		std::ifstream& ch10_input_stream, std::streamsize& actual_read_size,
 		const std::map<Ch10PacketType, ManagedPath>& output_file_path_map,
 		const std::map<Ch10PacketType, bool>& packet_type_config_map);
 
@@ -192,8 +201,9 @@ public:
 		append_read_size	--> Size of chunk in bytes of ch10 to parse for each 
 								append-mode worker
 	*/
-	void ConfigureAppendWorker(WorkerConfig& worker_config, const uint16_t& worker_index,
-		const uint64_t& append_read_size);
+	bool ConfigureAppendWorker(WorkerConfig& worker_config, const uint16_t& worker_index,
+		const uint64_t& append_read_size, const uint64_t& total_size, BinBuff* binbuff_ptr,
+		std::ifstream& ch10_input_stream, std::streamsize& actual_read_size);
 
 	/*
 	Start workers in a queue in quantity up to the user-configured thread
