@@ -10,6 +10,7 @@ parser_rewrite lib.
 #include <cstdio>
 #include <set>
 #include <atomic>
+#include <memory>
 #include "ch10_packet_type.h"
 #include "ch10_context.h"
 #include "ch10_packet.h"
@@ -62,7 +63,8 @@ public:
 		tmats_body_vec	--> Vector to which any TMATs matter found in the binary 
 							data are appended
 	*/
-	void operator()(WorkerConfig& worker_config, std::vector<std::string>& tmats_body_vec);
+	void operator()(WorkerConfig& worker_config, 
+		std::vector<std::string>& tmats_body_vec);
 
 	/*
 	Helper function for aesthetics. Configure instance of Ch10Context by calling the

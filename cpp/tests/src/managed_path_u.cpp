@@ -964,6 +964,7 @@ TEST(ManagedPathTest, CreateDirectoryFromComponentsCreateDir)
 		append_str, full_output_dir, true);
 	EXPECT_TRUE(result);
 	EXPECT_TRUE(full_output_dir.is_directory());
+	EXPECT_TRUE(full_output_dir.remove());
 }
 
 TEST(ManagedPathTest, CreateDirectoryFromComponentsCreateDirFail)

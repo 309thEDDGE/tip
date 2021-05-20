@@ -4,7 +4,7 @@
 ParseWorker::ParseWorker() : complete_(false), ch10_context_(ctx_), ctx_()
 { }
 
-void ParseWorker::operator()(WorkerConfig& worker_config, 
+void ParseWorker::operator()(WorkerConfig& worker_config,
 	std::vector<std::string>& tmats_body_vec)
 {
 	// Reset completion status.

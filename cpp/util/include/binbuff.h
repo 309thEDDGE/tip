@@ -60,7 +60,7 @@ class BinBuff
 		// end of the file is less than the requested read count, fewer bytes
 		// will be read into the buffer than requested and the count of bytes actually
 		// read will be returned.
-		uint64_t Initialize(std::ifstream& infile, 
+		virtual uint64_t Initialize(std::ifstream& infile, 
 			const uint64_t& file_size, const uint64_t& read_pos, const uint64_t& read_count);
 
 		// Find and return the location within the buffer of the first
@@ -114,6 +114,11 @@ class BinBuff
 		// after initialization. This is the functional size
 		// of the buffer.
 		uint64_t Size() const;
+
+		// Get the count of bytes allocated for the vector
+		// which serves as the buffer. This simply calls
+		// vector.capacity().
+		uint64_t Capacity() const;
 
 		// Free the memory in the buffer and reset state
 		void Clear();

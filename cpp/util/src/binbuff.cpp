@@ -124,9 +124,19 @@ uint64_t BinBuff::Size() const
 		return uint64_t(0);
 }
 
+uint64_t BinBuff::Capacity() const
+{
+	return bytes_.capacity();
+}
+
 void BinBuff::Clear()
 {
-	bytes_.clear();
+	// This is the one way to force deallocation of the memory
+	// without allocating the vector on the stack then intentionally
+	// going out of scope.
+	// vector.clear() and vector.resize(0), change the size of the
+	// vector but do not change its vector.capacity().
+	bytes_ = std::vector<uint8_t>();
 	buff_size_ = 0;
 	pos_ = 0;
 	read_count_ = 0;
