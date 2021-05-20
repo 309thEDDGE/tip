@@ -20,7 +20,7 @@ bool ParseManager::Configure(ManagedPath input_ch10_file_path, ManagedPath outpu
 	input_ch10_file_path.GetFileSize(success, ch10_file_size_);
 	if (!success)
 		return false;
-	spdlog::get("pm_logger")->info("Ch10 file size: {:d} MiB", ch10_file_size_ / (1024 * 1024));
+	spdlog::get("pm_logger")->info("Ch10 file size: {:d} MB", ch10_file_size_ / (1000 * 1000));
 
 	// Convert ch10_packet_type configuration map from string --> string to 
 	// Ch10PacketType --> bool
@@ -80,14 +80,15 @@ bool ParseManager::AllocateResources(const ParserConfigParams& user_config,
 	// based on the chunk of binary that each worker will parse.
 	worker_count_ = int(ceil(float(ch10_file_size) / float(worker_chunk_size_bytes_)));
 
-	spdlog::get("pm_logger")->info("Using {:d} threads", user_config.parse_thread_count_);
-	
+	spdlog::get("pm_logger")->info("AllocateResources: chunk size {:d} bytes",
+		worker_chunk_size_bytes_);
+	spdlog::get("pm_logger")->info("AllocateResources: using {:d} threads", user_config.parse_thread_count_);
 
 	// If the user-specified max_chunk_read_count is less the calculated worker_count_,
 	// decrease the worker_count_ to max_chunk_read_count.
 	if (user_config.max_chunk_read_count_ < worker_count_)
 		worker_count_ = user_config.max_chunk_read_count_;
-	spdlog::get("pm_logger")->debug("AllocateResources: creating {:d} workers", worker_count_);
+	spdlog::get("pm_logger")->info("AllocateResources: creating {:d} workers", worker_count_);
 
 	// Allocate objects necessary to parse each chunk
 	spdlog::get("pm_logger")->debug("AllocateResources: allocating memory for threads "
@@ -179,7 +180,7 @@ bool ParseManager::Parse(const ParserConfigParams& user_config)
 	{
 		return false;
 	}
-
+	spdlog::get("pm_logger")->info("Parse: Parsing complete with no errors");
 	return true;
 }
 
@@ -367,11 +368,13 @@ bool ParseManager::ConfigureAppendWorker(WorkerConfig& worker_config, const uint
 {
 	uint64_t last_pos = worker_config.last_position_;
 
-	spdlog::get("pm_logger")->debug("ConfigureAppendWorker {:d}: start = {:d}, read size = {:d}",
-		worker_index, last_pos, append_read_size);
-
 	worker_config.start_position_ = last_pos;
 	worker_config.append_mode_ = true;
+
+	spdlog::get("pm_logger")->debug(
+		"ConfigureAppendWorker: worker {:d} initializing buffer at position "
+		"{:d}, reading {:d} bytes from file with total size {:d}", worker_index,
+		worker_config.start_position_, append_read_size, total_size);
 
 	actual_read_size = binbuff_ptr->Initialize(ch10_input_stream,
 		total_size, worker_config.start_position_, append_read_size);
@@ -387,8 +390,20 @@ bool ParseManager::ConfigureAppendWorker(WorkerConfig& worker_config, const uint
 	// then an error has occurred.
 	if (actual_read_size != append_read_size)
 	{
+		// It's possible that the last worker only read, for example, 
+		// 5MB because of the way the ch10 is chunked. Say the second-to-last
+		// worker parsed up to last megabyte or so of the chunk it was given.
+		// (Typically it parses up until the last few bytes or kilobytes.) 
+		// Then the append worker for the second-to-last worker will try to 
+		// read the current default append_read_size = 100MB. However, in this
+		// example there is only 1MB + 5 MB left in the file, so the read
+		// size is not what is requested. Allow for this to happen without
+		// indicating an error.
+		if (worker_config.start_position_ + append_read_size > total_size)
+			return true;
+
 		spdlog::get("pm_logger")->warn(
-			"ConfigureAppendWorker: worker {:d} actual ready size ({:d}) not "
+			"ConfigureAppendWorker: worker {:d} actual read size ({:d}) not "
 			"equal to requested read size ({:d})",	worker_index, actual_read_size, 
 			append_read_size);
 		return false;

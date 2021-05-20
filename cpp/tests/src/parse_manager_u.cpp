@@ -578,9 +578,33 @@ TEST_F(ParseManagerTest, ConfigureAppendWorkerInitError)
 	EXPECT_EQ(UINT64_MAX, actual_read_size);
 }
 
+TEST_F(ParseManagerTest, ConfigureAppendWorkerAppendReadSizeLarge)
+{
+	/*
+	This test is created to address the case in which the
+	default append_read_size (100MB) is greater than the 
+	dangling bytes at the end of the current worker chunk
+	to the end of the file.
+	*/
+	worker_config_.last_position_ = 150e6;
+	uint16_t worker_index = 1;
+	uint64_t read_size = 100e6;
+	std::streamsize actual_read_size = 0;
+	uint64_t total_size = 220e6;
+
+	uint64_t expected_read_size = (220 - 150) * 1e6;
+	EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size,
+		worker_config_.last_position_, read_size)).Times(1).WillOnce(::testing::Return(
+			expected_read_size));
+	result_ = pm.ConfigureAppendWorker(worker_config_, worker_index, read_size, total_size,
+		bb_ptr_, file, actual_read_size);
+	EXPECT_TRUE(result_);
+	EXPECT_EQ(expected_read_size, actual_read_size);
+}
+
 TEST_F(ParseManagerTest, ConfigureAppendWorkerUnequalReadSize)
 {
-	worker_config_.last_position_ = 4311993045;
+	worker_config_.last_position_ = 100e6;
 	uint16_t worker_index = 1;
 	uint64_t read_size = 250e6;
 	std::streamsize actual_read_size = 0;
