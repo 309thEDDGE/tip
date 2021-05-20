@@ -175,7 +175,8 @@ public:
 								read into the buffer
 		output_file_path_vec--> Output file path for each configured Ch10PacketType
 		packet_type_config_map> Map of Ch10PacketType to boolean. True = enabled,
-								False = disabled.
+								False = disabled. This map is created from the 
+								'ch10_packet_type' map in the parse_conf.yaml.
 
 	Return:
 		True if no errors, false if errors occur and
@@ -475,7 +476,7 @@ public:
 		const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_lruaddr2_maps);
 
 	/*
-	Combine channel ID to command words maps from a vector maps,
+	Combine channel ID to command words maps from a vector of maps,
 	where each map in the vector corresponds to a map of observed channel ID
 	to command words retrieved from a worker. The output map is used in 
 	another function where it is recorded to metadata. 
