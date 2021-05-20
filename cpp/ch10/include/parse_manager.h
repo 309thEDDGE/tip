@@ -174,9 +174,9 @@ public:
 		actual_read_size	--> Output variable to hold the size of bytes actually 
 								read into the buffer
 		output_file_path_vec--> Output file path for each configured Ch10PacketType
-		packet_type_config_map> Map of Ch10PacketType to boolean. True = enabled,
-								False = disabled. This map is created from the 
-								'ch10_packet_type' map in the parse_conf.yaml.
+		packet_type_config_map--> Map of Ch10PacketType to boolean. True = enabled,
+								  False = disabled. This map is created from the 
+								  'ch10_packet_type' map in the parse_conf.yaml.
 
 	Return:
 		True if no errors, false if errors occur and
@@ -244,8 +244,8 @@ public:
 		actual_read_size	--> Output variable to hold the size of bytes actually
 								read into the buffer
 		output_file_path_vec--> Output file path for each configured Ch10PacketType
-		packet_type_config_map> Map of Ch10PacketType to boolean. True = enabled,
-								False = disabled.
+		packet_type_config_map--> Map of Ch10PacketType to boolean. True = enabled,
+								  False = disabled.
 		tmats_vec			--> Vector of strings into which workers will push
 								TMATS matter
 
@@ -291,8 +291,8 @@ public:
 		output_file_path_vec--> Vector of maps in which the index in
 								the vector is the same as the worker which
 								ought to utilize the mapped output file paths.
-		packet_type_config_map> Map of Ch10PacketType to boolean. True = enabled,
-								False = disabled.
+		packet_type_config_map--> Map of Ch10PacketType to boolean. True = enabled,
+								  False = disabled.
 		threads_vec			--> Vector of std::thread objects. Must have size()
 								equal to worker_vec.size().
 		tmats_vec			--> Vector of strings into which workers will push
