@@ -14,6 +14,7 @@
 ch10_packet_type:
   MILSTD1553_FORMAT1: true
   VIDEO_FORMAT0: true
+  ETHERNET_DATA0: true
 
 #
 # parse_chunk_bytes
