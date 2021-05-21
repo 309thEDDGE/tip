@@ -32,7 +32,8 @@ bool ParseManager::Configure(ManagedPath input_ch10_file_path, ManagedPath outpu
 	// config yaml.
 	std::map<Ch10PacketType, std::string> append_str_map = {
 		{Ch10PacketType::MILSTD1553_F1, "_1553.parquet"},
-		{Ch10PacketType::VIDEO_DATA_F0, "_video.parquet"}
+		{Ch10PacketType::VIDEO_DATA_F0, "_video.parquet"},
+		{Ch10PacketType::ETHERNET_DATA_F0, "_ethernet.parquet"}
 	};
 
 	if (!CreateCh10PacketOutputDirs(output_dir, input_ch10_file_path,
@@ -680,7 +681,8 @@ bool ParseManager::ConvertCh10PacketTypeMap(const std::map<std::string, std::str
 	// Define string to Ch10PacketType map
 	std::map<std::string, Ch10PacketType> conversion_map = {
 		{"MILSTD1553_FORMAT1", Ch10PacketType::MILSTD1553_F1},
-		{"VIDEO_FORMAT0", Ch10PacketType::VIDEO_DATA_F0}
+		{"VIDEO_FORMAT0", Ch10PacketType::VIDEO_DATA_F0},
+		{"ETHERNET_DATA0", Ch10PacketType::ETHERNET_DATA_F0}
 	};
 
 	ParseText pt;

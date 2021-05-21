@@ -105,6 +105,7 @@ public:
 		milstd1553f1_data_hdr_commword_ptr_(nullptr),
 		payload_ptr_ptr(&payload_ptr_), ch10_time_(), ipts_time_(0)
 	{	}
+
 	Ch10Status Parse(const uint8_t*& data) override;
 
 	/*

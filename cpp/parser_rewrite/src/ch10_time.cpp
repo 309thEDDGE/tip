@@ -6,6 +6,11 @@ Ch10Time::Ch10Time() :
     ertc_time_ptr_(nullptr), high_order_ns_(0), low_order_ns_(0)
 {}
 
+Ch10Time::~Ch10Time()
+{
+
+}
+
 uint64_t& Ch10Time::CalculateRTCTimeFromComponents(const uint32_t& rtc1, const uint32_t& rtc2)
 {
 	temp_ns_time_ = ((uint64_t(rtc2) << 32) + uint64_t(rtc1)) * rtc_to_ns_;

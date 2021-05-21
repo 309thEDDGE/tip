@@ -155,7 +155,7 @@ public:
 	Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
 	Ch10Context();
 	void Initialize(const uint64_t& abs_pos, uint16_t id);
-	~Ch10Context();
+	virtual ~Ch10Context();
 
 	/*
 	Return is_configured_. This value is set during call to CheckConfiguration.
@@ -280,7 +280,7 @@ public:
 	Return: 
 		Absolute time in units of nanoseconds since the epoch
 	*/
-	uint64_t& CalculateIPTSAbsTime(const uint64_t& ipts_time);
+	virtual uint64_t& CalculateIPTSAbsTime(const uint64_t& ipts_time);
 	
 	/*
 	Update maps of channel ID to remote addresses 1 and 2 as obtained from

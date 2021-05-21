@@ -152,6 +152,7 @@ void Ch10Context::CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketTyp
 	input[Ch10PacketType::TIME_DATA_F1] = true;
 	input[Ch10PacketType::MILSTD1553_F1] = true;
 	input[Ch10PacketType::VIDEO_DATA_F0] = true;
+	input[Ch10PacketType::ETHERNET_DATA_F0] = true;
 }
 
 void Ch10Context::SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user_config)
