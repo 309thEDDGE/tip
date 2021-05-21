@@ -1,4 +1,4 @@
-FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/base-image/harden-python38:3.8.5
+FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/base-image/harden-python38:3.8.9
 
 ARG CMAKE_BUILD_DIR="build"
 
