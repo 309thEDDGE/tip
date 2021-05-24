@@ -1,4 +1,3 @@
-*
 !*.Dockerfile
 !Dockerfile
 !cpp_pipeline_scripts
@@ -59,3 +58,7 @@ tip_scripts/__pycache__
 **/*.egg-info
 /cpp/out/build/x64-Debug (default)
 !Sample_DTS.yaml
+
+# nix
+result*
+default.nix
