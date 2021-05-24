@@ -23,7 +23,7 @@ ManagedPath::ManagedPath(std::initializer_list<std::string> path_components)
 	fs::path temp_path = fs::current_path();
 	for (auto comp : path_components)
 	{
-		temp_path /= comp;
+		temp_path /= std::string(comp);
 	}
 	this->assign(temp_path);
 }
