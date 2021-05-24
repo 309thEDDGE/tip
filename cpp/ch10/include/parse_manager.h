@@ -149,6 +149,37 @@ public:
 	// are made public to help facilitate testing.
 	//////////////////////////////////////////////////////////////////////////////
 
+	/*
+	Record metadata specific to MilStd 1553 Format 1
+
+	Args:
+		input_ch10_file_path	--> Ch10 file that was parsed
+		config					--> ParserConfigParams object which has
+									been pre-configured with data from
+									the parser_conf.yaml file
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
+	*/
+	bool RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
+		const ParserConfigParams& user_config);
+
+	/*
+	Record metadata specific to Video data format 0
+
+	Args:
+		input_ch10_file_path	--> Ch10 file that was parsed
+		config					--> ParserConfigParams object which has
+									been pre-configured with data from
+									the parser_conf.yaml file
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
+	*/
+	bool RecordVideoDataF0Metadata(ManagedPath input_ch10_file_path,
+		const ParserConfigParams& user_config);
 
 	/*
 	Initialize parameters in the relevant WorkerConfig object in preparation

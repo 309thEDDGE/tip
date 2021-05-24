@@ -194,114 +194,136 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
 		return false;
 
 	spdlog::get("pm_logger")->debug("RecordMetadata: begin record metadata");
-	
-	if (packet_type_config_map.count(Ch10PacketType::MILSTD1553_F1) == 1)
+
+	for (std::map<Ch10PacketType, bool>::const_iterator it = packet_type_config_map.cbegin();
+		it != packet_type_config_map.cend(); ++it)
 	{
-		if (packet_type_config_map.at(Ch10PacketType::MILSTD1553_F1))
+		if (it->second)
 		{
-			spdlog::get("pm_logger")->debug("RecordMetadata: recording {:s} metadata",
-				ch10packettype_to_string_map.at(Ch10PacketType::MILSTD1553_F1));
-			Metadata md;
-			ManagedPath md_path = md.GetYamlMetadataPath(
-				output_dir_map_[Ch10PacketType::MILSTD1553_F1],
-				"_metadata");
-
-			// Record Config options used
-			md.RecordSimpleMap(user_config.ch10_packet_type_map_, "ch10_packet_type");
-			md.RecordSingleKeyValuePair("parse_chunk_bytes", user_config.parse_chunk_bytes_);
-			md.RecordSingleKeyValuePair("parse_thread_count", user_config.parse_thread_count_);
-			md.RecordSingleKeyValuePair("max_chunk_read_count", user_config.max_chunk_read_count_);
-			md.RecordSingleKeyValuePair("worker_offset_wait_ms", user_config.worker_offset_wait_ms_);
-			md.RecordSingleKeyValuePair("worker_shift_wait_ms", user_config.worker_shift_wait_ms_);
-
-			// Record the input ch10 path.
-			md.RecordSingleKeyValuePair("ch10_input_file_path", input_ch10_file_path.RawString());
-
-			// Obtain the tx and rx combined channel ID to LRU address map and
-			// record it to the Yaml writer. First compile all the channel ID to 
-			// LRU address maps from the workers.
-			std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_lruaddr1_maps;
-			std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_lruaddr2_maps;
-			for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
+			switch (it->first)
 			{
-				chanid_lruaddr1_maps.push_back(
-					workers_vec_[worker_ind]->ch10_context_.chanid_remoteaddr1_map);
-				chanid_lruaddr2_maps.push_back(
-					workers_vec_[worker_ind]->ch10_context_.chanid_remoteaddr2_map);
-			}
-			std::map<uint32_t, std::set<uint16_t>> output_chanid_remoteaddr_map;
-			if (!CombineChannelIDToLRUAddressesMetadata(output_chanid_remoteaddr_map,
-				chanid_lruaddr1_maps, chanid_lruaddr2_maps))
-				return false;
-			md.RecordCompoundMapToSet(output_chanid_remoteaddr_map, "chanid_to_lru_addrs");
-
-			// Obtain the channel ID to command words set map.
-			std::vector<std::map<uint32_t, std::set<uint32_t>>> chanid_commwords_maps;
-			for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
-				chanid_commwords_maps.push_back(
-					workers_vec_[worker_ind]->ch10_context_.chanid_commwords_map);
-
-			std::map<uint32_t, std::vector<std::vector<uint32_t>>> output_chanid_commwords_map;
-			if (!CombineChannelIDToCommandWordsMetadata(output_chanid_commwords_map,
-				chanid_commwords_maps))
-				return false;
-			md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
-
-			// Create the output path for TMATs
-			ManagedPath tmats_path = output_dir_map_[Ch10PacketType::MILSTD1553_F1] / "_TMATS.txt";
-
-			// Process TMATs matter and record 
-			std::map<std::string, std::string> TMATsChannelIDToSourceMap;
-			std::map<std::string, std::string> TMATsChannelIDToTypeMap;
-			ProcessTMATS(tmats_body_vec_, tmats_path, TMATsChannelIDToSourceMap,
-				TMATsChannelIDToTypeMap);
-
-			// Record the TMATS channel ID to source map.
-			md.RecordSimpleMap(TMATsChannelIDToSourceMap, "tmats_chanid_to_source");
-
-			// Record the TMATS channel ID to type map.
-			md.RecordSimpleMap(TMATsChannelIDToTypeMap, "tmats_chanid_to_type");
-
-			// Write the complete Yaml record to the metadata file.
-			std::ofstream stream_1553_metadata(md_path.string(),
-				std::ofstream::out | std::ofstream::trunc);
-			stream_1553_metadata << md.GetMetadataString();
-			stream_1553_metadata.close();
-		}
-	}
-
-	if (packet_type_config_map.count(Ch10PacketType::VIDEO_DATA_F0) == 1)
-	{
-		if (packet_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0))
-		{
-			spdlog::get("pm_logger")->debug("RecordMetadata: recording {:s} metadata",
-				ch10packettype_to_string_map.at(Ch10PacketType::VIDEO_DATA_F0));
-			Metadata vmd;
-			ManagedPath video_md_path = vmd.GetYamlMetadataPath(
-				output_dir_map_[Ch10PacketType::VIDEO_DATA_F0],
-				"_metadata");
-
-			// Get the channel ID to minimum time stamp map.
-			std::vector<std::map<uint16_t, uint64_t>> worker_chanid_to_mintimestamps_maps;
-			for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
-			{
-				worker_chanid_to_mintimestamps_maps.push_back(
-					workers_vec_[worker_ind]->ch10_context_.chanid_minvideotimestamp_map);
-			}
-			std::map<uint16_t, uint64_t> output_min_timestamp_map;
-			CreateChannelIDToMinVideoTimestampsMetadata(output_min_timestamp_map,
-				worker_chanid_to_mintimestamps_maps);
-
-			// Record the map in the Yaml writer and write the 
-			// total yaml text to file.
-			vmd.RecordSimpleMap(output_min_timestamp_map, "chanid_to_first_timestamp");
-			std::ofstream stream_video_metadata(video_md_path.string(),
-				std::ofstream::out | std::ofstream::trunc);
-			stream_video_metadata << vmd.GetMetadataString();
-			stream_video_metadata.close();
-		}
-	}
+			case Ch10PacketType::MILSTD1553_F1:
+				if (!RecordMilStd1553F1Metadata(input_ch10_file_path, user_config))
+					return false;
+				break;
+			case Ch10PacketType::VIDEO_DATA_F0:
+				if(!RecordVideoDataF0Metadata(input_ch10_file_path, user_config))
+					return false;
+				break;
+			default:						
+				spdlog::get("pm_logger")->warn("RecordMetadata: No metadata output "
+					"function for packet type \"{:s}\"", 
+					ch10packettype_to_string_map.at(it->first));
+				break;
+			} // end switch
+		} // end if(it->second)
+	} // end for loop
 	spdlog::get("pm_logger")->debug("RecordMetadata: complete record metadata");
+	return true;
+}
+
+bool ParseManager::RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
+	const ParserConfigParams& user_config)
+{
+	spdlog::get("pm_logger")->debug("RecordMetadata: recording {:s} metadata",
+		ch10packettype_to_string_map.at(Ch10PacketType::MILSTD1553_F1));
+	Metadata md;
+	ManagedPath md_path = md.GetYamlMetadataPath(
+		output_dir_map_[Ch10PacketType::MILSTD1553_F1],
+		"_metadata");
+
+	// Record Config options used
+	md.RecordSimpleMap(user_config.ch10_packet_type_map_, "ch10_packet_type");
+	md.RecordSingleKeyValuePair("parse_chunk_bytes", user_config.parse_chunk_bytes_);
+	md.RecordSingleKeyValuePair("parse_thread_count", user_config.parse_thread_count_);
+	md.RecordSingleKeyValuePair("max_chunk_read_count", user_config.max_chunk_read_count_);
+	md.RecordSingleKeyValuePair("worker_offset_wait_ms", user_config.worker_offset_wait_ms_);
+	md.RecordSingleKeyValuePair("worker_shift_wait_ms", user_config.worker_shift_wait_ms_);
+
+	// Record the input ch10 path.
+	md.RecordSingleKeyValuePair("ch10_input_file_path", input_ch10_file_path.RawString());
+
+	// Obtain the tx and rx combined channel ID to LRU address map and
+	// record it to the Yaml writer. First compile all the channel ID to 
+	// LRU address maps from the workers.
+	std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_lruaddr1_maps;
+	std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_lruaddr2_maps;
+	for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
+	{
+		chanid_lruaddr1_maps.push_back(
+			workers_vec_[worker_ind]->ch10_context_.chanid_remoteaddr1_map);
+		chanid_lruaddr2_maps.push_back(
+			workers_vec_[worker_ind]->ch10_context_.chanid_remoteaddr2_map);
+	}
+	std::map<uint32_t, std::set<uint16_t>> output_chanid_remoteaddr_map;
+	if (!CombineChannelIDToLRUAddressesMetadata(output_chanid_remoteaddr_map,
+		chanid_lruaddr1_maps, chanid_lruaddr2_maps))
+		return false;
+	md.RecordCompoundMapToSet(output_chanid_remoteaddr_map, "chanid_to_lru_addrs");
+
+	// Obtain the channel ID to command words set map.
+	std::vector<std::map<uint32_t, std::set<uint32_t>>> chanid_commwords_maps;
+	for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
+		chanid_commwords_maps.push_back(
+			workers_vec_[worker_ind]->ch10_context_.chanid_commwords_map);
+
+	std::map<uint32_t, std::vector<std::vector<uint32_t>>> output_chanid_commwords_map;
+	if (!CombineChannelIDToCommandWordsMetadata(output_chanid_commwords_map,
+		chanid_commwords_maps))
+		return false;
+	md.RecordCompoundMapToVectorOfVector(output_chanid_commwords_map, "chanid_to_comm_words");
+
+	// Create the output path for TMATs
+	ManagedPath tmats_path = output_dir_map_[Ch10PacketType::MILSTD1553_F1] / "_TMATS.txt";
+
+	// Process TMATs matter and record 
+	std::map<std::string, std::string> TMATsChannelIDToSourceMap;
+	std::map<std::string, std::string> TMATsChannelIDToTypeMap;
+	ProcessTMATS(tmats_body_vec_, tmats_path, TMATsChannelIDToSourceMap,
+		TMATsChannelIDToTypeMap);
+
+	// Record the TMATS channel ID to source map.
+	md.RecordSimpleMap(TMATsChannelIDToSourceMap, "tmats_chanid_to_source");
+
+	// Record the TMATS channel ID to type map.
+	md.RecordSimpleMap(TMATsChannelIDToTypeMap, "tmats_chanid_to_type");
+
+	// Write the complete Yaml record to the metadata file.
+	std::ofstream stream_1553_metadata(md_path.string(),
+		std::ofstream::out | std::ofstream::trunc);
+	stream_1553_metadata << md.GetMetadataString();
+	stream_1553_metadata.close();
+	return true;
+}
+
+bool ParseManager::RecordVideoDataF0Metadata(ManagedPath input_ch10_file_path,
+	const ParserConfigParams& user_config)
+{
+	spdlog::get("pm_logger")->debug("RecordMetadata: recording {:s} metadata",
+		ch10packettype_to_string_map.at(Ch10PacketType::VIDEO_DATA_F0));
+	Metadata vmd;
+	ManagedPath video_md_path = vmd.GetYamlMetadataPath(
+		output_dir_map_[Ch10PacketType::VIDEO_DATA_F0],
+		"_metadata");
+
+	// Get the channel ID to minimum time stamp map.
+	std::vector<std::map<uint16_t, uint64_t>> worker_chanid_to_mintimestamps_maps;
+	for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
+	{
+		worker_chanid_to_mintimestamps_maps.push_back(
+			workers_vec_[worker_ind]->ch10_context_.chanid_minvideotimestamp_map);
+	}
+	std::map<uint16_t, uint64_t> output_min_timestamp_map;
+	CreateChannelIDToMinVideoTimestampsMetadata(output_min_timestamp_map,
+		worker_chanid_to_mintimestamps_maps);
+
+	// Record the map in the Yaml writer and write the 
+	// total yaml text to file.
+	vmd.RecordSimpleMap(output_min_timestamp_map, "chanid_to_first_timestamp");
+	std::ofstream stream_video_metadata(video_md_path.string(),
+		std::ofstream::out | std::ofstream::trunc);
+	stream_video_metadata << vmd.GetMetadataString();
+	stream_video_metadata.close();
 	return true;
 }
 
@@ -693,8 +715,8 @@ bool ParseManager::ConvertCh10PacketTypeMap(const std::map<std::string, std::str
 		if (conversion_map.count(it->first) == 0)
 		{
 			output_map.clear();
-			spdlog::get("pm_logger")->warn("ch10_packet_type configuration key {:s} not "
-				"in conversion_map", it->first);
+			spdlog::get("pm_logger")->warn("ConvertCh10PacketTypeMap: ch10_packet_type "
+				"configuration key \"{:s}\" not in conversion_map", it->first);
 			return false;
 		}
 

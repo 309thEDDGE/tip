@@ -9,9 +9,8 @@
 enum class Ch10PacketType : uint8_t
 {
 	/*
-	WARNING! Update CreatePacketTypeConfigReference with
-	any packet types that are added to this enum! Also update
-	relevant unit tests in ch10_context_u.cpp.
+	WARNING! Update relevant unit tests in ch10_context_u.cpp
+	when this enum is updated.
 	*/
 	NONE = 0xFF,
 	COMPUTER_GENERATED_DATA_F1 = 0x01,
