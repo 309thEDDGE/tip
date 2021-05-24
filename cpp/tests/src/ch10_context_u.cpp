@@ -91,7 +91,8 @@ TEST(Ch10ContextTest, SetPacketTypeConfigDefaultsNonconfigurable)
 	pkt_type_conf[Ch10PacketType::TIME_DATA_F1] = false;
 
 	// Set the configuration.
-	ctx.SetPacketTypeConfig(pkt_type_conf);
+	bool status = ctx.SetPacketTypeConfig(pkt_type_conf, ctx.pkt_type_config_map);
+	EXPECT_TRUE(status);
 
 	// Check that the config state of the default packet types 
 	// are true.
@@ -109,8 +110,8 @@ TEST(Ch10ContextTest, SetPacketTypeConfigUnconfiguredAreTrue)
 	pkt_type_conf[Ch10PacketType::MILSTD1553_F1] = true;
 
 	// Set the configuration.
-	ctx.SetPacketTypeConfig(pkt_type_conf);
-
+	bool status = ctx.SetPacketTypeConfig(pkt_type_conf, ctx.pkt_type_config_map);
+	EXPECT_TRUE(status);
 	EXPECT_TRUE(ctx.pkt_type_config_map.at(Ch10PacketType::MILSTD1553_F1));
 
 	// Video data should be turned on be default since it was not specified.
@@ -128,12 +129,32 @@ TEST(Ch10ContextTest, SetPacketTypeConfigConfirmDisabledTypes)
 	pkt_type_conf[Ch10PacketType::VIDEO_DATA_F0] = false;
 
 	// Set the configuration.
-	ctx.SetPacketTypeConfig(pkt_type_conf);
-
+	bool status = ctx.SetPacketTypeConfig(pkt_type_conf, ctx.pkt_type_config_map);
+	EXPECT_TRUE(status);
 	EXPECT_TRUE(ctx.pkt_type_config_map.at(Ch10PacketType::MILSTD1553_F1));
 
 	// Video was explicitly turned off.
 	EXPECT_FALSE(ctx.pkt_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0));
+}
+
+TEST(Ch10ContextTest, SetPacketTypeConfigDisallowTypeNotInDefault)
+{
+	Ch10Context ctx(0);
+
+	std::map<Ch10PacketType, bool> pkt_type_conf;
+
+	// Turn on 1553 and disable video.
+	pkt_type_conf[Ch10PacketType::MILSTD1553_F1] = true;
+	pkt_type_conf[Ch10PacketType::VIDEO_DATA_F0] = false;
+
+	std::unordered_map<Ch10PacketType, bool> default_pkt_type_conf = {
+		{Ch10PacketType::MILSTD1553_F1, true }
+	};
+	default_pkt_type_conf.erase(Ch10PacketType::VIDEO_DATA_F0);
+
+	// Set the configuration.
+	bool status = ctx.SetPacketTypeConfig(pkt_type_conf, default_pkt_type_conf);
+	EXPECT_FALSE(status);
 }
 
 TEST(Ch10ContextTest, UpdateContextSetVars)

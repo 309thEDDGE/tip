@@ -62,7 +62,8 @@ bool ParseWorker::ConfigureContext(Ch10Context& ctx,
 	if (!ctx.IsConfigured())
 	{
 		// Configure packet parsing.
-		ctx.SetPacketTypeConfig(ch10_packet_type_map);
+		if (!ctx.SetPacketTypeConfig(ch10_packet_type_map, ctx.pkt_type_config_map))
+			return false;
 
 		// Check configuration. Are the packet parse and output paths configs
 		// consistent?

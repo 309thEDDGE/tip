@@ -234,8 +234,22 @@ void Ch10Packet::ParseBody()
             ctx_->RecordMinVideoTimeStamp(videof0_component_.subpacket_absolute_times.at(0));
         }
         break;
+    default:
+        // If the packet type is configured (exists in the pkt_type_config_map) 
+        // and enabled (has a value of true) and does not have a parser, then 
+        // alert the user.
+        Ch10PacketType pkt_type = static_cast<Ch10PacketType>(
+            (*header_.std_hdr_elem.element)->data_type);
+        if (ctx_->pkt_type_config_map.count(pkt_type) == 1)
+        {
+            if (ctx_->pkt_type_config_map.at(pkt_type))
+            {
+                SPDLOG_WARN("({:02d}) No parser exists for {;s}", ctx_->thread_id,
+                    ch10packettype_to_string_map.at(pkt_type));
+            }
+        }
+        break;
     }
-
     // Return status?
 }
 
