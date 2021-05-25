@@ -231,10 +231,10 @@ add_library(${parserw_lib_name} STATIC
     )
 
 target_include_directories(${parserw_lib_name} PUBLIC ${parserw_inc_dir} ${util_inc_dir}
-                            ${ch10pq_inc_dir} ${spdlog_inc_dir})
+                            ${ch10pq_inc_dir} ${spdlog_inc_dir} ${eth_inc_dir})
 target_compile_features(${parserw_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${parserw_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_name}
-                        ${spdlog_lib_name})
+                        ${spdlog_lib_name} ${eth_lib_name})
 
 #########################################################
 #                Build/link ch10parse Lib
@@ -246,8 +246,6 @@ set(temp_eth_lib_name "")
 set(temp_eth_inc_dir "")
 set(temp_tins_libs "")
 if(ethernet_data)
-    set(parse_ethernet_src ${ch10_inc_dir}/i106_parse_context.h ${ch10_src_dir}/i106_parse_context.cpp
-                        ${ch10_inc_dir}/i106_ch10_ethernetf0.h ${ch10_src_dir}/i106_ch10_ethernetf0.cpp)
     set(temp_eth_lib_name ${eth_lib_name})
     set(temp_eth_inc_dir ${eth_inc_dir})
     set(temp_tins_libs ${all_tins_libs})
@@ -378,7 +376,7 @@ add_executable(${test_exe_name}
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir} 
                             ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
                             ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} ${parserw_inc_dir}
-                            ${spdlog_inc_dir} ${yamlsv_inc_dir})
+                            ${spdlog_inc_dir} ${yamlsv_inc_dir} ${eth_inc_dir})
 
 target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
 target_link_libraries(${test_exe_name}
@@ -392,6 +390,7 @@ target_link_libraries(${test_exe_name}
                         ${parserw_lib_name}
                         ${spdlog_lib_name}
                         ${yamlsv_lib_name}
+                        ${eth_lib_name}
                         ${linux_libs})
 
 # For Ctest
