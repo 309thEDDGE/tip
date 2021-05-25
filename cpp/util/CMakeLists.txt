@@ -6,8 +6,10 @@ set(headers
     include/iterable_tools.h
     include/managed_path.h
     include/metadata.h
+    include/parser_config_params.h
     include/parse_text.h
     include/tmats_parser.h
+    include/translation_config_params.h
     include/user_input.h
     include/yaml_reader.h
 )
@@ -38,5 +40,5 @@ target_link_libraries(tiputil
 
 install(
     TARGETS tiputil
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/utils
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/util
 )

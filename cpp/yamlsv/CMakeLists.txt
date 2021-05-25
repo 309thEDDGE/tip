@@ -1,5 +1,6 @@
 set(headers
     include/yamlsv_log_item.h
+    include/yamlsv_schema.h
     include/yaml_schema_validation.h
 )
 
