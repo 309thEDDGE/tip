@@ -43,8 +43,9 @@ protected:
 	double LimitSigFigs(double val)
 	{
 		double output = 0.0;
-		double shift = double(4 - uint64_t(floor(log10(val) + 1)));
-		output = double(uint64_t(val * pow(10.0, shift))) / pow(10, shift);
+		int64_t sigfigs = 4;
+		double shift = double(sigfigs - int64_t(floor(log10(abs(val)) + 1)));
+		output = double(int64_t(val * pow(10.0, shift))) / pow(10, shift);
 		return output;
 	}
 
@@ -849,10 +850,10 @@ TEST_F(ICDTranslateTest, TranslateFloat64GPS)
 	input_words_.push_back(4096);
 	icdt_.ConfigureWordLevel(input_words_.size(), output_eu_double_, icde_);
 	icdt_.TranslateFloat64GPS(input_words_, output_eu_double_);
-	EXPECT_EQ(LimitSigFigs(output_eu_double_[0]), LimitSigFigs(-4.15222e-10));
+	EXPECT_EQ(LimitSigFigs(output_eu_double_[0]), LimitSigFigs(-5.32362e-11));
 	output_eu_double_.resize(0);
 	bool res = icdt_.TranslateArrayOfElement(input_words_, output_eu_double_, icde_);
-	EXPECT_EQ(LimitSigFigs(output_eu_double_[0]), LimitSigFigs(-4.15222e-10));
+	EXPECT_EQ(LimitSigFigs(output_eu_double_[0]), LimitSigFigs(-5.32362e-11));
 }
 
 TEST_F(ICDTranslateTest, TranslateFloat64GPSCornerCases)

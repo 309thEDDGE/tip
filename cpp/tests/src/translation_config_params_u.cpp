@@ -2,7 +2,6 @@
 #include "gmock/gmock.h"
 #include "translation_config_params.h"
 
-
 class TranslationConfigParamsTest : public ::testing::Test
 {
 protected:
@@ -36,8 +35,6 @@ protected:
 	}
 
 };
-
-
 
 TEST_F(TranslationConfigParamsTest, NonexistantFile)
 {

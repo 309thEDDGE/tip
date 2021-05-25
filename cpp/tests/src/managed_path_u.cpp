@@ -90,7 +90,7 @@ TEST(ManagedPathTest, InitializerListConstructorMultArg)
 	std::string p3 = "data.txt";
 	ManagedPath expected_path;
 	expected_path = expected_path / p1 / p2 / p3;
-	ManagedPath mp({ p1, p2, p3 });
+	ManagedPath mp(std::initializer_list<std::string>{ p1, p2, p3 });
 	EXPECT_EQ(mp.RawString(), expected_path.RawString());
 }
 
