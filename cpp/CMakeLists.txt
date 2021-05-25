@@ -209,6 +209,14 @@ target_compile_features(${videx_lib_name} PUBLIC cxx_std_17)
 #########################################################
 #          Build/link ch10 parser rewrite lib
 #########################################################
+set(temp_eth_lib_name "")
+set(temp_eth_inc_dir "")
+set(temp_tins_libs "")
+if(ethernet_data)
+    set(temp_eth_lib_name ${eth_lib_name})
+    set(temp_eth_inc_dir ${eth_inc_dir})
+    set(temp_tins_libs ${all_tins_libs})
+endif()
 add_library(${parserw_lib_name} STATIC
             ${parserw_inc_dir}/ch10_status.h ${parserw_src_dir}/ch10_status.cpp 
             ${parserw_inc_dir}/ch10_packet_type.h
@@ -234,23 +242,13 @@ target_include_directories(${parserw_lib_name} PUBLIC ${parserw_inc_dir} ${util_
                             ${ch10pq_inc_dir} ${spdlog_inc_dir} ${eth_inc_dir})
 target_compile_features(${parserw_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${parserw_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_name}
-                        ${spdlog_lib_name} ${eth_lib_name})
+                        ${spdlog_lib_name} ${eth_lib_name} ${temp_tins_libs})
 
 #########################################################
 #                Build/link ch10parse Lib
 #########################################################
 set(ch10parse_exe_name "tip_parse")
 set(ch10parse_lib_name "ch10parse_lib")
-set(parse_ethernet_src "")
-set(temp_eth_lib_name "")
-set(temp_eth_inc_dir "")
-set(temp_tins_libs "")
-if(ethernet_data)
-    set(temp_eth_lib_name ${eth_lib_name})
-    set(temp_eth_inc_dir ${eth_inc_dir})
-    set(temp_tins_libs ${all_tins_libs})
-endif()
-
 add_library(${ch10parse_lib_name} STATIC 
     ${parse_ethernet_src}
     ${ch10_inc_dir}/worker_config.h
@@ -258,7 +256,7 @@ add_library(${ch10parse_lib_name} STATIC
     ${ch10_inc_dir}/parse_worker.h ${ch10_src_dir}/parse_worker.cpp
     ${ch10_src_dir}/parser_helper_funcs.cpp ${ch10_inc_dir}/parser_helper_funcs.h
     )
-target_include_directories(${ch10parse_lib_name} PUBLIC ${ch10_inc_dir} ${temp_eth_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
+target_include_directories(${ch10parse_lib_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
                             ${parserw_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir})
 
@@ -267,14 +265,10 @@ target_link_libraries(${ch10parse_lib_name} PUBLIC
                       ${util_lib_name}
                       ${ch10pq_lib_name}
                       ${linux_libs}
-                      ${temp_tins_libs}
-                      ${temp_eth_lib_name}
                       ${parserw_lib_name}
                       ${spdlog_lib_name}
                       ${yamlsv_lib_name}
     )
-
-
 
 #########################################################
 #                   Install Libs
