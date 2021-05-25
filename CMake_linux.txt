@@ -39,5 +39,3 @@ find_package(yaml-cpp REQUIRED)
 find_package(spdlog REQUIRED)
 
 pkg_check_modules(LIBTINS REQUIRED libtins)
-
-# find_package(gtest REQUIRED)

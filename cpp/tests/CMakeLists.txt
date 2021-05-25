@@ -1,3 +1,5 @@
+
+
 set(headers
     include/spdlog_setup_helper_funcs.h
 )
@@ -46,20 +48,7 @@ target_include_directories(tests
 )
 
 target_link_libraries(tests
-    PUBLIC lib_ch10 lib_ch10_parquet lib_ethernet lib_parquet_context lib_parser_rewrite lib_validation lib_translate_1553
-    spdlog::spdlog
+    PUBLIC ch10parse_lib ch10_parquet ch10ethernet parquet_context parserw translate_1553 tiputil parquet_compare pq_vid_extract yamlsv
+    arrow_shared parquet spdlog::spdlog
+    PRIVATE gtest gmock gtest_main
 )
-
-install(
-    TARGETS tests
-)
-
-# # For Ctest
-# #include(CTest)
-enable_testing()
-
-# # For gtest_discover_tests
-include(GoogleTest)
-
-# # Create ctest executable
- gtest_discover_tests(tests)
