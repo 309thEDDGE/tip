@@ -207,17 +207,27 @@ public:
 	pkt_type_config_map_.
 
 	Args:
+		user_config		--> map of Ch10PacketType to bool. For the user-submitted
+							example map, 
+								{Ch10PacketType::MILSTD1553_F1 --> true},
+								{Ch10PacketType::VIDEO_DATA_F0 --> false}
+							1553 will be parsed and video (type f0) will not be 
+							parsed. TMATS (computer generated data, format 1) 
+							and time data packets (time data f1) cannot be 
+							turned off. Data types that are not configured will
+							default to true.
+		default_config	--> The current default configuration, use 
+							::pkt_type_config_map. This input can't be modified
+							because it is const, but provides a way to perform
+							certain tests without allowing the user access to
+							edit the data.
 
-		user_config --> map of Ch10PacketType to bool. For the user-submitted
-		example map, 
-			{Ch10PacketType::MILSTD1553_F1 --> true},
-			{Ch10PacketType::VIDEO_DATA_F0 --> false}
-		1553 will be parsed and video (type f0) will not be parsed. TMATS
-		(computer generated data, format 1) and time data packets (time data f1)
-		cannot be turned off. Data types that are not configured will default
-		to true.
+	Return:
+		True if there are no issues and false if the default config is not
+		up to date with the user config.
 	*/
-	void SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user_config);
+	bool SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user_config,
+		const std::unordered_map<Ch10PacketType, bool>& default_config);
 
 	/*
 	Update tdp_rtc_, tdp_abs_time_, tdp_doy_, tdp_valid_ and found_tdp_,

@@ -155,13 +155,23 @@ void Ch10Context::CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketTyp
 	input[Ch10PacketType::ETHERNET_DATA_F0] = true;
 }
 
-void Ch10Context::SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user_config)
+bool Ch10Context::SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user_config,
+	const std::unordered_map<Ch10PacketType, bool>& default_config)
 {
-	// Loop over user map and only turn off or set to zero bits that correspond
+	// Loop over user map and only turn off entries that correspond
 	// to the packet types that are set to false in the user map.
 	using MapIt = std::map< Ch10PacketType, bool>::const_iterator;
 	for (MapIt it = user_config.cbegin(); it != user_config.cend(); ++it)
 	{
+		// If the current user config Ch10PacketType is not in the default
+		// config, alert the user and return false.
+		if (default_config.count(it->first) == 0)
+		{
+			SPDLOG_ERROR("({:02d}) The type {:s} can't be found in the "
+				"default config. Update the default config for consistency.",
+				thread_id, ch10packettype_to_string_map.at(it->first));
+			return false;
+		}
 		pkt_type_config_map_[it->first] = it->second;
 	}
 
@@ -169,6 +179,8 @@ void Ch10Context::SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user
 	// and time packets to true = on.
 	pkt_type_config_map_[Ch10PacketType::COMPUTER_GENERATED_DATA_F1] = true;
 	pkt_type_config_map_[Ch10PacketType::TIME_DATA_F1] = true;
+
+	return true;
 }
 
 void Ch10Context::UpdateWithTDPData(const uint64_t& tdp_abs_time, uint8_t tdp_doy,
@@ -335,6 +347,10 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 				thread_id, true);
 
 			videof0_pq_writer = videof0_pq_writer_.get();
+			break;
+		default:
+			SPDLOG_WARN("({:02d}) No writer defined for {:s}",
+				thread_id, ch10packettype_to_string_map.at(it->first));
 			break;
 		}
 	}
