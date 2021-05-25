@@ -10,8 +10,9 @@ Ch10Status Ch10EthernetF0Component::Parse(const uint8_t*& data)
 	// large. This value is a guess and subject to change.
 	if ((*ethernetf0_csdw_elem_.element)->frame_count > max_frame_count_)
 	{
+		uint16_t frame_count = (*ethernetf0_csdw_elem_.element)->frame_count;
 		SPDLOG_WARN("Frame count ({:d}) > maximum allowed count ({:d})",
-			(*ethernetf0_csdw_elem_.element)->frame_count, max_frame_count_);
+			frame_count, max_frame_count_);
 		return Ch10Status::ETHERNETF0_FRAME_COUNT;
 	}
 
@@ -47,7 +48,14 @@ Ch10Status Ch10EthernetF0Component::ParseFrames(const EthernetF0CSDW* const csdw
 
 		// Increment the data pointer by the size in bytes of 
 		// the frame.
-		data_ptr += (*ethernetf0_frameid_elem_.element)->data_length;
+		data_length_ = (*ethernetf0_frameid_elem_.element)->data_length;
+		if (data_length_ > mac_frame_max_length_)
+		{
+			SPDLOG_WARN("MAC frame data length ({:d}) > maximum ({:d})",
+				data_length_, mac_frame_max_length_);
+			return Ch10Status::ETHERNETF0_FRAME_LENGTH;
+		}
+		data_ptr += data_length_;
 	}
 	return Ch10Status::OK;
 }

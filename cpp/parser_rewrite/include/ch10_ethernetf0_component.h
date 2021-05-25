@@ -39,6 +39,16 @@ private:
 	// once instead of each call to ParseFrames
 	uint16_t frame_index_;
 
+	// Length of bytes in Ethernet frame payload
+	uint32_t data_length_;
+
+	// Ethernet/MAC frame maximum length, including 4-byte
+	// CRC. Not sure if "MAC frames" as specified by the ch10
+	// spec includes the preamble or start frame delimiter.
+	// For now include all in the maximum length, from preamble
+	// to end of CRC (frame check sequence), in byte unit.
+	const uint32_t mac_frame_max_length_ = 1530;
+
 public:
 	const Ch10PacketElement<EthernetF0CSDW>& ethernetf0_csdw_elem;
 	const Ch10PacketElement<EthernetF0FrameIDWord>& ethernetf0_frameid_elem;
@@ -55,7 +65,7 @@ public:
 			dynamic_cast<Ch10PacketElementBase*>(&ethernetf0_frameid_elem_) },
 		max_frame_count_(1000), ch10_time_(), ipts_time_(0), abs_time_(0),
 		frame_index_(0), ethernetf0_csdw_elem(ethernetf0_csdw_elem_),
-		ethernetf0_frameid_elem(ethernetf0_frameid_elem_)
+		ethernetf0_frameid_elem(ethernetf0_frameid_elem_), data_length_(0)
 	{}
 
 	/*

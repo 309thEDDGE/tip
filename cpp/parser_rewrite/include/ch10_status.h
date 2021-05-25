@@ -29,6 +29,7 @@ enum class Ch10Status : uint8_t
 	VIDEOF0_NONINTEGER_SUBPKT_COUNT,
 	VIDEOF0_SUBPKT_COUNT_BIG,
 	ETHERNETF0_FRAME_COUNT,
+	ETHERNETF0_FRAME_LENGTH
 };
 
 const std::unordered_map<Ch10Status, std::string> ch10status_to_string_map = {

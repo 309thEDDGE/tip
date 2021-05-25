@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "ch10_ethernetf0_component.h"
@@ -8,6 +9,8 @@ using ::testing::_;
 using ::testing::SetArgReferee;
 using ::testing::Return;
 using ::testing::ReturnRef;
+using ::testing::Ref;
+using ::testing::DoAll;
 using ::testing::SetArgPointee;
 
 class MockCh10TimeEthF0 : public Ch10Time
@@ -32,6 +35,7 @@ protected:
     const uint8_t* data_ptr_;
     Ch10Status status_;
     Ch10Context ctx_;
+    Ch10Time ch10_time_;
     EthernetF0CSDW csdw_;
     EthernetF0FrameIDWord frameid_word_;
     MockCh10TimeEthF0 mock_ch10_time_;
@@ -43,7 +47,7 @@ protected:
     Ch10EthernetF0ComponentTest() : data_ptr_(nullptr),
         status_(Ch10Status::NONE), ctx_(0), eth_(&ctx_), mock_ch10_time_(), 
         ch10_time_ptr_(&mock_ch10_time_), ipts_time_(0), mock_ch10_context_(),
-        ch10_context_ptr_(&mock_ch10_context_)
+        ch10_context_ptr_(&mock_ch10_context_), ch10_time_()
     {
     }
 };
@@ -59,10 +63,26 @@ TEST_F(Ch10EthernetF0ComponentTest, ParseExcessiveFrameCount)
 TEST_F(Ch10EthernetF0ComponentTest, ParseFramesParseIPTS)
 {
     csdw_.frame_count = 10;
+    uint64_t mock_abs_time = 1234567890;
+    int intrapkt_hdr_size = 8 + 4; // IPTS + Frame ID word
+    uint32_t data_length = 1284;
+    std::vector<uint8_t> dummy_buffer(intrapkt_hdr_size + data_length, 0);
+    data_ptr_ = dummy_buffer.data();
+    EthernetF0FrameIDWord* frame_id_word = (EthernetF0FrameIDWord*)data_ptr_ + 8; 
+    frame_id_word->data_length = data_length;
 
+    // Each time, set the 0-th argument back to 8 bytes from the beginning
+    // of the dummy buffer to avoid straying into memory which I don't
+    // control.
     EXPECT_CALL(mock_ch10_time_, ParseIPTS(_, 
         _, ctx_.intrapkt_ts_src, ctx_.time_format))
-        .Times(csdw_.frame_count).WillRepeatedly(Return(Ch10Status::OK));
+        .Times(csdw_.frame_count).WillRepeatedly(DoAll(
+            SetArgReferee<0>(dummy_buffer.data() + 8),
+            SetArgReferee<1>(ipts_time_),
+            Return(Ch10Status::OK)));
+
+    /*EXPECT_CALL(mock_ch10_context_, CalculateIPTSAbsTime(ipts_time_)).
+        Times(csdw_.frame_count).WillRepeatedly(ReturnRef(mock_abs_time));*/
 
     status_ = eth_.ParseFrames(&csdw_, &ctx_, ch10_time_ptr_, data_ptr_);
     EXPECT_EQ(status_, Ch10Status::OK);
@@ -84,11 +104,18 @@ TEST_F(Ch10EthernetF0ComponentTest, ParseFramesCalcIPTSAbsTime)
 {
     csdw_.frame_count = 4;
     uint64_t mock_abs_time = 1234567890;
+    int intrapkt_hdr_size = 8 + 4; // IPTS + Frame ID word
+    std::vector<uint8_t> dummy_buffer(intrapkt_hdr_size, 0);
+    data_ptr_ = dummy_buffer.data();
+    EthernetF0FrameIDWord* frame_id_word = (EthernetF0FrameIDWord*)(data_ptr_ + 8);
+    frame_id_word->data_length = 1233;
 
-    EXPECT_CALL(mock_ch10_time_, ParseIPTS(_,
+   EXPECT_CALL(mock_ch10_time_, ParseIPTS(_,
         _, ctx_.intrapkt_ts_src, ctx_.time_format))
-        .Times(csdw_.frame_count).WillRepeatedly(::testing::DoAll(
-            SetArgReferee<1>(ipts_time_), Return(Ch10Status::OK)));
+        .Times(csdw_.frame_count).WillRepeatedly(DoAll(
+            SetArgReferee<0>(dummy_buffer.data() + 8),
+            SetArgReferee<1>(ipts_time_), 
+            Return(Ch10Status::OK)));
 
     EXPECT_CALL(mock_ch10_context_, CalculateIPTSAbsTime(ipts_time_)).
         Times(csdw_.frame_count).WillRepeatedly(ReturnRef(mock_abs_time));
@@ -100,20 +127,84 @@ TEST_F(Ch10EthernetF0ComponentTest, ParseFramesCalcIPTSAbsTime)
 
 TEST_F(Ch10EthernetF0ComponentTest, ParseFramesBufferAdvancement)
 {
-    csdw_.frame_count = 4;
+    csdw_.frame_count = 3;
     uint64_t mock_abs_time = 1234567890;
+    int intrapkt_hdr_size = 8 + 4; // IPTS + Frame ID word
+    uint32_t data_length = 138;
+    size_t single_frame_size = intrapkt_hdr_size + data_length;
+    size_t total_buff_size = single_frame_size * csdw_.frame_count;
+    std::vector<uint8_t> dummy_buffer(total_buff_size, 0);
+    std::vector<uint8_t> copy_buffer(intrapkt_hdr_size, 0);
+    data_ptr_ = dummy_buffer.data();
+    EthernetF0FrameIDWord* frame_id_word = (EthernetF0FrameIDWord*)(copy_buffer.data() + 8); 
+    frame_id_word->data_length = data_length;
 
-    // use SetArgePointee
-    EXPECT_CALL(mock_ch10_time_, ParseIPTS(_,
-        _, ctx_.intrapkt_ts_src, ctx_.time_format))
-        .Times(csdw_.frame_count).WillRepeatedly(::testing::DoAll(
-            SetArgReferee<1>(ipts_time_), Return(Ch10Status::OK)));
+    // Copy the first data_length bytes into the other n sections
+    // of data_length.
+    for (size_t i = 0; i < csdw_.frame_count; i++)
+    {
+        std::copy(copy_buffer.data(), copy_buffer.data() + intrapkt_hdr_size, 
+            dummy_buffer.data() + single_frame_size * i);
+    }
+
+    // Use this variable since it expects a concrete value 
+    // and we don't want to increment data_ptr_ since it hasn't
+    // actually been passed to ParseFrames yet.
+    const uint8_t* temp_data_ptr = data_ptr_;
+    EXPECT_CALL(mock_ch10_time_, ParseIPTS(temp_data_ptr, _, ctx_.intrapkt_ts_src,
+        ctx_.time_format)).Times(1).WillOnce(DoAll(
+            SetArgReferee<0>(data_ptr_ + 8),
+            SetArgReferee<1>(ipts_time_),
+            Return(Ch10Status::OK)));
+
+    temp_data_ptr += single_frame_size;
+    EXPECT_CALL(mock_ch10_time_, ParseIPTS(temp_data_ptr, 
+        _, ctx_.intrapkt_ts_src,
+        ctx_.time_format)).Times(1).WillOnce(DoAll(
+            SetArgReferee<0>(data_ptr_ + single_frame_size + 8),
+            SetArgReferee<1>(ipts_time_),
+            Return(Ch10Status::OK)));
+
+    temp_data_ptr += single_frame_size;
+    EXPECT_CALL(mock_ch10_time_, ParseIPTS(temp_data_ptr, _, ctx_.intrapkt_ts_src,
+        ctx_.time_format)).Times(1).WillOnce(DoAll(
+            SetArgReferee<0>(data_ptr_ + single_frame_size*2 + 8),
+            SetArgReferee<1>(ipts_time_),
+            Return(Ch10Status::OK)));
 
     EXPECT_CALL(mock_ch10_context_, CalculateIPTSAbsTime(ipts_time_)).
-        Times(csdw_.frame_count).WillRepeatedly(ReturnRef(mock_abs_time));
+        Times(csdw_.frame_count).
+        WillRepeatedly(ReturnRef(mock_abs_time));
 
     status_ = eth_.ParseFrames(&csdw_, ch10_context_ptr_, ch10_time_ptr_,
         data_ptr_);
     EXPECT_EQ(status_, Ch10Status::OK);
+    EXPECT_EQ(dummy_buffer.data() + total_buff_size,
+        data_ptr_);
+}
+
+TEST_F(Ch10EthernetF0ComponentTest, ParseFramesFrameLengthExceedsMax)
+{
+    csdw_.frame_count = 10;
+    uint64_t mock_abs_time = 1234567890;
+    int intrapkt_hdr_size = 8 + 4; // IPTS + Frame ID word
+    std::vector<uint8_t> dummy_buffer(intrapkt_hdr_size, 0);
+    data_ptr_ = dummy_buffer.data();
+    EthernetF0FrameIDWord* frame_id_word = (EthernetF0FrameIDWord*)(data_ptr_ + 8);
+    frame_id_word->data_length = 4321; // > mac_frame_max_length_
+
+    EXPECT_CALL(mock_ch10_time_, ParseIPTS(data_ptr_,
+        _, ctx_.intrapkt_ts_src, ctx_.time_format))
+        .Times(1).WillOnce(DoAll(
+            SetArgReferee<0>(dummy_buffer.data() + 8),
+            SetArgReferee<1>(ipts_time_),
+            Return(Ch10Status::OK)));
+
+    EXPECT_CALL(mock_ch10_context_, CalculateIPTSAbsTime(ipts_time_)).
+        Times(1).WillOnce(ReturnRef(mock_abs_time));
+
+    status_ = eth_.ParseFrames(&csdw_, ch10_context_ptr_, ch10_time_ptr_,
+        data_ptr_);
+    EXPECT_EQ(status_, Ch10Status::ETHERNETF0_FRAME_LENGTH);
 }
 
