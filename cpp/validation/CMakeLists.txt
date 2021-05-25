@@ -2,37 +2,39 @@ set(headers
     include/comparator.h
 )
 
-add_library(lib_validation
+add_library(parquet_compare
     STATIC
     src/comparator.cpp
 )
 
-target_compile_features(lib_validation PUBLIC cxx_std_17)
+target_compile_features(parquet_compare PUBLIC cxx_std_17)
 
-target_include_directories(lib_validation
+target_include_directories(parquet_compare
     PUBLIC include
 )
 
-set_target_properties(lib_validation
+set_target_properties(parquet_compare
     PROPERTIES PUBLIC_HEADER "${headers}"
 )
 
-target_link_libraries(lib_validation
-    PUBLIC lib_util lib_ch10_parquet
+target_link_libraries(parquet_compare
+    PUBLIC tiputil ch10_parquet
     arrow_shared parquet
 )
 
 add_executable(pqcompare main/parquet_arrow_validator_main.cpp)
 
-target_link_libraries(pqcompare lib_validation)
+target_link_libraries(pqcompare parquet_compare)
 
 target_compile_features(pqcompare PUBLIC cxx_std_17)
 
 add_executable(bincompare main/binary_comparison.cpp)
 
-target_link_libraries(bincompare lib_validation)
+target_link_libraries(bincompare parquet_compare)
+
+target_compile_features(bincompare PUBLIC cxx_std_17)
 
 install(
-    TARGETS lib_validation pqcompare bincompare
+    TARGETS parquet_compare pqcompare bincompare
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/validation
 )

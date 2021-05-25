@@ -17,7 +17,7 @@ set(headers
     include/ch10_videof0_header_format.h
 )
 
-add_library(lib_parser_rewrite
+add_library(parserw
     STATIC
     src/ch10_1553f1_component.cpp
     src/ch10_context.cpp
@@ -31,21 +31,21 @@ add_library(lib_parser_rewrite
     src/ch10_videof0_component.cpp
 )
 
-target_compile_features(lib_parser_rewrite PUBLIC cxx_std_17)
+target_compile_features(parserw PUBLIC cxx_std_17)
 
-target_include_directories(lib_parser_rewrite
+target_include_directories(parserw
     PUBLIC include
 )
 
-set_target_properties(lib_parser_rewrite
+set_target_properties(parserw
     PROPERTIES PUBLIC_HEADER "${headers}"
 )
 
-target_link_libraries(lib_parser_rewrite
-    PUBLIC lib_util lib_ch10_parquet spdlog::spdlog
+target_link_libraries(parserw
+    PUBLIC tiputil ch10_parquet spdlog::spdlog
 )
 
 install(
-    TARGETS lib_parser_rewrite
+    TARGETS parserw
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/parser_rewrite
 )

@@ -26,11 +26,18 @@ set(linux_libs ${fs_lib_name} ${thread_lib_name} ${dl_lib_name})
 # Link dirs
 link_directories(${lib_dir})
 
+# common same default install directories
+include(GNUInstallDirs)
+
 ###########################################
 # Find All Dependencies
 ###########################################
+find_package(PkgConfig)
+
 find_package(Arrow REQUIRED)
 find_package(yaml-cpp REQUIRED)
-find_package(libtins REQUIRED)
 find_package(spdlog REQUIRED)
+
+pkg_check_modules(LIBTINS REQUIRED libtins)
+
 # find_package(gtest REQUIRED)

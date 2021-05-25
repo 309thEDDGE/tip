@@ -2,23 +2,23 @@ set(headers
     include/parquet_video_extraction.h
 )
 
-add_library(lib_video_parquet
+add_library(pq_vid_extract
     STATIC
     src/parquet_video_extraction.cpp
 )
 
-target_compile_features(lib_video_parquet PUBLIC cxx_std_17)
+target_compile_features(pq_vid_extract PUBLIC cxx_std_17)
 
-target_include_directories(lib_video_parquet
+target_include_directories(pq_vid_extract
     PUBLIC include
 )
 
-set_target_properties(lib_video_parquet
+set_target_properties(pq_vid_extract
     PROPERTIES PUBLIC_HEADER "${headers}"
 )
 
-target_link_libraries(lib_video_parquet
-    PUBLIC lib_util
+target_link_libraries(pq_vid_extract
+    PUBLIC tiputil
     arrow_shared parquet
 )
 
@@ -26,9 +26,9 @@ add_executable(parquet_video_extractor main/parquet_video_extractor.cpp)
 
 target_compile_features(parquet_video_extractor PUBLIC cxx_std_17)
 
-target_link_libraries(parquet_video_extractor lib_video_parquet)
+target_link_libraries(parquet_video_extractor pq_vid_extract)
 
 install(
-    TARGETS lib_video_parquet
+    TARGETS pq_vid_extract parquet_video_extractor
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/video/parquet
 )

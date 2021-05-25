@@ -12,7 +12,7 @@ set(headers
     include/yaml_reader.h
 )
 
-add_library(lib_util STATIC
+add_library(tiputil STATIC
             src/argument_validation.cpp
             src/binbuff.cpp
             src/data_organization.cpp
@@ -26,17 +26,17 @@ add_library(lib_util STATIC
             src/yaml_reader.cpp
 )
 
-target_compile_features(lib_util PUBLIC cxx_std_17)
+target_compile_features(tiputil PUBLIC cxx_std_17)
 
-target_include_directories(lib_util PUBLIC include)
+target_include_directories(tiputil PUBLIC include)
 
-set_target_properties(lib_util PROPERTIES PUBLIC_HEADER "${headers}")
+set_target_properties(tiputil PROPERTIES PUBLIC_HEADER "${headers}")
 
-target_link_libraries(lib_util
+target_link_libraries(tiputil
     PUBLIC spdlog::spdlog yaml-cpp
 )
 
 install(
-    TARGETS lib_util
+    TARGETS tiputil
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/utils
 )
