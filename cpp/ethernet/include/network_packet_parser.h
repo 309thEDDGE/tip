@@ -31,6 +31,7 @@ Include the following three headers prior to tins.h.
 #include <string>
 #include <algorithm> // copy
 #include <map>
+#include "spdlog/spdlog.h"
 
 class NetworkPacketParser
 {
@@ -60,6 +61,28 @@ private:
 
 public:
 	NetworkPacketParser();
+
+	/*
+	Parse an Ethernet/MAC frame from a Ch10 Ethernet packet. 
+
+	Args:
+		buffer		--> Pointer to the memory location of the beginning of the
+						frame. Ought to be the beginning of the MAC frame 
+						which is the first byte in the ch10 frame payload
+						after the frame ID word
+
+		length		--> Length of the frame in bytes. Same value as the 
+						frame ID word data_length field.
+		eth_data	--> Pointer to EthernetData object, a generic object
+						in which data and metadata for multiple types of 
+						ethernet packets and sub-packets can be stored.
+						Holds the output of the parsed packets.
+
+	Return:
+		True if no errors, false otherwise.
+	*/
+	bool Parse(const uint8_t* buffer, const uint32_t& length, 
+		EthernetData* eth_data);
 	
 
 	/************************************************************

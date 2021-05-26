@@ -44,17 +44,21 @@ Ch10Status Ch10EthernetF0Component::ParseFrames(const EthernetF0CSDW* const csdw
 		// Parse the frame ID word (buffer advanced automatically)
 		ParseElements(ethernetf0_frameid_elem_vec_, data_ptr);
 
-		// Parse the payload
-
-		// Increment the data pointer by the size in bytes of 
-		// the frame.
+		// Parse the payload. Does not advance the data pointer.
 		data_length_ = (*ethernetf0_frameid_elem_.element)->data_length;
+		eth_frame_parser_.Parse(data_ptr, data_length_, eth_data_ptr_);
+
+		// Check for corrupt data. The correct value for mac_frame_max_length_
+		// has not been determined.
 		if (data_length_ > mac_frame_max_length_)
 		{
 			SPDLOG_WARN("MAC frame data length ({:d}) > maximum ({:d})",
 				data_length_, mac_frame_max_length_);
 			return Ch10Status::ETHERNETF0_FRAME_LENGTH;
 		}
+
+		// Increment the data pointer by the size in bytes of 
+		// the frame.
 		data_ptr += data_length_;
 	}
 	return Ch10Status::OK;

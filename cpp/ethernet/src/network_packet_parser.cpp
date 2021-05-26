@@ -6,6 +6,24 @@ udp_pdu_(nullptr), ip_pdu_(nullptr), llc_pdu_(nullptr), ethernet_data_ptr_(nullp
 
 }
 
+bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
+	EthernetData* eth_data)
+{
+	Tins::Dot3 dot3;
+	try
+	{
+		dot3 = Tins::Dot3(buffer, length);
+	}
+	catch (const Tins::malformed_packet& e)
+	{
+		SPDLOG_INFO("PDU type: {:s}", pdu_type_to_name_map_.at(pdu_type_));
+		return false;
+	}
+	pdu_type_ = static_cast<uint16_t>(dot3.pdu_type());
+	SPDLOG_INFO("PDU type: {:s}", pdu_type_to_name_map_.at(pdu_type_));
+	return true;
+}
+
 uint8_t NetworkPacketParser::ParseEthernet(const uint8_t* buffer, const uint32_t& tot_size,
 	EthernetData* ed)
 {

@@ -6,6 +6,8 @@
 #include "ch10_ethernetf0_msg_hdr_format.h"
 #include "ch10_packet_component.h"
 #include "ch10_time.h"
+#include "ethernet_data.h"
+#include "network_packet_parser.h"
 
 /*
 This class defines the structures/classes and methods
@@ -49,6 +51,13 @@ private:
 	// to end of CRC (frame check sequence), in byte unit.
 	const uint32_t mac_frame_max_length_ = 1530;
 
+	// Object in which to store parsed ethernet frame data.
+	EthernetData eth_data_;
+	EthernetData* eth_data_ptr_;
+
+	// Ethernet parsing class
+	NetworkPacketParser eth_frame_parser_;
+
 public:
 	const Ch10PacketElement<EthernetF0CSDW>& ethernetf0_csdw_elem;
 	const Ch10PacketElement<EthernetF0FrameIDWord>& ethernetf0_frameid_elem;
@@ -65,7 +74,8 @@ public:
 			dynamic_cast<Ch10PacketElementBase*>(&ethernetf0_frameid_elem_) },
 		max_frame_count_(1000), ch10_time_(), ipts_time_(0), abs_time_(0),
 		frame_index_(0), ethernetf0_csdw_elem(ethernetf0_csdw_elem_),
-		ethernetf0_frameid_elem(ethernetf0_frameid_elem_), data_length_(0)
+		ethernetf0_frameid_elem(ethernetf0_frameid_elem_), data_length_(0),
+		eth_data_(), eth_data_ptr_(&eth_data_), eth_frame_parser_()
 	{}
 
 	/*
