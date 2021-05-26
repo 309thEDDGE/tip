@@ -21,10 +21,11 @@ protected:
     }
 };
 
-TEST_F(NetworkPacketParserTest, ParseBadBuffer)
+TEST_F(NetworkPacketParserTest, ParseHandleMalformedPacket)
 {
-	std::vector<uint8_t> buff(500);
+	std::vector<uint8_t> buff(10); // too small
 	data_length_ = buff.size();
 	result_ = npp_.Parse(buff.data(), data_length_, &eth_data_);
 	EXPECT_FALSE(result_);
 }
+

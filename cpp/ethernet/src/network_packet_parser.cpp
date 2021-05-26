@@ -16,7 +16,7 @@ bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
 	}
 	catch (const Tins::malformed_packet& e)
 	{
-		SPDLOG_INFO("PDU type: {:s}", pdu_type_to_name_map_.at(pdu_type_));
+		SPDLOG_WARN("Error: {:s}", e.what());
 		return false;
 	}
 	pdu_type_ = static_cast<uint16_t>(dot3.pdu_type());

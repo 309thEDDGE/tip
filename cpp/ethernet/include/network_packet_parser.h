@@ -81,7 +81,7 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	bool Parse(const uint8_t* buffer, const uint32_t& length, 
+	virtual bool Parse(const uint8_t* buffer, const uint32_t& length, 
 		EthernetData* eth_data);
 	
 
