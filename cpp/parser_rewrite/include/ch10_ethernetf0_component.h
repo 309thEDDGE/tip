@@ -100,6 +100,9 @@ public:
 		cdsw_ptr		--> Pointer to previously parsed EthernetF0CSDW
 		ch10_context_ptr--> Pointer to Ch10Context which conveys the ch10
 							parse state
+		npp_ptr			--> Pointer to NetworkPacketParser object. This 
+							pointed object will be used to parse the 
+							frame. Passing this in to facilitate mocking.
 		ch10_time_ptr	--> Ch10Time object with which to calculate time
 		data_ptr		--> Buffer location of the next unparsed bytes
 							which ought to be immediately following the
@@ -109,8 +112,8 @@ public:
 		Ch10Status::OK if no problems, otherwise a different Ch10Status code.
 	*/
 	Ch10Status ParseFrames(const EthernetF0CSDW* const csdw_ptr,
-		Ch10Context* const ch10_context_ptr, Ch10Time* const ch10_time_ptr,
-		const uint8_t*& data_ptr);
+		Ch10Context* const ch10_context_ptr, NetworkPacketParser* npp_ptr,
+		Ch10Time* const ch10_time_ptr, const uint8_t*& data_ptr);
 
 };
 
