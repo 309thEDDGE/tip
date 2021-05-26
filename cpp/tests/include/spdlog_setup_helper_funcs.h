@@ -5,13 +5,10 @@
 #include <string>
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/null_sink.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 
-void CreateNullLoggerWithName(std::string logger_name)
-{
-	auto logger = spdlog::create<spdlog::sinks::null_sink_st>(logger_name);
+void CreateNullLoggerWithName(std::string logger_name);
+void CreateStdoutLoggerWithName(std::string logger_name);
 
-	// Register as default if default macros are used.
-	spdlog::set_default_logger(logger);
-}
 
 #endif
