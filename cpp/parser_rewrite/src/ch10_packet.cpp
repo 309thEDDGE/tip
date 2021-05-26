@@ -244,7 +244,7 @@ void Ch10Packet::ParseBody()
         {
             if (ctx_->pkt_type_config_map.at(pkt_type))
             {
-                SPDLOG_WARN("({:02d}) No parser exists for {;s}", ctx_->thread_id,
+                SPDLOG_WARN("({:02d}) No parser exists for {:s}", ctx_->thread_id,
                     ch10packettype_to_string_map.at(pkt_type));
             }
         }
