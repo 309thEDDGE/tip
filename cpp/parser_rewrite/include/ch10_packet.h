@@ -6,6 +6,7 @@
 #include "ch10_time.h"
 #include "ch10_1553f1_component.h"
 #include "ch10_videof0_component.h"
+#include "ch10_ethernetf0_component.h"
 #include "binbuff.h"
 #include "ch10_status.h"
 
@@ -55,7 +56,7 @@ private:
     Ch10TDPComponent tdp_component_;
     Ch101553F1Component milstd1553f1_component_;
     Ch10VideoF0Component videof0_component_;
-
+    Ch10EthernetF0Component ethernetf0_component_;
     Ch10Time ch10_time_;
 
 
@@ -68,7 +69,7 @@ public:
         status_(Ch10Status::OK), temp_pkt_size_(0),
         pkt_type_(Ch10PacketType::NONE), current_pkt_type(pkt_type_), header_(context), 
         tmats_(context), tdp_component_(context), milstd1553f1_component_(context),
-        videof0_component_(context) {}
+        videof0_component_(context), ethernetf0_component_(context) {}
 
     /*
     Parse the ch10 header at the current location of the buffer.
