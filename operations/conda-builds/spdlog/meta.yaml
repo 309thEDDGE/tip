@@ -1,0 +1,45 @@
+{% set name = "spdlog" %}
+{% set version = "1.8.5" %}
+{% set sha256 = "944d0bd7c763ac721398dca2bb0f3b5ed16f67cef36810ede5061f35a543b4b8" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://github.com/gabime/{{ name|lower }}/archive/v{{ version }}.tar.gz
+  sha256: {{ sha256 }}
+
+build:
+  number: 0
+  run_exports:
+    - {{ pin_subpackage('spdlog', max_pin='x') }}
+  skip: true  # [win and vc<14]
+
+requirements:
+  build:
+    - cmake
+    - {{ compiler('cxx') }}
+    - make  # [ unix ]
+
+test:
+  commands:
+    - test -e $PREFIX/include/spdlog/spdlog.h  # [not win]
+    - if not exist %PREFIX%\Library\include\spdlog\spdlog.h exit 1  # [win]
+
+about:
+  home: https://github.com/gabime/spdlog
+  license: MIT
+  license_family: MIT
+  license_file: LICENSE
+  summary: Super fast C++ logging library.
+
+  description: |
+    spdlog is a header only library for Super fast C++ logging
+    to be used with a C++11 compiler.
+
+extra:
+  recipe-maintainers:
+    - druvus
+    - rongou
+    - bluescarni
