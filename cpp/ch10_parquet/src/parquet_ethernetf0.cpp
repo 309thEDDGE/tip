@@ -20,7 +20,7 @@ bool ParquetEthernetF0::Initialize(const std::string& outfile, uint16_t thread_i
 	payload_size_.resize(MAX_TEMP_ELEMENT_COUNT);
 	dst_mac_addr_.resize(MAX_TEMP_ELEMENT_COUNT);
 	src_mac_addr_.resize(MAX_TEMP_ELEMENT_COUNT);
-	payload_type_.resize(MAX_TEMP_ELEMENT_COUNT);
+	ethertype_.resize(MAX_TEMP_ELEMENT_COUNT);
 	frame_format_.resize(MAX_TEMP_ELEMENT_COUNT);
 	dsap_.resize(MAX_TEMP_ELEMENT_COUNT);
 	ssap_.resize(MAX_TEMP_ELEMENT_COUNT);
@@ -60,7 +60,7 @@ bool ParquetEthernetF0::Initialize(const std::string& outfile, uint16_t thread_i
 	SetMemoryLocation(payload_size_, "payload_sz");
 	SetMemoryLocation(dst_mac_addr_, "dstmac");
 	SetMemoryLocation(src_mac_addr_, "srcmac");
-	SetMemoryLocation(payload_type_, "ethtype");
+	SetMemoryLocation(ethertype_, "ethtype");
 	SetMemoryLocation(frame_format_, "llcfmt");
 	SetMemoryLocation(dsap_, "llcdsap");
 	SetMemoryLocation(ssap_, "llcssap");
@@ -102,7 +102,7 @@ void ParquetEthernetF0::Append(const uint64_t& time_stamp, const EthernetData* e
 	payload_size_[append_count_] = eth_data->payload_size_;
 	dst_mac_addr_[append_count_] = eth_data->dst_mac_addr_;
 	src_mac_addr_[append_count_] = eth_data->src_mac_addr_;
-	payload_type_[append_count_] = eth_data->payload_type_;
+	ethertype_[append_count_] = eth_data->ethertype_;
 	frame_format_[append_count_] = eth_data->frame_format_;
 	dsap_[append_count_] = eth_data->dsap_;
 	ssap_[append_count_] = eth_data->ssap_;

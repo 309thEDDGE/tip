@@ -21,7 +21,7 @@ private:
 	std::vector<int64_t> payload_size_; // original type is uint32_t
 	std::vector<std::string> dst_mac_addr_;
 	std::vector<std::string> src_mac_addr_;
-	std::vector<int32_t> payload_type_; // original type is uint16_t
+	std::vector<int32_t> ethertype_; // original type is uint16_t
 	std::vector<int16_t> frame_format_; // original is uint8_t
 	std::vector<int16_t> dsap_; // original is uint8_t
 	std::vector<int16_t> ssap_; // original is uint8_t

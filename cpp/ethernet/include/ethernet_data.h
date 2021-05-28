@@ -22,7 +22,7 @@ public:
 	std::string src_mac_addr_;
 
 	// EthernetII
-	uint16_t payload_type_; // EtherType
+	uint16_t ethertype_; // EtherType
 
 	// LLC
 	uint8_t frame_format_; // 0 = information, 1 = supervisory, 2 = unnumbered (verify this)

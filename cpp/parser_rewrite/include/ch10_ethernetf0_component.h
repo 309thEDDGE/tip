@@ -47,9 +47,12 @@ private:
 	// Ethernet/MAC frame maximum length, including 4-byte
 	// CRC. Not sure if "MAC frames" as specified by the ch10
 	// spec includes the preamble or start frame delimiter.
-	// For now include all in the maximum length, from preamble
-	// to end of CRC (frame check sequence), in byte unit.
-	const uint32_t mac_frame_max_length_ = 1530;
+	// (Appears that physical layer components are not included.)
+	// For now include MAC addrs through CRC = 1522 bytes. 
+	// Not sure if that is correct for Ethernet II frames, but
+	// may be given the information here:
+	// ttps://en.wikipedia.org/wiki/Ethernet_frame
+	const uint32_t mac_frame_max_length_ = 1522;
 
 	// Object in which to store parsed ethernet frame data.
 	EthernetData eth_data_;

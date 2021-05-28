@@ -26,6 +26,7 @@ Include the following three headers prior to tins.h.
 
 #include "tins/tins.h"
 #include "ethernet_data.h"
+#include <exception>
 #include <cstdint>
 #include <cstdio>
 #include <string>
@@ -40,7 +41,19 @@ private:
 	//std::vector<uint8_t> temp_payload_;
 	//std::vector<uint8_t>& raw_payload_;
 	//uint32_t raw_payload_size_;
-	uint16_t pdu_type_;
+
+	// 802.3 maximum payload length
+	static const size_t mtu_ = 1500;
+
+	// Hold PDUType enum and integer value.
+	Tins::PDU::PDUType pdu_type_;
+	uint16_t pdu_type_val_;
+
+	// Initial PDU types to create from Ch10 frame payloads
+	Tins::Dot3 dot3_;
+	Tins::EthernetII eth2_;
+
+	// 
 	Tins::PDU* pdu_ptr_;
 	Tins::RawPDU* raw_pdu_;
 	Tins::UDP* udp_pdu_;
@@ -88,14 +101,39 @@ public:
 	/************************************************************
 						 Data Link Layer
 	*************************************************************/
-	// 802.3 (with total payload <= 1500), multiple sub-types possible.
-	uint8_t ParseEthernet(const uint8_t* buffer, const uint32_t& tot_size, EthernetData* ed);
+
+	/*
+	802.3 (with total payload <= 1500), multiple sub-types possible.
+
+	Args:
+		dot3_pdu	--> 802.3 PDU
+		eth_data	--> Pointer to EthernetData object, a generic object
+						in which data and metadata for multiple types of
+						ethernet packets and sub-packets can be stored.
+						Holds the output of the parsed packets.
+
+	Return:
+		True if no errors, false otherwise.
+	*/
+	virtual bool ParseEthernet(Tins::Dot3& dot3_pdu, EthernetData* ed);
 
 	// 802.2 LLC
 	uint8_t ParseEthernetLLC();
 
-	// Ethernet II (802.3 with total payload > 1500)
-	uint8_t ParseEthernetII(const uint8_t* buffer, const uint32_t& tot_size, EthernetData* ed);
+	/*
+	Ethernet II (802.3 with length/Ethertype >= 1536)
+
+	Args:
+		dot3_pdu	--> 802.3 PDU
+		eth_data	--> Pointer to EthernetData object, a generic object
+						in which data and metadata for multiple types of
+						ethernet packets and sub-packets can be stored.
+						Holds the output of the parsed packets.
+
+	Return:
+		True if no errors, false otherwise.
+	*/
+	virtual bool ParseEthernetII(Tins::EthernetII& ethii_pdu, EthernetData* ed);
 
 	/************************************************************
 	                       Network Layer

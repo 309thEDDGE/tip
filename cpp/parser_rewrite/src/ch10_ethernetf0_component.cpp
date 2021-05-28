@@ -45,22 +45,22 @@ Ch10Status Ch10EthernetF0Component::ParseFrames(const EthernetF0CSDW* const csdw
 		// Parse the frame ID word (buffer advanced automatically)
 		ParseElements(ethernetf0_frameid_elem_vec_, data_ptr);
 
-		// Parse the payload. Does not advance the data pointer.
-		data_length_ = (*ethernetf0_frameid_elem_.element)->data_length;
-		if (!npp_ptr->Parse(data_ptr, data_length_, eth_data_ptr_))
-		{
-			SPDLOG_WARN("({:02d}) Failed to parse ethernet frame", ctx_->thread_id);
-			status_ = Ch10Status::ETHERNETF0_FRAME_PARSE_ERROR;
-			return status_;
-		}
-
 		// Check for corrupt data. The correct value for mac_frame_max_length_
 		// has not been determined.
+		data_length_ = (*ethernetf0_frameid_elem_.element)->data_length;
 		if (data_length_ > mac_frame_max_length_)
 		{
 			SPDLOG_WARN("({:02d}) MAC frame data length ({:d}) > maximum ({:d})",
 				ctx_->thread_id, data_length_, mac_frame_max_length_);
 			return Ch10Status::ETHERNETF0_FRAME_LENGTH;
+		}
+
+		// Parse the payload. Does not advance the data pointer.
+		if (!npp_ptr->Parse(data_ptr, data_length_, eth_data_ptr_))
+		{
+			SPDLOG_WARN("({:02d}) Failed to parse ethernet frame", ctx_->thread_id);
+			status_ = Ch10Status::ETHERNETF0_FRAME_PARSE_ERROR;
+			return status_;
 		}
 
 		// Increment the data pointer by the size in bytes of 
