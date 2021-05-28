@@ -21,11 +21,13 @@ public:
 	std::string dst_mac_addr_;
 	std::string src_mac_addr_;
 
-	// EthernetII
+	// 802.3 length or EthernetII ethertype
 	uint16_t ethertype_; // EtherType
 
 	// LLC
-	uint8_t frame_format_; // 0 = information, 1 = supervisory, 2 = unnumbered (verify this)
+	// 0 = information, 1 = supervisory, 2 = unnumbered (verify this)
+	// Also called control field.
+	uint8_t frame_format_; 
 	uint8_t dsap_;
 	uint8_t ssap_;
 	uint8_t snd_seq_number_;

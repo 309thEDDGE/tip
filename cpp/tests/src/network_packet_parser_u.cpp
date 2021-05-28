@@ -24,6 +24,14 @@ public:
 	MOCK_METHOD2(ParseEthernetII, bool(Tins::EthernetII& ethii_pdu, EthernetData* ed));
 };
 
+class MockNPPSecondLevel : public NetworkPacketParser
+{
+public:
+	MockNPPSecondLevel() : NetworkPacketParser() {}
+	MOCK_METHOD2(ParseIPv4, bool(Tins::IP* ip_pdu, EthernetData* ed));
+	MOCK_METHOD2(ParseEthernetLLC, bool(Tins::LLC* llc_pdu, EthernetData* ed));
+};
+
 
 class NetworkPacketParserTest : public ::testing::Test
 {
@@ -36,10 +44,12 @@ protected:
 	std::string src_mac_string_;
 	bool result_;
 	NiceMock<MockNPPTopLevel> mock_npp_top_level_;
+	NiceMock<MockNPPSecondLevel> mock_npp_sec_level_;
 	NetworkPacketParser* npp_ptr_;
 
     NetworkPacketParserTest() : npp_(), eth_data_(), data_length_(0),
-		result_(false), ethertype_(0), mock_npp_top_level_(), npp_ptr_(nullptr)
+		result_(false), ethertype_(0), mock_npp_top_level_(), npp_ptr_(nullptr),
+		mock_npp_sec_level_()
     {
 		
     }
@@ -93,33 +103,140 @@ TEST_F(NetworkPacketParserTest, ParseEthernetHeaderData)
 	src_mac_string_ = "2b:01:f7:ae:5c:3f";
 	Tins::HWAddress<6> dst_mac(dst_mac_string_);
 	Tins::HWAddress<6> src_mac(src_mac_string_);
-	Tins::Dot3 dot3;
+	Tins::Dot3 dot3 = Tins::Dot3() / Tins::LLC();
 	dot3.dst_addr(dst_mac);
 	dot3.src_addr(src_mac);
 	ethertype_ = 1200;
 	dot3.length(ethertype_);
-	result_ = npp_.ParseEthernet(dot3, &eth_data_);
+
+	ON_CALL(mock_npp_sec_level_, ParseEthernetLLC(_, _)).
+		WillByDefault(Return(true));
+
+	result_ = mock_npp_sec_level_.ParseEthernet(dot3, &eth_data_);
 	EXPECT_TRUE(result_);
 	EXPECT_EQ(dst_mac_string_, eth_data_.dst_mac_addr_);
 	EXPECT_EQ(src_mac_string_, eth_data_.src_mac_addr_);
 	EXPECT_EQ(ethertype_, eth_data_.ethertype_);
 }
 
-//TEST_F(NetworkPacketParserTest, ParseEthernetIIHeaderData)
-//{
-//	dst_mac_string_ = "00:01:fa:9e:1a:cd";
-//	src_mac_string_ = "2b:01:f7:ae:5c:3f";
-//	Tins::HWAddress<6> dst_mac(dst_mac_string_);
-//	Tins::HWAddress<6> src_mac(src_mac_string_);
-//	Tins::Dot3 dot3;
-//	dot3.dst_addr(dst_mac);
-//	dot3.src_addr(src_mac);
-//	ethertype_ = 1200;
-//	dot3.payload(ethertype_);
-//	result_ = npp_.ParseEthernet(dot3, &eth_data_);
-//	EXPECT_TRUE(result_);
-//	EXPECT_EQ(dst_mac_string_, eth_data_.dst_mac_addr_);
-//	EXPECT_EQ(src_mac_string_, eth_data_.src_mac_addr_);
-//	EXPECT_EQ(ethertype_, eth_data_.ethertype_);
-//}
+TEST_F(NetworkPacketParserTest, ParseEthernetIIHeaderData)
+{
+	dst_mac_string_ = "00:01:fa:9e:1a:cd";
+	src_mac_string_ = "2b:01:f7:ae:5c:3f";
+	Tins::HWAddress<6> dst_mac(dst_mac_string_);
+	Tins::HWAddress<6> src_mac(src_mac_string_);
+	Tins::EthernetII eth2 = Tins::EthernetII() / Tins::IP() / Tins::TCP();
+	eth2.dst_addr(dst_mac);
+	eth2.src_addr(src_mac);
+	ethertype_ = 1200;
+	eth2.payload_type(ethertype_);
+
+	ON_CALL(mock_npp_sec_level_, ParseIPv4(_, _)).WillByDefault(Return(true));
+
+	result_ = mock_npp_sec_level_.ParseEthernetII(eth2, &eth_data_);
+	EXPECT_TRUE(result_);
+	EXPECT_EQ(dst_mac_string_, eth_data_.dst_mac_addr_);
+	EXPECT_EQ(src_mac_string_, eth_data_.src_mac_addr_);
+	EXPECT_EQ(ethertype_, eth_data_.ethertype_);
+}
+
+TEST_F(NetworkPacketParserTest, ParseEthernetIIParseIPv4)
+{
+	Tins::EthernetII eth2 = Tins::EthernetII() / Tins::IP() / Tins::TCP();
+
+	EXPECT_CALL(mock_npp_sec_level_, ParseIPv4(_, &eth_data_)).
+		Times(1).WillOnce(Return(true));
+
+	result_ = mock_npp_sec_level_.ParseEthernetII(eth2, &eth_data_);
+	EXPECT_TRUE(result_);
+}
+
+TEST_F(NetworkPacketParserTest, ParseEthernetParseEthernetLLC)
+{
+	Tins::Dot3 dot3 = Tins::Dot3() / Tins::LLC();
+
+	EXPECT_CALL(mock_npp_sec_level_, ParseEthernetLLC(_, &eth_data_)).
+		Times(1).WillOnce(Return(true));
+
+	result_ = mock_npp_sec_level_.ParseEthernet(dot3, &eth_data_);
+	EXPECT_TRUE(result_);
+}
+
+TEST_F(NetworkPacketParserTest, ParseIPv4HeaderData)
+{
+	Tins::IP ip = Tins::IP() / Tins::TCP();
+	std::string src_ipaddr_str("192.168.0.1");
+	std::string dst_ipaddr_str("255.255.255.0");
+	Tins::IPv4Address src_ipaddr(src_ipaddr_str);
+	Tins::IPv4Address dst_ipaddr(dst_ipaddr_str);
+	ip.src_addr(src_ipaddr);
+	ip.dst_addr(dst_ipaddr);
+	uint16_t id = 23;
+	ip.id(id);
+	uint8_t protocol = 3;
+	ip.protocol(protocol);
+	uint16_t frag_offset = 10;
+	Tins::small_uint<13> fragment_offset = frag_offset;
+	ip.fragment_offset(fragment_offset);
+
+	result_ = npp_.ParseIPv4(&ip, &eth_data_);
+	EXPECT_TRUE(result_);
+	EXPECT_EQ(src_ipaddr_str, eth_data_.src_ip_addr_);
+	EXPECT_EQ(dst_ipaddr_str, eth_data_.dst_ip_addr_);
+	EXPECT_EQ(id, eth_data_.id_);
+	EXPECT_EQ(protocol, eth_data_.protocol_);
+	EXPECT_EQ(frag_offset, eth_data_.offset_);
+
+}
+
+TEST_F(NetworkPacketParserTest, ParseEthernetLLCHeaderData)
+{
+	Tins::LLC llc;
+	uint8_t dsap = 45;
+	uint8_t ssap = 128;
+	llc.dsap(dsap);
+	llc.ssap(ssap);
+	uint8_t format = 0; // either 0, 1, or 3, 0 = information
+	llc.type(static_cast<Tins::LLC::Format>(format));
+
+	// Both snd and rcv seq are valid for format = 0
+	uint8_t snd_seq_num = 23; // must be modulo 128
+	uint8_t rcv_seq_num = 79; // must be modulo 128
+	llc.send_seq_number(snd_seq_num);
+	llc.receive_seq_number(rcv_seq_num);
+
+	result_ = npp_.ParseEthernetLLC(&llc, &eth_data_);
+	EXPECT_TRUE(result_);
+	EXPECT_EQ(dsap, eth_data_.dsap_);
+	EXPECT_EQ(ssap, eth_data_.ssap_);
+	EXPECT_EQ(format, eth_data_.frame_format_);
+	EXPECT_EQ(snd_seq_num, eth_data_.snd_seq_number_);
+	EXPECT_EQ(rcv_seq_num, eth_data_.rcv_seq_number_);
+}
+
+TEST_F(NetworkPacketParserTest, ParseUDPHeaderData)
+{
+	Tins::UDP udp;
+	uint16_t dst_port = 3090;
+	uint16_t src_port = 8081;
+	udp.dport(dst_port);
+	udp.sport(src_port);
+
+	result_ = npp_.ParseUDP(&udp, &eth_data_);
+	EXPECT_TRUE(result_);
+	EXPECT_EQ(dst_port, eth_data_.dst_port_);
+	EXPECT_EQ(src_port, eth_data_.src_port_);
+}
+
+TEST_F(NetworkPacketParserTest, ParseRawHeaderData)
+{
+	uint32_t pload_size = 123;
+	Tins::RawPDU::payload_type pload(pload_size);
+	Tins::RawPDU raw(pload);
+
+	result_ = npp_.ParseRaw(&raw, &eth_data_);
+	EXPECT_TRUE(result_);
+	EXPECT_EQ(pload_size, eth_data_.payload_size_);
+}
+
 

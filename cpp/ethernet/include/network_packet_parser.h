@@ -98,6 +98,7 @@ public:
 		EthernetData* eth_data);
 	
 
+
 	/************************************************************
 						 Data Link Layer
 	*************************************************************/
@@ -117,8 +118,21 @@ public:
 	*/
 	virtual bool ParseEthernet(Tins::Dot3& dot3_pdu, EthernetData* ed);
 
-	// 802.2 LLC
-	uint8_t ParseEthernetLLC();
+	
+	/*
+	Parse Tins::PDU::PDUType::LLC == 802.2 LLC type packet
+
+	Args:
+		llc_pdu		--> IP PDU
+		eth_data	--> Pointer to EthernetData object, a generic object
+						in which data and metadata for multiple types of
+						ethernet packets and sub-packets can be stored.
+						Holds the output of the parsed packets.
+
+	Return:
+		True if no errors, false otherwise.
+	*/
+	virtual bool ParseEthernetLLC(Tins::LLC* llc_pdu, EthernetData* ed);
 
 	/*
 	Ethernet II (802.3 with length/Ethertype >= 1536)
@@ -135,22 +149,90 @@ public:
 	*/
 	virtual bool ParseEthernetII(Tins::EthernetII& ethii_pdu, EthernetData* ed);
 
+
+
 	/************************************************************
 	                       Network Layer
 	*************************************************************/
-	uint8_t ParseIPv4();
+
+	/*
+	Parse Tins::PDU::PDUType::IP == IPv4 type packet
+
+	Args:
+		ip_pdu		--> IP PDU
+		eth_data	--> Pointer to EthernetData object, a generic object
+						in which data and metadata for multiple types of
+						ethernet packets and sub-packets can be stored.
+						Holds the output of the parsed packets.
+
+	Return:
+		True if no errors, false otherwise.
+	*/
+	virtual bool ParseIPv4(Tins::IP* ip_pdu, EthernetData* ed);
+
+
 
 	/************************************************************
 						   Transport Layer
 	*************************************************************/
-	uint8_t ParseUDP();
+
+	/*
+	Parse Tins::PDU::PDUType::UDP
+
+	Args:
+		udp_pdu		--> Tins::UDP PDU
+		eth_data	--> Pointer to EthernetData object, a generic object
+						in which data and metadata for multiple types of
+						ethernet packets and sub-packets can be stored.
+						Holds the output of the parsed packets.
+
+	Return:
+		True if no errors, false otherwise.
+	*/
+	bool ParseUDP(Tins::UDP* udp_pdu, EthernetData* ed);
+
+
 
 	/************************************************************
 						   Application Layer
 	*************************************************************/
-	// Very basic in its interaction with libtins. Provides a common
-	// function for recording data.
-	uint8_t ParseRaw();
+
+	/*
+	Parse Tins::PDU::PDUType::RAW
+
+	Args:
+		raw_pdu		--> Tins::RawPDU
+		eth_data	--> Pointer to EthernetData object, a generic object
+						in which data and metadata for multiple types of
+						ethernet packets and sub-packets can be stored.
+						Holds the output of the parsed packets.
+
+	Return:
+		True if no errors, false otherwise.
+	*/
+	bool ParseRaw(Tins::RawPDU* raw_pdu, EthernetData* ed);
+
+	///
+	/// Helper functions
+	/// 
+	
+	/*
+	Selector for the next parser. In this context, next
+	means the Tins::PDU::inner_pdu() of the current
+	PDU being parsed. Handle the case in which there 
+	is no inner pdu and the return pointer is nullptr.
+
+	Args:
+		pdu_ptr		-> Pointer to Tins::PDU
+		eth_data	--> Pointer to EthernetData object, a generic object
+						in which data and metadata for multiple types of
+						ethernet packets and sub-packets can be stored.
+						Holds the output of the parsed packets.
+
+	Return:
+		True if no errors, false otherwise.
+	*/
+	bool ParserSelector(const Tins::PDU const* pdu_ptr, EthernetData const* ed);
 
 	void PDUType();
 	void PrintPDUTypeNotHandled();
