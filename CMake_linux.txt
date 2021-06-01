@@ -32,10 +32,11 @@ include(GNUInstallDirs)
 ###########################################
 # Find All Dependencies
 ###########################################
-find_package(PkgConfig)
+# find_package(PkgConfig)
 
 find_package(Arrow REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(spdlog REQUIRED)
 
-pkg_check_modules(LIBTINS REQUIRED libtins)
+# pkg_check_modules(LIBTINS REQUIRED libtins)
+find_package(libtins REQUIRED)

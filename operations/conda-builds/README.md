@@ -1,7 +1,7 @@
 # Building conda packages
 
 Note that this guide is indended for use on Linux based
-systems. Windows systems have note been tested.
+systems. Windows systems have not been tested.
 
 The structure of the conda package config files as well as other
 packagind documentation can be found here:
