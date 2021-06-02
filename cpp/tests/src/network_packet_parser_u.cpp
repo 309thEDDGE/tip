@@ -20,16 +20,25 @@ class MockNPPTopLevel : public NetworkPacketParser
 {
 public:
 	MockNPPTopLevel() : NetworkPacketParser() {}
-	MOCK_METHOD2(ParseEthernet, bool(Tins::Dot3& dot3_pdu, EthernetData* ed));
-	MOCK_METHOD2(ParseEthernetII, bool(Tins::EthernetII& ethii_pdu, EthernetData* ed));
+	MOCK_METHOD2(ParseEthernet, bool(Tins::Dot3& dot3_pdu, EthernetData* const ed));
+	MOCK_METHOD2(ParseEthernetII, bool(Tins::EthernetII& ethii_pdu, EthernetData* const ed));
 };
 
 class MockNPPSecondLevel : public NetworkPacketParser
 {
 public:
 	MockNPPSecondLevel() : NetworkPacketParser() {}
-	MOCK_METHOD2(ParseIPv4, bool(Tins::IP* ip_pdu, EthernetData* ed));
-	MOCK_METHOD2(ParseEthernetLLC, bool(Tins::LLC* llc_pdu, EthernetData* ed));
+	MOCK_METHOD2(ParseIPv4, bool(Tins::IP* ip_pdu, EthernetData* const ed));
+	MOCK_METHOD2(ParseEthernetLLC, bool(Tins::LLC* llc_pdu, EthernetData* const ed));
+	MOCK_METHOD2(ParseRaw, bool(Tins::RawPDU* raw_pdu, EthernetData* const ed));
+	MOCK_METHOD2(ParseUDP, bool(Tins::UDP* udp_pdu, EthernetData* const ed));
+};
+
+class MockNPPSelector : public NetworkPacketParser
+{
+public:
+	MockNPPSelector() : NetworkPacketParser() {}
+	MOCK_METHOD2(ParserSelector, bool(Tins::PDU* pdu_ptr, EthernetData* const ed));
 };
 
 
@@ -45,11 +54,13 @@ protected:
 	bool result_;
 	NiceMock<MockNPPTopLevel> mock_npp_top_level_;
 	NiceMock<MockNPPSecondLevel> mock_npp_sec_level_;
+	NiceMock<MockNPPSelector> mock_npp_selector_;
 	NetworkPacketParser* npp_ptr_;
+	Tins::PDU* pdu_ptr_;
 
     NetworkPacketParserTest() : npp_(), eth_data_(), data_length_(0),
 		result_(false), ethertype_(0), mock_npp_top_level_(), npp_ptr_(nullptr),
-		mock_npp_sec_level_()
+		mock_npp_sec_level_(), pdu_ptr_(nullptr), mock_npp_selector_()
     {
 		
     }
@@ -109,10 +120,10 @@ TEST_F(NetworkPacketParserTest, ParseEthernetHeaderData)
 	ethertype_ = 1200;
 	dot3.length(ethertype_);
 
-	ON_CALL(mock_npp_sec_level_, ParseEthernetLLC(_, _)).
+	ON_CALL(mock_npp_selector_, ParserSelector(_, _)).
 		WillByDefault(Return(true));
 
-	result_ = mock_npp_sec_level_.ParseEthernet(dot3, &eth_data_);
+	result_ = mock_npp_selector_.ParseEthernet(dot3, &eth_data_);
 	EXPECT_TRUE(result_);
 	EXPECT_EQ(dst_mac_string_, eth_data_.dst_mac_addr_);
 	EXPECT_EQ(src_mac_string_, eth_data_.src_mac_addr_);
@@ -179,7 +190,10 @@ TEST_F(NetworkPacketParserTest, ParseIPv4HeaderData)
 	Tins::small_uint<13> fragment_offset = frag_offset;
 	ip.fragment_offset(fragment_offset);
 
-	result_ = npp_.ParseIPv4(&ip, &eth_data_);
+	ON_CALL(mock_npp_selector_, ParserSelector(_, _)).
+		WillByDefault(Return(true));
+
+	result_ = mock_npp_selector_.ParseIPv4(&ip, &eth_data_);
 	EXPECT_TRUE(result_);
 	EXPECT_EQ(src_ipaddr_str, eth_data_.src_ip_addr_);
 	EXPECT_EQ(dst_ipaddr_str, eth_data_.dst_ip_addr_);
@@ -222,13 +236,31 @@ TEST_F(NetworkPacketParserTest, ParseUDPHeaderData)
 	udp.dport(dst_port);
 	udp.sport(src_port);
 
-	result_ = npp_.ParseUDP(&udp, &eth_data_);
+	ON_CALL(mock_npp_selector_, ParserSelector(_, _)).
+		WillByDefault(Return(true));
+
+	result_ = mock_npp_selector_.ParseUDP(&udp, &eth_data_);
 	EXPECT_TRUE(result_);
 	EXPECT_EQ(dst_port, eth_data_.dst_port_);
 	EXPECT_EQ(src_port, eth_data_.src_port_);
 }
 
-TEST_F(NetworkPacketParserTest, ParseRawHeaderData)
+TEST_F(NetworkPacketParserTest, ParseTCPHeaderData)
+{
+	/*Tins::UDP udp;
+	uint16_t dst_port = 3090;
+	uint16_t src_port = 8081;
+	udp.dport(dst_port);
+	udp.sport(src_port);
+
+	ON_CALL(mock_npp_selector_, ParserSelector(_, _)).
+		WillByDefault(Return(true));
+
+	result_ = mock_npp_selector_.ParseUDP(&udp, &eth_data_);*/
+	EXPECT_TRUE(false);
+}
+
+TEST_F(NetworkPacketParserTest, ParseRawHeaderAndPayload)
 {
 	uint32_t pload_size = 123;
 	Tins::RawPDU::payload_type pload(pload_size);
@@ -237,6 +269,76 @@ TEST_F(NetworkPacketParserTest, ParseRawHeaderData)
 	result_ = npp_.ParseRaw(&raw, &eth_data_);
 	EXPECT_TRUE(result_);
 	EXPECT_EQ(pload_size, eth_data_.payload_size_);
+	EXPECT_TRUE(false);
 }
+
+TEST_F(NetworkPacketParserTest, ParserSelectorNullPointer)
+{
+	pdu_ptr_ = nullptr;
+	result_ = npp_.ParserSelector(pdu_ptr_, &eth_data_);
+	EXPECT_FALSE(result_);
+}
+
+TEST_F(NetworkPacketParserTest, ParserSelectorParseEthernetLLC)
+{
+	Tins::LLC llc;
+	pdu_ptr_ = dynamic_cast<Tins::PDU*>(&llc);
+
+	EXPECT_CALL(mock_npp_sec_level_, ParseEthernetLLC(&llc, &eth_data_)).
+		Times(1).WillOnce(Return(true));
+
+	result_ = mock_npp_sec_level_.ParserSelector(pdu_ptr_, &eth_data_);
+	EXPECT_TRUE(result_);
+}
+
+TEST_F(NetworkPacketParserTest, ParserSelectorParseRaw)
+{
+	uint32_t pload_size = 123;
+	Tins::RawPDU::payload_type pload(pload_size);
+	Tins::RawPDU raw(pload);
+	pdu_ptr_ = dynamic_cast<Tins::PDU*>(&raw);
+
+	EXPECT_CALL(mock_npp_sec_level_, ParseRaw(&raw, &eth_data_)).
+		Times(1).WillOnce(Return(true));
+
+	result_ = mock_npp_sec_level_.ParserSelector(pdu_ptr_, &eth_data_);
+	EXPECT_TRUE(result_);
+}
+
+TEST_F(NetworkPacketParserTest, ParserSelectorParseIPv4)
+{
+	Tins::IP ip;
+	pdu_ptr_ = dynamic_cast<Tins::PDU*>(&ip);
+
+	EXPECT_CALL(mock_npp_sec_level_, ParseIPv4(&ip, &eth_data_)).
+		Times(1).WillOnce(Return(true));
+
+	result_ = mock_npp_sec_level_.ParserSelector(pdu_ptr_, &eth_data_);
+	EXPECT_TRUE(result_);
+}
+
+TEST_F(NetworkPacketParserTest, ParserSelectorParseUDP)
+{
+	Tins::UDP udp;
+	pdu_ptr_ = dynamic_cast<Tins::PDU*>(&udp);
+
+	EXPECT_CALL(mock_npp_sec_level_, ParseUDP(&udp, &eth_data_)).
+		Times(1).WillOnce(Return(true));
+
+	result_ = mock_npp_sec_level_.ParserSelector(pdu_ptr_, &eth_data_);
+	EXPECT_TRUE(result_);
+}
+
+//TEST_F(NetworkPacketParserTest, ParserSelectorParseEthernetLLC)
+//{
+//	Tins::LLC llc;
+//	pdu_ptr_ = dynamic_cast<Tins::PDU*>(&llc);
+//
+//	EXPECT_CALL(mock_npp_sec_level_, ParseEthernetLLC(&llc, &eth_data_)).
+//		Times(1).WillOnce(Return(true));
+//
+//	result_ = mock_npp_sec_level_.ParserSelector(pdu_ptr_, &eth_data_);
+//	EXPECT_TRUE(result_);
+//}
 
 

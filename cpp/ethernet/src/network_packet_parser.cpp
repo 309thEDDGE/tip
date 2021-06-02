@@ -31,7 +31,7 @@ bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
 	return true;
 }
 
-bool NetworkPacketParser::ParseEthernet(Tins::Dot3& dot3_pdu, EthernetData* ed)
+bool NetworkPacketParser::ParseEthernet(Tins::Dot3& dot3_pdu, EthernetData* const ed)
 {
 	
 	ed->dst_mac_addr_ = dot3_pdu.dst_addr().to_string();
@@ -42,47 +42,12 @@ bool NetworkPacketParser::ParseEthernet(Tins::Dot3& dot3_pdu, EthernetData* ed)
 
 	// Get inner pdu and check type.
 	pdu_ptr_ = dot3_pdu.inner_pdu();
-	PDUType();
 	//pdu_type_val_ = static_cast<uint16_t>(pdu_ptr_->pdu_type());
 	//SPDLOG_INFO("Ethernet inner pdu is {:s}", pdu_type_to_name_map_.at(pdu_type_val_));
-	
-	switch (pdu_ptr_->pdu_type())
-	{
-	case Tins::PDU::PDUType::LLC:
-		llc_pdu_ = dynamic_cast<Tins::LLC*>(pdu_ptr_);
-		return ParseEthernetLLC(llc_pdu_, ed);
-		break;
-	default:
-		SPDLOG_WARN("PDU type not handled: {:s}",
-			pdu_type_to_name_map_.at(pdu_type_val_));
-		break;
-	}
-	//// LLC
-	//if (pdu_type_val_ == 26)
-	//{
-	//	return ParseEthernetLLC();
-	//}
-	//// SNAP
-	//else if (pdu_type_val_ == 27)
-	//{
-	//	PrintPDUTypeNotHandled();
-	//}
-	//// Raw
-	//else if (pdu_type_val_ == 0)
-	//{
-	//	PrintPDUTypeNotHandled();
-	//}
-	//else
-	//{
-	//	printf("\n\nCase not handled:\n");
-	//	PrintPDUTypeNotHandled();
-	//	return 1;
-	//}
-
-	return true;
+	return ParserSelector(pdu_ptr_, ed);
 }
 
-bool NetworkPacketParser::ParseEthernetLLC(Tins::LLC* llc_pdu, EthernetData* ed)
+bool NetworkPacketParser::ParseEthernetLLC(Tins::LLC* llc_pdu, EthernetData* const ed)
 {
 	
 	ed->dsap_ = llc_pdu->dsap();
@@ -100,91 +65,25 @@ bool NetworkPacketParser::ParseEthernetLLC(Tins::LLC* llc_pdu, EthernetData* ed)
 		ethernet_data_ptr_->frame_format_, ethernet_data_ptr_->snd_seq_number_, 
 		ethernet_data_ptr_->rcv_seq_number_);*/
 
-	//pdu_ptr_ = llc_pdu_->inner_pdu();
-	//PDUType();
-
-	/*if (pdu_type_val_ == 0)
-	{
-		return ParseRaw();
-	}
-	else
-	{
-		PrintPDUTypeNotHandled();
-		return 1;
-	}*/
-
-	return true;
+	pdu_ptr_ = llc_pdu_->inner_pdu();
+	return ParserSelector(pdu_ptr_, ed);
 }
 
-bool NetworkPacketParser::ParseEthernetII(Tins::EthernetII& ethii_pdu, EthernetData* ed)
+bool NetworkPacketParser::ParseEthernetII(Tins::EthernetII& ethii_pdu, EthernetData* const ed)
 {
+	// See possible Ethernet II types at https://en.wikipedia.org/wiki/Ethernet_frame
+
 	ed->dst_mac_addr_ = ethii_pdu.dst_addr().to_string();
 	ed->src_mac_addr_ = ethii_pdu.src_addr().to_string();
 	ed->ethertype_ = ethii_pdu.payload_type();
 
 	pdu_ptr_ = ethii_pdu.inner_pdu();
-	PDUType();
 	//pdu_type_val_ = static_cast<uint16_t>(pdu_ptr_->pdu_type());
-	SPDLOG_INFO("EthernetII inner pdu is {:s}", pdu_type_to_name_map_.at(pdu_type_val_));
-
-	// See possible Ethernet II types at https://en.wikipedia.org/wiki/Ethernet_frame
-
-	// IP/IPv4
-	//Tins::PDU::PDUType pdutype = pdu_ptr_->pdu_type();
-	switch (pdu_ptr_->pdu_type())
-	{
-	case Tins::PDU::PDUType::IP:
-		ip_pdu_ = dynamic_cast<Tins::IP*>(pdu_ptr_);
-		return ParseIPv4(ip_pdu_, ed);
-		break;
-	default:
-		SPDLOG_WARN("PDU type not handled: {:s}", 
-			pdu_type_to_name_map_.at(pdu_type_val_));
-		break;
-	}
-	//if (pdu_type_val_ == 28)
-	//{
-	//	if (ethernet_data_ptr_->ethertype_ != 0x0800)
-	//		printf("Wrong payload type (%hu) for pdu type (%hu)!\n", 
-	//			ethernet_data_ptr_->ethertype_, pdu_type_val_);
-	//	
-	//	return ParseIPv4();
-	//}
-	//// ARP
-	//else if (pdu_type_val_ == 29)
-	//{
-	//	PrintPDUTypeNotHandled();
-	//	if (ethernet_data_ptr_->ethertype_ != 0x0806)
-	//		printf("Wrong payload type (%hu) for pdu type (%hu)!\n", 
-	//			ethernet_data_ptr_->ethertype_, pdu_type_val_);
-	//}
-	//// IPv6
-	//else if (pdu_type_val_ == 40)
-	//{
-	//	PrintPDUTypeNotHandled();
-	//	if (ethernet_data_ptr_->ethertype_ != 0x86DD)
-	//		printf("Wrong payload type (%hu) for pdu type (%hu)!\n", 
-	//			ethernet_data_ptr_->ethertype_, pdu_type_val_);
-	//}
-	//// IEEE 802.1Q
-	//else if (pdu_type_val_ == 44)
-	//{
-	//	PrintPDUTypeNotHandled();
-	//	if (ethernet_data_ptr_->ethertype_ != 0x8100)
-	//		printf("Wrong payload type (%hu) for pdu type (%hu)!\n", 
-	//			ethernet_data_ptr_->ethertype_, pdu_type_val_);
-	//}
-	//else
-	//{
-	//	printf("\n\nCase not handled:\n");
-	//	PrintPDUTypeNotHandled();
-	//	return 1;
-	//}
-
-	return true;
+	//SPDLOG_INFO("EthernetII inner pdu is {:s}", pdu_type_to_name_map_.at(pdu_type_val_));
+	return ParserSelector(pdu_ptr_, ed);
 }
 
-bool NetworkPacketParser::ParseIPv4(Tins::IP* ip_pdu, EthernetData* ed)
+bool NetworkPacketParser::ParseIPv4(Tins::IP* ip_pdu, EthernetData* const ed)
 {
 	
 	ed->src_ip_addr_ = ip_pdu->src_addr().to_string();
@@ -195,42 +94,15 @@ bool NetworkPacketParser::ParseIPv4(Tins::IP* ip_pdu, EthernetData* ed)
 	ed->offset_ = ip_pdu->fragment_offset();
 
 	pdu_ptr_ = ip_pdu->inner_pdu();
-	PDUType();
-	//pdu_type_val_ = static_cast<uint16_t>(pdu_ptr_->pdu_type());
 	//SPDLOG_INFO("IP inner pdu is {:s}", pdu_type_to_name_map_.at(pdu_type_val_));
 
 	/*printf("IPv4: srcaddr %s, dstaddr %s, id %hu, protocol %hhu, offset %hu\n",
 		ethernet_data_ptr_->src_ip_addr_.c_str(), ethernet_data_ptr_->dst_ip_addr_.c_str(), 
 		ethernet_data_ptr_->id_, ethernet_data_ptr_->protocol_, ethernet_data_ptr_->offset_);*/
-
-	//pdu_ptr_ = ip_pdu_->inner_pdu();
-	//PDUType();
-	switch (pdu_ptr_->pdu_type())
-	{
-	case Tins::PDU::PDUType::UDP:
-		udp_pdu_ = dynamic_cast<Tins::UDP*>(pdu_ptr_);
-		return ParseUDP(udp_pdu_, ed);
-		break;
-	default:
-		SPDLOG_WARN("PDU type not handled: {:s}",
-			pdu_type_to_name_map_.at(pdu_type_val_));
-		break;
-	}
-	//// UDP
-	//if (pdu_type_val_ == 31)
-	//{
-	//	return ParseUDP();
-	//}
-	//else
-	//{
-	//	PrintPDUTypeNotHandled();
-	//	return 1;
-	//}
-
-	return true;
+	return ParserSelector(pdu_ptr_, ed);
 }
 
-bool NetworkPacketParser::ParseUDP(Tins::UDP* udp_pdu, EthernetData* ed)
+bool NetworkPacketParser::ParseUDP(Tins::UDP* udp_pdu, EthernetData* const ed)
 {
 	
 	ed->src_port_ = udp_pdu->sport();
@@ -238,29 +110,13 @@ bool NetworkPacketParser::ParseUDP(Tins::UDP* udp_pdu, EthernetData* ed)
 	/*printf("UDP: src port %hu, dst port %hu\n", ethernet_data_ptr_->src_port_, 
 		ethernet_data_ptr_->dst_port_);*/
 
-	pdu_ptr_ = udp_pdu_->inner_pdu();
-	PDUType();
+	pdu_ptr_ = udp_pdu->inner_pdu();
 	SPDLOG_INFO("UDP inner pdu is {:s}", pdu_type_to_name_map_.at(pdu_type_val_));
-
-	switch (pdu_ptr_->pdu_type())
-	{
-	case Tins::PDU::PDUType::RAW:
-		raw_pdu_ = dynamic_cast<Tins::RawPDU*>(pdu_ptr_);
-		return ParseRaw(raw_pdu_, ed);
-		break;
-	default:
-		SPDLOG_WARN("PDU type not handled: {:s}",
-			pdu_type_to_name_map_.at(pdu_type_val_));
-		break;
-	}
-
-	return true;
+	return ParserSelector(pdu_ptr_, ed);
 }
 
-bool NetworkPacketParser::ParseRaw(Tins::RawPDU* raw_pdu, EthernetData* ed)
+bool NetworkPacketParser::ParseRaw(Tins::RawPDU* raw_pdu, EthernetData* const ed)
 {
-	
-
 	// Check payload length.
 	ed->payload_size_ = raw_pdu->payload_size();
 
@@ -291,6 +147,44 @@ void NetworkPacketParser::PDUType()
 	else
 		pdu_type_val_ = 999;
 	//printf("PDU type %hu = %s\n", pdu_type_val_, pdu_type_to_name_map_.at(pdu_type_val_).c_str());
+}
+
+bool NetworkPacketParser::ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const ed)
+{
+	// If there is no inner_pdu(), the call will return a null pointer, which
+	// may be passed to this function.
+	if (pdu_ptr == nullptr)
+	{
+		printf("null pointer\n");
+		return false;
+	}
+
+	switch (pdu_ptr->pdu_type())
+	{
+	case Tins::PDU::PDUType::LLC:
+		llc_pdu_ = dynamic_cast<Tins::LLC*>(pdu_ptr);
+		return ParseEthernetLLC(llc_pdu_, ed);
+		break;
+	case Tins::PDU::PDUType::RAW:
+		raw_pdu_ = dynamic_cast<Tins::RawPDU*>(pdu_ptr);
+		return ParseRaw(raw_pdu_, ed);
+		break;
+	case Tins::PDU::PDUType::IP:
+		ip_pdu_ = dynamic_cast<Tins::IP*>(pdu_ptr);
+		return ParseIPv4(ip_pdu_, ed);
+		break;
+	case Tins::PDU::PDUType::UDP:
+		udp_pdu_ = dynamic_cast<Tins::UDP*>(pdu_ptr);
+		return ParseUDP(udp_pdu_, ed);
+		break;
+	default:
+		pdu_type_val_ = static_cast<uint16_t>(pdu_ptr->pdu_type());
+		SPDLOG_WARN("PDU type not handled: {:s}",
+			pdu_type_to_name_map_.at(pdu_type_val_));
+		break;
+	}
+
+	return true;
 }
 
 void NetworkPacketParser::PrintPDUTypeNotHandled()

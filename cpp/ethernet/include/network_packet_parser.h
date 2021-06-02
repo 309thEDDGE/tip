@@ -36,6 +36,16 @@ Include the following three headers prior to tins.h.
 
 class NetworkPacketParser
 {
+
+	/*
+	A note about usage of const Tins::PDU* vs (non-const) Tins::PDU*:
+
+	Getters for the various PDU types (example: Tins::IP, Tins::LLC) are not
+	declared as const, therefore can't be used with const Tins::PDU* pointers.
+	This is the reason why non-const pointers are passed to the various parsers
+	instead of using the safe and obvious option of const pointers.
+
+	*/
 private:
 	EthernetData* ethernet_data_ptr_;
 	//std::vector<uint8_t> temp_payload_;
@@ -116,7 +126,7 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool ParseEthernet(Tins::Dot3& dot3_pdu, EthernetData* ed);
+	virtual bool ParseEthernet(Tins::Dot3& dot3_pdu, EthernetData* const ed);
 
 	
 	/*
@@ -132,7 +142,7 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool ParseEthernetLLC(Tins::LLC* llc_pdu, EthernetData* ed);
+	virtual bool ParseEthernetLLC(Tins::LLC* llc_pdu, EthernetData* const ed);
 
 	/*
 	Ethernet II (802.3 with length/Ethertype >= 1536)
@@ -147,7 +157,7 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool ParseEthernetII(Tins::EthernetII& ethii_pdu, EthernetData* ed);
+	virtual bool ParseEthernetII(Tins::EthernetII& ethii_pdu, EthernetData* const ed);
 
 
 
@@ -168,7 +178,7 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool ParseIPv4(Tins::IP* ip_pdu, EthernetData* ed);
+	virtual bool ParseIPv4(Tins::IP* ip_pdu, EthernetData* const ed);
 
 
 
@@ -189,7 +199,7 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	bool ParseUDP(Tins::UDP* udp_pdu, EthernetData* ed);
+	virtual bool ParseUDP(Tins::UDP* udp_pdu, EthernetData* const ed);
 
 
 
@@ -210,7 +220,7 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	bool ParseRaw(Tins::RawPDU* raw_pdu, EthernetData* ed);
+	virtual bool ParseRaw(Tins::RawPDU* raw_pdu, EthernetData* const ed);
 
 	///
 	/// Helper functions
@@ -232,7 +242,7 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	bool ParserSelector(const Tins::PDU const* pdu_ptr, EthernetData const* ed);
+	virtual bool ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const ed);
 
 	void PDUType();
 	void PrintPDUTypeNotHandled();
