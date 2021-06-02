@@ -22,8 +22,14 @@ protected:
             ManagedPath(std::string("/data/1553"));
         worker_cfg_.output_file_paths_[Ch10PacketType::VIDEO_DATA_F0] =
             ManagedPath(std::string("/data/video"));
+
+        // This map must have at least all of the types defined by default
+        // in Ch10Context::CreateDefaultPacketTypeConfig with the exception 
+        // of COMPUTER_GENERATED_DATA_F1 and TIME_DATA_F1 otherwise tests
+        // will fail.
         worker_cfg_.ch10_packet_type_map_[Ch10PacketType::MILSTD1553_F1] = true;
         worker_cfg_.ch10_packet_type_map_[Ch10PacketType::VIDEO_DATA_F0] = false;
+        worker_cfg_.ch10_packet_type_map_[Ch10PacketType::ETHERNET_DATA_F0] = false;
 
         // Initialize Ch10Context
         ctx_.Initialize(worker_cfg_.start_position_, worker_cfg_.worker_index_);
