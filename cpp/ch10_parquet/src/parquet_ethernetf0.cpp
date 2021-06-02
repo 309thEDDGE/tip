@@ -1,7 +1,7 @@
 #include "parquet_ethernetf0.h"
 
 ParquetEthernetF0::ParquetEthernetF0() : ParquetContext(DEFAULT_ROW_GROUP_COUNT),
-thread_id_(UINT16_MAX), PAYLOAD_LIST_COUNT(EthernetData::mtu_), 
+thread_id_(UINT16_MAX), PAYLOAD_LIST_COUNT(EthernetData::max_payload_size_), 
 MAX_TEMP_ELEMENT_COUNT(DEFAULT_ROW_GROUP_COUNT* DEFAULT_BUFFER_SIZE_MULTIPLIER),
 payload_ptr_(nullptr)
 {

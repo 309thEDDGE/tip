@@ -1,9 +1,8 @@
 #include "network_packet_parser.h"
 
-NetworkPacketParser::NetworkPacketParser() : pdu_type_(Tins::PDU::PDUType::UNKNOWN), 
-pdu_ptr_(nullptr), raw_pdu_(nullptr), pdu_type_val_(999),
-udp_pdu_(nullptr), ip_pdu_(nullptr), llc_pdu_(nullptr), ethernet_data_ptr_(nullptr),
-dot3_(), eth2_()
+NetworkPacketParser::NetworkPacketParser() : raw_pdu_(nullptr),
+udp_pdu_(nullptr), ip_pdu_(nullptr), llc_pdu_(nullptr), dot3_(), eth2_(), 
+tcp_pdu_(nullptr), max_payload_size_(0), max_payload_size(max_payload_size_)
 {
 
 }
@@ -18,8 +17,10 @@ bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
 		if (dot3_.length() > mtu_)
 		{
 			eth2_ = Tins::EthernetII(buffer, length);
+			SPDLOG_DEBUG("Parsing EthernetII");
 			return ParseEthernetII(eth2_, eth_data);
 		}
+		SPDLOG_DEBUG("Parsing 802.3");
 		return ParseEthernet(dot3_, eth_data);
 	}
 	catch (const Tins::malformed_packet& e)
@@ -33,18 +34,11 @@ bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
 
 bool NetworkPacketParser::ParseEthernet(Tins::Dot3& dot3_pdu, EthernetData* const ed)
 {
-	
 	ed->dst_mac_addr_ = dot3_pdu.dst_addr().to_string();
 	ed->src_mac_addr_ = dot3_pdu.src_addr().to_string();
 	ed->ethertype_ = dot3_pdu.length();
-	/*printf("\nDot3 -- > dst: %s, src: %s, length: %hu\n", ethernet_data_ptr_->dst_mac_addr_.c_str(), 
-		ethernet_data_ptr_->src_mac_addr_.c_str(), dot3.length());*/
 
-	// Get inner pdu and check type.
-	pdu_ptr_ = dot3_pdu.inner_pdu();
-	//pdu_type_val_ = static_cast<uint16_t>(pdu_ptr_->pdu_type());
-	//SPDLOG_INFO("Ethernet inner pdu is {:s}", pdu_type_to_name_map_.at(pdu_type_val_));
-	return ParserSelector(pdu_ptr_, ed);
+	return ParserSelector(dot3_pdu.inner_pdu(), ed);
 }
 
 bool NetworkPacketParser::ParseEthernetLLC(Tins::LLC* llc_pdu, EthernetData* const ed)
@@ -60,13 +54,7 @@ bool NetworkPacketParser::ParseEthernetLLC(Tins::LLC* llc_pdu, EthernetData* con
 	ed->snd_seq_number_ = llc_pdu->send_seq_number();
 	ed->rcv_seq_number_ = llc_pdu->receive_seq_number();
 
-	/*printf("LLC: dsap %hhu, ssap %hhu, type %hhu, sendseqnum %hhu, rcvseqnum %hhu\n",
-		ethernet_data_ptr_->dsap_, ethernet_data_ptr_->ssap_, 
-		ethernet_data_ptr_->frame_format_, ethernet_data_ptr_->snd_seq_number_, 
-		ethernet_data_ptr_->rcv_seq_number_);*/
-
-	pdu_ptr_ = llc_pdu_->inner_pdu();
-	return ParserSelector(pdu_ptr_, ed);
+	return ParserSelector(llc_pdu->inner_pdu(), ed);
 }
 
 bool NetworkPacketParser::ParseEthernetII(Tins::EthernetII& ethii_pdu, EthernetData* const ed)
@@ -76,11 +64,8 @@ bool NetworkPacketParser::ParseEthernetII(Tins::EthernetII& ethii_pdu, EthernetD
 	ed->dst_mac_addr_ = ethii_pdu.dst_addr().to_string();
 	ed->src_mac_addr_ = ethii_pdu.src_addr().to_string();
 	ed->ethertype_ = ethii_pdu.payload_type();
-
-	pdu_ptr_ = ethii_pdu.inner_pdu();
-	//pdu_type_val_ = static_cast<uint16_t>(pdu_ptr_->pdu_type());
-	//SPDLOG_INFO("EthernetII inner pdu is {:s}", pdu_type_to_name_map_.at(pdu_type_val_));
-	return ParserSelector(pdu_ptr_, ed);
+	
+	return ParserSelector(ethii_pdu.inner_pdu(), ed);
 }
 
 bool NetworkPacketParser::ParseIPv4(Tins::IP* ip_pdu, EthernetData* const ed)
@@ -93,60 +78,74 @@ bool NetworkPacketParser::ParseIPv4(Tins::IP* ip_pdu, EthernetData* const ed)
 	ed->protocol_ = ip_pdu->protocol();
 	ed->offset_ = ip_pdu->fragment_offset();
 
-	pdu_ptr_ = ip_pdu->inner_pdu();
-	//SPDLOG_INFO("IP inner pdu is {:s}", pdu_type_to_name_map_.at(pdu_type_val_));
-
-	/*printf("IPv4: srcaddr %s, dstaddr %s, id %hu, protocol %hhu, offset %hu\n",
-		ethernet_data_ptr_->src_ip_addr_.c_str(), ethernet_data_ptr_->dst_ip_addr_.c_str(), 
-		ethernet_data_ptr_->id_, ethernet_data_ptr_->protocol_, ethernet_data_ptr_->offset_);*/
-	return ParserSelector(pdu_ptr_, ed);
+	return ParserSelector(ip_pdu->inner_pdu(), ed);
 }
 
 bool NetworkPacketParser::ParseUDP(Tins::UDP* udp_pdu, EthernetData* const ed)
 {
-	
 	ed->src_port_ = udp_pdu->sport();
 	ed->dst_port_ = udp_pdu->dport();
-	/*printf("UDP: src port %hu, dst port %hu\n", ethernet_data_ptr_->src_port_, 
-		ethernet_data_ptr_->dst_port_);*/
 
-	pdu_ptr_ = udp_pdu->inner_pdu();
-	SPDLOG_INFO("UDP inner pdu is {:s}", pdu_type_to_name_map_.at(pdu_type_val_));
-	return ParserSelector(pdu_ptr_, ed);
+	// Set max payload size
+	max_payload_size_ = EthernetData::max_udp_payload_size_;
+
+	return ParserSelector(udp_pdu->inner_pdu(), ed);
 }
 
-bool NetworkPacketParser::ParseRaw(Tins::RawPDU* raw_pdu, EthernetData* const ed)
+bool NetworkPacketParser::ParseTCP(Tins::TCP* tcp_pdu, EthernetData* const ed)
 {
-	// Check payload length.
+	ed->dst_port_ = tcp_pdu->dport();
+	ed->src_port_ = tcp_pdu->sport();
+
+	// Set max payload size
+	max_payload_size_ = EthernetData::max_tcp_payload_size_;
+
+	return ParserSelector(tcp_pdu->inner_pdu(), ed);
+}
+
+bool NetworkPacketParser::ParseRaw(Tins::RawPDU* raw_pdu, EthernetData* const ed,
+	const uint32_t& max_pload_size)
+{
 	ed->payload_size_ = raw_pdu->payload_size();
 
-	//if (ethernet_data_ptr_->payload_size_ > EthernetData::mtu_)
-	//{
-	//	/*printf("NetworkPacketParser::ParseRaw(): Payload size exceeds MTU: %u\n",
-	//		ethernet_data_ptr_->payload_size_);*/
-	//	return 1;
-	//}
+	/*
+	It's not clear at this time if storing the pointer is sufficient
+	to locate the data. When a pointer to a buffer is initially passed
+	to the Parse method and a Tins PDU object is constructed. It's not
+	clear if the cascading containers (i.e., PDUs) are constructed all at
+	once or on each inner_pdu call and whether the final raw data payload
+	is lifted from the buffer into a payload_type (vector<uint8_t>) that
+	is allocated on the heap or a vector is constructed such that it's first
+	element coincides with the location in memory of the original buffer 
+	raw payload. If the former scenario is true, then storing a pointer is 
+	meaningless because the Tins object which holds the data will go out
+	of scope as soon as Parse returns to the original caller. In that
+	case, the final payload data will need to be copied.
 
-	//// This copy is inefficient because the payload will be copied again into
-	//// the vector from which the payloads will be eventually read into parquet.
-	//// Much better to hold a pointer to the final payload vector, somehow retrieved from
-	//// the ethernet parquet writing class, in the EthernetData object. Then data
-	//// can be written/copied once.
-	//std::copy(raw_pdu_->payload().begin(), raw_pdu_->payload().end(), 
-	//	ethernet_data_ptr_->payload_ptr_);
+	The test NetworkPacketParserTest.ParseRawHeaderAndPayloadInChain
+	has shown that the RawPDU payload is not somehow constructed
+	on top of the original memory location of the payload from 
+	from the buffer. Instead it is copied into the RawPDU.payload()
+	vector. Because of this, I must actually copy the payload data
+	from the RawPDU into my EthernetData object.
+	*/
+	//ed->payload_ptr_ = raw_pdu->payload().data();
 
-	return true;
-}
-
-void NetworkPacketParser::PDUType()
-{
-	if (pdu_ptr_ != nullptr)
+	// Check if the payload size exceeds the default mtu.
+	if (ed->payload_size_ > max_pload_size)
 	{
-		pdu_type_val_ = static_cast<uint16_t>(pdu_ptr_->pdu_type());
+		SPDLOG_WARN("Payload size ({:d}) > max payload size ({:d})", ed->payload_size_,
+			max_pload_size);
+		return false;
 	}
-	else
-		pdu_type_val_ = 999;
-	//printf("PDU type %hu = %s\n", pdu_type_val_, pdu_type_to_name_map_.at(pdu_type_val_).c_str());
+
+	// Copy the payload into the EthernetData payload vector
+	std::copy(raw_pdu->payload().data(), raw_pdu->payload().data() + ed->payload_size_,
+		ed->payload_ptr_);
+
+	// Return true instead of calling ParserSelector on the inner_pdu because
+	// there can be no inner_pdu for a RawPDU.
+	return true;
 }
 
 bool NetworkPacketParser::ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const ed)
@@ -159,6 +158,8 @@ bool NetworkPacketParser::ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const
 		return false;
 	}
 
+	SPDLOG_DEBUG("Parsing {:s}", pdu_type_to_name_map_.at(
+		static_cast<uint16_t>(pdu_ptr->pdu_type())));
 	switch (pdu_ptr->pdu_type())
 	{
 	case Tins::PDU::PDUType::LLC:
@@ -167,7 +168,7 @@ bool NetworkPacketParser::ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const
 		break;
 	case Tins::PDU::PDUType::RAW:
 		raw_pdu_ = dynamic_cast<Tins::RawPDU*>(pdu_ptr);
-		return ParseRaw(raw_pdu_, ed);
+		return ParseRaw(raw_pdu_, ed, max_payload_size_);
 		break;
 	case Tins::PDU::PDUType::IP:
 		ip_pdu_ = dynamic_cast<Tins::IP*>(pdu_ptr);
@@ -177,19 +178,15 @@ bool NetworkPacketParser::ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const
 		udp_pdu_ = dynamic_cast<Tins::UDP*>(pdu_ptr);
 		return ParseUDP(udp_pdu_, ed);
 		break;
+	case Tins::PDU::PDUType::TCP:
+		tcp_pdu_ = dynamic_cast<Tins::TCP*>(pdu_ptr);
+		return ParseTCP(tcp_pdu_, ed);
+		break;
 	default:
-		pdu_type_val_ = static_cast<uint16_t>(pdu_ptr->pdu_type());
 		SPDLOG_WARN("PDU type not handled: {:s}",
-			pdu_type_to_name_map_.at(pdu_type_val_));
+			pdu_type_to_name_map_.at(static_cast<uint16_t>(pdu_ptr->pdu_type())));
 		break;
 	}
 
 	return true;
 }
-
-void NetworkPacketParser::PrintPDUTypeNotHandled()
-{
-	printf("\n !!!!!! PDU type NOT HANDLED, %hu = %s\n", pdu_type_val_, 
-		pdu_type_to_name_map_.at(pdu_type_val_).c_str());
-}
-

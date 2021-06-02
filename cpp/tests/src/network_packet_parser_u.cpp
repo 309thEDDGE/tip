@@ -30,8 +30,10 @@ public:
 	MockNPPSecondLevel() : NetworkPacketParser() {}
 	MOCK_METHOD2(ParseIPv4, bool(Tins::IP* ip_pdu, EthernetData* const ed));
 	MOCK_METHOD2(ParseEthernetLLC, bool(Tins::LLC* llc_pdu, EthernetData* const ed));
-	MOCK_METHOD2(ParseRaw, bool(Tins::RawPDU* raw_pdu, EthernetData* const ed));
+	MOCK_METHOD3(ParseRaw, bool(Tins::RawPDU* raw_pdu, EthernetData* const ed, 
+		const uint32_t& max_pload_size));
 	MOCK_METHOD2(ParseUDP, bool(Tins::UDP* udp_pdu, EthernetData* const ed));
+	MOCK_METHOD2(ParseTCP, bool(Tins::TCP* tcp_pdu, EthernetData* const ed));
 };
 
 class MockNPPSelector : public NetworkPacketParser
@@ -219,7 +221,10 @@ TEST_F(NetworkPacketParserTest, ParseEthernetLLCHeaderData)
 	llc.send_seq_number(snd_seq_num);
 	llc.receive_seq_number(rcv_seq_num);
 
-	result_ = npp_.ParseEthernetLLC(&llc, &eth_data_);
+	ON_CALL(mock_npp_selector_, ParserSelector(_, _)).
+		WillByDefault(Return(true));
+
+	result_ = mock_npp_selector_.ParseEthernetLLC(&llc, &eth_data_);
 	EXPECT_TRUE(result_);
 	EXPECT_EQ(dsap, eth_data_.dsap_);
 	EXPECT_EQ(ssap, eth_data_.ssap_);
@@ -241,35 +246,93 @@ TEST_F(NetworkPacketParserTest, ParseUDPHeaderData)
 
 	result_ = mock_npp_selector_.ParseUDP(&udp, &eth_data_);
 	EXPECT_TRUE(result_);
+	EXPECT_EQ(mock_npp_selector_.max_payload_size, EthernetData::max_udp_payload_size_);
 	EXPECT_EQ(dst_port, eth_data_.dst_port_);
 	EXPECT_EQ(src_port, eth_data_.src_port_);
 }
 
 TEST_F(NetworkPacketParserTest, ParseTCPHeaderData)
 {
-	/*Tins::UDP udp;
+	Tins::TCP tcp;
 	uint16_t dst_port = 3090;
 	uint16_t src_port = 8081;
-	udp.dport(dst_port);
-	udp.sport(src_port);
+	tcp.dport(dst_port);
+	tcp.sport(src_port);
 
 	ON_CALL(mock_npp_selector_, ParserSelector(_, _)).
 		WillByDefault(Return(true));
 
-	result_ = mock_npp_selector_.ParseUDP(&udp, &eth_data_);*/
-	EXPECT_TRUE(false);
+	result_ = mock_npp_selector_.ParseTCP(&tcp, &eth_data_);
+	EXPECT_TRUE(result_);
+	EXPECT_EQ(mock_npp_selector_.max_payload_size, EthernetData::max_tcp_payload_size_);
+	EXPECT_EQ(dst_port, eth_data_.dst_port_);
+	EXPECT_EQ(src_port, eth_data_.src_port_);
 }
 
 TEST_F(NetworkPacketParserTest, ParseRawHeaderAndPayload)
 {
-	uint32_t pload_size = 123;
-	Tins::RawPDU::payload_type pload(pload_size);
+	uint32_t pload_size = 627;
+	Tins::RawPDU::payload_type pload(pload_size, 24);
 	Tins::RawPDU raw(pload);
+	uint32_t max_size = 800; // > pload_size
 
-	result_ = npp_.ParseRaw(&raw, &eth_data_);
+	result_ = npp_.ParseRaw(&raw, &eth_data_, max_size);
 	EXPECT_TRUE(result_);
 	EXPECT_EQ(pload_size, eth_data_.payload_size_);
-	EXPECT_TRUE(false);
+
+	// Test the first pload_size elements.
+	EXPECT_THAT(pload, ::testing::ElementsAreArray(eth_data_.payload_ptr_,
+		pload_size));
+
+	// Confirm that the remaining mtu_ - pload_size elements
+	// are zeros.
+	std::vector<uint8_t> expect_zeros(EthernetData::max_payload_size_ - pload_size, 0);
+	EXPECT_THAT(expect_zeros, ::testing::ElementsAreArray(
+		eth_data_.payload_ptr_ + pload_size, EthernetData::max_payload_size_ - pload_size));
+}
+
+TEST_F(NetworkPacketParserTest, ParseRawHeaderAndPayloadGreaterThanMax)
+{
+	uint32_t pload_size = 1533;
+	uint32_t max_size = 800; // < pload_size
+
+	Tins::RawPDU::payload_type pload(pload_size, 19);
+	Tins::RawPDU raw(pload);
+
+	result_ = npp_.ParseRaw(&raw, &eth_data_, max_size);
+	EXPECT_FALSE(result_);
+}
+
+TEST_F(NetworkPacketParserTest, ParseRawHeaderAndPayloadInChain)
+{
+	uint32_t pload_size = 123;
+	Tins::RawPDU::payload_type pload(pload_size, 9);
+
+	// Construct a chain of PDUs terminating in a raw
+	// payload.
+	Tins::EthernetII eth_packet = Tins::EthernetII() / Tins::IP() / 
+		Tins::TCP() / Tins::RawPDU(pload);
+	
+	// Get the buffer associated with this packet.
+	// It is important to only call serialize() once. It appears
+	// that calling it multiple times results in undefined behavior.
+	Tins::PDU::serialization_type serial_data = eth_packet.serialize();
+	uint8_t* buff = serial_data.data();
+	data_length_ = serial_data.size();
+
+	result_ = npp_.Parse(buff, data_length_, &eth_data_);
+	EXPECT_TRUE(result_);
+	EXPECT_EQ(pload_size, eth_data_.payload_size_);
+
+	// Test the first pload_size elements.
+	EXPECT_THAT(pload, ::testing::ElementsAreArray(eth_data_.payload_ptr_, 
+		pload_size));
+
+	// Confirm that the remaining mtu_ - pload_size elements
+	// are zeros.
+	std::vector<uint8_t> expect_zeros(EthernetData::max_payload_size_ - pload_size, 0);
+	EXPECT_THAT(expect_zeros, ::testing::ElementsAreArray(
+		eth_data_.payload_ptr_ + pload_size, EthernetData::max_payload_size_ - pload_size));
 }
 
 TEST_F(NetworkPacketParserTest, ParserSelectorNullPointer)
@@ -298,7 +361,7 @@ TEST_F(NetworkPacketParserTest, ParserSelectorParseRaw)
 	Tins::RawPDU raw(pload);
 	pdu_ptr_ = dynamic_cast<Tins::PDU*>(&raw);
 
-	EXPECT_CALL(mock_npp_sec_level_, ParseRaw(&raw, &eth_data_)).
+	EXPECT_CALL(mock_npp_sec_level_, ParseRaw(&raw, &eth_data_, _)).
 		Times(1).WillOnce(Return(true));
 
 	result_ = mock_npp_sec_level_.ParserSelector(pdu_ptr_, &eth_data_);
@@ -329,16 +392,16 @@ TEST_F(NetworkPacketParserTest, ParserSelectorParseUDP)
 	EXPECT_TRUE(result_);
 }
 
-//TEST_F(NetworkPacketParserTest, ParserSelectorParseEthernetLLC)
-//{
-//	Tins::LLC llc;
-//	pdu_ptr_ = dynamic_cast<Tins::PDU*>(&llc);
-//
-//	EXPECT_CALL(mock_npp_sec_level_, ParseEthernetLLC(&llc, &eth_data_)).
-//		Times(1).WillOnce(Return(true));
-//
-//	result_ = mock_npp_sec_level_.ParserSelector(pdu_ptr_, &eth_data_);
-//	EXPECT_TRUE(result_);
-//}
+TEST_F(NetworkPacketParserTest, ParserSelectorParseTCP)
+{
+	Tins::TCP tcp;
+	pdu_ptr_ = dynamic_cast<Tins::PDU*>(&tcp);
+
+	EXPECT_CALL(mock_npp_sec_level_, ParseTCP(&tcp, &eth_data_)).
+		Times(1).WillOnce(Return(true));
+
+	result_ = mock_npp_sec_level_.ParserSelector(pdu_ptr_, &eth_data_);
+	EXPECT_TRUE(result_);
+}
 
 

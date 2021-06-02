@@ -47,28 +47,35 @@ class NetworkPacketParser
 
 	*/
 private:
-	EthernetData* ethernet_data_ptr_;
-	//std::vector<uint8_t> temp_payload_;
-	//std::vector<uint8_t>& raw_payload_;
-	//uint32_t raw_payload_size_;
 
-	// 802.3 maximum payload length
+	// Maximum length of a 802.3 frame. Note that an EthernetII
+	// frame has ethertype in what is typically the length field
+	// and specifies that the type will be greater than 1500. It 
+	// gives a way of indicating EthernetII types packets and does
+	// not actually indicate the length of the packet, the maximum
+	// of which remains at 1500. 
 	static const size_t mtu_ = 1500;
 
+	// Current maximum raw payload length.
+	uint32_t max_payload_size_;
+
 	// Hold PDUType enum and integer value.
-	Tins::PDU::PDUType pdu_type_;
-	uint16_t pdu_type_val_;
+	//Tins::PDU::PDUType pdu_type_;
+	//uint16_t pdu_type_val_;
 
 	// Initial PDU types to create from Ch10 frame payloads
 	Tins::Dot3 dot3_;
 	Tins::EthernetII eth2_;
 
-	// 
-	Tins::PDU* pdu_ptr_;
+	// Temporary pointers for the various PDU types. These
+	// will be casted from the base class, Tins::PDU.
 	Tins::RawPDU* raw_pdu_;
 	Tins::UDP* udp_pdu_;
+	Tins::TCP* tcp_pdu_;
 	Tins::IP* ip_pdu_;
 	Tins::LLC* llc_pdu_;
+
+	// Tins::PDU::PDUType enum value to string mapping
 	const std::map<uint16_t, std::string> pdu_type_to_name_map_ = { {0, "RAW"}, {1, "ETHERNET_II"},
 		{2,"IEEE802_3"}, {3,"RADIOTAP"}, {4, "DOT11"}, {5, "DOT11_ACK"}, {6, "DOT11_ASSOC_REQ"},
 		{7, "DOT11_ASSOC_RESP"}, { 8, "DOT11_AUTH" }, { 9, "DOT11_BEACON" }, { 10, "DOT11_BLOCK_ACK" },
@@ -83,6 +90,8 @@ private:
 		{51, "MPLS"}, {999, "UNKNOWN"}, {1000, "USER_DEFINED_PDU"} };
 
 public:
+	const uint32_t& max_payload_size;
+
 	NetworkPacketParser();
 
 	/*
@@ -201,6 +210,21 @@ public:
 	*/
 	virtual bool ParseUDP(Tins::UDP* udp_pdu, EthernetData* const ed);
 
+	/*
+	Parse Tins::PDU::PDUType::TCP
+
+	Args:
+		tcp_pdu		--> Tins::TCP PDU
+		eth_data	--> Pointer to EthernetData object, a generic object
+						in which data and metadata for multiple types of
+						ethernet packets and sub-packets can be stored.
+						Holds the output of the parsed packets.
+
+	Return:
+		True if no errors, false otherwise.
+	*/
+	virtual bool ParseTCP(Tins::TCP* tcp_pdu, EthernetData* const ed);
+
 
 
 	/************************************************************
@@ -220,7 +244,8 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool ParseRaw(Tins::RawPDU* raw_pdu, EthernetData* const ed);
+	virtual bool ParseRaw(Tins::RawPDU* raw_pdu, EthernetData* const ed,
+		const uint32_t& max_pload_size);
 
 	///
 	/// Helper functions
@@ -243,9 +268,6 @@ public:
 		True if no errors, false otherwise.
 	*/
 	virtual bool ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const ed);
-
-	void PDUType();
-	void PrintPDUTypeNotHandled();
 };
 
 #endif
