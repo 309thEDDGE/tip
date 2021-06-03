@@ -60,8 +60,27 @@ Ch10Status Ch10EthernetF0Component::ParseFrames(const EthernetF0CSDW* const csdw
 		{
 			SPDLOG_WARN("({:02d}) Failed to parse ethernet frame", ctx_->thread_id);
 			status_ = Ch10Status::ETHERNETF0_FRAME_PARSE_ERROR;
-			return status_;
+
+			// Do not return status immediately so other ethernet frames
+			// in the packet can be parsed. After more experience with Ch10
+			// ethernet packets, we may learn that a malformed ethernet packet
+			// is indicative of corrupt data, in which we will want to change
+			// to return immediately and skip the remaining frames in the
+			// packet. 
+			
+			// We do want to skip the call to Append since the EthernetData
+			// object pointed by eth_data_ptr_ will not have valid data. 
+
+			// We also must advance the data pointer to the beginning of the 
+			// next packet.
+			data_ptr += data_length_;
+
+			continue;
+			//return status_;
 		}
+
+		// Append parsed data to the Parquet file
+		ctx_->ethernetf0_pq_writer->Append(abs_time_, eth_data_ptr_);
 
 		// Increment the data pointer by the size in bytes of 
 		// the frame.
