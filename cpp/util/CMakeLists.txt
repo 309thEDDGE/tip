@@ -35,7 +35,7 @@ target_include_directories(tiputil PUBLIC include)
 set_target_properties(tiputil PROPERTIES PUBLIC_HEADER "${headers}")
 
 target_link_libraries(tiputil
-    PUBLIC spdlog::spdlog yaml-cpp
+    PUBLIC spdlog::spdlog yaml-cpp stdc++fs
 )
 
 install(

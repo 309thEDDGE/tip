@@ -38,9 +38,8 @@ set_target_properties(translate_1553
 
 target_link_libraries(translate_1553
   PUBLIC tiputil parquet_context yamlsv ch10_parquet
-  yaml-cpp arrow_shared parquet
+  yaml-cpp arrow_shared parquet tins
 )
-
 
 add_executable(tip_translate main/translate_1553_from_parquet.cpp)
 

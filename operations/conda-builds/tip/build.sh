@@ -3,7 +3,12 @@
 mkdir build-release
 cd build-release
 
-cmake .. -DCONTAINER=True -DCMAKE_PREFIX_PATH=Arrow
+cmake ${CMAKE_ARGS} .. \
+    -DCONTAINER=ON \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_PREFIX_PATH=$PREFIX \
+    -DCMAKE_INSTALL_PREFIX=$PREFIX
+
 cmake --build . --target install
 
 

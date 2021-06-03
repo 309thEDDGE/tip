@@ -18,6 +18,7 @@ add_definitions(-D__linux__)
 # filesystem
 set(fs_lib_name "stdc++fs")
 
+
 # thread
 set(thread_lib_name "pthread")
 set(dl_lib_name "dl")
@@ -32,11 +33,17 @@ include(GNUInstallDirs)
 ###########################################
 # Find All Dependencies
 ###########################################
-# find_package(PkgConfig)
+find_package(PkgConfig)
 
 find_package(Arrow REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(spdlog REQUIRED)
 
-# pkg_check_modules(LIBTINS REQUIRED libtins)
-find_package(libtins REQUIRED)
+
+pkg_check_modules(LIBTINS REQUIRED libtins)
+# find_package(libtins REQUIRED)
+
+pkg_check_modules(LIBPCAP REQUIRED libpcap)
+message("first message: ${LIBPCAP_FOUND}")
+message("second message: ${LIBPCAP_LINK_LIBRARIES}")
+message("third message: ${LIBPCAP_LIBRARY_DIRS}")

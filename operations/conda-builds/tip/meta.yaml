@@ -17,6 +17,9 @@ requirements:
     - {{ compiler('cxx') }}
     - make
     - cmake
+    - pkgconfig
+
+  host:
     - libpcap
     - arrow-cpp
     - spdlog
@@ -25,8 +28,7 @@ requirements:
     - gtest
     - libtins
     - cpp-filesystem
-    
-    
+
 
 about:
   home: https://code.il2.dso.mil/skicamp/project-opal/tip
