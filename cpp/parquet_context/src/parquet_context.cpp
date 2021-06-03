@@ -22,33 +22,25 @@ print_activity_(false), print_msg_("")
 
 ParquetContext::~ParquetContext()
 {
+	Close();
+}
+
+void ParquetContext::Close(const uint16_t& thread_id)
+{
 	// If automatic row count tracking and writing
 	// has been turned on, write the data remaining in the 
 	// buffers.
 	if (ready_for_automatic_tracking_)
 	{
-		Finalize();
+		Finalize(thread_id);
+		ready_for_automatic_tracking_ = false;
 	}
 
 	if (have_created_writer_)
 	{
 		writer_->Close();
 		ostream_->Close();
-	}
-
-}
-
-void ParquetContext::Close()
-{
-	if (ready_for_automatic_tracking_)
-	{
-		Finalize();
-	}
-
-	if (have_created_writer_)
-	{
-		writer_->Close();
-		ostream_->Close();
+		have_created_writer_ = false;
 	}
 }
 
@@ -819,7 +811,7 @@ void ParquetContext::FillStringVec(std::vector<std::string>* str_data_vec_ptr,
 		temp_string_vec_.data());
 }
 
-bool ParquetContext::IncrementAndWrite()
+bool ParquetContext::IncrementAndWrite(const uint16_t& thread_id)
 {
 	// Increment appended row counter. 
 	appended_row_count_++;
@@ -829,7 +821,7 @@ bool ParquetContext::IncrementAndWrite()
 	{
 		if (print_activity_)
 		{
-			SPDLOG_INFO("IncrementAndWrite(): {:s}, Writing {:d} rows",
+			SPDLOG_INFO("({:02d}) {:s}: Writing {:d} rows", thread_id,
 				print_msg_, appended_row_count_);
 		}
 
@@ -889,40 +881,43 @@ bool ParquetContext::SetupRowCountTracking(size_t row_group_count,
 	return ready_for_automatic_tracking_;
 }
 
-void ParquetContext::Finalize()
+void ParquetContext::Finalize(const uint16_t& thread_id)
 {
 	if(appended_row_count_ > 0)
 	{
 		if (print_activity_)
 		{
-			SPDLOG_INFO("Finalize(): {:s}, Writing {:d} rows",
+			SPDLOG_INFO("({:02d}) {:s}, Writing {:d} rows", thread_id,
 				print_msg_, appended_row_count_);
 		}
 
 		int n_calls = int(std::ceil(double(appended_row_count_) / double(ROW_GROUP_COUNT_)));
-		SPDLOG_INFO("Finalize(): n_calls = {:d}", n_calls);
+		SPDLOG_INFO("({:02d}) {:s}, {:d} row groups", thread_id,
+			print_msg_, n_calls);
 		for (int i = 0; i < n_calls; i++)
 		{
 			if (i == n_calls - 1)
 			{
-				SPDLOG_INFO("Finalize(): WriteColumns(count = {:d}, offset = {:d})",
+				SPDLOG_INFO("({:02d}) {:s}, WriteColumns(count = {:d}, offset = {:d})",
+					thread_id, print_msg_, 
 					appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_,
 					i * ROW_GROUP_COUNT_);
 
 				if (!WriteColumns(appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
 				{
-					SPDLOG_ERROR("Finalize(): WriteColumns() failure");
+					SPDLOG_ERROR("({:02d}) {:s}, WriteColumns() failure",
+						thread_id, print_msg_);
 				}
 			}
 			else
 			{
-				SPDLOG_INFO("Finalize(): WriteColumns(count = {:d}, offset = {:d})",
-					ROW_GROUP_COUNT_,
-					i * ROW_GROUP_COUNT_);
+				SPDLOG_INFO("({:02d}) {:s}, WriteColumns(count = {:d}, offset = {:d})",
+					thread_id, print_msg_, ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
 
 				if (!WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
 				{
-					SPDLOG_ERROR("Finalize(): WriteColumns() failure");
+					SPDLOG_ERROR("({:02d}) {:s}, WriteColumns() failure", thread_id,
+						print_msg_);
 				}
 			}
 		}

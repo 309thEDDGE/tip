@@ -8,7 +8,7 @@ payload_ptr_(nullptr)
 
 }
 
-bool ParquetEthernetF0::Initialize(const std::string& outfile, uint16_t thread_id)
+bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_id)
 {
 	thread_id_ = thread_id;
 
@@ -74,20 +74,18 @@ bool ParquetEthernetF0::Initialize(const std::string& outfile, uint16_t thread_i
 	SetMemoryLocation(dst_port_, "ipdstport");
 	SetMemoryLocation(src_port_, "ipsrcport");
 
-	if (!OpenForWrite(outfile, true))
+	if (!OpenForWrite(outfile.string(), true))
 	{
-		printf("(%03hu) ParquetEthernetF0::Initialize(): OpenForWrite failed!\n",
-			thread_id_);
+		SPDLOG_ERROR("({:03d}) OpenForWrite failed for file {:s}", thread_id_,
+			outfile.string());
 		return false;
 	}
 
 	// Setup automatic tracking of appended data.
-	char buff[100];
-	sprintf(buff, "(%03hu) EthernetF0", thread_id_);
-	std::string msg(buff);
-	if (!SetupRowCountTracking(DEFAULT_ROW_GROUP_COUNT, DEFAULT_BUFFER_SIZE_MULTIPLIER, true, msg))
+	if (!SetupRowCountTracking(DEFAULT_ROW_GROUP_COUNT, 
+		DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "EthernetF0"))
 	{
-		printf("(%03hu) ParquetEthernetF0::Initialize(): Row count tracking not configured correctly!\n",
+		SPDLOG_ERROR("({:03d}) SetupRowCountTracking not configured correctly",
 			thread_id_);
 		return false;
 	}
@@ -121,7 +119,7 @@ void ParquetEthernetF0::Append(const uint64_t& time_stamp, const EthernetData* e
 		payload_ptr_ + append_count_ * PAYLOAD_LIST_COUNT);
 
 	// Increment the count variable and write data if row group(s) are filled.
-	if (IncrementAndWrite())
+	if (IncrementAndWrite(thread_id_))
 	{
 		// Reset list buffers.
 		std::fill(payload_.begin(), payload_.end(), 0);

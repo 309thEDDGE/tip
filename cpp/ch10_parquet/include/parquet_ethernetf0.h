@@ -1,8 +1,13 @@
 #ifndef PARQUET_ETHERNETF0_H
 #define PARQUET_ETHERNETF0_H
 
+#include <cstdint>
+#include <string>
+#include <vector>
 #include "parquet_context.h"
 #include "ethernet_data.h"
+#include "managed_path.h"
+#include "spdlog/spdlog.h"
 
 class ParquetEthernetF0 : public ParquetContext
 {
@@ -37,7 +42,7 @@ private:
 
 public:
 	ParquetEthernetF0();
-	bool Initialize(const std::string& outfile, uint16_t thread_id);
+	bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
 	void Append(const uint64_t& time_stamp, const EthernetData* eth_data);
 };
 

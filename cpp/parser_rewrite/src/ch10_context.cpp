@@ -13,7 +13,8 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
 	chanid_remoteaddr1_map(chanid_remoteaddr1_map_), chanid_remoteaddr2_map(chanid_remoteaddr2_map_),
 	chanid_commwords_map(chanid_commwords_map_), command_word1_(nullptr), command_word2_(nullptr),
 	is_configured_(false), milstd1553f1_pq_writer_(nullptr), milstd1553f1_pq_writer(nullptr),
-	videof0_pq_writer_(nullptr), videof0_pq_writer(nullptr), 
+	videof0_pq_writer_(nullptr), videof0_pq_writer(nullptr), ethernetf0_pq_writer_(nullptr),
+	ethernetf0_pq_writer(nullptr),
 	chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_)
 {
 	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
@@ -33,7 +34,8 @@ Ch10Context::Ch10Context() : absolute_position_(0),
 	chanid_remoteaddr1_map(chanid_remoteaddr1_map_), chanid_remoteaddr2_map(chanid_remoteaddr2_map_),
 	chanid_commwords_map(chanid_commwords_map_), command_word1_(nullptr), command_word2_(nullptr),
 	is_configured_(false), milstd1553f1_pq_writer_(nullptr), milstd1553f1_pq_writer(nullptr),
-	videof0_pq_writer_(nullptr), videof0_pq_writer(nullptr),
+	videof0_pq_writer_(nullptr), videof0_pq_writer(nullptr), ethernetf0_pq_writer_(nullptr),
+	ethernetf0_pq_writer(nullptr),
 	chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_)
 {
 	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
@@ -348,6 +350,13 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 
 			videof0_pq_writer = videof0_pq_writer_.get();
 			break;
+		case Ch10PacketType::ETHERNET_DATA_F0:
+
+			pkt_type_file_writers_enabled_map_[Ch10PacketType::ETHERNET_DATA_F0] = true;
+			ethernetf0_pq_writer_ = std::make_unique<ParquetEthernetF0>();
+			ethernetf0_pq_writer_->Initialize(it->second, thread_id);
+			ethernetf0_pq_writer = ethernetf0_pq_writer_.get();
+			break;
 		default:
 			SPDLOG_WARN("({:02d}) No writer defined for {:s}",
 				thread_id, ch10packettype_to_string_map.at(it->first));
@@ -372,6 +381,12 @@ void Ch10Context::CloseFileWriters()
 			if (pkt_type_file_writers_enabled_map_.at(Ch10PacketType::VIDEO_DATA_F0))
 			{
 				videof0_pq_writer_->commit();
+			}
+			break;
+		case Ch10PacketType::ETHERNET_DATA_F0:
+			if (pkt_type_file_writers_enabled_map_.at(Ch10PacketType::ETHERNET_DATA_F0))
+			{
+				ethernetf0_pq_writer_->Close(thread_id_);
 			}
 			break;
 		}

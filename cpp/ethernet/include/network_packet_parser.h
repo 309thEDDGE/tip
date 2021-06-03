@@ -59,10 +59,6 @@ private:
 	// Current maximum raw payload length.
 	uint32_t max_payload_size_;
 
-	// Hold PDUType enum and integer value.
-	//Tins::PDU::PDUType pdu_type_;
-	//uint16_t pdu_type_val_;
-
 	// Initial PDU types to create from Ch10 frame payloads
 	Tins::Dot3 dot3_;
 	Tins::EthernetII eth2_;
@@ -247,10 +243,12 @@ public:
 	virtual bool ParseRaw(Tins::RawPDU* raw_pdu, EthernetData* const ed,
 		const uint32_t& max_pload_size);
 
-	///
-	/// Helper functions
-	/// 
-	
+
+
+	/************************************************************
+						   Helper Functions
+	*************************************************************/
+
 	/*
 	Selector for the next parser. In this context, next
 	means the Tins::PDU::inner_pdu() of the current

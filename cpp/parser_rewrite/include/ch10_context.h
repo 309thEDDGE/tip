@@ -8,6 +8,7 @@
 // some of the types defined in Arrow.
 #include "parquet_milstd1553f1.h"
 #include "parquet_videodataf0.h"
+#include "parquet_ethernetf0.h"
 
 #include <cstdint>
 #include <cstdio>
@@ -126,6 +127,7 @@ private:
 	//
 	std::unique_ptr<ParquetMilStd1553F1> milstd1553f1_pq_writer_;
 	std::unique_ptr<ParquetVideoDataF0> videof0_pq_writer_;
+	std::unique_ptr<ParquetEthernetF0> ethernetf0_pq_writer_;
 
 
 public:
@@ -150,6 +152,7 @@ public:
 	const std::map<uint16_t, uint64_t>& chanid_minvideotimestamp_map;
 	ParquetMilStd1553F1* milstd1553f1_pq_writer;
 	ParquetVideoDataF0* videof0_pq_writer;
+	ParquetEthernetF0* ethernetf0_pq_writer;
 	const uint32_t intrapacket_ts_size_ = sizeof(uint64_t);
 
 	Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);

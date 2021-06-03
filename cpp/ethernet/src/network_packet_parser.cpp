@@ -158,8 +158,9 @@ bool NetworkPacketParser::ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const
 		return false;
 	}
 
-	SPDLOG_DEBUG("Parsing {:s}", pdu_type_to_name_map_.at(
-		static_cast<uint16_t>(pdu_ptr->pdu_type())));
+	/*SPDLOG_DEBUG("Parsing {:s}", pdu_type_to_name_map_.at(
+		static_cast<uint16_t>(pdu_ptr->pdu_type())));*/
+
 	switch (pdu_ptr->pdu_type())
 	{
 	case Tins::PDU::PDUType::LLC:
