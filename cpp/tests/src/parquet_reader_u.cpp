@@ -1,6 +1,6 @@
 #include <vector>
 #include <string>
-#include <filesystem>
+#include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
 #include "gtest/gtest.h"
@@ -33,7 +33,7 @@ protected:
 
 		for (int i = 0; i < pq_directories.size(); i++)
 		{
-			std::filesystem::remove_all(pq_directories[i]);
+			std::experimental::filesystem::remove_all(pq_directories[i]);
 		}
 	}
 	
@@ -51,17 +51,17 @@ protected:
 		int row_group_count,
 		std::vector<uint8_t>* bool_fields = nullptr)
 	{
-		if (!std::filesystem::exists(directory))
+		if (!std::experimental::filesystem::exists(directory))
 		{
-			if (!std::filesystem::create_directory(directory))
+			if (!std::experimental::filesystem::create_directory(directory))
 			{
 				printf("failed to create directory %s: \n", directory.c_str());
 				return false;
 			}
 		}
 
-		std::filesystem::path pqt_path(directory);
-		pqt_path = pqt_path / std::filesystem::path(
+		std::experimental::filesystem::path pqt_path(directory);
+		pqt_path = pqt_path / std::experimental::filesystem::path(
 			std::to_string(pq_file_count) + std::string(".parquet"));
 		std::string path = pqt_path.string();
 
@@ -112,17 +112,17 @@ protected:
 		int row_group_count, int list_size)
 	{
 
-		if (!std::filesystem::exists(directory))
+		if (!std::experimental::filesystem::exists(directory))
 		{
-			if (!std::filesystem::create_directory(directory))
+			if (!std::experimental::filesystem::create_directory(directory))
 			{
 				printf("failed to create directory %s: \n", directory.c_str());
 				return false;
 			}
 		}
 
-		std::filesystem::path pqt_path(directory);
-		pqt_path = pqt_path / std::filesystem::path(
+		std::experimental::filesystem::path pqt_path(directory);
+		pqt_path = pqt_path / std::experimental::filesystem::path(
 			std::to_string(pq_file_count) + std::string(".parquet"));
 
 		std::string path = pqt_path.string();
@@ -175,17 +175,17 @@ protected:
 		std::string colname2,
 		int row_group_count)
 	{
-		if (!std::filesystem::exists(directory))
+		if (!std::experimental::filesystem::exists(directory))
 		{
-			if (!std::filesystem::create_directory(directory))
+			if (!std::experimental::filesystem::create_directory(directory))
 			{
 				printf("failed to create directory %s: \n", directory.c_str());
 				return false;
 			}
 		}
 
-		std::filesystem::path pqt_path(directory);
-		pqt_path = pqt_path / std::filesystem::path(
+		std::experimental::filesystem::path pqt_path(directory);
+		pqt_path = pqt_path / std::experimental::filesystem::path(
 			std::to_string(pq_file_count) + std::string(".parquet"));
 		std::string path = pqt_path.string();
 
@@ -413,7 +413,7 @@ TEST_F(ParquetReaderTest, EmptyParquetFile)
 	ParquetReader pm;
 
 	std::string dir = "empty_parquet.parquet";
-	ASSERT_TRUE(std::filesystem::create_directory(dir));
+	ASSERT_TRUE(std::experimental::filesystem::create_directory(dir));
 	
 	ASSERT_FALSE(pm.SetPQPath(dir));
 
@@ -422,29 +422,29 @@ TEST_F(ParquetReaderTest, EmptyParquetFile)
 	ASSERT_EQ(size, 0);
 	ASSERT_EQ(pm.GetSchema()->num_fields(), 0);
 
-	ASSERT_TRUE(std::filesystem::remove_all(dir));
+	ASSERT_TRUE(std::experimental::filesystem::remove_all(dir));
 }
 
 TEST_F(ParquetReaderTest, ParquetFolderWithParquetAndNonParquetFiles)
 {
 	std::string directory = "directory.parquet";
 
-	if (std::filesystem::exists(directory))
+	if (std::experimental::filesystem::exists(directory))
 	{
-		ASSERT_TRUE(std::filesystem::remove_all(directory));
+		ASSERT_TRUE(std::experimental::filesystem::remove_all(directory));
 	}
 
-	ASSERT_TRUE(std::filesystem::create_directory(directory));
+	ASSERT_TRUE(std::experimental::filesystem::create_directory(directory));
 
 
-	std::filesystem::path pqt_path(directory);
-	pqt_path = pqt_path / std::filesystem::path(
+	std::experimental::filesystem::path pqt_path(directory);
+	pqt_path = pqt_path / std::experimental::filesystem::path(
 		std::to_string(pq_file_count) + std::string(".parquet"));
 	std::string path = pqt_path.string();
 
 	// create text file that should be ignored
-	std::filesystem::path text_path_(directory);
-	text_path_ = pqt_path / std::filesystem::path(
+	std::experimental::filesystem::path text_path_(directory);
+	text_path_ = pqt_path / std::experimental::filesystem::path(
 		std::to_string(pq_file_count) + std::string(".txt"));
 	std::string text_path = text_path_.string();
 
@@ -504,16 +504,16 @@ TEST_F(ParquetReaderTest, InvalidParquetFile)
 {
 	std::string directory = "directory.parquet";
 
-	if (std::filesystem::exists(directory))
+	if (std::experimental::filesystem::exists(directory))
 	{
-		ASSERT_TRUE(std::filesystem::remove_all(directory));
+		ASSERT_TRUE(std::experimental::filesystem::remove_all(directory));
 	}
 
-	ASSERT_TRUE(std::filesystem::create_directory(directory));
+	ASSERT_TRUE(std::experimental::filesystem::create_directory(directory));
 
 
-	std::filesystem::path pqt_path(directory);
-	pqt_path = pqt_path / std::filesystem::path(
+	std::experimental::filesystem::path pqt_path(directory);
+	pqt_path = pqt_path / std::experimental::filesystem::path(
 		std::to_string(pq_file_count) + std::string(".parquet"));
 	std::string path = pqt_path.string();
 
