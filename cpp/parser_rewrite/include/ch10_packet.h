@@ -69,6 +69,8 @@ public:
         tmats_(context), tdp_component_(context), milstd1553f1_component_(context),
         videof0_component_(context), ethernetf0_component_(context) 
     {
+
+        // Comment to disable pcap output.
         ethernetf0_component_.EnablePcapOutput(
             context->pkt_type_paths_map.at(Ch10PacketType::ETHERNET_DATA_F0));
     }

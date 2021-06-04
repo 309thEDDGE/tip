@@ -33,7 +33,9 @@ Include the following three headers prior to tins.h.
 #include <algorithm> // copy
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <iterator>
+#include <memory>
 #include "managed_path.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/bin_to_hex.h"
@@ -72,6 +74,12 @@ private:
 
 	bool pcap_output_enabled_;
 	ManagedPath pcap_base_path_;
+
+	// Map to hold PacketWriters relevant to a specific channel ID
+	// and Tins::PDU::PDUType. Will be queried frequently if pcap
+	// in enabled so you unordered_map to improve performance.
+	std::unordered_map<uint32_t, std::unordered_map<
+		Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>> pcap_writer_map_;
 
 	// Tins::PDU::PDUType enum value to string mapping
 	const std::map<uint16_t, std::string> pdu_type_to_name_map_ = { {0, "RAW"}, {1, "ETHERNET_II"},
@@ -134,7 +142,8 @@ public:
 
 	/*
 	Write pcap packet relevant to a specific channel ID and Tins PDU
-	type 
+	type. This is the only function that ought to be called to write
+	a packet to PCAP file.
 
 	Args:
 			pcap_base_path		--> Pcap output path from which to build
@@ -145,14 +154,23 @@ public:
 			pdu_type			--> Tins pdu type enum indicates the type
 									of PacketWriter to which the packet 
 									ought to be written
+			pcap_map			--> Map of channel ID to map of pdu type to
+									PacketWriter object relevant to the channel ID
+									and pdu type
+			pdu					--> Pointer to the pdu to be written to pcap
+									file
 
 	*/
 	void WritePcapPacket(const ManagedPath& pcap_base_path,
-		const uint32_t& channel_id, Tins::PDU::PDUType pdu_type);
+		const uint32_t& channel_id, Tins::PDU::PDUType pdu_type,
+		std::unordered_map<uint32_t, std::unordered_map<
+		Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>>& pcap_writer_map, 
+		Tins::PDU* pdu);
 
 	/*
 	Helper function to simplify testing. Create an output pcap
-	path relevant to a specific channel ID and Tins PDU type.
+	path relevant to a specific channel ID and Tins PDU type. Not to
+	be used directly; called automatically by WritePcapPacket.
 
 	Args:
 			pcap_base_path		--> Pcap output path from which to build
@@ -166,6 +184,31 @@ public:
 	*/
 	ManagedPath CreateSpecificPcapPath(const ManagedPath& pcap_base_path,
 		const uint32_t& channel_id, Tins::PDU::PDUType pdu_type);
+
+	/*
+	Write pcap packet relevant to a specific channel ID and Tins PDU
+	type. Not to be used directly; automatically called by WritePcapPacket.
+
+	Args:
+			pcap_base_path		--> Pcap output path from which to build
+									channel ID and packet specific output
+									pcap paths
+			channel_id			--> Channel ID with which to tag the output
+									file
+			pdu_type			--> Tins pdu type enum indicates the type
+									of PacketWriter to which the packet
+									ought to be written
+			pcap_map			--> Map of channel ID to map of pdu type to
+									PacketWriter object relevant to the channel ID
+									and pdu type
+
+	Return:
+		True if writer was created and added to map, false otherwise.
+	*/
+	bool AddPacketWriterToMap(const ManagedPath& pcap_base_path,
+		const uint32_t& channel_id, Tins::PDU::PDUType pdu_type,
+		std::unordered_map<uint32_t, std::unordered_map<
+		Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>>& pcap_writer_map);
 
 	/************************************************************
 						 Data Link Layer

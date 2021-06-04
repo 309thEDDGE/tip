@@ -27,7 +27,8 @@ bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
 
 			if (pcap_output_enabled_)
 			{
-
+				WritePcapPacket(pcap_base_path_, channel_id, Tins::PDU::PDUType::ETHERNET_II,
+					pcap_writer_map_, dynamic_cast<Tins::PDU*>(&eth2_));
 			}
 		}
 		else
@@ -37,7 +38,8 @@ bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
 
 			if (pcap_output_enabled_)
 			{
-
+				WritePcapPacket(pcap_base_path_, channel_id, Tins::PDU::PDUType::DOT3,
+					pcap_writer_map_, dynamic_cast<Tins::PDU*>(&dot3_));
 			}
 		}
 
@@ -253,4 +255,74 @@ ManagedPath NetworkPacketParser::EnablePcapOutput(const ManagedPath& pq_output_f
 	pcap_output_enabled_ = true;
 
 	return pcap_base_path_;
+}
+
+ManagedPath NetworkPacketParser::CreateSpecificPcapPath(const ManagedPath& pcap_base_path,
+	const uint32_t& channel_id, Tins::PDU::PDUType pdu_type)
+{
+	ManagedPath output;
+	
+	char buff[100];
+	std::snprintf(buff, 100, "_%s_chanid%02u.pcap", 
+		pdu_type_to_name_map_.at(static_cast<uint16_t>(pdu_type)).c_str(), channel_id);
+	std::string extension(buff);
+
+	output = pcap_base_path.parent_path().CreatePathObject(
+		pcap_base_path, extension);
+
+	return output;
+}
+
+void NetworkPacketParser::WritePcapPacket(const ManagedPath& pcap_base_path,
+	const uint32_t& channel_id, Tins::PDU::PDUType pdu_type, 
+	std::unordered_map<uint32_t, std::unordered_map<
+	Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>>& pcap_writer_map, 
+	Tins::PDU* pdu)
+{
+	if (AddPacketWriterToMap(pcap_base_path, channel_id, pdu_type, pcap_writer_map))
+	{
+		// Write the packet
+		pcap_writer_map[channel_id][pdu_type]->write(pdu);
+	}
+}
+
+bool NetworkPacketParser::AddPacketWriterToMap(const ManagedPath& pcap_base_path,
+	const uint32_t& channel_id, Tins::PDU::PDUType pdu_type,
+	std::unordered_map<uint32_t, std::unordered_map<
+	Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>>& pcap_writer_map)
+{
+	// Check if a writer for the given channel_id and pdu_type
+	// already exists.
+	if (pcap_writer_map.count(channel_id) == 0)
+	{
+		// Add an empty map for the given channel_id and create
+		// a writer, then add it for the given pdu_type.
+		std::unordered_map<Tins::PDU::PDUType, 
+			std::shared_ptr<Tins::PacketWriter>> temp_pdu_writer_map;
+		pcap_writer_map[channel_id] = temp_pdu_writer_map;
+	}
+	
+	if (pcap_writer_map[channel_id].count(pdu_type) == 0)
+	{
+		ManagedPath pcap_path = CreateSpecificPcapPath(pcap_base_path, channel_id,
+			pdu_type);
+
+		switch (pdu_type)
+		{
+		case Tins::PDU::PDUType::DOT3:
+			pcap_writer_map[channel_id][pdu_type] = std::make_shared<Tins::PacketWriter>(
+				pcap_path.string(), Tins::DataLinkType<Tins::Dot3>());
+			break;
+		case Tins::PDU::PDUType::ETHERNET_II:
+			pcap_writer_map[channel_id][pdu_type] = std::make_shared<Tins::PacketWriter>(
+				pcap_path.string(), Tins::DataLinkType<Tins::EthernetII>());
+			break;
+		default:
+			SPDLOG_WARN("No PacketWriter creation routine defined for PDU type {:s}",
+				pdu_type_to_name_map_.at(static_cast<uint16_t>(pdu_type)));
+			return false;
+			break;
+		}
+	}
+	return true;
 }
