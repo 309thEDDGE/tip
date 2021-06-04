@@ -35,7 +35,7 @@ protected:
 
 		for (int i = 0; i < pq_directories.size(); i++)
 		{
-			std::filesystem::remove_all(pq_directories[i]);
+			std::experimental::filesystem::remove_all(pq_directories[i]);
 		}	
 	}
 
@@ -48,17 +48,17 @@ protected:
 		int row_group_count,
 		std::vector<uint8_t>* bool_fields = nullptr)
 	{
-		if (!std::filesystem::exists(directory))
+		if (!std::experimental::filesystem::exists(directory))
 		{
-			if (!std::filesystem::create_directory(directory))
+			if (!std::experimental::filesystem::create_directory(directory))
 			{
 				printf("failed to create directory %s: \n", directory.c_str());
 				return false;
 			}
 		}
 	
-		std::filesystem::path pqt_path(directory);
-		pqt_path = pqt_path / std::filesystem::path(
+		std::experimental::filesystem::path pqt_path(directory);
+		pqt_path = pqt_path / std::experimental::filesystem::path(
 			std::to_string(pq_file_count) + std::string(".parquet"));
 		std::string path = pqt_path.string();
 
@@ -113,17 +113,17 @@ protected:
 		std::string colname2,
 		int row_group_count)
 	{
-		if (!std::filesystem::exists(directory))
+		if (!std::experimental::filesystem::exists(directory))
 		{
-			if (!std::filesystem::create_directory(directory))
+			if (!std::experimental::filesystem::create_directory(directory))
 			{
 				printf("failed to create directory %s: \n", directory.c_str());
 				return false;
 			}
 		}
 
-		std::filesystem::path pqt_path(directory);
-		pqt_path = pqt_path / std::filesystem::path(
+		std::experimental::filesystem::path pqt_path(directory);
+		pqt_path = pqt_path / std::experimental::filesystem::path(
 			std::to_string(pq_file_count) + std::string(".parquet"));
 		std::string path = pqt_path.string();
 
@@ -170,17 +170,17 @@ protected:
 		int row_group_count, int list_size)
 	{
 
-		if (!std::filesystem::exists(directory))
+		if (!std::experimental::filesystem::exists(directory))
 		{
-			if (!std::filesystem::create_directory(directory))
+			if (!std::experimental::filesystem::create_directory(directory))
 			{
 				printf("failed to create directory %s: \n", directory.c_str());
 				return false;
 			}
 		}
 
-		std::filesystem::path pqt_path(directory);
-		pqt_path = pqt_path / std::filesystem::path(
+		std::experimental::filesystem::path pqt_path(directory);
+		pqt_path = pqt_path / std::experimental::filesystem::path(
 			std::to_string(pq_file_count) + std::string(".parquet"));
 
 		std::string path = pqt_path.string();
@@ -237,10 +237,10 @@ TEST_F(ParquetArrowValidatorTest, ComparatorInitializeNoFilesExist2)
 	std::string file1 = "file1.parquet";
 	std::string file2 = "file2.parquet";
 
-	std::filesystem::create_directory(file1);
+	std::experimental::filesystem::create_directory(file1);
 
 	EXPECT_FALSE(comp.Initialize(ManagedPath(file1), ManagedPath(file2)));
-	std::filesystem::remove_all(file1);
+	std::experimental::filesystem::remove_all(file1);
 }
 
 TEST_F(ParquetArrowValidatorTest, ComparatorInitializeInvalidFiles)
@@ -255,12 +255,12 @@ TEST_F(ParquetArrowValidatorTest, ComparatorInitializeInvalidFiles)
 
 	std::string invalid = "invalid.parquet";
 
-	std::filesystem::create_directory(invalid);	
+	std::experimental::filesystem::create_directory(invalid);	
 
 	EXPECT_FALSE(comp.Initialize(invalid, dirname));
 	EXPECT_FALSE(comp.Initialize(dirname, invalid));
 
-	std::filesystem::remove_all(invalid);
+	std::experimental::filesystem::remove_all(invalid);
 }
 
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareVecsMatchingSameSize)

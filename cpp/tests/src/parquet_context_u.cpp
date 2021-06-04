@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 #include <stdio.h>
-#include <filesystem>
+#include <experimental/filesystem>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "parquet_context.h"
@@ -449,7 +449,7 @@ protected:
 		*/
 		if (file_path.size() > 259)
 		{
-			std::filesystem::path modified_path("\\\\?\\");
+			std::experimental::filesystem::path modified_path("\\\\?\\");
 			modified_path += file_path;
 			file_path = modified_path.string();
 		}		
