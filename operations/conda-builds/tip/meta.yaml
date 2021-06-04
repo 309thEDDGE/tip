@@ -8,16 +8,18 @@ package:
 source:
   path: ../../../../tip
 
-
 build:
-  number: 1
+  number: 2
+  skip: true  # [win and vc<14]
+  run_exports:
+    - {{ pin_subpackage('tip', max_pin='x.x') }}
 
 requirements:
   build:
     - {{ compiler('cxx') }}
     - make
     - cmake
-    - pkgconfig
+    - pkgconfig    
 
   host:
     - libpcap
@@ -27,8 +29,13 @@ requirements:
     - gmock
     - gtest
     - libtins
-    - cpp-filesystem
-
+    
+  run:
+    - yaml-cpp
+    - libpcap
+    - arrow-cpp
+    - spdlog
+    - libtins
 
 about:
   home: https://code.il2.dso.mil/skicamp/project-opal/tip
