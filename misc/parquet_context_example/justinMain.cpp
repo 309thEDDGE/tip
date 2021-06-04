@@ -19,6 +19,10 @@
 
 using namespace std;
 
+namespace std
+{
+using namespace experimental; 
+}
 
 int main(int argc, char* argv[]) {
 	
@@ -71,7 +75,7 @@ int main(int argc, char* argv[]) {
 		}
 		else {
 
-			// Use std::experimental::filesystem to create the output path
+			// Use std::filesystem to create the output path
 			filesystem::path input_path = filename;
 
 			// output test files for debugging 

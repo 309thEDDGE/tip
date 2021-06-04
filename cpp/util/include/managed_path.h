@@ -11,8 +11,13 @@
 #include <initializer_list>
 #include "iterable_tools.h"
 
-namespace fs = std::experimental::filesystem;
-// namespace fs = std::experimental::filesystem;
+namespace std
+{
+using namespace experimental; 
+} 
+
+namespace fs = std::filesystem;
+// namespace fs = std::filesystem;
 
 class ManagedPath : public fs::path
 {
@@ -66,7 +71,7 @@ public:
 	/*
 	Determine if a file or directory represented by a 
 	ManagedPath object exists. Same functionality as the 
-	std::experimental::filesystem::exists function.
+	std::filesystem::exists function.
 
 	Returns: true if exists, false otherwise.
 	*/
@@ -82,7 +87,7 @@ public:
 
 	/*
 	Get the parent path. Same functionality as the 
-	std::experimental::filesystem::path::parent_path function.
+	std::filesystem::path::parent_path function.
 
 	Returns: A ManagedPath object containing the parent
 	path.
@@ -91,7 +96,7 @@ public:
 
 	/*
 	Get the absolute. Same functionality as the
-	std::experimental::filesystem::absolute function.
+	std::filesystem::absolute function.
 
 	Returns: A ManagedPath object containing the absolute
 	path.
@@ -100,7 +105,7 @@ public:
 
 	/*
 	Check whether the current object is a regular file.
-	Same functionality as the std::experimental::filesystem::path::is_regular_file
+	Same functionality as the std::filesystem::path::is_regular_file
 	function.
 
 	Returns: true if is regular file, false otherwise
@@ -109,7 +114,7 @@ public:
 
 	/*
 	Check whether the current object is a directory.
-	Same functionality as the std::experimental::filesystem::path::is_directory
+	Same functionality as the std::filesystem::path::is_directory
 	function.
 
 	Returns: true if is directory, false otherwise
@@ -118,7 +123,7 @@ public:
 
 	/*
 	Get the filename component of the current object.
-	Same functionality as the std::experimental::filesystem::path::filename
+	Same functionality as the std::filesystem::path::filename
 	function.
 
 	Returns: A ManagedPath object containing the filename portion
@@ -128,7 +133,7 @@ public:
 
 	/*
 	Get the stem component of the current object.
-	Same functionality as the std::experimental::filesystem::path::stem
+	Same functionality as the std::filesystem::path::stem
 	function.
 
 	Returns: A ManagedPath object containing the stem portion
@@ -138,7 +143,7 @@ public:
 
 	/*
 	Get the extension component of the current object.
-	Same functionality as std::experimental::filesystem::path::extension
+	Same functionality as std::filesystem::path::extension
 
 	Return: A ManagedPath object containing the extension
 	of the current object.
@@ -146,12 +151,12 @@ public:
 	ManagedPath extension() const;
 
 	//
-	// Mimic other std::experimental::filesystem functions.
+	// Mimic other std::filesystem functions.
 	//
 
 	/*
 	Create a directory that is represented by the current
-	object, similar to std::experimental::filesystem::create_directory.
+	object, similar to std::filesystem::create_directory.
 
 	Returns: true if the directory does not exist and the 
 	directory is successfully created or if the directory
@@ -160,7 +165,7 @@ public:
 	bool create_directory() const;
 
 	/*
-	Remove a file or directory, similar to std::experimental::filesystem::remove.
+	Remove a file or directory, similar to std::filesystem::remove.
 
 	Returns: true if file/dir is removed, false otherwise.
 	*/
@@ -242,7 +247,7 @@ public:
 
 		success				- Output bool is true if the current object represents a 
 		directory and contents can be successfully iterated over using 
-		std::experimental::filesystem::directory_iterator. Otherwise false.
+		std::filesystem::directory_iterator. Otherwise false.
 
 		output_list			- Vector of ManagedPath objects representative of the
 		directory contents.

@@ -119,7 +119,7 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 	// Build the path in a platform-independent way
 	for (auto s : test_path_str)
 		mp /= s;
-	std::experimental::filesystem::path test_path(mp.RawString());
+	std::filesystem::path test_path(mp.RawString());
 
 	EXPECT_TRUE(test_path.string().size() <= ManagedPath::max_unamended_path_len_);
 	EXPECT_FALSE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
@@ -132,7 +132,7 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 	for (auto s : test_path_str)
 		mp /= s;
 	//printf("string len: %zu\n", mp.RawString().size());
-	test_path = std::experimental::filesystem::path(mp.RawString());
+	test_path = std::filesystem::path(mp.RawString());
 	EXPECT_EQ(test_path.string().size(), ManagedPath::max_unamended_path_len_ + 1);
 #ifdef __WIN64
 	EXPECT_TRUE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
@@ -147,7 +147,7 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 	test_path_str = CreatePathWithLength(mp, ManagedPath::max_unamended_path_len_ + 10);
 	for (auto s : test_path_str)
 		mp /= s;
-	test_path = std::experimental::filesystem::path(mp.RawString());
+	test_path = std::filesystem::path(mp.RawString());
 	EXPECT_TRUE(test_path.string().size() > ManagedPath::max_unamended_path_len_ + 1);
 #ifdef __WIN64
 	EXPECT_TRUE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
@@ -335,7 +335,7 @@ TEST(ManagedPathTest, CreateDirectoryLongPath)
 	std::string root_dir_name = "test_dir";
 
 	// Create the part of the path that's less than ManagedPath::max_unamended_path_len_ + 1
-	// chars using std::experimental::filesystem.
+	// chars using std::filesystem.
 	mp /= ManagedPath(root_dir_name);
 	mp = mp / "this_is_part_of_a_very_long_path_section00" / "this_is_part_of_a_very_long_path_section01";
 	mp = mp / "this_is_part_of_a_very_long_path_section02" / "this_is_part_of_a_very_long_path_section03";
@@ -359,11 +359,11 @@ TEST(ManagedPathTest, CreateDirectoryLongPath)
 	// Remove long directory using ManagedPath remove function.
 	// Note that if this function is not called to take the 
 	// full path length to below 261 chars, the following call
-	// to std::experimental::filesystem::remove_all will fail.
+	// to std::filesystem::remove_all will fail.
 	// This test also tests ManagedPath::remove.
 	EXPECT_TRUE(mp.remove());
 
-	// Remove all remaining dirs using std::experimental::filesystem::remove_all.
+	// Remove all remaining dirs using std::filesystem::remove_all.
 	fs::path root_path(root_dir_name);
 	EXPECT_TRUE(fs::remove_all(root_path));
 }
@@ -375,8 +375,8 @@ TEST(ManagedPathTest, AppendOperator)
 	std::string s2 = "path";
 	ManagedPath mp1(s1);
 	ManagedPath mp2(s2);
-	std::experimental::filesystem::path p1(s1);
-	std::experimental::filesystem::path p2(s2);
+	std::filesystem::path p1(s1);
+	std::filesystem::path p2(s2);
 	p1 /= p2;
 	mp1 /= mp2;
 	EXPECT_EQ(mp1.RawString(), p1.string());
@@ -389,10 +389,10 @@ TEST(ManagedPathTest, ConcatenateOperator)
 	std::string s2 = "path";
 	ManagedPath mp1(s1);
 	ManagedPath mp2(s2);
-	std::experimental::filesystem::path p1(s1);
-	std::experimental::filesystem::path p2(s2);
+	std::filesystem::path p1(s1);
+	std::filesystem::path p2(s2);
 	ManagedPath mp = mp1 / mp2;
-	std::experimental::filesystem::path p = p1 / p2;
+	std::filesystem::path p = p1 / p2;
 	EXPECT_EQ(mp.RawString(), p.string());
 }
 
@@ -403,8 +403,8 @@ TEST(ManagedPathTest, AppendNoSeparator)
 	std::string s2 = "path";
 	ManagedPath mp1(s1);
 	ManagedPath mp2(s2);
-	std::experimental::filesystem::path p1(s1);
-	std::experimental::filesystem::path p2(s2);
+	std::filesystem::path p1(s1);
+	std::filesystem::path p2(s2);
 	mp1 += mp2;
 	p1 += p2;
 	EXPECT_EQ(mp1.RawString(), p1.string());
@@ -423,17 +423,17 @@ TEST(ManagedPathTest, CreatePathObjectNoExtReplacement)
 
 	ManagedPath mp_result = mp_base.CreatePathObject(mp_file);
 
-	std::experimental::filesystem::path p_base(base_path);
-	std::experimental::filesystem::path p_file(file_path1);
+	std::filesystem::path p_base(base_path);
+	std::filesystem::path p_file(file_path1);
 	p_file /= file_path2;
-	std::experimental::filesystem::path p_result = p_base / p_file.filename();
+	std::filesystem::path p_result = p_base / p_file.filename();
 
 	EXPECT_EQ(mp_result.RawString(), p_result.string());
 
 	// single-component file path
 	mp_file = ManagedPath(file_path2);
 	mp_result = mp_base.CreatePathObject(mp_file);
-	p_result = p_base / std::experimental::filesystem::path(file_path2);
+	p_result = p_base / std::filesystem::path(file_path2);
 	EXPECT_EQ(mp_result.RawString(), p_result.string());
 }
 
@@ -451,17 +451,17 @@ TEST(ManagedPathTest, CreatePathObjectWithExtReplacement)
 
 	ManagedPath mp_result = mp_base.CreatePathObject(mp_file, ext_repl);
 
-	std::experimental::filesystem::path p_base(base_path);
-	std::experimental::filesystem::path p_file(file_path1);
+	std::filesystem::path p_base(base_path);
+	std::filesystem::path p_file(file_path1);
 	p_file /= file_path2;
-	std::experimental::filesystem::path p_result = p_base / (p_file.stem() += ext_repl);
+	std::filesystem::path p_result = p_base / (p_file.stem() += ext_repl);
 
 	EXPECT_EQ(mp_result.RawString(), p_result.string());
 
 	// single-component file path
 	mp_file = ManagedPath(file_path2);
 	mp_result = mp_base.CreatePathObject(mp_file, ext_repl);
-	p_result = p_base / (std::experimental::filesystem::path(file_path2).stem() += ext_repl);
+	p_result = p_base / (std::filesystem::path(file_path2).stem() += ext_repl);
 	EXPECT_EQ(mp_result.RawString(), p_result.string());
 }
 
@@ -478,10 +478,10 @@ TEST(ManagedPathTest, CreatePathObjectDirsNoExtReplacement)
 
 	ManagedPath mp_result = mp_base.CreatePathObject(mp_file);
 
-	std::experimental::filesystem::path p_base(base_path);
-	std::experimental::filesystem::path p_file(file_path1);
+	std::filesystem::path p_base(base_path);
+	std::filesystem::path p_file(file_path1);
 	p_file /= file_path2;
-	std::experimental::filesystem::path p_result = p_base / p_file.filename();
+	std::filesystem::path p_result = p_base / p_file.filename();
 	EXPECT_EQ(mp_result.RawString(), p_result.string());
 }
 
@@ -499,10 +499,10 @@ TEST(ManagedPathTest, CreatePathObjectDirsWithExtReplacement)
 
 	ManagedPath mp_result = mp_base.CreatePathObject(mp_file, ext_repl);
 
-	std::experimental::filesystem::path p_base(base_path);
-	std::experimental::filesystem::path p_file(file_path1);
+	std::filesystem::path p_base(base_path);
+	std::filesystem::path p_file(file_path1);
 	p_file /= file_path2;
-	std::experimental::filesystem::path p_result = p_base / (p_file.filename() += ext_repl);
+	std::filesystem::path p_result = p_base / (p_file.filename() += ext_repl);
 	EXPECT_EQ(mp_result.RawString(), p_result.string());
 }
 
@@ -523,7 +523,7 @@ TEST(ManagedPathTest, GetFileSize)
 	EXPECT_TRUE(success);
 	EXPECT_EQ(result, n_bytes);
 
-	EXPECT_TRUE(std::experimental::filesystem::remove(std::experimental::filesystem::path(test_fname)));
+	EXPECT_TRUE(std::filesystem::remove(std::filesystem::path(test_fname)));
 }
 
 TEST(ManagedPathTest, GetFileSizeNonExistentFile)
@@ -555,7 +555,7 @@ TEST(ManagedPathTest, GetFileSizeNonFile)
 	EXPECT_FALSE(success);
 	EXPECT_EQ(result, 0);
 
-	EXPECT_TRUE(std::experimental::filesystem::remove(std::experimental::filesystem::path(test_fname)));
+	EXPECT_TRUE(std::filesystem::remove(std::filesystem::path(test_fname)));
 }
 
 TEST(ManagedPathTest, ListDirectoryEntriesDirNotExist)
@@ -605,8 +605,8 @@ TEST(ManagedPathTest, ListDirectoryEntriesCorrectList)
 	EXPECT_EQ(file_list[0].filename().RawString(), file_name2);
 	EXPECT_EQ(file_list[1].filename().RawString(), file_name1);
 
-	std::experimental::filesystem::path rm_path(mp.RawString());
-	std::experimental::filesystem::remove_all(rm_path);
+	std::filesystem::path rm_path(mp.RawString());
+	std::filesystem::remove_all(rm_path);
 }
 
 TEST(ManagedPathTest, ExcludePathsWithSubString)
@@ -678,8 +678,8 @@ TEST(ManagedPathTest, ExcludePathsWithSubString)
 	// Check correct files name in alphanumeric order
 	EXPECT_EQ(result[0].filename().RawString(), file_name2);
 
-	std::experimental::filesystem::path rm_path(mp.RawString());
-	std::experimental::filesystem::remove_all(rm_path);
+	std::filesystem::path rm_path(mp.RawString());
+	std::filesystem::remove_all(rm_path);
 }
 
 TEST(ManagedPathTest, ExcludePathsWithSubStringNotInFilenameComponent)
@@ -777,8 +777,8 @@ TEST(ManagedPathTest, SelectPathsWithSubString)
 	EXPECT_EQ(result[0].filename().RawString(), file_name3);
 	EXPECT_EQ(result[1].filename().RawString(), file_name1);
 
-	std::experimental::filesystem::path rm_path(mp.RawString());
-	std::experimental::filesystem::remove_all(rm_path);
+	std::filesystem::path rm_path(mp.RawString());
+	std::filesystem::remove_all(rm_path);
 }
 
 TEST(ManagedPathTest, SelectPathsWithSubStringNotInFilenameComponent)
@@ -841,8 +841,8 @@ TEST(ManagedPathTest, SelectFiles)
 	EXPECT_EQ(files_only[0].filename().RawString(), file_name2);
 	EXPECT_EQ(files_only[1].filename().RawString(), file_name1);
 
-	std::experimental::filesystem::path rm_path(mp.RawString());
-	std::experimental::filesystem::remove_all(rm_path);
+	std::filesystem::path rm_path(mp.RawString());
+	std::filesystem::remove_all(rm_path);
 }
 
 TEST(ManagedPathTest, SelectDirectories)
@@ -881,8 +881,8 @@ TEST(ManagedPathTest, SelectDirectories)
 	EXPECT_EQ(files_only[0].filename().RawString(), file_name2);
 	EXPECT_EQ(files_only[1].filename().RawString(), file_name3);
 
-	std::experimental::filesystem::path rm_path(mp.RawString());
-	std::experimental::filesystem::remove_all(rm_path);
+	std::filesystem::path rm_path(mp.RawString());
+	std::filesystem::remove_all(rm_path);
 }
 
 TEST(ManagedPathTest, CreateDirectoryFromComponentsEmptyPaths)

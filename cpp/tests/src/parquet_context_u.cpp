@@ -6,11 +6,15 @@
 #include <vector>
 #include <string>
 #include <stdio.h>
-#include <experimental/filesystem>
+#include <filesystem>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "parquet_context.h"
 
+namespace std
+{
+using namespace experimental; 
+} 
 
 class ParquetContextTest : public ::testing::Test
 {
@@ -431,7 +435,7 @@ protected:
 		path manipulation and open files, etc. In JIRA issue ARROW-6613 ("[C++] Remove
 		dependency on boost::filesystem") boost::filesystem was removed prior to
 		the release of Arrow 0.15.0 which occurred on 20191005. See
-		arrow.apache.org/release/0.15.0.html. When std::experimental::filesystem is used, paths are
+		arrow.apache.org/release/0.15.0.html. When std::filesystem is used, paths are
 		limited to 260 characters due to Windows MAX_PATH setting. Isaac verified this by
 		running translate_1553_from_parquet.cpp on files which resulted in output paths
 		below and above MAX_PATH. Output files with length less than MAX_PATH complete
@@ -445,7 +449,7 @@ protected:
 		*/
 		if (file_path.size() > 259)
 		{
-			std::experimental::filesystem::path modified_path("\\\\?\\");
+			std::filesystem::path modified_path("\\\\?\\");
 			modified_path += file_path;
 			file_path = modified_path.string();
 		}		

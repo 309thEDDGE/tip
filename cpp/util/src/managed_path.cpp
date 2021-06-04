@@ -254,7 +254,7 @@ void ManagedPath::ListDirectoryEntries(bool& success, std::vector<ManagedPath>& 
 		std::vector<std::string> filenames_list;
 		
 		fs::path amended_path = AmendPath(fs::path(this->fs::path::string()));
-		for (auto& p : std::experimental::filesystem::directory_iterator(amended_path))
+		for (auto& p : std::filesystem::directory_iterator(amended_path))
 		{
 			temp_path = ManagedPath(p.path());
 			temp_output_list.push_back(temp_path);

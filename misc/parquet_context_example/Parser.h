@@ -14,6 +14,11 @@
 
 using namespace std;
 
+namespace std
+{
+using namespace experimental; 
+} 
+
 class Parser
 {
 	private:
