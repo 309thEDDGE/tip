@@ -15,7 +15,8 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
 	is_configured_(false), milstd1553f1_pq_writer_(nullptr), milstd1553f1_pq_writer(nullptr),
 	videof0_pq_writer_(nullptr), videof0_pq_writer(nullptr), ethernetf0_pq_writer_(nullptr),
 	ethernetf0_pq_writer(nullptr),
-	chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_)
+	chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_),
+	pkt_type_paths_map(pkt_type_paths_enabled_map_)
 {
 	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
@@ -36,7 +37,8 @@ Ch10Context::Ch10Context() : absolute_position_(0),
 	is_configured_(false), milstd1553f1_pq_writer_(nullptr), milstd1553f1_pq_writer(nullptr),
 	videof0_pq_writer_(nullptr), videof0_pq_writer(nullptr), ethernetf0_pq_writer_(nullptr),
 	ethernetf0_pq_writer(nullptr),
-	chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_)
+	chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_),
+	pkt_type_paths_map(pkt_type_paths_enabled_map_)
 {
 	CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
@@ -326,6 +328,7 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 			
 			// Store the file writer status for this type as enabled.
 			pkt_type_file_writers_enabled_map_[Ch10PacketType::MILSTD1553_F1] = true;
+			pkt_type_paths_enabled_map_[Ch10PacketType::MILSTD1553_F1] = it->second;
 
 			// Create the writer object.
 			milstd1553f1_pq_writer_ = std::make_unique<ParquetMilStd1553F1>(it->second,
@@ -343,6 +346,7 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 		case Ch10PacketType::VIDEO_DATA_F0:
 
 			pkt_type_file_writers_enabled_map_[Ch10PacketType::VIDEO_DATA_F0] = true;
+			pkt_type_paths_enabled_map_[Ch10PacketType::VIDEO_DATA_F0] = it->second;
 
 			// Create the writer object.
 			videof0_pq_writer_ = std::make_unique<ParquetVideoDataF0>(it->second,
@@ -353,6 +357,7 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 		case Ch10PacketType::ETHERNET_DATA_F0:
 
 			pkt_type_file_writers_enabled_map_[Ch10PacketType::ETHERNET_DATA_F0] = true;
+			pkt_type_paths_enabled_map_[Ch10PacketType::ETHERNET_DATA_F0] = it->second;
 			ethernetf0_pq_writer_ = std::make_unique<ParquetEthernetF0>();
 			ethernetf0_pq_writer_->Initialize(it->second, thread_id);
 			ethernetf0_pq_writer = ethernetf0_pq_writer_.get();

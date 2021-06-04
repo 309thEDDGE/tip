@@ -14,6 +14,7 @@ bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_i
 
 	// Allocate vector memory. 
 	time_stamp_.resize(MAX_TEMP_ELEMENT_COUNT);
+	channel_id_.resize(MAX_TEMP_ELEMENT_COUNT);
 	payload_.resize(MAX_TEMP_ELEMENT_COUNT * PAYLOAD_LIST_COUNT, 0);
 	payload_ptr_ = payload_.data();
 
@@ -36,6 +37,7 @@ bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_i
 
 	// Add fields to table.
 	AddField(arrow::int64(), "time");
+	AddField(arrow::int32(), "channelid");
 	AddField(arrow::int16(), "payload", PAYLOAD_LIST_COUNT);
 	AddField(arrow::int64(), "payload_sz");
 	AddField(arrow::utf8(), "dstmac");
@@ -56,6 +58,7 @@ bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_i
 
 	// Set memory locations.
 	SetMemoryLocation(time_stamp_, "time");
+	SetMemoryLocation(channel_id_, "channelid");
 	SetMemoryLocation(payload_, "payload");
 	SetMemoryLocation(payload_size_, "payload_sz");
 	SetMemoryLocation(dst_mac_addr_, "dstmac");
@@ -93,10 +96,12 @@ bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_i
 	return true;
 }
 
-void ParquetEthernetF0::Append(const uint64_t& time_stamp, const EthernetData* eth_data)
+void ParquetEthernetF0::Append(const uint64_t& time_stamp, const uint32_t& chanid,
+	const EthernetData* eth_data)
 {
 	//printf("append_count_ is %zu\n", append_count_);
 	time_stamp_[append_count_] = time_stamp;
+	channel_id_[append_count_] = chanid;
 	payload_size_[append_count_] = eth_data->payload_size_;
 	dst_mac_addr_[append_count_] = eth_data->dst_mac_addr_;
 	src_mac_addr_[append_count_] = eth_data->src_mac_addr_;

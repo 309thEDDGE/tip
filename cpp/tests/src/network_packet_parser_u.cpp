@@ -3,6 +3,7 @@
 #include <string>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "managed_path.h"
 #include "network_packet_parser.h"
 #include "ethernet_data.h"
 #include "spdlog_setup_helper_funcs.h"
@@ -59,10 +60,11 @@ protected:
 	NiceMock<MockNPPSelector> mock_npp_selector_;
 	NetworkPacketParser* npp_ptr_;
 	Tins::PDU* pdu_ptr_;
+	uint32_t channel_id_;
 
     NetworkPacketParserTest() : npp_(), eth_data_(), data_length_(0),
 		result_(false), ethertype_(0), mock_npp_top_level_(), npp_ptr_(nullptr),
-		mock_npp_sec_level_(), pdu_ptr_(nullptr), mock_npp_selector_()
+		mock_npp_sec_level_(), pdu_ptr_(nullptr), mock_npp_selector_(), channel_id_(12)
     {
 		
     }
@@ -77,7 +79,7 @@ TEST_F(NetworkPacketParserTest, ParseHandleMalformedPacket)
 {
 	std::vector<uint8_t> buff(10); // too small
 	data_length_ = buff.size();
-	result_ = npp_.Parse(buff.data(), data_length_, &eth_data_);
+	result_ = npp_.Parse(buff.data(), data_length_, &eth_data_, channel_id_);
 	EXPECT_FALSE(result_);
 }
 
@@ -93,7 +95,8 @@ TEST_F(NetworkPacketParserTest, ParseIdentifyDot3)
 	EXPECT_CALL(mock_npp_top_level_, ParseEthernet(_, &eth_data_))
 		.Times(1).WillOnce(Return(true));
 
-	result_ = mock_npp_top_level_.Parse(serial.data(), data_length_, &eth_data_);
+	result_ = mock_npp_top_level_.Parse(serial.data(), data_length_, &eth_data_, 
+		channel_id_);
 	EXPECT_TRUE(result_);
 }
 
@@ -106,7 +109,8 @@ TEST_F(NetworkPacketParserTest, ParseIdentifyEthernetII)
 	EXPECT_CALL(mock_npp_top_level_, ParseEthernetII(_, &eth_data_))
 		.Times(1).WillOnce(Return(true));
 
-	result_ = mock_npp_top_level_.Parse(serial.data(), data_length_, &eth_data_);
+	result_ = mock_npp_top_level_.Parse(serial.data(), data_length_, &eth_data_, 
+		channel_id_);
 	EXPECT_TRUE(result_);
 }
 
@@ -320,7 +324,7 @@ TEST_F(NetworkPacketParserTest, ParseRawHeaderAndPayloadInChain)
 	uint8_t* buff = serial_data.data();
 	data_length_ = serial_data.size();
 
-	result_ = npp_.Parse(buff, data_length_, &eth_data_);
+	result_ = npp_.Parse(buff, data_length_, &eth_data_, channel_id_);
 	EXPECT_TRUE(result_);
 	EXPECT_EQ(pload_size, eth_data_.payload_size_);
 
@@ -402,6 +406,23 @@ TEST_F(NetworkPacketParserTest, ParserSelectorParseTCP)
 
 	result_ = mock_npp_sec_level_.ParserSelector(pdu_ptr_, &eth_data_);
 	EXPECT_TRUE(result_);
+}
+
+TEST_F(NetworkPacketParserTest, EnablePcapOutputBasePath)
+{
+	// Create fake input path.
+	ManagedPath pq_base_path;
+	pq_base_path = pq_base_path / std::string("mydata_ethernet.parquet") /
+		std::string("mydata_ethernet__000.parquet");
+
+	// Create expected pcap base path.
+	ManagedPath file_name("_" + pq_base_path.filename().RawString());
+	ManagedPath expected = pq_base_path.parent_path().CreatePathObject(
+		file_name, ".pcap");
+
+	ManagedPath observed = npp_.EnablePcapOutput(pq_base_path);
+	EXPECT_EQ(expected.RawString(), observed.RawString());
+	EXPECT_TRUE(npp_.pcap_output_enabled);
 }
 
 

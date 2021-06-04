@@ -31,8 +31,12 @@ Include the following three headers prior to tins.h.
 #include <cstdio>
 #include <string>
 #include <algorithm> // copy
+#include <vector>
 #include <map>
+#include <iterator>
+#include "managed_path.h"
 #include "spdlog/spdlog.h"
+#include "spdlog/fmt/bin_to_hex.h"
 
 class NetworkPacketParser
 {
@@ -48,14 +52,6 @@ class NetworkPacketParser
 	*/
 private:
 
-	// Maximum length of a 802.3 frame. Note that an EthernetII
-	// frame has ethertype in what is typically the length field
-	// and specifies that the type will be greater than 1500. It 
-	// gives a way of indicating EthernetII types packets and does
-	// not actually indicate the length of the packet, the maximum
-	// of which remains at 1500. 
-	static const size_t mtu_ = 1500;
-
 	// Current maximum raw payload length.
 	uint32_t max_payload_size_;
 
@@ -70,6 +66,12 @@ private:
 	Tins::TCP* tcp_pdu_;
 	Tins::IP* ip_pdu_;
 	Tins::LLC* llc_pdu_;
+
+	// Create class var here to avoid creation each time Parse is called
+	bool parse_result_;
+
+	bool pcap_output_enabled_;
+	ManagedPath pcap_base_path_;
 
 	// Tins::PDU::PDUType enum value to string mapping
 	const std::map<uint16_t, std::string> pdu_type_to_name_map_ = { {0, "RAW"}, {1, "ETHERNET_II"},
@@ -87,6 +89,7 @@ private:
 
 public:
 	const uint32_t& max_payload_size;
+	const bool& pcap_output_enabled;
 
 	NetworkPacketParser();
 
@@ -110,9 +113,59 @@ public:
 		True if no errors, false otherwise.
 	*/
 	virtual bool Parse(const uint8_t* buffer, const uint32_t& length, 
-		EthernetData* eth_data);
-	
+		EthernetData* eth_data, const uint32_t& channel_id);
 
+	/*
+	Enable pcap file writing. Pcap files are placed in the *_ethernet.parquet
+	directory alongside the *_ethernet__xxx.parquet files. File names have a 
+	leading underscore to avoid conflict with parquet file readers that ingest
+	the entire parquet directory. One pcap file is written per thread, per
+	channel ID.
+
+	Args:
+		pq_output_file		--> The path for the thread-specific parquet
+								file which is used to create the pcap
+								output paths
+
+	Return:
+		The base pcap output file path.
+	*/
+	ManagedPath EnablePcapOutput(const ManagedPath& pq_output_file);
+
+	/*
+	Write pcap packet relevant to a specific channel ID and Tins PDU
+	type 
+
+	Args:
+			pcap_base_path		--> Pcap output path from which to build
+									channel ID and packet specific output
+									pcap paths
+			channel_id			--> Channel ID with which to tag the output
+									file
+			pdu_type			--> Tins pdu type enum indicates the type
+									of PacketWriter to which the packet 
+									ought to be written
+
+	*/
+	void WritePcapPacket(const ManagedPath& pcap_base_path,
+		const uint32_t& channel_id, Tins::PDU::PDUType pdu_type);
+
+	/*
+	Helper function to simplify testing. Create an output pcap
+	path relevant to a specific channel ID and Tins PDU type.
+
+	Args:
+			pcap_base_path		--> Pcap output path from which to build
+									channel ID and packet specific output
+									pcap paths
+			channel_id			--> Channel ID with which to tag the output
+									file
+			pdu_type			--> Tins pdu type enum indicates the type
+									of PacketWriter to which the packet
+									ought to be written
+	*/
+	ManagedPath CreateSpecificPcapPath(const ManagedPath& pcap_base_path,
+		const uint32_t& channel_id, Tins::PDU::PDUType pdu_type);
 
 	/************************************************************
 						 Data Link Layer

@@ -5,6 +5,7 @@
 #include <set>
 #include "ch10_ethernetf0_msg_hdr_format.h"
 #include "ch10_packet_component.h"
+#include "managed_path.h"
 #include "ch10_time.h"
 #include "ethernet_data.h"
 #include "network_packet_parser.h"
@@ -52,7 +53,7 @@ private:
 	// Not sure if that is correct for Ethernet II frames, but
 	// may be given the information here:
 	// ttps://en.wikipedia.org/wiki/Ethernet_frame
-	const uint32_t mac_frame_max_length_ = 1522;
+	const uint32_t mac_frame_max_length_ = 65000; // 1522;
 
 	// Object in which to store parsed ethernet frame data.
 	EthernetData eth_data_;
@@ -117,6 +118,17 @@ public:
 	Ch10Status ParseFrames(const EthernetF0CSDW* const csdw_ptr,
 		Ch10Context* const ch10_context_ptr, NetworkPacketParser* npp_ptr,
 		Ch10Time* const ch10_time_ptr, const uint8_t*& data_ptr);
+
+	/*
+	Enable pcap file writing. See method with same name in 
+	NetworkPacketParser.
+
+	Args:
+		pq_output_file		--> The path for the thread-specific parquet
+								file which is used to create the pcap
+								output paths
+	*/
+	void EnablePcapOutput(const ManagedPath& pq_output_file);
 
 };
 

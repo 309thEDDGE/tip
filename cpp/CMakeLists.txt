@@ -102,8 +102,9 @@ if(ethernet_data)
                 ${eth_src_dir}/network_packet_parser.cpp ${eth_inc_dir}/network_packet_parser.h
                 ${eth_src_dir}/ethernet_data.cpp ${eth_inc_dir}/ethernet_data.h)
     target_include_directories(${eth_lib_name} PUBLIC ${eth_inc_dir}
-                               ${all_tins_incs} ${spdlog_inc_dir})
-    target_link_libraries(${eth_lib_name} PUBLIC ${all_tins_libs} ${spdlog_lib_name})
+                               ${all_tins_incs} ${spdlog_inc_dir} ${util_inc_dir})
+    target_link_libraries(${eth_lib_name} PUBLIC ${all_tins_libs} ${spdlog_lib_name}
+                          ${util_lib_name})
     target_compile_features(${eth_lib_name} PUBLIC cxx_std_17)
 endif()
 
@@ -372,7 +373,8 @@ add_executable(${test_exe_name}
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir} 
                             ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
-                            ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} ${temp_eth_inc_dir} ${temp_tins_incs}
+                            ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} ${temp_eth_inc_dir} 
+                            ${temp_tins_incs}
                             ${parserw_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir} )
 
 target_compile_features(${test_exe_name} PUBLIC cxx_std_17)

@@ -12,20 +12,32 @@ class EthernetData
 {
 public:
 
+	// Maximum length of a standard 802.3 frame. Note that an EthernetII
+	// frame has ethertype in what is typically the length field
+	// and specifies that the type will be greater than 1500. It 
+	// gives a way of indicating EthernetII types packets and does
+	// not actually indicate the length of the packet, the maximum
+	// of which remains at 1500. 
+	static const size_t mtu_ = 1500;
+
+	// Maximum practical length of ethernet frame, not to be used
+	// to check if 802.3 or EthernetII.
+	static const size_t max_eth_frame_size_ = 1522;
+
 	// Maximum TCP segment length, often call the MSS or Maximum 
 	// Segment Size:
 	// Ethernet MTU (1500) - typical IPv4 header (20) - typical TCP header (32, 
 	// but could be 20 if older) = 1448
 	// Using 32 bits because this is likely the data type that will be returned
 	// because the TCP options spec specifies 4 bytes.
-	static const uint32_t max_tcp_payload_size_ = 1448;
+	static const uint32_t max_tcp_payload_size_ = max_eth_frame_size_ - 20 - 32;
 
 	// Maximum UDP length:
 	// Ethernet MTU (1500) - typical IPv4 header (20) - typical UDP header (8)
 	// = 1472
 	// The length field is 2 bytes. Here we use 4 bytes to simplify
 	// passing of maximum lengths into functions.
-	static const uint32_t max_udp_payload_size_ = 1472;
+	static const uint32_t max_udp_payload_size_ = max_eth_frame_size_ - 20 - 8;
 
 	// Payload size needs to accommodate TCP or UDP, possibly more types
 	// in the future.

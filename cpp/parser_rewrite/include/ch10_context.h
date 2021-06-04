@@ -62,6 +62,9 @@ private:
 	// Store status of enabled file writers.
 	std::unordered_map<Ch10PacketType, bool> pkt_type_file_writers_enabled_map_;
 
+	// Store output paths of enabled file writers.
+	std::unordered_map<Ch10PacketType, ManagedPath> pkt_type_paths_enabled_map_;
+
 	bool searching_for_tdp_;
 	bool found_tdp_;
 
@@ -146,6 +149,7 @@ public:
 	const uint8_t& secondary_hdr;
 	const uint32_t& channel_id;
 	const std::unordered_map<Ch10PacketType, bool>& pkt_type_config_map;
+	const std::unordered_map<Ch10PacketType, ManagedPath>& pkt_type_paths_map;
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr1_map;
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr2_map;
 	const std::map<uint32_t, std::set<uint32_t>>& chanid_commwords_map;

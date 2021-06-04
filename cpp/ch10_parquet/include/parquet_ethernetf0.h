@@ -22,6 +22,7 @@ private:
 	// Arrays of data to be written to the Parquet table. See EthernetData for a 
 	// description of the columns.
 	std::vector<uint64_t> time_stamp_;  // save as int64
+	std::vector<uint16_t> channel_id_; // save as int32
 	std::vector<uint8_t> payload_; // save as int16
 	std::vector<int64_t> payload_size_; // original type is uint32_t
 	std::vector<std::string> dst_mac_addr_;
@@ -43,7 +44,8 @@ private:
 public:
 	ParquetEthernetF0();
 	bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
-	void Append(const uint64_t& time_stamp, const EthernetData* eth_data);
+	void Append(const uint64_t& time_stamp, const uint32_t& chanid, 
+		const EthernetData* eth_data);
 };
 
 #endif

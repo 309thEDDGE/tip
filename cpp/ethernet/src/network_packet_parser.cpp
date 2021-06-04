@@ -2,30 +2,82 @@
 
 NetworkPacketParser::NetworkPacketParser() : raw_pdu_(nullptr),
 udp_pdu_(nullptr), ip_pdu_(nullptr), llc_pdu_(nullptr), dot3_(), eth2_(), 
-tcp_pdu_(nullptr), max_payload_size_(0), max_payload_size(max_payload_size_)
+tcp_pdu_(nullptr), max_payload_size_(0), max_payload_size(max_payload_size_),
+parse_result_(false), pcap_output_enabled_(false), 
+pcap_output_enabled(pcap_output_enabled_)
 {
 
 }
 
 bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
-	EthernetData* eth_data)
+	EthernetData* eth_data, const uint32_t& channel_id)
 {
+	// Default to greatest payload size
+	max_payload_size_ = EthernetData::max_payload_size_;
+
 	// Determine if 802.3 or Ethernet II
 	try
 	{
 		dot3_ = Tins::Dot3(buffer, length);
-		if (dot3_.length() > mtu_)
+		if (dot3_.length() > EthernetData::mtu_)
 		{
 			eth2_ = Tins::EthernetII(buffer, length);
 			SPDLOG_DEBUG("Parsing EthernetII");
-			return ParseEthernetII(eth2_, eth_data);
+			parse_result_ = ParseEthernetII(eth2_, eth_data);
+
+			if (pcap_output_enabled_)
+			{
+
+			}
 		}
-		SPDLOG_DEBUG("Parsing 802.3");
-		return ParseEthernet(dot3_, eth_data);
+		else
+		{
+			SPDLOG_DEBUG("Parsing 802.3");
+			parse_result_ = ParseEthernet(dot3_, eth_data);
+
+			if (pcap_output_enabled_)
+			{
+
+			}
+		}
+
+		//if (!parse_result_)
+		//{
+		//	/*std::vector<uint8_t> buff(buffer, buffer + length);*/
+		//	//SPDLOG_DEBUG("buff size {:d}, length {:d}", int(buff.size()), length);
+		//	SPDLOG_DEBUG("Ethernet buffer data: {:Xs}", spdlog::to_hex(buffer, buffer+length));
+		//}
 	}
 	catch (const Tins::malformed_packet& e)
 	{
+		// Sometimes frame payloads from the ch10 can be "payload only",
+		// which includes data from the payload portion of the 802.3 or 
+		// EthernetII packet and not the MAC and Ethertype header or
+		// the trailing CRC.
+		/*try 
+		{
+			Tins::LLC llc(buffer, length);
+			return ParseEthernetLLC(&llc, eth_data);
+		}
+		catch (const Tins::malformed_packet& e)
+		{
+			SPDLOG_WARN("Failed to interpret as LLC buffer: {:s}", e.what());
+		}
+
+		try
+		{
+			Tins::IP ip(buffer, length);
+			return ParseIPv4(&ip, eth_data);
+		}
+		catch (const Tins::malformed_packet& e)
+		{
+			SPDLOG_WARN("Failed to interpret as IP buffer: {:s}", e.what());
+		}*/
+
 		SPDLOG_WARN("Error: {:s}", e.what());
+		/*std::vector<uint8_t> buff(buffer, buffer + length);
+		SPDLOG_DEBUG("buff size {:d}, length {:d}", int(buff.size()), length);
+		SPDLOG_DEBUG("Ethernet buffer data: {:Xsn}", spdlog::to_hex(buff.begin(), buff.end()));*/
 		return false;
 	}
 	
@@ -158,8 +210,8 @@ bool NetworkPacketParser::ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const
 		return false;
 	}
 
-	/*SPDLOG_DEBUG("Parsing {:s}", pdu_type_to_name_map_.at(
-		static_cast<uint16_t>(pdu_ptr->pdu_type())));*/
+	SPDLOG_DEBUG("Parsing {:s}", pdu_type_to_name_map_.at(
+		static_cast<uint16_t>(pdu_ptr->pdu_type())));
 
 	switch (pdu_ptr->pdu_type())
 	{
@@ -190,4 +242,15 @@ bool NetworkPacketParser::ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const
 	}
 
 	return true;
+}
+
+ManagedPath NetworkPacketParser::EnablePcapOutput(const ManagedPath& pq_output_file)
+{
+	ManagedPath file_name("_" + pq_output_file.filename().RawString());
+	pcap_base_path_ = pq_output_file.parent_path().CreatePathObject(file_name,
+		".pcap");
+
+	pcap_output_enabled_ = true;
+
+	return pcap_base_path_;
 }
