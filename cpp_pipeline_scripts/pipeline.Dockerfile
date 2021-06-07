@@ -1,5 +1,5 @@
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/ubi8-gcc-bundle:1.0
-
+ENV PATH="/root/miniconda3/bin:${PATH}"
 ENV LFR_ROOT_PATH=/opt/alkemist/lfr
 # Install alkemist-lfr
 RUN echo $'[AppStream]\n\
@@ -28,8 +28,12 @@ RUN	mkdir -p /deps/alkemist-lfr/lib \
 
 # Install python development files
 RUN dnf install -y platform-python-devel
-
+RUN wget \
+    https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+    && mkdir /root/.conda \
+    && bash Miniconda3-latest-Linux-x86_64.sh -b \
+    && rm -f Miniconda3-latest-Linux-x86_64.sh 
 # Install python wheel tools for building wheel in pytip
 RUN pip3.6 install wheel
-
+RUN conda --version
 CMD ["/bin/bash"]

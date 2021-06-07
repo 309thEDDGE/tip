@@ -9,27 +9,52 @@ main() {
 	
 	# If we are running on a pipeline, always build with Alkemist
 	# If not, only include Alkemist if ALKEMIST_LICENSE_KEY is provided
-	if is_alkemist_included; then
-		# Add LFR ALKEMIST build flags
-		echo "Building with Alkemist libraries"
-		export TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L${DEPS_DIR}/alkemist-lfr/lib"
-		OLDPATH="${PATH}"
-		export PATH="${LFR_ROOT_PATH}/scripts:${PATH}"
-	else
-		echo "Building WITHOUT Alkemist libraries:"
-		echo "   not on a pipeline and ALKEMIST_LICENSE_KEY unset or empty"
-	fi
+	# if is_alkemist_included; then
+	# 	# Add LFR ALKEMIST build flags
+	# 	echo "Building with Alkemist libraries"
+	# 	export TRAPLINKER_EXTRA_LDFLAGS="--traplinker-static-lfr -L${DEPS_DIR}/alkemist-lfr/lib"
+	# 	OLDPATH="${PATH}"
+	# 	export PATH="${LFR_ROOT_PATH}/scripts:${PATH}"
+	# else
+	# 	echo "Building WITHOUT Alkemist libraries:"
+	# 	echo "   not on a pipeline and ALKEMIST_LICENSE_KEY unset or empty"
+	# fi
+    echo -n "Installing Miniconda"
+    export PATH="/root/miniconda3/bin:${PATH}"
+    dnf install wget -y
+    wget \
+        https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+        && mkdir /root/.conda \
+        && bash Miniconda3-latest-Linux-x86_64.sh -b \
+        && rm -f Miniconda3-latest-Linux-x86_64.sh 	
 
-	echo -n "Checking for ninja..."
-	if [[ -f /usr/local/bin/ninja ]] ; then
-		echo "yes"
-		CMAKE="cmake -G Ninja"
-		MAKE="ninja -j2"
-	else
-		echo "no.  Using make"
-		CMAKE="cmake"
-		MAKE="make -j2"
-	fi
+    echo -n "Checking for conda"
+  
+    if [[ -f /root/miniconda3/bin/conda ]] ; then 
+        echo "Conda found"
+    else
+        echo "No Conda"
+    fi
+    
+    echo -n "Installing conda-build"
+    conda install conda-build -y
+    pwd
+    ls
+    echo -n "Change directory to conda-build recipes"
+    cd operations/conda-builds
+    echo -n "Directory list"
+    ls
+    conda build spdlog
+    #echo -n "Checking for ninja..."
+	#if [[ -f /usr/local/bin/ninja ]] ; then
+	#	echo "yes"
+	#	CMAKE="cmake -G Ninja"
+	#	MAKE="ninja -j2"
+	#else
+	#	echo "no.  Using make"
+	#	CMAKE="cmake"
+	#	MAKE="make -j2"
+	#fi
 
 	# Get paths to all cached libraries
 	BINARIES=( $(find $BUILD_DIR -name \*.a) ) || BINARIES=""
