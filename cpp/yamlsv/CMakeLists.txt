@@ -26,5 +26,4 @@ target_link_libraries(validate_yaml yamlsv)
 
 install(
     TARGETS yamlsv validate_yaml
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/yamlsv
 )

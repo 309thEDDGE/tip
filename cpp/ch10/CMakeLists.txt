@@ -34,5 +34,4 @@ target_link_libraries(tip_parse PUBLIC ch10parse_lib)
 
 install(
     TARGETS ch10parse_lib tip_parse
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ch10
 )

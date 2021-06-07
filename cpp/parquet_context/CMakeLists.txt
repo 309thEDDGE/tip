@@ -23,5 +23,4 @@ target_link_libraries(parquet_context
 
 install(
     TARGETS parquet_context
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/parquet_context
 )

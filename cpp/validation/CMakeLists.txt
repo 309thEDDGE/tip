@@ -36,5 +36,4 @@ target_compile_features(bincompare PUBLIC cxx_std_17)
 
 install(
     TARGETS parquet_compare pqcompare bincompare
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/validation
 )

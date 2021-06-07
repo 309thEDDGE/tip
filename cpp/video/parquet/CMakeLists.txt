@@ -30,5 +30,4 @@ target_link_libraries(parquet_video_extractor pq_vid_extract)
 
 install(
     TARGETS pq_vid_extract parquet_video_extractor
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/video/parquet
 )

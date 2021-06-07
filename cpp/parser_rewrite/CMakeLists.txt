@@ -47,5 +47,4 @@ target_link_libraries(parserw
 
 install(
     TARGETS parserw
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/parser_rewrite
 )

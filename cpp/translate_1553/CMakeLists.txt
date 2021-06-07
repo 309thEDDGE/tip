@@ -49,5 +49,4 @@ target_compile_features(tip_translate PUBLIC cxx_std_17)
 
 install(
     TARGETS translate_1553 tip_translate
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/translate_1553
 )

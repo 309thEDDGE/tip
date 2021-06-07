@@ -30,5 +30,4 @@ target_link_libraries(ch10_parquet
 
 install(
     TARGETS ch10_parquet
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ch10_parquet
 )

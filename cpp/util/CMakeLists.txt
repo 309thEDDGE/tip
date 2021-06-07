@@ -40,5 +40,4 @@ target_link_libraries(tiputil
 
 install(
     TARGETS tiputil
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/util
 )

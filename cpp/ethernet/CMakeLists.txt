@@ -25,5 +25,4 @@ target_link_libraries(ch10ethernet
 
 install(
     TARGETS ch10ethernet
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ethernet
 )
