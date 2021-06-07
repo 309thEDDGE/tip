@@ -173,7 +173,8 @@ public:
 	Return:
 		True if the file (object represents a file path) is removed
 		or all files and sub-directories (object represents a directory).
-		False if one or more files and/or directories fail to be removed.
+		False if one or more files and/or directories fail to be removed 
+		or the file/directory does not exist.
 	*/
 	bool RemoveTree() const;
 
