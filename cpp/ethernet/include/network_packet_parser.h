@@ -362,6 +362,13 @@ public:
 		True if no errors, false otherwise.
 	*/
 	virtual bool ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const ed);
+
+	/*
+	Remove all objects from the pcap_writer_map_ to cause the destructor
+	to be called to close the writers. This function is used by the tests
+	to close the writers so the files can be cleaned up.
+	*/
+	void ClearPcapWriterMap();
 };
 
 #endif

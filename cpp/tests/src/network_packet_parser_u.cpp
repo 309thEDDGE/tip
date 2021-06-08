@@ -478,54 +478,65 @@ TEST_F(NetworkPacketParserTest, AddPacketWriterToMapChannelIDNotPresent)
 	EXPECT_TRUE(result_);
 	ASSERT_TRUE(pcap_map.count(channel_id_) == 1);
 	EXPECT_TRUE(pcap_map[channel_id_].count(pdu_type) == 1);
-	//EXPECT_TRUE(pq_base_path.parent_path().RemoveTree());
+
+	// Clear the map that holds the PacketWriter objects. This will
+	// result in execution of the destructors which will allow the pcap
+	// files to be deleted without conflict.
+	pcap_map.clear();
+	EXPECT_TRUE(pq_base_path.parent_path().RemoveTree());
 }
 
-//TEST_F(NetworkPacketParserTest, AddPacketWriterToMapPDUTypeNotPresent)
-//{
-//	// Create fake input path.
-//	ManagedPath pq_base_path;
-//	pq_base_path = pq_base_path / std::string("mydata_ethernet.parquet") /
-//		std::string("mydata_ethernet__000.parquet");
-//
-//	// Create pcap base path.
-//	ManagedPath pcap_base_path = npp_.EnablePcapOutput(pq_base_path);
-//
-//	std::unordered_map<uint32_t, std::unordered_map<
-//		Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>> pcap_map;
-//	Tins::PDU::PDUType pdu_type = Tins::PDU::PDUType::ETHERNET_II;
-//	channel_id_ = 13;
-//	std::unordered_map<Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>> temp_map;
-//
-//	pcap_map[channel_id_] = temp_map;
-//	
-//	result_ = npp_.AddPacketWriterToMap(pcap_base_path, channel_id_, pdu_type, pcap_map);
-//	EXPECT_TRUE(result_);
-//	ASSERT_TRUE(pcap_map.count(channel_id_) == 1);
-//	EXPECT_TRUE(pcap_map[channel_id_].count(pdu_type) == 1);
-//}
+TEST_F(NetworkPacketParserTest, AddPacketWriterToMapPDUTypeNotPresent)
+{
+	// Create fake input path.
+	ManagedPath pq_base_path;
+	pq_base_path = pq_base_path / std::string("mydata_ethernet.parquet") /
+		std::string("mydata_ethernet__000.parquet");
 
-//TEST_F(NetworkPacketParserTest, AddPacketWriterToMapInvalidPDU)
-//{
-//	// Create fake input path.
-//	ManagedPath pq_base_path;
-//	pq_base_path = pq_base_path / std::string("mydata_ethernet.parquet") /
-//		std::string("mydata_ethernet__000.parquet");
-//
-//	// Create pcap base path.
-//	ManagedPath pcap_base_path = npp_.EnablePcapOutput(pq_base_path);
-//
-//	std::unordered_map<uint32_t, std::unordered_map<
-//		Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>> pcap_map;
-//
-//	// Currently only support Dot3 and EthernetII
-//	Tins::PDU::PDUType pdu_type = Tins::PDU::PDUType::LLC;
-//	channel_id_ = 13;
-//
-//	result_ = npp_.AddPacketWriterToMap(pcap_base_path, channel_id_, pdu_type, pcap_map);
-//	EXPECT_FALSE(result_);
-//	ASSERT_TRUE(pcap_map.count(channel_id_) == 0);
-//}
+	ASSERT_TRUE(pq_base_path.parent_path().create_directory());
+
+	// Create pcap base path.
+	ManagedPath pcap_base_path = npp_.EnablePcapOutput(pq_base_path);
+
+	std::unordered_map<uint32_t, std::unordered_map<
+		Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>> pcap_map;
+	Tins::PDU::PDUType pdu_type = Tins::PDU::PDUType::ETHERNET_II;
+	channel_id_ = 13;
+	std::unordered_map<Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>> temp_map;
+
+	pcap_map[channel_id_] = temp_map;
+	
+	result_ = npp_.AddPacketWriterToMap(pcap_base_path, channel_id_, pdu_type, pcap_map);
+	EXPECT_TRUE(result_);
+	ASSERT_TRUE(pcap_map.count(channel_id_) == 1);
+	EXPECT_TRUE(pcap_map[channel_id_].count(pdu_type) == 1);
+
+	pcap_map.clear();
+	EXPECT_TRUE(pq_base_path.parent_path().RemoveTree());
+}
+
+TEST_F(NetworkPacketParserTest, AddPacketWriterToMapInvalidPDUNewChannelID)
+{
+	// Create fake input path.
+	ManagedPath pq_base_path;
+	pq_base_path = pq_base_path / std::string("mydata_ethernet.parquet") /
+		std::string("mydata_ethernet__000.parquet");
+
+	// Create pcap base path.
+	ManagedPath pcap_base_path = npp_.EnablePcapOutput(pq_base_path);
+
+	std::unordered_map<uint32_t, std::unordered_map<
+		Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>> pcap_map;
+
+	// Currently only support Dot3 and EthernetII
+	Tins::PDU::PDUType pdu_type = Tins::PDU::PDUType::LLC;
+	channel_id_ = 13;
+
+	result_ = npp_.AddPacketWriterToMap(pcap_base_path, channel_id_, pdu_type, pcap_map);
+	EXPECT_FALSE(result_);
+	ASSERT_TRUE(pcap_map.count(channel_id_) == 0);
+}
+
 
 
 

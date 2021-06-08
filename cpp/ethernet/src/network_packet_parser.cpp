@@ -25,7 +25,7 @@ bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
 			SPDLOG_DEBUG("Parsing EthernetII");
 			parse_result_ = ParseEthernetII(eth2_, eth_data);
 
-			if (pcap_output_enabled_)
+			if (pcap_output_enabled_ && parse_result_)
 			{
 				WritePcapPacket(pcap_base_path_, channel_id, Tins::PDU::PDUType::ETHERNET_II,
 					pcap_writer_map_, dynamic_cast<Tins::PDU*>(&eth2_));
@@ -36,7 +36,7 @@ bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
 			SPDLOG_DEBUG("Parsing 802.3");
 			parse_result_ = ParseEthernet(dot3_, eth_data);
 
-			if (pcap_output_enabled_)
+			if (pcap_output_enabled_ && parse_result_)
 			{
 				WritePcapPacket(pcap_base_path_, channel_id, Tins::PDU::PDUType::DOT3,
 					pcap_writer_map_, dynamic_cast<Tins::PDU*>(&dot3_));
@@ -83,7 +83,7 @@ bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
 		return false;
 	}
 	
-	return true;
+	return parse_result_;
 }
 
 bool NetworkPacketParser::ParseEthernet(Tins::Dot3& dot3_pdu, EthernetData* const ed)
@@ -293,6 +293,7 @@ bool NetworkPacketParser::AddPacketWriterToMap(const ManagedPath& pcap_base_path
 {
 	// Check if a writer for the given channel_id and pdu_type
 	// already exists.
+	bool adds_new_channel_id = false;
 	if (pcap_writer_map.count(channel_id) == 0)
 	{
 		// Add an empty map for the given channel_id and create
@@ -300,6 +301,7 @@ bool NetworkPacketParser::AddPacketWriterToMap(const ManagedPath& pcap_base_path
 		std::unordered_map<Tins::PDU::PDUType, 
 			std::shared_ptr<Tins::PacketWriter>> temp_pdu_writer_map;
 		pcap_writer_map[channel_id] = temp_pdu_writer_map;
+		adds_new_channel_id = true;
 	}
 	
 	if (pcap_writer_map[channel_id].count(pdu_type) == 0)
@@ -320,9 +322,18 @@ bool NetworkPacketParser::AddPacketWriterToMap(const ManagedPath& pcap_base_path
 		default:
 			SPDLOG_WARN("No PacketWriter creation routine defined for PDU type {:s}",
 				pdu_type_to_name_map_.at(static_cast<uint16_t>(pdu_type)));
+			if (adds_new_channel_id)
+			{
+				pcap_writer_map.erase(channel_id);
+			}
 			return false;
 			break;
 		}
 	}
 	return true;
+}
+
+void NetworkPacketParser::ClearPcapWriterMap()
+{
+	pcap_writer_map_.clear();
 }
