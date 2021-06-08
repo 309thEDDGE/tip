@@ -53,8 +53,8 @@ bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_i
 	AddField(arrow::int32(), "ipid");
 	AddField(arrow::int16(), "ipproto");
 	AddField(arrow::int32(), "ipoffset");
-	AddField(arrow::int32(), "ipdstport");
-	AddField(arrow::int32(), "ipsrcport");
+	AddField(arrow::int32(), "dstport");
+	AddField(arrow::int32(), "srcport");
 
 	// Set memory locations.
 	SetMemoryLocation(time_stamp_, "time");
@@ -74,8 +74,8 @@ bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_i
 	SetMemoryLocation(id_, "ipid");
 	SetMemoryLocation(protocol_, "ipproto");
 	SetMemoryLocation(offset_, "ipoffset");
-	SetMemoryLocation(dst_port_, "ipdstport");
-	SetMemoryLocation(src_port_, "ipsrcport");
+	SetMemoryLocation(dst_port_, "dstport");
+	SetMemoryLocation(src_port_, "srcport");
 
 	if (!OpenForWrite(outfile.string(), true))
 	{

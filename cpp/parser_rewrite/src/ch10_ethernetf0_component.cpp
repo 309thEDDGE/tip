@@ -69,6 +69,9 @@ Ch10Status Ch10EthernetF0Component::ParseFrames(const EthernetF0CSDW* const csdw
 			return Ch10Status::ETHERNETF0_FRAME_LENGTH;
 		}
 
+		// Reset the EthernetData object values to defaults
+		eth_data_ptr_->Reset();
+
 		// Parse the payload. Does not advance the data pointer.
 		if (!npp_ptr->Parse(data_ptr, data_length_, eth_data_ptr_, 
 			ctx_->channel_id))
@@ -94,9 +97,6 @@ Ch10Status Ch10EthernetF0Component::ParseFrames(const EthernetF0CSDW* const csdw
 			continue;
 			//return status_;
 		}
-
-		// Reset the EthernetData object values to defaults
-		eth_data_ptr_->Reset();
 
 		// Append parsed data to the Parquet file
 		if(ctx_->ethernetf0_pq_writer != nullptr)

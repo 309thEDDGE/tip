@@ -22,7 +22,7 @@ bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
 		if (dot3_.length() > EthernetData::mtu_)
 		{
 			eth2_ = Tins::EthernetII(buffer, length);
-			SPDLOG_DEBUG("Parsing EthernetII");
+			SPDLOG_TRACE("Parsing EthernetII (channel_id = {:d}", channel_id);
 			parse_result_ = ParseEthernetII(eth2_, eth_data);
 
 			if (pcap_output_enabled_ && parse_result_)
@@ -33,7 +33,7 @@ bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
 		}
 		else
 		{
-			SPDLOG_DEBUG("Parsing 802.3");
+			SPDLOG_TRACE("Parsing 802.3 (channel_id = {:d}", channel_id);
 			parse_result_ = ParseEthernet(dot3_, eth_data);
 
 			if (pcap_output_enabled_ && parse_result_)
@@ -174,11 +174,10 @@ bool NetworkPacketParser::ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const
 	// may be passed to this function.
 	if (pdu_ptr == nullptr)
 	{
-		printf("null pointer\n");
 		return false;
 	}
 
-	SPDLOG_DEBUG("Parsing {:s}", pdu_type_to_name_map_.at(
+	SPDLOG_TRACE("Parsing {:s}", pdu_type_to_name_map_.at(
 		static_cast<uint16_t>(pdu_ptr->pdu_type())));
 
 	switch (pdu_ptr->pdu_type())
