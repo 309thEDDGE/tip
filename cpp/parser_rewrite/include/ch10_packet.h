@@ -71,8 +71,11 @@ public:
     {
 
         // Comment to disable pcap output.
-        ethernetf0_component_.EnablePcapOutput(
-            context->pkt_type_paths_map.at(Ch10PacketType::ETHERNET_DATA_F0));
+        if (ctx_->IsConfigured())
+        {
+            ethernetf0_component_.EnablePcapOutput(
+                context->pkt_type_paths_map.at(Ch10PacketType::ETHERNET_DATA_F0));
+        }
     }
 
     /*

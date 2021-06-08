@@ -53,7 +53,17 @@ private:
 	// Not sure if that is correct for Ethernet II frames, but
 	// may be given the information here:
 	// ttps://en.wikipedia.org/wiki/Ethernet_frame
-	const uint32_t mac_frame_max_length_ = 65000; // 1522;
+	// Other information suggests MAC frames can theoretically
+	// occupy up to 65000 bytes. After observing some irig106.org
+	// ch10s with lengths greater than 1522 (some close to 9000),
+	// The data type is uin32t_t
+	// so this high value will still be a relatively good check for
+	// corrupt data.
+
+	// After more investigation, there do not appear to be any 
+	// frames in irig106.org data with size > 9000, which is the
+	// maximum jumbo frame size. 
+	const uint32_t mac_frame_max_length_ = 9000; // 1522;
 
 	// Object in which to store parsed ethernet frame data.
 	EthernetData eth_data_;

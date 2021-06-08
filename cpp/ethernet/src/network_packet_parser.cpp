@@ -42,44 +42,10 @@ bool NetworkPacketParser::Parse(const uint8_t* buffer, const uint32_t& length,
 					pcap_writer_map_, dynamic_cast<Tins::PDU*>(&dot3_));
 			}
 		}
-
-		//if (!parse_result_)
-		//{
-		//	/*std::vector<uint8_t> buff(buffer, buffer + length);*/
-		//	//SPDLOG_DEBUG("buff size {:d}, length {:d}", int(buff.size()), length);
-		//	SPDLOG_DEBUG("Ethernet buffer data: {:Xs}", spdlog::to_hex(buffer, buffer+length));
-		//}
 	}
 	catch (const Tins::malformed_packet& e)
 	{
-		// Sometimes frame payloads from the ch10 can be "payload only",
-		// which includes data from the payload portion of the 802.3 or 
-		// EthernetII packet and not the MAC and Ethertype header or
-		// the trailing CRC.
-		/*try 
-		{
-			Tins::LLC llc(buffer, length);
-			return ParseEthernetLLC(&llc, eth_data);
-		}
-		catch (const Tins::malformed_packet& e)
-		{
-			SPDLOG_WARN("Failed to interpret as LLC buffer: {:s}", e.what());
-		}
-
-		try
-		{
-			Tins::IP ip(buffer, length);
-			return ParseIPv4(&ip, eth_data);
-		}
-		catch (const Tins::malformed_packet& e)
-		{
-			SPDLOG_WARN("Failed to interpret as IP buffer: {:s}", e.what());
-		}*/
-
 		SPDLOG_WARN("Error: {:s}", e.what());
-		/*std::vector<uint8_t> buff(buffer, buffer + length);
-		SPDLOG_DEBUG("buff size {:d}, length {:d}", int(buff.size()), length);
-		SPDLOG_DEBUG("Ethernet buffer data: {:Xsn}", spdlog::to_hex(buff.begin(), buff.end()));*/
 		return false;
 	}
 	
@@ -185,7 +151,7 @@ bool NetworkPacketParser::ParseRaw(Tins::RawPDU* raw_pdu, EthernetData* const ed
 	*/
 	//ed->payload_ptr_ = raw_pdu->payload().data();
 
-	// Check if the payload size exceeds the default mtu.
+	// Check if the payload size exceeds the EthernetData::max_eth_frame_size_
 	if (ed->payload_size_ > max_pload_size)
 	{
 		SPDLOG_WARN("Payload size ({:d}) > max payload size ({:d})", ed->payload_size_,

@@ -31,7 +31,6 @@ Ch10Status Ch10EthernetF0Component::ParseFrames(const EthernetF0CSDW* const csdw
 	Ch10Time* const ch10_time_ptr, const uint8_t*& data_ptr)
 {
 	// Iterate over all frame + IPH sub-packets
-	SPDLOG_DEBUG("Parsing frames:");
 	for (frame_index_ = 0; frame_index_ < csdw_ptr->frame_count; frame_index_++)
 	{
 		// Parse the IPTS (buffer advanced automatically)
@@ -47,13 +46,15 @@ Ch10Status Ch10EthernetF0Component::ParseFrames(const EthernetF0CSDW* const csdw
 		ParseElements(ethernetf0_frameid_elem_vec_, data_ptr);
 
 		data_length_ = (*ethernetf0_frameid_elem_.element)->data_length;
+
 		// Frame length of zero was encountered in some IRIG106.org
-		// sample ch10 files.
+		// sample ch10 files. We don't know what this means, but 
 		if (data_length_ == 0)
 		{
 			SPDLOG_WARN("({:02d}) MAC frame data length equal to zero, "
 				"frame index {:d}/{:d}",
 				ctx_->thread_id, frame_index_, csdw_ptr->frame_count - 1);
+			//continue;
 			return Ch10Status::ETHERNETF0_FRAME_LENGTH;
 		}
 
@@ -94,6 +95,9 @@ Ch10Status Ch10EthernetF0Component::ParseFrames(const EthernetF0CSDW* const csdw
 			//return status_;
 		}
 
+		// Reset the EthernetData object values to defaults
+		eth_data_ptr_->Reset();
+
 		// Append parsed data to the Parquet file
 		if(ctx_->ethernetf0_pq_writer != nullptr)
 			ctx_->ethernetf0_pq_writer->Append(abs_time_, ctx_->channel_id, eth_data_ptr_);
@@ -102,7 +106,6 @@ Ch10Status Ch10EthernetF0Component::ParseFrames(const EthernetF0CSDW* const csdw
 		// the frame.
 		data_ptr += data_length_;
 	}
-	SPDLOG_DEBUG("End parsing frames\n");
 	return Ch10Status::OK;
 }
 

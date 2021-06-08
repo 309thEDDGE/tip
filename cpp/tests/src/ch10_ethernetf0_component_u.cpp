@@ -5,7 +5,6 @@
 #include "ch10_time.h"
 #include "ch10_context.h"
 #include "network_packet_parser.h"
-//#include "parquet_ethernetf0.h"
 #include "spdlog_setup_helper_funcs.h"
 
 using ::testing::_;
@@ -35,8 +34,8 @@ class MockNetworkPacketParser : public NetworkPacketParser
 {
 public:
     MockNetworkPacketParser() : NetworkPacketParser() {}
-    MOCK_METHOD3(Parse, bool(const uint8_t* buffer, const uint32_t& length,
-        EthernetData* eth_data));
+    MOCK_METHOD4(Parse, bool(const uint8_t* buffer, const uint32_t& length,
+        EthernetData* eth_data, const uint32_t& channel_id));
 };
 
 class Ch10EthernetF0ComponentTest : public ::testing::Test
@@ -100,7 +99,7 @@ TEST_F(Ch10EthernetF0ComponentTest, ParseFramesParseIPTS)
             SetArgReferee<1>(ipts_time_),
             Return(Ch10Status::OK)));
 
-    ON_CALL(mock_npp_, Parse(_, _, _)).WillByDefault(Return(true));
+    ON_CALL(mock_npp_, Parse(_, _, _, _)).WillByDefault(Return(true));
 
     /*EXPECT_CALL(mock_ch10_context_, CalculateIPTSAbsTime(ipts_time_)).
         Times(csdw_.frame_count).WillRepeatedly(ReturnRef(mock_abs_time));*/
@@ -141,7 +140,7 @@ TEST_F(Ch10EthernetF0ComponentTest, ParseFramesCalcIPTSAbsTime)
     EXPECT_CALL(mock_ch10_context_, CalculateIPTSAbsTime(ipts_time_)).
         Times(csdw_.frame_count).WillRepeatedly(ReturnRef(mock_abs_time));
 
-    ON_CALL(mock_npp_, Parse(_, _, _)).WillByDefault(Return(true));
+    ON_CALL(mock_npp_, Parse(_, _, _, _)).WillByDefault(Return(true));
 
     status_ = eth_.ParseFrames(&csdw_, ch10_context_ptr_, npp_ptr_, ch10_time_ptr_,
         data_ptr_);
@@ -151,6 +150,7 @@ TEST_F(Ch10EthernetF0ComponentTest, ParseFramesCalcIPTSAbsTime)
 TEST_F(Ch10EthernetF0ComponentTest, ParseFramesBufferAdvancement)
 {
     csdw_.frame_count = 3;
+    uint32_t channelid = 10;
     uint64_t mock_abs_time = 1234567890;
     int intrapkt_hdr_size = 8 + 4; // IPTS + Frame ID word
     uint32_t data_length = 138;
@@ -180,7 +180,7 @@ TEST_F(Ch10EthernetF0ComponentTest, ParseFramesBufferAdvancement)
             SetArgReferee<1>(ipts_time_),
             Return(Ch10Status::OK)));
 
-    EXPECT_CALL(mock_npp_, Parse(temp_data_ptr+intrapkt_hdr_size, data_length, _)).
+    EXPECT_CALL(mock_npp_, Parse(temp_data_ptr+intrapkt_hdr_size, data_length, _, _)).
         Times(1).WillOnce(Return(true));
 
     temp_data_ptr += single_frame_size;
@@ -191,7 +191,7 @@ TEST_F(Ch10EthernetF0ComponentTest, ParseFramesBufferAdvancement)
             SetArgReferee<1>(ipts_time_),
             Return(Ch10Status::OK)));
 
-    EXPECT_CALL(mock_npp_, Parse(temp_data_ptr + intrapkt_hdr_size, data_length, _)).
+    EXPECT_CALL(mock_npp_, Parse(temp_data_ptr + intrapkt_hdr_size, data_length, _, _)).
         Times(1).WillOnce(Return(true));
 
     temp_data_ptr += single_frame_size;
@@ -201,7 +201,7 @@ TEST_F(Ch10EthernetF0ComponentTest, ParseFramesBufferAdvancement)
             SetArgReferee<1>(ipts_time_),
             Return(Ch10Status::OK)));
 
-    EXPECT_CALL(mock_npp_, Parse(temp_data_ptr + intrapkt_hdr_size, data_length, _)).
+    EXPECT_CALL(mock_npp_, Parse(temp_data_ptr + intrapkt_hdr_size, data_length, _, _)).
         Times(1).WillOnce(Return(true));
 
     EXPECT_CALL(mock_ch10_context_, CalculateIPTSAbsTime(ipts_time_)).
@@ -223,7 +223,7 @@ TEST_F(Ch10EthernetF0ComponentTest, ParseFramesFrameLengthExceedsMax)
     std::vector<uint8_t> dummy_buffer(intrapkt_hdr_size, 0);
     data_ptr_ = dummy_buffer.data();
     EthernetF0FrameIDWord* frame_id_word = (EthernetF0FrameIDWord*)(data_ptr_ + 8);
-    frame_id_word->data_length = 4321; // > mac_frame_max_length_
+    frame_id_word->data_length = 60000; // > mac_frame_max_length_
 
     EXPECT_CALL(mock_ch10_time_, ParseIPTS(data_ptr_,
         _, ctx_.intrapkt_ts_src, ctx_.time_format))
@@ -235,7 +235,7 @@ TEST_F(Ch10EthernetF0ComponentTest, ParseFramesFrameLengthExceedsMax)
     EXPECT_CALL(mock_ch10_context_, CalculateIPTSAbsTime(ipts_time_)).
         Times(1).WillOnce(ReturnRef(mock_abs_time));
 
-    ON_CALL(mock_npp_, Parse(_, _, _)).WillByDefault(Return(true));
+    ON_CALL(mock_npp_, Parse(_, _, _, _)).WillByDefault(Return(true));
 
     status_ = eth_.ParseFrames(&csdw_, ch10_context_ptr_, npp_ptr_, ch10_time_ptr_,
         data_ptr_);
@@ -262,7 +262,7 @@ TEST_F(Ch10EthernetF0ComponentTest, ParseFramesFrameLengthZero)
     EXPECT_CALL(mock_ch10_context_, CalculateIPTSAbsTime(ipts_time_)).
         Times(1).WillOnce(ReturnRef(mock_abs_time));
 
-    ON_CALL(mock_npp_, Parse(_, _, _)).WillByDefault(Return(true));
+    ON_CALL(mock_npp_, Parse(_, _, _, _)).WillByDefault(Return(true));
 
     status_ = eth_.ParseFrames(&csdw_, ch10_context_ptr_, npp_ptr_, ch10_time_ptr_,
         data_ptr_);
