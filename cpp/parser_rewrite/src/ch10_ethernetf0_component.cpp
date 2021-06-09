@@ -48,12 +48,13 @@ Ch10Status Ch10EthernetF0Component::ParseFrames(const EthernetF0CSDW* const csdw
 		data_length_ = (*ethernetf0_frameid_elem_.element)->data_length;
 
 		// Frame length of zero was encountered in some IRIG106.org
-		// sample ch10 files. We don't know what this means, but 
+		// sample ch10 files. We don't yet know what this means.
 		if (data_length_ == 0)
 		{
 			SPDLOG_WARN("({:02d}) MAC frame data length equal to zero, "
-				"frame index {:d}/{:d}",
-				ctx_->thread_id, frame_index_, csdw_ptr->frame_count - 1);
+				"frame index {:d}/{:d}, channel ID {:d}",
+				ctx_->thread_id, frame_index_, csdw_ptr->frame_count - 1,
+				ctx_->channel_id);
 			//continue;
 			return Ch10Status::ETHERNETF0_FRAME_LENGTH;
 		}
@@ -63,9 +64,9 @@ Ch10Status Ch10EthernetF0Component::ParseFrames(const EthernetF0CSDW* const csdw
 		if (data_length_ > mac_frame_max_length_)
 		{
 			SPDLOG_WARN("({:02d}) MAC frame data length ({:d}) > maximum ({:d}), "
-				"frame index {:d}/{:d}",
+				"frame index {:d}/{:d}, channel ID {:d}",
 				ctx_->thread_id, data_length_, mac_frame_max_length_,
-				frame_index_, csdw_ptr->frame_count - 1);
+				frame_index_, csdw_ptr->frame_count - 1, ctx_->channel_id);
 			return Ch10Status::ETHERNETF0_FRAME_LENGTH;
 		}
 
@@ -76,8 +77,9 @@ Ch10Status Ch10EthernetF0Component::ParseFrames(const EthernetF0CSDW* const csdw
 		if (!npp_ptr->Parse(data_ptr, data_length_, eth_data_ptr_, 
 			ctx_->channel_id))
 		{
-			SPDLOG_WARN("({:02d}) Failed to parse ethernet, frame index {:d}/{:d}", 
-				ctx_->thread_id, frame_index_, csdw_ptr->frame_count - 1);
+			SPDLOG_WARN("({:02d}) Failed to parse ethernet, frame index {:d}/{:d}, "
+				"channel ID {:d}", ctx_->thread_id, frame_index_, 
+				csdw_ptr->frame_count - 1, ctx_->channel_id);
 			status_ = Ch10Status::ETHERNETF0_FRAME_PARSE_ERROR;
 
 			// Do not return status immediately so other ethernet frames
