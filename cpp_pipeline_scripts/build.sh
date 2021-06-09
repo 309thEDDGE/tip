@@ -29,13 +29,13 @@ main() {
     pwd
     ls
     echo -n "Change directory to conda-build recipes"
-    cd operations/conda-builds
+    cd tip_scripts/conda-recipes
     echo -n "Directory list"
     ls
     echo -n "Building tip dependencies"
     conda build spdlog gtest libtins yaml-cpp
     echo -n "Building tip"
-    conda build tip
+    conda build tip -c /root/miniconda3/conda-bld
 
 } # main
 
