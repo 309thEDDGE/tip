@@ -32,7 +32,10 @@ main() {
     cd operations/conda-builds
     echo -n "Directory list"
     ls
-    conda build spdlog
+    echo -n "Building tip dependencies"
+    conda build spdlog gtest libtins yaml-cpp
+    echo -n "Building tip"
+    conda build tip
 
 } # main
 
