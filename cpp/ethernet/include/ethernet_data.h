@@ -88,4 +88,10 @@ public:
 
 };
 
+const size_t EthernetData::mtu_;
+const size_t EthernetData::max_eth_frame_size_;
+const uint32_t EthernetData::max_tcp_payload_size_;
+const uint32_t EthernetData::max_udp_payload_size_;
+const uint32_t EthernetData::max_payload_size_ ;
+
 #endif
