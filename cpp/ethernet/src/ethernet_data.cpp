@@ -1,5 +1,11 @@
 #include "ethernet_data.h"
 
+const size_t EthernetData::mtu_;
+const size_t EthernetData::max_eth_frame_size_;
+const uint32_t EthernetData::max_tcp_payload_size_;
+const uint32_t EthernetData::max_udp_payload_size_;
+const uint32_t EthernetData::max_payload_size_;
+
 EthernetData::EthernetData() : payload_(max_payload_size_, 0), 
 	payload_ptr_(payload_.data()),
 dst_mac_addr_(""), src_mac_addr_(""), ethertype_(0), frame_format_(UINT8_MAX),
