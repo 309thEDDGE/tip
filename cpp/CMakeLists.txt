@@ -347,7 +347,7 @@ add_executable(${test_exe_name}
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir} 
                             ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
-                            ${tmats_inc_dir} ${ch10_inc_dir}
+                            ${tmats_inc_dir} ${ch10_inc_dir} ${eth_inc_dir}
                             ${parserw_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir} )
 
 target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
@@ -359,6 +359,7 @@ target_link_libraries(${test_exe_name}
                         ${comp_lib_name}
                         ${ch10parse_lib_name}
                         ${parquet_libs}
+                        ${eth_lib_name}
                         ${parserw_lib_name}
                         ${spdlog_lib_name}
                         ${yamlsv_lib_name}
