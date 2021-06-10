@@ -114,9 +114,9 @@ if(linux)
                     -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 else()
     add_compile_definitions(PARQUET_STATIC
-                        ARROW_STATIC
-                        TINS_STATIC
-                        SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+                            ARROW_STATIC
+                            TINS_STATIC
+                            SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 endif()
 
 # Add source files dir.

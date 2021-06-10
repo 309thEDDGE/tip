@@ -189,21 +189,6 @@ endif()
 set(gsuite_libs ${gtest_lib_name} ${gtestmain_lib_name} ${gmock_lib_name})
 
 #########################################################
-#                   LibIrig106 Paths
-#########################################################
-if(container)
-    set(irig_inc_dir ${inc_dir}/libirig106)
-    set(irig_lib_dir ${lib_dir})
-    set(irig_lib_name ${irig_lib_dir}/libirig106.so)
-else()
-    set(irig_dir_name "libirig106")
-    get_filename_component(irig_path "${deps_dir}/${irig_dir_name}" ABSOLUTE)
-    set(irig_inc_dir ${irig_path}/include)
-    set(irig_lib_dir ${irig_path}/lib)
-    set(irig_lib_name ${irig_lib_dir}/libirig106.a)
-endif()
-
-#########################################################
 #                   libtins Paths
 #########################################################
 if(container)

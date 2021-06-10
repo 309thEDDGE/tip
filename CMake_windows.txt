@@ -122,22 +122,20 @@ if(NOT EXISTS ${out_bin_dir})
     file(MAKE_DIRECTORY ${out_bin_dir})
 endif()
     
-if(ethernet_data)
-    # Pcap dlls that must be installed next to tip_parse.exe.
-    set(pcap_dll1 ${pcap_lib_dir}/wpcap.dll)
-    set(pcap_dll2 ${pcap_lib_dir}/Packet.dll)
+# Pcap dlls that must be installed next to tip_parse.exe.
+set(pcap_dll1 ${pcap_lib_dir}/wpcap.dll)
+set(pcap_dll2 ${pcap_lib_dir}/Packet.dll)
 
-    # Copy pcap dlls to bin dir.
-    configure_file(${pcap_dll1} ${out_bin_dir} COPYONLY)
-    configure_file(${pcap_dll2} ${out_bin_dir} COPYONLY)
+# Copy pcap dlls to bin dir.
+configure_file(${pcap_dll1} ${out_bin_dir} COPYONLY)
+configure_file(${pcap_dll2} ${out_bin_dir} COPYONLY)
 
-    # Copy dlls to build/cpp dir.
-    if(NOT EXISTS ${build_dir})
-        file(MAKE_DIRECTORY ${build_dir})
-    endif()
-    configure_file(${pcap_dll1} ${build_dir} COPYONLY)
-    configure_file(${pcap_dll2} ${build_dir} COPYONLY)
+# Copy dlls to build/cpp dir.
+if(NOT EXISTS ${build_dir})
+    file(MAKE_DIRECTORY ${build_dir})
 endif()
+configure_file(${pcap_dll1} ${build_dir} COPYONLY)
+configure_file(${pcap_dll2} ${build_dir} COPYONLY)
 
 # Other system libs necessary, ought to be found by compiler
 set(other_tins_lib_names Ws2_32.lib Iphlpapi.lib)
