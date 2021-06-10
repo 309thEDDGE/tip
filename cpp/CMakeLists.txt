@@ -88,25 +88,20 @@ target_link_libraries(${yamlsv_lib_name} PUBLIC ${yaml_lib_name} ${util_lib_name
 #########################################################
 #      Build/link ethernet lib
 #########################################################
-set(eth_lib_name "")
-set(eth_inc_dir "")
-if(ethernet_data)
 
-    # Build ch10ethernet add_library(${1:target_name} ${2:source_file}).
-    set(eth_lib_name "ch10ethernet")
-    set(eth_path "ethernet")
-    set(eth_inc_dir ${eth_path}/${include_dir_name})
-    set(eth_src_dir ${eth_path}/${source_dir_name})
-    message(STATUS "Building ethernet lib (using libtins): " "${eth_lib_name}")
-    add_library(${eth_lib_name} STATIC
-                ${eth_src_dir}/network_packet_parser.cpp ${eth_inc_dir}/network_packet_parser.h
-                ${eth_src_dir}/ethernet_data.cpp ${eth_inc_dir}/ethernet_data.h)
-    target_include_directories(${eth_lib_name} PUBLIC ${eth_inc_dir}
-                               ${all_tins_incs} ${spdlog_inc_dir} ${util_inc_dir})
-    target_link_libraries(${eth_lib_name} PUBLIC ${all_tins_libs} ${spdlog_lib_name}
-                          ${util_lib_name})
-    target_compile_features(${eth_lib_name} PUBLIC cxx_std_17)
-endif()
+set(eth_lib_name "ch10ethernet")
+set(eth_path "ethernet")
+set(eth_inc_dir ${eth_path}/${include_dir_name})
+set(eth_src_dir ${eth_path}/${source_dir_name})
+message(STATUS "Building ethernet lib (using libtins): " "${eth_lib_name}")
+add_library(${eth_lib_name} STATIC
+            ${eth_src_dir}/network_packet_parser.cpp ${eth_inc_dir}/network_packet_parser.h
+            ${eth_src_dir}/ethernet_data.cpp ${eth_inc_dir}/ethernet_data.h)
+target_include_directories(${eth_lib_name} PUBLIC ${eth_inc_dir}
+                            ${all_tins_incs} ${spdlog_inc_dir} ${util_inc_dir})
+target_link_libraries(${eth_lib_name} PUBLIC ${all_tins_libs} ${spdlog_lib_name}
+                        ${util_lib_name})
+target_compile_features(${eth_lib_name} PUBLIC cxx_std_17)
 
 #########################################################
 #            Build/link ch10_parquet lib
@@ -116,20 +111,12 @@ message(STATUS "Building lib: " "${ch10pq_lib_name}")
 set(ch10pq_src_dir ${ch10pq_lib_name}/${source_dir_name})
 set(ch10pq_inc_dir ${ch10pq_lib_name}/${include_dir_name})
 
-if(ethernet_data)
-    add_library(${ch10pq_lib_name} STATIC
-                ${ch10pq_src_dir}/parquet_reader.cpp       ${ch10pq_inc_dir}/parquet_reader.h
-                ${ch10pq_src_dir}/parquet_milstd1553f1.cpp ${ch10pq_inc_dir}/parquet_milstd1553f1.h
-                ${ch10pq_src_dir}/parquet_videodataf0.cpp  ${ch10pq_inc_dir}/parquet_videodataf0.h
-                ${ch10pq_src_dir}/parquet_ethernetf0.cpp ${ch10pq_inc_dir}/parquet_ethernetf0.h
-        )
-else()
-    add_library(${ch10pq_lib_name} STATIC
-                ${ch10pq_src_dir}/parquet_reader.cpp       ${ch10pq_inc_dir}/parquet_reader.h
-                ${ch10pq_src_dir}/parquet_milstd1553f1.cpp ${ch10pq_inc_dir}/parquet_milstd1553f1.h
-                ${ch10pq_src_dir}/parquet_videodataf0.cpp  ${ch10pq_inc_dir}/parquet_videodataf0.h
-        )
-endif()
+add_library(${ch10pq_lib_name} STATIC
+            ${ch10pq_src_dir}/parquet_reader.cpp       ${ch10pq_inc_dir}/parquet_reader.h
+            ${ch10pq_src_dir}/parquet_milstd1553f1.cpp ${ch10pq_inc_dir}/parquet_milstd1553f1.h
+            ${ch10pq_src_dir}/parquet_videodataf0.cpp  ${ch10pq_inc_dir}/parquet_videodataf0.h
+            ${ch10pq_src_dir}/parquet_ethernetf0.cpp ${ch10pq_inc_dir}/parquet_ethernetf0.h
+    )
 
 target_include_directories(${ch10pq_lib_name} PUBLIC 
                             ${parquet_inc_dirs}
@@ -206,16 +193,7 @@ target_compile_features(${videx_lib_name} PUBLIC cxx_std_17)
 #########################################################
 #          Build/link ch10 parser rewrite lib
 #########################################################
-set(temp_eth_lib_name "")
-set(temp_eth_inc_dir "")
-set(temp_tins_libs "")
-set(temp_tins_incs "")
-if(ethernet_data)
-    set(temp_eth_lib_name ${eth_lib_name})
-    set(temp_eth_inc_dir ${eth_inc_dir})
-    set(temp_tins_libs ${all_tins_libs})
-    set(temp_tins_incs ${all_tins_incs})
-endif()
+
 add_library(${parserw_lib_name} STATIC
             ${parserw_inc_dir}/ch10_status.h ${parserw_src_dir}/ch10_status.cpp 
             ${parserw_inc_dir}/ch10_packet_type.h
@@ -238,10 +216,10 @@ add_library(${parserw_lib_name} STATIC
     )
 
 target_include_directories(${parserw_lib_name} PUBLIC ${parserw_inc_dir} ${util_inc_dir}
-                            ${ch10pq_inc_dir} ${spdlog_inc_dir} ${temp_tins_incs} ${temp_eth_inc_dir})
+                            ${ch10pq_inc_dir} ${spdlog_inc_dir} ${all_tins_incs} ${eth_inc_dir})
 target_compile_features(${parserw_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${parserw_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_name}
-                        ${spdlog_lib_name} ${temp_tins_libs} ${temp_eth_lib_name})
+                        ${spdlog_lib_name} ${all_tins_libs} ${eth_lib_name})
 
 #########################################################
 #                Build/link ch10parse Lib
@@ -249,7 +227,6 @@ target_link_libraries(${parserw_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_n
 set(ch10parse_exe_name "tip_parse")
 set(ch10parse_lib_name "ch10parse_lib")
 add_library(${ch10parse_lib_name} STATIC 
-    ${parse_ethernet_src}
     ${ch10_inc_dir}/worker_config.h
     ${ch10_inc_dir}/parse_manager.h ${ch10_src_dir}/parse_manager.cpp
     ${ch10_inc_dir}/parse_worker.h ${ch10_src_dir}/parse_worker.cpp
@@ -303,7 +280,7 @@ add_executable(${ch10parse_exe_name} ${ch10_main_dir}/ch10parse.cpp
 #set_property(TARGET ${ch10parse_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(${ch10parse_exe_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs} 
-                            ${temp_eth_inc_dir} ${parserw_inc_dir}
+                            ${parserw_inc_dir}
                             )
 target_compile_features(${ch10parse_exe_name} PUBLIC cxx_std_17)
 target_link_libraries(${ch10parse_exe_name} ${ch10parse_lib_name} ${parserw_lib_name})
@@ -336,10 +313,7 @@ message(STATUS "Building lib: " "${test_exe_name}")
 set(test_inc_dir ${test_exe_name}/${include_dir_name})
 set(test_src_dir ${test_exe_name}/${source_dir_name})
 set(test_main_dir ${test_exe_name}/${main_dir_name})
-set(temp_eth_tests "")
-if(ethernet_data)
-    set(temp_eth_tests "${test_src_dir}/network_packet_parser_u.cpp")
-endif()
+
 add_executable(${test_exe_name}
                 ${test_main_dir}/test.cpp
                 ${test_inc_dir}/spdlog_setup_helper_funcs.h
@@ -369,12 +343,11 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/argument_validation_u.cpp
                 ${test_src_dir}/parse_worker_u.cpp
                 ${test_src_dir}/ch10_ethernetf0_component_u.cpp
-                ${temp_eth_tests})
+                ${test_src_dir}/network_packet_parser_u.cpp)
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir} 
                             ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir} 
-                            ${tmats_inc_dir} ${temp_irig_inc_dir} ${ch10_inc_dir} ${temp_eth_inc_dir} 
-                            ${temp_tins_incs}
+                            ${tmats_inc_dir} ${ch10_inc_dir}
                             ${parserw_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir} )
 
 target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
@@ -386,8 +359,6 @@ target_link_libraries(${test_exe_name}
                         ${comp_lib_name}
                         ${ch10parse_lib_name}
                         ${parquet_libs}
-                        ${temp_eth_lib_name}
-                        ${temp_tins_libs}
                         ${parserw_lib_name}
                         ${spdlog_lib_name}
                         ${yamlsv_lib_name}

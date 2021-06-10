@@ -41,16 +41,6 @@ if(DEFINED CONTAINER)
     set(container true)
 endif()
 
-if(DEFINED ETHERNET)
-    if(ETHERNET MATCHES "OFF")
-        message(STATUS "ETHERNET set to OFF")
-        set(ethernet_data false)
-    endif()
-    set(ignore ${ETHERNET})
-else()
-    message(STATUS "ETHERNET set to ON") 
-endif()
-
 get_filename_component(deps_dir "../deps" ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 message(STATUS "Dependencies dir: " ${deps_dir})
 
@@ -116,36 +106,17 @@ endif()
 #########################################################
 #                    Preprocessor Defs
 #########################################################
-if(linux)
-    add_definitions(-DLOCALDB
-                    -DDEBUG=${debug}
-)
-else()
-    add_compile_definitions(LOCALDB
-                        DEBUG=${debug}
-)
-endif()
 
 if(linux)
     add_definitions(-DPARQUET_STATIC
-                    -DPARQUET
                     -DARROW_STATIC
+                    -DTINS_STATIC
                     -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 else()
     add_compile_definitions(PARQUET_STATIC
-                        PARQUET
                         ARROW_STATIC
+                        TINS_STATIC
                         SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
-endif()
-
-if(ethernet_data)
-    if(linux)
-        add_definitions(-DETHERNET_DATA)
-        add_definitions(-DTINS_STATIC)
-    else()
-        add_compile_definitions(ETHERNET_DATA)
-        add_compile_definitions(TINS_STATIC)
-    endif()
 endif()
 
 # Add source files dir.
