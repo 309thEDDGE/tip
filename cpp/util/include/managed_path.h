@@ -165,6 +165,20 @@ public:
 	bool remove() const;
 
 	/*
+	Remove all files and directories at the location represented
+	by the current object. If the current object is a file, then
+	only the file shall be removed. Only files and directories
+	which extend the current path will be removed.
+
+	Return:
+		True if the file (object represents a file path) is removed
+		or all files and sub-directories (object represents a directory).
+		False if one or more files and/or directories fail to be removed 
+		or the file/directory does not exist.
+	*/
+	bool RemoveTree() const;
+
+	/*
 	Get an un-amended raw string. Useful for print statements.
 	Does not include the windows magic sequence, even if applicable.
 

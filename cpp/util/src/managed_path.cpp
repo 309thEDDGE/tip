@@ -155,6 +155,35 @@ bool ManagedPath::remove() const
 	return fs::remove(amended_path);
 }
 
+bool ManagedPath::RemoveTree() const
+{
+	if (is_regular_file())
+	{
+		return remove();
+	}
+	else if (is_directory())
+	{
+		std::vector<ManagedPath> ls;
+		bool success = false;
+		ListDirectoryEntries(success, ls);
+
+		if (ls.size() == 0)
+			return remove();
+		else
+		{
+			for (std::vector<ManagedPath>::iterator lsit = ls.begin();
+				lsit != ls.end(); ++lsit)
+			{
+				if (!lsit->RemoveTree())
+					return false;
+			}
+			return remove();
+		}
+	}
+
+	return false;
+}
+
 ManagedPath ManagedPath::filename() const
 {
 	ManagedPath mp(this->fs::path::filename());

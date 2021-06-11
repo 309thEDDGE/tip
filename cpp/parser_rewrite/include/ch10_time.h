@@ -67,6 +67,7 @@ public:
     const size_t time_data_size_ = 8;
 
     Ch10Time();
+    virtual ~Ch10Time();
 
     /*
     Calculate the RTC time in nanoseconds since last counter reset from
@@ -182,7 +183,7 @@ public:
     Return:
         Ch10Status::OK if no problems, otherwise a different Ch10Status code.
     */
-    Ch10Status ParseIPTS(const uint8_t*& data, uint64_t& time_ns,
+    virtual Ch10Status ParseIPTS(const uint8_t*& data, uint64_t& time_ns,
         uint8_t intrapkt_ts_src, uint8_t time_fmt);
 };
 

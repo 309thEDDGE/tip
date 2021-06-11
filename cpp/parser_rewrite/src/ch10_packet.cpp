@@ -234,6 +234,13 @@ void Ch10Packet::ParseBody()
             ctx_->RecordMinVideoTimeStamp(videof0_component_.subpacket_absolute_times.at(0));
         }
         break;
+    case static_cast<uint8_t>(Ch10PacketType::ETHERNET_DATA_F0):
+        if (ctx_->pkt_type_config_map.at(Ch10PacketType::ETHERNET_DATA_F0))
+        {
+            pkt_type_ = Ch10PacketType::ETHERNET_DATA_F0;
+            ethernetf0_component_.Parse(data_ptr_);
+        }
+        break;
     default:
         // If the packet type is configured (exists in the pkt_type_config_map) 
         // and enabled (has a value of true) and does not have a parser, then 
@@ -244,7 +251,7 @@ void Ch10Packet::ParseBody()
         {
             if (ctx_->pkt_type_config_map.at(pkt_type))
             {
-                SPDLOG_WARN("({:02d}) No parser exists for {;s}", ctx_->thread_id,
+                SPDLOG_WARN("({:02d}) No parser exists for {:s}", ctx_->thread_id,
                     ch10packettype_to_string_map.at(pkt_type));
             }
         }

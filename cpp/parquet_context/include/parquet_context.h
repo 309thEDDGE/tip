@@ -124,14 +124,16 @@ public:
 		WriteColumns(const int& rows, const int offset=0)
 	*/
 	ParquetContext(int rgSize);
-	~ParquetContext();
+	virtual ~ParquetContext();
 
 	/*
 		Closes the parquet file
 		Automatically called by the destructor
 		This function is public for testing purposes
+
+		Inputs: thread_id		--> Optional index of current thread
 	*/
-	void Close();
+	void Close(const uint16_t& thread_id = 0);
 
 	/*
 		Adds a column to a parquet file. Used in conjunction with 
@@ -365,6 +367,8 @@ public:
 				fill(list_vec.begin(), list_vec.end(), 0);
 			}
 
+		Inputs: thread_id		--> Optional index of current thread
+
 		Returns:
 			
 						True if the data row group(s) were written and false otherwise. Note
@@ -372,7 +376,7 @@ public:
 						this function will only return true every 1000th call.
 
 	*/
-	bool IncrementAndWrite();
+	bool IncrementAndWrite(const uint16_t& thread_id = 0);
 
 	/*
 	
@@ -384,8 +388,10 @@ public:
 		perform any action because data have already been written the counter will have been
 		zeroed.
 
+		Inputs: thread_id		--> Optional index of current thread
+
 	*/
-	void Finalize();
+	void Finalize(const uint16_t& thread_id = 0);
 };
 
 template<typename T, typename A>

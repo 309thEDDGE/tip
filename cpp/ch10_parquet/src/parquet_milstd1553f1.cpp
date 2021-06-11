@@ -207,7 +207,6 @@ void ParquetMilStd1553F1::append_data(const uint64_t& time_stamp, uint8_t doy,
 		SPDLOG_INFO("({:02d}) Writing MilStd1553F1 to Parquet, {:d} rows", id_, temp_element_count_);
 		for (int i = 0; i < DEFAULT_BUFFER_SIZE_MULTIPLIER; i++)
 		{
-			//printf("write offset %d\n", i * DEFAULT_ROW_GROUP_COUNT);
 			WriteColumns(DEFAULT_ROW_GROUP_COUNT, i * DEFAULT_ROW_GROUP_COUNT);
 		}
 
@@ -223,20 +222,16 @@ void ParquetMilStd1553F1::commit()
 {
 	if (temp_element_count_ > 0)
 	{
-		//printf("(%03u) ParquetMilStd1553F1::commit(): total remaining to write = %u\n", id_, temp_element_count_);
 		int n_calls = int(std::ceil(double(temp_element_count_) / double(DEFAULT_ROW_GROUP_COUNT)));
 		for (int i = 0; i < n_calls; i++)
 		{
 			if (i == n_calls - 1)
 			{
 				WriteColumns(temp_element_count_ - (n_calls - 1)*DEFAULT_ROW_GROUP_COUNT, i * DEFAULT_ROW_GROUP_COUNT);
-				/*printf("(%03u) ParquetMilStd1553F1::commit(): write %u\n", id_,
-					temp_element_count_ - (n_calls - 1) * DEFAULT_ROW_GROUP_COUNT);*/
 			}
 			else
 			{
 				WriteColumns(DEFAULT_ROW_GROUP_COUNT, i*DEFAULT_ROW_GROUP_COUNT);
-				//printf("(%03u) ParquetMilStd1553F1::commit(): write %u\n", id_, DEFAULT_ROW_GROUP_COUNT);
 			}
 		}
 		

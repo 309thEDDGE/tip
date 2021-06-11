@@ -1,26 +1,27 @@
 #include "parquet_ethernetf0.h"
 
 ParquetEthernetF0::ParquetEthernetF0() : ParquetContext(DEFAULT_ROW_GROUP_COUNT),
-thread_id_(UINT16_MAX), PAYLOAD_LIST_COUNT(EthernetData::mtu_), 
+thread_id_(UINT16_MAX), PAYLOAD_LIST_COUNT(EthernetData::max_payload_size_), 
 MAX_TEMP_ELEMENT_COUNT(DEFAULT_ROW_GROUP_COUNT* DEFAULT_BUFFER_SIZE_MULTIPLIER),
 payload_ptr_(nullptr)
 {
 
 }
 
-bool ParquetEthernetF0::Initialize(const std::string& outfile, uint16_t thread_id)
+bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_id)
 {
 	thread_id_ = thread_id;
 
 	// Allocate vector memory. 
 	time_stamp_.resize(MAX_TEMP_ELEMENT_COUNT);
+	channel_id_.resize(MAX_TEMP_ELEMENT_COUNT);
 	payload_.resize(MAX_TEMP_ELEMENT_COUNT * PAYLOAD_LIST_COUNT, 0);
 	payload_ptr_ = payload_.data();
 
 	payload_size_.resize(MAX_TEMP_ELEMENT_COUNT);
 	dst_mac_addr_.resize(MAX_TEMP_ELEMENT_COUNT);
 	src_mac_addr_.resize(MAX_TEMP_ELEMENT_COUNT);
-	payload_type_.resize(MAX_TEMP_ELEMENT_COUNT);
+	ethertype_.resize(MAX_TEMP_ELEMENT_COUNT);
 	frame_format_.resize(MAX_TEMP_ELEMENT_COUNT);
 	dsap_.resize(MAX_TEMP_ELEMENT_COUNT);
 	ssap_.resize(MAX_TEMP_ELEMENT_COUNT);
@@ -36,6 +37,7 @@ bool ParquetEthernetF0::Initialize(const std::string& outfile, uint16_t thread_i
 
 	// Add fields to table.
 	AddField(arrow::int64(), "time");
+	AddField(arrow::int32(), "channelid");
 	AddField(arrow::int16(), "payload", PAYLOAD_LIST_COUNT);
 	AddField(arrow::int64(), "payload_sz");
 	AddField(arrow::utf8(), "dstmac");
@@ -51,16 +53,17 @@ bool ParquetEthernetF0::Initialize(const std::string& outfile, uint16_t thread_i
 	AddField(arrow::int32(), "ipid");
 	AddField(arrow::int16(), "ipproto");
 	AddField(arrow::int32(), "ipoffset");
-	AddField(arrow::int32(), "ipdstport");
-	AddField(arrow::int32(), "ipsrcport");
+	AddField(arrow::int32(), "dstport");
+	AddField(arrow::int32(), "srcport");
 
 	// Set memory locations.
 	SetMemoryLocation(time_stamp_, "time");
+	SetMemoryLocation(channel_id_, "channelid");
 	SetMemoryLocation(payload_, "payload");
 	SetMemoryLocation(payload_size_, "payload_sz");
 	SetMemoryLocation(dst_mac_addr_, "dstmac");
 	SetMemoryLocation(src_mac_addr_, "srcmac");
-	SetMemoryLocation(payload_type_, "ethtype");
+	SetMemoryLocation(ethertype_, "ethtype");
 	SetMemoryLocation(frame_format_, "llcfmt");
 	SetMemoryLocation(dsap_, "llcdsap");
 	SetMemoryLocation(ssap_, "llcssap");
@@ -71,23 +74,21 @@ bool ParquetEthernetF0::Initialize(const std::string& outfile, uint16_t thread_i
 	SetMemoryLocation(id_, "ipid");
 	SetMemoryLocation(protocol_, "ipproto");
 	SetMemoryLocation(offset_, "ipoffset");
-	SetMemoryLocation(dst_port_, "ipdstport");
-	SetMemoryLocation(src_port_, "ipsrcport");
+	SetMemoryLocation(dst_port_, "dstport");
+	SetMemoryLocation(src_port_, "srcport");
 
-	if (!OpenForWrite(outfile, true))
+	if (!OpenForWrite(outfile.string(), true))
 	{
-		printf("(%03hu) ParquetEthernetF0::Initialize(): OpenForWrite failed!\n",
-			thread_id_);
+		SPDLOG_ERROR("({:03d}) OpenForWrite failed for file {:s}", thread_id_,
+			outfile.string());
 		return false;
 	}
 
 	// Setup automatic tracking of appended data.
-	char buff[100];
-	sprintf(buff, "(%03hu) EthernetF0", thread_id_);
-	std::string msg(buff);
-	if (!SetupRowCountTracking(DEFAULT_ROW_GROUP_COUNT, DEFAULT_BUFFER_SIZE_MULTIPLIER, true, msg))
+	if (!SetupRowCountTracking(DEFAULT_ROW_GROUP_COUNT, 
+		DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "EthernetF0"))
 	{
-		printf("(%03hu) ParquetEthernetF0::Initialize(): Row count tracking not configured correctly!\n",
+		SPDLOG_ERROR("({:03d}) SetupRowCountTracking not configured correctly",
 			thread_id_);
 		return false;
 	}
@@ -95,14 +96,16 @@ bool ParquetEthernetF0::Initialize(const std::string& outfile, uint16_t thread_i
 	return true;
 }
 
-void ParquetEthernetF0::Append(const uint64_t& time_stamp, const EthernetData* eth_data)
+void ParquetEthernetF0::Append(const uint64_t& time_stamp, const uint32_t& chanid,
+	const EthernetData* eth_data)
 {
 	//printf("append_count_ is %zu\n", append_count_);
 	time_stamp_[append_count_] = time_stamp;
+	channel_id_[append_count_] = chanid;
 	payload_size_[append_count_] = eth_data->payload_size_;
 	dst_mac_addr_[append_count_] = eth_data->dst_mac_addr_;
 	src_mac_addr_[append_count_] = eth_data->src_mac_addr_;
-	payload_type_[append_count_] = eth_data->payload_type_;
+	ethertype_[append_count_] = eth_data->ethertype_;
 	frame_format_[append_count_] = eth_data->frame_format_;
 	dsap_[append_count_] = eth_data->dsap_;
 	ssap_[append_count_] = eth_data->ssap_;
@@ -121,7 +124,7 @@ void ParquetEthernetF0::Append(const uint64_t& time_stamp, const EthernetData* e
 		payload_ptr_ + append_count_ * PAYLOAD_LIST_COUNT);
 
 	// Increment the count variable and write data if row group(s) are filled.
-	if (IncrementAndWrite())
+	if (IncrementAndWrite(thread_id_))
 	{
 		// Reset list buffers.
 		std::fill(payload_.begin(), payload_.end(), 0);

@@ -8,6 +8,7 @@
 // some of the types defined in Arrow.
 #include "parquet_milstd1553f1.h"
 #include "parquet_videodataf0.h"
+#include "parquet_ethernetf0.h"
 
 #include <cstdint>
 #include <cstdio>
@@ -60,6 +61,9 @@ private:
 	
 	// Store status of enabled file writers.
 	std::unordered_map<Ch10PacketType, bool> pkt_type_file_writers_enabled_map_;
+
+	// Store output paths of enabled file writers.
+	std::unordered_map<Ch10PacketType, ManagedPath> pkt_type_paths_enabled_map_;
 
 	bool searching_for_tdp_;
 	bool found_tdp_;
@@ -126,6 +130,7 @@ private:
 	//
 	std::unique_ptr<ParquetMilStd1553F1> milstd1553f1_pq_writer_;
 	std::unique_ptr<ParquetVideoDataF0> videof0_pq_writer_;
+	std::unique_ptr<ParquetEthernetF0> ethernetf0_pq_writer_;
 
 
 public:
@@ -144,18 +149,20 @@ public:
 	const uint8_t& secondary_hdr;
 	const uint32_t& channel_id;
 	const std::unordered_map<Ch10PacketType, bool>& pkt_type_config_map;
+	const std::unordered_map<Ch10PacketType, ManagedPath>& pkt_type_paths_map;
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr1_map;
 	const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr2_map;
 	const std::map<uint32_t, std::set<uint32_t>>& chanid_commwords_map;
 	const std::map<uint16_t, uint64_t>& chanid_minvideotimestamp_map;
 	ParquetMilStd1553F1* milstd1553f1_pq_writer;
 	ParquetVideoDataF0* videof0_pq_writer;
+	ParquetEthernetF0* ethernetf0_pq_writer;
 	const uint32_t intrapacket_ts_size_ = sizeof(uint64_t);
 
 	Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
 	Ch10Context();
 	void Initialize(const uint64_t& abs_pos, uint16_t id);
-	~Ch10Context();
+	virtual ~Ch10Context();
 
 	/*
 	Return is_configured_. This value is set during call to CheckConfiguration.
@@ -290,7 +297,7 @@ public:
 	Return: 
 		Absolute time in units of nanoseconds since the epoch
 	*/
-	uint64_t& CalculateIPTSAbsTime(const uint64_t& ipts_time);
+	virtual uint64_t& CalculateIPTSAbsTime(const uint64_t& ipts_time);
 	
 	/*
 	Update maps of channel ID to remote addresses 1 and 2 as obtained from

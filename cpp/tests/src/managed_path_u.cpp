@@ -74,6 +74,19 @@ std::vector<std::string> CreatePathWithLength(const ManagedPath& mp_relative, si
 	return path_components;
 }
 
+bool CreateFileWithData(const ManagedPath& fpath, std::string data)
+{
+	std::ofstream file;
+	file.open(fpath.string());
+	if (!file.is_open()) return false;
+
+	file << data;
+	file.close();
+	if (file.is_open()) return false;
+
+	return true;
+}
+
 TEST(ManagedPathTest, InitializerListConstructor1Arg)
 {
 	std::string p = "data.txt";
@@ -982,4 +995,115 @@ TEST(ManagedPathTest, CreateDirectoryFromComponentsCreateDirFail)
 		append_str, full_output_dir, true);
 	EXPECT_FALSE(result);
 }
+
+TEST(ManagedPathTest, RemoveTreePathIsFile)
+{
+	// Relative base path
+	ManagedPath test_path;
+
+	// Update test path with the file name, but do not create file
+	std::string file_name = "test_file.data";
+	test_path /= file_name;
+
+	bool result = test_path.RemoveTree();
+	EXPECT_FALSE(result);
+
+	// Create the file
+	result = CreateFileWithData(test_path, "some data for hte file");
+	EXPECT_TRUE(result);
+	result = test_path.RemoveTree();
+	EXPECT_TRUE(result);
+	EXPECT_FALSE(test_path.is_regular_file());
+}
+
+TEST(ManagedPathTest, RemoveTreePathIsDirectory)
+{
+	// Relative base path
+	ManagedPath test_path;
+
+	// Update test path with the dir name, but do not create dir
+	std::string file_name = "test_dir";
+	test_path /= file_name;
+
+	bool result = test_path.RemoveTree();
+	EXPECT_FALSE(result);
+
+	// Create the dir
+	result = test_path.create_directory();
+	EXPECT_TRUE(result);
+	result = test_path.RemoveTree();
+	EXPECT_TRUE(result);
+	EXPECT_FALSE(test_path.is_directory());
+}
+
+TEST(ManagedPathTest, RemoveTreeDirectoryWithFiles)
+{
+	// Relative base path
+	ManagedPath test_path;
+
+	// Update test path with the dir name, but do not create dir
+	std::string dir_name = "anoter-test_dir";
+	test_path /= dir_name;
+	ASSERT_TRUE(test_path.create_directory());
+
+	ManagedPath file1 = test_path / std::string("accounting.csv");
+	ManagedPath file2 = test_path / std::string("movie.mkv");
+
+	bool result = CreateFileWithData(file1, "bogus csv data");
+	ASSERT_TRUE(result);
+	ASSERT_TRUE(file1.is_regular_file());
+
+	result = CreateFileWithData(file2, "these are not video packets");
+	ASSERT_TRUE(result);
+	ASSERT_TRUE(file2.is_regular_file());
+
+	result = test_path.RemoveTree();
+	EXPECT_TRUE(result);
+	EXPECT_FALSE(test_path.is_directory());
+}
+
+TEST(ManagedPathTest, RemoveTreeDirectoryWithFilesAndDirs)
+{
+	// Relative base path
+	ManagedPath test_path;
+
+	// Update test path with the dir name, but do not create dir
+	std::string dir_name = "anoter-test_dir";
+	test_path /= dir_name;
+	ASSERT_TRUE(test_path.create_directory());
+
+	ManagedPath file1 = test_path / std::string("accounting.csv");
+	ManagedPath file2 = test_path / std::string("movie.mkv");
+	ManagedPath dir1 = test_path / std::string("subdir");
+
+	bool result = CreateFileWithData(file1, "bogus csv data");
+	ASSERT_TRUE(result);
+	ASSERT_TRUE(file1.is_regular_file());
+
+	result = CreateFileWithData(file2, "these are not video packets");
+	ASSERT_TRUE(result);
+	ASSERT_TRUE(file2.is_regular_file());
+
+	ASSERT_TRUE(dir1.create_directory());
+
+	ManagedPath dir1f1 = test_path / dir1 / std::string("index.html");
+	ManagedPath dir1f2 = test_path / dir1 / std::string("cool.parquet");
+	ManagedPath dir1dir1 = test_path / dir1 / std::string("sub_subdir");
+
+	result = CreateFileWithData(dir1f1, "nothing much");
+	ASSERT_TRUE(result);
+	ASSERT_TRUE(dir1f1.is_regular_file());
+
+	result = CreateFileWithData(dir1f2, "these are not video packets");
+	ASSERT_TRUE(result);
+	ASSERT_TRUE(dir1f2.is_regular_file());
+
+	ASSERT_TRUE(dir1dir1.create_directory());
+
+	result = test_path.RemoveTree();
+	EXPECT_TRUE(result);
+	EXPECT_FALSE(test_path.is_directory());
+}
+
+
 
