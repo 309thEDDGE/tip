@@ -1,5 +1,5 @@
 import subprocess
-import yaml
+import json
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -7,8 +7,8 @@ parser.add_argument("environment")
 parser.add_argument("output_file", nargs="?", default="mirror_config.yaml", type=str)
 args = parser.parse_args()
 
-text = subprocess.run(["conda", "env", "export", "-n", args.environment], capture_output=True).stdout.decode('utf-8')
-env_dict = yaml.safe_load(text)
+text = subprocess.run(["conda", "env", "export", "-n", args.environment, "--json"], capture_output=True).stdout.decode('utf-8')
+env_dict = json.loads(text)
 
 whitelist = """blacklist:
     - name: \"*\"
