@@ -14,7 +14,7 @@ whitelist = """blacklist:
     - name: \"*\"
 whitelist:\n"""
 
-for entry in env_dict['dependencies'][:20]:
+for entry in env_dict['dependencies']:
     parts = entry.split('=')
     whitelist += f"""    - name: \"{parts[0]}\"
       version: \"{parts[1]}\"
