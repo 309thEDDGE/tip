@@ -4,7 +4,6 @@ set(headers
 )
 
 add_library(ch10ethernet
-    STATIC
     src/network_packet_parser.cpp
     src/ethernet_data.cpp
 )

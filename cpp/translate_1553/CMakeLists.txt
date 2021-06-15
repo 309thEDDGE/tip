@@ -13,7 +13,6 @@ set(headers
 )
 
 add_library(translate_1553
-    STATIC
     src/bus_map.cpp
     src/dts1553.cpp
     src/icd_data.cpp

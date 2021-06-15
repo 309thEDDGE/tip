@@ -3,7 +3,6 @@ set(headers
 )
 
 add_library(parquet_compare
-    STATIC
     src/comparator.cpp
 )
 

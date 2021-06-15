@@ -6,7 +6,6 @@ set(headers
 )
 
 add_library(ch10parse_lib
-    STATIC
     src/parse_manager.cpp
     src/parser_helper_funcs.cpp
     src/parse_worker.cpp

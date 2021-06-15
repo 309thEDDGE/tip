@@ -3,7 +3,6 @@ set(headers
 )
 
 add_library(pq_vid_extract
-    STATIC
     src/parquet_video_extraction.cpp
 )
 

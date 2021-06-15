@@ -4,7 +4,7 @@ set(headers
     include/yaml_schema_validation.h
 )
 
-add_library(yamlsv STATIC
+add_library(yamlsv
             src/yaml_schema_validation.cpp
 )
 

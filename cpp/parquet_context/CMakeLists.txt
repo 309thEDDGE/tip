@@ -4,7 +4,7 @@ set(headers
 )
 
 add_library(parquet_context
-    STATIC src/parquet_context.cpp
+    src/parquet_context.cpp
 )
 
 target_compile_features(parquet_context PUBLIC cxx_std_17)
