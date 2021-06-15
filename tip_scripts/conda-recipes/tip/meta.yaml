@@ -6,7 +6,7 @@ package:
   version: {{ version }}
 
 source:
-  path: ../../../../tip
+  path: ../../../
 
 build:
   number: 2

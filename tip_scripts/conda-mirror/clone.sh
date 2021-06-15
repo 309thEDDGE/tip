@@ -1,13 +1,13 @@
 #!/bin/sh
 
 conda-mirror \
-    --target-directory local_mirror \
+    --target-directory $CONDA_MIRROR_DIR \
     --platform linux-64 \
-    --config mirror_config.yaml \
+    --config $MIRROR_CONFIG \
     --upstream-channel https://repo.anaconda.com/pkgs/main/
 
 conda-mirror \
-    --target-directory local_mirror \
+    --target-directory $CONDA_MIRROR_DIR \
     --platform noarch \
-    --config mirror_config.yaml \
+    --config $MIRROR_CONFIG \
     --upstream-channel https://repo.anaconda.com/pkgs/main/ 
