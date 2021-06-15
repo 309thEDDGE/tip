@@ -16,7 +16,7 @@ main() {
          && bash Miniconda3-latest-Linux-x86_64.sh -b \
          && rm -f Miniconda3-latest-Linux-x86_64.sh 	
 
-    
+    pip install conda-mirror    
     echo -n "Installing conda-build"
     conda install conda-build -y
     echo -n "Change directory to conda-build recipes"
