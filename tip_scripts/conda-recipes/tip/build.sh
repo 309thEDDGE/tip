@@ -4,6 +4,7 @@ mkdir build-release
 cd build-release
 
 cmake ${CMAKE_ARGS} .. \
+    -G Ninja \
     -DCONTAINER=ON \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH=$PREFIX \
