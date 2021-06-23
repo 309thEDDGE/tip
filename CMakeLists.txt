@@ -79,7 +79,10 @@ endif()
 #########################################################
 
 message(STATUS "System name: " ${CMAKE_SYSTEM_NAME})
-if("${CMAKE_SYSTEM_NAME}" MATCHES "CYGWIN")
+if(DEFINED CONDA)
+    message(STATUS "Setting conda build options")
+    include("CMake_conda.txt")
+elseif("${CMAKE_SYSTEM_NAME}" MATCHES "CYGWIN")
     message(STATUS "Setting system-specific options: " ${CMAKE_SYSTEM_NAME})
     set(CMAKE_GENERATOR "Unix Makefiles")
     set(CMAKE_CXX_COMPILER "/usr/bin/g++")
@@ -120,4 +123,4 @@ else()
 endif()
 
 # Add source files dir.
-add_subdirectory(cpp) 
+add_subdirectory(cpp)
