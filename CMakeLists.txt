@@ -123,4 +123,6 @@ else()
 endif()
 
 # Add source files dir.
-add_subdirectory(cpp)
+if(NOT DEFINED CONDA)
+  add_subdirectory(cpp)
+endif()
