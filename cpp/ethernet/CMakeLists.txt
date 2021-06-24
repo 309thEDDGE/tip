@@ -19,7 +19,7 @@ set_target_properties(ch10ethernet
 )
 
 target_link_libraries(ch10ethernet
-    PUBLIC tins
+    PUBLIC tins tiputil
 )
 
 install(

@@ -2,11 +2,13 @@ set(headers
     include/ch10_1553f1_component.h
     include/ch10_1553f1_msg_hdr_format.h
     include/ch10_context.h
+    include/ch10_ethernetf0_component.h
+    include/ch10_ethernetf0_msg_hdr_format.h
     include/ch10_header_format.h
-    include/ch10_packet_component.h
-    include/ch10_packet_element_base.h
-    include/ch10_packet_element.h
     include/ch10_packet.h
+    include/ch10_packet_component.h
+    include/ch10_packet_element.h
+    include/ch10_packet_element_base.h
     include/ch10_packet_header_component.h
     include/ch10_packet_type.h
     include/ch10_status.h
@@ -21,6 +23,7 @@ add_library(parserw
     STATIC
     src/ch10_1553f1_component.cpp
     src/ch10_context.cpp
+    src/ch10_ethernetf0_component.cpp
     src/ch10_packet_component.cpp
     src/ch10_packet.cpp
     src/ch10_packet_header_component.cpp

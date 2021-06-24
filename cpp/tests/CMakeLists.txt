@@ -11,6 +11,7 @@ add_executable(tests
     src/bus_map_u.cpp
     src/ch10_1553f1_component_u.cpp
     src/ch10_context_u.cpp
+    src/ch10_ethernetf0_component_u.cpp
     src/ch10_packet_component_u.cpp
     src/ch10_packet_element_u.cpp
     src/ch10_packet_header_component_u.cpp
@@ -26,14 +27,15 @@ add_executable(tests
     src/iterable_tools_u.cpp
     src/managed_path_u.cpp
     src/metadata_u.cpp
+    src/network_packet_parser_u.cpp
     src/parquet_arrow_validator_u.cpp
     src/parquet_context_u.cpp
     src/parquet_reader_u.cpp
     src/parse_manager_u.cpp
-    src/parser_config_params_u.cpp
     src/parse_text_u.cpp
     src/parse_worker_u.cpp
-    src/spdlog_setup_helper_funcs.h
+    src/parser_config_params_u.cpp
+    src/spdlog_setup_helper_funcs.cpp
     src/tmats_parser_u.cpp
     src/translation_config_params_u.cpp
     src/user_input_u.cpp
