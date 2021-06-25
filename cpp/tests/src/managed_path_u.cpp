@@ -111,7 +111,7 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 {
 	ManagedPath mp(std::string("start"));
 
-	//
+	// 
 	// <= ManagedPath::max_unamended_path_len_
 	//
 	std::vector<std::string> test_path_str = { "data", "Is", "not-here", "ok.txt" };
@@ -140,7 +140,7 @@ TEST(ManagedPathTest, AmendPathInsertsPrefix)
 	EXPECT_FALSE(HasWindowsPrefix(mp.AmendPath(test_path).string()));
 #endif
 
-	//
+	// 
 	// > ManagedPath::max_unamended_path_len_ + 1
 	//
 	mp = ManagedPath();
@@ -160,7 +160,7 @@ TEST(ManagedPathTest, string)
 {
 	ManagedPath mp(std::string("start"));
 
-	//
+	// 
 	// <= ManagedPath::max_unamended_path_len_
 	//
 	std::vector<std::string> test_path_str = { "data", "Is", "not-here", "ok.txt" };
@@ -171,7 +171,7 @@ TEST(ManagedPathTest, string)
 	EXPECT_TRUE(mp.RawString().size() <= ManagedPath::max_unamended_path_len_);
 	EXPECT_FALSE(HasWindowsPrefix(mp.string()));
 
-	//
+	// 
 	// = ManagedPath::max_unamended_path_len_ + 1
 	//
 	mp = ManagedPath();
@@ -185,7 +185,7 @@ TEST(ManagedPathTest, string)
 	EXPECT_FALSE(HasWindowsPrefix(mp.string()));
 #endif
 
-	//
+	// 
 	// > ManagedPath::max_unamended_path_len_ + 1
 	//
 	mp = ManagedPath();
@@ -204,7 +204,7 @@ TEST(ManagedPathTest, string)
    paths, combine them into a single method with a parameter that
    the tests will call.
 
-Input:
+Input: 
 	use_absolute_paths - flag indicating whether to use absolute paths
 */
 void TestCreateDirectoryFailsWithoutCorrection(bool use_absolute_path)
@@ -224,11 +224,11 @@ void TestCreateDirectoryFailsWithoutCorrection(bool use_absolute_path)
 
 	// Start with a path a little less than max, then test all
 	// lengths up to max for success and max+1 for failure.
-	std::vector<std::string> test_path_components = CreatePathWithLength(mp,
+	std::vector<std::string> test_path_components = CreatePathWithLength(mp, 
 		initial_length);
-
+	
 	// Append test_path_str components as file path components.
-	ManagedPath fullpath = mp;
+	ManagedPath fullpath = mp; 
 	for (auto s : test_path_components)
 		fullpath /= s;
 	//printf("\nabsolute extended to max + 1: %s\n", fullpath.RawString().c_str());
@@ -241,7 +241,7 @@ void TestCreateDirectoryFailsWithoutCorrection(bool use_absolute_path)
 	{
 		//printf("\nappending to path: %s\n", test_path_components[i].c_str());
 		currdir /= test_path_components[i];
-
+		
 		EXPECT_TRUE(currdir.create_directory());
 		//printf("after append length = %zu\n", currdir.RawString().size());
 	}
@@ -253,35 +253,35 @@ void TestCreateDirectoryFailsWithoutCorrection(bool use_absolute_path)
 	{
 		postfix += 'a';
 		currdir = base_dir / postfix;
-
+		
 		EXPECT_TRUE(currdir.create_directory());
 		//printf("after append length = %zu\n", currdir.RawString().size());
 	}
 
-	// Attempt to create the last directory using standard fs::create_directory.
+	// Attempt to create the last directory using standard fs::create_directory. 
 	// This ought to fail because the path is too long.
 	postfix += 'a';
 	currdir = base_dir / postfix;
 
 	/*
 	Catch the error. Also, one way to fix the create_directory
-	impl is to catch the error, amend path, and try again.
-	This is an ugly approach but will likely solve the problem,
+	impl is to catch the error, amend path, and try again. 
+	This is an ugly approach but will likely solve the problem, 
 	though it may need to be implemented in several functions
 	that operate on the real file system.
 	*/
 	fs::path raw_path(currdir.RawString());
 	std::error_code ec;
-	bool result = fs::create_directory(raw_path, ec);
-
+	bool result = fs::create_directory(raw_path, ec); 
+	
 	// If the error code is zero, then an error was not thrown.
-	// If zero,
+	// If zero, 
 #ifdef __WIN64
 	EXPECT_TRUE((ec.value() != 0) || (!result));
 #elif defined __linux__
 	EXPECT_TRUE((ec.value() == 0) && result);
 #endif
-
+	
 
 	// Attempt to create the directory using ManagedPath.
 	// Ought to succeed.
@@ -344,20 +344,20 @@ TEST(ManagedPathTest, CreateDirectoryLongPath)
 	fs::path small_path(mp.RawString());
 	EXPECT_TRUE(fs::create_directories(small_path));
 
-	// Extend the path beyond ManagedPath::max_unamended_path_len_ and
+	// Extend the path beyond ManagedPath::max_unamended_path_len_ and 
 	// create the final path.
 	mp = mp / "this_is_part_of_a_very_long_path_section04";
 
 	// Code below fails with an exception on Windows.
 	/*fs::path long_path(mp.RawString());
 	EXPECT_TRUE(fs::create_directory(long_path));*/
-
+	
 	// This code, created to handle long paths, must succeed
 	// for the test to pass.
 	EXPECT_TRUE(mp.create_directory());
 
 	// Remove long directory using ManagedPath remove function.
-	// Note that if this function is not called to take the
+	// Note that if this function is not called to take the 
 	// full path length to below 261 chars, the following call
 	// to std::filesystem::remove_all will fail.
 	// This test also tests ManagedPath::remove.
@@ -600,7 +600,7 @@ TEST(ManagedPathTest, ListDirectoryEntriesCorrectList)
 
 	EXPECT_TRUE(success);
 	EXPECT_EQ(file_list.size(), 2);
-
+	
 	// Check correct files name in alphanumeric order
 	EXPECT_EQ(file_list[0].filename().RawString(), file_name2);
 	EXPECT_EQ(file_list[1].filename().RawString(), file_name1);
@@ -639,7 +639,7 @@ TEST(ManagedPathTest, ExcludePathsWithSubString)
 	EXPECT_TRUE(success);
 	EXPECT_EQ(dir_entries.size(), 3);
 
-	//
+	// 
 	// Single exclusion
 	//
 	std::vector<ManagedPath> result = ManagedPath::ExcludePathsWithSubString(
@@ -700,7 +700,7 @@ TEST(ManagedPathTest, ExcludePathsWithSubStringNotInFilenameComponent)
 	std::vector<ManagedPath> result = ManagedPath::ExcludePathsWithSubString(
 		dir_entries, substrings);
 
-	// Ensure that both entries are NOT removed due to having "dir" in
+	// Ensure that both entries are NOT removed due to having "dir" in 
 	// "my_dir" portion of the path.
 	EXPECT_EQ(result.size(), 2);
 }
@@ -734,7 +734,7 @@ TEST(ManagedPathTest, SelectPathsWithSubString)
 	EXPECT_TRUE(success);
 	EXPECT_EQ(dir_entries.size(), 3);
 
-	//
+	// 
 	// Select all
 	//
 	std::vector<std::string> substrings({ "file" });
@@ -1104,3 +1104,6 @@ TEST(ManagedPathTest, RemoveTreeDirectoryWithFilesAndDirs)
 	EXPECT_TRUE(result);
 	EXPECT_FALSE(test_path.is_directory());
 }
+
+
+

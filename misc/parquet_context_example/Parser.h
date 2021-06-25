@@ -54,3 +54,4 @@ class Parser
 		Columnizer& getColumns();
 		Station_Columnizer& getMetadata_columns();
 };
+

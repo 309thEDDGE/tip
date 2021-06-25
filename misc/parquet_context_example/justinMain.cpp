@@ -19,13 +19,14 @@
 
 using namespace std;
 
+
 int main(int argc, char* argv[]) {
-
-
+	
+	
 	bool parseNOAA = false;
 	bool parseMeta = true;
 
-
+	
 	Parser parser;
 
 	// Parse NOAA data
@@ -73,7 +74,7 @@ int main(int argc, char* argv[]) {
 			// Use std::filesystem to create the output path
 			filesystem::path input_path = filename;
 
-			// output test files for debugging
+			// output test files for debugging 
 			if (outputTest_files) {
 				filesystem::path testDir = input_path.parent_path() / "testing";
 				filesystem::create_directory(testDir);
@@ -87,7 +88,7 @@ int main(int argc, char* argv[]) {
 			printf("\nParsing %s\n", filename.c_str());
 			parser.parseFile(is);
 			printf("Parsing complete \n");
-
+		
 
 
 
@@ -110,7 +111,7 @@ int main(int argc, char* argv[]) {
 				printf("output path: %s\n", parquet_output_path.c_str());
 				printf("hdfs output path: %s\n", hdfs_output_path.c_str());
 
-
+				
 
 
 
@@ -300,14 +301,14 @@ int main(int argc, char* argv[]) {
 
 		is.close();
 	}
-
+	
 	if (parseMeta) {
 		bool dumpMetaFiles = true;
 		bool writeMetaParquet = true;
 		string metaFile = "C:\\Users\\A10\\Documents\\Justins\\noaaData\\parquet_metadata\\igra2-station-list_adjusted.txt";
-
+		
 		filesystem::path meta_path = metaFile;
-
+		
 		if (dumpMetaFiles) {
 			filesystem::path testDir = meta_path.parent_path() / "testing";
 			filesystem::create_directory(testDir);
@@ -429,7 +430,7 @@ int main(int argc, char* argv[]) {
 			// Write locally.
 			pc.open_for_write(parquet_output_path, true);
 
-			// Write columns pointed to by setMemoryLocation passing in the
+			// Write columns pointed to by setMemoryLocation passing in the 
 			// number of rows in the vectors
 			pc.writeColumns();
 		}

@@ -15,7 +15,7 @@ protected:
 	int pq_file_count;
 	ParquetArrowValidatorTest()
 	{
-
+		
 	}
 	void SetUp() override
 	{
@@ -32,14 +32,14 @@ protected:
 		for (int i = 0; i < pq_directories.size(); i++)
 		{
 			std::filesystem::remove_all(pq_directories[i]);
-		}
+		}	
 	}
 
 	// Generate Parquet file with single value
 	// columns
 	template <typename T>
-	bool CreateParquetFile(std::shared_ptr<arrow::DataType> type,
-		std::string directory,
+	bool CreateParquetFile(std::shared_ptr<arrow::DataType> type, 
+		std::string directory, 
 		std::vector<std::vector<T>> output,
 		int row_group_count,
 		std::vector<uint8_t>* bool_fields = nullptr)
@@ -52,14 +52,14 @@ protected:
 				return false;
 			}
 		}
-
+	
 		std::filesystem::path pqt_path(directory);
 		pqt_path = pqt_path / std::filesystem::path(
 			std::to_string(pq_file_count) + std::string(".parquet"));
 		std::string path = pqt_path.string();
 
 		ParquetContext pc(row_group_count);
-
+		
 		// Add each vector as a column
 		for (int i = 0; i < output.size(); i++)
 		{
@@ -80,7 +80,7 @@ protected:
 			pc.WriteColumns(row_group_count, i * row_group_count);
 		}
 
-		// The the remaider rows if row_group_count is
+		// The the remaider rows if row_group_count is 
 		// not a multiple of the array size
 		int remainder = row_size % row_group_count;
 		if (remainder > 0)
@@ -88,8 +88,8 @@ protected:
 			pc.WriteColumns(remainder,
 				(row_size / row_group_count) * row_group_count);
 		}
-
-
+		
+		
 		pc.Close();
 		pq_files.push_back(path);
 		pq_directories.push_back(directory);
@@ -144,7 +144,7 @@ protected:
 			pc.WriteColumns(row_group_count, i * row_group_count);
 		}
 
-		// The the remaider rows if row_group_count is
+		// The the remaider rows if row_group_count is 
 		// not a multiple of the array size
 		int remainder = row_size % row_group_count;
 		if (remainder > 0)
@@ -162,7 +162,7 @@ protected:
 	}
 
 	// Create parquet file with one list column
-	bool CreateParquetFile(std::string directory, std::vector<uint16_t>& output,
+	bool CreateParquetFile(std::string directory, std::vector<uint16_t>& output, 
 		int row_group_count, int list_size)
 	{
 
@@ -194,14 +194,14 @@ protected:
 			printf("failed to open parquet path %s\n", path.c_str());
 			return false;
 		}
-
+		
 		int tot_row_groups = row_count / row_group_count;
 		for (int i = 0; i < tot_row_groups; i++)
 		{
 			pc.WriteColumns(row_group_count, i * row_group_count);
 		}
 
-		// The the remaider rows if row_group_count is
+		// The the remaider rows if row_group_count is 
 		// not a multiple of the array size
 		int remainder = row_count % row_group_count;
 		int offset = tot_row_groups * row_group_count;
@@ -251,7 +251,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorInitializeInvalidFiles)
 
 	std::string invalid = "invalid.parquet";
 
-	std::filesystem::create_directory(invalid);
+	std::filesystem::create_directory(invalid);	
 
 	EXPECT_FALSE(comp.Initialize(invalid, dirname));
 	EXPECT_FALSE(comp.Initialize(dirname, invalid));
@@ -261,9 +261,9 @@ TEST_F(ParquetArrowValidatorTest, ComparatorInitializeInvalidFiles)
 
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareVecsMatchingSameSize)
 {
-	std::vector<int32_t> data_a =
+	std::vector<int32_t> data_a = 
 	{ 1,2,3,4,5,6,7,8,9,10 };
-	std::vector<int32_t> data_b =
+	std::vector<int32_t> data_b = 
 	{ 1,2,3,4,5,6,7,8,9,10 };
 
 	int size_a = 10;
@@ -285,9 +285,9 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareVecsMatchingSameSize)
 
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareVecsNonMatchingSameSize)
 {
-	std::vector<int32_t> data_a =
+	std::vector<int32_t> data_a = 
 	{ 1,2,3,4,5,0,7,8,9,10 };
-	std::vector<int32_t> data_b =
+	std::vector<int32_t> data_b = 
 	{ 1,2,3,4,5,6,7,8,9,10 };
 
 	int size_a = 10;
@@ -309,9 +309,9 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareVecsNonMatchingSameSize)
 
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareVecsMatchingLargerDataA)
 {
-	std::vector<int32_t> data_a =
+	std::vector<int32_t> data_a = 
 	{ 1,2,3,4,5,6,7,8,9,10,11,12,13 };
-	std::vector<int32_t> data_b =
+	std::vector<int32_t> data_b = 
 	{ 1,2,3,4,5,6,7,8,9,10 };
 
 	int size_a = 13;
@@ -335,9 +335,9 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareVecsMatchingLargerDataA)
 
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareVecsMatchingLargerDataB)
 {
-	std::vector<int32_t> data_a =
+	std::vector<int32_t> data_a = 
 	{ 1,2,3,4,5,6,7,8,9,10 };
-	std::vector<int32_t> data_b =
+	std::vector<int32_t> data_b = 
 	{ 1,2,3,4,5,6,7,8,9,10,11,12,13 };
 
 	int size_a = 10;
@@ -362,9 +362,9 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareVecsMatchingLargerDataB)
 
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnOutOfBoundsLow)
 {
-	std::vector<std::vector<int32_t>> data_a =
+	std::vector<std::vector<int32_t>> data_a = 
 	{ {1,1,1,1,1}, {2,2,2,2,2} };
-	std::vector<std::vector<int32_t>> data_b =
+	std::vector<std::vector<int32_t>> data_b = 
 	{ {3,3,3,3,3}, {4,4,4,4,4} };
 
 	std::string dirname1 = "file1.parquet";
@@ -383,9 +383,9 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnOutOfBoundsLow)
 
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnOutOfBoundsHighFileOne)
 {
-	std::vector<std::vector<int32_t>> data_a =
+	std::vector<std::vector<int32_t>> data_a = 
 	{ {1,1,1,1,1}, {2,2,2,2,2} };
-	std::vector<std::vector<int32_t>> data_b =
+	std::vector<std::vector<int32_t>> data_b = 
 	{ {1,1,1,1,1}, {2,2,2,2,2}, {5,5,5,5,5} };
 
 	std::string dirname1 = "file1.parquet";
@@ -404,9 +404,9 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnOutOfBoundsHighFileOne)
 
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnOutOfBoundsHighFileTwo)
 {
-	std::vector<std::vector<int32_t>> data_a =
+	std::vector<std::vector<int32_t>> data_a = 
 	{ {1,1,1,1,1}, {2,2,2,2,2}, {5,5,5,5,5} };
-	std::vector<std::vector<int32_t>> data_b =
+	std::vector<std::vector<int32_t>> data_b = 
 	{ {1,1,1,1,1}, {2,2,2,2,2} };
 
 	std::string dirname1 = "file1.parquet";
@@ -427,7 +427,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnOutOfBoundsHighFileTwo)
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnTwoEquivalentColumns)
 {
 	//												column1		column2
-	std::vector<std::vector<int32_t>> data_a =
+	std::vector<std::vector<int32_t>> data_a = 
 	{ {1,1,1,1,1}, {2,2,2,2,2} };
 	std::vector<std::vector<int32_t>> data_b =
 	{ {3,3,3,3,3}, {4,4,4,4,4} };
@@ -506,7 +506,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnTwoNonEquivalentColumns
 
 	std::string dirname1 = "file1.parquet";
 	std::string dirname2 = "file2.parquet";
-
+	
 	// file 1
 	ASSERT_TRUE(CreateParquetFile(arrow::int32(), dirname1, file1a, 3));
 	ASSERT_TRUE(CreateParquetFile(arrow::int32(), dirname1, file1b, 2));
@@ -659,7 +659,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareFileTwoBigger)
 
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareTwoDifferentDataTypes)
 {
-	//		file1									column1
+	//		file1									column1		
 	std::vector<std::vector<int32_t>> file1a = { {1,1,1,1,1} };
 	std::vector<std::vector<int32_t>> file1b = { {2,2,2,2,2} };
 	//		file2
@@ -686,13 +686,13 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareTwoDifferentDataTypes)
 TEST_F(ParquetArrowValidatorTest, ParquetManagerCompareListMatchUint16)
 {
 	int size;
-
+	
 	// 10 values
-	std::vector<uint16_t> data1 =
+	std::vector<uint16_t> data1 = 
 	{ 1,5,1,9,1, 2,5,2,8,2 };
-
+	
 	// 35 values
-	std::vector<uint16_t> data2 =
+	std::vector<uint16_t> data2 = 
 	{ 3,3,3,3,3, 4,4,4,4,4, 5,5,5,5,5, 6,6,6,6,6, 7,7,7,7,7 };
 
 	std::string dirname1 = "file1.parquet";
@@ -713,11 +713,11 @@ TEST_F(ParquetArrowValidatorTest, ParquetManagerCompareListMatchUint16)
 TEST_F(ParquetArrowValidatorTest, ParquetManagerCompareListMisMatchUint16)
 {
 	int size;
-	std::vector<uint16_t> data1 =
+	std::vector<uint16_t> data1 = 
 	{ 1,5,1,9,1, 2,5,2,8,2 };
-	std::vector<uint16_t> data2 =
+	std::vector<uint16_t> data2 = 
 	{ 3,3,3,3,3, 4,4,4,4,4, 5,5,5,5,5, 6,6,6,6,6, 7,7,7,7,7 };
-	std::vector<uint16_t> data2b =
+	std::vector<uint16_t> data2b = 
 	{ 3,3,3,3,3, 4,4,4,4,4, 5,5,5,5,5, 6,6,6,6,6, 7,7,7,7,8 };
 
 	std::string dirname1 = "file1.parquet";
@@ -1041,7 +1041,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareDoubleMisMatch)
 
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareDoubleNaN)
 {
-	//												column1
+	//												column1				
 	std::vector<std::vector<double>> file1a = { {16.54, 5.34, 4.24, 9.14, std::numeric_limits<double>::quiet_NaN() } };
 	std::vector<std::vector<double>> file1b = { {-20.2, std::numeric_limits<double>::quiet_NaN(), 100.1} };
 
@@ -1063,7 +1063,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareDoubleNaN)
 
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareDoubleDifferentNaNImpls)
 {
-	//												column1
+	//												column1				
 	std::vector<std::vector<double>> file1a = { {16.54, 5.34, 4.24, -std::numeric_limits<double>::quiet_NaN()} };
 	std::vector<std::vector<double>> file1b = { {-20.2, std::numeric_limits<double>::quiet_NaN(), 100.1, -1345677.4} };
 
@@ -1144,7 +1144,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareFloatMisMatch)
 	The next two tests are to protect against the beginning postions
 	of each vector not being initialized to 0 at each call of CompareColumn.
 	One possible route that a vector position would be left at some
-	other location is if the row group sizes for each file were
+	other location is if the row group sizes for each file were 
 	different and non matching for the first column. This would
 	leave the beginning postion of one of the vectors at a location
 	other than the beginning of the vector when CompareColumn is called
@@ -1193,8 +1193,8 @@ TEST_F(ParquetArrowValidatorTest, ComparatorEnsureVectorBeginningPosition2Reset)
 	std::string dirname2 = "file2.parquet";
 	// file 1
 	ASSERT_TRUE(CreateParquetFile(arrow::float32(), dirname1, file1, 2));
-
-
+	
+	
 	// file 2  - Note that the only change from ComparatorEnsureVectorBeginningPosition1Reset is
 	// that the row group size flipped, this should expose begin_pos_2_ if it were not initialize
 	// back to 0 at CompareColumn(2)
@@ -1209,7 +1209,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorEnsureVectorBeginningPosition2Reset)
 
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareFloatNaN)
 {
-	//												column1
+	//												column1				
 	std::vector<std::vector<float>> file1a = { {16.54, 5.34, 4.24, 9.14, std::numeric_limits<float>::quiet_NaN() } };
 	std::vector<std::vector<float>> file1b = { {-20.2, std::numeric_limits<float>::quiet_NaN(), 100.1} };
 
@@ -1612,7 +1612,7 @@ TEST_F(ParquetArrowValidatorTest, CompareEmptyFilesSameSchema)
 
 	ASSERT_TRUE(CreateTwoColParquetFile(dirname1, arrow::float32(), col0data, "col1",
 		arrow::int16(), col1data, "col2", 5));
-	ASSERT_TRUE(CreateTwoColParquetFile(dirname2, arrow::float32(), col0data, "col1",
+	ASSERT_TRUE(CreateTwoColParquetFile(dirname2, arrow::float32(), col0data, "col1", 
 		arrow::int16(), col1data, "col2", 5));
 
 	Comparator comp;
@@ -1665,3 +1665,4 @@ TEST_F(ParquetArrowValidatorTest, CompareSameDataDifferentColNames)
 	ASSERT_TRUE(comp.CompareColumn(1));
 	ASSERT_FALSE(comp.CompareColumn(2));
 }
+

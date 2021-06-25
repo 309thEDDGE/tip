@@ -19,7 +19,7 @@ endif()
 
 add_compile_options("-m64")
 
-# NEWARROW is used if the new (~0.17+) version of
+# NEWARROW is used if the new (~0.17+) version of 
 # Arrow is used. Currently, only the most recent
 # Arrow version can be installed in Centos using
 # the package manager.
@@ -80,7 +80,7 @@ else()
     set(arrow_path "${deps_dir}/arrow_library_dependencies")
     set(arrow_inc_dir "${arrow_path}/include")
     set(arrow_lib_dir "${arrow_path}/lib")
-
+    
     set(arrow_lib_name "${arrow_lib_dir}/libarrow.a")
     set(brotli_lib_name "${arrow_lib_dir}/libbrotlicommon-static.a")
     set(brotlidec_lib_name "${arrow_lib_dir}/libbrotlidec-static.a")
@@ -113,10 +113,10 @@ endif()
 #########################################################
 if(container)
     set(parquet_inc_dirs ${arrow_inc_dir})
-    set(parquet_libs
+    set(parquet_libs 
         ${arrow_lib_name}
         ${glibarrow_lib_name}
-        ${parquet_lib_name}
+        ${parquet_lib_name} 
 #           ${je_lib_name}
 #           ${brotli_lib_name}
 #           ${brotlidec_lib_name}
@@ -125,19 +125,19 @@ if(container)
 else()
     set(parquet_inc_dirs ${arrow_inc_dir})
     set(parquet_libs
-                    ${parquet_lib_name}
+                    ${parquet_lib_name} 
                     ${arrow_lib_name}
                     ${zlib_lib_name}
-                    ${boostfs_lib_name}
-                    ${boostsys_lib_name}
+                    ${boostfs_lib_name} 
+                    ${boostsys_lib_name} 
                     ${boostregex_lib_name}
-                    ${lz4_lib_name}
-                    ${zstd_lib_name}
-                    ${snappy_lib_name}
+                    ${lz4_lib_name} 
+                    ${zstd_lib_name} 
+                    ${snappy_lib_name} 
                     ${thrift_lib_name}
-                    ${brotlienc_lib_name}
-                    ${brotlidec_lib_name}
-                    ${brotli_lib_name}
+                    ${brotlienc_lib_name} 
+                    ${brotlidec_lib_name} 
+                    ${brotli_lib_name} 
                     ${doubleconv_lib_name}
                     ${je_lib_name}
                     ${glog_lib_name}
@@ -147,18 +147,18 @@ else()
                     # ${glog_lib_name}
                     # ${je_lib_name}
                     # ${doubleconv_lib_name}
-                    # ${brotlidec_lib_name}
-                    # ${brotlienc_lib_name}
-                    # ${brotli_lib_name}
+                    # ${brotlidec_lib_name} 
+                    # ${brotlienc_lib_name} 
+                    # ${brotli_lib_name} 
                     # ${thrift_lib_name}
-                    # ${snappy_lib_name}
-                    # ${zstd_lib_name}
-                    # ${lz4_lib_name}
+                    # ${snappy_lib_name} 
+                    # ${zstd_lib_name} 
+                    # ${lz4_lib_name} 
                     # ${boostregex_lib_name}
-                    # ${boostsys_lib_name}
-                    # ${boostfs_lib_name}
+                    # ${boostsys_lib_name} 
+                    # ${boostfs_lib_name} 
                     # ${zlib_lib_name}
-                    # ${parquet_lib_name}
+                    # ${parquet_lib_name} 
                     # ${arrow_lib_name}
     )
 endif()
@@ -182,7 +182,7 @@ else()
     set(gtest_lib_name "${gtest_lib_dir}/libgtest.a")
     set(gtestmain_lib_name "${gtest_lib_dir}/libgtest_main.a")
     set(gmock_lib_name "${gmock_lib_dir}/libgmock.a")
-
+    
     set(gsuite_inc_dirs ${gtest_inc_dir} ${gmock_inc_dir})
 endif()
 
