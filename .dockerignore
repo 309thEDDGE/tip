@@ -1,6 +1,6 @@
-**/.git
-**/*.cpp
-cpp/**/main
-cpp/**/src
-cpp/tests
-cpp/CMakeLists.txt
+# git
+.git
+
+# nix
+default.nix
+result*

@@ -1,0 +1,25 @@
+FROM ubuntu:20.04
+
+ENV TZ=America/New_York
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update && \
+    apt-get install -y pkg-config cmake build-essential ca-certificates lsb-release wget\
+        libspdlog-dev libtins-dev libpcap-dev libyaml-cpp-dev libgtest-dev libgmock-dev && \
+    # install arrow
+    wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb && \
+   apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb && \
+    apt-get update && \
+    apt-get install -y -V libarrow-dev libparquet-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY CMakeLists.txt CMake_linux.txt /opt/tip/
+COPY cpp /opt/tip/cpp/
+
+RUN cd /opt/tip && \
+    mkdir -p build-release && \
+    cd build-release && \
+    cmake .. -DCONTAINER=True && \
+    cmake --build . --target install
+
+WORKDIR /opt/tip/build-release
