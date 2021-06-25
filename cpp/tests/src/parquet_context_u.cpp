@@ -6,21 +6,17 @@
 #include <vector>
 #include <string>
 #include <stdio.h>
-#include <experimental/filesystem>
+#include <filesystem>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "parquet_context.h"
 
-namespace std
-{
-using namespace experimental; 
-} 
 
 class ParquetContextTest : public ::testing::Test
 {
 protected:
 	std::string pq_file;
-	ParquetContextTest() 
+	ParquetContextTest()
 	{
 		row_group_count_ = 0;
 		current_row_group_ = 0;
@@ -51,7 +47,7 @@ protected:
 				arrow_file_->Close();
 		}
 
-		remove(pq_file.c_str());		
+		remove(pq_file.c_str());
 	}
 
 	// Generate Parquet file with single value
@@ -93,7 +89,7 @@ protected:
 				return false;
 		}
 
-		// The the remaider rows if row_group_count is 
+		// The the remaider rows if row_group_count is
 		// not a multiple of the array size
 		int remainder = row_size % row_group_count;
 		if (remainder > 0)
@@ -112,12 +108,12 @@ protected:
 
 	// Create parquet file with one list column
 	template <typename T>
-	bool CreateParquetFileList(std::shared_ptr<arrow::DataType> type, 
-		std::string file_name, 
+	bool CreateParquetFileList(std::shared_ptr<arrow::DataType> type,
+		std::string file_name,
 		std::vector<T> output,
-		int row_group_count, 
-		int list_size, 
-		bool truncate = true, 
+		int row_group_count,
+		int list_size,
+		bool truncate = true,
 		std::vector<uint8_t>* bool_fields = nullptr)
 	{
 		ParquetContext pc = ParquetContext(row_group_count);
@@ -137,7 +133,7 @@ protected:
 
 		// Assume each vector is of the same size
 		int row_size = output.size() / list_size;
-		
+
 
 		if(!pc.OpenForWrite(file_name, truncate))
 			return false;
@@ -148,9 +144,9 @@ protected:
 				return false;
 		}
 
-		// The the remaider rows if row_group_count is 
+		// The the remaider rows if row_group_count is
 		// not a multiple of the array size
-		
+
 		int remainder = row_size % row_group_count;
 		if (remainder > 0)
 		{
@@ -167,7 +163,7 @@ protected:
 
 	template<typename T, typename A>
 	bool GetNextRG(int col,
-		std::vector<T>& data,		
+		std::vector<T>& data,
 		bool list = false,
 		std::vector<size_t>* null_indices = nullptr)
 	{
@@ -220,10 +216,10 @@ protected:
 		{
 #ifdef NEWARROW
 			A data_array =
-				A(arrow_table->column(0)->chunk(0)->data());		
+				A(arrow_table->column(0)->chunk(0)->data());
 #else
 			A data_array =
-				A(arrow_table->column(0)->data()->chunk(0)->data());		
+				A(arrow_table->column(0)->data()->chunk(0)->data());
 #endif
 
 			size = data_array.length();
@@ -289,7 +285,7 @@ protected:
 #endif
 
 			arrow::BooleanArray data_array=
-				arrow::BooleanArray(data_list_arr.values()->data());			
+				arrow::BooleanArray(data_list_arr.values()->data());
 
 			size = data_array.length();
 
@@ -449,10 +445,10 @@ protected:
 		*/
 		if (file_path.size() > 259)
 		{
-			std::experimental::filesystem::path modified_path("\\\\?\\");
+			std::filesystem::path modified_path("\\\\?\\");
 			modified_path += file_path;
 			file_path = modified_path.string();
-		}		
+		}
 
 		if (arrow_file_ != nullptr)
 		{
@@ -475,7 +471,7 @@ protected:
 			printf("ReadableFile::Open error\n");
 			return false;
 		}
-		
+
 #else
 		st_ = arrow::io::ReadableFile::Open(file_path, pool_, &arrow_file_);
 		if (!st_.ok())
@@ -554,7 +550,7 @@ TEST_F(ParquetContextTest, MultipleColumns)
 
 TEST_F(ParquetContextTest, SmallRowGroupSize)
 {
-	//												column1		
+	//												column1
 	std::vector<std::vector<int64_t>> file = { {16,5,4,9,8} };
 
 	std::string file_name = "file.parquet";
@@ -655,7 +651,7 @@ TEST_F(ParquetContextTest, int64Test)
 
 	ASSERT_FALSE(CreateParquetFile(arrow::uint64(), file_name, file, 50));
 
-	// Cannot output unsigned 
+	// Cannot output unsigned
 	ASSERT_FALSE(SetPQPath(file_name));
 
 	// cast
@@ -702,7 +698,7 @@ TEST_F(ParquetContextTest, int32Test)
 
 	ASSERT_FALSE(CreateParquetFile(arrow::uint32(), file_name, file, 50));
 
-	// Cannot output unsigned 
+	// Cannot output unsigned
 	ASSERT_FALSE(SetPQPath(file_name));
 
 	// cast
@@ -749,7 +745,7 @@ TEST_F(ParquetContextTest, int16Test)
 
 	ASSERT_FALSE(CreateParquetFile(arrow::uint16(), file_name, file, 50));
 
-	// Cannot output unsigned 
+	// Cannot output unsigned
 	ASSERT_FALSE(SetPQPath(file_name));
 
 	// cast
@@ -796,7 +792,7 @@ TEST_F(ParquetContextTest, int8Test)
 
 	ASSERT_FALSE(CreateParquetFile(arrow::uint8(), file_name, file, 50));
 
-	// Cannot output unsigned 
+	// Cannot output unsigned
 	ASSERT_FALSE(SetPQPath(file_name));
 
 	// cast
@@ -1002,7 +998,7 @@ TEST_F(ParquetContextTest, int64List)
 
 	ASSERT_FALSE(CreateParquetFileList(arrow::uint64(), file_name, file, 50, 2));
 
-	// Cannot output unsigned 
+	// Cannot output unsigned
 	ASSERT_FALSE(SetPQPath(file_name));
 
 	// cast
@@ -1046,7 +1042,7 @@ TEST_F(ParquetContextTest, int32List)
 
 	ASSERT_FALSE(CreateParquetFileList(arrow::uint32(), file_name, file, 50, 2));
 
-	// Cannot output unsigned 
+	// Cannot output unsigned
 	ASSERT_FALSE(SetPQPath(file_name));
 
 	// cast
@@ -1090,7 +1086,7 @@ TEST_F(ParquetContextTest, int16List)
 
 	ASSERT_FALSE(CreateParquetFileList(arrow::uint16(), file_name, file, 50, 2));
 
-	// Cannot output unsigned 
+	// Cannot output unsigned
 	ASSERT_FALSE(SetPQPath(file_name));
 
 	// cast
@@ -1134,7 +1130,7 @@ TEST_F(ParquetContextTest, int8List)
 
 	ASSERT_FALSE(CreateParquetFileList(arrow::uint8(), file_name, file, 50, 2));
 
-	// Cannot output unsigned 
+	// Cannot output unsigned
 	ASSERT_FALSE(SetPQPath(file_name));
 
 	// cast
@@ -1233,7 +1229,7 @@ TEST_F(ParquetContextTest, WriteColumnsNoArguments)
 
 	pc->OpenForWrite(file_name, true);
 
-	// Should return false because default 
+	// Should return false because default
 	// row group size of 50 exceeds value count
 	ASSERT_FALSE(pc->WriteColumns());
 
@@ -1371,7 +1367,7 @@ TEST_F(ParquetContextTest, Int32ListWithCastMultipleRG)
 TEST_F(ParquetContextTest, StringListMultipleRG)
 {
 	std::string file_name = "file.parquet";
-	std::vector<std::string> file = 
+	std::vector<std::string> file =
 	{ "a","b","d","jack","bell","bell",
 		"dale","fell","cake","say what??","ee","ff",
 		"gg","d2"};
@@ -1512,11 +1508,11 @@ TEST_F(ParquetContextTest, StringWriteOutPortionOfVector)
 
 
 	pc->AddField(arrow::utf8(), "data");
-	pc->SetMemoryLocation<std::string>(file, "data");	
+	pc->SetMemoryLocation<std::string>(file, "data");
 
 
 	pc->OpenForWrite(file_name, true);
-	
+
 	// Offset
 	pc->WriteColumns(1, 3);
 
@@ -1543,7 +1539,7 @@ TEST_F(ParquetContextTest, StringWriteOutPortionOfVector)
 	}
 
 	remove(pq_file.c_str());
-	
+
 	ParquetContext* pc2 = new ParquetContext(50);
 
 
@@ -2032,7 +2028,7 @@ TEST_F(ParquetContextTest, Int64ListNull)
 	ASSERT_FALSE(ret_val);
 }
 
-// Null fields not applicable for lists 
+// Null fields not applicable for lists
 // Should yield the same result
 TEST_F(ParquetContextTest, StringListNull)
 {
@@ -2240,7 +2236,7 @@ TEST_F(ParquetContextTest, StringNullVectorNotSameSizeAsDataVector)
 
 	ASSERT_FALSE(CreateParquetFile(arrow::utf8(), file_name, file, 6, true, &null_fields));
 
-	ASSERT_FALSE(SetPQPath(file_name)); 
+	ASSERT_FALSE(SetPQPath(file_name));
 
 }
 
@@ -2264,7 +2260,7 @@ TEST_F(ParquetContextTest, OpenForWrite)
 
 	ParquetContext* pc = new ParquetContext(50);
 
-	
+
 	std::string temp = "file.parquet";
 
 	// fields not set
@@ -2339,7 +2335,7 @@ TEST_F(ParquetContextTest, WriteColumnsCalledBeforeOpenForWrite)
 	ParquetContext* pc = new ParquetContext(50);
 	pc->AddField(arrow::int64(), "data");
 	pc->SetMemoryLocation<int64_t>(file, "data");
-	
+
 	ASSERT_FALSE(pc->WriteColumns());
 
 	pc->Close();
@@ -2351,7 +2347,7 @@ TEST_F(ParquetContextTest, WriteColumnsCalledBeforeOpenForWrite)
 
 // Arrow Truncation doesn't work
 // See st_ = arrow::io::FileOutputStream::Open(path_, !truncate_, &ostream_);
-// in void ParquetContext::write_cols_if_ready() and notice how it gets passed 
+// in void ParquetContext::write_cols_if_ready() and notice how it gets passed
 // correctly
 //
 // To make sure parquet context doesn't vary
@@ -2359,7 +2355,7 @@ TEST_F(ParquetContextTest, WriteColumnsCalledBeforeOpenForWrite)
 // trancate is hard coded to always remain true
 TEST_F(ParquetContextTest, Truncate)
 {
-	//												column1		
+	//												column1
 	std::vector<std::vector<int64_t>> file = { {16,5,4,9,8} };
 
 	std::string dirname1 = "file.parquet";
@@ -2570,7 +2566,7 @@ protected:
 			return false;
 		}
 		total_rows = size_t(row_count);
-		
+
 		arrow_file_->Close();
 		return true;
 	}
@@ -2583,20 +2579,20 @@ TEST_F(ParquetContextRowCountTrackingTest, IntegerMultRowGroups)
 	// tests, to some degree, SetupRowCountTracking, and more specifically,
 	// IncrementAndWrite and Finalize.
 
-	// Initialize with a row group count of ten and a buffer 
+	// Initialize with a row group count of ten and a buffer
 	// multiplier of 1.
 	ASSERT_TRUE(Initialize(10, 1));
 	ASSERT_TRUE(pc_.SetupRowCountTracking(10, 1, print_activity_, print_msg_));
-	
+
 	// 10 row groups
-	ASSERT_TRUE(AppendRows(100)); 
+	ASSERT_TRUE(AppendRows(100));
 
 	// Write remaining and close.
 	Done();
 
 	size_t confirmed_rg_count = 0;
 	size_t confirmed_tot_count = 0;
-	
+
 	// Must return true to correctly acquire stats.
 	ASSERT_TRUE(GetWrittenDataStats(confirmed_rg_count, confirmed_tot_count));
 
@@ -2613,19 +2609,19 @@ TEST_F(ParquetContextRowCountTrackingTest, NonIntegerMultRowGroups)
 	// This test relies on Finalize to be operating correctly because
 	// there is a non-integer count of row groups.
 
-	// Initialize with a row group count of ten and a buffer 
+	// Initialize with a row group count of ten and a buffer
 	// multiplier of 1.
 	ASSERT_TRUE(Initialize(15, 3));
 	ASSERT_TRUE(pc_.SetupRowCountTracking(15, 3, print_activity_, print_msg_));
 
 	// 110 rows: 2 writes of 3 row groups * 15 rows per row group = 90 rows
-	// Remaining is 1 row group + 5 rows (2 more row groups). 
-	// The remaining row group and 5 rows will not be written in the loop, 
-	// and therefore AppendRows will return false. 
+	// Remaining is 1 row group + 5 rows (2 more row groups).
+	// The remaining row group and 5 rows will not be written in the loop,
+	// and therefore AppendRows will return false.
 	//
 	// Note: if necessary this test could be improved by calling AppendRows
 	// multiple times and checking the return value for each call. Something
-	// like 
+	// like
 	// AppendRows(15) --> false
 	// AppendRows(15) --> false
 	// AppendRows(15) --> true
@@ -2652,7 +2648,7 @@ TEST_F(ParquetContextRowCountTrackingTest, IntegerMultRowGroupsRequestedExceeds)
 	// tests, to some degree, SetupRowCountTracking, and more specifically,
 	// IncrementAndWrite and Finalize.
 
-	// Initialize with a row group count of 100 and a buffer 
+	// Initialize with a row group count of 100 and a buffer
 	// multiplier of 2.
 	ASSERT_TRUE(Initialize(100, 2));
 

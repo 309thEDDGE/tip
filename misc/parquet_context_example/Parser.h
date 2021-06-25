@@ -2,7 +2,7 @@
 #include<iostream>
 #include<fstream>
 #include<string>
-#include <experimental/filesystem>
+#include <filesystem>
 
 #include "Data_Block.h"
 #include "Data_Record.h"
@@ -13,11 +13,6 @@
 
 
 using namespace std;
-
-namespace std
-{
-using namespace experimental; 
-} 
 
 class Parser
 {
@@ -59,4 +54,3 @@ class Parser
 		Columnizer& getColumns();
 		Station_Columnizer& getMetadata_columns();
 };
-

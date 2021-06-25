@@ -16,11 +16,11 @@ build:
 
 requirements:
   build:
-    - {{ compiler('cxx') }}
+    - gcc_linux-64 >=8
     - make
     - cmake
     - ninja
-    - pkgconfig    
+    - pkgconfig
 
   host:
     - libpcap
@@ -30,7 +30,7 @@ requirements:
     - gmock
     - gtest
     - libtins
-    
+
   run:
     - yaml-cpp
     - libpcap

@@ -1,6 +1,6 @@
 #include <vector>
 #include <string>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include "gtest/gtest.h"
@@ -8,10 +8,6 @@
 #include "parquet_context.h"
 #include "parquet_reader.h"
 
-namespace std
-{
-using namespace experimental; 
-} 
 
 class ParquetReaderTest : public ::testing::Test
 {
@@ -40,10 +36,10 @@ protected:
 			std::filesystem::remove_all(pq_directories[i]);
 		}
 	}
-	
+
 	void TearDown()
 	{
-		
+
 	}
 
 	// Generate Parquet file with single value
@@ -91,7 +87,7 @@ protected:
 			pc.WriteColumns(row_group_count, i * row_group_count);
 		}
 
-		// The the remaider rows if row_group_count is 
+		// The the remaider rows if row_group_count is
 		// not a multiple of the array size
 		int remainder = row_size % row_group_count;
 		if (remainder > 0)
@@ -110,8 +106,8 @@ protected:
 
 	// Create parquet file with one list column
 	template <typename T>
-	bool CreateParquetFile(std::shared_ptr<arrow::DataType> type, 
-		std::string directory, 
+	bool CreateParquetFile(std::shared_ptr<arrow::DataType> type,
+		std::string directory,
 		std::vector<T>& output,
 		int row_group_count, int list_size)
 	{
@@ -151,7 +147,7 @@ protected:
 			pc.WriteColumns(row_group_count, i * row_group_count);
 		}
 
-		// The the remaider rows if row_group_count is 
+		// The the remaider rows if row_group_count is
 		// not a multiple of the array size
 		int remainder = row_count % row_group_count;
 		int offset = tot_row_groups * row_group_count;
@@ -214,7 +210,7 @@ protected:
 			pc.WriteColumns(row_group_count, i * row_group_count);
 		}
 
-		// The the remaider rows if row_group_count is 
+		// The the remaider rows if row_group_count is
 		// not a multiple of the array size
 		int remainder = row_size % row_group_count;
 		if (remainder > 0)
@@ -362,7 +358,7 @@ TEST_F(ParquetReaderTest, IncrementRGDoesNotIncrementWhenSetManualRowgroupIncrem
 
 	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
-	EXPECT_EQ(out[0], 2);	
+	EXPECT_EQ(out[0], 2);
 
 	ASSERT_TRUE((pm.GetNextRG<int32_t, arrow::NumericArray<arrow::Int32Type>>(0, out, size)));
 	ASSERT_EQ(size, 1);
@@ -418,7 +414,7 @@ TEST_F(ParquetReaderTest, EmptyParquetFile)
 
 	std::string dir = "empty_parquet.parquet";
 	ASSERT_TRUE(std::filesystem::create_directory(dir));
-	
+
 	ASSERT_FALSE(pm.SetPQPath(dir));
 
 	std::vector<int32_t> out(100);
@@ -470,13 +466,13 @@ TEST_F(ParquetReaderTest, ParquetFolderWithParquetAndNonParquetFiles)
 	int row_size = output.size();
 
 	ASSERT_TRUE(pc.OpenForWrite(path, true));
-	
+
 	for (int i = 0; i < row_size / row_group_count; i++)
 	{
 		pc.WriteColumns(row_group_count, i * row_group_count);
 	}
 
-	// The the remaider rows if row_group_count is 
+	// The the remaider rows if row_group_count is
 	// not a multiple of the array size
 	int remainder = row_size % row_group_count;
 	if (remainder > 0)
@@ -490,7 +486,7 @@ TEST_F(ParquetReaderTest, ParquetFolderWithParquetAndNonParquetFiles)
 	pq_files.push_back(text_path);
 	pq_directories.push_back(directory);
 	pq_file_count++;
-	
+
 	ParquetReader pm;
 	ASSERT_TRUE(pm.SetPQPath(directory));
 
@@ -786,7 +782,7 @@ TEST_F(ParquetReaderTest, GetNextRGBoolManualIncrement)
 	EXPECT_EQ(out[0], 0);
 	EXPECT_EQ(out[1], 1);
 	EXPECT_EQ(out[2], 0);
-	
+
 	pm.IncrementRG();
 
 	ASSERT_TRUE(pm.GetNextRGBool(0, out, size));
@@ -1074,7 +1070,7 @@ TEST_F(ParquetReaderTest, SetPQPathChecksForConsistentSchemaType)
 	std::vector<int32_t> data2 = { 8,2 };
 
 	std::string dirname = "file1.parquet";
-	ASSERT_TRUE(CreateTwoColParquetFile(dirname, arrow::int16(), data1, "col1", 
+	ASSERT_TRUE(CreateTwoColParquetFile(dirname, arrow::int16(), data1, "col1",
 		arrow::int16(), data1, "col2", 2));
 	ASSERT_TRUE(CreateTwoColParquetFile(dirname, arrow::int16(), data1, "col1",
 		arrow::int32(), data2, "col2", 2));
