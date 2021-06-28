@@ -19,12 +19,9 @@ WORKDIR /
 
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0 
 
-
-USER root    
-
-COPY --from=builder /opt/conda /opt/conda
+COPY --from=builder /root/miniconda3 /root/miniconda3
 COPY --from=builder /local-channel /local-channel
 COPY --from=builder /local-mirror /local-mirror
-ENV PATH=/opt/conda/bin:$PATH
+ENV PATH=/root/miniconda3/bin:$PATH
 RUN conda create -n tip_dev tip -c /local-channel -c /local-mirror --dry-run --offline
 CMD ["/bin/bash"]
