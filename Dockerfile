@@ -32,7 +32,10 @@ RUN conda create -n tip_dev tip -c /local-channel -c /local-mirror --dry-run --o
 # Twistlock: private key stored in image
 RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc
 RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem
+RUN rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem
+RUN find /usr/ -type f -name "*.pem" | xargs rm
+
 # Twistlock: image should be created with non-root user
 RUN groupadd -r user && useradd -r -g user user 
 
-USER user
+#USER user
