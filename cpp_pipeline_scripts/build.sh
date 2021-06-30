@@ -8,12 +8,11 @@ main() {
 	setup
 	
     echo -n "Installing Miniconda"
-    export PATH="/root/miniconda3/bin:${PATH}"
+    export PATH="/home/user/miniconda3/bin:${PATH}"
     dnf install wget -y
     wget \
          https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-         && mkdir /root/.conda \
-         && bash Miniconda3-latest-Linux-x86_64.sh -b \
+         && bash Miniconda3-latest-Linux-x86_64.sh -b -p /home/user/miniconda3 \
          && rm -f Miniconda3-latest-Linux-x86_64.sh 	
 
     pip install conda-mirror    
