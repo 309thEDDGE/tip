@@ -12,7 +12,6 @@ ADD CMakeLists.txt  /tip/CMakeLists.txt
 ADD README.md /tip/README.md
 
 WORKDIR /tip
-RUN mkdir /home/user/.conda
 RUN ./cpp_pipeline_scripts/build.sh
 WORKDIR /
 
