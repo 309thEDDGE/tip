@@ -1,0 +1,49 @@
+{% set name = "tip" %}
+{% set version = "1.0.2" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  path: ../../../
+
+build:
+  number: 2
+  skip: true  # [win and vc<14]
+  run_exports:
+    - {{ pin_subpackage('tip', max_pin='x.x') }}
+
+requirements:
+  build:
+    - gcc_linux-64 >=8
+    - make
+    - cmake
+    - ninja
+    - pkgconfig
+
+  host:
+    - libpcap
+    - arrow-cpp
+    - spdlog
+    - yaml-cpp
+    - gmock
+    - gtest
+    - libtins
+
+  run:
+    - yaml-cpp
+    - libpcap
+    - arrow-cpp
+    - spdlog
+    - libtins
+
+about:
+  home: https://code.il2.dso.mil/skicamp/project-opal/tip
+  license: DOD
+  license_family: OTHER
+  license_file: README.md
+  summary: c++ library to process Chapter 10 data
+
+    # test:
+    #   commands: test -f $PREFIX/cpp/tests/CMakeLists.txt
