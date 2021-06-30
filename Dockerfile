@@ -24,8 +24,8 @@ WORKDIR /
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0 
 #Twistlock: image should be created with non-root user
 
-RUN groupadd -r user && useradd -r -g user user && mkdir /home/user
-RUN chown -R user:user /home/user 
+RUN groupadd -r user && useradd -r -g user user && mkdir /home/user && \ 
+chown -R user:user /home/user 
 USER user
 RUN mkdir /home/user/miniconda3
 
@@ -40,11 +40,11 @@ COPY --chown=user:user conf/default_conf/*.yaml /home/user/miniconda3/conf/
 
 # Twistlock: private key stored in image
 USER root
-RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc
-RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem
-RUN rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem
-RUN rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem
-RUN rm  /usr/share/gnupg/sks-keyservers.netCA.pem
+RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
+rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem && \
+rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem && \
+rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem && \
+rm  /usr/share/gnupg/sks-keyservers.netCA.pem 
 
 USER user
 ENV PATH=/home/user/miniconda3/bin:$PATH
