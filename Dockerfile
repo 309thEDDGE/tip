@@ -15,7 +15,7 @@ WORKDIR /tip
 RUN ./cpp_pipeline_scripts/build.sh
 ENV PATH="/home/user/miniconda3/bin:${PATH}"
 
-RUN pip install conda-mirror==0.8.2
+RUN pip install --no-cache-dir conda-mirror==0.8.2
 ENV CONDA_MIRROR_DIR="/local-mirror"
 ENV MIRROR_CONFIG="tip_scripts/conda-mirror/mirror_config.yaml"
 RUN ./tip_scripts/conda-mirror/clone.sh
