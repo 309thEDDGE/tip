@@ -1,42 +1,107 @@
 #include "parser_helper_funcs.h"
 
-bool ValidateConfig(ParserConfigParams& config, std::string config_path,
-	std::string config_schema_path, ManagedPath& final_config_path,
-	ManagedPath& final_schema_path)
+bool ParseArgs(int argc, char* argv[], std::string& str_input_path, std::string& str_output_path,
+	std::string& str_conf_path, std::string& str_log_dir)
+
 {
-	final_config_path = ManagedPath(std::string(""));
-	final_schema_path = ManagedPath(std::string(""));
+	if(argc < 2)
+	{
+		printf("Usage: <ch10 path> [output path] [config files path]\nNeeds input path.\n");
+		return false;
+	}
+	str_input_path = std::string(argv[1]);
 
+	str_output_path = "";
+	if(argc < 3) return true;
+	str_output_path = std::string(argv[2]);
+
+	str_conf_path = "";
+	if(argc < 4) return true;
+	str_conf_path = std::string(argv[3]);
+
+	str_log_dir = "";
+	if(argc < 5) return true;
+	str_log_dir = std::string(argv[4]);
+
+	return true;
+}
+
+bool ValidatePaths(const std::string& str_input_path, const std::string& str_output_path,
+	const std::string& str_conf_path, const std::string& str_log_dir, 
+	ManagedPath& input_path, ManagedPath& output_path,
+	ManagedPath& conf_file_path, ManagedPath& schema_file_path, ManagedPath& log_dir)
+{
 	ArgumentValidation av;
-	std::string conf_file_name = "parse_conf.yaml";
 
-	// Get the current workding directory, then the parent path / "conf"
+	if (!av.CheckExtension(str_input_path, "ch10", "c10"))
+	{
+		printf("User-defined input path does not have one of the case-insensitive "
+			"extension: ch10, c10\n");
+		return false;
+	} 
+	// Check utf-8 conformity and verify existence of input path
+	if (!av.ValidateInputFilePath(str_input_path, input_path))
+	{
+		printf("User-defined input path is not a file/does not exist: %s\n",
+			str_input_path.c_str());
+		return false;
+	}
+
+	// If no output path is specified, use the input path.
+	if (str_output_path == "")
+	{
+		output_path = input_path.absolute().parent_path();
+	}
+	else
+	{
+		// Check if the path conforms to utf-8 and exists
+		if (!av.ValidateDirectoryPath(str_output_path, output_path))
+		{
+			printf("User-defined output path is not a directory: %s\n",
+				str_output_path.c_str());
+			return false;
+		}
+	}
+
+	// Create parse configuration path from base conf path 
+	std::string conf_file_name = "parse_conf.yaml";
 	ManagedPath default_conf_base_path({ "..", "conf" });
-	ManagedPath conf_path;
-	if (!av.ValidateDefaultInputFilePath(default_conf_base_path, config_path,
-		conf_file_name, conf_path))
+	if (!av.ValidateDefaultInputFilePath(default_conf_base_path.absolute(), 
+		str_conf_path, conf_file_name, conf_file_path))
 	{
 		printf("Failed to create parser configuration file path\n");
 		return false;
 	}
-	printf("Configuration file path: %s\n", conf_path.RawString().c_str());
 
-	// Construct the schema path.
+	// Construct the schema path. The user schema path is constructed from
+	// the user conf path only if the user conf path is not an empty string.
 	std::string schema_file_name = "tip_parse_conf_schema.yaml";
 	ManagedPath default_schema_path({ "..", "conf", "yaml_schemas" });
-	ManagedPath schema_path;
-	if (!av.ValidateDefaultInputFilePath(default_schema_path, config_schema_path,
-		schema_file_name, schema_path))
+	ManagedPath user_schema_path(std::string(""));
+	if(str_conf_path != "")
+		user_schema_path = ManagedPath({str_conf_path, "yaml_schemas"});
+	if (!av.ValidateDefaultInputFilePath(default_schema_path, user_schema_path.RawString(),
+		schema_file_name, schema_file_path))
 	{
 		printf("Failed to create yaml schema file path\n");
 		return false;
 	}
 
+	if(!ValidateLogDir(str_log_dir, log_dir)) return false;
+
+	return true;
+}
+
+bool ValidateConfig(ParserConfigParams& config, const ManagedPath& conf_file_path,
+	const ManagedPath& schema_file_path)
+{
+	ArgumentValidation av;
+
 	std::string schema_doc;
-	if (!av.ValidateDocument(schema_path, schema_doc)) return false;
+	if (!av.ValidateDocument(schema_file_path, schema_doc)) return false;
 
 	std::string config_doc;
-	if (!av.ValidateDocument(conf_path, config_doc)) return false;
+	if (!av.ValidateDocument(conf_file_path, config_doc)) return false;
 
 	// Validate configuration file using yaml schema
 	YamlSV yamlsv;
@@ -44,46 +109,20 @@ bool ValidateConfig(ParserConfigParams& config, std::string config_path,
 	if (!yamlsv.Validate(config_doc, schema_doc, log_items))
 	{
 		printf("Failed to validate config file (%s) against schema (%s)\n",
-			conf_path.RawString().c_str(), schema_path.RawString().c_str());
+			conf_file_path.RawString().c_str(), schema_file_path.RawString().c_str());
+
+		// Print log items which may contain information about which yaml elements
+		// do not conform to schema.
+		for(std::vector<LogItem>::const_iterator it = log_items.cbegin(); 
+			it != log_items.cend(); ++it)
+		{
+			it->Print();		
+		}
 		return false;
 	}
 
 	bool settings_validated = config.InitializeWithConfigString(config_doc);
-	final_config_path = conf_path;
-	final_schema_path = schema_path;
 	return settings_validated;
-}
-
-bool ValidatePaths(char* arg1, char* arg2, ManagedPath& input_path, ManagedPath& output_path)
-{
-	ArgumentValidation av;
-
-	// Get path to ch10 file. 
-	std::string ch10_path = arg1;
-	if (!av.CheckExtension(ch10_path, "ch10", "c10")) return false;
-	if (!av.ValidateInputFilePath(ch10_path, input_path))
-	{
-		printf("User-defined input path is not a file/does not exist: %s\n",
-			ch10_path.c_str());
-		return false;
-	}
-	
-	// Check for a second argument. If present, this path specifies the output
-	// path. If not present, the output path is the same as the input path.
-	output_path = input_path.parent_path();
-	if ((arg2 != NULL) && (strlen(arg2) != 0))
-	{
-		// Check if the path conforms to utf-8
-		std::string temp_out_path = arg2;
-		if (!av.ValidateDirectoryPath(temp_out_path, output_path))
-		{
-			printf("User-defined output path is not a directory: %s\n",
-				temp_out_path.c_str());
-			return false;
-		}
-	}
-	
-	return true;
 }
 
 bool StartParse(ManagedPath input_path, ManagedPath output_path,

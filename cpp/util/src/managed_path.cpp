@@ -1,5 +1,13 @@
 #include "managed_path.h"
 
+ManagedPath::ManagedPath(std::string input_path)
+{
+	// Remove unnecessary leading chars: "./"
+	if (input_path.find("./") == 0)
+		input_path = input_path.substr(2);
+	this->assign(input_path);
+}
+
 fs::path ManagedPath::AmendPath(fs::path input_path) const
 {
 #ifdef __WIN64
@@ -23,7 +31,12 @@ ManagedPath::ManagedPath(std::initializer_list<std::string> path_components)
 	fs::path temp_path = fs::current_path();
 	for (auto comp : path_components)
 	{
-		temp_path /= comp;
+		if(comp == "..")
+			temp_path = temp_path.parent_path();
+		else
+		{	
+			temp_path /= comp;
+		}
 	}
 	this->assign(temp_path);
 }

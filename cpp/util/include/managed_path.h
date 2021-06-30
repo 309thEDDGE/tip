@@ -37,7 +37,7 @@ public:
 	//////////////////////////////////////////
 
 	// Initialize with string path
-	ManagedPath(std::string input_path) : fs::path(input_path){ }
+	ManagedPath(std::string input_path);
 
 	// Initialize with cwd
 	ManagedPath() : fs::path(fs::current_path()) { }

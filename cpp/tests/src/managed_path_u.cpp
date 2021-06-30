@@ -87,6 +87,14 @@ bool CreateFileWithData(const ManagedPath& fpath, std::string data)
 	return true;
 }
 
+TEST(ManagedPathTest, StringConstructorRemovesDotSlash)
+{
+	std::string p = "./data.txt";
+	ManagedPath expected_path(std::string("data.txt"));
+	ManagedPath mp(p);
+	EXPECT_EQ(mp.RawString(), expected_path.RawString());
+}
+
 TEST(ManagedPathTest, InitializerListConstructor1Arg)
 {
 	std::string p = "data.txt";
@@ -104,6 +112,15 @@ TEST(ManagedPathTest, InitializerListConstructorMultArg)
 	ManagedPath expected_path;
 	expected_path = expected_path / p1 / p2 / p3;
 	ManagedPath mp(std::initializer_list<std::string>{ p1, p2, p3 });
+	EXPECT_EQ(mp.RawString(), expected_path.RawString());
+}
+
+TEST(ManagedPathTest, InitializerListParentDirDots)
+{
+	std::string p = "data.txt";
+	ManagedPath expected_path;
+	expected_path = expected_path.parent_path() / p;
+	ManagedPath mp({ "..", p });
 	EXPECT_EQ(mp.RawString(), expected_path.RawString());
 }
 

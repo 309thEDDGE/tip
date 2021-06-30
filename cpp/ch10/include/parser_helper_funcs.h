@@ -12,11 +12,16 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 
-bool ValidateConfig(ParserConfigParams& config, std::string config_path,
-	std::string config_schema_path, ManagedPath& final_config_path,
-	ManagedPath& final_schema_path);
+bool ParseArgs(int argc, char* argv[], std::string& str_input_path, std::string& str_output_path,
+	std::string& str_conf_path, std::string& str_log_dir);
 
-bool ValidatePaths(char* arg1, char* arg2, ManagedPath& input_path, ManagedPath& output_path);
+bool ValidatePaths(const std::string& str_input_path, const std::string& str_output_path,
+	const std::string& str_conf_path, const std::string& str_log_dir, 
+	ManagedPath& input_path, ManagedPath& output_path,
+	ManagedPath& conf_file_path, ManagedPath& schema_file_path, ManagedPath& log_dir);
+
+bool ValidateConfig(ParserConfigParams& config, const ManagedPath& conf_file_path,
+	const ManagedPath& schema_file_path);
 
 bool StartParse(ManagedPath input_path, ManagedPath output_path,
 	ParserConfigParams config, double& duration);
