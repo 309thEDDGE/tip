@@ -116,7 +116,8 @@ bool ValidateConfig(ParserConfigParams& config, const ManagedPath& conf_file_pat
 		for(std::vector<LogItem>::const_iterator it = log_items.cbegin(); 
 			it != log_items.cend(); ++it)
 		{
-			it->Print();		
+			if (static_cast<uint8_t>(it->log_level) > static_cast<uint8_t>(LogLevel::Debug))
+				it->Print();		
 		}
 		return false;
 	}
