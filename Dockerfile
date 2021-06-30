@@ -38,4 +38,4 @@ RUN find /usr/ -type f -name "*.pem" | xargs rm
 # Twistlock: image should be created with non-root user
 RUN groupadd -r user && useradd -r -g user user 
 
-#USER user
+USER user
