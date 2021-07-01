@@ -14,15 +14,18 @@ bool ParseArgs(int argc, char* argv[], std::string& str_input_path,
 	str_icd_path = std::string(argv[2]);
 
 	str_output_dir = "";
+	str_conf_dir = "";
+	str_log_dir = "";
 	if(argc < 4) return true;
 	str_output_dir = std::string(argv[3]);
 
-	str_conf_dir = "";
-	if(argc < 5) return true;
+	if(argc < 6) 
+	{
+		printf("If an output directory is specified then a confguration files directory "
+			"and log directory must also be specified\n");
+		return false;
+	}
 	str_conf_dir = std::string(argv[4]);
-
-	str_log_dir = "";
-	if(argc < 6) return true;
 	str_log_dir = std::string(argv[5]);
 
 	return true;
@@ -68,7 +71,12 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd
 	std::string translate_conf_name = "translate_conf.yaml";
 	if(!av.ValidateDefaultInputFilePath(default_conf_dir, str_conf_dir,
 		translate_conf_name, conf_file_path))
+	{
+		printf("The constructed path may be the default path, relative to CWD "
+			"(\"../conf\"). Specify an explicit output directory, conf path, and log "
+			"directory to remedy.\n");
 		return false;
+	}
 	
 	std::string conf_schema_name = "tip_translate_conf_schema.yaml";
 	std::string icd_schema_name = "tip_dts1553_schema.yaml";

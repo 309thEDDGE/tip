@@ -13,15 +13,25 @@ bool ParseArgs(int argc, char* argv[], std::string& str_input_path, std::string&
 	str_input_path = std::string(argv[1]);
 
 	str_output_path = "";
+	str_conf_dir = "";
+	str_log_dir = "";
 	if(argc < 3) return true;
 	str_output_path = std::string(argv[2]);
 
-	str_conf_dir = "";
+	// If a third argument is passed, also require the fourth
+	// argument. This prevents the case in which the user specifies
+	// a configuration files directory and does not specify a log
+	// directory, perhaps by mistake, then forgets where the relative 
+	// path from the cwd places the logs directory. 
 	if(argc < 4) return true;
 	str_conf_dir = std::string(argv[3]);
 
-	str_log_dir = "";
-	if(argc < 5) return true;
+	if(argc < 5)
+	{
+		printf("If a configuration directory is specified by the user then "
+			"an output log directory must also be specified\n");
+		return false;
+	} 
 	str_log_dir = std::string(argv[4]);
 
 	return true;
@@ -70,7 +80,8 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_out
 	if (!av.ValidateDefaultInputFilePath(default_conf_base_path.absolute(), 
 		str_conf_dir, conf_file_name, conf_file_path))
 	{
-		printf("Failed to create parser configuration file path\n");
+		printf("The constructed path may be the default path, relative to CWD "
+			"(\"../conf\"). Specify an explicit conf path to remedy.\n");
 		return false;
 	}
 

@@ -43,11 +43,12 @@ int main(int argc, char* argv[])
 
 	// Use logger to print and record these values after logging
 	// is implemented.
-	uint8_t thread_count = config_params.translate_thread_count_;
-	printf("DTS1553 path: %s\n", icd_path.RawString().c_str());
 	printf("Input: %s\n", input_path.RawString().c_str());
-	printf("Thread count: %hhu\n", thread_count);
 	printf("Output dir: %s\n", output_dir.RawString().c_str());
+	printf("DTS1553 path: %s\n", icd_path.RawString().c_str());
+	uint8_t thread_count = config_params.translate_thread_count_;
+	printf("Thread count: %hhu\n", thread_count);
+	
 
 	DTS1553 dts1553;
 	std::map<uint64_t, std::string> chanid_to_bus_name_map;
