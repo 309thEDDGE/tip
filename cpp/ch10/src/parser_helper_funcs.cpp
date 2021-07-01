@@ -79,8 +79,8 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_out
 	std::string schema_file_name = "tip_parse_conf_schema.yaml";
 	ManagedPath default_schema_path({ "..", "conf", "yaml_schemas" });
 	ManagedPath user_schema_path(std::string(""));
-	if(str_conf_path != "")
-		user_schema_path = ManagedPath({str_conf_path, "yaml_schemas"});
+	if(str_conf_dir != "")
+		user_schema_path = ManagedPath({str_conf_dir, "yaml_schemas"});
 	if (!av.ValidateDefaultInputFilePath(default_schema_path, user_schema_path.RawString(),
 		schema_file_name, schema_file_path))
 	{

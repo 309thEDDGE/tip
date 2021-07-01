@@ -37,11 +37,17 @@ int main(int argc, char* argv[])
 	TranslationConfigParams config_params;
 	if(!config_params.InitializeWithConfigString(config_doc))
 		return 0;
-	// SetupLogging(log_dir)
+
+	if(!SetupLogging(log_dir))
+		return 0;
+
+	// Use logger to print and record these values after logging
+	// is implemented.
 	uint8_t thread_count = config_params.translate_thread_count_;
 	printf("DTS1553 path: %s\n", icd_path.RawString().c_str());
 	printf("Input: %s\n", input_path.RawString().c_str());
 	printf("Thread count: %hhu\n", thread_count);
+	printf("Output dir: %s\n", output_dir.RawString().c_str());
 
 	DTS1553 dts1553;
 	std::map<uint64_t, std::string> chanid_to_bus_name_map;
@@ -60,13 +66,13 @@ int main(int argc, char* argv[])
 	double duration = 0.0;
 	if (thread_count > 0)
 	{
-		MTTranslate(config_params, input_path, dts1553.GetICDData(),
+		MTTranslate(config_params, input_path, output_dir, dts1553.GetICDData(),
 			 icd_path, chanid_to_bus_name_map, excluded_channel_ids, duration);
 	}
 	// Start the translation routine that doesn't use threading.
 	else
 	{
-		Translate(config_params, input_path, dts1553.GetICDData(),
+		Translate(config_params, input_path, output_dir, dts1553.GetICDData(),
 			icd_path, chanid_to_bus_name_map, excluded_channel_ids, duration);
 	}
 

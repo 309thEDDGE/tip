@@ -155,7 +155,7 @@ bool ArgumentValidation::CheckExtension(const std::string& input_path, T... exts
 	ManagedPath temp_path(input_path);
 	if (temp_path.extension().RawString() == "")
 	{
-		printf("CheckExtension: Input file/path %s has no extension\n",
+		printf("CheckExtension: Input file %s does not have an extension\n",
 			input_path.c_str());
 		return false;
 	}
@@ -179,8 +179,8 @@ bool ArgumentValidation::CheckExtension(const std::string& input_path, T... exts
 		ext_list += opt_ext;
 		ext_list += " ";
 	}
-	printf("CheckExtension: Input file/path %s does not have one of the extensions: %s\n",
-		input_path.c_str(), ext_list.c_str());
+	printf("CheckExtension: Input file %s does not have one of the "
+		   "(case-insensitive) extensions: %s\n", input_path.c_str(), ext_list.c_str());
 
 	return false;
 }

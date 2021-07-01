@@ -4,16 +4,13 @@ bool ParseArgs(int argc, char* argv[], std::string& str_input_path,
 	std::string& str_icd_path, std::string& str_output_dir, std::string& str_conf_dir,
 	std::string& str_log_dir)
 {
-	if(argc < 2)
+	if(argc < 3)
 	{
 		printf("Usage: tip_translate <1553 Parquet path> <DTS1553 path> [output dir] "
 			   "[config dir path] [log dir]\nNeeds input path.\n");
 		return false;
 	}
 	str_input_path = std::string(argv[1]);
-
-	str_icd_path = "";
-	if(argc < 3) return true;
 	str_icd_path = std::string(argv[2]);
 
 	str_output_dir = "";
@@ -44,7 +41,7 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd
 			str_input_path.c_str());
 		return false;
 	}
-	if(!av.ValidateInputFilePath(str_input_path, input_path))
+	if(!av.ValidateDirectoryPath(str_input_path, input_path))
 	{
 		printf("Input path \"%s\" is not a valid path\n", str_input_path.c_str());
 		return false;
@@ -66,7 +63,7 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd
 	if(!av.ValidateDefaultOutputDirectory(default_output_dir, str_output_dir,
 		output_dir, true))
 		return false;
-	
+
 	ManagedPath default_conf_dir({"..", "conf"});
 	std::string translate_conf_name = "translate_conf.yaml";
 	if(!av.ValidateDefaultInputFilePath(default_conf_dir, str_conf_dir,
@@ -83,7 +80,7 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd
 	if(!icd_schema_file_path.is_regular_file())
 		return false;
 
-	ManagedPath default_log_dir("..", "logs");
+	ManagedPath default_log_dir({"..", "logs"});
 	if(!av.ValidateDefaultOutputDirectory(default_log_dir, str_log_dir,
 		log_dir, true))
 		return false;
@@ -375,14 +372,14 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 }
 
 bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path,
-	ICDData icd, const ManagedPath& dts_path,
+ 	const ManagedPath& output_dir, ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
 	const std::set<uint64_t>& excluded_channel_ids, double& duration)
 {
 	bool select_msgs = !config.select_specific_messages_.empty();
 
-	TranslationMaster tm(input_path, config.translate_thread_count_, select_msgs,
-		config.select_specific_messages_, icd);
+	TranslationMaster tm(input_path, output_dir, config.translate_thread_count_, 
+		select_msgs, config.select_specific_messages_, icd);
 
 	auto start_time = std::chrono::high_resolution_clock::now();
 	uint8_t ret_val = tm.translate();
@@ -403,13 +400,13 @@ bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path,
 }
 
 bool Translate(TranslationConfigParams config, const ManagedPath& input_path,
-	ICDData icd, const ManagedPath& dts_path,
+	const ManagedPath& output_dir, ICDData icd, const ManagedPath& dts_path,
 	std::map<uint64_t, std::string>& chanid_to_bus_name_map,
 	const std::set<uint64_t>& excluded_channel_ids, double& duration)
 {
 	bool select_msgs = !config.select_specific_messages_.empty();
 
-	ParquetTranslationManager ptm(input_path, icd);
+	ParquetTranslationManager ptm(input_path, output_dir, icd);
 	ptm.set_select_msgs_list(select_msgs, config.select_specific_messages_);
 
 	auto start_time = std::chrono::high_resolution_clock::now();

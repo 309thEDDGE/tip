@@ -1,8 +1,9 @@
 #include "translation_master.h"
 
-TranslationMaster::TranslationMaster(const ManagedPath& parquet_path, uint8_t n_threads,
+TranslationMaster::TranslationMaster(const ManagedPath& input_parquet_path, 
+	const ManagedPath& output_dir, uint8_t n_threads,
 	bool select_msgs, std::vector<std::string> select_msg_names, ICDData icd) :
-	n_threads_(n_threads), parquet_path_(parquet_path), worker_wait_(200),
+	n_threads_(n_threads), parquet_path_(input_parquet_path), worker_wait_(200),
 	worker_start_offset_(2000), is_multithreaded_(true), output_base_path_(),
 	output_base_name_(), msg_list_path_(), parquet_path_is_dir_(false)
 {
@@ -18,8 +19,8 @@ TranslationMaster::TranslationMaster(const ManagedPath& parquet_path, uint8_t n_
 	// Determine paths using ParquetTranslationManager. Get paths now in order
 	// for call to GetTranslatedDataDir to be of use for metadata recording prior to
 	// translation. Metadata may be useful for debuggin.
-	ptm_vec_[0]->get_paths(parquet_path_, output_base_path_, output_base_name_, 
-		msg_list_path_, input_parquet_paths_, parquet_path_is_dir_);
+	ptm_vec_[0]->get_paths(parquet_path_, output_dir, output_base_path_, 
+		output_base_name_, msg_list_path_, input_parquet_paths_, parquet_path_is_dir_);
 }
 
 ManagedPath TranslationMaster::GetTranslatedDataDirectory()

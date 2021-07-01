@@ -30,6 +30,7 @@ private:
 	bool parquet_path_is_dir_;
 	std::vector<ManagedPath> input_parquet_paths_;
 	ManagedPath output_dir_;
+	ManagedPath output_root_dir_;
 	ManagedPath output_base_name_;
 	bool select_msgs_;
 	std::vector<std::string> select_msg_vec_;
@@ -86,7 +87,8 @@ private:
 	
 
 public:
-	ParquetTranslationManager(const ManagedPath& parquet_path, const ICDData& icd);
+	ParquetTranslationManager(const ManagedPath& input_parquet_path, 
+		const ManagedPath& output_root_dir, const ICDData& icd);
 	ParquetTranslationManager(uint8_t id, const ICDData& icd);
 	~ParquetTranslationManager();
 	int get_status();
@@ -98,8 +100,8 @@ public:
 	// Functions for use with multithreaded parsing only.
 	void operator()(const ManagedPath& output_base_path, const ManagedPath& output_base_name,
 		std::vector<ManagedPath>& input_parquet_paths, bool is_multithreaded);
-	void get_paths(ManagedPath parquet_path, ManagedPath& output_base_path,
-		ManagedPath& output_base_name, ManagedPath& msg_list_path,
+	void get_paths(ManagedPath input_parquet_path, ManagedPath output_root_dir, 
+		ManagedPath& output_base_path, ManagedPath& output_base_name, ManagedPath& msg_list_path,
 		std::vector<ManagedPath>& input_parquet_paths, bool& parquet_path_is_dir);
 	void get_message_list(std::vector<std::string>& msg_names_list, bool& message_list_exists);
 	std::set<std::string> GetTranslatedMessages() { return translated_messages_; }

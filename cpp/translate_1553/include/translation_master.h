@@ -23,8 +23,9 @@ private:
 	bool is_multithreaded_;
 
 public:
-	TranslationMaster(const ManagedPath& parquet_path, uint8_t n_threads,
-		bool select_msgs, std::vector<std::string> select_msg_names, ICDData icd);
+	TranslationMaster(const ManagedPath& input_parquet_path, const ManagedPath& output_dir, 
+		uint8_t n_threads, bool select_msgs, std::vector<std::string> select_msg_names, 
+		ICDData icd);
 	uint8_t translate();
 	ManagedPath GetTranslatedDataDirectory();
 	std::set<std::string> GetTranslatedMessages();

@@ -14,14 +14,15 @@ ParquetTranslationManager::ParquetTranslationManager(uint8_t id, const ICDData& 
 }
 
 ParquetTranslationManager::ParquetTranslationManager(const ManagedPath& parquet_path, 
-	const ICDData& icd) :
+	const ManagedPath& output_root_dir, const ICDData& icd) :
 	parquet_path_(parquet_path), pool_(arrow::default_memory_pool()), have_created_reader_(false), status_(1),
 	table_count_(0), have_consumed_all_row_groups_(false), row_group_index_(0), raw_table_row_group_count_(0),
 	raw_table_data_col_index_(0), data_org_(), output_dir_(), output_base_name_(),
 	match_index_(UINT16_MAX), row_ind_(0), time_val_(0), raw_data_ptr_(nullptr),
 	total_row_count_(0), current_row_count_(0), id_(UINT8_MAX), complete_(false),
 	select_msgs_(false), table_indices_iterator_end_(table_indices_.end()),
-	icd_(icd), iter_tools_(), table_name_(""), is_multithreaded_(false)
+	icd_(icd), iter_tools_(), table_name_(""), is_multithreaded_(false), 
+	output_root_dir_(output_root_dir)
 {
 	if (setup_output_paths() == 1)
 	{
@@ -69,7 +70,7 @@ uint8_t ParquetTranslationManager::setup_output_paths()
 
 	// Create an output directory at the same level as the Parquet
 	// directory.
-	output_dir_ = parquet_path_.parent_path().CreatePathObject(parquet_path_, "_translated");
+	output_dir_ = output_root_dir_.CreatePathObject(parquet_path_, "_translated");
 	output_base_name_ = output_dir_.filename();
 	if(!output_dir_.create_directory())
 	{
@@ -90,11 +91,13 @@ ManagedPath ParquetTranslationManager::GetTranslatedDataDirectory()
 }
 
 
-void ParquetTranslationManager::get_paths(ManagedPath parquet_path, ManagedPath& output_base_path,
+void ParquetTranslationManager::get_paths(ManagedPath input_parquet_path, 
+	ManagedPath output_root_dir, ManagedPath& output_base_path,
 	ManagedPath& output_base_name, ManagedPath& msg_list_path,
 	std::vector<ManagedPath>& input_parquet_paths, bool& parquet_path_is_dir)
 {
-	parquet_path_ = parquet_path;
+	parquet_path_ = input_parquet_path;
+	output_root_dir_ = output_root_dir;
 	setup_output_paths();
 	output_base_path = output_dir_;
 	output_base_name = output_base_name_;
