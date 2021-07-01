@@ -15,9 +15,9 @@ int main(int argc, char* argv[])
 {
 	std::string str_input_path;
 	std::string str_output_path;
-	std::string str_conf_path;
+	std::string str_conf_dir;
 	std::string str_log_dir;
-	if(!ParseArgs(argc, argv, str_input_path, str_output_path, str_conf_path,
+	if(!ParseArgs(argc, argv, str_input_path, str_output_path, str_conf_dir,
 		str_log_dir))
 		return 0;
 
@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 	ManagedPath conf_file_path;	
 	ManagedPath schema_file_path;
 	ManagedPath log_dir;
-	if (!ValidatePaths(str_input_path, str_output_path, str_conf_path, str_log_dir, 
+	if (!ValidatePaths(str_input_path, str_output_path, str_conf_dir, str_log_dir, 
 		input_path, output_path, conf_file_path, schema_file_path, log_dir))
 		return 0;
 

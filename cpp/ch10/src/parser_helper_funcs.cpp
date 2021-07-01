@@ -1,12 +1,13 @@
 #include "parser_helper_funcs.h"
 
 bool ParseArgs(int argc, char* argv[], std::string& str_input_path, std::string& str_output_path,
-	std::string& str_conf_path, std::string& str_log_dir)
+	std::string& str_conf_dir, std::string& str_log_dir)
 
 {
 	if(argc < 2)
 	{
-		printf("Usage: <ch10 path> [output path] [config files path]\nNeeds input path.\n");
+		printf("Usage: tip_parse <ch10 path> [output path] [config dir] [log dir]\n"
+			   "Needs input path.\n");
 		return false;
 	}
 	str_input_path = std::string(argv[1]);
@@ -15,9 +16,9 @@ bool ParseArgs(int argc, char* argv[], std::string& str_input_path, std::string&
 	if(argc < 3) return true;
 	str_output_path = std::string(argv[2]);
 
-	str_conf_path = "";
+	str_conf_dir = "";
 	if(argc < 4) return true;
-	str_conf_path = std::string(argv[3]);
+	str_conf_dir = std::string(argv[3]);
 
 	str_log_dir = "";
 	if(argc < 5) return true;
@@ -27,7 +28,7 @@ bool ParseArgs(int argc, char* argv[], std::string& str_input_path, std::string&
 }
 
 bool ValidatePaths(const std::string& str_input_path, const std::string& str_output_path,
-	const std::string& str_conf_path, const std::string& str_log_dir, 
+	const std::string& str_conf_dir, const std::string& str_log_dir, 
 	ManagedPath& input_path, ManagedPath& output_path,
 	ManagedPath& conf_file_path, ManagedPath& schema_file_path, ManagedPath& log_dir)
 {
@@ -67,7 +68,7 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_out
 	std::string conf_file_name = "parse_conf.yaml";
 	ManagedPath default_conf_base_path({ "..", "conf" });
 	if (!av.ValidateDefaultInputFilePath(default_conf_base_path.absolute(), 
-		str_conf_path, conf_file_name, conf_file_path))
+		str_conf_dir, conf_file_name, conf_file_path))
 	{
 		printf("Failed to create parser configuration file path\n");
 		return false;

@@ -13,10 +13,10 @@
 #include "spdlog/sinks/rotating_file_sink.h"
 
 bool ParseArgs(int argc, char* argv[], std::string& str_input_path, std::string& str_output_path,
-	std::string& str_conf_path, std::string& str_log_dir);
+	std::string& str_conf_dir, std::string& str_log_dir);
 
 bool ValidatePaths(const std::string& str_input_path, const std::string& str_output_path,
-	const std::string& str_conf_path, const std::string& str_log_dir, 
+	const std::string& str_conf_dir, const std::string& str_log_dir, 
 	ManagedPath& input_path, ManagedPath& output_path,
 	ManagedPath& conf_file_path, ManagedPath& schema_file_path, ManagedPath& log_dir);
 
