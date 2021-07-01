@@ -1,126 +1,158 @@
 #include "translator_helper_funcs.h"
 
-bool GetArguments(int argc, char* argv[], ManagedPath& input_path,
-	ManagedPath& icd_path)
+bool ParseArgs(int argc, char* argv[], std::string& str_input_path,
+	std::string& str_icd_path, std::string& str_output_dir, std::string& str_conf_dir,
+	std::string& str_log_dir)
 {
-	if (argc < 3)
+	if(argc < 2)
 	{
-		printf("Args not present\n");
+		printf("Usage: tip_translate <1553 Parquet path> <DTS1553 path> [output dir] "
+			   "[config dir path] [log dir]\nNeeds input path.\n");
 		return false;
 	}
+	str_input_path = std::string(argv[1]);
 
-	ArgumentValidation av;
-	std::string temp_input_path = argv[1];
-	if (!av.CheckExtension(temp_input_path, "parquet")) return false;
+	str_icd_path = "";
+	if(argc < 3) return true;
+	str_icd_path = std::string(argv[2]);
 
-	std::string temp_icd_path = argv[2];
-	if (!av.CheckExtension(temp_icd_path, "txt", "csv", "yaml", "yml")) return false;
-	
-	if (!av.ValidateDirectoryPath(temp_input_path, input_path))
-	{
-		printf("Ch10 input directory does not exist: %s\n", temp_input_path.c_str());
-		return false;
-	}
+	str_output_dir = "";
+	if(argc < 4) return true;
+	str_output_dir = std::string(argv[3]);
 
-	if (!av.ValidateInputFilePath(temp_icd_path, icd_path))
-	{
-		printf("DTS1553/ICD input directory does not exist: %s\n", 
-			temp_icd_path.c_str());
-		return false;
-	}
+	str_conf_dir = "";
+	if(argc < 5) return true;
+	str_conf_dir = std::string(argv[4]);
+
+	str_log_dir = "";
+	if(argc < 6) return true;
+	str_log_dir = std::string(argv[5]);
 
 	return true;
 }
 
-bool InitializeConfig(std::string conf_root_path, std::string schema_root_path,
-	TranslationConfigParams& tcp, std::vector<LogItem>& log_items)
+bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
+	const std::string& str_output_dir, const std::string& str_conf_dir, 
+	const std::string& str_log_dir,	ManagedPath& input_path, ManagedPath& icd_path, 
+	ManagedPath& output_dir, ManagedPath& conf_file_path, ManagedPath& conf_schema_file_path, 
+	ManagedPath& icd_schema_file_path, ManagedPath& log_dir)
 {
-
-	// Get the configuration yaml path either by default or from a user-input
-	// path to the root of the conf file directory.
-	ManagedPath full_config_path;
-	std::string config_file_name = "translate_conf.yaml";
-	ManagedPath default_root_path({ "..", "conf" });
-
 	ArgumentValidation av;
-	if (!av.ValidateDefaultInputFilePath(default_root_path, conf_root_path,
-		config_file_name, full_config_path))
+	if (!av.CheckExtension(str_input_path, "parquet"))
 	{
-		printf("Failed to create translator configuration file path\n");
+		printf("Input path \"%s\" does not have extension \"parquet\"\n",
+			str_input_path.c_str());
+		return false;
+	}
+	if(!av.ValidateInputFilePath(str_input_path, input_path))
+	{
+		printf("Input path \"%s\" is not a valid path\n", str_input_path.c_str());
 		return false;
 	}
 
-	// Get the config schema yaml path either by default or from a user-input
-	// base path.
-	ManagedPath full_schema_path;
-	std::string schema_file_name = "tip_translate_conf_schema.yaml";
-	ManagedPath schema_default_path({ "..", "conf", "yaml_schemas" });
-	if (!av.ValidateDefaultInputFilePath(schema_default_path, schema_root_path,
-		schema_file_name, full_schema_path))
+	if (!av.CheckExtension(str_icd_path, "txt", "csv", "yaml", "yml")) 
 	{
-		printf("Failed to create translator configuration schema file path\n");
+		printf("DTS1553 (ICD) path \"%s\" does not have extension: txt, csv, "
+			"yaml, yml\n", str_icd_path.c_str());
+		return false;
+	}
+	if(!av.ValidateInputFilePath(str_icd_path, icd_path))
+	{
+		printf("DTS1553 (ICD) path \"%s\" is not a valid path\n", str_icd_path.c_str());
 		return false;
 	}
 
-	// Check the file contents for utf8 conformity.
-	std::string config_doc;
-	if (!av.ValidateDocument(full_config_path, config_doc)) return false;
+	ManagedPath default_output_dir = input_path.parent_path();
+	if(!av.ValidateDefaultOutputDirectory(default_output_dir, str_output_dir,
+		output_dir, true))
+		return false;
+	
+	ManagedPath default_conf_dir({"..", "conf"});
+	std::string translate_conf_name = "translate_conf.yaml";
+	if(!av.ValidateDefaultInputFilePath(default_conf_dir, str_conf_dir,
+		translate_conf_name, conf_file_path))
+		return false;
+	
+	std::string conf_schema_name = "tip_translate_conf_schema.yaml";
+	std::string icd_schema_name = "tip_dts1553_schema.yaml";
+	std::string schema_dir = "yaml_schemas";
+	conf_schema_file_path = conf_file_path.parent_path() / schema_dir / conf_schema_name;
+	icd_schema_file_path = conf_file_path.parent_path() / schema_dir / icd_schema_name;
+	if(!conf_schema_file_path.is_regular_file())
+		return false;
+	if(!icd_schema_file_path.is_regular_file())
+		return false;
+
+	ManagedPath default_log_dir("..", "logs");
+	if(!av.ValidateDefaultOutputDirectory(default_log_dir, str_log_dir,
+		log_dir, true))
+		return false;
+
+	return true;
+}
+
+bool ValidateConfSchema(const ManagedPath& conf_file_path, 
+	const ManagedPath& conf_schema_file_path, std::string& conf_doc)
+{
+	ArgumentValidation av;
+	if(!av.ValidateDocument(conf_file_path, conf_doc)) return false;
 
 	std::string schema_doc;
-	if (!av.ValidateDocument(full_schema_path, schema_doc)) return false;
+	if(!av.ValidateDocument(conf_schema_file_path, schema_doc)) return false;
 
-	// Validate the config file using the yaml schema validator.
 	YamlSV ysv;
-	if (!ysv.Validate(config_doc, schema_doc, log_items))
+	std::vector<LogItem> log_items;
+	if(!ysv.Validate(conf_doc, schema_doc, log_items))
 	{
-		printf("Failed to validate configuration file (%s) with schema (%s)\n",
-			full_config_path.RawString().c_str(), full_schema_path.RawString().c_str());
+		for(std::vector<LogItem>::const_iterator it = log_items.cbegin(); 
+			it != log_items.cend(); ++it)
+		{
+			if (static_cast<uint8_t>(it->log_level) > static_cast<uint8_t>(LogLevel::Debug))
+				it->Print();		
+		}
 		return false;
 	}
-
-	// Initialize the configuration file reader and ingest the data.
-	if (!tcp.InitializeWithConfigString(config_doc))
-		return false;
-
 	return true;
 }
 
-bool ValidateDTS1553YamlSchema(std::string schema_root_path, 
-	const ManagedPath& dts_path, std::vector<LogItem>& log_items)
+bool ValidateDTS1553YamlSchema(const ManagedPath& icd_path, 
+	const ManagedPath& icd_schema_file_path)
 {
 	// Do not proceed if the dts_path does not have a yaml or yml
 	// extension.
 	ArgumentValidation av;
-	if(!av.CheckExtension(dts_path.RawString(), "yaml", "yml"))
+	if(!av.CheckExtension(icd_path.RawString(), "yaml", "yml"))
 		return true;
-
-	// Construct the schema file path
-	std::string schema_file_name = "tip_dts1553_schema.yaml";
-	ManagedPath full_schema_path;
-	ManagedPath default_root_path({ "..", "conf", "yaml_schemas" });
-	if (!av.ValidateDefaultInputFilePath(default_root_path, schema_root_path,
-		schema_file_name, full_schema_path))
-	{
-		printf("Failed to create DTS1553 schema file path\n");
-		return false;
-	}
 
 	// Check the schema and dts1553 documents for utf-8 conformity
 	std::string schema_doc;
-	if (!av.ValidateDocument(full_schema_path, schema_doc)) return false;
+	if (!av.ValidateDocument(icd_schema_file_path, schema_doc)) return false;
 
-	std::string dts_doc;
-	if (!av.ValidateDocument(dts_path, dts_doc)) return false;
+	std::string icd_doc;
+	if (!av.ValidateDocument(icd_path, icd_doc)) return false;
 
 	// Validate the dts1553 document using schema validator.
 	YamlSV ysv;
-	if (!ysv.Validate(dts_doc, schema_doc, log_items))
+	std::vector<LogItem> log_items;
+	if (!ysv.Validate(icd_doc, schema_doc, log_items))
 	{
 		printf("Failed to validate DTS1553 file (%s) with schema (%s)\n",
-			dts_path.RawString().c_str(), full_schema_path.RawString().c_str());
+			icd_path.RawString().c_str(), icd_schema_file_path.RawString().c_str());
+		for(std::vector<LogItem>::const_iterator it = log_items.cbegin(); 
+			it != log_items.cend(); ++it)
+		{
+			if (static_cast<uint8_t>(it->log_level) > static_cast<uint8_t>(LogLevel::Debug))
+				it->Print();		
+		}
 		return false;
 	}
 
+	return true;
+}
+
+bool SetupLogging(const ManagedPath& log_dir)
+{
+	printf("!!! Logger not configured !!!\n");
 	return true;
 }
 
