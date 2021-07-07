@@ -61,4 +61,6 @@ USER user
 ENV PATH=/home/user/miniconda3/bin:$PATH
 
 # This is to validate the environment solves via local channels
-RUN conda create -n tip_dev tip jupyterlab pandas matplotlib pyarrow -c file:///home/user/local-channel -c /home/user/local-mirror -c /home/user/singleuser-channel --dry-run --offline
+RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow -c file:///home/user/local-channel -c /home/user/local-mirror -c /home/user/singleuser-channel --offline
+
+RUN source activate tip
