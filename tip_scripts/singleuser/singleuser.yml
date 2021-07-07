@@ -1,0 +1,13 @@
+name: tip_singleuser
+channels:
+  - main
+  - nodefaults
+dependencies:
+- jupyter
+- python=3.9
+- jupyterlab
+- pandas
+- matplotlib
+- pyarrow
+
+

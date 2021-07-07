@@ -19,7 +19,15 @@ RUN pip install --no-cache-dir conda-mirror==0.8.2
 ENV CONDA_MIRROR_DIR="/local-mirror"
 ENV MIRROR_CONFIG="tip_scripts/conda-mirror/mirror_config.yaml"
 RUN ./tip_scripts/conda-mirror/clone.sh
+WORKDIR /tip
+
+
+RUN pip install --no-cache-dir conda-lock==0.10.0
+ENV SINGLEUSER_CHANNEL_DIR = "singleuser-channel"
+RUN ./tip_scripts/singleuser/create.sh
 WORKDIR /
+
+RUN conda clean -afy
 
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0 
 #Twistlock: image should be created with non-root user
@@ -32,6 +40,7 @@ RUN mkdir /home/user/miniconda3
 COPY --from=builder --chown=user:user /home/user/miniconda3 /home/user/miniconda3
 COPY --from=builder --chown=user:user /local-channel /home/user/local-channel
 COPY --from=builder --chown=user:user /local-mirror /home/user/local-mirror
+COPY --from=builder --chown=user:user /tip/tip_scripts/singleuser/singleuser-channel /home/user/singleuser-channel
 # Copy default conf directory for tip
 COPY --chown=user:user conf /home/user/miniconda3/conf
 # Nice user facing step so that users don't have to copy default conf from the
@@ -46,8 +55,23 @@ rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem && \
 rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem && \
 rm  /usr/share/gnupg/sks-keyservers.netCA.pem 
 
+RUN find -name '*.a' -delete && \
+  rm -rf /home/user/miniconda3/conda-meta && \
+  rm -rf /home/user/miniconda3/include && \
+  find -name '__pycache__' -type d -exec rm -rf '{}' '+' && \
+  rm -rf  /home/user/miniconda3/lib/libasan.so.5.0.0 \
+    /home/user/miniconda3/lib/libtsan.so.0.0.0 \
+    /home/user/miniconda3/lib/liblsan.so.0.0.0 \
+    /home/user/miniconda3/lib/libubsan.so.1.0.0 \
+    /home/user/miniconda3/bin/x86_64-conda-linux-gnu-ld \
+    /home/user/miniconda3/bin/sqlite3 \
+    /home/user/miniconda3/bin/openssl \
+    /home/user/miniconda3/share/terminfo && \
+  find /home/user/miniconda3/lib/python3.8/site-packages -name '*.pyx' -delete && \
+  rm -rf /home/user/miniconda3/lib/python3.8/site-packages/uvloop/loop.c
+
 USER user
 ENV PATH=/home/user/miniconda3/bin:$PATH
-
+RUN conda clean -a -y
 # This is to validate the environment solves via local channels
-RUN conda create -n tip_dev tip -c file:///home/user/local-channel -c /home/user/local-mirror --dry-run --offline
+RUN conda create -n tip_dev tip jupyterlab pandas matplotlib pyarrow -c file:///home/user/local-channel -c /home/user/local-mirror -c /home/user/singleuser-channel --dry-run --offline

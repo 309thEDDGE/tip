@@ -1,0 +1,816 @@
+resources:
+- name: _libgcc_mutex-0.1-main.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/_libgcc_mutex-0.1-main.conda
+  validation:
+    type: sha256
+    value: 476626712f60e5ef0fe04c354727152b1ee5285d57ccd3575c7be930122bd051
+- name: blas-1.0-mkl.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/blas-1.0-mkl.conda
+  validation:
+    type: sha256
+    value: 05f806e9b610f80e15f2c8d7b4e9a7a2817ed4870b85427acb2a89a1db44ec0e
+- name: ca-certificates-2021.5.25-h06a4308_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2021.5.25-h06a4308_1.conda
+  validation:
+    type: sha256
+    value: 6f88ed7629479ae99fb8b75a64aaf46a12a445e981f2c9353a8f3128b944ee1a
+- name: intel-openmp-2021.2.0-h06a4308_610.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/intel-openmp-2021.2.0-h06a4308_610.conda
+  validation:
+    type: sha256
+    value: a1c78a2d9d80bbd625e8199cd3b8c7ced6542cbe7ddfcf7a834caba69d07ac38
+- name: ld_impl_linux-64-2.35.1-h7274673_9.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/ld_impl_linux-64-2.35.1-h7274673_9.conda
+  validation:
+    type: sha256
+    value: cc5b453d585754bb9d52bac9e2045f32eb0fc43d74ec3eee21e44604cf1a6485
+- name: libstdcxx-ng-9.3.0-hd4cf53a_17.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libstdcxx-ng-9.3.0-hd4cf53a_17.conda
+  validation:
+    type: sha256
+    value: 0cdad3721336fe93f626289dd45e864eb4a0659ff2094670af01e7eacad28d9c
+- name: libgomp-9.3.0-h5101ec6_17.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libgomp-9.3.0-h5101ec6_17.conda
+  validation:
+    type: sha256
+    value: b53f7b4d5a1a3a3d61ad86b043f91a0ca9ee16b77194021383185d34eb592e56
+- name: mkl-2021.2.0-h06a4308_296.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/mkl-2021.2.0-h06a4308_296.conda
+  validation:
+    type: sha256
+    value: 19cd4c513867c2fb79962122a6fb38fd36b49b3d08402907a389f3ce14b17f9c
+- name: _openmp_mutex-4.5-1_gnu.tar.bz2
+  url: https://repo.anaconda.com/pkgs/main/linux-64/_openmp_mutex-4.5-1_gnu.tar.bz2
+  validation:
+    type: sha256
+    value: 2c269ff2e33d3c158b4744485b7fe11ee132814c55a70b33b3e68d588375d465
+- name: libgcc-ng-9.3.0-h5101ec6_17.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libgcc-ng-9.3.0-h5101ec6_17.conda
+  validation:
+    type: sha256
+    value: 49a808720a51c107241a42ac3641cce3d8451ef7cfaf3d68b6e4a3fec2da0676
+- name: aws-c-common-0.4.57-he6710b0_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/aws-c-common-0.4.57-he6710b0_1.conda
+  validation:
+    type: sha256
+    value: 89587577e2319d5bc225d48d303848b18d60a31ed31b9e5aa2cfe02bb63ec4f4
+- name: brotli-1.0.9-he6710b0_2.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/brotli-1.0.9-he6710b0_2.conda
+  validation:
+    type: sha256
+    value: 9e936304be2da4ca78b208d52c09a3511a36c07ce2e2de7108f29da35bc36753
+- name: bzip2-1.0.8-h7b6447c_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/bzip2-1.0.8-h7b6447c_0.conda
+  validation:
+    type: sha256
+    value: d3fa503351a53692866182a3819fb28d105e32c25d177bf6a9444c4153215e0d
+- name: c-ares-1.17.1-h27cfd23_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/c-ares-1.17.1-h27cfd23_0.conda
+  validation:
+    type: sha256
+    value: fe3dd95fd0c54b967a4db44aa3e1fe81c614a51d6a8d0b9f5232a7226045a555
+- name: double-conversion-3.1.5-he6710b0_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/double-conversion-3.1.5-he6710b0_1.conda
+  validation:
+    type: sha256
+    value: a70c18d23f1ce9f4de75133e3ac321b94fed51a2b0a6e1ddc005bd049ca3ae60
+- name: expat-2.4.1-h2531618_2.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/expat-2.4.1-h2531618_2.conda
+  validation:
+    type: sha256
+    value: dd2a76afaaa65f727cf7d6c7a2fc44db5ac98f2481215b7e6960e2186d79e1a5
+- name: gflags-2.2.2-he6710b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/gflags-2.2.2-he6710b0_0.conda
+  validation:
+    type: sha256
+    value: db6b325cc8b37b1e90b3170490630061f5007efee1ed39601912a204bc56dcb5
+- name: icu-58.2-he6710b0_3.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/icu-58.2-he6710b0_3.conda
+  validation:
+    type: sha256
+    value: fdf7a480fcb598d164cbd28d3ce015d7de52db30f76faf7a15fbb8bbc7b8c5af
+- name: jpeg-9b-h024ee3a_2.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/jpeg-9b-h024ee3a_2.conda
+  validation:
+    type: sha256
+    value: 3771b5c80500813ee442f6360a1453fc32d30e84d9f6ea71ef0c67de1860a0a0
+- name: libffi-3.3-he6710b0_2.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libffi-3.3-he6710b0_2.conda
+  validation:
+    type: sha256
+    value: 2cef7c80db19e83a38b6e02110f0e9828d3ef4045c38791d5b01006c44529093
+- name: libsodium-1.0.18-h7b6447c_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libsodium-1.0.18-h7b6447c_0.conda
+  validation:
+    type: sha256
+    value: be446d634c6f366fce72b77c7a3b2709f2fd29dd8eedab05df253e99ce08650a
+- name: libuuid-1.0.3-h1bed415_2.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libuuid-1.0.3-h1bed415_2.conda
+  validation:
+    type: sha256
+    value: 7c4bc14591f14cbe1c92bd0c658c21d1dbe7138a0067b0c9f0fe65bf5ceb8c53
+- name: libwebp-base-1.2.0-h27cfd23_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libwebp-base-1.2.0-h27cfd23_0.conda
+  validation:
+    type: sha256
+    value: a894ef4837385c2bb9ac9abcbb4527e0c5f5051979156179fbbfde21f10f49e1
+- name: libxcb-1.14-h7b6447c_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libxcb-1.14-h7b6447c_0.conda
+  validation:
+    type: sha256
+    value: a715f9f5484de1cc39a4182e46a762cf574ff0b13ff6daeff74563f3791528a4
+- name: lz4-c-1.9.3-h2531618_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/lz4-c-1.9.3-h2531618_0.conda
+  validation:
+    type: sha256
+    value: b4f4a28fe516bc1d0d76d5805213f63386a83187b4f231b7b20e2d929b6a9318
+- name: ncurses-6.2-he6710b0_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.2-he6710b0_1.conda
+  validation:
+    type: sha256
+    value: b06808e9d147ff7d56f37d64eb55f09bfc1108ef0af22cb461e7ad20810bc236
+- name: openssl-1.1.1k-h27cfd23_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/openssl-1.1.1k-h27cfd23_0.conda
+  validation:
+    type: sha256
+    value: dd9ff7c11ee7690256772eeae1cfebb63d8643c8329ff489ec93f64863e7b421
+- name: pcre-8.45-h295c915_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/pcre-8.45-h295c915_0.conda
+  validation:
+    type: sha256
+    value: 2bf0144c02007ade42d6a5305987974cc751c7f2e2107d6f88c23d43ce354d5a
+- name: re2-2020.11.01-h2531618_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/re2-2020.11.01-h2531618_1.conda
+  validation:
+    type: sha256
+    value: 293951407250e690362f2223d7ed0176e230673b02d6cf3c200fc80d87d2a913
+- name: snappy-1.1.8-he6710b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/snappy-1.1.8-he6710b0_0.conda
+  validation:
+    type: sha256
+    value: 098136c7994f758ca60b006e19001452933bf08073f9b93544e4740a895254a8
+- name: uriparser-0.9.3-he6710b0_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/uriparser-0.9.3-he6710b0_1.conda
+  validation:
+    type: sha256
+    value: 40e2fc22714db0af94b2afdc6efd98a23e3d3f9a8e0a7a7a986667cf7769a617
+- name: utf8proc-2.6.1-h27cfd23_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/utf8proc-2.6.1-h27cfd23_0.conda
+  validation:
+    type: sha256
+    value: c10baf92a00a632813bb28f1812e5e547374a400f93d45301b917747c5ddf307
+- name: xz-5.2.5-h7b6447c_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/xz-5.2.5-h7b6447c_0.conda
+  validation:
+    type: sha256
+    value: 58045af0e1f23ea72b6759c4f5aac3e2fb98da9585758853d09961126d66f9ce
+- name: zlib-1.2.11-h7b6447c_3.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.11-h7b6447c_3.conda
+  validation:
+    type: sha256
+    value: 5c5346ca7da14d7e11e15a8cc5e695d805ecb79c0e59d7043bea5843ffc493e5
+- name: aws-checksums-0.1.9-he6710b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/aws-checksums-0.1.9-he6710b0_0.conda
+  validation:
+    type: sha256
+    value: a6edb1233d2511b1e6615cf8fbb93b672ce6b5bff9245c367c766eb2c8437038
+- name: glib-2.68.2-h36276a3_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/glib-2.68.2-h36276a3_0.conda
+  validation:
+    type: sha256
+    value: 0e88408be1ff0796f5fbba14d32bb122d540d99de709aeb2ee3a198bba6ed7c4
+- name: glog-0.5.0-h2531618_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/glog-0.5.0-h2531618_0.conda
+  validation:
+    type: sha256
+    value: 58984e4e178603984b2e5b5e3197b7a37d40d994fa8a76320dbcc7c5944e73d1
+- name: libedit-3.1.20210216-h27cfd23_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libedit-3.1.20210216-h27cfd23_1.conda
+  validation:
+    type: sha256
+    value: 8c096f0829735fc9c3549887a38c5201de3a83e325920d87fd9f8531501b27db
+- name: libevent-2.1.8-h1ba5d50_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libevent-2.1.8-h1ba5d50_1.conda
+  validation:
+    type: sha256
+    value: 66156a5a9a4c57b9b5f1d76c646be189b6c204c8c4c71664a45e72fee818dc75
+- name: libpng-1.6.37-hbc83047_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libpng-1.6.37-hbc83047_0.conda
+  validation:
+    type: sha256
+    value: 4f99638c8da0abe841c2b4bc337839f2a01363d40cfc334c0084e79dc0fd0a0d
+- name: libprotobuf-3.11.2-hd408876_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libprotobuf-3.11.2-hd408876_0.conda
+  validation:
+    type: sha256
+    value: d190c2c7a752442aced9fab6164032cf2bebe9233f359edbdc307107faf5af96
+- name: libssh2-1.9.0-h1ba5d50_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libssh2-1.9.0-h1ba5d50_1.conda
+  validation:
+    type: sha256
+    value: 44a292b8d2004962bf9babca42cbdd2e02d1b592dc8c4faed7675c5315b27920
+- name: libxml2-2.9.12-h03d6c58_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libxml2-2.9.12-h03d6c58_0.conda
+  validation:
+    type: sha256
+    value: 8cb4ba69be2ff7199905552a4eb82329425ff8125155ef6d74927b2818453c8b
+- name: readline-8.1-h27cfd23_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/readline-8.1-h27cfd23_0.conda
+  validation:
+    type: sha256
+    value: 5fe35471214d5fc544fa4c37808a6ffbd294d8f6d3ef5c484f2f72d7493e8d1d
+- name: tk-8.6.10-hbc83047_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/tk-8.6.10-hbc83047_0.conda
+  validation:
+    type: sha256
+    value: 99fba40357115be361759731fc5a19b7833b4884310f2851f3faadbf33484991
+- name: zeromq-4.3.4-h2531618_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/zeromq-4.3.4-h2531618_0.conda
+  validation:
+    type: sha256
+    value: 3d338592b4515c84764249b5a7be8ebfdd82d1e79953ceb0c23352bf2f6817b6
+- name: zstd-1.4.9-haebb681_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/zstd-1.4.9-haebb681_0.conda
+  validation:
+    type: sha256
+    value: 5ebb3e77ad431e24226cdee8884fb39f511d36fae598d1ce1f50081545a046a3
+- name: aws-c-event-stream-0.1.6-h2531618_5.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/aws-c-event-stream-0.1.6-h2531618_5.conda
+  validation:
+    type: sha256
+    value: 244accbf9cfeee6f41723d6706751a3f94dd0d1b516d1788c354a02c69425682
+- name: dbus-1.13.18-hb2f20db_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/dbus-1.13.18-hb2f20db_0.conda
+  validation:
+    type: sha256
+    value: 33cffa33d77d6bfa4e157322e188d82deb904efe1bc867d1ee08fcee9275b8ab
+- name: freetype-2.10.4-h5ab3b9f_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/freetype-2.10.4-h5ab3b9f_0.conda
+  validation:
+    type: sha256
+    value: ce30bd1542b38e7dc83180c54202b36597ef26a14fa4678f5a74ae540cdb2143
+- name: grpc-cpp-1.26.0-hf8bcb03_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/grpc-cpp-1.26.0-hf8bcb03_0.conda
+  validation:
+    type: sha256
+    value: 79197424168f1c4e4925a68af93f7bea49a76fef355d1849c71a1f965436f152
+- name: gstreamer-1.14.0-h28cd5cc_2.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/gstreamer-1.14.0-h28cd5cc_2.conda
+  validation:
+    type: sha256
+    value: 254b4fe8b685fc293c250ca239d0be03e95f3d909972827fc472129ca2590d85
+- name: krb5-1.18.2-h173b8e3_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/krb5-1.18.2-h173b8e3_0.conda
+  validation:
+    type: sha256
+    value: 1d26238a48d401fd23657e56a979736dd487f938f20b273f2396bc03f7bd034b
+- name: libboost-1.73.0-h3ff78a5_11.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libboost-1.73.0-h3ff78a5_11.conda
+  validation:
+    type: sha256
+    value: bcc4409c6ed27643f13d7246b352c97306e824af1ec27640bfa73015df8fb8c7
+- name: libthrift-0.13.0-hfb8234f_6.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libthrift-0.13.0-hfb8234f_6.conda
+  validation:
+    type: sha256
+    value: 2792fd0e532c49215940ff5f4547ffa21a4ae38a2c3dbf6d18c8316433db6e4e
+- name: libtiff-4.2.0-h85742a9_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libtiff-4.2.0-h85742a9_0.conda
+  validation:
+    type: sha256
+    value: abef7c57f548dd2b9dac487db1a9ffaf949b9505e94af5566778ed8116babbe7
+- name: orc-1.6.7-h973521d_2.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/orc-1.6.7-h973521d_2.conda
+  validation:
+    type: sha256
+    value: 769b5c8ea11554adc944051d5a021f94f70d4153202e7207f4e47d205a5b3533
+- name: sqlite-3.36.0-hc218d9a_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.36.0-hc218d9a_0.conda
+  validation:
+    type: sha256
+    value: 1be2b3f810979dd43649584be77a4bdf61f4c6cbce79c4e5fe940fc199579561
+- name: boost-cpp-1.73.0-h27cfd23_11.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/boost-cpp-1.73.0-h27cfd23_11.conda
+  validation:
+    type: sha256
+    value: 045bd461b357392cda1ce477e26658e624bd96d906699db4a001c70d49f426f2
+- name: fontconfig-2.13.1-h6c09931_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/fontconfig-2.13.1-h6c09931_0.conda
+  validation:
+    type: sha256
+    value: fa9d98e9653b68717f4cf09f3abfd364c84ac89e2190b976a8f1bb8771b80115
+- name: gst-plugins-base-1.14.0-h8213a91_2.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/gst-plugins-base-1.14.0-h8213a91_2.conda
+  validation:
+    type: sha256
+    value: 61394888b29e57742a477f2134f735fbd4c39ae867c111badd7d8d410046bc7a
+- name: lcms2-2.12-h3be6417_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/lcms2-2.12-h3be6417_0.conda
+  validation:
+    type: sha256
+    value: c7fdebc0954fe6d272c2a477a1067dc96ebc36fb43109b33378e0e9c2732a847
+- name: libcurl-7.71.1-h20c2e04_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/libcurl-7.71.1-h20c2e04_1.conda
+  validation:
+    type: sha256
+    value: 57b17ce248d5297bef4171fbb5a7ffe87f17788a331632cacd6e37aa0ce476ce
+- name: python-3.9.5-h12debd9_4.tar.bz2
+  url: https://repo.anaconda.com/pkgs/main/linux-64/python-3.9.5-h12debd9_4.tar.bz2
+  validation:
+    type: sha256
+    value: 7fc98fe684cb716a8d19cf20a77ccce3cda3f6da968abaade63edbe006d8f3ba
+- name: aws-sdk-cpp-1.8.185-hce553d0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/aws-sdk-cpp-1.8.185-hce553d0_0.conda
+  validation:
+    type: sha256
+    value: 73c243e776a83e7d25548f3761d19388e90b37ceeb5f81cee0036c357480d774
+- name: certifi-2021.5.30-py39h06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/certifi-2021.5.30-py39h06a4308_0.conda
+  validation:
+    type: sha256
+    value: 42918dff25511e3d8d82c51ef16d26ef50b6d52ec59a9aaf3ac25c90561d1723
+- name: chardet-4.0.0-py39h06a4308_1003.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/chardet-4.0.0-py39h06a4308_1003.conda
+  validation:
+    type: sha256
+    value: f46e3e9a3536b25ced4a56fa7fadf833fa51beb4e27662967999082935d69d0a
+- name: entrypoints-0.3-py39h06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/entrypoints-0.3-py39h06a4308_0.conda
+  validation:
+    type: sha256
+    value: bcbc49902e1b14a948679781d14ffbb5f6b8bff8d96f79af720a875e6b7df324
+- name: kiwisolver-1.3.1-py39h2531618_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/kiwisolver-1.3.1-py39h2531618_0.conda
+  validation:
+    type: sha256
+    value: c9a599135c8d79a9fafa3716269e0ca62dda56b6034b1abfc346e2390e80b044
+- name: markupsafe-2.0.1-py39h27cfd23_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/markupsafe-2.0.1-py39h27cfd23_0.conda
+  validation:
+    type: sha256
+    value: d19d019174d4470307ada32611d68f6054cce3c18158f03235e4c11efdece36a
+- name: mistune-0.8.4-py39h27cfd23_1000.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/mistune-0.8.4-py39h27cfd23_1000.conda
+  validation:
+    type: sha256
+    value: e78ee2350c7b7bd496ca4cf82a6bb38d07ed2c4955e129d90ca25049f3c02efe
+- name: pandocfilters-1.4.3-py39h06a4308_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/pandocfilters-1.4.3-py39h06a4308_1.conda
+  validation:
+    type: sha256
+    value: efdb5d6d85d453fe8dcd6a84fbb088f16a62538e80d6c17a9beaf456e57e0862
+- name: pyrsistent-0.18.0-py39h7f8727e_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/pyrsistent-0.18.0-py39h7f8727e_0.conda
+  validation:
+    type: sha256
+    value: d47846f80a68bf3048be0639330ec2bee2ae7b2a890d745412c15a4d4f3bb1ee
+- name: pysocks-1.7.1-py39h06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/pysocks-1.7.1-py39h06a4308_0.conda
+  validation:
+    type: sha256
+    value: ead83f9ff403c95124f8f7bd88a3af1d195139a316cf53d881430cad7d09d870
+- name: pyzmq-20.0.0-py39h2531618_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/pyzmq-20.0.0-py39h2531618_1.conda
+  validation:
+    type: sha256
+    value: 9fd027d83c6f3eb5ed7f7392fa2b001a5b24cd00fecdf270426fc495555192f4
+- name: qt-5.9.7-h5867ecd_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/qt-5.9.7-h5867ecd_1.conda
+  validation:
+    type: sha256
+    value: 5085610d80131ae721bd206af12857acaa4bc1b7b0eda6bc07c52f2277e9db25
+- name: sip-4.19.13-py39h2531618_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/sip-4.19.13-py39h2531618_0.conda
+  validation:
+    type: sha256
+    value: 3443d7fb9f10e4b7ee5094952531d80e7b8249c1136f25af176f911da7db6a7f
+- name: sniffio-1.2.0-py39h06a4308_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/sniffio-1.2.0-py39h06a4308_1.conda
+  validation:
+    type: sha256
+    value: a169448a6dd8cae312b1dcc1422c274c60aa7911a1c6720db369f7db372ad96a
+- name: tornado-6.1-py39h27cfd23_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/tornado-6.1-py39h27cfd23_0.conda
+  validation:
+    type: sha256
+    value: cf122fdaf6e301e21fd7a7dc6b989aff93c97b264edf4274423ae294c6dcf111
+- name: webencodings-0.5.1-py39h06a4308_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/webencodings-0.5.1-py39h06a4308_1.conda
+  validation:
+    type: sha256
+    value: c748787f28cf1d18e7c8227e9925ccbc0e3e2b32440157c2dfe1427c7ad2eec2
+- name: anyio-2.2.0-py39h06a4308_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/anyio-2.2.0-py39h06a4308_1.conda
+  validation:
+    type: sha256
+    value: 2e17ba3272c7f3ad944c79d93a9c198c97a9da67c8733fa62b65a629c0963ec6
+- name: cffi-1.14.5-py39h261ae71_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/cffi-1.14.5-py39h261ae71_0.conda
+  validation:
+    type: sha256
+    value: ea3160a1537296a9fa1940279640486a22705a96d598002313cced8da7842c26
+- name: cycler-0.10.0-py39h06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/cycler-0.10.0-py39h06a4308_0.conda
+  validation:
+    type: sha256
+    value: bdb39791080d482d79e0da8574b5ffa99ecb37cbb6b8c36c9f982f87471930ad
+- name: importlib-metadata-3.10.0-py39h06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/importlib-metadata-3.10.0-py39h06a4308_0.conda
+  validation:
+    type: sha256
+    value: 1f9d713628a422e7fa9d3043bc82319fb3316e08a2323acdfb96379f17eb82d8
+- name: jedi-0.17.2-py39h06a4308_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/jedi-0.17.2-py39h06a4308_1.conda
+  validation:
+    type: sha256
+    value: 9e8cf5f5cc16b0d2cd03131d0e015b4c36266b1e4862283aaf3a7cbde7ca7d5c
+- name: mkl-service-2.3.0-py39h27cfd23_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/mkl-service-2.3.0-py39h27cfd23_1.conda
+  validation:
+    type: sha256
+    value: cc59a6a164373018f865de42c613fa9e26e7d0699cba195f10cca4555b3676fc
+- name: pillow-8.2.0-py39he98fc37_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/pillow-8.2.0-py39he98fc37_0.conda
+  validation:
+    type: sha256
+    value: 86ad95d6ba97e2345953e0fb7168db45aaf8d8dc813761cd553643c8a4c9faaf
+- name: pyqt-5.9.2-py39h2531618_6.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/pyqt-5.9.2-py39h2531618_6.conda
+  validation:
+    type: sha256
+    value: 314afeb04e7ba1bc861fb422142897ba3e5fe03c88b8f1e4edb9b7fc533723cc
+- name: setuptools-52.0.0-py39h06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/setuptools-52.0.0-py39h06a4308_0.conda
+  validation:
+    type: sha256
+    value: 0132896a89b2ac02486aca2ad981367567646282397b06015d169667f84b743f
+- name: terminado-0.9.4-py39h06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/terminado-0.9.4-py39h06a4308_0.conda
+  validation:
+    type: sha256
+    value: 42112b232b7ca91fb66d614c44a4f06eddf0cd066a7420928e827499e360ad02
+- name: argon2-cffi-20.1.0-py39h27cfd23_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/argon2-cffi-20.1.0-py39h27cfd23_1.conda
+  validation:
+    type: sha256
+    value: 512b42c4b737ffd21d5f97e92650f5c422300fd2e3e0a8fe03b6a3fc93813dbe
+- name: brotlipy-0.7.0-py39h27cfd23_1003.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/brotlipy-0.7.0-py39h27cfd23_1003.conda
+  validation:
+    type: sha256
+    value: 17420d4eea48a3e89aa260c9233ba96815ea40d07702d7554b27f30f3ecdc2fb
+- name: cryptography-3.4.7-py39hd23ed53_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/cryptography-3.4.7-py39hd23ed53_0.conda
+  validation:
+    type: sha256
+    value: 667eb1750127cb57f548eb346f7fd5d991befedb0ff0a6462b6bd41abd1b6c54
+- name: jupyter_core-4.7.1-py39h06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/jupyter_core-4.7.1-py39h06a4308_0.conda
+  validation:
+    type: sha256
+    value: ef827c5c766b7a64bd65152b348f91c36c131e8888a186744d069e8b01d8f2cb
+- name: numpy-base-1.20.2-py39hfae3a4d_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/numpy-base-1.20.2-py39hfae3a4d_0.conda
+  validation:
+    type: sha256
+    value: e910c6efd47cb13aca90d0a284208223062b1d8a665b52f339ad1e53620d5425
+- name: ipython-7.22.0-py39hb070fc8_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/ipython-7.22.0-py39hb070fc8_0.conda
+  validation:
+    type: sha256
+    value: 64471b8ea41f22c7cbefbed6031bbfc4ba4970dbfc99c5b732a73ca562b86a90
+- name: ipykernel-5.3.4-py39hb070fc8_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/ipykernel-5.3.4-py39hb070fc8_0.conda
+  validation:
+    type: sha256
+    value: 7d14c20400b7cd7d792b56f1acdf2a773657b0ce1083fdaa383d7707258f8318
+- name: nbconvert-6.1.0-py39h06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/nbconvert-6.1.0-py39h06a4308_0.conda
+  validation:
+    type: sha256
+    value: b8a9ccc9ea19c9437ec5088dcfb442bedf7be09d6e17d0f6b9c6a0ed9801ecec
+- name: jupyter_server-1.4.1-py39h06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/jupyter_server-1.4.1-py39h06a4308_0.conda
+  validation:
+    type: sha256
+    value: 319dabe60e7e5bb9c31fbe793a45d7203d50ae9cbe261b328bac94f3d76310c8
+- name: notebook-6.4.0-py39h06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/notebook-6.4.0-py39h06a4308_0.conda
+  validation:
+    type: sha256
+    value: b1c55579a9bf9cc110c48dd8be3c51e1eac47edaa9a6093c509ff319ed2855d9
+- name: widgetsnbextension-3.5.1-py39h06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/widgetsnbextension-3.5.1-py39h06a4308_0.conda
+  validation:
+    type: sha256
+    value: 96977b0c7e2f635e7eba744c880b70ef88760bf1059d418ff5aeda55d2a3cfdf
+- name: jupyter-1.0.0-py39h06a4308_7.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/jupyter-1.0.0-py39h06a4308_7.conda
+  validation:
+    type: sha256
+    value: bba2c70c558bbffcdc48b3624abae18d4aab98aae49f13b707f8e057b7f14c27
+- name: arrow-cpp-4.0.1-py39hced866c_3.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/arrow-cpp-4.0.1-py39hced866c_3.conda
+  validation:
+    type: sha256
+    value: 5992a53344f2c426593231a07ab5713707d1f5920176c0caf68c9d158d6a1f33
+- name: bottleneck-1.3.2-py39hdd57654_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/bottleneck-1.3.2-py39hdd57654_1.conda
+  validation:
+    type: sha256
+    value: 08a3371b653f544d5298cc78a979abd97c16c05943453d211b385b2eb09bc491
+- name: matplotlib-3.3.4-py39h06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/matplotlib-3.3.4-py39h06a4308_0.conda
+  validation:
+    type: sha256
+    value: d04be7077b32da404120eb02a9e40919acdbbeb79396683f85df579c09bfd78a
+- name: matplotlib-base-3.3.4-py39h62a2d02_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/matplotlib-base-3.3.4-py39h62a2d02_0.conda
+  validation:
+    type: sha256
+    value: d6b5abe3ba158d654d64588db3b572104b51b8a2470648969971bcec15d64d97
+- name: mkl_fft-1.3.0-py39h42c9631_2.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/mkl_fft-1.3.0-py39h42c9631_2.conda
+  validation:
+    type: sha256
+    value: fbf574add25dd62f5f1df6b41098017e758bf95a4029a4fa7219ffaff92d6774
+- name: mkl_random-1.2.1-py39ha9443f7_2.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/mkl_random-1.2.1-py39ha9443f7_2.conda
+  validation:
+    type: sha256
+    value: 39799642912e727baef2b439f58c3274dfcb9d6baf8167b4ba345b13b9760e46
+- name: numpy-1.20.2-py39h2d18471_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/numpy-1.20.2-py39h2d18471_0.conda
+  validation:
+    type: sha256
+    value: 0a6b0ca59f81eb702944db6c52314a8fc880cb9977f29584e2d6d04dc5cb3afe
+- name: numexpr-2.7.3-py39h22e1b3c_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/numexpr-2.7.3-py39h22e1b3c_1.conda
+  validation:
+    type: sha256
+    value: 9fcc725756ce256a8f96eb2ac636a690593e676aefb1a78db69c595b5e76221f
+- name: pandas-1.2.5-py39h295c915_0.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/pandas-1.2.5-py39h295c915_0.conda
+  validation:
+    type: sha256
+    value: 7508aae7943b38bb440ddf826d247a3f953b158eef16ce7365df7c487b0bb87c
+- name: pyarrow-4.0.1-py39he0739d4_3.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/pyarrow-4.0.1-py39he0739d4_3.conda
+  validation:
+    type: sha256
+    value: 26156faa47575e59b0d5953be01e3cdd4ca7bd4ccb332a1f95579a6813aab7a9
+- name: tzdata-2021a-h52ac0ba_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/tzdata-2021a-h52ac0ba_0.conda
+  validation:
+    type: sha256
+    value: 022bb682798a8e54302de9ed271306523f5c75c2f394b3931e2c3ae03f7da5ed
+- name: async_generator-1.10-pyhd3eb1b0_0.tar.bz2
+  url: https://repo.anaconda.com/pkgs/main/noarch/async_generator-1.10-pyhd3eb1b0_0.tar.bz2
+  validation:
+    type: sha256
+    value: ca065e670afbbaa8d99a0cbae8f31ad4320c92dfb9a3d148f302f168033f34ac
+- name: attrs-21.2.0-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/attrs-21.2.0-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 890f22b956a3954307946f4f5a40bcd29a6bd4b6515bf9e8b6436382447b34dc
+- name: backcall-0.2.0-pyhd3eb1b0_0.tar.bz2
+  url: https://repo.anaconda.com/pkgs/main/noarch/backcall-0.2.0-pyhd3eb1b0_0.tar.bz2
+  validation:
+    type: sha256
+    value: 09f2cf5b30825a39257320204b08146367f4346655197515b2cabcd363736488
+- name: decorator-5.0.9-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/decorator-5.0.9-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 8913024599858e36839cb767530ef9d8621379188178bf777958c83b01064c83
+- name: defusedxml-0.7.1-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/defusedxml-0.7.1-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: d5ccad2e614ba3f953c202a42270fe0cfdaf6c5071311a3accf28446c49a6c5b
+- name: idna-2.10-pyhd3eb1b0_0.tar.bz2
+  url: https://repo.anaconda.com/pkgs/main/noarch/idna-2.10-pyhd3eb1b0_0.tar.bz2
+  validation:
+    type: sha256
+    value: 2f4e481054f660769fd766a506f4774a91afa95903cbcfe1ba9da724ca348dc4
+- name: ipython_genutils-0.2.0-pyhd3eb1b0_1.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/ipython_genutils-0.2.0-pyhd3eb1b0_1.conda
+  validation:
+    type: sha256
+    value: 57b26ed1992a45f5c3c1261001956cd31c05ffe7c57c452af07bc3417c57d143
+- name: json5-0.9.6-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/json5-0.9.6-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 595b96c7e20703125ff4865ee55ba282357b57438a609dd7660610318127ca2e
+- name: jupyterlab_widgets-1.0.0-pyhd3eb1b0_1.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/jupyterlab_widgets-1.0.0-pyhd3eb1b0_1.conda
+  validation:
+    type: sha256
+    value: 064700490c3d0e64b56ddb52faa6d6b57c2218f781145019e0a9e91cbfdbfe43
+- name: nest-asyncio-1.5.1-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/nest-asyncio-1.5.1-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 6f2ff8e872a18e2e50cfc8a0bed4fd3c0423634094535d90d0e5a0698c43cb8d
+- name: olefile-0.46-py_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/olefile-0.46-py_0.conda
+  validation:
+    type: sha256
+    value: 3c201bfa04c9dc738c2d26ee41539a46ffc567f2ad773c2d1470d583dac7d695
+- name: parso-0.7.0-py_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/parso-0.7.0-py_0.conda
+  validation:
+    type: sha256
+    value: 2af6669e0d4b082728f9161ebd8751b90f0857a4b4cfb141d4c3237cf776c38f
+- name: pickleshare-0.7.5-pyhd3eb1b0_1003.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/pickleshare-0.7.5-pyhd3eb1b0_1003.conda
+  validation:
+    type: sha256
+    value: c4c974ac5bab1628bc472eb271903206ebc349f30cf590740560b6284118852a
+- name: prometheus_client-0.11.0-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/prometheus_client-0.11.0-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 0bf5b1e6595a089866df72742e3d154a913af598e2401e95f20bbf4576fa7a96
+- name: ptyprocess-0.7.0-pyhd3eb1b0_2.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/ptyprocess-0.7.0-pyhd3eb1b0_2.conda
+  validation:
+    type: sha256
+    value: 664254ab6de7f14d4077bdaeceda2bf0144fd841e257d07bb70427fadf08c588
+- name: pycparser-2.20-py_2.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/pycparser-2.20-py_2.conda
+  validation:
+    type: sha256
+    value: b166672b541ab2931f98e762dbf1c84fd1d48400f0406d08aae57150d517ceed
+- name: pyparsing-2.4.7-pyhd3eb1b0_0.tar.bz2
+  url: https://repo.anaconda.com/pkgs/main/noarch/pyparsing-2.4.7-pyhd3eb1b0_0.tar.bz2
+  validation:
+    type: sha256
+    value: 19a4e2778e0ecd10fdd5a25b235b3c0d0a93f8f127f8ca92fe82fa4d596ba1c1
+- name: pytz-2021.1-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/pytz-2021.1-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: dca0a887dae621c20e68318305433f015e3428d4e011c13fe358ed2dec3bb9c7
+- name: qtpy-1.9.0-py_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/qtpy-1.9.0-py_0.conda
+  validation:
+    type: sha256
+    value: 08143472a48c015cad403953df012734c620d46204c0b369f903d46f8cf3b34c
+- name: send2trash-1.5.0-pyhd3eb1b0_1.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/send2trash-1.5.0-pyhd3eb1b0_1.conda
+  validation:
+    type: sha256
+    value: 41d8e5680c79f2c1095b37b05125476557d34b49093df3190753df23246ccbdc
+- name: six-1.16.0-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/six-1.16.0-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 5b04aac9e55ddd591d29bb842d30c6287d7f202b7dca849b1944c172c33d7dc7
+- name: testpath-0.5.0-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/testpath-0.5.0-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 2b0bd8d29b8142a9fad8b70059576d22434144cff59f46c25e8e3b60fe9b8fac
+- name: wcwidth-0.2.5-py_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/wcwidth-0.2.5-py_0.conda
+  validation:
+    type: sha256
+    value: dd65cf97be27f680389a4c8e4f23a5f3622d0338e7e3520d0f8d6a6030f4adb4
+- name: zipp-3.4.1-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/zipp-3.4.1-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 5ab34b3c43e19bf67c7864bf226c103dc471cafbf356abd50bab3f6925a145c5
+- name: babel-2.9.1-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/babel-2.9.1-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: c467e0ec03fb3f974cb903778b5806f4bced21534233c2e6b80bf879dc664460
+- name: packaging-20.9-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/packaging-20.9-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 4b57e9fb3b7ae36348bf4ec72ef452e5ba4f137ebf5ff8a2ef13fb03640bcc32
+- name: pexpect-4.8.0-pyhd3eb1b0_3.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/pexpect-4.8.0-pyhd3eb1b0_3.conda
+  validation:
+    type: sha256
+    value: fb4b14fdb5e57becda5b8b88b453626ce12edb49fc8cec88ddaea40b52277494
+- name: prompt-toolkit-3.0.17-pyh06a4308_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/prompt-toolkit-3.0.17-pyh06a4308_0.conda
+  validation:
+    type: sha256
+    value: 25810a4592f45a3a70dd7c5e3daa285026ea3416dbc5c954bacec74b22e32bd4
+- name: python-dateutil-2.8.1-pyhd3eb1b0_0.tar.bz2
+  url: https://repo.anaconda.com/pkgs/main/noarch/python-dateutil-2.8.1-pyhd3eb1b0_0.tar.bz2
+  validation:
+    type: sha256
+    value: 04a9221f6edf5e11fcd001973836ab91f02750330f6d60b5b5f2becfd0bd187e
+- name: traitlets-5.0.5-pyhd3eb1b0_0.tar.bz2
+  url: https://repo.anaconda.com/pkgs/main/noarch/traitlets-5.0.5-pyhd3eb1b0_0.tar.bz2
+  validation:
+    type: sha256
+    value: 7b1517eac04451c7075d56913a637ae36f8dc761ae501e2b1779b4425e5483f5
+- name: bleach-3.3.0-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/bleach-3.3.0-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 3388bd9aaf76a8f91fb37f95d650897e1bcb3682bb333f1ef7b691ea4f3861d7
+- name: importlib_metadata-3.10.0-hd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/importlib_metadata-3.10.0-hd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 6b5ed8817cfa012e067790d68cc5e462d2d116ad41aa1cc7b0139d9698327aeb
+- name: jinja2-3.0.1-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/jinja2-3.0.1-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: d4038c9aa2a276b58410c719364c338ea040222f1d52b5210c031c0071933f18
+- name: jupyter-packaging-0.7.12-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/jupyter-packaging-0.7.12-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 5c5d741bb543338bcb0e300c21d5c29176e98aa5b22661b51bbbc354e33a7f76
+- name: prompt_toolkit-3.0.17-hd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/prompt_toolkit-3.0.17-hd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: f60aab1444d826d2c67d6e58cd408dc87635eaf102bd0a49a25f175ed21cc6a8
+- name: pygments-2.9.0-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/pygments-2.9.0-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: cde3f72751a2a0fc45b84dd49b0d90966d530cd4c5873e0e2493071df5c1f76f
+- name: jsonschema-3.2.0-py_2.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/jsonschema-3.2.0-py_2.conda
+  validation:
+    type: sha256
+    value: 72b9d5a040faaaf7bb06e435ee9ae1bde4e431a94bf07d373419ee801401f234
+- name: jupyter_client-6.1.12-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/jupyter_client-6.1.12-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 1edc5536b7e29470fa6e27781aedb679a50e36096a67918a401ff29038b0028d
+- name: jupyterlab_pygments-0.1.2-py_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/jupyterlab_pygments-0.1.2-py_0.conda
+  validation:
+    type: sha256
+    value: 3fb6380242934cad8db44dd1e77597529eb6c73c88144ee5e7f86f18e6eb70e9
+- name: pyopenssl-20.0.1-pyhd3eb1b0_1.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/pyopenssl-20.0.1-pyhd3eb1b0_1.conda
+  validation:
+    type: sha256
+    value: b85bc153d977c4a950e58a767df11b4153d681fcef023233006320731cf1ddc1
+- name: nbformat-5.1.3-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/nbformat-5.1.3-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: c613af10af3bc5226eff067fb45cc2497649b42b88521eedd3eb4596972ee5fe
+- name: urllib3-1.26.6-pyhd3eb1b0_1.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/urllib3-1.26.6-pyhd3eb1b0_1.conda
+  validation:
+    type: sha256
+    value: 9d0eb4dc25d7271be8b003286f6d5773525d640123f0446eebf7621d03f650f8
+- name: jupyter_console-6.4.0-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/jupyter_console-6.4.0-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: d925edd3ae53456716abcd422b73ecedc610f78f17e53f3feb693f98e75918fc
+- name: nbclient-0.5.3-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/nbclient-0.5.3-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: f1a9eb25139d6910ed4eda4210c7d4757d6929a13ab082a8540e20bd62071caf
+- name: qtconsole-5.1.0-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/qtconsole-5.1.0-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: cb83046db73a0974c0570bf02ef424ff48204ba0a5010add2790c0700e38f20d
+- name: requests-2.25.1-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/requests-2.25.1-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: bafbd058e982376384088ca8264aa5f2e2e57f2c74c5d7c110ff203f069a9625
+- name: jupyterlab_server-2.4.0-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/jupyterlab_server-2.4.0-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: dfb033ef1d038450802e80e08321f5b4b4ed368fb6e57bb13f5fbec1cd43a442
+- name: nbclassic-0.2.6-pyhd3eb1b0_0.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/nbclassic-0.2.6-pyhd3eb1b0_0.conda
+  validation:
+    type: sha256
+    value: 50c9c3f65c171ffeff433e46e7a035bb084f37784b5cf1847d5c7b678a73fc24
+- name: ipywidgets-7.6.3-pyhd3eb1b0_1.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/ipywidgets-7.6.3-pyhd3eb1b0_1.conda
+  validation:
+    type: sha256
+    value: 09b184ee99c714f6d585626adcb57d5913043ffa7616579aa5fdec9c35a8659c
+- name: jupyterlab-3.0.14-pyhd3eb1b0_1.conda
+  url: https://repo.anaconda.com/pkgs/main/noarch/jupyterlab-3.0.14-pyhd3eb1b0_1.conda
+  validation:
+    type: sha256
+    value: 15e30613cd3c0426fac32431f6006947862f9440befcf30b8f0bf7abe43cfe0e
