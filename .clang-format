@@ -1,0 +1,7 @@
+BasedOnStyle: Google
+ColumnLimit: 0
+BreakBeforeBraces: Allman
+UseTab: Never
+IndentWidth: 4
+IndentCaseLabels: true
+AllowShortIfStatementsOnASingleLine: true
