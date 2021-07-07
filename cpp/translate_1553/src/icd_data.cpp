@@ -622,6 +622,12 @@ bool ICDData::IsYamlFile(const ManagedPath& icd_path)
 		return false;
 }
 
+bool ICDData::IsYamlFile(const std::string& icd_path)
+{
+	ManagedPath mp(icd_path);
+	return IsYamlFile(mp);
+}
+
 bool ICDData::IngestICDYamlNode(const YAML::Node& root_node,
 	std::vector<ICDElement>& icd_elems_output)
 {

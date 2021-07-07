@@ -72,6 +72,7 @@ public:
 				 True  -> If valid parquet folder
 	*/
 	bool SetPQPath(ManagedPath base_path);
+	bool SetPQPath(std::string base_path);
 
 	/*
 		Gets the next row group for a given column

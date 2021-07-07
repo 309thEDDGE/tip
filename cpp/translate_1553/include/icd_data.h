@@ -118,6 +118,7 @@ public:
 	// as those immediately above, with the exception that the following
 	// are related specifically to processing of yaml ICD input.
 	bool IsYamlFile(const ManagedPath& icd_path);
+	bool IsYamlFile(const std::string& icd_path);
 	bool IngestICDYamlNode(const YAML::Node& root_node,
 		std::vector<ICDElement>& icd_elems_output);
 	bool MapNodeHasRequiredKeys(const YAML::Node& node, 

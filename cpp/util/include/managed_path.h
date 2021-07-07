@@ -36,7 +36,8 @@ class ManagedPath : public fs::path
     //////////////////////////////////////////
 
     // Initialize with string path
-    ManagedPath(const std::string& input_path);
+    explicit ManagedPath(const std::string& input_path);
+	explicit ManagedPath(const char* input_path);
 
     // Initialize with cwd
     ManagedPath() : fs::path(fs::current_path()) {}
@@ -53,8 +54,10 @@ class ManagedPath : public fs::path
 
     // Concatenate, Append
     ManagedPath& operator/=(const ManagedPath& rhs);
+	ManagedPath& operator/=(const std::string& rhs);
     ManagedPath operator/(const ManagedPath& rhs);
     ManagedPath& operator+=(const ManagedPath& rhs);
+	ManagedPath& operator+=(const std::string& rhs);
 
     //
     // Hide, not override these fs::path functions.

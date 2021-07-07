@@ -280,6 +280,11 @@ bool ParquetReader::SetPQPath(ManagedPath base_path)
 		return true;
 }
 
+bool ParquetReader::SetPQPath(std::string base_path)
+{
+	ManagedPath mp(base_path);
+	return SetPQPath(mp);
+}
 
 bool ParquetReader::GetNextRGBool(int col, std::vector<uint8_t>& data,
 	int& size,

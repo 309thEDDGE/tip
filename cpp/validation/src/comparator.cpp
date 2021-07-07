@@ -28,6 +28,13 @@ bool Comparator::Initialize(ManagedPath path1, ManagedPath path2)
 	return !failure_;
 }
 
+bool Comparator::Initialize(std::string path1, std::string path2)
+{
+	ManagedPath mp1(path1);
+	ManagedPath mp2(path2);
+	return Initialize(mp1, mp2);
+}
+
 void Comparator::InitializeStats()
 {
 	compared_count_.clear();

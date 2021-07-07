@@ -54,6 +54,7 @@ public:
 				 True  -> Other wise	
 	*/
 	bool Initialize(ManagedPath path1, ManagedPath path2);
+	bool Initialize(std::string path1, std::string path2);
 
 	/*
 		Compares two vectors from start position to (size + start position)

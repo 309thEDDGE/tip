@@ -9,6 +9,15 @@ ManagedPath::ManagedPath(const std::string& input_path)
 	this->assign(mod_input_path);
 }
 
+ManagedPath::ManagedPath(const char* input_path)
+{
+    // Remove unnecessary leading chars: "./"
+    std::string mod_input_path(input_path);
+	if (mod_input_path.find("./") == 0)
+		mod_input_path = mod_input_path.substr(2);
+	this->assign(mod_input_path);
+}
+
 fs::path ManagedPath::AmendPath(fs::path input_path) const
 {
 #ifdef __WIN64
@@ -56,10 +65,25 @@ ManagedPath& ManagedPath::operator /= (const ManagedPath& rhs)
 	return *this;
 }
 
+ManagedPath& ManagedPath::operator /= (const std::string& rhs)
+{
+	fs::path temp_path = this->append(rhs);
+	this->assign(temp_path.string());
+	return *this;
+}
+
 ManagedPath ManagedPath::operator / (const ManagedPath& rhs)
 {
 	ManagedPath temp_path = *this;
 	return temp_path /= rhs;
+}
+
+ManagedPath& ManagedPath::operator += (const std::string& rhs)
+{
+    fs::path temp_path(this->fs::path::string());
+	temp_path += fs::path(rhs);
+	this->assign(temp_path.string());
+	return *this;  
 }
 
 ManagedPath& ManagedPath::operator += (const ManagedPath& rhs)
