@@ -21,11 +21,10 @@ ENV MIRROR_CONFIG="tip_scripts/conda-mirror/mirror_config.yaml"
 RUN ./tip_scripts/conda-mirror/clone.sh
 
 
-WORKDIR /tip
+WORKDIR /tip/tip_scripts/singleuser
 RUN pip install --no-cache-dir conda-lock==0.10.0
 ENV SINGLEUSER_CHANNEL_DIR = "singleuser-channel"
-RUN	cd tip_scripts/singleuser/ && \
-python -m conda_vendor local_channels -f /tip/tip_scripts/singleuser/singleuser.yml -l $SINGLEUSER_CHANNEL_DIR
+RUN python -m conda_vendor local_channels -f /tip/tip_scripts/singleuser/singleuser.yml -l $SINGLEUSER_CHANNEL_DIR
 WORKDIR /
 
 RUN conda clean -afy
