@@ -23,7 +23,7 @@ RUN ./tip_scripts/conda-mirror/clone.sh
 
 WORKDIR /tip/tip_scripts/singleuser
 RUN pip install --no-cache-dir conda-lock==0.10.0
-ENV SINGLEUSER_CHANNEL_DIR = "singleuser-channel"
+ENV SINGLEUSER_CHANNEL_DIR = "/tip/tip_scripts/singleuser/lsingleuser-channel"
 RUN python -m conda_vendor local_channels -f /tip/tip_scripts/singleuser/singleuser.yml -l $SINGLEUSER_CHANNEL_DIR
 WORKDIR /
 
@@ -61,4 +61,4 @@ USER user
 ENV PATH=/home/user/miniconda3/bin:$PATH
 
 # This is to validate the environment solves via local channels
-RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow -c file:///home/user/local-channel -c /home/user/local-mirror -c /home/user/singleuser-channel --offline && source /home/user/miniconda3/envs/tip/bin/activate
+RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow -c file:///home/user/local-channel -c /home/user/local-mirror -c /home/user/singleuser-channel --offline
