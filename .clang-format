@@ -5,4 +5,5 @@ UseTab: Never
 IndentWidth: 4
 IndentCaseLabels: true
 AllowShortIfStatementsOnASingleLine: true
-SortIncludes: Never
+SortIncludes: false 
+
