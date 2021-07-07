@@ -10,6 +10,9 @@
 #include <cstdio>
 #include <cmath>
 #include <map>
+#include <memory>
+#include <algorithm>
+#include <string>
 #include <typeinfo>
 #include "column_data.h"
 #include "spdlog/spdlog.h"
@@ -27,94 +30,92 @@ if linking to the library statically.
 
 class ParquetContext
 {
-private:
-	std::string host_;
-	std::string user_;
-	std::string path_;
-	std::vector<std::string> temp_string_vec_;
-	int port_;
-	bool truncate_;
-	arrow::Status st_;
-	bool have_created_writer_;
-	bool have_created_schema_;
-	arrow::MemoryPool* pool_;
-	bool parquet_stop_;
-	std::unique_ptr<parquet::arrow::FileWriter> writer_;
-	size_t ROW_GROUP_COUNT_;
-	int append_row_count_;
-	bool have_created_table_;
-	std::map<std::string, ColumnData> column_data_map_;
-	std::shared_ptr<arrow::Schema> schema_;
-	std::shared_ptr<arrow::io::FileOutputStream> ostream_;
-	std::shared_ptr<parquet::WriterProperties> props_;
-	std::shared_ptr<arrow::io::ReadableFile> input_file_;
-	std::vector<std::shared_ptr<arrow::Field>> fields_;
-	std::vector<uint8_t> cast_vec_;
+   private:
+    std::string host_;
+    std::string user_;
+    std::string path_;
+    std::vector<std::string> temp_string_vec_;
+    int port_;
+    bool truncate_;
+    arrow::Status st_;
+    bool have_created_writer_;
+    bool have_created_schema_;
+    arrow::MemoryPool* pool_;
+    bool parquet_stop_;
+    std::unique_ptr<parquet::arrow::FileWriter> writer_;
+    size_t ROW_GROUP_COUNT_;
+    int append_row_count_;
+    bool have_created_table_;
+    std::map<std::string, ColumnData> column_data_map_;
+    std::shared_ptr<arrow::Schema> schema_;
+    std::shared_ptr<arrow::io::FileOutputStream> ostream_;
+    std::shared_ptr<parquet::WriterProperties> props_;
+    std::shared_ptr<arrow::io::ReadableFile> input_file_;
+    std::vector<std::shared_ptr<arrow::Field>> fields_;
+    std::vector<uint8_t> cast_vec_;
 
-	std::unique_ptr<arrow::ArrayBuilder> 
-		GetBuilderFromDataType(
-			const std::shared_ptr<arrow::DataType> dtype,
-			const bool& is_list_builder);
+    std::unique_ptr<arrow::ArrayBuilder>
+    GetBuilderFromDataType(
+        const std::shared_ptr<arrow::DataType> dtype,
+        const bool& is_list_builder);
 
-	bool AppendColumn(ColumnData& dataInfo, 
-		const int& rows, 
-		const int offset = 0);
+    bool AppendColumn(ColumnData& dataInfo,
+                      const int& rows,
+                      const int offset = 0);
 
-	template<typename T, typename A>
-	void Append(const bool& isList,
-		const bool& castRequired,
-		const int& listCount,
-		const int& offset, 
-		const ColumnData& columnData);
+    template <typename T, typename A>
+    void Append(const bool& isList,
+                const bool& castRequired,
+                const int& listCount,
+                const int& offset,
+                const ColumnData& columnData);
 
-	void CreateBuilders();
+    void CreateBuilders();
 
-	std::vector<int32_t> GetOffsetsVector(const int& n_rows, 
-		const int& elements_per_row, 
-		const int offset = 0);
+    std::vector<int32_t> GetOffsetsVector(const int& n_rows,
+                                          const int& elements_per_row,
+                                          const int offset = 0);
 
-	bool WriteColsIfReady();
+    bool WriteColsIfReady();
 
-	void FillStringVec(std::vector<std::string>* str_data_vec_ptr, 
-		const int& count,
-		const int offset = 0);	
+    void FillStringVec(std::vector<std::string>* str_data_vec_ptr,
+                       const int& count,
+                       const int offset = 0);
 
-	bool IsUnsigned(const std::shared_ptr<arrow::DataType> type);
+    bool IsUnsigned(const std::shared_ptr<arrow::DataType> type);
 
-	std::string GetTypeIDFromArrowType(const std::shared_ptr<arrow::DataType> type,
-		int& byteSize);
+    std::string GetTypeIDFromArrowType(const std::shared_ptr<arrow::DataType> type,
+                                       int& byteSize);
 
-	template<typename castToType> 
-	void CastTo(const void * const data,
-		const CastFromType castFrom,
-		const int& size,
-		const int& offset);
-	
-	// Track the count of appended rows.
-	size_t appended_row_count_;
+    template <typename castToType>
+    void CastTo(const void* const data,
+                const CastFromType castFrom,
+                const int& size,
+                const int& offset);
 
-	// Determine if row groups are ready to be written
-	// by comparing appended row count to buffer size.
-	size_t max_temp_element_count_;
-	size_t row_group_count_multiplier_;
-	bool ready_for_automatic_tracking_;
-	bool print_activity_;
-	std::string print_msg_;
+    // Track the count of appended rows.
+    size_t appended_row_count_;
 
+    // Determine if row groups are ready to be written
+    // by comparing appended row count to buffer size.
+    size_t max_temp_element_count_;
+    size_t row_group_count_multiplier_;
+    bool ready_for_automatic_tracking_;
+    bool print_activity_;
+    std::string print_msg_;
 
-public:
+   public:
+    // User-available variable to access the current
+    // count of rows appended to buffers.
+    const size_t& append_count_ = appended_row_count_;
 
-	// User-available variable to access the current
-	// count of rows appended to buffers.
-	const size_t& append_count_ = appended_row_count_;
-
-	/*
+    /*
 		Initializes parquet context with a default row
 		group size of 10000
 	*/
-	ParquetContext();
+    ParquetContext();
 
-	/*
+    /*
 		Initializes parquet context with a row group size
 		specified by rgSize
 
@@ -123,19 +124,19 @@ public:
 		rows when calling 
 		WriteColumns(const int& rows, const int offset=0)
 	*/
-	ParquetContext(int rgSize);
-	virtual ~ParquetContext();
+    ParquetContext(int rgSize);
+    virtual ~ParquetContext();
 
-	/*
+    /*
 		Closes the parquet file
 		Automatically called by the destructor
 		This function is public for testing purposes
 
 		Inputs: thread_id		--> Optional index of current thread
 	*/
-	void Close(const uint16_t& thread_id = 0);
+    void Close(const uint16_t& thread_id = 0);
 
-	/*
+    /*
 		Adds a column to a parquet file. Used in conjunction with 
 		SetMemoryLocation. Also includes automatic casting.
 		Must be called before the correlated call to 
@@ -186,11 +187,11 @@ public:
 								(unsigned output currently not supported)
 
 	*/
-	bool AddField(const std::shared_ptr<arrow::DataType> type, 
-		const std::string& fieldName, 
-		const int listSize=NULL);
+    bool AddField(const std::shared_ptr<arrow::DataType> type,
+                  const std::string& fieldName,
+                  const int listSize = NULL);
 
-	/*
+    /*
 		Sets a pointer to the memory location of vectors
 		where data will be written from. These vectors
 		are to be initialized and managed outsize of parquet
@@ -235,12 +236,12 @@ public:
 								False if fieldName was not added previously with 
 								AddField or casting isn't possible
 	*/
-	template<typename NativeType> 
-	bool SetMemoryLocation(std::vector<NativeType>& data, 
-		const std::string& fieldName, 
-		std::vector<uint8_t>* boolField=nullptr);
+    template <typename NativeType>
+    bool SetMemoryLocation(std::vector<NativeType>& data,
+                           const std::string& fieldName,
+                           std::vector<uint8_t>* boolField = nullptr);
 
-	/*
+    /*
 		Creates the parquet file with an initial schema
 		specified by AddField calls. 
 		Note!!!!! OpenForWrite should be called after 
@@ -259,10 +260,10 @@ public:
 							subsequent SetMemoryLocation call, or if no AddField
 							calls are made.
 	*/
-	bool OpenForWrite(const std::string path,
-		const bool truncate = true);
+    bool OpenForWrite(const std::string path,
+                      const bool truncate = true);
 
-	/*
+    /*
 		Writes all columns using vectors passed to SetMemoryLocation. 
 		Can be called multiple times to append to the existing parquet file.
 
@@ -284,9 +285,9 @@ public:
 						   data in the original vectors passed to 
 						   SetMemoryLocation, False will be returned.
 	*/
-	bool WriteColumns(const int& rows, const int offset = 0);
+    bool WriteColumns(const int& rows, const int offset = 0);
 
-	/*
+    /*
 		Writes all data vectors to all columns in the parquet file. 
 		Can be called multiple times to append to the existing parquet file.
 		Writes the number of rows specified by rgSize passed to the 
@@ -299,9 +300,9 @@ public:
 						   vectors passed to SetMemoryLocation,
 						   False will be returned.
 	*/
-	bool WriteColumns();
+    bool WriteColumns();
 
-	/*
+    /*
 		Set the parameters used for automatic accounting of rows and 
 		writing row groups when necessary. Also handles the 
 		writing of remaining rows if the appended row count has not reached
@@ -339,11 +340,11 @@ public:
 							false otherwise.
 	
 	*/
-	bool SetupRowCountTracking(size_t row_group_count, 
-		size_t row_group_count_multiplier, bool print_activity,
-		std::string print_msg = "");
+    bool SetupRowCountTracking(size_t row_group_count,
+                               size_t row_group_count_multiplier, bool print_activity,
+                               std::string print_msg = "");
 
-	/*
+    /*
 	
 		Function to be called after the buffers are filled for the current row.
 		Use the protected member variable append_count_ as the index in the buffer. It is
@@ -376,9 +377,9 @@ public:
 						this function will only return true every 1000th call.
 
 	*/
-	bool IncrementAndWrite(const uint16_t& thread_id = 0);
+    bool IncrementAndWrite(const uint16_t& thread_id = 0);
 
-	/*
+    /*
 	
 		Write the data remaining in the buffers to disk. Generally used prior to closing
 		the file. This function is called automatically by the destructor if automatic 
@@ -391,389 +392,394 @@ public:
 		Inputs: thread_id		--> Optional index of current thread
 
 	*/
-	void Finalize(const uint16_t& thread_id = 0);
+    void Finalize(const uint16_t& thread_id = 0);
 };
 
-template<typename T, typename A>
-void ParquetContext::Append(const bool& isList, 
-	const bool& castRequired, 
-	const int& listCount, 
-	const int& offset,  
-	const ColumnData& columnData)
+template <typename T, typename A>
+void ParquetContext::Append(const bool& isList,
+                            const bool& castRequired,
+                            const int& listCount,
+                            const int& offset,
+                            const ColumnData& columnData)
 {
-	if (isList)
-	{
-		// Get the relevant builder for the data type.
-		std::shared_ptr<arrow::ListBuilder> bldr =
-			std::dynamic_pointer_cast<arrow::ListBuilder>(columnData.builder_);
+    if (isList)
+    {
+        // Get the relevant builder for the data type.
+        std::shared_ptr<arrow::ListBuilder> bldr =
+            std::dynamic_pointer_cast<arrow::ListBuilder>(columnData.builder_);
 
-		// Resize array to allocate space and append data.
-		bldr->Resize(append_row_count_);
+        // Resize array to allocate space and append data.
+        bldr->Resize(append_row_count_);
 
-		// Resize the global cast vector to the minimum size needed
-		// in bytes
-		if (cast_vec_.size() < (append_row_count_ * listCount * sizeof(T)))
-			cast_vec_.resize(append_row_count_ * listCount * sizeof(T));
+        // Resize the global cast vector to the minimum size needed
+        // in bytes
+        if (cast_vec_.size() < (append_row_count_ * listCount * sizeof(T)))
+            cast_vec_.resize(append_row_count_ * listCount * sizeof(T));
 
-		if (castRequired)
-		{
-			std::vector<int32_t> offsets_vec = 
-				GetOffsetsVector(append_row_count_, listCount, 0);
+        if (castRequired)
+        {
+            std::vector<int32_t> offsets_vec =
+                GetOffsetsVector(append_row_count_, listCount, 0);
 
-			bldr->AppendValues(offsets_vec.data(), append_row_count_);
+            bldr->AppendValues(offsets_vec.data(), append_row_count_);
 
-			A* sub_bldr =
-				static_cast<A*>(bldr->value_builder());			
+            A* sub_bldr =
+                static_cast<A*>(bldr->value_builder());
 
-			CastTo<T>(columnData.data_,
-				columnData.cast_from_,
-				append_row_count_ * listCount,
-				offset * listCount);
+            CastTo<T>(columnData.data_,
+                      columnData.cast_from_,
+                      append_row_count_ * listCount,
+                      offset * listCount);
 
-			sub_bldr->AppendValues((T*)cast_vec_.data(), 
-				append_row_count_ * listCount);
-		}
-		else
-		{
-			std::vector<int32_t> offsets_vec = 
-				GetOffsetsVector(append_row_count_, listCount, 0);
+            sub_bldr->AppendValues(reinterpret_cast<T*>(cast_vec_.data()),
+                                   append_row_count_ * listCount);
+        }
+        else
+        {
+            std::vector<int32_t> offsets_vec =
+                GetOffsetsVector(append_row_count_, listCount, 0);
 
-			bldr->AppendValues(offsets_vec.data(), append_row_count_);
-			A* sub_bldr =
-				static_cast<A*>(bldr->value_builder());
-			sub_bldr->AppendValues((T*)columnData.data_ + (offset * listCount), 
-				append_row_count_ * listCount);
-		}
-	}
-	else 
-	{
-		std::shared_ptr<A> bldr =
-			std::dynamic_pointer_cast<A>(columnData.builder_);
+            bldr->AppendValues(offsets_vec.data(), append_row_count_);
+            A* sub_bldr =
+                static_cast<A*>(bldr->value_builder());
+            sub_bldr->AppendValues(reinterpret_cast<T*>(columnData.data_) + (offset * listCount),
+                                   append_row_count_ * listCount);
+        }
+    }
+    else
+    {
+        std::shared_ptr<A> bldr =
+            std::dynamic_pointer_cast<A>(columnData.builder_);
 
-		// Resize array to allocate space and append data.
-		bldr->Resize(append_row_count_);
+        // Resize array to allocate space and append data.
+        bldr->Resize(append_row_count_);
 
-		// Resize the global cast vector to the minimum size needed
-		// in bytes
-		if (cast_vec_.size() < (append_row_count_ * sizeof(T)))
-			cast_vec_.resize(append_row_count_ * sizeof(T));
+        // Resize the global cast vector to the minimum size needed
+        // in bytes
+        if (cast_vec_.size() < (append_row_count_ * sizeof(T)))
+            cast_vec_.resize(append_row_count_ * sizeof(T));
 
-		if (columnData.null_values_ == nullptr) 
-		{
-			if (castRequired) 
-			{
-				CastTo<T>(columnData.data_,
-					columnData.cast_from_,
-					append_row_count_,
-					offset);
+        if (columnData.null_values_ == nullptr)
+        {
+            if (castRequired)
+            {
+                CastTo<T>(columnData.data_,
+                          columnData.cast_from_,
+                          append_row_count_,
+                          offset);
 
-				bldr->AppendValues((T*)cast_vec_.data(),
-					append_row_count_);
-			}
-			else
-				bldr->AppendValues(((T*)columnData.data_) + offset, 
-					append_row_count_);
-		}
-		else
-		{
-			if (castRequired) 
-			{
-				CastTo<T>(columnData.data_,
-					columnData.cast_from_,
-					append_row_count_,
-					offset);
+                bldr->AppendValues(reinterpret_cast<T*>(cast_vec_.data()),
+                                   append_row_count_);
+            }
+            else
+                bldr->AppendValues(reinterpret_cast<T*>(columnData.data_) + offset,
+                                   append_row_count_);
+        }
+        else
+        {
+            if (castRequired)
+            {
+                CastTo<T>(columnData.data_,
+                          columnData.cast_from_,
+                          append_row_count_,
+                          offset);
 
-				bldr->AppendValues((T*)cast_vec_.data(),
-					append_row_count_,
-					columnData.null_values_->data() + offset);
-
-			}
-			else
-				bldr->AppendValues(((T*)columnData.data_) + offset,
-					append_row_count_, 
-					columnData.null_values_->data() + offset);
-		}
-	}
+                bldr->AppendValues(reinterpret_cast<T*>(cast_vec_.data()),
+                                   append_row_count_,
+                                   columnData.null_values_->data() + offset);
+            }
+            else
+                bldr->AppendValues(reinterpret_cast<T*>(columnData.data_) + offset,
+                                   append_row_count_,
+                                   columnData.null_values_->data() + offset);
+        }
+    }
 }
 
-template<typename castToType>
-void ParquetContext::CastTo(const void * const data,
-	const CastFromType castFrom,
-	const int& size,
-	const int& offset)
+template <typename castToType>
+void ParquetContext::CastTo(const void* const data,
+                            const CastFromType castFrom,
+                            const int& size,
+                            const int& offset)
 {
-	switch (castFrom)
-	{
-	case CastFromType::TypeINT8:
-		std::copy((int8_t*)data + offset,
-			(int8_t*)data + offset + size,
-			(castToType*)cast_vec_.data());
-		break;
+    switch (castFrom)
+    {
+        case CastFromType::TypeINT8:
+            std::copy(reinterpret_cast<const int8_t* const>(data) + offset,
+                      reinterpret_cast<const int8_t* const>(data) + offset + size,
+                      reinterpret_cast<castToType*>(cast_vec_.data()));
+            break;
 
-	case CastFromType::TypeUINT8:
-		std::copy((uint8_t*)data + offset,
-			(uint8_t*)data + offset + size,
-			(castToType*)cast_vec_.data());
-		break;
+        case CastFromType::TypeUINT8:
+            std::copy(reinterpret_cast<const uint8_t* const>(data) + offset,
+                      reinterpret_cast<const uint8_t* const>(data) + offset + size,
+                      reinterpret_cast<castToType*>(cast_vec_.data()));
+            break;
 
-	case CastFromType::TypeINT16:
-		std::copy((int16_t*)data + offset,
-			(int16_t*)data + offset + size,
-			(castToType*)cast_vec_.data());
-		break;
+        case CastFromType::TypeINT16:
+            std::copy(reinterpret_cast<const int16_t* const>(data) + offset,
+                      reinterpret_cast<const int16_t* const>(data) + offset + size,
+                      reinterpret_cast<castToType*>(cast_vec_.data()));
+            break;
 
-	case CastFromType::TypeUINT16:
-		std::copy((uint16_t*)data + offset,
-			(uint16_t*)data + offset + size,
-			(castToType*)cast_vec_.data());
-		break;
+        case CastFromType::TypeUINT16:
+            std::copy(reinterpret_cast<const uint16_t* const>(data) + offset,
+                      reinterpret_cast<const uint16_t* const>(data) + offset + size,
+                      reinterpret_cast<castToType*>(cast_vec_.data()));
+            break;
 
-	case CastFromType::TypeINT32:
-		std::copy((int32_t*)data + offset,
-			(int32_t*)data + offset + size,
-			(castToType*)cast_vec_.data());
-		break;
-	
-	case CastFromType::TypeUINT32:
-		std::copy((uint32_t*)data + offset,
-			(uint32_t*)data + offset + size,
-			(castToType*)cast_vec_.data());
-		break;
+        case CastFromType::TypeINT32:
+            std::copy(reinterpret_cast<const int32_t* const>(data) + offset,
+                      reinterpret_cast<const int32_t* const>(data) + offset + size,
+                      reinterpret_cast<castToType*>(cast_vec_.data()));
+            break;
 
-	case CastFromType::TypeINT64:
-		std::copy((int64_t*)data + offset,
-			(int64_t*)data + offset + size,
-			(castToType*)cast_vec_.data());
-		break;
+        case CastFromType::TypeUINT32:
+            std::copy(reinterpret_cast<const uint32_t* const>(data) + offset,
+                      reinterpret_cast<const uint32_t* const>(data) + offset + size,
+                      reinterpret_cast<castToType*>(cast_vec_.data()));
+            break;
 
-	case CastFromType::TypeUINT64:
-		std::copy((uint64_t*)data + offset,
-			(uint64_t*)data + offset + size,
-			(castToType*)cast_vec_.data());
-		break;
-	}
+        case CastFromType::TypeINT64:
+            std::copy(reinterpret_cast<const int64_t* const>(data) + offset,
+                      reinterpret_cast<const int64_t* const>(data) + offset + size,
+                      reinterpret_cast<castToType*>(cast_vec_.data()));
+            break;
+
+        case CastFromType::TypeUINT64:
+            std::copy(reinterpret_cast<const uint64_t* const>(data) + offset,
+                      reinterpret_cast<const uint64_t* const>(data) + offset + size,
+                      reinterpret_cast<castToType*>(cast_vec_.data()));
+            break;
+    }
 }
 
-template<typename NativeType> 
-bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data, 
-	const std::string& fieldName, 
-	std::vector<uint8_t>* boolField)
+template <typename NativeType>
+bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
+                                       const std::string& fieldName,
+                                       std::vector<uint8_t>* boolField)
 {
+    for (std::map<std::string, ColumnData>::iterator
+             it = column_data_map_.begin();
+         it != column_data_map_.end();
+         ++it)
+    {
+        if (it->first == fieldName)
+        {
+            NativeType a;
+            // If it is a list and boolField is defined
+            // make sure to reset boolField to null since
+            // null lists aren't available
+            if (it->second.is_list_)
+            {
+                // Check that the list size is a multiple of the
+                // vector size provided
+                if (data.size() % it->second.list_size_ != 0)
+                {
+                    SPDLOG_CRITICAL(
+                        "list size specified {:d}"
+                        " is not a multiple of total data length {:d} "
+                        "for column: {:s}",
+                        it->second.list_size_,
+                        data.size(),
+                        fieldName);
+                    parquet_stop_ = true;
+                    return false;
+                }
 
-	for (std::map<std::string, ColumnData>::iterator 
-		it = column_data_map_.begin(); 
-		it != column_data_map_.end(); 
-		++it) 
-	{
-		if (it->first == fieldName)
-		{
-			NativeType a;
-			// If it is a list and boolField is defined
-			// make sure to reset boolField to null since
-			// null lists aren't available
-			if (it->second.is_list_)
-			{
-				// Check that the list size is a multiple of the 
-				// vector size provided
-				if (data.size() % it->second.list_size_ != 0)
-				{
-					SPDLOG_CRITICAL("list size specified {:d}"
-						" is not a multiple of total data length {:d} "
-						"for column: {:s}",
-						it->second.list_size_,
-						data.size(),
-						fieldName);
-					parquet_stop_ = true;
-					return false;
-				}
+                if (boolField != nullptr)
+                {
+                    SPDLOG_WARN(
+                        "Null fields for lists "
+                        "are currently unavailable: {:s}",
+                        fieldName);
+                    boolField = nullptr;
+                }
+            }
 
-				if (boolField != nullptr)
-				{
-					SPDLOG_WARN("Null fields for lists "
-						"are currently unavailable: {:s}",
-						fieldName);
-					boolField = nullptr;
-				}
-			}
+            // The null field vector must be the same size as the
+            // data vector
+            if (boolField != nullptr)
+            {
+                if (boolField->size() != data.size())
+                {
+                    SPDLOG_CRITICAL(
+                        "null field vector must be the "
+                        "same size as data vector: {:s}",
+                        fieldName);
+                    parquet_stop_ = true;
+                    return false;
+                }
+            }
 
-			// The null field vector must be the same size as the 
-			// data vector
-			if (boolField != nullptr)
-			{
-				if (boolField->size() != data.size())
-				{
-					SPDLOG_CRITICAL("null field vector must be the "
-						"same size as data vector: {:s}",
-						fieldName);
-					parquet_stop_ = true;
-					return false;
-				}
-			}
+            // Check if ptr is already set
+            if (it->second.pointer_set_)
+            {
+                SPDLOG_WARN("ptr is already set for: {:s}", fieldName);
+            }
 
-			// Check if ptr is already set
-			if (it->second.pointer_set_)
-			{
-				SPDLOG_WARN("ptr is already set for: {:s}", fieldName);
-			}
+            // If casting is required
+            if (typeid(NativeType).name() != it->second.type_ID_)
+            {
+                // Check if other types are being written
+                // to or from a string or to boolean from
+                // anything but uint8_t
+                // NativeType is they type being cast FROM and second.type_->id()
+                // is the type being cast TO which is the original arrow type passed
+                // to AddField
+                // Note: It is impossible to stop boolean from being cast
+                // up to a larger type, since NativeType for boolean is uint8_t.
+                // The only way to stop boolean from being cast
+                // up would be to stop all uint8_t from being cast up.
+                // Also note that it->second.type_ID_ is originally retrieved from
+                // ParquetContext::GetTypeIDFromArrowType and every type is as
+                // expected except boolean. Boolean arrow types will result in
+                // uint8_t being assigned to it->second.type_ID_
+                if (it->second.type_->id() == arrow::StringType::type_id ||
+                    typeid(std::string).name() == typeid(NativeType).name() ||
+                    it->second.type_->id() == arrow::BooleanType::type_id)
+                {
+                    SPDLOG_CRITICAL(
+                        "can't cast from other data type "
+                        "to string or bool for: {:s}",
+                        fieldName);
+                    parquet_stop_ = true;
+                    return false;
+                }
 
-			// If casting is required			
-			if (typeid(NativeType).name() != it->second.type_ID_)
-			{
-				// Check if other types are being written
-				// to or from a string or to boolean from 
-				// anything but uint8_t 
-				// NativeType is they type being cast FROM and second.type_->id() 
-				// is the type being cast TO which is the original arrow type passed 
-				// to AddField 
-				// Note: It is impossible to stop boolean from being cast
-				// up to a larger type, since NativeType for boolean is uint8_t.
-				// The only way to stop boolean from being cast
-				// up would be to stop all uint8_t from being cast up.
-				// Also note that it->second.type_ID_ is originally retrieved from
-				// ParquetContext::GetTypeIDFromArrowType and every type is as 
-				// expected except boolean. Boolean arrow types will result in 
-				// uint8_t being assigned to it->second.type_ID_
-				if (it->second.type_->id() == arrow::StringType::type_id ||
-					typeid(std::string).name() == typeid(NativeType).name() ||
-					it->second.type_->id() == arrow::BooleanType::type_id)
-				{
-					SPDLOG_CRITICAL("can't cast from other data type "
-						"to string or bool for: {:s}", fieldName);
-					parquet_stop_ = true;
-					return false;
-				}
+                // Cast to larger datatype check
+                if (it->second.byte_size_ < sizeof(a))
+                {
+                    SPDLOG_CRITICAL(
+                        "Intended datatype to be cast "
+                        "is smaller than the given datatype for: {:s}",
+                        fieldName);
+                    parquet_stop_ = true;
+                    return false;
+                }
 
-				// Cast to larger datatype check
-				if (it->second.byte_size_ < sizeof(a))
-				{
-					SPDLOG_CRITICAL("Intended datatype to be cast "
-						"is smaller than the given datatype for: {:s}",
-						fieldName);
-					parquet_stop_ = true;
-					return false;
-				}
+                // Check if floating point casting is happening
+                if (it->second.type_ID_ == typeid(float).name() ||
+                    it->second.type_ID_ == typeid(double).name() ||
+                    typeid(NativeType).name() == typeid(float).name() ||
+                    typeid(NativeType).name() == typeid(double).name())
+                {
+                    SPDLOG_CRITICAL("Can't cast floating point data types: {:s}",
+                                    fieldName);
+                    parquet_stop_ = true;
+                    return false;
+                }
 
-				// Check if floating point casting is happening
-				if (it->second.type_ID_ == typeid(float).name() ||
-					it->second.type_ID_ == typeid(double).name() ||
-					typeid(NativeType).name() == typeid(float).name() ||
-					typeid(NativeType).name() == typeid(double).name())
-				{
-					SPDLOG_CRITICAL("Can't cast floating point data types: {:s}",
-						fieldName);
-					parquet_stop_ = true;
-					return false;
-				}
+                // Equal size datatypes check
+                if (it->second.byte_size_ == sizeof(a))
+                {
+                    SPDLOG_DEBUG(
+                        "Intended datatype to "
+                        "be cast is equal to the casting type for: {:s}",
+                        fieldName);
+                }
 
-				// Equal size datatypes check
-				if (it->second.byte_size_ == sizeof(a))
-				{
-					SPDLOG_DEBUG("Intended datatype to "
-						"be cast is equal to the casting type for: {:s}", fieldName);
-				}
+                it->second.SetColumnData(data.data(),
+                                         fieldName,
+                                         typeid(NativeType).name(),
+                                         boolField,
+                                         data.size());
 
-				it->second.SetColumnData(data.data(),
-					fieldName,
-					typeid(NativeType).name(),
-					boolField,
-					data.size());
+                SPDLOG_DEBUG("Cast from {:s} planned for: {:s}",
+                             typeid(NativeType).name(),
+                             fieldName);
+            }
+            // Data types are the same and no casting required
+            else
+            {
+                it->second.SetColumnData(data.data(),
+                                         fieldName,
+                                         "",
+                                         boolField,
+                                         data.size());
+            }
 
-				SPDLOG_DEBUG("Cast from {:s} planned for: {:s}",
-					typeid(NativeType).name(),
-					fieldName);
+            return true;
+        }
+    }
 
-			}
-			// Data types are the same and no casting required
-			else
-			{
-				it->second.SetColumnData(data.data(),
-					fieldName,
-					"",
-					boolField,
-					data.size());
-			}
-
-			return true;
-		}
-	}
-
-	SPDLOG_CRITICAL("Field name doesn't exist: {:s}", fieldName);
-	parquet_stop_ = true;
-	return false;
+    SPDLOG_CRITICAL("Field name doesn't exist: {:s}", fieldName);
+    parquet_stop_ = true;
+    return false;
 }
 
 // Specialization for string data.
-template<>
+template <>
 inline bool ParquetContext::SetMemoryLocation<std::string>(std::vector<std::string>& data,
-	const std::string& fieldName,
-	std::vector<uint8_t>* boolField)
+                                                           const std::string& fieldName,
+                                                           std::vector<uint8_t>* boolField)
 {
-	for (std::map<std::string, ColumnData>::iterator
-		it = column_data_map_.begin();
-		it != column_data_map_.end();
-		++it)
-	{
-		if (it->first == fieldName)
-		{
-			if (typeid(std::string).name() != it->second.type_ID_)
-			{
-				SPDLOG_CRITICAL("can't cast from string to other types: {:s}",
-					fieldName);
-				parquet_stop_ = true;
-				return false;
-			}
-			else if (it->second.pointer_set_)
-			{
-				SPDLOG_WARN("ptr is already set for: {:s}", fieldName);
-			}
-			if (it->second.is_list_)
-			{
+    for (std::map<std::string, ColumnData>::iterator
+             it = column_data_map_.begin();
+         it != column_data_map_.end();
+         ++it)
+    {
+        if (it->first == fieldName)
+        {
+            if (typeid(std::string).name() != it->second.type_ID_)
+            {
+                SPDLOG_CRITICAL("can't cast from string to other types: {:s}",
+                                fieldName);
+                parquet_stop_ = true;
+                return false;
+            }
+            else if (it->second.pointer_set_)
+            {
+                SPDLOG_WARN("ptr is already set for: {:s}", fieldName);
+            }
+            if (it->second.is_list_)
+            {
+                if (data.size() % it->second.list_size_ != 0)
+                {
+                    SPDLOG_CRITICAL(
+                        "list size specified ({:d})"
+                        " is not a multiple of total data length ({:d}) "
+                        "for column: {:s}",
+                        it->second.list_size_,
+                        data.size(),
+                        fieldName);
+                    parquet_stop_ = true;
+                    return false;
+                }
 
-				if (data.size() % it->second.list_size_ != 0)
-				{
-					SPDLOG_CRITICAL("list size specified ({:d})"
-						" is not a multiple of total data length ({:d}) "
-						"for column: {:s}",
-						it->second.list_size_,
-						data.size(),
-						fieldName);
-					parquet_stop_ = true;
-					return false;
-				}
+                if (boolField != nullptr)
+                {
+                    SPDLOG_WARN(
+                        "Null fields for lists "
+                        "are currently unavailable: {:s}",
+                        fieldName);
+                    boolField = nullptr;
+                }
+            }
 
-				if (boolField != nullptr)
-				{
-					SPDLOG_WARN("Null fields for lists "
-						"are currently unavailable: {:s}",
-						fieldName);
-					boolField = nullptr;
-				}
-				
-			}
+            // The null field vector must be the same size as the
+            // data vector
+            if (boolField != nullptr)
+            {
+                if (boolField->size() != data.size())
+                {
+                    SPDLOG_CRITICAL(
+                        "null field vector must be the "
+                        "same size as data vector: {:s}",
+                        fieldName);
+                    parquet_stop_ = true;
+                    return false;
+                }
+            }
+            SPDLOG_DEBUG("setting field info for {:s}", fieldName);
+            it->second.SetColumnData(data, fieldName, boolField);
 
-			// The null field vector must be the same size as the 
-			// data vector
-			if (boolField != nullptr)
-			{
-				if (boolField->size() != data.size())
-				{
-					SPDLOG_CRITICAL("null field vector must be the "
-						"same size as data vector: {:s}",
-						fieldName);
-					parquet_stop_ = true;
-					return false;
-				}
-			}
-			SPDLOG_DEBUG("setting field info for {:s}",	fieldName);
-			it->second.SetColumnData(data, fieldName, boolField);
-			
-			return true;
-		}
-	}
-	SPDLOG_CRITICAL("Field name doesn't exist: {:s}", fieldName);
-	parquet_stop_ = true;
-	return false;
+            return true;
+        }
+    }
+    SPDLOG_CRITICAL("Field name doesn't exist: {:s}", fieldName);
+    parquet_stop_ = true;
+    return false;
 }
-
 
 #endif

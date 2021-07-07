@@ -1,927 +1,933 @@
 #include "parquet_context.h"
 
 ParquetContext::ParquetContext() : ROW_GROUP_COUNT_(10000),
-have_created_table_(false), path_(""), have_created_writer_(false),
-pool_(nullptr), schema_(nullptr),
-append_row_count_(0), host_(""), user_(""), port_(-1),
-have_created_schema_(false), writer_(nullptr), parquet_stop_(false),
-truncate_(true), appended_row_count_(0), max_temp_element_count_(0),
-row_group_count_multiplier_(1), ready_for_automatic_tracking_(false),
-print_activity_(false), print_msg_("")
-{}
+                                   have_created_table_(false),
+                                   path_(""),
+                                   have_created_writer_(false),
+                                   pool_(nullptr),
+                                   schema_(nullptr),
+                                   append_row_count_(0),
+                                   host_(""),
+                                   user_(""),
+                                   port_(-1),
+                                   have_created_schema_(false),
+                                   writer_(nullptr),
+                                   parquet_stop_(false),
+                                   truncate_(true),
+                                   appended_row_count_(0),
+                                   max_temp_element_count_(0),
+                                   row_group_count_multiplier_(1),
+                                   ready_for_automatic_tracking_(false),
+                                   print_activity_(false),
+                                   print_msg_("")
+{
+}
 
 ParquetContext::ParquetContext(int rgSize) : ROW_GROUP_COUNT_(rgSize),
-have_created_table_(false), path_(""), have_created_writer_(false),
-pool_(nullptr), schema_(nullptr),
-append_row_count_(0), host_(""), user_(""), port_(-1),
-have_created_schema_(false), writer_(nullptr), parquet_stop_(false),
-truncate_(true), appended_row_count_(0), max_temp_element_count_(0),
-row_group_count_multiplier_(1), ready_for_automatic_tracking_(false),
-print_activity_(false), print_msg_("")
-{}
+                                             have_created_table_(false),
+                                             path_(""),
+                                             have_created_writer_(false),
+                                             pool_(nullptr),
+                                             schema_(nullptr),
+                                             append_row_count_(0),
+                                             host_(""),
+                                             user_(""),
+                                             port_(-1),
+                                             have_created_schema_(false),
+                                             writer_(nullptr),
+                                             parquet_stop_(false),
+                                             truncate_(true),
+                                             appended_row_count_(0),
+                                             max_temp_element_count_(0),
+                                             row_group_count_multiplier_(1),
+                                             ready_for_automatic_tracking_(false),
+                                             print_activity_(false),
+                                             print_msg_("")
+{
+}
 
 ParquetContext::~ParquetContext()
 {
-	Close();
+    Close();
 }
 
 void ParquetContext::Close(const uint16_t& thread_id)
 {
-	// If automatic row count tracking and writing
-	// has been turned on, write the data remaining in the 
-	// buffers.
-	if (ready_for_automatic_tracking_)
-	{
-		Finalize(thread_id);
-		ready_for_automatic_tracking_ = false;
-	}
+    // If automatic row count tracking and writing
+    // has been turned on, write the data remaining in the
+    // buffers.
+    if (ready_for_automatic_tracking_)
+    {
+        Finalize(thread_id);
+        ready_for_automatic_tracking_ = false;
+    }
 
-	if (have_created_writer_)
-	{
-		writer_->Close();
-		ostream_->Close();
-		have_created_writer_ = false;
-	}
+    if (have_created_writer_)
+    {
+        writer_->Close();
+        ostream_->Close();
+        have_created_writer_ = false;
+    }
 }
 
-std::vector<int32_t> 
-ParquetContext::GetOffsetsVector(const int& n_rows, 
-	const int& elements_per_row, 
-	const int offset)
+std::vector<int32_t>
+ParquetContext::GetOffsetsVector(const int& n_rows,
+                                 const int& elements_per_row,
+                                 const int offset)
 {
-	std::vector<int32_t> offsets_vec(n_rows, 0);
-	int _offset_ = offset * elements_per_row;
-	for (int32_t i = 0; i < n_rows; i++)
-	{
-		offsets_vec[i] = i * elements_per_row + _offset_;
-	}
-	return offsets_vec;
+    std::vector<int32_t> offsets_vec(n_rows, 0);
+    int _offset_ = offset * elements_per_row;
+    for (int32_t i = 0; i < n_rows; i++)
+    {
+        offsets_vec[i] = i * elements_per_row + _offset_;
+    }
+    return offsets_vec;
 }
 
 bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 {
-	// must have at least one column set with AddField
-	// and SetMemoryLocation before writing
-	if (fields_.size() == 0)
-	{
-		SPDLOG_CRITICAL("Must call AddField and SetMemoryLocation before calling OpenForWrite");
-		return false;
-	}
+    // must have at least one column set with AddField
+    // and SetMemoryLocation before writing
+    if (fields_.size() == 0)
+    {
+        SPDLOG_CRITICAL("Must call AddField and SetMemoryLocation before calling OpenForWrite");
+        return false;
+    }
 
-	// Check to see if all memory locations are set for each column
-	for (std::map<std::string, ColumnData>::iterator
-		it = column_data_map_.begin();
-		it != column_data_map_.end();
-		++it)
-	{
-		if (!it->second.pointer_set_)
-		{
-			SPDLOG_CRITICAL("memory location for field not set: {:s}",
-				it->second.field_name_);
-			parquet_stop_ = true;
-			return false;
-		}
-	}
+    // Check to see if all memory locations are set for each column
+    for (std::map<std::string, ColumnData>::iterator
+             it = column_data_map_.begin();
+         it != column_data_map_.end();
+         ++it)
+    {
+        if (!it->second.pointer_set_)
+        {
+            SPDLOG_CRITICAL("memory location for field not set: {:s}",
+                            it->second.field_name_);
+            parquet_stop_ = true;
+            return false;
+        }
+    }
 
-	if (parquet_stop_)
-		return false;
-	
-	if (!have_created_writer_)
-	{
+    if (parquet_stop_)
+        return false;
+
+    if (!have_created_writer_)
+    {
 #ifdef NEWARROW
-		try
-		{
-			PARQUET_ASSIGN_OR_THROW(ostream_,
-				arrow::io::FileOutputStream::Open(path));
-		}
-		catch (...)
-		{
-			SPDLOG_CRITICAL("FileOutputStream::Open error");
-			return false;
-		}
+        try
+        {
+            PARQUET_ASSIGN_OR_THROW(ostream_,
+                                    arrow::io::FileOutputStream::Open(path));
+        }
+        catch (...)
+        {
+            SPDLOG_CRITICAL("FileOutputStream::Open error");
+            return false;
+        }
 #else
-		st_ = arrow::io::FileOutputStream::Open(path,
-			!truncate_,
-			&ostream_);
+        st_ = arrow::io::FileOutputStream::Open(path,
+                                                !truncate_,
+                                                &ostream_);
 
-		if (!st_.ok())
-		{
-			SPDLOG_CRITICAL("FileOutputStream::Open error (ID {:s}): {:s}",
-				st_.CodeAsString(),	st_.message());
-			return false;
-		}
+        if (!st_.ok())
+        {
+            SPDLOG_CRITICAL("FileOutputStream::Open error (ID {:s}): {:s}",
+                            st_.CodeAsString(), st_.message());
+            return false;
+        }
 #endif
 
-		path_ = path;
-		truncate_ = true;
-		schema_ = arrow::schema(fields_);
-		have_created_schema_ = true;
-		CreateBuilders();
-		// Create properties for the writer.
-		parquet::WriterProperties::Builder props_builder;
-		props_builder.compression(parquet::Compression::GZIP);
-		props_builder.memory_pool(pool_);
-		props_builder.enable_dictionary();
+        path_ = path;
+        truncate_ = true;
+        schema_ = arrow::schema(fields_);
+        have_created_schema_ = true;
+        CreateBuilders();
+        // Create properties for the writer.
+        parquet::WriterProperties::Builder props_builder;
+        props_builder.compression(parquet::Compression::GZIP);
+        props_builder.memory_pool(pool_);
+        props_builder.enable_dictionary();
 
-		// The only encoding that works
-		props_builder.encoding(parquet::Encoding::PLAIN);
-		props_builder.enable_statistics();
-		props_ = props_builder.build();
+        // The only encoding that works
+        props_builder.encoding(parquet::Encoding::PLAIN);
+        props_builder.enable_statistics();
+        props_ = props_builder.build();
 
-		st_ = parquet::arrow::FileWriter::Open(*schema_, pool_,
-			ostream_,
-			props_,
-			&writer_);
+        st_ = parquet::arrow::FileWriter::Open(*schema_, pool_,
+                                               ostream_,
+                                               props_,
+                                               &writer_);
 
-		if (!st_.ok())
-		{
-			SPDLOG_CRITICAL("parquet::arrow::FileWriter::Open error (ID {:s}): {:s}",
-				st_.CodeAsString(), st_.message());
-			return false;
-		}
-		have_created_writer_ = true;
-	}
-	return true;
+        if (!st_.ok())
+        {
+            SPDLOG_CRITICAL("parquet::arrow::FileWriter::Open error (ID {:s}): {:s}",
+                            st_.CodeAsString(), st_.message());
+            return false;
+        }
+        have_created_writer_ = true;
+    }
+    return true;
 }
 
-std::unique_ptr<arrow::ArrayBuilder> 
+std::unique_ptr<arrow::ArrayBuilder>
 ParquetContext::GetBuilderFromDataType(const std::shared_ptr<arrow::DataType> dtype,
-	const bool& is_list_builder)
+                                       const bool& is_list_builder)
 {
-	switch (dtype->id())
-	{
-	case arrow::UInt64Type::type_id:
-	{
-		if (is_list_builder)
-			return std::make_unique<arrow::ListBuilder>
-			(pool_, std::make_shared<arrow::UInt64Builder>(pool_));
-		else
-			return std::make_unique<arrow::UInt64Builder>(pool_);
-	}
-	case arrow::Int64Type::type_id:
-	{
-		if (is_list_builder)
-			return std::make_unique<arrow::ListBuilder>
-			(pool_, std::make_shared<arrow::Int64Builder>(pool_));
-		else
-			return std::make_unique<arrow::Int64Builder>(pool_);
-	}
-	case arrow::Int32Type::type_id:
-	{
-		if (is_list_builder)
-			return std::make_unique<arrow::ListBuilder>
-			(pool_, std::make_shared<arrow::Int32Builder>(pool_));
-		else
-			return std::make_unique<arrow::Int32Builder>(pool_);
-	}
-	case arrow::UInt32Type::type_id:
-	{
-		if (is_list_builder)
-			return std::make_unique<arrow::ListBuilder>
-			(pool_, std::make_shared<arrow::UInt32Builder>(pool_));
-		else
-			return std::make_unique<arrow::UInt32Builder>(pool_);
-	}
-	case arrow::UInt16Type::type_id:
-	{
-		if (is_list_builder)
-			return std::make_unique<arrow::ListBuilder>
-			(pool_, std::make_shared<arrow::UInt16Builder>(pool_));
-		else
-			return std::make_unique<arrow::UInt16Builder>(pool_);
-	}
-	case arrow::Int16Type::type_id:
-	{
-		if (is_list_builder)
-			return std::make_unique<arrow::ListBuilder>
-			(pool_, std::make_shared<arrow::Int16Builder>(pool_));
-		else
-			return std::make_unique<arrow::Int16Builder>(pool_);
-	}
-	case arrow::UInt8Type::type_id:
-	{
-		if (is_list_builder)
-			return std::make_unique<arrow::ListBuilder>
-			(pool_, std::make_shared<arrow::UInt8Builder>(pool_));
-		else
-			return std::make_unique<arrow::UInt8Builder>(pool_);
-	}
-	case arrow::Int8Type::type_id:
-	{
-		if (is_list_builder)
-			return std::make_unique<arrow::ListBuilder>
-			(pool_, std::make_shared<arrow::Int8Builder>(pool_));
-		else
-			return std::make_unique<arrow::Int8Builder>(pool_);
-	}
-	case arrow::BooleanType::type_id:
-	{
-		if (is_list_builder)
-			return std::make_unique<arrow::ListBuilder>
-			(pool_, std::make_shared<arrow::BooleanBuilder>(pool_));
-		else
-			return std::make_unique<arrow::BooleanBuilder>(pool_);
-	}
-	case arrow::DoubleType::type_id:
-	{
-		if (is_list_builder)
-			return std::make_unique<arrow::ListBuilder>
-			(pool_, std::make_shared<arrow::DoubleBuilder>(pool_));
-		else
-			return std::make_unique<arrow::DoubleBuilder>(pool_);
-	}
-	case arrow::FloatType::type_id:
-	{
-		if (is_list_builder)
-			return std::make_unique<arrow::ListBuilder>
-			(pool_, std::make_shared<arrow::FloatBuilder>(pool_));
-		else
-			return std::make_unique<arrow::FloatBuilder>(pool_);
-	}
-	case arrow::StringType::type_id:
-	{
-		if (is_list_builder)
-			return std::make_unique<arrow::ListBuilder>
-			(pool_, std::make_shared<arrow::StringBuilder>(pool_));
-		else
-			return std::make_unique<arrow::StringBuilder>(pool_);
-	}
-	
-	default:
-		return std::make_unique<arrow::NullBuilder>(pool_);
-	}
+    switch (dtype->id())
+    {
+        case arrow::UInt64Type::type_id:
+        {
+            if (is_list_builder)
+                return std::make_unique<arrow::ListBuilder>(pool_, std::make_shared<arrow::UInt64Builder>(pool_));
+            else
+                return std::make_unique<arrow::UInt64Builder>(pool_);
+        }
+        case arrow::Int64Type::type_id:
+        {
+            if (is_list_builder)
+                return std::make_unique<arrow::ListBuilder>(pool_, std::make_shared<arrow::Int64Builder>(pool_));
+            else
+                return std::make_unique<arrow::Int64Builder>(pool_);
+        }
+        case arrow::Int32Type::type_id:
+        {
+            if (is_list_builder)
+                return std::make_unique<arrow::ListBuilder>(pool_, std::make_shared<arrow::Int32Builder>(pool_));
+            else
+                return std::make_unique<arrow::Int32Builder>(pool_);
+        }
+        case arrow::UInt32Type::type_id:
+        {
+            if (is_list_builder)
+                return std::make_unique<arrow::ListBuilder>(pool_, std::make_shared<arrow::UInt32Builder>(pool_));
+            else
+                return std::make_unique<arrow::UInt32Builder>(pool_);
+        }
+        case arrow::UInt16Type::type_id:
+        {
+            if (is_list_builder)
+                return std::make_unique<arrow::ListBuilder>(pool_, std::make_shared<arrow::UInt16Builder>(pool_));
+            else
+                return std::make_unique<arrow::UInt16Builder>(pool_);
+        }
+        case arrow::Int16Type::type_id:
+        {
+            if (is_list_builder)
+                return std::make_unique<arrow::ListBuilder>(pool_, std::make_shared<arrow::Int16Builder>(pool_));
+            else
+                return std::make_unique<arrow::Int16Builder>(pool_);
+        }
+        case arrow::UInt8Type::type_id:
+        {
+            if (is_list_builder)
+                return std::make_unique<arrow::ListBuilder>(pool_, std::make_shared<arrow::UInt8Builder>(pool_));
+            else
+                return std::make_unique<arrow::UInt8Builder>(pool_);
+        }
+        case arrow::Int8Type::type_id:
+        {
+            if (is_list_builder)
+                return std::make_unique<arrow::ListBuilder>(pool_, std::make_shared<arrow::Int8Builder>(pool_));
+            else
+                return std::make_unique<arrow::Int8Builder>(pool_);
+        }
+        case arrow::BooleanType::type_id:
+        {
+            if (is_list_builder)
+                return std::make_unique<arrow::ListBuilder>(pool_, std::make_shared<arrow::BooleanBuilder>(pool_));
+            else
+                return std::make_unique<arrow::BooleanBuilder>(pool_);
+        }
+        case arrow::DoubleType::type_id:
+        {
+            if (is_list_builder)
+                return std::make_unique<arrow::ListBuilder>(pool_, std::make_shared<arrow::DoubleBuilder>(pool_));
+            else
+                return std::make_unique<arrow::DoubleBuilder>(pool_);
+        }
+        case arrow::FloatType::type_id:
+        {
+            if (is_list_builder)
+                return std::make_unique<arrow::ListBuilder>(pool_, std::make_shared<arrow::FloatBuilder>(pool_));
+            else
+                return std::make_unique<arrow::FloatBuilder>(pool_);
+        }
+        case arrow::StringType::type_id:
+        {
+            if (is_list_builder)
+                return std::make_unique<arrow::ListBuilder>(pool_, std::make_shared<arrow::StringBuilder>(pool_));
+            else
+                return std::make_unique<arrow::StringBuilder>(pool_);
+        }
+
+        default:
+            return std::make_unique<arrow::NullBuilder>(pool_);
+    }
 }
 
 void ParquetContext::CreateBuilders()
 {
-	pool_ = arrow::default_memory_pool();
-	arrow::NullType null_type;
-	arrow::Type::type dtype = arrow::Type::NA;
-	for (std::map<std::string, ColumnData>::iterator 
-		it = column_data_map_.begin(); 
-		it != column_data_map_.end(); 
-		++it) 
-	{
-		std::string fieldName = it->second.field_name_;
-		dtype = it->second.type_->id();
+    pool_ = arrow::default_memory_pool();
+    arrow::NullType null_type;
+    arrow::Type::type dtype = arrow::Type::NA;
+    for (std::map<std::string, ColumnData>::iterator
+             it = column_data_map_.begin();
+         it != column_data_map_.end();
+         ++it)
+    {
+        std::string fieldName = it->second.field_name_;
+        dtype = it->second.type_->id();
 
-		it->second.builder_ = GetBuilderFromDataType(
-			it->second.type_, it->second.is_list_);
-	}
+        it->second.builder_ = GetBuilderFromDataType(
+            it->second.type_, it->second.is_list_);
+    }
 }
 
 bool ParquetContext::WriteColsIfReady()
 {
-	// Check if the table has been created. If not, then create it.
-	if (!have_created_table_)
-	{		
+    // Check if the table has been created. If not, then create it.
+    if (!have_created_table_)
+    {
 #ifdef NEWARROW
-		std::vector<std::shared_ptr<arrow::Array>> arr_vec;
+        std::vector<std::shared_ptr<arrow::Array>> arr_vec;
 #else
-		arrow::ArrayVector arr_vec;
+        arrow::ArrayVector arr_vec;
 #endif
-		// Loop over the builders and "Finish" them in order.
-		for (int field_ind = 0; field_ind < schema_->num_fields(); field_ind++)
-		{
-			std::shared_ptr<arrow::Array> temp_array_ptr;
+        // Loop over the builders and "Finish" them in order.
+        for (int field_ind = 0; field_ind < schema_->num_fields(); field_ind++)
+        {
+            std::shared_ptr<arrow::Array> temp_array_ptr;
 
-			st_ = column_data_map_[schema_->field(field_ind)->name()]
-				.builder_->Finish(&temp_array_ptr);
+            st_ = column_data_map_[schema_->field(field_ind)->name()]
+                      .builder_->Finish(&temp_array_ptr);
 
-			if (!st_.ok())
-			{
-				SPDLOG_ERROR("\"Finish\" error (ID {:s}): {:s}",
-					st_.CodeAsString(), st_.message());
-				return false;
-			}
-			arr_vec.push_back(temp_array_ptr);
-		}
+            if (!st_.ok())
+            {
+                SPDLOG_ERROR("\"Finish\" error (ID {:s}): {:s}",
+                             st_.CodeAsString(), st_.message());
+                return false;
+            }
+            arr_vec.push_back(temp_array_ptr);
+        }
 
-		// Make the Table and write it.
-		std::shared_ptr<arrow::Table> table = arrow::Table::Make(schema_, arr_vec);
-		st_ = writer_->WriteTable(*table, append_row_count_);
-		if (!st_.ok())
-		{
-			SPDLOG_ERROR("WriteTable error (ID {:s}): {:s}",
-				st_.CodeAsString(), st_.message());
-			return false;
-		}
-		have_created_table_ = true;
-		
-		// Debug, check if table has metadata.
-		if(table->schema()->HasMetadata())
-			SPDLOG_DEBUG("after being written, table has metadata");
+        // Make the Table and write it.
+        std::shared_ptr<arrow::Table> table = arrow::Table::Make(schema_, arr_vec);
+        st_ = writer_->WriteTable(*table, append_row_count_);
+        if (!st_.ok())
+        {
+            SPDLOG_ERROR("WriteTable error (ID {:s}): {:s}",
+                         st_.CodeAsString(), st_.message());
+            return false;
+        }
+        have_created_table_ = true;
+
+        // Debug, check if table has metadata.
+        if (table->schema()->HasMetadata())
+            SPDLOG_DEBUG("after being written, table has metadata");
 #ifdef NEWARROW
-		if(writer_->schema()->HasMetadata())
-			SPDLOG_DEBUG("after writetable, writer has metadata");
+        if (writer_->schema()->HasMetadata())
+            SPDLOG_DEBUG("after writetable, writer has metadata");
 #endif
-	}
-	else
-	{
-		// Write columns in order.
-		writer_->NewRowGroup(append_row_count_);
-		for (int field_ind = 0; field_ind < schema_->num_fields(); field_ind++)
-		{
-			std::shared_ptr<arrow::Array> temp_array_ptr;
-			st_ = column_data_map_[schema_->field(field_ind)->name()].
-				builder_->Finish(&temp_array_ptr);
+    }
+    else
+    {
+        // Write columns in order.
+        writer_->NewRowGroup(append_row_count_);
+        for (int field_ind = 0; field_ind < schema_->num_fields(); field_ind++)
+        {
+            std::shared_ptr<arrow::Array> temp_array_ptr;
+            st_ = column_data_map_[schema_->field(field_ind)->name()].builder_->Finish(&temp_array_ptr);
 
-			if (!st_.ok())
-			{
-				SPDLOG_ERROR("\"Finish\" error (ID {:s}): {:s}",
-					st_.CodeAsString(), st_.message());
-				return false;
-			}
-			st_ = writer_->WriteColumnChunk(*temp_array_ptr);
-			if (!st_.ok())
-			{
-				SPDLOG_ERROR("WriteColumnChunk error (ID {:s}): {:s}",
-					st_.CodeAsString(), st_.message());
+            if (!st_.ok())
+            {
+                SPDLOG_ERROR("\"Finish\" error (ID {:s}): {:s}",
+                             st_.CodeAsString(), st_.message());
+                return false;
+            }
+            st_ = writer_->WriteColumnChunk(*temp_array_ptr);
+            if (!st_.ok())
+            {
+                SPDLOG_ERROR("WriteColumnChunk error (ID {:s}): {:s}",
+                             st_.CodeAsString(), st_.message());
 
-				return false;
-			}
-		}
-	}
-	return true;
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
-bool ParquetContext::AppendColumn(ColumnData& columnData, 
-	const int& rows, 
-	const int offset) 
+bool ParquetContext::AppendColumn(ColumnData& columnData,
+                                  const int& rows,
+                                  const int offset)
 {
-	int datatypeID = columnData.type_->id(); 
-	bool isList = columnData.is_list_;
-	
-	bool castRequired;
+    int datatypeID = columnData.type_->id();
+    bool isList = columnData.is_list_;
 
-	if (columnData.cast_from_ == CastFromType::TypeNONE)
-		castRequired = false;
-	else
-		castRequired = true;
-	
-	int listCount = 0;
+    bool castRequired;
 
-	if (isList) 
-		listCount = columnData.list_size_;
+    if (columnData.cast_from_ == CastFromType::TypeNONE)
+        castRequired = false;
+    else
+        castRequired = true;
 
-	SPDLOG_TRACE("AppendColumn(): name {:s}, datatypename {:s}", columnData.field_name_,
-		columnData.type_->name());
+    int listCount = 0;
 
-	append_row_count_ = rows;
+    if (isList)
+        listCount = columnData.list_size_;
 
-	if (rows + offset > columnData.initial_max_row_size_)
-	{
-		SPDLOG_CRITICAL("initial vector does not"
-			" contain enough information to write"
-			" {:d} rows with a {:d} offset for column {:s}", 
-			rows, offset, columnData.type_->name());
-		return false;
-	}
+    SPDLOG_TRACE("AppendColumn(): name {:s}, datatypename {:s}", columnData.field_name_,
+                 columnData.type_->name());
 
-	switch (datatypeID)
-	{
+    append_row_count_ = rows;
 
-	case arrow::Int64Type::type_id:
-	{
-		Append<int64_t, arrow::NumericBuilder<arrow::Int64Type>>(isList,
-			castRequired,
-			listCount,
-			offset,
-			columnData);
-		break;
-	}
+    if (rows + offset > columnData.initial_max_row_size_)
+    {
+        SPDLOG_CRITICAL(
+            "initial vector does not"
+            " contain enough information to write"
+            " {:d} rows with a {:d} offset for column {:s}",
+            rows, offset, columnData.type_->name());
+        return false;
+    }
 
-	case arrow::UInt64Type::type_id:
-	{
-		Append<uint64_t, arrow::NumericBuilder<arrow::UInt64Type>>(isList, 
-			castRequired, 
-			listCount, 
-			offset,
-			columnData);
-		break;
-	}
-	
-	case arrow::Int32Type::type_id:
-	{
-		Append<int32_t, arrow::NumericBuilder<arrow::Int32Type>>(isList,
-			castRequired,
-			listCount,
-			offset,
-			columnData);
-		break;
-	}
+    switch (datatypeID)
+    {
+        case arrow::Int64Type::type_id:
+        {
+            Append<int64_t, arrow::NumericBuilder<arrow::Int64Type>>(isList,
+                                                                     castRequired,
+                                                                     listCount,
+                                                                     offset,
+                                                                     columnData);
+            break;
+        }
 
-	case arrow::UInt32Type::type_id:
-	{
-		Append<uint32_t, arrow::NumericBuilder<arrow::UInt32Type>>(isList,
-			castRequired,
-			listCount,
-			offset,
-			columnData);
-		break;
-	}
-	
-	case arrow::Int16Type::type_id:
-	{
-		Append<int16_t, arrow::NumericBuilder<arrow::Int16Type>>(isList,
-			castRequired,
-			listCount,
-			offset,
-			columnData);
-		break;
-	}
+        case arrow::UInt64Type::type_id:
+        {
+            Append<uint64_t, arrow::NumericBuilder<arrow::UInt64Type>>(isList,
+                                                                       castRequired,
+                                                                       listCount,
+                                                                       offset,
+                                                                       columnData);
+            break;
+        }
 
-	case arrow::UInt16Type::type_id:
-	{
-		Append<uint16_t, arrow::NumericBuilder<arrow::UInt16Type>>(isList,
-			castRequired,
-			listCount,
-			offset,
-			columnData);
-		break;
-	}
+        case arrow::Int32Type::type_id:
+        {
+            Append<int32_t, arrow::NumericBuilder<arrow::Int32Type>>(isList,
+                                                                     castRequired,
+                                                                     listCount,
+                                                                     offset,
+                                                                     columnData);
+            break;
+        }
 
-	case arrow::Int8Type::type_id:
-	{
-		Append<int8_t, arrow::NumericBuilder<arrow::Int8Type>>(isList,
-			castRequired,
-			listCount,
-			offset,
-			columnData);
-		break;
-	}
+        case arrow::UInt32Type::type_id:
+        {
+            Append<uint32_t, arrow::NumericBuilder<arrow::UInt32Type>>(isList,
+                                                                       castRequired,
+                                                                       listCount,
+                                                                       offset,
+                                                                       columnData);
+            break;
+        }
 
-	case arrow::UInt8Type::type_id:
-	{
-		Append<uint8_t, arrow::NumericBuilder<arrow::UInt8Type>>(isList,
-			castRequired,
-			listCount,
-			offset,
-			columnData);
-		break;
-	}
+        case arrow::Int16Type::type_id:
+        {
+            Append<int16_t, arrow::NumericBuilder<arrow::Int16Type>>(isList,
+                                                                     castRequired,
+                                                                     listCount,
+                                                                     offset,
+                                                                     columnData);
+            break;
+        }
 
-	case arrow::DoubleType::type_id:
-	{
-		castRequired = false;
-		Append<double, arrow::NumericBuilder<arrow::DoubleType>>(isList,
-			castRequired,
-			listCount,
-			offset,
-			columnData);
-		break;
-	}
+        case arrow::UInt16Type::type_id:
+        {
+            Append<uint16_t, arrow::NumericBuilder<arrow::UInt16Type>>(isList,
+                                                                       castRequired,
+                                                                       listCount,
+                                                                       offset,
+                                                                       columnData);
+            break;
+        }
 
-	case arrow::FloatType::type_id:
-	{
-		castRequired = false;
-		Append<float, arrow::NumericBuilder<arrow::FloatType>>(isList,
-			castRequired,
-			listCount,
-			offset,
-			columnData);
-		break;
-	}
+        case arrow::Int8Type::type_id:
+        {
+            Append<int8_t, arrow::NumericBuilder<arrow::Int8Type>>(isList,
+                                                                   castRequired,
+                                                                   listCount,
+                                                                   offset,
+                                                                   columnData);
+            break;
+        }
 
-	case arrow::BooleanType::type_id:
-	{
-		castRequired = false;
-		Append<uint8_t, arrow::BooleanBuilder>(isList,
-			castRequired,
-			listCount,
-			offset,
-			columnData);
-		break;
-	}
+        case arrow::UInt8Type::type_id:
+        {
+            Append<uint8_t, arrow::NumericBuilder<arrow::UInt8Type>>(isList,
+                                                                     castRequired,
+                                                                     listCount,
+                                                                     offset,
+                                                                     columnData);
+            break;
+        }
 
-	case arrow::StringType::type_id:
-	{
-		if (isList) 
-		{
-			// Get the relevant builder for the data type.
-			std::shared_ptr<arrow::ListBuilder> bldr =
-				std::dynamic_pointer_cast<arrow::ListBuilder>(columnData.builder_);
+        case arrow::DoubleType::type_id:
+        {
+            castRequired = false;
+            Append<double, arrow::NumericBuilder<arrow::DoubleType>>(isList,
+                                                                     castRequired,
+                                                                     listCount,
+                                                                     offset,
+                                                                     columnData);
+            break;
+        }
 
-			// Resize array to allocate space and append data.
-			bldr->Resize(append_row_count_);
+        case arrow::FloatType::type_id:
+        {
+            castRequired = false;
+            Append<float, arrow::NumericBuilder<arrow::FloatType>>(isList,
+                                                                   castRequired,
+                                                                   listCount,
+                                                                   offset,
+                                                                   columnData);
+            break;
+        }
 
-			std::vector<int32_t> offsets_vec = 
-				GetOffsetsVector(append_row_count_, listCount, 0);
+        case arrow::BooleanType::type_id:
+        {
+            castRequired = false;
+            Append<uint8_t, arrow::BooleanBuilder>(isList,
+                                                   castRequired,
+                                                   listCount,
+                                                   offset,
+                                                   columnData);
+            break;
+        }
 
-			bldr->AppendValues(offsets_vec.data(), append_row_count_);
-			arrow::StringBuilder* sub_bldr =
-				static_cast<arrow::StringBuilder*>(bldr->value_builder());
+        case arrow::StringType::type_id:
+        {
+            if (isList)
+            {
+                // Get the relevant builder for the data type.
+                std::shared_ptr<arrow::ListBuilder> bldr =
+                    std::dynamic_pointer_cast<arrow::ListBuilder>(columnData.builder_);
 
-			// The only way to convey to Arrow the row count for the
-			// StringBuilder class is via the implicit vector size.
-			//
-			// If the desired append row count is not equivalent
-			// to initial_max_row_size_, a new string vector is built
-			// with a size consistent with the desired row count.
-			// For lists initial_max_row_size_ = initial vector size / list size
-			// For non list columns initial_max_row_size_ = initial vector size
-			if (append_row_count_ == columnData.initial_max_row_size_)
-			{
-				sub_bldr->AppendValues(*columnData.str_ptr_);
-			}
-			else
-			{
-				FillStringVec(columnData.str_ptr_,
-					append_row_count_* listCount,
-					offset* listCount);
+                // Resize array to allocate space and append data.
+                bldr->Resize(append_row_count_);
 
-				sub_bldr->AppendValues(temp_string_vec_);
-			}
-		}
-		else 
-		{
-			std::shared_ptr<arrow::StringBuilder> bldr = 
-				std::dynamic_pointer_cast<arrow::StringBuilder>(columnData.builder_);
+                std::vector<int32_t> offsets_vec =
+                    GetOffsetsVector(append_row_count_, listCount, 0);
 
-			// Resize array to allocate space and append data.
-			bldr->Resize(append_row_count_);
+                bldr->AppendValues(offsets_vec.data(), append_row_count_);
+                arrow::StringBuilder* sub_bldr =
+                    static_cast<arrow::StringBuilder*>(bldr->value_builder());
 
-			if (append_row_count_ == columnData.initial_max_row_size_)
-			{
-				if (columnData.null_values_ == nullptr)
-				{
-					bldr->AppendValues(*columnData.str_ptr_);
-				}
-				else
-				{
-					bldr->AppendValues(*columnData.str_ptr_, columnData.null_values_->data() + offset);
-				}
-			}
-			else
-			{
-				FillStringVec(columnData.str_ptr_, append_row_count_, offset);
-				if (columnData.null_values_ == nullptr)
-				{
-					bldr->AppendValues(temp_string_vec_);
-				}
-				else
-				{
-					bldr->AppendValues(temp_string_vec_, columnData.null_values_->data() + offset);
-				}
-			}			
-		}
-		break;
-	}
-	default:
-		SPDLOG_CRITICAL("Data type not included: {:s}", columnData.type_->name());
-		return false;
-		break;
-	}
+                // The only way to convey to Arrow the row count for the
+                // StringBuilder class is via the implicit vector size.
+                //
+                // If the desired append row count is not equivalent
+                // to initial_max_row_size_, a new string vector is built
+                // with a size consistent with the desired row count.
+                // For lists initial_max_row_size_ = initial vector size / list size
+                // For non list columns initial_max_row_size_ = initial vector size
+                if (append_row_count_ == columnData.initial_max_row_size_)
+                {
+                    sub_bldr->AppendValues(*columnData.str_ptr_);
+                }
+                else
+                {
+                    FillStringVec(columnData.str_ptr_,
+                                  append_row_count_ * listCount,
+                                  offset * listCount);
 
-	// Make note that this column has been updated by setting the relevant bool.
-	columnData.ready_for_write_ = true;
+                    sub_bldr->AppendValues(temp_string_vec_);
+                }
+            }
+            else
+            {
+                std::shared_ptr<arrow::StringBuilder> bldr =
+                    std::dynamic_pointer_cast<arrow::StringBuilder>(columnData.builder_);
 
-	return true;
+                // Resize array to allocate space and append data.
+                bldr->Resize(append_row_count_);
 
+                if (append_row_count_ == columnData.initial_max_row_size_)
+                {
+                    if (columnData.null_values_ == nullptr)
+                    {
+                        bldr->AppendValues(*columnData.str_ptr_);
+                    }
+                    else
+                    {
+                        bldr->AppendValues(*columnData.str_ptr_, columnData.null_values_->data() + offset);
+                    }
+                }
+                else
+                {
+                    FillStringVec(columnData.str_ptr_, append_row_count_, offset);
+                    if (columnData.null_values_ == nullptr)
+                    {
+                        bldr->AppendValues(temp_string_vec_);
+                    }
+                    else
+                    {
+                        bldr->AppendValues(temp_string_vec_, columnData.null_values_->data() + offset);
+                    }
+                }
+            }
+            break;
+        }
+        default:
+            SPDLOG_CRITICAL("Data type not included: {:s}", columnData.type_->name());
+            return false;
+            break;
+    }
+
+    // Make note that this column has been updated by setting the relevant bool.
+    columnData.ready_for_write_ = true;
+
+    return true;
 }
 
-
-bool ParquetContext::AddField(const std::shared_ptr<arrow::DataType> type, 
-	const std::string& fieldName, 
-	const int listSize)
+bool ParquetContext::AddField(const std::shared_ptr<arrow::DataType> type,
+                              const std::string& fieldName,
+                              const int listSize)
 {
-	//printf("Add field %s\n", fieldName.c_str());
-	bool isList;
-	if (listSize == NULL)
-		isList = false;
-	else
-		isList = true;
+    //printf("Add field %s\n", fieldName.c_str());
+    bool isList;
+    if (listSize == NULL)
+        isList = false;
+    else
+        isList = true;
 
-	// Spark can't read unsigned data types from a parquet file
-	if (IsUnsigned(type)) 
-	{
-		SPDLOG_CRITICAL("Unsigned types are currently not available for writing parquet");
-		return false;
-		
-	}
-	int byteSize;
-	std::string typeID = GetTypeIDFromArrowType(type, byteSize);
-	column_data_map_[fieldName] = ColumnData(type, 
-		fieldName, 
-		typeID, 
-		byteSize, 
-		listSize);
+    // Spark can't read unsigned data types from a parquet file
+    if (IsUnsigned(type))
+    {
+        SPDLOG_CRITICAL("Unsigned types are currently not available for writing parquet");
+        return false;
+    }
+    int byteSize;
+    std::string typeID = GetTypeIDFromArrowType(type, byteSize);
+    column_data_map_[fieldName] = ColumnData(type,
+                                             fieldName,
+                                             typeID,
+                                             byteSize,
+                                             listSize);
 
-	std::shared_ptr<arrow::Field> tempField;
+    std::shared_ptr<arrow::Field> tempField;
 
-	if (isList) 
-	{
-		tempField = arrow::field(fieldName, arrow::list(type));
-		fields_.push_back(tempField);
-	}
-	else 
-	{
-		tempField = arrow::field(fieldName, type);
-		fields_.push_back(tempField);
-	}
+    if (isList)
+    {
+        tempField = arrow::field(fieldName, arrow::list(type));
+        fields_.push_back(tempField);
+    }
+    else
+    {
+        tempField = arrow::field(fieldName, type);
+        fields_.push_back(tempField);
+    }
 
-	return true;
+    return true;
 }
 
-bool ParquetContext::IsUnsigned(const std::shared_ptr<arrow::DataType> type) 
+bool ParquetContext::IsUnsigned(const std::shared_ptr<arrow::DataType> type)
 {
-	if (type->id() == arrow::UInt64Type::type_id || 
-		type->id() == arrow::UInt32Type::type_id || 
-		type->id() == arrow::UInt16Type::type_id || 
-		type->id() == arrow::UInt8Type::type_id)
-		return true;
-	else
-		return false;
+    if (type->id() == arrow::UInt64Type::type_id ||
+        type->id() == arrow::UInt32Type::type_id ||
+        type->id() == arrow::UInt16Type::type_id ||
+        type->id() == arrow::UInt8Type::type_id)
+        return true;
+    else
+        return false;
 }
 
-bool ParquetContext::WriteColumns(const int& rows,const int offset)
+bool ParquetContext::WriteColumns(const int& rows, const int offset)
 {
-	if (parquet_stop_) 
-	{
-		SPDLOG_ERROR("parquetStop = true");
-		return false;
-	}
+    if (parquet_stop_)
+    {
+        SPDLOG_ERROR("parquetStop = true");
+        return false;
+    }
 
-	if (!have_created_writer_)
-	{
-		SPDLOG_CRITICAL("must call OpenForWrite before calling WriteColumns");
-		return false;
-	}
-	append_row_count_ = rows;
-	bool ret_val = true;
+    if (!have_created_writer_)
+    {
+        SPDLOG_CRITICAL("must call OpenForWrite before calling WriteColumns");
+        return false;
+    }
+    append_row_count_ = rows;
+    bool ret_val = true;
 
-	try
-	{
-		if (rows > 0)
-		{
-			for (std::map<std::string, ColumnData>::iterator
-				it = column_data_map_.begin();
-				it != column_data_map_.end();
-				++it)
-			{
-				ret_val = AppendColumn(it->second, rows, offset);
-				if (!ret_val)
-				{
-					SPDLOG_CRITICAL("AppendColumn() failure");
-					return false;
-				}
-			}
-		}
+    try
+    {
+        if (rows > 0)
+        {
+            for (std::map<std::string, ColumnData>::iterator
+                     it = column_data_map_.begin();
+                 it != column_data_map_.end();
+                 ++it)
+            {
+                ret_val = AppendColumn(it->second, rows, offset);
+                if (!ret_val)
+                {
+                    SPDLOG_CRITICAL("AppendColumn() failure");
+                    return false;
+                }
+            }
+        }
 
-		if (!WriteColsIfReady())
-		{
-			SPDLOG_CRITICAL("WriteColsIfReady() failure");
-			return false;
-		}
+        if (!WriteColsIfReady())
+        {
+            SPDLOG_CRITICAL("WriteColsIfReady() failure");
+            return false;
+        }
 
-		// Reset the status of each column.
-		for (std::map<std::string, ColumnData>::iterator
-			it = column_data_map_.begin();
-			it != column_data_map_.end();
-			++it)
-		{
-			it->second.ready_for_write_ = false;
-		}
-		return true;
-	}
-	
-	catch (...)
-	{
-		SPDLOG_CRITICAL("WriteColumns(): Caught Exception");
-		return false;
-	}
-	
+        // Reset the status of each column.
+        for (std::map<std::string, ColumnData>::iterator
+                 it = column_data_map_.begin();
+             it != column_data_map_.end();
+             ++it)
+        {
+            it->second.ready_for_write_ = false;
+        }
+        return true;
+    }
+
+    catch (...)
+    {
+        SPDLOG_CRITICAL("WriteColumns(): Caught Exception");
+        return false;
+    }
 }
 
 bool ParquetContext::WriteColumns()
 {
-	return WriteColumns(ROW_GROUP_COUNT_, 0);
+    return WriteColumns(ROW_GROUP_COUNT_, 0);
 }
 
-
-std::string ParquetContext::GetTypeIDFromArrowType(const std::shared_ptr<arrow::DataType> type, 
-	int& byteSize)
+std::string ParquetContext::GetTypeIDFromArrowType(const std::shared_ptr<arrow::DataType> type,
+                                                   int& byteSize)
 {
-	switch (type->id())
-	{
-	case arrow::UInt64Type::type_id:
-	{
-		uint64_t a;
-		byteSize = sizeof(a);
-		return typeid(a).name();
-		break;
+    switch (type->id())
+    {
+        case arrow::UInt64Type::type_id:
+        {
+            uint64_t a;
+            byteSize = sizeof(a);
+            return typeid(a).name();
+            break;
+        }
+        case arrow::Int64Type::type_id:
+        {
+            int64_t a;
+            byteSize = sizeof(a);
+            return typeid(a).name();
+            break;
+        }
+        case arrow::Int32Type::type_id:
+        {
+            int32_t a;
+            byteSize = sizeof(a);
+            return typeid(a).name();
+            break;
+        }
+        case arrow::UInt32Type::type_id:
+        {
+            uint32_t a;
+            byteSize = sizeof(a);
+            return typeid(a).name();
+            break;
+        }
+        case arrow::UInt16Type::type_id:
+        {
+            uint16_t a;
+            byteSize = sizeof(a);
+            return typeid(a).name();
+            break;
+        }
+        case arrow::Int16Type::type_id:
+        {
+            int16_t a;
+            byteSize = sizeof(a);
+            return typeid(a).name();
+            break;
+        }
+        case arrow::UInt8Type::type_id:
+        {
+            uint8_t a;
+            byteSize = sizeof(a);
+            return typeid(a).name();
+            break;
+        }
+        case arrow::Int8Type::type_id:
+        {
+            int8_t a;
+            byteSize = sizeof(a);
+            return typeid(a).name();
+            break;
+        }
+        // Note that boolean types need to come in
+        // as uint8_t
+        case arrow::BooleanType::type_id:
+        {
+            uint8_t a;
+            byteSize = sizeof(a);
+            return typeid(a).name();
+            break;
+        }
+        case arrow::DoubleType::type_id:
+        {
+            double a;
+            byteSize = sizeof(a);
+            return typeid(a).name();
+            break;
+        }
+        case arrow::FloatType::type_id:
+        {
+            float a;
+            byteSize = sizeof(a);
+            return typeid(a).name();
+            break;
+        }
+        case arrow::StringType::type_id:
+        {
+            std::string a;
+            byteSize = sizeof(a);
+            return typeid(a).name();
+            break;
+        }
 
-	}
-	case arrow::Int64Type::type_id:
-	{
-		int64_t a;
-		byteSize = sizeof(a);
-		return typeid(a).name();
-		break;
-	}
-	case arrow::Int32Type::type_id:
-	{
-		int32_t a;
-		byteSize = sizeof(a);
-		return typeid(a).name();
-		break;
-	}
-	case arrow::UInt32Type::type_id:
-	{
-		uint32_t a;
-		byteSize = sizeof(a);
-		return typeid(a).name();
-		break;
-	}
-	case arrow::UInt16Type::type_id:
-	{
-		uint16_t a;
-		byteSize = sizeof(a);
-		return typeid(a).name();
-		break;
-	}
-	case arrow::Int16Type::type_id:
-	{
-		int16_t a;
-		byteSize = sizeof(a);
-		return typeid(a).name();
-		break;
-	}
-	case arrow::UInt8Type::type_id:
-	{
-		uint8_t a;
-		byteSize = sizeof(a);
-		return typeid(a).name();
-		break;
-	}
-	case arrow::Int8Type::type_id:
-	{
-		int8_t a;
-		byteSize = sizeof(a);
-		return typeid(a).name();
-		break;
-	}
-	// Note that boolean types need to come in
-	// as uint8_t
-	case arrow::BooleanType::type_id:
-	{
-		uint8_t a;
-		byteSize = sizeof(a);
-		return typeid(a).name();
-		break;
-	}
-	case arrow::DoubleType::type_id:
-	{
-		double a;
-		byteSize = sizeof(a);
-		return typeid(a).name();
-		break;
-	}
-	case arrow::FloatType::type_id:
-	{
-		float a;
-		byteSize = sizeof(a);
-		return typeid(a).name();
-		break;
-	}
-	case arrow::StringType::type_id:
-	{
-		std::string a;
-		byteSize = sizeof(a);
-		return typeid(a).name();
-		break;
-	}
-
-	default:
-		SPDLOG_ERROR("Data type not included in add field");
-		return "NA";
-		break;
-	}
+        default:
+            SPDLOG_ERROR("Data type not included in add field");
+            return "NA";
+            break;
+    }
 }
 
-void ParquetContext::FillStringVec(std::vector<std::string>* str_data_vec_ptr, 
-	const int& count, 
-	const int offset)
+void ParquetContext::FillStringVec(std::vector<std::string>* str_data_vec_ptr,
+                                   const int& count,
+                                   const int offset)
 {
-	if (temp_string_vec_.size() != count)
-		temp_string_vec_.resize(count);
+    if (temp_string_vec_.size() != count)
+        temp_string_vec_.resize(count);
 
-	std::copy(str_data_vec_ptr->data() + offset, 
-		str_data_vec_ptr->data() + offset + count, 
-		temp_string_vec_.data());
+    std::copy(str_data_vec_ptr->data() + offset,
+              str_data_vec_ptr->data() + offset + count,
+              temp_string_vec_.data());
 }
 
 bool ParquetContext::IncrementAndWrite(const uint16_t& thread_id)
 {
-	// Increment appended row counter. 
-	appended_row_count_++;
+    // Increment appended row counter.
+    appended_row_count_++;
 
-	// If the buffer is full, write the data to disk.
-	if (appended_row_count_ == max_temp_element_count_)
-	{
-		if (print_activity_)
-		{
-			SPDLOG_INFO("({:02d}) {:s}: Writing {:d} rows", thread_id,
-				print_msg_, appended_row_count_);
-		}
+    // If the buffer is full, write the data to disk.
+    if (appended_row_count_ == max_temp_element_count_)
+    {
+        if (print_activity_)
+        {
+            SPDLOG_INFO("({:02d}) {:s}: Writing {:d} rows", thread_id,
+                        print_msg_, appended_row_count_);
+        }
 
-		// Write each of the row groups.
-		for (int i = 0; i < row_group_count_multiplier_; i++)
-		{
-			//printf("writecolumns(%zu, %zu)\n", ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
-			WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
-		}
+        // Write each of the row groups.
+        for (int i = 0; i < row_group_count_multiplier_; i++)
+        {
+            //printf("writecolumns(%zu, %zu)\n", ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+            WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+        }
 
-		// Reset
-		appended_row_count_ = 0;
+        // Reset
+        appended_row_count_ = 0;
 
-		// Return true to indicate that buffers were written.
-		return true;
-	}
-	return false;
+        // Return true to indicate that buffers were written.
+        return true;
+    }
+    return false;
 }
 
 bool ParquetContext::SetupRowCountTracking(size_t row_group_count,
-	size_t row_group_count_multiplier,
-	bool print_activity, std::string print_msg)
+                                           size_t row_group_count_multiplier,
+                                           bool print_activity, std::string print_msg)
 {
+    // Do not allow unreasonable values.
+    if (row_group_count < 1 || row_group_count_multiplier < 1)
+    {
+        ready_for_automatic_tracking_ = false;
+        parquet_stop_ = true;
+        return ready_for_automatic_tracking_;
+    }
 
-	// Do not allow unreasonable values.
-	if (row_group_count < 1 || row_group_count_multiplier < 1)
-	{
-		ready_for_automatic_tracking_ = false;
-		parquet_stop_ = true;
-		return ready_for_automatic_tracking_;
-	}
+    ROW_GROUP_COUNT_ = row_group_count;
+    row_group_count_multiplier_ = row_group_count_multiplier;
+    max_temp_element_count_ = row_group_count_multiplier_ * ROW_GROUP_COUNT_;
+    print_activity_ = print_activity;
+    print_msg_ = print_msg;
 
-	ROW_GROUP_COUNT_ = row_group_count;
-	row_group_count_multiplier_ = row_group_count_multiplier;
-	max_temp_element_count_ = row_group_count_multiplier_ * ROW_GROUP_COUNT_;
-	print_activity_ = print_activity;
-	print_msg_ = print_msg;
+    // Ensure that max_temp_element_count does not exceed the allocated
+    // size of the buffers, i.e., the allocated size of the vector that
+    // represents each column. Loop over the map of ColumnData objects
+    // and check that this is true for each.
+    for (std::map<std::string, ColumnData>::iterator it = column_data_map_.begin();
+         it != column_data_map_.end(); ++it)
+    {
+        if (max_temp_element_count_ > it->second.initial_max_row_size_)
+        {
+            parquet_stop_ = true;
+            ready_for_automatic_tracking_ = false;
+            return ready_for_automatic_tracking_;
+        }
+    }
 
-	// Ensure that max_temp_element_count does not exceed the allocated
-	// size of the buffers, i.e., the allocated size of the vector that
-	// represents each column. Loop over the map of ColumnData objects
-	// and check that this is true for each.
-	for (std::map<std::string, ColumnData>::iterator it = column_data_map_.begin();
-		it != column_data_map_.end(); ++it)
-	{
-		if (max_temp_element_count_ > it->second.initial_max_row_size_)
-		{
-			parquet_stop_ = true;
-			ready_for_automatic_tracking_ = false;
-			return ready_for_automatic_tracking_;
-		}
-	}
-
-	// Reset appended row count if parameters are valid.
-	appended_row_count_ = 0;
-	ready_for_automatic_tracking_ = true;
-	return ready_for_automatic_tracking_;
+    // Reset appended row count if parameters are valid.
+    appended_row_count_ = 0;
+    ready_for_automatic_tracking_ = true;
+    return ready_for_automatic_tracking_;
 }
 
 void ParquetContext::Finalize(const uint16_t& thread_id)
 {
-	if(appended_row_count_ > 0)
-	{
-		if (print_activity_)
-		{
-			SPDLOG_INFO("({:02d}) {:s}, Writing {:d} rows", thread_id,
-				print_msg_, appended_row_count_);
-		}
+    if (appended_row_count_ > 0)
+    {
+        if (print_activity_)
+        {
+            SPDLOG_INFO("({:02d}) {:s}, Writing {:d} rows", thread_id,
+                        print_msg_, appended_row_count_);
+        }
 
-		int n_calls = int(std::ceil(double(appended_row_count_) / double(ROW_GROUP_COUNT_)));
-		SPDLOG_INFO("({:02d}) {:s}, {:d} row groups", thread_id,
-			print_msg_, n_calls);
-		for (int i = 0; i < n_calls; i++)
-		{
-			if (i == n_calls - 1)
-			{
-				SPDLOG_INFO("({:02d}) {:s}, WriteColumns(count = {:d}, offset = {:d})",
-					thread_id, print_msg_, 
-					appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_,
-					i * ROW_GROUP_COUNT_);
+        int n_calls = static_cast<int>(std::ceil(static_cast<double>(appended_row_count_) / static_cast<double>(ROW_GROUP_COUNT_)));
+        SPDLOG_INFO("({:02d}) {:s}, {:d} row groups", thread_id,
+                    print_msg_, n_calls);
+        for (int i = 0; i < n_calls; i++)
+        {
+            if (i == n_calls - 1)
+            {
+                SPDLOG_INFO("({:02d}) {:s}, WriteColumns(count = {:d}, offset = {:d})",
+                            thread_id, print_msg_,
+                            appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_,
+                            i * ROW_GROUP_COUNT_);
 
-				if (!WriteColumns(appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
-				{
-					SPDLOG_ERROR("({:02d}) {:s}, WriteColumns() failure",
-						thread_id, print_msg_);
-				}
-			}
-			else
-			{
-				SPDLOG_INFO("({:02d}) {:s}, WriteColumns(count = {:d}, offset = {:d})",
-					thread_id, print_msg_, ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+                if (!WriteColumns(appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
+                {
+                    SPDLOG_ERROR("({:02d}) {:s}, WriteColumns() failure",
+                                 thread_id, print_msg_);
+                }
+            }
+            else
+            {
+                SPDLOG_INFO("({:02d}) {:s}, WriteColumns(count = {:d}, offset = {:d})",
+                            thread_id, print_msg_, ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
 
-				if (!WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
-				{
-					SPDLOG_ERROR("({:02d}) {:s}, WriteColumns() failure", thread_id,
-						print_msg_);
-				}
-			}
-		}
+                if (!WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
+                {
+                    SPDLOG_ERROR("({:02d}) {:s}, WriteColumns() failure", thread_id,
+                                 print_msg_);
+                }
+            }
+        }
 
-		appended_row_count_ = 0;
-	}
+        appended_row_count_ = 0;
+    }
 }

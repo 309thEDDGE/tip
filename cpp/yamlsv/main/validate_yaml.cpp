@@ -10,8 +10,8 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	ManagedPath yaml_test_path = std::string(argv[1]);
-	ManagedPath yaml_schema_path = std::string(argv[2]);
+	ManagedPath yaml_test_path(argv[1]);
+	ManagedPath yaml_schema_path(argv[2]);
 
 	FileReader fr_test;
 	if (fr_test.ReadFile(yaml_test_path.string()) == 1)
