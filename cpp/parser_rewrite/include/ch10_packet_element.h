@@ -4,20 +4,19 @@
 
 #include "ch10_packet_element_base.h"
 
-template<class T>
+template <class T>
 class Ch10PacketElement : public Ch10PacketElementBase
 {
-    private:
+   private:
     const T* element_;
 
-    public: 
-    const T* const * const element = &element_;
+   public:
+    const T* const* const element = &element_;
     Ch10PacketElement() : Ch10PacketElementBase(sizeof(T)), element_(nullptr) {}
     void Set(const uint8_t* data) override;
-
 };
 
-template<class T>
+template <class T>
 void Ch10PacketElement<T>::Set(const uint8_t* data)
 {
     // Set the address of the element to the current data address.

@@ -12,7 +12,7 @@ Ch10Status Ch10PacketHeaderComponent::Parse(const uint8_t*& data)
 
     // Calculate and compare checksum.
     status_ = VerifyHeaderChecksum((const uint8_t*)(*std_hdr_elem_.element),
-        (*std_hdr_elem_.element)->checksum);
+                                   (*std_hdr_elem_.element)->checksum);
     if (status_ != Ch10Status::CHECKSUM_TRUE)
     {
         return status_;
@@ -23,7 +23,6 @@ Ch10Status Ch10PacketHeaderComponent::Parse(const uint8_t*& data)
 
 void Ch10PacketHeaderComponent::ParseTimeStampNS(const uint8_t*& data, uint64_t& time_ns)
 {
-
 }
 
 Ch10Status Ch10PacketHeaderComponent::ParseSecondaryHeader(const uint8_t*& data, uint64_t& time_ns)
@@ -33,7 +32,7 @@ Ch10Status Ch10PacketHeaderComponent::ParseSecondaryHeader(const uint8_t*& data,
     {
         // Parse the time portion of the secondary header only.
         status_ = ch10_time_.ParseSecondaryHeaderTime(data,
-            (*std_hdr_elem_.element)->time_format, time_ns);
+                                                      (*std_hdr_elem_.element)->time_format, time_ns);
 
         // If the status is not OK, return the failed status code.
         if (status_ != Ch10Status::OK)
@@ -44,13 +43,13 @@ Ch10Status Ch10PacketHeaderComponent::ParseSecondaryHeader(const uint8_t*& data,
 
         // Calculate the secondary header checksum value. First
         // parse the position in memory that is located immediately
-        // after the time data, which ought to be the current position of 
+        // after the time data, which ought to be the current position of
         // the data pointer after the call to ParseSecondaryHeaderTime.
-        // Then verify the checksum value by passing a pointer that is 
+        // Then verify the checksum value by passing a pointer that is
         // time_data_size_ bytes prior.
         ParseElements(secondary_checksum_elems_vec_, data);
         status_ = VerifySecondaryHeaderChecksum(data - ch10_time_.time_data_size_,
-            (*secondary_checksum_elem_.element)->checksum);
+                                                (*secondary_checksum_elem_.element)->checksum);
         if (status_ != Ch10Status::CHECKSUM_TRUE)
         {
             time_ns = 0;
@@ -61,7 +60,7 @@ Ch10Status Ch10PacketHeaderComponent::ParseSecondaryHeader(const uint8_t*& data,
 }
 
 Ch10Status Ch10PacketHeaderComponent::VerifyHeaderChecksum(const uint8_t* pkt_data,
-    const uint32_t& checksum_value)
+                                                           const uint32_t& checksum_value)
 {
     checksum_unit_count_ = header_checksum_byte_count_ / 2;
     checksum_data_ptr16_ = (const uint16_t*)pkt_data;
@@ -77,7 +76,7 @@ Ch10Status Ch10PacketHeaderComponent::VerifyHeaderChecksum(const uint8_t* pkt_da
 }
 
 Ch10Status Ch10PacketHeaderComponent::VerifySecondaryHeaderChecksum(const uint8_t* pkt_data,
-    const uint16_t& checksum_value)
+                                                                    const uint16_t& checksum_value)
 {
     checksum_data_ptr16_ = (const uint16_t*)pkt_data;
     checksum_value16_ = 0;
@@ -86,15 +85,17 @@ Ch10Status Ch10PacketHeaderComponent::VerifySecondaryHeaderChecksum(const uint8_
 
     if (checksum_value16_ == checksum_value)
         return Ch10Status::CHECKSUM_TRUE;
-    
-    SPDLOG_WARN("({:02d}) Secondary header checksum fail: calculated value = {:d}, "
-        "expected value = {:d}", ctx_->thread_id, checksum_value16_, checksum_value);
+
+    SPDLOG_WARN(
+        "({:02d}) Secondary header checksum fail: calculated value = {:d}, "
+        "expected value = {:d}",
+        ctx_->thread_id, checksum_value16_, checksum_value);
     return Ch10Status::CHECKSUM_FALSE;
 }
 
 Ch10Status Ch10PacketHeaderComponent::VerifyDataChecksum(const uint8_t* body_data,
-    const uint32_t& checksum_existence, const uint32_t& pkt_size, 
-    const uint32_t& secondary_hdr)
+                                                         const uint32_t& checksum_existence, const uint32_t& pkt_size,
+                                                         const uint32_t& secondary_hdr)
 {
     // Calculate the total count of bytes in the data checksum.
     uint32_t checksum_byte_count = 0;
@@ -102,7 +103,7 @@ Ch10Status Ch10PacketHeaderComponent::VerifyDataChecksum(const uint8_t* body_dat
         checksum_byte_count = pkt_size - std_hdr_size_ - secondary_hdr_size_;
     else
         checksum_byte_count = pkt_size - std_hdr_size_;
-    
+
     // 16-bit data checksum
     if (checksum_existence == 2)
     {
@@ -171,7 +172,7 @@ Ch10Status Ch10PacketHeaderComponent::VerifyDataChecksum(const uint8_t* body_dat
         if (checksum_value32_ == checksum_value)
             return Ch10Status::CHECKSUM_TRUE;
     }
-    
+
     SPDLOG_WARN("({:02d}) Data checksum fail", ctx_->thread_id);
     return Ch10Status::CHECKSUM_FALSE;
 }

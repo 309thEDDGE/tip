@@ -2,22 +2,23 @@
 #define CH10_VIDEOF0_COMPONENT_H_
 
 #include <cstdint>
+#include <vector>
 #include "ch10_packet_component.h"
 #include "ch10_videof0_header_format.h"
 #include "ch10_time.h"
 
 class Ch10VideoF0RTCTimeStampFmt
 {
-public:
-	uint64_t ts1_ : 32;
-	uint64_t ts2_ : 32;
+   public:
+    uint64_t ts1_ : 32;
+    uint64_t ts2_ : 32;
 };
 
 class Ch10VideoF0Component : public Ch10PacketComponent
 {
-private:
+   private:
     Ch10PacketElement<Ch10VideoF0HeaderFormat> csdw_element_;
-	ElemPtrVec csdw_element_vector_;
+    ElemPtrVec csdw_element_vector_;
 
     Ch10PacketElement<video_datum[TransportStream_DATA_COUNT]> video_payload_element_;
 
@@ -26,25 +27,18 @@ private:
     // Temporary holder for IPTS time
     uint64_t ipts_time_;
 
-// Protected members are accessible to tests via inheritance
-protected:
-	std::vector<uint64_t> subpacket_absolute_times_;
+    // Protected members are accessible to tests via inheritance
+   protected:
+    std::vector<uint64_t> subpacket_absolute_times_;
     ElemPtrVec video_element_vector_;
 
-public:
+   public:
     const Ch10PacketElement<Ch10VideoF0HeaderFormat>& csdw_element;
     const std::vector<uint64_t>& subpacket_absolute_times;
 
-    Ch10VideoF0Component(Ch10Context* const context) :
-        Ch10PacketComponent(context), ch10_time_(), ipts_time_(0),
-        subpacket_absolute_times_(MAX_TransportStream_UNITS),
-        subpacket_absolute_times(subpacket_absolute_times_),
-        csdw_element(csdw_element_),
-        csdw_element_vector_{
-            dynamic_cast<Ch10PacketElementBase*>(&csdw_element_)},
-        video_element_vector_{
-            dynamic_cast<Ch10PacketElementBase*>(&video_payload_element_)}
-        {}
+    Ch10VideoF0Component(Ch10Context* const context) : Ch10PacketComponent(context), ch10_time_(), ipts_time_(0), subpacket_absolute_times_(MAX_TransportStream_UNITS), subpacket_absolute_times(subpacket_absolute_times_), csdw_element(csdw_element_), csdw_element_vector_{dynamic_cast<Ch10PacketElementBase*>(&csdw_element_)}, video_element_vector_{dynamic_cast<Ch10PacketElementBase*>(&video_payload_element_)}
+    {
+    }
 
     ~Ch10VideoF0Component() {}
 

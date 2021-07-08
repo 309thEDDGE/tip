@@ -6,29 +6,30 @@
 #include <regex>
 #include <iostream>
 #include <cstdio>
+#include <vector>
 #include "iterable_tools.h"
-
 
 class CodeName
 {
-private:
+   private:
     std::vector<std::string> subattrs;
-public:
+
+   public:
     std::string plaintext;
     std::regex re;
     std::string regex_string;
     bool debug;
-    CodeName(std::string, bool show_debug=false);
+    CodeName(std::string, bool show_debug = false);
     std::map<std::string, int> groups(std::smatch);
 };
 
-
 class TMATSParser
 {
-private:
+   private:
     std::string raw;
     bool debug;
-public:
-    TMATSParser(std::string, bool show_debug=false);
+
+   public:
+    TMATSParser(std::string, bool show_debug = false);
     std::map<std::string, std::string> MapAttrs(std::string, std::string);
 };

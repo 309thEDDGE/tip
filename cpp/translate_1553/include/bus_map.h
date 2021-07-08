@@ -2,6 +2,7 @@
 #define BUSMAP_H
 
 #include <string>
+#include <utility>
 #include <map>
 #include <unordered_map>
 #include <set>
@@ -15,46 +16,46 @@
 
 class BusMap
 {
-private:
-	std::unordered_map<uint64_t, std::set<std::string>> 
-		icd_message_key_to_busnames_map_;
+   private:
+    std::unordered_map<uint64_t, std::set<std::string>>
+        icd_message_key_to_busnames_map_;
 
-	std::unordered_map<uint64_t, std::set<uint64_t>> 
-		icd_message_key_to_channelids_map_;
+    std::unordered_map<uint64_t, std::set<uint64_t>>
+        icd_message_key_to_channelids_map_;
 
-	std::map<uint64_t, std::string> tmats_chanid_to_source_map_;
-	std::set<std::string> unique_buses_;
-	std::set<uint64_t> channel_ids_;
-	int64_t key_;
-	uint64_t mask_;		
-	std::map<uint64_t, std::pair<std::string, std::string>> 
-		final_bus_map_with_sources_;
+    std::map<uint64_t, std::string> tmats_chanid_to_source_map_;
+    std::set<std::string> unique_buses_;
+    std::set<uint64_t> channel_ids_;
+    int64_t key_;
+    uint64_t mask_;
+    std::map<uint64_t, std::pair<std::string, std::string>>
+        final_bus_map_with_sources_;
 
-	std::map<std::string, std::string> tmats_busname_corrections_;	
-	IterableTools iterable_tools_;
-	bool tmats_present_;
-	UserInput user_input_;
-	std::map<uint64_t, std::string>* final_map_ptr_;
-	uint64_t vote_threshold_;
-	bool vote_method_checks_tmats_;
-	std::map<uint64_t, std::string> excluded_channel_ids_;
-	std::set<std::string> upper_case_bus_exclusions_;
+    std::map<std::string, std::string> tmats_busname_corrections_;
+    IterableTools iterable_tools_;
+    bool tmats_present_;
+    UserInput user_input_;
+    std::map<uint64_t, std::string>* final_map_ptr_;
+    uint64_t vote_threshold_;
+    bool vote_method_checks_tmats_;
+    std::map<uint64_t, std::string> excluded_channel_ids_;
+    std::set<std::string> upper_case_bus_exclusions_;
 
-	void PrepareFinalMap();
-	void PrintVoteMap();
-	std::map<uint64_t, std::string> VoteMapping();
-	std::map<uint64_t, std::string> TmatsMapping();
-	std::string PrintFinalMap();
-	void SubmitToFinalBusMap(const std::map<uint64_t,
-		std::string>& insert_map,
-		std::string source);
-	std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>> votes_;
+    void PrepareFinalMap();
+    void PrintVoteMap();
+    std::map<uint64_t, std::string> VoteMapping();
+    std::map<uint64_t, std::string> TmatsMapping();
+    std::string PrintFinalMap();
+    void SubmitToFinalBusMap(const std::map<uint64_t,
+                                            std::string>& insert_map,
+                             std::string source);
+    std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>> votes_;
 
-public:
-	BusMap() : tmats_present_(false), mask_(UINT64_MAX), vote_threshold_(1){};
-	~BusMap() {};
-	
-	/*
+   public:
+    BusMap() : tmats_present_(false), mask_(UINT64_MAX), vote_threshold_(1){}
+    ~BusMap(){}
+
+    /*
 	 Initialize bus map with required maps
 
 	 icd_message_keys_to_busnames -> retrieved from the ICD. Construct a key and a set
@@ -116,20 +117,18 @@ public:
 										using the key as the tmats source name and the
 										value as the desired correction.
 	*/
-	void InitializeMaps(
-		const std::unordered_map<uint64_t, std::set<std::string>>* 
-		icd_message_keys_to_busnames,
-		std::set<uint64_t> channel_ids,
-		uint64_t mask = UINT64_MAX,
-		uint64_t vote_threshold = 1,
-		bool vote_method_checks_tmats = false,
-		std::set<std::string> bus_exclusions = std::set<std::string>(),
-		std::map<uint64_t, std::string> tmats_chanid_to_source_map
-		= std::map<uint64_t, std::string>(),
-		std::map<std::string, std::string> tmats_busname_corrections
-		= std::map<std::string, std::string>());
+    void InitializeMaps(
+        const std::unordered_map<uint64_t, std::set<std::string>>*
+            icd_message_keys_to_busnames,
+        std::set<uint64_t> channel_ids,
+        uint64_t mask = UINT64_MAX,
+        uint64_t vote_threshold = 1,
+        bool vote_method_checks_tmats = false,
+        std::set<std::string> bus_exclusions = std::set<std::string>(),
+        std::map<uint64_t, std::string> tmats_chanid_to_source_map = std::map<uint64_t, std::string>(),
+        std::map<std::string, std::string> tmats_busname_corrections = std::map<std::string, std::string>());
 
-	/*
+    /*
 		SubmitMessages
 
 		Should be called each time new messages are submitted for  
@@ -154,13 +153,13 @@ public:
 							less than or equal to the vector sizes.
 							False otherwise	
 	*/
-	bool SubmitMessages(
-			const std::vector<uint64_t>& transmit_cmd,
-			const std::vector<uint64_t>& recieve_cmd,
-			const std::vector<uint64_t>& channel_ids,
-			size_t submission_size = -1);
+    bool SubmitMessages(
+        const std::vector<uint64_t>& transmit_cmd,
+        const std::vector<uint64_t>& recieve_cmd,
+        const std::vector<uint64_t>& channel_ids,
+        size_t submission_size = -1);
 
-	/*
+    /*
 		SubmitMessage
 
 		Used to submit one message at a time for voting. 
@@ -178,12 +177,12 @@ public:
 		channel_id		-> channel id associated with the
 							transmit and recieve command word
 	*/
-	void SubmitMessage(
-		const uint64_t& transmit_cmd,
-		const uint64_t& recieve_cmd,
-		const uint64_t& channel_id);
+    void SubmitMessage(
+        const uint64_t& transmit_cmd,
+        const uint64_t& recieve_cmd,
+        const uint64_t& channel_id);
 
-	/*
+    /*
 		 Finalize
 
 		 final_map					-> channel ID to bus name map passed by reference and
@@ -208,75 +207,74 @@ public:
 						  |OR| prompt_user is set to true and the user
 							selects option "q" to quit translation	
 	*/
-	bool Finalize(std::map<uint64_t, std::string>& final_map,
-		bool use_tmats_busmap,
-		bool prompt_user,
-		std::vector<std::string>* test_options = NULL);
+    bool Finalize(std::map<uint64_t, std::string>& final_map,
+                  bool use_tmats_busmap,
+                  bool prompt_user,
+                  std::vector<std::string>* test_options = NULL);
 
-	/*
+    /*
 		Prints the current vote statistics along with
 		the final bus map
 	*/
-	void Print();
-	 
-	///////////////////////// Utilities used for unit tests
+    void Print();
 
-	std::unordered_map<uint64_t, std::set<std::string>> 
-		GetICD_MessageKeyToBusNamesMap()
-	{ 
-		return icd_message_key_to_busnames_map_;
-	}
+    ///////////////////////// Utilities used for unit tests
 
-	std::unordered_map<uint64_t, std::set<uint64_t>> 
-		GetICD_MessageKeyToChannelIDSMap()
-	{ 
-		return icd_message_key_to_channelids_map_; 
-	}
-	
-	std::set<std::string> GetUniqueBuses()
-	{
-		return unique_buses_;
-	}
+    std::unordered_map<uint64_t, std::set<std::string>>
+    GetICD_MessageKeyToBusNamesMap()
+    {
+        return icd_message_key_to_busnames_map_;
+    }
 
-	std::set<uint64_t> GetChannelIDs()
-	{
-		return channel_ids_; 
-	}
+    std::unordered_map<uint64_t, std::set<uint64_t>>
+    GetICD_MessageKeyToChannelIDSMap()
+    {
+        return icd_message_key_to_channelids_map_;
+    }
 
-	bool TmatsPresent()
-	{
-		return tmats_present_;
-	}
+    std::set<std::string> GetUniqueBuses()
+    {
+        return unique_buses_;
+    }
 
-	const std::map<uint64_t, std::string>& 
-		GetTMATSchannelidToSourceMap()
-	{
-		return tmats_chanid_to_source_map_;
-	}
-	
-	std::map<uint64_t, std::string> TestVoteMapping(		
-		std::unordered_map<uint64_t, std::set<uint64_t>> 
-		icd_message_key_to_channelids_map)
-	{
-		icd_message_key_to_channelids_map_ = icd_message_key_to_channelids_map;
-		return VoteMapping();
-	}
+    std::set<uint64_t> GetChannelIDs()
+    {
+        return channel_ids_;
+    }
 
-	const std::map<uint64_t, std::pair<std::string, std::string>>& 
-		GetFinalBusMap_withSource() 
-	{ 
-		return final_bus_map_with_sources_; 
-	}
+    bool TmatsPresent()
+    {
+        return tmats_present_;
+    }
 
-	std::map<uint64_t, std::string> GetExcludedChannelIDs()
-	{
-		return excluded_channel_ids_;
-	}
+    const std::map<uint64_t, std::string>&
+    GetTMATSchannelidToSourceMap()
+    {
+        return tmats_chanid_to_source_map_;
+    }
 
-	bool UserAdjustments(std::vector<std::string>* test_options = NULL);
-	
+    std::map<uint64_t, std::string> TestVoteMapping(
+        std::unordered_map<uint64_t, std::set<uint64_t>>
+            icd_message_key_to_channelids_map)
+    {
+        icd_message_key_to_channelids_map_ = icd_message_key_to_channelids_map;
+        return VoteMapping();
+    }
 
-	/////////////////////////
+    const std::map<uint64_t, std::pair<std::string, std::string>>&
+    GetFinalBusMap_withSource()
+    {
+        return final_bus_map_with_sources_;
+    }
+
+    std::map<uint64_t, std::string> GetExcludedChannelIDs()
+    {
+        return excluded_channel_ids_;
+    }
+
+    bool UserAdjustments(std::vector<std::string>* test_options = NULL);
+
+    /////////////////////////
 };
 
 #endif

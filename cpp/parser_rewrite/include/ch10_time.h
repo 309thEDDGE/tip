@@ -2,37 +2,36 @@
 #ifndef CH10_TIME_H_
 #define CH10_TIME_H_
 
-#include<cstdint>
+#include <cstdint>
 #include "ch10_status.h"
 #include "spdlog/spdlog.h"
 
 class Ch10RTCTimeStampFmt
 {
-public:
+   public:
     uint64_t ts1_ : 32;
     uint64_t ts2_ : 32;
 };
 
 class Ch10BinWtTimeStampFmt
 {
-public:
+   public:
     uint16_t : 16;
     uint16_t microsec;
     uint16_t low_order;
     uint16_t high_order;
-
 };
 
 class Ch10IEEE1588TimeStampFmt
 {
-public:
+   public:
     uint32_t ns_word;
     uint32_t sec_word;
 };
 
 class Ch10ERTCTimeStampFmt
 {
-public:
+   public:
     uint32_t lslw;
     uint32_t mslw;
 };
@@ -44,7 +43,7 @@ within the Chapter 10.
 
 class Ch10Time
 {
-private:
+   private:
     const Ch10RTCTimeStampFmt* rtc_time_ptr_;
     const Ch10BinWtTimeStampFmt* binwt_time_ptr_;
     const Ch10IEEE1588TimeStampFmt* ieee_time_ptr_;
@@ -56,8 +55,7 @@ private:
     uint64_t high_order_ns_;
     uint64_t low_order_ns_;
 
-public:
-
+   public:
     // Conversion factor for relative time counter (RTC)
     // to nanoseconds.
     // Unit: count/ns
@@ -98,7 +96,7 @@ public:
         Ch10Status::OK if no problems, otherwise a different Ch10Status code.
     */
     Ch10Status ParseSecondaryHeaderTime(const uint8_t*& data, uint8_t time_format,
-        uint64_t& time_ns);
+                                        uint64_t& time_ns);
 
     /*
     Calculate the binary weighted time in nanosecond units with the assumption
@@ -184,7 +182,7 @@ public:
         Ch10Status::OK if no problems, otherwise a different Ch10Status code.
     */
     virtual Ch10Status ParseIPTS(const uint8_t*& data, uint64_t& time_ns,
-        uint8_t intrapkt_ts_src, uint8_t time_fmt);
+                                 uint8_t intrapkt_ts_src, uint8_t time_fmt);
 };
 
 #endif

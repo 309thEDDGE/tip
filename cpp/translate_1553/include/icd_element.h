@@ -1,96 +1,94 @@
 #ifndef ICD_ELEMENT_H
 #define ICD_ELEMENT_H
 
-#include<string>
-#include<cstdint>
+#include <string>
+#include <cstdint>
+#include <vector>
 #include "parse_text.h"
 #include "yaml-cpp/yaml.h"
 
 enum class ICDElementSchema : uint8_t
 {
-	// Not currently used. This value is here to be
-	// backwards-compatible with legacy code.
-	MULTIPLE_BIT = 0,
+    // Not currently used. This value is here to be
+    // backwards-compatible with legacy code.
+    MULTIPLE_BIT = 0,
 
-	// MilStd1553B mode code. Relevant to 1553 bus operation.
-	MODE_CODE = 1,
+    // MilStd1553B mode code. Relevant to 1553 bus operation.
+    MODE_CODE = 1,
 
-	// IEEE standard twos-complement signed 16-bit integer.
-	SIGNED16 = 2,
+    // IEEE standard twos-complement signed 16-bit integer.
+    SIGNED16 = 2,
 
-	// IEEE standard two-complement signed 32-bit integer.
-	SIGNED32 = 3,
+    // IEEE standard two-complement signed 32-bit integer.
+    SIGNED32 = 3,
 
-	// IEEE standard unsigned 16-bit integer.
-	UNSIGNED16 = 4,
+    // IEEE standard unsigned 16-bit integer.
+    UNSIGNED16 = 4,
 
-	// IEEE standard unsigned 32-bit integer.
-	UNSIGNED32 = 5,
+    // IEEE standard unsigned 32-bit integer.
+    UNSIGNED32 = 5,
 
-	// MilStd1750 32-bit floating point value.
-	FLOAT32_1750 = 6,
+    // MilStd1750 32-bit floating point value.
+    FLOAT32_1750 = 6,
 
-	// IEEE 32-bit floating point value.
-	FLOAT32_IEEE = 7,
+    // IEEE 32-bit floating point value.
+    FLOAT32_IEEE = 7,
 
-	// IEEE 64-bit floating point value.
-	FLOAT64_IEEE = 8,
+    // IEEE 64-bit floating point value.
+    FLOAT64_IEEE = 8,
 
-	// 16-bit floating point value -- standard currently uknown.
-	FLOAT16 = 9,
+    // 16-bit floating point value -- standard currently uknown.
+    FLOAT16 = 9,
 
-	// 8-bit ASCII
-	ASCII = 10,
+    // 8-bit ASCII
+    ASCII = 10,
 
-	// Two or more consecutive bits to be interpreted as a twos-complement signed integer.
-	// SIGNEDBITS or UNSIGNEDBITS schema should be used when is_bitlevel_ = true.
-	SIGNEDBITS = 11,
+    // Two or more consecutive bits to be interpreted as a twos-complement signed integer.
+    // SIGNEDBITS or UNSIGNEDBITS schema should be used when is_bitlevel_ = true.
+    SIGNEDBITS = 11,
 
-	// Single-bit boolean or multiple bits to be interpreted as unsigned integer.
-	// SIGNEDBITS or UNSIGNEDBITS schema should be used when is_bitlevel_ = true.
-	UNSIGNEDBITS = 12, 
+    // Single-bit boolean or multiple bits to be interpreted as unsigned integer.
+    // SIGNEDBITS or UNSIGNEDBITS schema should be used when is_bitlevel_ = true.
+    UNSIGNEDBITS = 12,
 
-	// Default/initial value.
-	BAD = 13,
+    // Default/initial value.
+    BAD = 13,
 
-	// Collins Adaptive Processing System (CAPS) 48-bit floating point value.
-	CAPS = 14,
+    // Collins Adaptive Processing System (CAPS) 48-bit floating point value.
+    CAPS = 14,
 
-	// 32-bit floating point value -- standard currently unknown.
-	FLOAT32_GPS = 15,
+    // 32-bit floating point value -- standard currently unknown.
+    FLOAT32_GPS = 15,
 
-	// 64-bit floating point value -- standard currently unknown.
-	FLOAT64_GPS = 16,
+    // 64-bit floating point value -- standard currently unknown.
+    FLOAT64_GPS = 16,
 
-	
 };
-
-
 
 class ICDElement
 {
-private:
-	// tools
-	ParseText pt;
+   private:
+    // tools
+    ParseText pt;
 
-	// data members
-	const int kICDElementSchemaMaxValue = 16;
+    // data members
+    const int kICDElementSchemaMaxValue = 16;
 
-public:
-	// Count of input columns required to fill data members.
-	static const int kFillElementCount = 25;
+   public:
+    // Count of input columns required to fill data members.
+    static const int kFillElementCount = 25;
 
-	// Channel ID as obtained from the Ch10. This
-	// is a value that will have to be matched based on the ICD
-	// and a bus mapping. The bus name to channel ID mapping
-	// must be done for each Ch10 file, because it can vary.
-	uint16_t channel_id_;
+    // Channel ID as obtained from the Ch10. This
+    // is a value that will have to be matched based on the ICD
+    // and a bus mapping. The bus name to channel ID mapping
+    // must be done for each Ch10 file, because it can vary.
+    uint16_t channel_id_;
 
-	//
-	// ICD text file elements
-	//
+    //
+    // ICD text file elements
+    //
 
-	/*
+    /*
 		-name:			msg_name
 		-description:	Name of message
 		-format/range:
@@ -100,9 +98,9 @@ public:
 			2. MSG02		
 					
 	*/
-	std::string msg_name_;
+    std::string msg_name_;
 
-	/*
+    /*
 		-name:			element_name
 		-description:	Name of message element
 		-format/range:	<message name>_<2 digit word number><2 digit bit number (if any)>
@@ -115,9 +113,9 @@ public:
 				word 1 bit 5 of message MSG01)
 
 	*/
-	std::string elem_name_;
+    std::string elem_name_;
 
-	/*
+    /*
 		-name:			xmit_word
 		-description:	MilStd1553B 16-bit transmit comand word
 		-format/range:	1...RT address (bits 1-5)
@@ -156,9 +154,9 @@ public:
 				word count = 1 (0b00001)
 				xmit_word  -> 17473 (0b0100010001000001)
 	*/
-	uint16_t xmit_word_;
+    uint16_t xmit_word_;
 
-	/*
+    /*
 		-name:			dest_word
 		-description:	MilStd1553B 16-bit recieve comand word
 		-format/range:	1...RT address (bits 1-5)
@@ -197,9 +195,9 @@ public:
 				word count = 32 (0b00000)
 				xmit_word  -> 2144 (0b0000100001100000)
 	*/
-	uint16_t dest_word_;
+    uint16_t dest_word_;
 
-	/*
+    /*
 		-name:			msg_word_count
 		-description:	Number of 16-bit words in a 1553 message.
 						This is a count of the data words
@@ -216,72 +214,72 @@ public:
 			2. Zero Payload Mode Code
 				msg_word_count = 0
 	*/
-	uint8_t msg_word_count_;
+    uint8_t msg_word_count_;
 
-	/*
+    /*
 		-name:			bus_name
 		-description:	Name of bus on which message is transmitted
 		-format/range:	
 		-special cases:
 		-examples:
 	*/
-	std::string bus_name_;
+    std::string bus_name_;
 
-	/*
+    /*
 		-name:			xmit_lru_name
 		-description:	Transmit LRU name
 		-format/range:	
 		-special cases:
 		-examples:
 	*/
-	std::string xmit_lru_name_;
+    std::string xmit_lru_name_;
 
-	/*
+    /*
 		-name:			xmit_lru_addr
 		-description:	Transmit LRU address
 		-format/range:	[0,31]
 		-special cases:	0 for bus controller (BC->RT)
 		-examples:
 	*/
-	uint8_t xmit_lru_addr_;
+    uint8_t xmit_lru_addr_;
 
-	/*
+    /*
 		-name:			dest_lru_name
 		-description:	Recieve LRU name
 		-format/range:	
 		-special cases: 
 		-examples:
 	*/
-	std::string dest_lru_name_;
+    std::string dest_lru_name_;
 
-	/*
+    /*
 		-name:			dest_lru_name
 		-description:	Recieve LRU address
 		-format/range:  [0,31]
 		-special cases: 0 for bus controller (RT->BC)
 		-examples:
 	*/
-	uint8_t dest_lru_addr_;
+    uint8_t dest_lru_addr_;
 
-	/*
+    /*
 		-name:			xmit_lru_subaddr
 		-description:	Transmit subaddress
 		-format/range:	[0,31]
 		-special cases: 0 or 31 for mode code
 		-examples:
 	*/
-	uint8_t xmit_lru_subaddr_;
+    uint8_t xmit_lru_subaddr_;
 
-	/*
+    /*
 		-name:			dest_lru_subaddr
 		-description:	Recieve subaddress
 		-format/range:	[0,31]
 		-special cases: 0 or 31 for mode code
 		-examples:
 	*/
-	uint8_t dest_lru_subaddr_;
+    uint8_t dest_lru_subaddr_;
 
-	/*
+    /*
 		-name:			rate
 		-description:	Message transfer rate
 		-format/range:	Hz
@@ -290,9 +288,9 @@ public:
 			1. 50.0
 			2. 3.125
 	*/
-	float rate_;
+    float rate_;
 
-	/*
+    /*
 		-name:			offset
 		-description:	Integer offset of first
 						16-bit raw data word 1553 msg payload in which 
@@ -306,9 +304,9 @@ public:
 			2. MSG01-0510 (word 5 bit 10)
 				offset = 4
 	*/
-	uint8_t offset_;
+    uint8_t offset_;
 
-	/*
+    /*
 		-name:			elem_word_count
 		-description:	Quantity of 16-bit words, starting at offset,
 						required to recover the relevant bits necessary
@@ -325,9 +323,9 @@ public:
 			4. 32 bit element (2 words)
 				elem_word_count = 2
 	*/
-	uint8_t elem_word_count_;
+    uint8_t elem_word_count_;
 
-	/*
+    /*
 		-name:			schema
 		-description:	Enum representative of comet schema. 
 						Refer to ICDElementSchema above for 
@@ -345,9 +343,9 @@ public:
 				schema = 3
 				
 	*/
-	ICDElementSchema schema_;
+    ICDElementSchema schema_;
 
-	/*
+    /*
 		-name:			is_bitlevel
 		-description:	If true, indicates that the element is a 
 						bit-level specification, in contrast with 
@@ -364,9 +362,9 @@ public:
 			2. element defined by 32 bit IEEE integer (2 words)
 				is_bitlevel = 0
 	*/
-	bool is_bitlevel_;
+    bool is_bitlevel_;
 
-	/*
+    /*
 		-name:			is_multiformat
 		-description:	Indicates if the element is multi_format.
 						See comet flat files description for more
@@ -388,9 +386,9 @@ public:
 			2. MSG01-02
 				is_multiformat = 0
 	*/
-	bool is_multiformat_;
+    bool is_multiformat_;
 
-	/*
+    /*
 		-name:			bitmsb
 		-description:	Only applies when is_bitlevel_ = true.
 						Most significant bit of the first word
@@ -407,10 +405,9 @@ public:
 			2. single bit element at word 3 bit 4
 				bitmsb = 4
 	*/
-	uint8_t bitmsb_;
+    uint8_t bitmsb_;
 
-	
-	/*
+    /*
 		-name:			bitlsb
 		-description:	Only applies when is_bitlevel_ = true.
 						Least significant bit of the last word
@@ -426,9 +423,9 @@ public:
 			2. single bit element at word 3 bit 4
 				bitlsb = 4
 	*/
-	uint8_t bitlsb_;
+    uint8_t bitlsb_;
 
-	/*
+    /*
 		-name:			bit_count
 		-description:	Only applies when is_bitlevel_ = true.
 						Count of all bits that define the
@@ -445,9 +442,9 @@ public:
 			1. bit level element from word 3 bit 2 -> word 5 bit 8
 				bit_count = 15(word3) + 16(word4) + 8(word5) = 39
 	*/
-	uint8_t bit_count_;
+    uint8_t bit_count_;
 
-	/*
+    /*
 		-name:			classification
 		-description:	Classification value as found 
 						in comet wrd tables.
@@ -463,9 +460,9 @@ public:
 		-special cases:
 		-examples:
 	*/
-	uint8_t classification_;
+    uint8_t classification_;
 
-	/*
+    /*
 		-name:			description
 		-description:	element description
 		-format/range:	string in quotes
@@ -475,9 +472,9 @@ public:
 			1. "LATITUDE"
 			2. "LONGITUDE"
 	*/
-	std::string description_;
+    std::string description_;
 
-	/*
+    /*
 		-name:			msb_val
 		-description:	Value of the most significant bit. Used to 
 						scale the translated value. As an example,
@@ -503,9 +500,9 @@ public:
 			2. no scaling wanted for an signed IEEE 32 bit integer
 				msb_val = 2^30				
 	*/
-	double msb_val_;
+    double msb_val_;
 
-	/*
+    /*
 		-name:			uom
 		-description:	Unit of measure of the Engineering Unit.
 		-format/range:	Generally all caps
@@ -515,19 +512,16 @@ public:
 			1. FT-SEC
 			2. PIRAD
 	*/
-	std::string uom_;
+    std::string uom_;
 
-	
-
-	// methods/c'tors
-	ICDElement();
-	~ICDElement();
-	ICDElement(const ICDElement& C);
-	ICDElement& operator=(const ICDElement& C);
-	bool Fill(const std::string& icdelem_str);
-	bool FillElements(const std::vector<std::string>& input_str_vec);
-	//static_cast<ICDElementSchema>(int schema_from_string);
-	
+    // methods/c'tors
+    ICDElement();
+    ~ICDElement();
+    ICDElement(const ICDElement& C);
+    ICDElement& operator=(const ICDElement& C);
+    bool Fill(const std::string& icdelem_str);
+    bool FillElements(const std::vector<std::string>& input_str_vec);
+    //static_cast<ICDElementSchema>(int schema_from_string);
 };
 
 #endif
