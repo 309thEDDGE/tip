@@ -24,7 +24,7 @@ RUN ./tip_scripts/conda-mirror/clone.sh
 WORKDIR /tip/tip_scripts/singleuser
 RUN pip install --no-cache-dir conda-lock==0.10.0
 ENV SINGLEUSER_CHANNEL_DIR = "/tip/tip_scripts/singleuser/singleuser-channel"
-RUN python -m conda_vendor local_channels -f /tip/tip_scripts/singleuser/singleuser.yml -l $SINGLEUSER_CHANNEL_DIR -c
+RUN python -m conda_vendor local_channels -f singleuser.yml -c
 WORKDIR /
 
 RUN conda clean -afy
@@ -40,7 +40,7 @@ RUN mkdir /home/user/miniconda3
 COPY --from=builder --chown=user:user /home/user/miniconda3 /home/user/miniconda3
 COPY --from=builder --chown=user:user /local-channel /home/user/local-channel
 COPY --from=builder --chown=user:user /local-mirror /home/user/local-mirror
-COPY --from=builder --chown=user:user /tip/tip_scripts/singleuser/singleuser-channel /home/user/singleuser-channel
+COPY --from=builder --chown=user:user /tip/tip_scripts/singleuser/local_channel /home/user/singleuser-channel
 # Copy default conf directory for tip
 COPY --chown=user:user conf /home/user/miniconda3/conf
 # Nice user facing step so that users don't have to copy default conf from the
