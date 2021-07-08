@@ -35,7 +35,7 @@ FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bun
 RUN groupadd -r user && useradd -r -g user user && mkdir /home/user && \ 
 chown -R user:user /home/user 
 USER user
-RUN mkdir /home/user/miniconda3
+RUN mkdir /home/user/miniconda3 && mkdir /home/user/miniconda3/notebooks
 
 COPY --from=builder --chown=user:user /home/user/miniconda3 /home/user/miniconda3
 COPY --from=builder --chown=user:user /local-channel /home/user/local-channel
@@ -46,6 +46,9 @@ COPY --chown=user:user conf /home/user/miniconda3/conf
 # Nice user facing step so that users don't have to copy default conf from the
 # conf directory in /root/miniconda3/
 COPY --chown=user:user conf/default_conf/*.yaml /home/user/miniconda3/conf/
+# Copy Jupyterlab config
+RUN mkdir /home/user/.jupyter/
+COPY --chown=user:user jupyter_notebook_config.py /home/user/.jupyter/
 
 # Twistlock: private key stored in image
 USER root
@@ -59,6 +62,7 @@ rm -rf /home/user/miniconda3/include
 
 USER user
 ENV PATH=/home/user/miniconda3/bin:$PATH
+WORKDIR /home/user/
 
 # This is to validate the environment solves via local channels
 RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow -c file:///home/user/local-channel -c /home/user/local-mirror -c /home/user/singleuser-channel --offline --dry-run
