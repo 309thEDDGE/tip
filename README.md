@@ -111,6 +111,26 @@ If the `parse_and_translate.py` script is used, relevant config files are automa
 
 ## Usage
 
+### How to use TIP singleuser container
+1. Run the container
+```
+docker run -it -p 8888:8888 registry.il2.dso.mil/skicamp/project-opal/tip:1bfbad64
+
+```
+
+2. Once inside the container, build the tip environment using available
+   local channels
+```
+conda create -n tip tip jupyterlab pandas matplotlib pyarrow -c file:///home/user/local-channel -c /home/user/local-mirror -c /home/user/singleuser-channel --offline
+```
+3. Activate the newly created environment
+```
+source activate tip
+jupyter lab --ip 0.0.0.0 --port 8888 --no-browser
+```
+4. The command line will log the URL with token necessary to navigate to
+   the jupyter lab instance.
+
 ### Helper Script (preferred)
 
 * Must be run in an environment in which the sys.path can be appended to by the script (i.e., not the base conda environment)

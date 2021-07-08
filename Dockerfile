@@ -20,7 +20,6 @@ ENV CONDA_MIRROR_DIR="/local-mirror"
 ENV MIRROR_CONFIG="tip_scripts/conda-mirror/mirror_config.yaml"
 RUN ./tip_scripts/conda-mirror/clone.sh
 
-
 WORKDIR /tip/tip_scripts/singleuser
 RUN pip install --no-cache-dir conda-lock==0.10.0
 ENV SINGLEUSER_CHANNEL_DIR = "/tip/tip_scripts/singleuser/singleuser-channel"
@@ -38,8 +37,11 @@ USER user
 RUN mkdir /home/user/miniconda3 && mkdir /home/user/miniconda3/notebooks
 
 COPY --from=builder --chown=user:user /home/user/miniconda3 /home/user/miniconda3
+# tip built artifacts + conda packages that are not available in main channel
 COPY --from=builder --chown=user:user /local-channel /home/user/local-channel
+# tip dependencies e.g arrow-cpp (available in main channel repo.anaconda.com/main/)
 COPY --from=builder --chown=user:user /local-mirror /home/user/local-mirror
+# singleuser channel built with conda-vendor
 COPY --from=builder --chown=user:user /tip/tip_scripts/singleuser/local_channel /home/user/singleuser-channel
 # Copy default conf directory for tip
 COPY --chown=user:user conf /home/user/miniconda3/conf
