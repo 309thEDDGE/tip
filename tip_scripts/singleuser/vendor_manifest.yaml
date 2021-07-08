@@ -9,11 +9,11 @@ resources:
   validation:
     type: sha256
     value: 05f806e9b610f80e15f2c8d7b4e9a7a2817ed4870b85427acb2a89a1db44ec0e
-- name: ca-certificates-2021.5.25-h06a4308_1.conda
-  url: https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2021.5.25-h06a4308_1.conda
+- name: ca-certificates-2021.7.5-h06a4308_1.conda
+  url: https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2021.7.5-h06a4308_1.conda
   validation:
     type: sha256
-    value: 6f88ed7629479ae99fb8b75a64aaf46a12a445e981f2c9353a8f3128b944ee1a
+    value: 62ce49d5262991b1d2ad46e47b2ea53c793c65f98d4c210bbf17a89a25d837ae
 - name: intel-openmp-2021.2.0-h06a4308_610.conda
   url: https://repo.anaconda.com/pkgs/main/linux-64/intel-openmp-2021.2.0-h06a4308_610.conda
   validation:
