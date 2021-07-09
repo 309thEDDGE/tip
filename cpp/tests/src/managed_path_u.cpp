@@ -94,6 +94,16 @@ TEST(ManagedPathTest, StringConstructorRemovesDotSlash)
     EXPECT_EQ(mp.RawString(), expected_path.RawString());
 }
 
+TEST(ManagedPathTest, StringConstructorRemovesTrailingSlash)
+{
+    std::string p = "/my/path/data.txt/";
+    ManagedPath expected_path(std::string("/my/path/data.txt"));
+    ManagedPath mp(p);
+    EXPECT_EQ(mp.RawString(), expected_path.RawString());
+}
+
+
+
 TEST(ManagedPathTest, InitializerListConstructor1Arg)
 {
     std::string p = "data.txt";

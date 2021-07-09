@@ -6,6 +6,11 @@ ManagedPath::ManagedPath(const std::string& input_path)
     std::string mod_input_path = input_path;
     if (mod_input_path.find("./") == 0)
         mod_input_path = mod_input_path.substr(2);
+
+    // Remove trailiing "/"
+    if (mod_input_path.find_last_of("/") == mod_input_path.size() - 1)
+        mod_input_path = mod_input_path.substr(0, mod_input_path.size() - 1);
+    
     this->assign(mod_input_path);
 }
 

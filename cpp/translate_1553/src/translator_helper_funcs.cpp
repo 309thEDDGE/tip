@@ -8,7 +8,7 @@ bool ParseArgs(int argc, char* argv[], std::string& str_input_path,
     {
         printf(
             "Usage: tip_translate <1553 Parquet path> <DTS1553 path> [output dir] "
-            "[config dir path] [log dir]\nNeeds input path.\n");
+            "[config dir path] [log dir]\nNeeds ch10 and DTS (ICD) input paths.\n");
         return false;
     }
     str_input_path = std::string(argv[1]);
@@ -40,6 +40,7 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd
                    ManagedPath& icd_schema_file_path, ManagedPath& log_dir)
 {
     ArgumentValidation av;
+
     if (!av.CheckExtension(str_input_path, "parquet"))
     {
         printf("Input path \"%s\" does not have extension \"parquet\"\n",
