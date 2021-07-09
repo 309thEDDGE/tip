@@ -16,8 +16,8 @@ class YamlReader
     bool Read(std::string parameter, T& output, bool print = false);
 
    public:
-    YamlReader(){}
-    ~YamlReader(){}
+    YamlReader() {}
+    ~YamlReader() {}
 
     bool LinkFile(std::string file_name);
 
@@ -101,7 +101,7 @@ inline bool YamlReader::GetParams(std::string parameter, T& output, T lower_boun
             if (print)
             {
                 ss << "\nParameter " << parameter << " (" << output << ") is out of range [" << lower_bound << " , " << upper_bound << "]\n";
-                printf("%s",ss.str().c_str());
+                printf("%s", ss.str().c_str());
             }
             return false;
         }

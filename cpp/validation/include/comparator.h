@@ -46,7 +46,7 @@ class Comparator
         failure_ = false;
     };
 
-    ~Comparator(){}
+    ~Comparator() {}
 
     /*
 		Pass the two parquet folder paths to be compared

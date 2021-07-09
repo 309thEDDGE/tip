@@ -2,8 +2,8 @@
 #include "gmock/gmock.h"
 #include "spdlog_setup_helper_funcs.h"
 
-int main(int argc, char** argv) {
-
+int main(int argc, char** argv)
+{
     //Create a logger with the name used in ParseManager.
     std::string logger_name = "pm_logger";
     CreateNullLoggerWithName(logger_name);

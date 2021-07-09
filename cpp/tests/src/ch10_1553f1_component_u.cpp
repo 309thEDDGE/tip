@@ -4,7 +4,7 @@
 
 class Ch101553F1ComponentTest : public ::testing::Test
 {
-protected:
+   protected:
     Ch101553F1Component comp_;
     uint64_t wrd_cnt_;
     const uint8_t* data_ptr_;
@@ -12,8 +12,7 @@ protected:
     Ch10Context ctx_;
     MilStd1553F1DataHeaderCommWordFmt fmt_;
 
-    Ch101553F1ComponentTest() : wrd_cnt_(0), data_ptr_(nullptr),
-        status_(Ch10Status::NONE), ctx_(0), comp_(&ctx_)
+    Ch101553F1ComponentTest() : wrd_cnt_(0), data_ptr_(nullptr), status_(Ch10Status::NONE), ctx_(0), comp_(&ctx_)
     {
     }
 };
@@ -34,7 +33,7 @@ TEST_F(Ch101553F1ComponentTest, GetWordCountFromDataHeaderRTtoRT)
 TEST_F(Ch101553F1ComponentTest, GetWordCountFromDataHeaderNonRTtoRTModeCode)
 {
     fmt_.RR = 0;
-    fmt_.word_count1 = 12; // <= 15 ==> no data word
+    fmt_.word_count1 = 12;  // <= 15 ==> no data word
     fmt_.sub_addr1 = 0;
     wrd_cnt_ = comp_.GetWordCountFromDataHeader(&fmt_);
     EXPECT_EQ(0, wrd_cnt_);
@@ -47,7 +46,7 @@ TEST_F(Ch101553F1ComponentTest, GetWordCountFromDataHeaderNonRTtoRTModeCode)
 
     // Repeat two tests with sub_addr1 == 31, also mode code
     fmt_.sub_addr1 = 31;
-    fmt_.word_count1 = 12; // <= 15 ==> no data word
+    fmt_.word_count1 = 12;  // <= 15 ==> no data word
     wrd_cnt_ = comp_.GetWordCountFromDataHeader(&fmt_);
     EXPECT_EQ(0, wrd_cnt_);
 
@@ -90,7 +89,7 @@ TEST_F(Ch101553F1ComponentTest, ParsePayloadWordCountRTtoRT)
     fmt_.word_count1 = 20;
     fmt_.sub_addr1 = 10;
 
-    // Set data pointer to address of MilStd1553F1DataHeaderCommWordFmt 
+    // Set data pointer to address of MilStd1553F1DataHeaderCommWordFmt
     // instance.
     data_ptr_ = (const uint8_t*)&fmt_;
 
@@ -109,7 +108,7 @@ TEST_F(Ch101553F1ComponentTest, ParsePayloadWordCountRTtoRT)
 
     // length = 15 words, 15-3 = 12 words for RTtoRT < 32
     fmt_.length = 30;
-    fmt_.word_count1 = 0; // 32
+    fmt_.word_count1 = 0;  // 32
     status_ = comp_.ParsePayload(data_ptr_, &fmt_);
     EXPECT_EQ(status_, Ch10Status::OK);
     EXPECT_EQ(comp_.expected_payload_word_count, 32);
@@ -123,11 +122,11 @@ TEST_F(Ch101553F1ComponentTest, ParsePayloadWordCountNonRTtoRT)
     // length = 25 words, 25-2 = 23 words for RT to BC > 20
     fmt_.length = 50;
     fmt_.RR = 0;
-    fmt_.tx1 = 1; // RT to BC
+    fmt_.tx1 = 1;  // RT to BC
     fmt_.word_count1 = 20;
     fmt_.sub_addr1 = 10;
 
-    // Set data pointer to address of MilStd1553F1DataHeaderCommWordFmt 
+    // Set data pointer to address of MilStd1553F1DataHeaderCommWordFmt
     // instance.
     data_ptr_ = (const uint8_t*)&fmt_;
 
@@ -146,7 +145,7 @@ TEST_F(Ch101553F1ComponentTest, ParsePayloadWordCountNonRTtoRT)
 
     // length = 15 words, 15-2 = 13 words for RT to BC < 32
     fmt_.length = 30;
-    fmt_.word_count1 = 0; // 32
+    fmt_.word_count1 = 0;  // 32
     status_ = comp_.ParsePayload(data_ptr_, &fmt_);
     EXPECT_EQ(status_, Ch10Status::OK);
     EXPECT_EQ(comp_.expected_payload_word_count, 32);
@@ -168,8 +167,8 @@ TEST_F(Ch101553F1ComponentTest, ParsePayloadWordCountNonRTtoRT)
     // Mode code with payload, RT to BC, skip mode command word followed
     // by status word. Payload ought to be incremented by two.
     fmt_.sub_addr1 = 0;
-    fmt_.word_count1 = 20; // > 15
-    fmt_.tx1 = 1; // RT to BC
+    fmt_.word_count1 = 20;  // > 15
+    fmt_.tx1 = 1;           // RT to BC
     status_ = comp_.ParsePayload(data_ptr_, &fmt_);
     EXPECT_EQ(status_, Ch10Status::OK);
     EXPECT_EQ(comp_.expected_payload_word_count, 1);
@@ -180,8 +179,8 @@ TEST_F(Ch101553F1ComponentTest, ParsePayloadWordCountNonRTtoRT)
     // Mode code with payload, BC to RT, skip mode command word only.
     // Payload ought to be incremented by one.
     fmt_.sub_addr1 = 0;
-    fmt_.word_count1 = 20; // > 15
-    fmt_.tx1 = 0; // BC to RT
+    fmt_.word_count1 = 20;  // > 15
+    fmt_.tx1 = 0;           // BC to RT
     status_ = comp_.ParsePayload(data_ptr_, &fmt_);
     EXPECT_EQ(status_, Ch10Status::OK);
     EXPECT_EQ(comp_.expected_payload_word_count, 1);

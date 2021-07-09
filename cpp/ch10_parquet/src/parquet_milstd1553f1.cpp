@@ -226,8 +226,8 @@ void ParquetMilStd1553F1::commit()
 {
     if (temp_element_count_ > 0)
     {
-        int n_calls = static_cast<int>(std::ceil(static_cast<double>(temp_element_count_) / 
-            static_cast<double>(DEFAULT_ROW_GROUP_COUNT)));
+        int n_calls = static_cast<int>(std::ceil(static_cast<double>(temp_element_count_) /
+                                                 static_cast<double>(DEFAULT_ROW_GROUP_COUNT)));
         for (int i = 0; i < n_calls; i++)
         {
             if (i == n_calls - 1)

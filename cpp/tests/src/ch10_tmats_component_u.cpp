@@ -4,7 +4,7 @@
 
 class Ch10TMATSComponentTest : public ::testing::Test
 {
-protected:
+   protected:
     Ch10TMATSCSDWFmt tmats_fmt_;
     Ch10TMATSComponent tmats_comp_;
     const uint8_t* data_ptr_;
@@ -23,14 +23,12 @@ protected:
     uint8_t time_fmt_;
     Ch10PacketHeaderFmt hdr_fmt_;
 
-    Ch10TMATSComponentTest() : data_ptr_(nullptr), orig_data_ptr_(nullptr), rtc_(0),
-        status_(Ch10Status::NONE), body_ptr_(nullptr), ctx_(0), tmats_comp_(&ctx_), abs_pos_(0),
-        pkt_size_(0), body_size_(0), rtc1_(0), rtc2_(0), intrapkt_ts_src_(0), time_fmt_(1)
+    Ch10TMATSComponentTest() : data_ptr_(nullptr), orig_data_ptr_(nullptr), rtc_(0), status_(Ch10Status::NONE), body_ptr_(nullptr), ctx_(0), tmats_comp_(&ctx_), abs_pos_(0), pkt_size_(0), body_size_(0), rtc1_(0), rtc2_(0), intrapkt_ts_src_(0), time_fmt_(1)
     {
         // Fill out values for fake tmats csdw data.
-        tmats_fmt_.frmt = 0; // ascii
-        tmats_fmt_.srcc = 0; // setup record has not changed
-        tmats_fmt_.ch10ver = 0x0B; // 106-15
+        tmats_fmt_.frmt = 0;        // ascii
+        tmats_fmt_.srcc = 0;        // setup record has not changed
+        tmats_fmt_.ch10ver = 0x0B;  // 106-15
     }
 };
 
@@ -53,14 +51,14 @@ TEST_F(Ch10TMATSComponentTest, ParseTMATSZeroLength)
 
 TEST_F(Ch10TMATSComponentTest, ParseTMATSCorrectChars)
 {
-    // Setup the context such that the body size is greater than 
+    // Setup the context such that the body size is greater than
     // CSDW and therefore the packet body contains some TMATS matter.
     uint32_t extra_size = 100;
     uint32_t csdw_size = (uint32_t)tmats_comp_.tmats_csdw_elem.size;
     body_size_ = csdw_size + extra_size;
     hdr_fmt_.data_size = body_size_;
     std::vector<char> csdw_and_data(body_size_);
-   
+
     ctx_.UpdateContext(abs_pos_, &hdr_fmt_, rtc_);
 
     // Set the data_ptr_ to the beginning of the vector of char.

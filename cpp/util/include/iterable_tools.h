@@ -450,11 +450,11 @@ std::string IterableTools::GetIterablePrintString(const T& input_iterable, std::
     {
         if (i == 0)
         {
-            snprintf(buff,format_spec.size(), format_spec.c_str(), *it);
+            snprintf(buff, format_spec.size(), format_spec.c_str(), *it);
         }
         else
         {
-            snprintf(buff,format_and_delim.size(), format_and_delim.c_str(), *it);
+            snprintf(buff, format_and_delim.size(), format_and_delim.c_str(), *it);
         }
         ret_val += buff;
         i++;
@@ -718,8 +718,7 @@ std::vector<size_t> IterableTools::ArgSortAscending(const std::vector<T>& input)
 
     // Custom sort the index by the values of input.
     std::sort(idx.begin(), idx.end(),
-              [&input](size_t i1, size_t i2)
-              { return input[i1] < input[i2]; });
+              [&input](size_t i1, size_t i2) { return input[i1] < input[i2]; });
     return idx;
 }
 
@@ -733,8 +732,7 @@ std::vector<size_t> IterableTools::ArgSortDescending(const std::vector<T>& input
 
     // Custom sort the index by the values of input in descending order.
     std::sort(idx.begin(), idx.end(),
-              [&input](size_t i1, size_t i2)
-              { return input[i1] > input[i2]; });
+              [&input](size_t i1, size_t i2) { return input[i1] > input[i2]; });
     return idx;
 }
 

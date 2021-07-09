@@ -608,8 +608,7 @@ bool ICDData::IsYamlFile(const ManagedPath& icd_path)
     // Get the extension and cast to lower case.
     std::string extension = icd_path.extension().string();
     std::transform(extension.begin(), extension.end(), extension.begin(),
-                   [](unsigned char c)
-                   { return std::tolower(c); });
+                   [](unsigned char c) { return std::tolower(c); });
 
     // Does it match yaml or yml?
     if (extension == ".yaml" || extension == ".yml")

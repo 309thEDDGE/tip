@@ -221,8 +221,7 @@ template <class C, int N>
 uint32_t DataOrg::binary_search_struct_cstr(C* data, uint32_t& data_count, const char* search_key, char (C::*field)[N])
 {
     auto it = std::lower_bound(data, data + data_count, search_key,
-                               [&](const C& lhs, const char* rhs)
-                               {
+                               [&](const C& lhs, const char* rhs) {
                                    if (std::strcmp(lhs.*field, rhs) < 0)
                                    {
                                        return true;
@@ -243,8 +242,7 @@ uint32_t DataOrg::binary_search_struct_cstr_part(C* data, uint32_t& data_count, 
 {
     size_t num = std::strlen(search_key);
     auto it = std::lower_bound(data, data + data_count, search_key,
-                               [&](const C& lhs, const char* rhs)
-                               {
+                               [&](const C& lhs, const char* rhs) {
                                    if (std::strcmp(lhs.*field, rhs) < 0)
                                    {
                                        return true;
@@ -290,8 +288,7 @@ std::vector<size_t> DataOrg::arg_sort_ascending(const std::vector<T>& v)
     std::vector<size_t> idx(v.size());
     std::iota(idx.begin(), idx.end(), 0);
 
-    std::sort(idx.begin(), idx.end(), [&v](size_t i1, size_t i2)
-              { return v[i1] < v[i2]; });
+    std::sort(idx.begin(), idx.end(), [&v](size_t i1, size_t i2) { return v[i1] < v[i2]; });
     return idx;
 }
 
@@ -301,8 +298,7 @@ std::vector<size_t> DataOrg::arg_sort_descending(const std::vector<T>& v)
     std::vector<size_t> idx(v.size());
     std::iota(idx.begin(), idx.end(), 0);
 
-    std::sort(idx.begin(), idx.end(), [&v](size_t i1, size_t i2)
-              { return v[i1] > v[i2]; });
+    std::sort(idx.begin(), idx.end(), [&v](size_t i1, size_t i2) { return v[i1] > v[i2]; });
     return idx;
 }
 

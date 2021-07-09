@@ -5,7 +5,7 @@ bool UserInput::GetUnsignedInt(uint64_t& output,
                                const std::set<uint64_t>* const valid_options,
                                std::vector<std::string>* const test_input)
 {
-    printf("%s",prompt.c_str());
+    printf("%s", prompt.c_str());
     printf("\n");
 
     std::string input;
@@ -95,7 +95,7 @@ bool UserInput::GetString(std::string& output,
                           const std::set<std::string>* const valid_options,
                           std::vector<std::string>* const test_input)
 {
-    printf("%s",prompt.c_str());
+    printf("%s", prompt.c_str());
     printf("\n");
 
     std::string input;

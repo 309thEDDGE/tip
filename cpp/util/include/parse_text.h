@@ -11,8 +11,8 @@ class ParseText
 {
    private:
    public:
-    ParseText(){}
-    ~ParseText(){}
+    ParseText() {}
+    ~ParseText() {}
 
     std::vector<std::string> Split(std::string input_string, const char& delim);
     bool ConvertInt(const std::string& convert_string, int& output);

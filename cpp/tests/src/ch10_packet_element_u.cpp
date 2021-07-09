@@ -5,10 +5,10 @@
 // bitfield
 class BitField
 {
-public:
-    uint32_t count  : 24;
-    uint32_t val    : 7;
-    uint32_t flag   : 1;
+   public:
+    uint32_t count : 24;
+    uint32_t val : 7;
+    uint32_t flag : 1;
 };
 
 TEST(Ch10PacketElementTest, SetFloat)
@@ -16,7 +16,7 @@ TEST(Ch10PacketElementTest, SetFloat)
     float f = 30.2;
     Ch10PacketElement<float> elem;
     EXPECT_EQ(sizeof(float), elem.size);
-    
+
     ASSERT_TRUE(*elem.element == nullptr);
     elem.Set((const uint8_t*)&f);
     ASSERT_TRUE(elem.element != nullptr);
@@ -35,7 +35,7 @@ TEST(Ch10PacketElementTest, SetBitField)
     obj.flag = 1;
     Ch10PacketElement<BitField> elem;
     EXPECT_EQ(sizeof(obj), elem.size);
-    
+
     ASSERT_TRUE(*elem.element == nullptr);
     elem.Set((const uint8_t*)&obj);
     ASSERT_TRUE(elem.element != nullptr);

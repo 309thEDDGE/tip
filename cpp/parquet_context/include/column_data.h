@@ -144,7 +144,7 @@ class ColumnData
             initial_max_row_size_ = data.size();
     }
 
-    ~ColumnData(){}
+    ~ColumnData() {}
 };
 
 #endif

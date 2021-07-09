@@ -573,7 +573,7 @@ uint8_t Translatable1553Table::configure_parquet_context(ManagedPath& output_dir
 
         // Create the output parquet file name based on the parquet_path file name.
         char buff[20];
-        snprintf(buff,sizeof(buff), "__%02hhu.parquet", id);
+        snprintf(buff, sizeof(buff), "__%02hhu.parquet", id);
         std::string ext(buff);
         final_parquet_path = parquet_dir_path.CreatePathObject(parquet_dir_path,
                                                                ext);

@@ -63,8 +63,7 @@ bool DTS1553::ProcessLinesAsYaml(const std::vector<std::string>& lines,
     // understand context.
     std::stringstream ss;
     std::for_each(lines.begin(), lines.end(),
-                  [&ss](const std::string& s)
-                  {
+                  [&ss](const std::string& s) {
                       ss << s;
                       ss << "\n";
                   });

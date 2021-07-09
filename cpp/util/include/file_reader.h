@@ -13,7 +13,7 @@ class FileReader
     std::vector<std::string> lines;
 
    public:
-    FileReader(){}
+    FileReader() {}
 
     std::vector<std::string> GetLines() { return lines; }
     int ReadFile(std::string);

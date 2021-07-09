@@ -15,8 +15,8 @@ class UserInput
     IterableTools iterable_tools_;
 
    public:
-    UserInput(){}
-    ~UserInput(){}
+    UserInput() {}
+    ~UserInput() {}
 
     // Gets an unsigned integer from the user
     // Continues to prompt the user until the input is valid or

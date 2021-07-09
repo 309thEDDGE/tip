@@ -145,7 +145,7 @@ std::string BusMap::PrintFinalMap()
 
     ss << iterable_tools_.GetPrintBar() << "\n\n";
 
-    printf("%s",ss.str().c_str());
+    printf("%s", ss.str().c_str());
     return ss.str();
 }
 

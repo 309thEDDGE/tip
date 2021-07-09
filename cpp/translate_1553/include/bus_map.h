@@ -52,8 +52,8 @@ class BusMap
     std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>> votes_;
 
    public:
-    BusMap() : tmats_present_(false), mask_(UINT64_MAX), vote_threshold_(1){}
-    ~BusMap(){}
+    BusMap() : tmats_present_(false), mask_(UINT64_MAX), vote_threshold_(1) {}
+    ~BusMap() {}
 
     /*
 	 Initialize bus map with required maps

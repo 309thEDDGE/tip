@@ -502,7 +502,7 @@ void ICDTranslate::TranslateSignedBits(const std::vector<uint16_t>& input_words,
                         middle_part += (~(input_words[elem_word_count_ * i + midi]) << ((elem_word_count_ - midi - 1) * 16));
                     }
                     output_eu[i] = static_cast<double>(((part1 & mask1_twos_) << part1_upshift) +
-                                          (part2 & mask2_twos_) + middle_part) *
+                                                       (part2 & mask2_twos_) + middle_part) *
                                    -scale_twos_;
                 }
                 else

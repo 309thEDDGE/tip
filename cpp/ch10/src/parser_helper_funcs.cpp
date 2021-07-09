@@ -8,7 +8,7 @@ bool ParseArgs(int argc, char* argv[], std::string& str_input_path, std::string&
     {
         printf(
             "Usage: tip_parse <ch10 path> [output path] [config dir] [log dir]\n"
-            "Needs input path.\n");
+            "Needs ch10 input path.\n");
         return false;
     }
     str_input_path = std::string(argv[1]);
@@ -50,7 +50,7 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_out
     {
         printf(
             "User-defined input path does not have one of the case-insensitive "
-            "extension: ch10, c10\n");
+            "extensions: ch10, c10\n");
         return false;
     }
     // Check utf-8 conformity and verify existence of input path
