@@ -4,7 +4,7 @@
 
 class Ch10PacketHeaderComponentTest : public ::testing::Test
 {
-protected:
+   protected:
     Ch10PacketHeaderFmt pkt_hdr_fmt_;
     Ch10Context ctx_;
     Ch10PacketHeaderComponent ch10_pkt_hdr_comp_;
@@ -17,9 +17,7 @@ protected:
     std::vector<uint32_t> fake_body_and_footer32_;
     uint64_t time_ns_;
 
-    Ch10PacketHeaderComponentTest() : data_ptr_(nullptr), orig_data_ptr_(nullptr),
-        status_(Ch10Status::NONE), body_ptr_(nullptr), ctx_(0, 0), ch10_pkt_hdr_comp_(&ctx_),
-        time_ns_(0)
+    Ch10PacketHeaderComponentTest() : data_ptr_(nullptr), orig_data_ptr_(nullptr), status_(Ch10Status::NONE), body_ptr_(nullptr), ctx_(0, 0), ch10_pkt_hdr_comp_(&ctx_), time_ns_(0)
     {
         // Fill out values for fake header data.
         pkt_hdr_fmt_.sync = ch10_pkt_hdr_comp_.sync_;
@@ -28,16 +26,16 @@ protected:
         pkt_hdr_fmt_.data_size = 800;
         pkt_hdr_fmt_.data_type_ver = 1;
         pkt_hdr_fmt_.seq_num = 0;
-        pkt_hdr_fmt_.checksum_existence = 2; // 16-bit header checksum
+        pkt_hdr_fmt_.checksum_existence = 2;  // 16-bit header checksum
         pkt_hdr_fmt_.time_format = 0;
         pkt_hdr_fmt_.overflow_err = 0;
         pkt_hdr_fmt_.sync_err = 0;
         pkt_hdr_fmt_.intrapkt_ts_source = 0;
         pkt_hdr_fmt_.secondary_hdr = 0;
-        pkt_hdr_fmt_.data_type = 0x01; // TMATS
-        pkt_hdr_fmt_.rtc1 = 0; // set later
-        pkt_hdr_fmt_.rtc2 = 0; // set later
-        pkt_hdr_fmt_.checksum = 0; // set later
+        pkt_hdr_fmt_.data_type = 0x01;  // TMATS
+        pkt_hdr_fmt_.rtc1 = 0;          // set later
+        pkt_hdr_fmt_.rtc2 = 0;          // set later
+        pkt_hdr_fmt_.checksum = 0;      // set later
     }
 
     ~Ch10PacketHeaderComponentTest()
@@ -67,15 +65,15 @@ protected:
     }
 
     const uint8_t* CreateFakeBodyAndFooter8(int body_and_footer_byte_length,
-        int secondary_header_present, int& corrected_total_pkt_len)
+                                            int secondary_header_present, int& corrected_total_pkt_len)
     {
         int corrected_body_and_footer_len = 0;
-        CreateValidPacketLength(body_and_footer_byte_length, 
-            secondary_header_present, corrected_body_and_footer_len,
-            corrected_total_pkt_len);
+        CreateValidPacketLength(body_and_footer_byte_length,
+                                secondary_header_present, corrected_body_and_footer_len,
+                                corrected_total_pkt_len);
 
         //printf("corrected body and footer: %d, corrected total: %d\n",
-            //corrected_body_and_footer_len, corrected_total_pkt_len);
+        //corrected_body_and_footer_len, corrected_total_pkt_len);
         fake_body_and_footer8_.resize(corrected_body_and_footer_len);
         uint8_t sum = 0;
         for (int i = 0; i < corrected_body_and_footer_len - 1; i++)
@@ -90,12 +88,12 @@ protected:
     }
 
     const uint8_t* CreateFakeBodyAndFooter16(int body_and_footer_byte_length,
-        int secondary_header_present, int& corrected_total_pkt_len)
+                                             int secondary_header_present, int& corrected_total_pkt_len)
     {
         int corrected_body_and_footer_len = 0;
         CreateValidPacketLength(body_and_footer_byte_length,
-            secondary_header_present, corrected_body_and_footer_len,
-            corrected_total_pkt_len);
+                                secondary_header_present, corrected_body_and_footer_len,
+                                corrected_total_pkt_len);
 
         int data_units = corrected_body_and_footer_len / 2;
         fake_body_and_footer16_.resize(data_units);
@@ -112,12 +110,12 @@ protected:
     }
 
     const uint8_t* CreateFakeBodyAndFooter32(int body_and_footer_byte_length,
-        int secondary_header_present, int& corrected_total_pkt_len)
+                                             int secondary_header_present, int& corrected_total_pkt_len)
     {
         int corrected_body_and_footer_len = 0;
         CreateValidPacketLength(body_and_footer_byte_length,
-            secondary_header_present, corrected_body_and_footer_len,
-            corrected_total_pkt_len);
+                                secondary_header_present, corrected_body_and_footer_len,
+                                corrected_total_pkt_len);
 
         int data_units = corrected_body_and_footer_len / 4;
         fake_body_and_footer32_.resize(data_units);
@@ -131,13 +129,13 @@ protected:
         return (const uint8_t*)fake_body_and_footer32_.data();
     }
 
-    void CreateValidPacketLength(int body_and_footer_len, int sec_hdr_present, 
-        int& corrected_body_and_footer_len,
-        int& corrected_total_pkt_len)
+    void CreateValidPacketLength(int body_and_footer_len, int sec_hdr_present,
+                                 int& corrected_body_and_footer_len,
+                                 int& corrected_total_pkt_len)
     {
         int total_pkt_size = 0;
         if (sec_hdr_present)
-        {   
+        {
             // secondary header length = 12 bytes
             // primary header length = 24 bytes
             total_pkt_size = body_and_footer_len + 12 + 24;
@@ -223,7 +221,7 @@ TEST_F(Ch10PacketHeaderComponentTest, ParseSecondaryHeaderInvalidFormat)
 {
     // Set secondary header not present.
     pkt_hdr_fmt_.secondary_hdr = 1;
-    pkt_hdr_fmt_.time_format = 3; // invalid
+    pkt_hdr_fmt_.time_format = 3;  // invalid
 
     // Calculate and insert correct checksum such that
     // no checksum errors are returned.
@@ -267,59 +265,59 @@ TEST_F(Ch10PacketHeaderComponentTest, VerifyHeaderChecksumFalse)
 
 TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksumNoChecksum)
 {
-    pkt_hdr_fmt_.checksum_existence = 0; // no checksum present
+    pkt_hdr_fmt_.checksum_existence = 0;  // no checksum present
 
     status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_, pkt_hdr_fmt_.checksum_existence,
-        1000, 1);
+                                                    1000, 1);
     EXPECT_EQ(status_, Ch10Status::CHECKSUM_NOT_PRESENT);
 }
 
 TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum8BitNoSecondaryTrue)
 {
-    pkt_hdr_fmt_.checksum_existence = 1; // 8-bit
+    pkt_hdr_fmt_.checksum_existence = 1;  // 8-bit
     // Set secondary header not present.
     pkt_hdr_fmt_.secondary_hdr = 0;
 
     int body_and_footer_len = 30;
     int corr_total_pkt_len = 0;
     body_ptr_ = CreateFakeBodyAndFooter8(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
-        corr_total_pkt_len);
+                                         corr_total_pkt_len);
 
-    status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_, 
-        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
+    status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
+                                                    pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
     EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
 }
 
 TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum8BitNoSecondaryFalse)
 {
-    pkt_hdr_fmt_.checksum_existence = 1; // 8-bit
+    pkt_hdr_fmt_.checksum_existence = 1;  // 8-bit
     // Set secondary header not present.
     pkt_hdr_fmt_.secondary_hdr = 0;
 
     int body_and_footer_len = 36;
     int corr_total_pkt_len = 0;
     body_ptr_ = CreateFakeBodyAndFooter8(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
-        corr_total_pkt_len);
+                                         corr_total_pkt_len);
 
     // Add bad values by using incorrect packet length.
     status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
-        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len + 4, pkt_hdr_fmt_.secondary_hdr);
+                                                    pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len + 4, pkt_hdr_fmt_.secondary_hdr);
     EXPECT_EQ(status_, Ch10Status::CHECKSUM_FALSE);
 }
 
 TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum8BitWithSecondaryTrue)
 {
-    pkt_hdr_fmt_.checksum_existence = 1; // 8-bit
+    pkt_hdr_fmt_.checksum_existence = 1;  // 8-bit
     // Set secondary header not present.
     pkt_hdr_fmt_.secondary_hdr = 1;
 
     int body_and_footer_len = 55;
     int corr_total_pkt_len = 0;
     body_ptr_ = CreateFakeBodyAndFooter8(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
-        corr_total_pkt_len);
+                                         corr_total_pkt_len);
 
     status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
-        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
+                                                    pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
     EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
 }
 
@@ -329,107 +327,107 @@ TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum8BitWithSecondaryTrue)
 
 TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum16BitNoSecondaryTrue)
 {
-    pkt_hdr_fmt_.checksum_existence = 2; // 16-bit
+    pkt_hdr_fmt_.checksum_existence = 2;  // 16-bit
     // Set secondary header not present.
     pkt_hdr_fmt_.secondary_hdr = 0;
 
     int body_and_footer_len = 300;
     int corr_total_pkt_len = 0;
     body_ptr_ = CreateFakeBodyAndFooter16(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
-        corr_total_pkt_len);
+                                          corr_total_pkt_len);
 
     status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
-        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
+                                                    pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
     EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
 }
 
 TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum16BitNoSecondaryFalse)
 {
-    pkt_hdr_fmt_.checksum_existence = 2; // 16-bit
+    pkt_hdr_fmt_.checksum_existence = 2;  // 16-bit
     // Set secondary header not present.
     pkt_hdr_fmt_.secondary_hdr = 0;
 
     int body_and_footer_len = 222;
     int corr_total_pkt_len = 0;
     body_ptr_ = CreateFakeBodyAndFooter16(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
-        corr_total_pkt_len);
+                                          corr_total_pkt_len);
 
     // Add bad values by using incorrect packet length.
     status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
-        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len + 4, pkt_hdr_fmt_.secondary_hdr);
+                                                    pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len + 4, pkt_hdr_fmt_.secondary_hdr);
     EXPECT_EQ(status_, Ch10Status::CHECKSUM_FALSE);
 }
 
 TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum16BitWithSecondaryTrue)
 {
-    pkt_hdr_fmt_.checksum_existence = 2; // 16-bit
+    pkt_hdr_fmt_.checksum_existence = 2;  // 16-bit
     // Set secondary header not present.
     pkt_hdr_fmt_.secondary_hdr = 1;
 
     int body_and_footer_len = 478;
     int corr_total_pkt_len = 0;
     body_ptr_ = CreateFakeBodyAndFooter16(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
-        corr_total_pkt_len);
+                                          corr_total_pkt_len);
 
     status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
-        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
+                                                    pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
     EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
 }
 
 TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum32BitNoSecondaryTrue)
 {
-    pkt_hdr_fmt_.checksum_existence = 3; // 32-bit
+    pkt_hdr_fmt_.checksum_existence = 3;  // 32-bit
     // Set secondary header not present.
     pkt_hdr_fmt_.secondary_hdr = 0;
 
     int body_and_footer_len = 3000;
     int corr_total_pkt_len = 0;
     body_ptr_ = CreateFakeBodyAndFooter32(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
-        corr_total_pkt_len);
+                                          corr_total_pkt_len);
 
     status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
-        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
+                                                    pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
     EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
 }
 
 TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum32BitNoSecondaryFalse)
 {
-    pkt_hdr_fmt_.checksum_existence = 3; // 32-bit
+    pkt_hdr_fmt_.checksum_existence = 3;  // 32-bit
     // Set secondary header not present.
     pkt_hdr_fmt_.secondary_hdr = 0;
 
     int body_and_footer_len = 7252;
     int corr_total_pkt_len = 0;
     body_ptr_ = CreateFakeBodyAndFooter32(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
-        corr_total_pkt_len);
+                                          corr_total_pkt_len);
 
     // Add bad values by using incorrect packet length.
     status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
-        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len + 4, pkt_hdr_fmt_.secondary_hdr);
+                                                    pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len + 4, pkt_hdr_fmt_.secondary_hdr);
     EXPECT_EQ(status_, Ch10Status::CHECKSUM_FALSE);
 }
 
 TEST_F(Ch10PacketHeaderComponentTest, VerifyDataChecksum32BitWithSecondaryTrue)
 {
-    pkt_hdr_fmt_.checksum_existence = 3; // 32-bit
+    pkt_hdr_fmt_.checksum_existence = 3;  // 32-bit
     // Set secondary header not present.
     pkt_hdr_fmt_.secondary_hdr = 1;
 
     int body_and_footer_len = 5513;
     int corr_total_pkt_len = 0;
     body_ptr_ = CreateFakeBodyAndFooter32(body_and_footer_len, pkt_hdr_fmt_.secondary_hdr,
-        corr_total_pkt_len);
+                                          corr_total_pkt_len);
 
     status_ = ch10_pkt_hdr_comp_.VerifyDataChecksum(body_ptr_,
-        pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
+                                                    pkt_hdr_fmt_.checksum_existence, corr_total_pkt_len, pkt_hdr_fmt_.secondary_hdr);
     EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
 }
 
 TEST_F(Ch10PacketHeaderComponentTest, VerifySecondaryHeaderChecksumTrue)
 {
-    std::vector<uint8_t> header_data = { 23, 45, 67, 89, 76, 54, 32, 11 };
+    std::vector<uint8_t> header_data = {23, 45, 67, 89, 76, 54, 32, 11};
     const uint8_t* header_data_ptr = (const uint8_t*)header_data.data();
     status_ = ch10_pkt_hdr_comp_.VerifySecondaryHeaderChecksum(header_data_ptr,
-        CalculateSecondaryHeaderChecksum(header_data_ptr));
+                                                               CalculateSecondaryHeaderChecksum(header_data_ptr));
     EXPECT_EQ(status_, Ch10Status::CHECKSUM_TRUE);
 }

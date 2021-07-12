@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstdarg>
+#include <string>
 #include "yaml-cpp/yaml.h"
 #include "parse_text.h"
 #include "yamlsv_log_item.h"
@@ -10,21 +11,21 @@
 
 class YamlSV
 {
-private:
-	ParseText parse_text_;
+   private:
+    ParseText parse_text_;
 
-	static const int buff_size_ = 512;
-	char buffer_[buff_size_];
+    static const int buff_size_ = 512;
+    char buffer_[buff_size_];
 
-	std::string bool_tolower_;
-	bool is_opt_;
-	std::string str_type_;
+    std::string bool_tolower_;
+    bool is_opt_;
+    std::string str_type_;
 
-public:
-	YamlSV();
-	~YamlSV();
+   public:
+    YamlSV();
+    ~YamlSV();
 
-	/*
+    /*
 	Validate a yaml node against a schema node.
 
 	Args:
@@ -36,10 +37,10 @@ public:
 	Return:
 		True if yaml matter under test is validated, false otherwise.
 	*/
-	bool Validate(const YAML::Node& test_node, const YAML::Node& user_schema_node,
-		std::vector<LogItem>& log_output);
+    bool Validate(const YAML::Node& test_node, const YAML::Node& user_schema_node,
+                  std::vector<LogItem>& log_output);
 
-	/*
+    /*
 	Validate a yaml document against a schema document.
 
 	Args:
@@ -51,14 +52,14 @@ public:
 	Return:
 		True if yaml matter under test is validated, false otherwise.
 	*/
-	bool Validate(const std::string& test_doc, const std::string& schema_doc,
-		std::vector<LogItem>& log_output);
+    bool Validate(const std::string& test_doc, const std::string& schema_doc,
+                  std::vector<LogItem>& log_output);
 
-	/////////////////////////////////////////////////////////////////////////////////
-	// Internal use functions below
-	/////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////
+    // Internal use functions below
+    /////////////////////////////////////////////////////////////////////////////////
 
-	/*
+    /*
 	Create a LogItem object with a given LogLevel and message.
 
 	Args: 
@@ -67,10 +68,10 @@ public:
 		level		--> LogLevel specified for the new LogItem
 		message		--> String message specified for the new LogItem
 	*/
-	void AddLogItem(std::vector<LogItem>& log_output, LogLevel level, 
-		std::string message);
+    void AddLogItem(std::vector<LogItem>& log_output, LogLevel level,
+                    std::string message);
 
-	/*
+    /*
 		Create a LogItem object with a given LogLevel and message,
 		which is created by a format string and variable argument
 		count.
@@ -83,10 +84,10 @@ public:
 						with the values passed in the remaining arguments
 		...			--> N arguments passed to the format string
 	*/
-	void AddLogItem(std::vector<LogItem>& log_output, LogLevel level,
-		const char* fmt, ...);
+    void AddLogItem(std::vector<LogItem>& log_output, LogLevel level,
+                    const char* fmt, ...);
 
-	/*
+    /*
 	Compare a schema node against a test node. Handles maps, sequences, and 
 	scalars. Assumes the two nodes have the same structure. Intended to be 
 	used recursively.
@@ -101,10 +102,10 @@ public:
 		False if test matter does not conform to schema or an error occurs, 
 		true otherwise.
 	*/
-	bool ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_node,
-		std::vector<LogItem>& log_output);
+    bool ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_node,
+                     std::vector<LogItem>& log_output);
 
-	/*
+    /*
 	Test a value passed as a string against one of the schema data types.
 	Based on the ParseText::TextIsInteger/Float functions.
 
@@ -119,9 +120,9 @@ public:
 		False if the str_type is invalid or the test_val is not compatible
 		with the schema data type represented by str_type, true otherwise.
 	*/
-	bool VerifyType(const std::string& str_type, const std::string& test_val);
+    bool VerifyType(const std::string& str_type, const std::string& test_val);
 
-	/*
+    /*
 	Test a map element (key-value pair) against a schema element (key-value pair
 	which contains the schema data type) via YAML::const_iterator (node iterators).
 
@@ -137,10 +138,10 @@ public:
 		has data not compatible with the schema data type indicated in the 
 		schema-mapped sequence or map, otherwise true.
 	*/
-	bool TestMapElement(YAML::const_iterator& schema_it, 
-		YAML::const_iterator& test_it, std::vector<LogItem>& log_output);
+    bool TestMapElement(YAML::const_iterator& schema_it,
+                        YAML::const_iterator& test_it, std::vector<LogItem>& log_output);
 
-	/*
+    /*
 	Test a sequence node against a test node.
 
 	Args:
@@ -155,10 +156,10 @@ public:
 		True if each value in the test_node is compatible with the schema 
 		data type, false otherwise of if there is an error.
 	*/
-	bool TestSequence(const YAML::Node& schema_node, const YAML::Node& test_node, 
-		std::vector<LogItem>& log_output);
+    bool TestSequence(const YAML::Node& schema_node, const YAML::Node& test_node,
+                      std::vector<LogItem>& log_output);
 
-	/*
+    /*
 	Get a string representing the standard schema type, after checking for 
 	any modifier characters.
 
@@ -173,9 +174,8 @@ public:
 		True if the test_type includes a valid schema type with or without
 		valid modifier characters.
 	*/
-	bool CheckDataTypeString(const std::string& test_type, std::string& str_type,
-		bool& is_opt);
-
+    bool CheckDataTypeString(const std::string& test_type, std::string& str_type,
+                             bool& is_opt);
 };
 
 #endif

@@ -1,7 +1,6 @@
 
 #include "tmats_parser.h"
 
-
 CodeName::CodeName(std::string raw, bool show_debug)
 {
     debug = show_debug;
@@ -11,7 +10,7 @@ CodeName::CodeName(std::string raw, bool show_debug)
     std::string match_substr;
     if (debug)
         printf("\n\nCodeName::CodeName(): raw = %s\n\n", raw.c_str());
-    while (regex_search(raw, match, (std::regex)"([0-9A-Z\\\\-]*)([a-z]+)"))
+    while (regex_search(raw, match, (std::regex) "([0-9A-Z\\\\-]*)([a-z]+)"))
     {
         prefix = match.prefix();
         match_substr = match.str(1);
@@ -19,8 +18,10 @@ CodeName::CodeName(std::string raw, bool show_debug)
         regex_string += "([0-9]+)";
         if (debug)
         {
-            printf("raw %s, prefix %s, match_substr %s, regex_string %s, "
-                "subattr %s\n", raw.c_str(), prefix.c_str(), match_substr.c_str(), 
+            printf(
+                "raw %s, prefix %s, match_substr %s, regex_string %s, "
+                "subattr %s\n",
+                raw.c_str(), prefix.c_str(), match_substr.c_str(),
                 regex_string.c_str(), match.str(2));
         }
         subattrs.push_back(match.str(2));
@@ -29,7 +30,7 @@ CodeName::CodeName(std::string raw, bool show_debug)
 
     // Find and escape slashes before building the regex.
     std::string escaped;
-    for (int i=0; i<regex_string.length();i++)
+    for (int i = 0; i < regex_string.length(); i++)
     {
         if (regex_string[i] == '\\')
             escaped += "\\\\";
@@ -43,22 +44,20 @@ CodeName::CodeName(std::string raw, bool show_debug)
         printf("\nescaped regex_string %s\n", regex_string.c_str());
 }
 
-
 // Take a regex match (from CodeName->re) and parse out the subattrs (x, n, etc.).
 std::map<std::string, int> CodeName::groups(std::smatch match)
 {
     std::map<std::string, int> result;
-    for (int i=0; i<subattrs.size(); i++)
-        result[subattrs[i]] = stoi(match.str(i+1));
+    for (int i = 0; i < subattrs.size(); i++)
+        result[subattrs[i]] = stoi(match.str(i + 1));
     return result;
 }
 
-
-TMATSParser::TMATSParser(std::string tmats, bool show_debug){
+TMATSParser::TMATSParser(std::string tmats, bool show_debug)
+{
     raw = tmats;
     debug = show_debug;
 }
-
 
 // Takes two TMATS attribute codenames (as seen in the Chapter 9 standard) and
 // returns matching values as key:value pairs. ie: map_attrs("R-n", "G-n")
@@ -109,7 +108,7 @@ TMATSParser::TMATSParser(std::string tmats, bool show_debug){
 //        char buff[100];
 //        std::map<std::string, int> temp_map;
 //        printf("\nKeys map (%s):\n", key_attr.c_str());
-//        for (std::map<std::string, std::map<std::string, int>>::const_iterator it = 
+//        for (std::map<std::string, std::map<std::string, int>>::const_iterator it =
 //            keys.begin(); it != keys.end(); ++it)
 //        {
 //            //map_name = it->first;
@@ -159,7 +158,6 @@ TMATSParser::TMATSParser(std::string tmats, bool show_debug){
 //    return result;
 //}
 
-
 // Takes two TMATS attribute codenames (as seen in the Chapter 9 standard) and
 // returns matching values as key:value pairs. ie: map_attrs("R-n", "G-n")
 // returns the values of all found pairs of R-n:G-n where n is some number.
@@ -175,11 +173,11 @@ std::map<std::string, std::string> TMATSParser::MapAttrs(std::string key_attr, s
     std::vector<subattr_data_tuple> values;
     std::smatch matches;
     std::string s = raw.substr(0, raw.length());
-    std::regex r = (std::regex)"([0-9A-Za-z\\\\-]+):(.*);";
+    std::regex r = (std::regex) "([0-9A-Za-z\\\\-]+):(.*);";
     if (debug)
         printf("\n\nTMATSParser::MapAttrs():\n");
     for (std::sregex_iterator i = std::sregex_iterator(s.begin(), s.end(), r);
-        i != std::sregex_iterator(); i++)
+         i != std::sregex_iterator(); i++)
     {
         std::smatch m = *i;
         std::string codename = m.str(1);
@@ -208,15 +206,16 @@ std::map<std::string, std::string> TMATSParser::MapAttrs(std::string key_attr, s
     if (debug)
     {
         IterableTools iter;
-        std::vector<std::string> cols({ "label", "value" });
+        std::vector<std::string> cols({"label", "value"});
         std::string map_name;
         char buff[100];
         std::map<std::string, int> temp_map;
         printf("\nKeys map (%s):\n", key_attr.c_str());
         for (std::vector<subattr_data_tuple>::const_iterator it =
-            keys.begin(); it != keys.end(); ++it)
+                 keys.begin();
+             it != keys.end(); ++it)
         {
-            sprintf(buff, "mapped-to value: %s", std::get<1>(*it).c_str());
+            snprintf(buff, std::get<1>(*it).size() + 17, "mapped-to value: %s", std::get<1>(*it).c_str());
             map_name = std::string(buff);
             temp_map = std::get<0>(*it);
             iter.PrintMapWithHeader_KeyToValue(temp_map, cols, map_name);
@@ -224,9 +223,10 @@ std::map<std::string, std::string> TMATSParser::MapAttrs(std::string key_attr, s
 
         printf("\nValues map (%s):\n", value_attr.c_str());
         for (std::vector<subattr_data_tuple>::const_iterator it =
-            values.begin(); it != values.end(); ++it)
+                 values.begin();
+             it != values.end(); ++it)
         {
-            sprintf(buff, "mapped-to value: %s", std::get<1>(*it).c_str());
+            snprintf(buff, std::get<1>(*it).size() + 17, "mapped-to value: %s", std::get<1>(*it).c_str());
             map_name = std::string(buff);
             temp_map = std::get<0>(*it);
             iter.PrintMapWithHeader_KeyToValue(temp_map, cols, map_name);

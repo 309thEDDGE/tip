@@ -11,6 +11,7 @@ Group - Hill AFB).
 - [Markdown](#markdown)
 - [CMake Build](#cmake-build)
 - [Code Convention](#code-convention)
+- [Linting](#linting)
 - [Configuration Files](#configuration-files)
 - [Usage](#usage)
 - [Build Notes](#build-notes)
@@ -94,7 +95,23 @@ Use `markdown_to_html.py` in the tip_scripts directory to convert md file to htm
 
 
 ## Code Convention
-Attempt to follow the Google C++ Style Guide which can be found at google.github.io/styleguide/cppguide.html. 
+Attempt to follow the Google C++ Style Guide which can be found at google.github.io/styleguide/cppguide.html. All source code (`*.h`, `*.cpp`) in `tip/cpp` shall be formatted with `clang-format` from the root directory and configured by the `.clang-format` file. 
+
+OS-specific usage:
+
+- Linux:
+  - Install `clang-format` via package manager
+  - `clang-format -i ./cpp/**/**/*.h ./cpp/**/**/*.cpp`
+- Windows:
+  - Install LLVM toolchain for `clang-format.exe`
+  - (PowerShell) `& 'C:\Program Files\LLVM\bin\clang-format.exe' -i (Get-ChildItem .\cpp\*\*\*.h) (Get-ChildItem .\cpp\*\*\*.cpp)`
+
+## Linting
+
+`cpplint` is the preferred linter and it is also used in the CI. `CPPLINT.cfg` files in the root dir and some sub-directories in `cpp/` specify the overall linting configuration and library-specific configuration, respectively. Only files in `tip/cpp` shall be linted. Pip install cpplint then use the following commands from the root dir:
+
+- Linux: `cpplint ./cpp/**/**/*.h ./cpp/**/**/*.cpp`
+- Windows (PowerShell): `cpplint (Get-ChildItem .\cpp\*\*\*.h) (Get-ChildItem .\cpp\*\*\*.cpp)`
 
 ## Configuration Files
 

@@ -11,6 +11,8 @@ parser_rewrite lib.
 #include <set>
 #include <atomic>
 #include <memory>
+#include <map>
+#include <vector>
 #include "ch10_packet_type.h"
 #include "ch10_context.h"
 #include "ch10_packet.h"
@@ -22,32 +24,29 @@ parser_rewrite lib.
 
 class ParseWorker
 {
-private:
+   private:
+    // True if worker has completed parsing, false otherwise
+    std::atomic<bool> complete_;
 
-	// True if worker has completed parsing, false otherwise
-	std::atomic<bool> complete_;
+    // Track Ch10 state and manipulate metadata
+    Ch10Context ctx_;
 
-	// Track Ch10 state and manipulate metadata
-	Ch10Context ctx_;
+   public:
+    // Used to obtain public data from this worker's Ch10Context instance
+    const Ch10Context& ch10_context_;
 
-	
-public:
+    ParseWorker();
 
-	// Used to obtain public data from this worker's Ch10Context instance
-	const Ch10Context& ch10_context_;
-
-	ParseWorker();
-
-	/*
+    /*
 	Worker job completion status.
 
 	Return:
 		True if the worker has completed parsing or an error has occurred
 		that caused parsing to cease early, false otherwise.
 	*/
-	std::atomic<bool>& CompletionStatus();
+    std::atomic<bool>& CompletionStatus();
 
-	/*
+    /*
 	The primary function of ParseWorker. To be called by passing an instance
 	of ParseWorker as the first argument to the std::thread constructor, in which
 	this operator() function is automatically executed. 
@@ -63,10 +62,10 @@ public:
 		tmats_body_vec	--> Vector to which any TMATs matter found in the binary 
 							data are appended
 	*/
-	void operator()(WorkerConfig& worker_config, 
-		std::vector<std::string>& tmats_body_vec);
+    void operator()(WorkerConfig& worker_config,
+                    std::vector<std::string>& tmats_body_vec);
 
-	/*
+    /*
 	Helper function for aesthetics. Configure instance of Ch10Context by calling the
 	functions to configure, confirm configuration and prepare for file writing.
 
@@ -81,11 +80,11 @@ public:
 	Return:
 		True if configuration was successful; false otherwise.
 	*/
-	bool ConfigureContext(Ch10Context& ctx,
-		const std::map<Ch10PacketType, bool>& ch10_packet_type_map,
-		const std::map<Ch10PacketType, ManagedPath>& output_file_paths_map);
+    bool ConfigureContext(Ch10Context& ctx,
+                          const std::map<Ch10PacketType, bool>& ch10_packet_type_map,
+                          const std::map<Ch10PacketType, ManagedPath>& output_file_paths_map);
 
-	/*
+    /*
 	Parse the ch10 binary data until complete.
 
 	Args:
@@ -94,8 +93,8 @@ public:
 		tmats_vec	--> Reference to vector of strings in which to append
 						found TMATs data
 	*/
-	void ParseBufferData(Ch10Context* ctx, BinBuff* bb, 
-		std::vector<std::string>& tmats_vec);
+    void ParseBufferData(Ch10Context* ctx, BinBuff* bb,
+                         std::vector<std::string>& tmats_vec);
 };
 
-#endif 
+#endif

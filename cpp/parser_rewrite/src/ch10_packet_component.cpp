@@ -1,10 +1,10 @@
 #include "ch10_packet_component.h"
 
-void Ch10PacketComponent::ParseElements(const ElemPtrVec& elems, 
-    const uint8_t*& data)
+void Ch10PacketComponent::ParseElements(const ElemPtrVec& elems,
+                                        const uint8_t*& data)
 {
     // Iterate over each Ch10PacketElement and Set the data.
-    for(elemit_ = elems.begin(); elemit_ != elems.end(); ++elemit_)
+    for (elemit_ = elems.begin(); elemit_ != elems.end(); ++elemit_)
     {
         (*elemit_)->Set(data);
 
@@ -20,5 +20,4 @@ Ch10Status Ch10PacketComponent::Parse(const uint8_t*& data)
 
 Ch10PacketComponent::~Ch10PacketComponent()
 {
-
 }

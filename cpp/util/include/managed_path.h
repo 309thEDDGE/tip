@@ -1,120 +1,122 @@
 #ifndef MANAGED_PATH_H
 #define MANAGED_PATH_H
 
-#include <thread>
 #include <chrono>
-#include <filesystem>
-#include <string>
-#include <cstdio>
 #include <cstdint>
+#include <cstdio>
+#include <filesystem>
 #include <initializer_list>
+#include <string>
+#include <thread>
+#include <vector>
 #include "iterable_tools.h"
 
 namespace fs = std::filesystem;
 
 class ManagedPath : public fs::path
 {
-private:
-	static const inline fs::path windows_prefix_ = "\\\\?\\";
-	static const int max_create_dir_attempts_ = 3;
+   private:
+    static const inline fs::path windows_prefix_ = "\\\\?\\";
+    static const int max_create_dir_attempts_ = 3;
 
-protected:
+   protected:
+   public:
+    // Maximum path in windows is 260 chars including a terminating
+    // null character, making the maximum string length 259.
+    // See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+    // Caveats:
+    //		- The drive letter is included in the count
+    //		- The system will only create directories up to 247 characters in order to allow
+    //			the appending of a 12-char DOS-style 8.3 file name:
+    //				259 - 12 = 247
+    static const int max_unamended_path_len_ = 247;
 
-public:
+    //////////////////////////////////////////
+    // User functions
+    //////////////////////////////////////////
 
-	// Maximum path in windows is 260 chars including a terminating
-	// null character, making the maximum string length 259.
-	// See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
-	// Caveats:
-	//		- The drive letter is included in the count
-	//		- The system will only create directories up to 247 characters in order to allow 
-	//			the appending of a 12-char DOS-style 8.3 file name: 
-	//				259 - 12 = 247
-	static const int max_unamended_path_len_ = 247;
-	
-	//////////////////////////////////////////
-	// User functions
-	//////////////////////////////////////////
+    // Initialize with string path
+    explicit ManagedPath(const std::string& input_path);
+    explicit ManagedPath(const char* input_path);
 
-	// Initialize with string path
-	ManagedPath(std::string input_path) : fs::path(input_path){ }
+    // Initialize with cwd
+    ManagedPath() : fs::path(fs::current_path()) {}
 
-	// Initialize with cwd
-	ManagedPath() : fs::path(fs::current_path()) { }
+    // Initialize with fs::path
+    ManagedPath(fs::path input_path) : fs::path(input_path) {}
 
-	// Initialize with fs::path
-	ManagedPath(fs::path input_path) : fs::path(input_path) { }
+    // Initialize with cwd and each of the arguments appended
+    // via "/"
+    ManagedPath(std::initializer_list<std::string> path_components);
 
-	// Initialize with cwd and each of the arguments appended
-	// via "/"
-	ManagedPath(std::initializer_list<std::string> path_components);
+    // Assignment
+    ManagedPath& operator=(const ManagedPath& c);
 
-	// Assignment
-	ManagedPath& operator = (const ManagedPath& c);
+    // Concatenate, Append
+    ManagedPath& operator/=(const ManagedPath& rhs);
+    ManagedPath& operator/=(const std::string& rhs);
+    ManagedPath operator/(const ManagedPath& rhs);
+    ManagedPath& operator+=(const ManagedPath& rhs);
+    ManagedPath& operator+=(const std::string& rhs);
 
-	// Concatenate, Append
-	ManagedPath& operator /= (const ManagedPath& rhs);
-	ManagedPath operator / (const ManagedPath& rhs);
-	ManagedPath& operator += (const ManagedPath& rhs);
+    //
+    // Hide, not override these fs::path functions.
+    //
 
-	//
-	// Hide, not override these fs::path functions.
-	//
-
-	/*
+    /*
 	Determine if a file or directory represented by a 
 	ManagedPath object exists. Same functionality as the 
 	std::filesystem::exists function.
 
 	Returns: true if exists, false otherwise.
 	*/
-	bool exists() const;
+    bool exists() const;
 
-	/*
+    /*
 	Get a string that is formatted with special characters
 	necessary for long paths in windows, if necessary. 
 
 	Returns: std::string
 	*/
-	std::string string() const;
+    std::string string() const;
 
-	/*
+    /*
 	Get the parent path. Same functionality as the 
 	std::filesystem::path::parent_path function.
 
 	Returns: A ManagedPath object containing the parent
 	path.
 	*/
-	ManagedPath parent_path() const;
+    ManagedPath parent_path() const;
 
-	/*
+    /*
 	Get the absolute. Same functionality as the
 	std::filesystem::absolute function.
 
 	Returns: A ManagedPath object containing the absolute
 	path.
 	*/
-	ManagedPath absolute() const;
+    ManagedPath absolute() const;
 
-	/*
+    /*
 	Check whether the current object is a regular file.
 	Same functionality as the std::filesystem::path::is_regular_file
 	function.
 
 	Returns: true if is regular file, false otherwise
 	*/
-	bool is_regular_file() const;
+    bool is_regular_file() const;
 
-	/*
+    /*
 	Check whether the current object is a directory.
 	Same functionality as the std::filesystem::path::is_directory
 	function.
 
 	Returns: true if is directory, false otherwise
 	*/
-	bool is_directory() const;
+    bool is_directory() const;
 
-	/*
+    /*
 	Get the filename component of the current object.
 	Same functionality as the std::filesystem::path::filename
 	function.
@@ -122,9 +124,9 @@ public:
 	Returns: A ManagedPath object containing the filename portion
 	of the current object.
 	*/
-	ManagedPath filename() const;
+    ManagedPath filename() const;
 
-	/*
+    /*
 	Get the stem component of the current object.
 	Same functionality as the std::filesystem::path::stem
 	function.
@@ -132,22 +134,22 @@ public:
 	Returns: A ManagedPath object containing the stem portion
 	of the current object.
 	*/
-	ManagedPath stem() const;
+    ManagedPath stem() const;
 
-	/*
+    /*
 	Get the extension component of the current object.
 	Same functionality as std::filesystem::path::extension
 
 	Return: A ManagedPath object containing the extension
 	of the current object.
 	*/
-	ManagedPath extension() const;
+    ManagedPath extension() const;
 
-	//
-	// Mimic other std::filesystem functions.
-	//
+    //
+    // Mimic other std::filesystem functions.
+    //
 
-	/*
+    /*
 	Create a directory that is represented by the current
 	object, similar to std::filesystem::create_directory.
 
@@ -155,16 +157,16 @@ public:
 	directory is successfully created or if the directory
 	already exists, otherwise false.
 	*/
-	bool create_directory() const;
+    bool create_directory() const;
 
-	/*
+    /*
 	Remove a file or directory, similar to std::filesystem::remove.
 
 	Returns: true if file/dir is removed, false otherwise.
 	*/
-	bool remove() const;
+    bool remove() const;
 
-	/*
+    /*
 	Remove all files and directories at the location represented
 	by the current object. If the current object is a file, then
 	only the file shall be removed. Only files and directories
@@ -176,17 +178,17 @@ public:
 		False if one or more files and/or directories fail to be removed 
 		or the file/directory does not exist.
 	*/
-	bool RemoveTree() const;
+    bool RemoveTree() const;
 
-	/*
+    /*
 	Get an un-amended raw string. Useful for print statements.
 	Does not include the windows magic sequence, even if applicable.
 
 	Returns: the objects representation of the path as a std::string.
 	*/
-	std::string RawString() const;
+    std::string RawString() const;
 
-	/*
+    /*
 	Create a file/dir path using the current object path and the final
 	component of an input ManagedPath object. If the input object is 
 	is a file path, then the full file name will be used unless 
@@ -208,11 +210,10 @@ public:
 
 	Return: ManagedPath object representative of the new path
 	*/
-	ManagedPath CreatePathObject(const ManagedPath& output_fname,
-		const std::string& extension_replacement = "") const;
+    ManagedPath CreatePathObject(const ManagedPath& output_fname,
+                                 const std::string& extension_replacement = "") const;
 
-
-	/*
+    /*
 	Get the size of the file represented by the current object.
 
 	Input: 
@@ -225,9 +226,9 @@ public:
 		result	- Output result indicating file size in bytes.
 		Set to 0 if success is false.
 	*/
-	void GetFileSize(bool& success, uint64_t& result) const;
+    void GetFileSize(bool& success, uint64_t& result) const;
 
-	/*
+    /*
 	Fill the output_list vector with ManagedPath objects corresponding
 	to the contents of the directory of the current object. If the current
 	object is not a directory or does not exist, the output_list will be empty
@@ -249,9 +250,9 @@ public:
 		the output_list which contain sub-strings matching any of the files
 		in this list.
 	*/
-	void ListDirectoryEntries(bool& success, std::vector<ManagedPath>& output_list) const;
+    void ListDirectoryEntries(bool& success, std::vector<ManagedPath>& output_list) const;
 
-	/*
+    /*
 	Filter a vector of ManagedPath objects by removing all objects from the vector
 	that represent paths which contain a substring (in the filename() component) 
 	equal to one of the substrings in the substrings vector.
@@ -269,11 +270,11 @@ public:
 		Vector of ManagedPath objects which represent paths that do not contain
 		substrings matching any of those in the substrings vector.
 	*/
-	static std::vector<ManagedPath> ExcludePathsWithSubString(const std::vector<ManagedPath>&
-		input_paths, const std::vector<std::string>& substrings);
+    static std::vector<ManagedPath> ExcludePathsWithSubString(const std::vector<ManagedPath>&
+                                                                  input_paths,
+                                                              const std::vector<std::string>& substrings);
 
-
-	/*
+    /*
 	Filter a vector of ManagedPath objects by selecting/keeping all objects from the vector
 	that represent paths which contain (in the filename() component) a substring equal 
 	to one of the substrings in the substrings vector.
@@ -291,10 +292,11 @@ public:
 		Vector of ManagedPath objects which represent paths that contain
 		substrings matching at least one of those in the substrings vector.
 	*/
-	static std::vector<ManagedPath> SelectPathsWithSubString(const std::vector<ManagedPath>&
-		input_paths, const std::vector<std::string>& substrings);
+    static std::vector<ManagedPath> SelectPathsWithSubString(const std::vector<ManagedPath>&
+                                                                 input_paths,
+                                                             const std::vector<std::string>& substrings);
 
-	/*
+    /*
 	Filter a vector of ManagedPath objects by removing all objects which correspond
 	to directories or do not exist.
 
@@ -306,9 +308,9 @@ public:
 
 		Vector of ManagedPath objects which represent files.
 	*/
-	static std::vector<ManagedPath> SelectFiles(const std::vector<ManagedPath>& input_paths);
+    static std::vector<ManagedPath> SelectFiles(const std::vector<ManagedPath>& input_paths);
 
-	/*
+    /*
 	Filter a vector of ManagedPath objects by removing all objects which correspond
 	to files or do not exist.
 
@@ -320,9 +322,9 @@ public:
 
 		Vector of ManagedPath objects which represent directories.
 	*/
-	static std::vector<ManagedPath> SelectDirectories(const std::vector<ManagedPath>& input_paths);
+    static std::vector<ManagedPath> SelectDirectories(const std::vector<ManagedPath>& input_paths);
 
-	/*
+    /*
 	Create a directory object specific to a given
 	output directory, base file name and string to be appended to the
 	base file name. Optionally create the directory in the file system.
@@ -346,22 +348,21 @@ public:
 		created in the filesystem. Also true if create_dir is false and there
 		were no errors creating output_dir. False otherwise.
 	*/
-	static bool CreateDirectoryFromComponents(const ManagedPath& base_dir,
-		const ManagedPath& base_file_name, const std::string& append_str,
-		ManagedPath& output_dir, bool create_dir);
+    static bool CreateDirectoryFromComponents(const ManagedPath& base_dir,
+                                              const ManagedPath& base_file_name, const std::string& append_str,
+                                              ManagedPath& output_dir, bool create_dir);
 
+    //////////////////////////////////////////
+    // Functions below not intended to be utilized directly.
+    //////////////////////////////////////////
 
-	//////////////////////////////////////////
-	// Functions below not intended to be utilized directly.
-	//////////////////////////////////////////
-
-	/*
+    /*
 	Get a std:filesystem::path object amended to include
 	the windows magic characters if necessary.
 
 	Returns: fs::path object
 	*/
-	fs::path AmendPath(fs::path input_path) const;
+    fs::path AmendPath(fs::path input_path) const;
 };
 
 #endif

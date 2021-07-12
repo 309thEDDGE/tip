@@ -9,17 +9,16 @@
 
 class FileReader
 {
+   private:
+    std::vector<std::string> lines;
 
-private:
-	std::vector<std::string> lines;
+   public:
+    FileReader() {}
 
-public:
-	FileReader() {};
+    std::vector<std::string> GetLines() { return lines; }
+    int ReadFile(std::string);
 
-	std::vector<std::string> GetLines() {return lines;};
-	int ReadFile(std::string);
-
-	/*
+    /*
 	Get a string containing the entire document as if it 
 	had not been read in line by line. Newline characters are
 	added to the end of each line prior to be used in the 
@@ -28,8 +27,7 @@ public:
 	Return: String representation of the file read in ReadFile
 	containing new line character at the end of each line.
 	*/
-	std::string GetDocumentAsString();
-	
+    std::string GetDocumentAsString();
 };
 
 #endif

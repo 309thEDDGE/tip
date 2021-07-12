@@ -17,33 +17,32 @@ winsock.h is loaded again and redefinition errors occur.
 
 Include the following three headers prior to tins.h.
 */
-
-#ifdef __WIN64
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <windows.h>
-#endif 
-
-#include "tins/tins.h"
-#include "ethernet_data.h"
 #include <exception>
 #include <cstdint>
 #include <cstdio>
 #include <string>
-#include <algorithm> // copy
+#include <algorithm>  // copy
 #include <vector>
 #include <map>
 #include <unordered_map>
 #include <iterator>
 #include <memory>
+
+#ifdef __WIN64
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+#endif
+
+#include "tins/tins.h"
+#include "ethernet_data.h"
 #include "managed_path.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/bin_to_hex.h"
 
 class NetworkPacketParser
 {
-
-	/*
+    /*
 	A note about usage of const Tins::PDU* vs (non-const) Tins::PDU*:
 
 	Getters for the various PDU types (example: Tins::IP, Tins::LLC) are not
@@ -52,56 +51,45 @@ class NetworkPacketParser
 	instead of using the safe and obvious option of const pointers.
 
 	*/
-private:
+   private:
+    // Current maximum raw payload length.
+    uint32_t max_payload_size_;
 
-	// Current maximum raw payload length.
-	uint32_t max_payload_size_;
+    // Initial PDU types to create from Ch10 frame payloads
+    Tins::Dot3 dot3_;
+    Tins::EthernetII eth2_;
 
-	// Initial PDU types to create from Ch10 frame payloads
-	Tins::Dot3 dot3_;
-	Tins::EthernetII eth2_;
+    // Temporary pointers for the various PDU types. These
+    // will be casted from the base class, Tins::PDU.
+    Tins::RawPDU* raw_pdu_;
+    Tins::UDP* udp_pdu_;
+    Tins::TCP* tcp_pdu_;
+    Tins::IP* ip_pdu_;
+    Tins::LLC* llc_pdu_;
 
-	// Temporary pointers for the various PDU types. These
-	// will be casted from the base class, Tins::PDU.
-	Tins::RawPDU* raw_pdu_;
-	Tins::UDP* udp_pdu_;
-	Tins::TCP* tcp_pdu_;
-	Tins::IP* ip_pdu_;
-	Tins::LLC* llc_pdu_;
+    // Create class var here to avoid creation each time Parse is called
+    bool parse_result_;
 
-	// Create class var here to avoid creation each time Parse is called
-	bool parse_result_;
+    bool pcap_output_enabled_;
+    ManagedPath pcap_base_path_;
 
-	bool pcap_output_enabled_;
-	ManagedPath pcap_base_path_;
+    // Map to hold PacketWriters relevant to a specific channel ID
+    // and Tins::PDU::PDUType. Will be queried frequently if pcap
+    // in enabled so you unordered_map to improve performance.
+    std::unordered_map<uint32_t, std::unordered_map<
+                                     Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>>
+        pcap_writer_map_;
 
-	// Map to hold PacketWriters relevant to a specific channel ID
-	// and Tins::PDU::PDUType. Will be queried frequently if pcap
-	// in enabled so you unordered_map to improve performance.
-	std::unordered_map<uint32_t, std::unordered_map<
-		Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>> pcap_writer_map_;
+    // Tins::PDU::PDUType enum value to string mapping
+    const std::map<uint16_t, std::string> pdu_type_to_name_map_ = {{0, "RAW"}, {1, "ETHERNET_II"}, {2, "IEEE802_3"}, {3, "RADIOTAP"}, {4, "DOT11"}, {5, "DOT11_ACK"}, {6, "DOT11_ASSOC_REQ"}, {7, "DOT11_ASSOC_RESP"}, {8, "DOT11_AUTH"}, {9, "DOT11_BEACON"}, {10, "DOT11_BLOCK_ACK"}, {11, "DOT11_BLOCK_ACK_REQ"}, {12, "DOT11_CF_END"}, {13, "DOT11_DATA"}, {14, "DOT11_CONTROL"}, {15, "DOT11_DEAUTH"}, {16, "OT11_DIASSOC"}, {17, "DOT11_END_CF_ACK"}, {18, "DOT11_MANAGEMENT"}, {19, "DOT11_PROBE_REQ"}, {20, "DOT11_PROBE_RESP"}, {21, "DOT11_PS_POLL"}, {22, "DOT11_REASSOC_REQ"}, {23, "DOT11_REASSOC_RESP"}, {24, "DOT11_RTS"}, {25, "DOT11_QOS_DATA"}, {26, "LLC"}, {27, "SNAP"}, {28, "IP"}, {29, "ARP"}, {30, "TCP"}, {31, "UDP"}, {32, "ICMP"}, {33, "BOOTP"}, {34, "DHCP"}, {35, "EAPOL"}, {36, "RC4EAPOL"}, {37, "RSNEAPOL"}, {38, "DNS"}, {39, "LOOPBACK"}, {40, "IPv6"}, {41, "ICMPv6"}, {42, "SLL"}, {43, "DHCPv6"}, {44, "DOT1Q"}, {45, "PPPOE"}, {46, "STP"}, {47, "PPI"}, {48, "IPSEC_AH"}, {49, "IPSEC_ESP"}, {50, "PKTAP"}, {51, "MPLS"}, {999, "UNKNOWN"}, {1000, "USER_DEFINED_PDU"}};
 
-	// Tins::PDU::PDUType enum value to string mapping
-	const std::map<uint16_t, std::string> pdu_type_to_name_map_ = { {0, "RAW"}, {1, "ETHERNET_II"},
-		{2,"IEEE802_3"}, {3,"RADIOTAP"}, {4, "DOT11"}, {5, "DOT11_ACK"}, {6, "DOT11_ASSOC_REQ"},
-		{7, "DOT11_ASSOC_RESP"}, { 8, "DOT11_AUTH" }, { 9, "DOT11_BEACON" }, { 10, "DOT11_BLOCK_ACK" },
-		{11, "DOT11_BLOCK_ACK_REQ"}, {12, "DOT11_CF_END"}, {13, "DOT11_DATA"}, {14, "DOT11_CONTROL"},
-		{15, "DOT11_DEAUTH"}, {16, "OT11_DIASSOC"}, {17, "DOT11_END_CF_ACK"}, {18, "DOT11_MANAGEMENT"},
-		{19, "DOT11_PROBE_REQ"}, {20, "DOT11_PROBE_RESP"}, {21, "DOT11_PS_POLL"}, {22, "DOT11_REASSOC_REQ"},
-		{23, "DOT11_REASSOC_RESP"}, {24, "DOT11_RTS"}, {25, "DOT11_QOS_DATA"}, {26, "LLC"},
-		{27, "SNAP"}, {28, "IP"}, {29, "ARP"}, {30, "TCP"}, {31, "UDP"}, {32, "ICMP"}, {33, "BOOTP"},
-		{34, "DHCP"}, {35, "EAPOL"}, {36, "RC4EAPOL"}, {37, "RSNEAPOL"}, {38, "DNS"},
-		{39, "LOOPBACK"}, {40, "IPv6"}, {41, "ICMPv6"}, {42, "SLL"}, {43, "DHCPv6"}, {44, "DOT1Q"},
-		{45, "PPPOE"}, {46, "STP"}, {47, "PPI"}, {48, "IPSEC_AH"}, {49, "IPSEC_ESP"}, {50, "PKTAP"},
-		{51, "MPLS"}, {999, "UNKNOWN"}, {1000, "USER_DEFINED_PDU"} };
+   public:
+    const uint32_t& max_payload_size;
+    const bool& pcap_output_enabled;
 
-public:
-	const uint32_t& max_payload_size;
-	const bool& pcap_output_enabled;
+    NetworkPacketParser();
 
-	NetworkPacketParser();
-
-	/*
+    /*
 	Parse an Ethernet/MAC frame from a Ch10 Ethernet packet. 
 
 	Args:
@@ -120,10 +108,10 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool Parse(const uint8_t* buffer, const uint32_t& length, 
-		EthernetData* eth_data, const uint32_t& channel_id);
+    virtual bool Parse(const uint8_t* buffer, const uint32_t& length,
+                       EthernetData* eth_data, const uint32_t& channel_id);
 
-	/*
+    /*
 	Enable pcap file writing. Pcap files are placed in the *_ethernet.parquet
 	directory alongside the *_ethernet__xxx.parquet files. File names have a 
 	leading underscore to avoid conflict with parquet file readers that ingest
@@ -138,9 +126,9 @@ public:
 	Return:
 		The base pcap output file path.
 	*/
-	ManagedPath EnablePcapOutput(const ManagedPath& pq_output_file);
+    ManagedPath EnablePcapOutput(const ManagedPath& pq_output_file);
 
-	/*
+    /*
 	Write pcap packet relevant to a specific channel ID and Tins PDU
 	type. This is the only function that ought to be called to write
 	a packet to PCAP file.
@@ -161,13 +149,13 @@ public:
 									file
 
 	*/
-	void WritePcapPacket(const ManagedPath& pcap_base_path,
-		const uint32_t& channel_id, Tins::PDU::PDUType pdu_type,
-		std::unordered_map<uint32_t, std::unordered_map<
-		Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>>& pcap_writer_map, 
-		Tins::PDU* pdu);
+    void WritePcapPacket(const ManagedPath& pcap_base_path,
+                         const uint32_t& channel_id, Tins::PDU::PDUType pdu_type,
+                         std::unordered_map<uint32_t, std::unordered_map<
+                                                          Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>>& pcap_writer_map,
+                         Tins::PDU* pdu);
 
-	/*
+    /*
 	Helper function to simplify testing. Create an output pcap
 	path relevant to a specific channel ID and Tins PDU type. Not to
 	be used directly; called automatically by WritePcapPacket.
@@ -182,10 +170,10 @@ public:
 									of PacketWriter to which the packet
 									ought to be written
 	*/
-	ManagedPath CreateSpecificPcapPath(const ManagedPath& pcap_base_path,
-		const uint32_t& channel_id, Tins::PDU::PDUType pdu_type);
+    ManagedPath CreateSpecificPcapPath(const ManagedPath& pcap_base_path,
+                                       const uint32_t& channel_id, Tins::PDU::PDUType pdu_type);
 
-	/*
+    /*
 	Write pcap packet relevant to a specific channel ID and Tins PDU
 	type. Not to be used directly; automatically called by WritePcapPacket.
 
@@ -205,16 +193,16 @@ public:
 	Return:
 		True if writer was created and added to map, false otherwise.
 	*/
-	bool AddPacketWriterToMap(const ManagedPath& pcap_base_path,
-		const uint32_t& channel_id, Tins::PDU::PDUType pdu_type,
-		std::unordered_map<uint32_t, std::unordered_map<
-		Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>>& pcap_writer_map);
+    bool AddPacketWriterToMap(const ManagedPath& pcap_base_path,
+                              const uint32_t& channel_id, Tins::PDU::PDUType pdu_type,
+                              std::unordered_map<uint32_t, std::unordered_map<
+                                                               Tins::PDU::PDUType, std::shared_ptr<Tins::PacketWriter>>>& pcap_writer_map);
 
-	/************************************************************
+    /************************************************************
 						 Data Link Layer
 	*************************************************************/
 
-	/*
+    /*
 	802.3 (with total payload <= 1500), multiple sub-types possible.
 
 	Args:
@@ -227,10 +215,9 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool ParseEthernet(Tins::Dot3& dot3_pdu, EthernetData* const ed);
+    virtual bool ParseEthernet(Tins::Dot3& dot3_pdu, EthernetData* const ed);
 
-	
-	/*
+    /*
 	Parse Tins::PDU::PDUType::LLC == 802.2 LLC type packet
 
 	Args:
@@ -243,9 +230,9 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool ParseEthernetLLC(Tins::LLC* llc_pdu, EthernetData* const ed);
+    virtual bool ParseEthernetLLC(Tins::LLC* llc_pdu, EthernetData* const ed);
 
-	/*
+    /*
 	Ethernet II (802.3 with length/Ethertype >= 1536)
 
 	Args:
@@ -258,15 +245,13 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool ParseEthernetII(Tins::EthernetII& ethii_pdu, EthernetData* const ed);
+    virtual bool ParseEthernetII(Tins::EthernetII& ethii_pdu, EthernetData* const ed);
 
-
-
-	/************************************************************
+    /************************************************************
 	                       Network Layer
 	*************************************************************/
 
-	/*
+    /*
 	Parse Tins::PDU::PDUType::IP == IPv4 type packet
 
 	Args:
@@ -279,15 +264,13 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool ParseIPv4(Tins::IP* ip_pdu, EthernetData* const ed);
+    virtual bool ParseIPv4(Tins::IP* ip_pdu, EthernetData* const ed);
 
-
-
-	/************************************************************
+    /************************************************************
 						   Transport Layer
 	*************************************************************/
 
-	/*
+    /*
 	Parse Tins::PDU::PDUType::UDP
 
 	Args:
@@ -300,9 +283,9 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool ParseUDP(Tins::UDP* udp_pdu, EthernetData* const ed);
+    virtual bool ParseUDP(Tins::UDP* udp_pdu, EthernetData* const ed);
 
-	/*
+    /*
 	Parse Tins::PDU::PDUType::TCP
 
 	Args:
@@ -315,15 +298,13 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool ParseTCP(Tins::TCP* tcp_pdu, EthernetData* const ed);
+    virtual bool ParseTCP(Tins::TCP* tcp_pdu, EthernetData* const ed);
 
-
-
-	/************************************************************
+    /************************************************************
 						   Application Layer
 	*************************************************************/
 
-	/*
+    /*
 	Parse Tins::PDU::PDUType::RAW
 
 	Args:
@@ -336,16 +317,14 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool ParseRaw(Tins::RawPDU* raw_pdu, EthernetData* const ed,
-		const uint32_t& max_pload_size);
+    virtual bool ParseRaw(Tins::RawPDU* raw_pdu, EthernetData* const ed,
+                          const uint32_t& max_pload_size);
 
-
-
-	/************************************************************
+    /************************************************************
 						   Helper Functions
 	*************************************************************/
 
-	/*
+    /*
 	Selector for the next parser. In this context, next
 	means the Tins::PDU::inner_pdu() of the current
 	PDU being parsed. Handle the case in which there 
@@ -361,14 +340,14 @@ public:
 	Return:
 		True if no errors, false otherwise.
 	*/
-	virtual bool ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const ed);
+    virtual bool ParserSelector(Tins::PDU* pdu_ptr, EthernetData* const ed);
 
-	/*
+    /*
 	Remove all objects from the pcap_writer_map_ to cause the destructor
 	to be called to close the writers. This function is used by the tests
 	to close the writers so the files can be cleaned up.
 	*/
-	void ClearPcapWriterMap();
+    void ClearPcapWriterMap();
 };
 
 #endif

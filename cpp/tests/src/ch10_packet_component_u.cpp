@@ -5,32 +5,30 @@
 
 class BitField1
 {
-public:
-    uint32_t count  : 24;
-    uint32_t val    : 7;
-    uint32_t flag   : 1;
+   public:
+    uint32_t count : 24;
+    uint32_t val : 7;
+    uint32_t flag : 1;
 };
 
 class BitField2
 {
-public:
-    uint16_t val  : 12;
-    uint32_t bits1    : 2;
-    uint32_t bits2   : 2;
+   public:
+    uint16_t val : 12;
+    uint32_t bits1 : 2;
+    uint32_t bits2 : 2;
 };
 
 class ArrayFloat
 {
-    public:
+   public:
     float ff[2];
     ArrayFloat() : ff{-9.0, 50.1} {}
 };
 
-
-
 class Ch10PacketComponentTest : public ::testing::Test
 {
-    protected:
+   protected:
     ElemPtrVec elems_;
     std::vector<uint8_t> data_;
     size_t total_size_;
@@ -44,13 +42,15 @@ class Ch10PacketComponentTest : public ::testing::Test
     Ch10PacketElement<ArrayFloat> afelem_;
 
     Ch10PacketComponentTest() : total_size_(0),
-        bitfield1_size_(sizeof(BitField1)), bitfield2_size_(sizeof(BitField2)),
-        arrayfloat_size_(sizeof(ArrayFloat)), ctx_(0,0), comp_(&ctx_)
+                                bitfield1_size_(sizeof(BitField1)),
+                                bitfield2_size_(sizeof(BitField2)),
+                                arrayfloat_size_(sizeof(ArrayFloat)),
+                                ctx_(0, 0),
+                                comp_(&ctx_)
     {
         total_size_ = bitfield1_size_ + bitfield2_size_ + arrayfloat_size_;
 
-
-        // Fill the data_ vector with bits that represent a 
+        // Fill the data_ vector with bits that represent a
         // the series of objects: BitFiel1, BitField2, ArrayFloat.
         data_.resize(total_size_);
 

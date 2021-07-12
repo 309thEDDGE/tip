@@ -10,5 +10,4 @@
 void CreateNullLoggerWithName(std::string logger_name);
 void CreateStdoutLoggerWithName(std::string logger_name);
 
-
 #endif

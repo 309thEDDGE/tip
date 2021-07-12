@@ -5,7 +5,7 @@
 
 class Ch10TDPComponentTest : public ::testing::Test
 {
-protected:
+   protected:
     TDF1CSDWFmt tdp_fmt_;
     TDF1DataIRIGFmt irig_fmt_;
     TDF1DataNonIRIGFmt nonirig_fmt_;
@@ -23,15 +23,13 @@ protected:
     uint32_t rtc2_;
     std::vector<uint8_t> data_;
 
-    Ch10TDPComponentTest() : data_ptr_(nullptr), orig_data_ptr_(nullptr),
-        status_(Ch10Status::NONE), body_ptr_(nullptr), ctx_(0), tdp_comp_(&ctx_), abs_pos_(0),
-        pkt_size_(0), body_size_(0), rtc1_(0), rtc2_(0), abs_time_(0)
+    Ch10TDPComponentTest() : data_ptr_(nullptr), orig_data_ptr_(nullptr), status_(Ch10Status::NONE), body_ptr_(nullptr), ctx_(0), tdp_comp_(&ctx_), abs_pos_(0), pkt_size_(0), body_size_(0), rtc1_(0), rtc2_(0), abs_time_(0)
     {
         // Fill out values for fake tdp csdw data.
-        tdp_fmt_.src = 0; // internal
-        tdp_fmt_.time_fmt = 1; // IRIG-A
+        tdp_fmt_.src = 0;       // internal
+        tdp_fmt_.time_fmt = 1;  // IRIG-A
         tdp_fmt_.leap_year = 0;
-        tdp_fmt_.date_fmt = 0; // IRIG
+        tdp_fmt_.date_fmt = 0;  // IRIG
     }
 
     void CreateBuffer()
@@ -100,7 +98,6 @@ protected:
         irig_fmt_.Tmn = counts;
 
         abs_time_ = ComputeIRIGAbsTime(day, hour, minute, sec, ms);
-
     }
 
     void SetNonIRIGFormat()
@@ -155,11 +152,10 @@ protected:
         nonirig_fmt_.Tmn = counts;
 
         abs_time_ = ComputeNonIRIGAbsTime(year, mth, day, hour, minute, sec, ms);
-
     }
 
     void MaxMultiplierCounts(const uint16_t& value, uint16_t multiplier,
-        uint16_t& counts, uint16_t& remainder)
+                             uint16_t& counts, uint16_t& remainder)
     {
         counts = (value / multiplier);
         remainder = value % multiplier;
@@ -168,14 +164,14 @@ protected:
     }
 
     uint64_t ComputeIRIGAbsTime(uint16_t day, uint16_t hour, uint16_t minute,
-        uint16_t sec, uint16_t ms)
+                                uint16_t sec, uint16_t ms)
     {
         // Check day for 0 error.
         if (day == 0)
             day = 1;
 
         // Get seconds into the first year of the epoch.
-        std::tm temptime = { 0 };
+        std::tm temptime = {0};
         temptime.tm_sec = sec;
         temptime.tm_min = minute;
         temptime.tm_hour = hour;
@@ -197,21 +193,21 @@ protected:
     }
 
     uint64_t ComputeNonIRIGAbsTime(uint16_t year, uint16_t mth, uint16_t day,
-        uint16_t hour, uint16_t minute, uint16_t sec, uint16_t ms)
+                                   uint16_t hour, uint16_t minute, uint16_t sec, uint16_t ms)
     {
         // Get seconds since the epoch using mktime.
-        std::tm temptime = { 0 };
+        std::tm temptime = {0};
         temptime.tm_sec = sec;
         temptime.tm_min = minute;
         temptime.tm_hour = hour;
 
         // Values from Ch10 may be [0, 30] and struct time takes
-        // [1, 31] for tm_mday. This would explain why DRA shows 
+        // [1, 31] for tm_mday. This would explain why DRA shows
         // day+1, where day is tm_mday recovered from data I parse.
         // Will add 1 to day below to correct this.
-        // 
-        // Note: the correction mentioned above is causing an off-by-one error 
-        // in both doy and non-doy date and time computations. My only 
+        //
+        // Note: the correction mentioned above is causing an off-by-one error
+        // in both doy and non-doy date and time computations. My only
         // guess is that this correction and the above explanation is in
         // error. I now change day+1 to day for both.
         temptime.tm_mday = day;
@@ -273,7 +269,7 @@ TEST_F(Ch10TDPComponentTest, ComputeIRIGTime)
     SetIRIGFormat();
 
     // Compare absolute time.
-    uint64_t test_abs_time = tdp_comp_.ComputeIRIGTime((const TDF1DataIRIGFmt* const)&irig_fmt_);
+    uint64_t test_abs_time = tdp_comp_.ComputeIRIGTime((const TDF1DataIRIGFmt* const) & irig_fmt_);
 
     ASSERT_EQ(abs_time_, test_abs_time);
 }
@@ -288,7 +284,7 @@ TEST_F(Ch10TDPComponentTest, ComputeNonIRIGTime)
 
     // Compare absolute time.
     uint64_t test_abs_time = tdp_comp_.ComputeNonIRIGTime(
-        (const TDF1DataNonIRIGFmt* const)&nonirig_fmt_);
+        (const TDF1DataNonIRIGFmt* const) & nonirig_fmt_);
 
     ASSERT_EQ(abs_time_, test_abs_time);
 }
@@ -309,7 +305,7 @@ TEST_F(Ch10TDPComponentTest, ParseIRIGTime)
     hdr_fmt.rtc1 = 321053;
     hdr_fmt.rtc2 = 502976;
     uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
-    uint8_t tdp_doy = 1; // 1 for irig time
+    uint8_t tdp_doy = 1;  // 1 for irig time
     hdr_fmt.intrapkt_ts_source = 0;
     hdr_fmt.time_format = 1;
 
@@ -352,7 +348,7 @@ TEST_F(Ch10TDPComponentTest, ParseNonIRIGTime)
     hdr_fmt.rtc1 = 321053;
     hdr_fmt.rtc2 = 502976;
     uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
-    uint8_t tdp_doy = 0; // 0 for non-irig time
+    uint8_t tdp_doy = 0;  // 0 for non-irig time
     hdr_fmt.intrapkt_ts_source = 0;
     hdr_fmt.time_format = 1;
 
