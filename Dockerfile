@@ -1,7 +1,9 @@
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0 AS builder
 
+COPY build/ build/
 RUN pwd
 RUN ls
+RUN ls build
 # RUN mkdir /tip
 # # Tip source 
 # COPY cpp_pipeline_scripts /tip/cpp_pipeline_scripts
