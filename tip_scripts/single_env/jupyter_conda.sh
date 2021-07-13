@@ -6,7 +6,7 @@ printf "$?\n"
 if [ $? = 0 ]; then
     printf "'tip' Conda env not found\n"
     # Create and activate conda environment with local channel
-    conda create -n tip tip jupyterlab pandas matplotlib pyarrow -c file:///home/user/local-channel -y > /dev/null &
+    conda create -n tip tip jupyterlab pandas matplotlib pyarrow -c file:///home/user/local-channel -c /home/user/local-mirror -c /home/user/singleuser-channel --offline -y > /dev/null &
     printf "Generating Conda env 'tip'\n"
     PID=$!
     sp="/-\|"
