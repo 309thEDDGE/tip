@@ -148,6 +148,15 @@ jupyter lab --ip 0.0.0.0 --port 8888 --no-browser
 4. The command line will log the URL with token necessary to navigate to
    the jupyter lab instance.
 
+### Jupyterlab quickstart
+
+Alternatively, run
+```bash
+/home/user/user_scripts/jupyter_conda.sh
+```
+
+To generate a conda environment and run a jupyterlab instance
+
 ### Helper Script (preferred)
 
 * Must be run in an environment in which the sys.path can be appended to by the script (i.e., not the base conda environment)
