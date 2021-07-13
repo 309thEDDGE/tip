@@ -56,15 +56,18 @@ RUN ls build
 # RUN mkdir /home/user/.jupyter/
 # COPY --chown=user:user tip_scripts/singleuser/jupyter_notebook_config.py /home/user/.jupyter/
 
-# # Twistlock: private key stored in image
-# USER root
-# RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
-# rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem && \
-# rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem && \
-# rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem && \
-# rm  /usr/share/gnupg/sks-keyservers.netCA.pem && \
-# rm -rf /home/user/miniconda3/conda-meta && \
-# rm -rf /home/user/miniconda3/include 
+#COPY --chown=user:user tip_scripts/single_env/ /home/user/user_scripts
+#RUN chmod 700 /home/user/user_scripts/jupyter_conda.sh
+#
+## Twistlock: private key stored in image
+#USER root
+#RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
+#rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem && \
+#rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem && \
+#rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem && \
+#rm  /usr/share/gnupg/sks-keyservers.netCA.pem && \
+#rm -rf /home/user/miniconda3/conda-meta && \
+#rm -rf /home/user/miniconda3/include
 
 # USER user
 # ENV PATH=/home/user/miniconda3/bin:$PATH
