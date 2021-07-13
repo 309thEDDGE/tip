@@ -131,9 +131,11 @@ If the `parse_and_translate.py` script is used, relevant config files are automa
 ### How to use TIP singleuser container
 1. Run the container
 ```
-docker run -it -p 8888:8888 registry.il2.dso.mil/skicamp/project-opal/tip:1bfbad64
+docker run -it -p 8888:8888 registry.il2.dso.mil/skicamp/project-opal/tip:<latest>
 
 ```
+
+Replace `<latest>` with the most recent container tag from https://code.il2.dso.mil/skicamp/project-opal/tip/container_registry/1904
 
 2. Once inside the container, build the tip environment using available
    local channels
