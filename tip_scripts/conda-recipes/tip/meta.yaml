@@ -16,7 +16,7 @@ build:
 
 requirements:
   build:
-    - gcc_linux-64 >=8
+    - gxx_linux-64 >=8
     - make
     - cmake
     - ninja
