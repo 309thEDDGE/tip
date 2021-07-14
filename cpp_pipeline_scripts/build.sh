@@ -25,7 +25,7 @@ main() {
     echo -n "Building tip"
     ./conda_build.sh
 
-    cp $CONDA_CHANNEL_DIR/ build/
+    cp -r $CONDA_CHANNEL_DIR/ build/
 }
 
 if ! is_test ; then 
