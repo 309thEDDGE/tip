@@ -229,7 +229,6 @@ TEST_F(ParseManagerTest, CreateCh10PacketOutputDirsEmptyOutputOnFailure)
     pkt_enabled_map_[Ch10PacketType::MILSTD1553_F1] = true;
     pkt_enabled_map_[Ch10PacketType::VIDEO_DATA_F0] = true;
 
-    // No append string entry for 1553
     append_str_map_[Ch10PacketType::VIDEO_DATA_F0] = "_video.parquet";
     append_str_map_[Ch10PacketType::MILSTD1553_F1] = "_1553.parquet";
 
@@ -246,7 +245,6 @@ TEST_F(ParseManagerTest, CreateCh10PacketOutputDirsCorrectDirs)
     pkt_enabled_map_[Ch10PacketType::MILSTD1553_F1] = true;
     pkt_enabled_map_[Ch10PacketType::VIDEO_DATA_F0] = true;
 
-    // No append string entry for 1553
     append_str_map_[Ch10PacketType::VIDEO_DATA_F0] = "_video.parquet";
     append_str_map_[Ch10PacketType::MILSTD1553_F1] = "_1553.parquet";
 
@@ -281,7 +279,7 @@ TEST_F(ParseManagerTest, CreateCh10PacketWorkerFileNamesEmptyExtension)
     uint16_t worker_count = 3;
     std::vector<std::map<Ch10PacketType, ManagedPath>> vec_mapped_paths;
     std::string ext = "";
-    ManagedPath expected = ManagedPath() / "video_data" / "video_data__000";
+    ManagedPath expected = ManagedPath() / "video_data" / "000";
     pm.CreateCh10PacketWorkerFileNames(worker_count, output_dir_map_,
                                        vec_mapped_paths, ext);
     EXPECT_EQ(worker_count, vec_mapped_paths.size());
@@ -298,7 +296,7 @@ TEST_F(ParseManagerTest, CreateCh10PacketWorkerFileNamesNonEmptyExtension)
     std::string ext = "Extension";
     std::string full_ext = ".";
     full_ext += ext;
-    ManagedPath expected = ManagedPath() / "video_data" / ("video_data__000" + full_ext);
+    ManagedPath expected = ManagedPath() / "video_data" / ("000" + full_ext);
     pm.CreateCh10PacketWorkerFileNames(worker_count, output_dir_map_,
                                        vec_mapped_paths, ext);
     EXPECT_EQ(worker_count, vec_mapped_paths.size());
@@ -316,8 +314,8 @@ TEST_F(ParseManagerTest, CreateCh10PacketWorkerFileNamesMultipleTypes)
     std::string ext = "pq";
     std::string full_ext = ".";
     full_ext += ext;
-    ManagedPath expected1 = ManagedPath() / "video_data" / ("video_data__015" + full_ext);
-    ManagedPath expected2 = ManagedPath() / "1553_data" / ("1553_data__005" + full_ext);
+    ManagedPath expected1 = ManagedPath() / "video_data" / ("015" + full_ext);
+    ManagedPath expected2 = ManagedPath() / "1553_data" / ("005" + full_ext);
     pm.CreateCh10PacketWorkerFileNames(worker_count, output_dir_map_,
                                        vec_mapped_paths, ext);
     EXPECT_EQ(worker_count, vec_mapped_paths.size());

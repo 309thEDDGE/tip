@@ -550,10 +550,8 @@ uint8_t Translatable1553Table::configure_parquet_context(ManagedPath& output_dir
                                                          ManagedPath& base_name, bool is_multithreaded, uint8_t id)
 {
     // Create the Parquet file output path.
-    std::string parquet_dir_extension = "_" + name_ + ".parquet";
-    ManagedPath parquet_dir_path = output_dir / base_name;
-    parquet_dir_path += ManagedPath(parquet_dir_extension);
-
+    std::string parquet_file_name = name_ + ".parquet";
+    ManagedPath parquet_dir_path = output_dir / parquet_file_name;
     ManagedPath final_parquet_path = parquet_dir_path;
 
     if (is_multithreaded)
@@ -573,10 +571,9 @@ uint8_t Translatable1553Table::configure_parquet_context(ManagedPath& output_dir
 
         // Create the output parquet file name based on the parquet_path file name.
         char buff[20];
-        snprintf(buff, sizeof(buff), "__%02hhu.parquet", id);
-        std::string ext(buff);
-        final_parquet_path = parquet_dir_path.CreatePathObject(parquet_dir_path,
-                                                               ext);
+        snprintf(buff, sizeof(buff), "%02hhu.parquet", id);
+        std::string thread_file_name(buff);
+        final_parquet_path = parquet_dir_path / thread_file_name; 
     }
 
     // Create ParquetContext object.

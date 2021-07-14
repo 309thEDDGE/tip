@@ -812,7 +812,7 @@ void ParseManager::CreateCh10PacketWorkerFileNames(const uint16_t& total_worker_
     {
         // Create the replacement extension for the current index.
         std::stringstream ss;
-        ss << "__" << std::setfill('0') << std::setw(3) << worker_index;
+        ss << std::setfill('0') << std::setw(3) << worker_index;
         if (file_extension != "")
         {
             ss << "." << file_extension;
@@ -827,8 +827,9 @@ void ParseManager::CreateCh10PacketWorkerFileNames(const uint16_t& total_worker_
         // in pkt_type_output_dir_map.
         for (it = pkt_type_output_dir_map.cbegin(); it != pkt_type_output_dir_map.cend(); ++it)
         {
-            temp_output_file_map[it->first] = it->second.CreatePathObject(
-                it->second, replacement_ext);
+            //temp_output_file_map[it->first] = it->second.CreatePathObject(
+            //    it->second, replacement_ext);
+            temp_output_file_map[it->first] = it->second / replacement_ext;
         }
 
         // Add the temp map to the vector maps if the temp map has items.
