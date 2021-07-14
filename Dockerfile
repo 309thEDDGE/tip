@@ -15,8 +15,9 @@ WORKDIR /tip
 ENV MINICONDA3_PATH="/home/user/miniconda3"
 ENV CONDA_CHANNEL_DIR="/local-channel"
 RUN mkdir ${CONDA_CHANNEL_DIR} && \
-dnf install wget -y && \
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+dnf install wget-1.19.5-10.el8 -y && \
+dnf clean all && \
+wget --progress=dot:giga https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
 bash Miniconda3-latest-Linux-x86_64.sh -b -p ${MINICONDA3_PATH}
 # RUN ./cpp_pipeline_scripts/build.sh
 ENV PATH="${MINICONDA3_PATH}/bin:${PATH}"
