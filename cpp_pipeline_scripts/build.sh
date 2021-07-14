@@ -6,12 +6,15 @@ source $SCRIPT_PATH/setup.sh
 main() {
 	set_exit_on_error
 	setup
-    if [[ ! -d ${CMAKE_BUILD_DIR} ]]; then mkdir $CMAKE_BUILD_DIR; fi 
-
-    echo -n "Installing Miniconda"
     export MINICONDA3_PATH="/home/user/miniconda3"
     export CONDA_CHANNEL_DIR="/local-channel"
     export PATH="$MINICONDA3_PATH/bin:${PATH}"
+    export ARTIFACT_CHANNEL_DIR="${ARTIFACT_FOLDER}/build-metadata/local-channel"
+    mkdir $ARTIFACT_CHANNEL_DIR
+    
+    #if [[ ! -d ${CMAKE_BUILD_DIR} ]]; then mkdir $CMAKE_BUILD_DIR; fi 
+
+    echo -n "Installing Miniconda"
     dnf install wget -y
     wget --progress=dot:giga \
          https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
@@ -24,10 +27,12 @@ main() {
     echo -n "Building tip"
     ./conda_build.sh
 
-    cp -r $CONDA_CHANNEL_DIR/ $CMAKE_BUILD_DIR/
-    ls $CONDA_CHANNEL_DIR
-    echo "cmake build dir: $CMAKE_BUILD_DIR"
-    ls $CMAKE_BUILD_DIR
+    #cp -r $CONDA_CHANNEL_DIR/ $CMAKE_BUILD_DIR/
+    #ls $CONDA_CHANNEL_DIR
+    #echo "cmake build dir: $CMAKE_BUILD_DIR"
+    #ls $CMAKE_BUILD_DIR
+    cp -r $CONDA_CHANNEL_DIR/ $ARTIFACT_CHANNEL_DIR/
+    ls $ARTIFACT_CHANNEL_DIR
 }
 
 if ! is_test ; then 
