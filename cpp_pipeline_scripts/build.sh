@@ -26,7 +26,7 @@ main() {
 
     cp -r $CONDA_CHANNEL_DIR/ $CMAKE_BUILD_DIR/
     ls $CONDA_CHANNEL_DIR
-    echo "conda channel dir: $CMAKE_BUILD_DIR"
+    echo "cmake build dir: $CMAKE_BUILD_DIR"
     ls $CMAKE_BUILD_DIR
 }
 
