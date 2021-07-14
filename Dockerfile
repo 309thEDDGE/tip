@@ -14,6 +14,7 @@ COPY README.md /tip/README.md
 WORKDIR /tip
 ENV MINICONDA3_PATH="/home/user/miniconda3"
 ENV CONDA_CHANNEL_DIR="/local-channel"
+ENV ARTIFACT_CHANNEL_DIR="${ARTIFACT_FOLDER}/build-metadata/local-channel"
 RUN mkdir ${CONDA_CHANNEL_DIR} && \
 dnf install wget-1.19.5-10.el8 -y && \
 dnf clean all && \
@@ -21,10 +22,13 @@ wget --progress=dot:giga https://repo.anaconda.com/miniconda/Miniconda3-latest-L
 bash Miniconda3-latest-Linux-x86_64.sh -b -p ${MINICONDA3_PATH}
 # RUN ./cpp_pipeline_scripts/build.sh
 ENV PATH="${MINICONDA3_PATH}/bin:${PATH}"
-COPY ${CMAKE_BUILD_DIR}/ ${CONDA_CHANNEL_DIR}/ 
-RUN echo "CMAKE_BUILD_DIR = ${CMAKE_BUILD_DIR}" && ls ${CMAKE_BUILD_DIR}
+#COPY ${CMAKE_BUILD_DIR}/ ${CONDA_CHANNEL_DIR}/ 
+#RUN echo "CMAKE_BUILD_DIR = ${CMAKE_BUILD_DIR}" && ls ${CMAKE_BUILD_DIR}
+#RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && ls ${CONDA_CHANNEL_DIR}
+#RUN echo "ls CONDA_CHANNEL_DIR/build" && ls ${CONDA_CHANNEL_DIR}/build
+COPY ${ARTIFACT_CHANNEL_DIR}/ ${CONDA_CHANNEL_DIR}/
+RUN echo "artifact channel dir: ${ARTIFACT_CHANNEL_DIR}" && ls ${ARTIFACT_CHANNEL_DIR}
 RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && ls ${CONDA_CHANNEL_DIR}
-RUN echo "ls CONDA_CHANNEL_DIR/build" && ls ${CONDA_CHANNEL_DIR}/build
 
 RUN pip install --no-cache-dir conda-mirror==0.8.2
 ENV CONDA_MIRROR_DIR="/local-mirror"
