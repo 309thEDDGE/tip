@@ -22,7 +22,9 @@ bash Miniconda3-latest-Linux-x86_64.sh -b -p ${MINICONDA3_PATH}
 # RUN ./cpp_pipeline_scripts/build.sh
 ENV PATH="${MINICONDA3_PATH}/bin:${PATH}"
 COPY ${CMAKE_BUILD_DIR}/ ${CONDA_CHANNEL_DIR}/ 
-RUN echo ${CMAKE_BUILD_DIR} && ls ${CONDA_CHANNEL_DIR} && ls build
+RUN echo "CMAKE_BUILD_DIR = ${CMAKE_BUILD_DIR}" && ls ${CMAKE_BUILD_DIR}
+RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && ls ${CONDA_CHANNEL_DIR}
+RUN echo "ls CONDA_CHANNEL_DIR/build" && ls ${CONDA_CHANNEL_DIR}/build
 
 RUN pip install --no-cache-dir conda-mirror==0.8.2
 ENV CONDA_MIRROR_DIR="/local-mirror"
