@@ -4,7 +4,7 @@ RUN mkdir /tip
 # Tip source 
 COPY cpp_pipeline_scripts /tip/cpp_pipeline_scripts
 COPY tip_scripts /tip/tip_scripts/
-COPY cpp /tip/cpp
+#COPY cpp /tip/cpp
 # CMake files explicity
 #COPY CMake_conda.txt /tip/CMake_conda.txt
 #COPY CMakeLists.txt  /tip/CMakeLists.txt
@@ -22,7 +22,7 @@ bash Miniconda3-latest-Linux-x86_64.sh -b -p ${MINICONDA3_PATH}
 # RUN ./cpp_pipeline_scripts/build.sh
 ENV PATH="${MINICONDA3_PATH}/bin:${PATH}"
 COPY ${CMAKE_BUILD_DIR}/ ${CONDA_CHANNEL_DIR}/ 
-RUN ls / && ls ${CONDA_CHANNEL_DIR}
+RUN echo "${CMAKE_BUILD_DIR}" && ls ${CONDA_CHANNEL_DIR} && ls build
 
 RUN pip install --no-cache-dir conda-mirror==0.8.2
 ENV CONDA_MIRROR_DIR="/local-mirror"
