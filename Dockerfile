@@ -21,7 +21,7 @@ wget --progress=dot:giga https://repo.anaconda.com/miniconda/Miniconda3-latest-L
 bash Miniconda3-latest-Linux-x86_64.sh -b -p ${MINICONDA3_PATH}
 # RUN ./cpp_pipeline_scripts/build.sh
 ENV PATH="${MINICONDA3_PATH}/bin:${PATH}"
-COPY build/ ${CONDA_CHANNEL_DIR}/ 
+COPY ${CMAKE_BUILD_DIR}/ ${CONDA_CHANNEL_DIR}/ 
 RUN ls / && ls ${CONDA_CHANNEL_DIR}
 
 RUN pip install --no-cache-dir conda-mirror==0.8.2
