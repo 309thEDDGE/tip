@@ -6,7 +6,7 @@ source $SCRIPT_PATH/setup.sh
 main() {
 	set_exit_on_error
 	setup
-	mkdir $CMAKE_BUILD_DIR 
+    if [[ ! -d ${CMAKE_BUILD_DIR} ]]; then mkdir $CMAKE_BUILD_DIR; fi 
 
     echo -n "Installing Miniconda"
     export MINICONDA3_PATH="/home/user/miniconda3"
