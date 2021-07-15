@@ -1,0 +1,10 @@
+name: tip_dependencies
+channels:
+  - conda-forge
+dependencies:
+  - yaml-cpp
+  - libpcap
+  - arrow-cpp
+  - spdlog
+  - libtins
+
