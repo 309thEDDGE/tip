@@ -39,12 +39,29 @@ main() {
     ./conda_build.sh
 
     # tar -cvf local_channel.tar /local-channel
+    
     echo "creating artifact dir if not already present"
     if [[ ! -d ${ARTIFACT_DIR} ]]; then mkdir -p $ARTIFACT_DIR; fi
 
+    echo "listing channel that was created"
+    ls -al /home/user/miniconda3/conda-bld/linux-64
+
+    echo "list with wildcard for tar"
+    ls -al /home/user/miniconda3/conda-bld/linux-64/*.tar*
+    
     echo "attempting copy of tarball"
     cp /home/user/miniconda3/conda-bld/linux-64/*.tar* $ARTIFACT_DIR/
+
+    echo "list artifact dir"
     ls $ARTIFACT_DIR
+
+    echo "copying test text file"
+    echo "proof positive" > test.txt
+    cp test.txt $ARTIFACT_DIR
+
+    echo "copying test tar file"
+    tar -cvf test_tar.tar test.txt
+    cp test_tar.tar $ARTIFACT_DIR
 }
 
 if ! is_test ; then 
