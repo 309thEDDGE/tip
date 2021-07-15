@@ -7,12 +7,22 @@ main() {
 	set_exit_on_error
 	setup
     export MINICONDA3_PATH="/home/user/miniconda3"
-    export CONDA_CHANNEL_DIR="$(pwd)/local-channel"
+    export CONDA_CHANNEL_DIR="$(pwd)/../local-channel"
     export PATH="$MINICONDA3_PATH/bin:${PATH}"
     export ARTIFACT_DIR="${ARTIFACT_FOLDER}/build-metadata/build-artifacts"
     # mkdir $ARTIFACT_DIR
     #if [[ ! -d ${CMAKE_BUILD_DIR} ]]; then mkdir $CMAKE_BUILD_DIR; fi 
+    echo "============ls current dir======="
+    ls -al
 
+    echo "========pwd of starting dir========"
+    pwd
+
+    echo "===========ls -al ../ from starting dir============="
+    ls -al ../ 
+
+    echo "==========echo local channel dir========="
+    echo $CONDA_CHANNEL_DIR
 
     echo -n "Installing Miniconda"
     dnf install wget -y
