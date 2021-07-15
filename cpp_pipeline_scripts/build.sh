@@ -4,12 +4,13 @@ SCRIPT_PATH=$(dirname $0)
 source $SCRIPT_PATH/setup.sh
 
 main() {
-	set_exit_on_error
-	setup
+    set_exit_on_error
+    setup
     export MINICONDA3_PATH="/home/user/miniconda3"
-    export CONDA_CHANNEL_DIR="$(pwd)/../local-channel"
-    export PATH="$MINICONDA3_PATH/bin:${PATH}"
     export ARTIFACT_DIR="${ARTIFACT_FOLDER}/build-metadata/build-artifacts"
+    export CONDA_CHANNEL_DIR=$ARTIFACT_DIR
+    export PATH="$MINICONDA3_PATH/bin:${PATH}"
+
     # mkdir $ARTIFACT_DIR
     #if [[ ! -d ${CMAKE_BUILD_DIR} ]]; then mkdir $CMAKE_BUILD_DIR; fi 
     echo "============ls current dir======="
@@ -38,8 +39,6 @@ main() {
     ./conda_build.sh
 
 
-    cp -r $CONDA_CHANNEL_DIR $ARTIFACT_DIR/
-    ls $ARTIFACT_DIR
 }
 
 if ! is_test ; then 
