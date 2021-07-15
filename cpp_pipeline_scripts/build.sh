@@ -13,7 +13,7 @@ main() {
     # mkdir $ARTIFACT_DIR
     #if [[ ! -d ${CMAKE_BUILD_DIR} ]]; then mkdir $CMAKE_BUILD_DIR; fi 
     echo "===========printenv============"
-    pritenv
+    printenv
 
     echo "===========pwd=========="
     pwd
