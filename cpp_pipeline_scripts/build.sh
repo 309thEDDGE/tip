@@ -8,19 +8,11 @@ main() {
     setup
     export MINICONDA3_PATH="/home/user/miniconda3"
     export ARTIFACT_DIR="${ARTIFACT_FOLDER}/build-metadata/build-artifacts"
-    export CONDA_CHANNEL_DIR=$ARTIFACT_DIR
+    export CONDA_CHANNEL_DIR="/local-channel"
     export PATH="$MINICONDA3_PATH/bin:${PATH}"
 
     # mkdir $ARTIFACT_DIR
     #if [[ ! -d ${CMAKE_BUILD_DIR} ]]; then mkdir $CMAKE_BUILD_DIR; fi 
-    echo "============ls current dir======="
-    ls -al
-
-    echo "========pwd of starting dir========"
-    pwd
-
-    echo "===========ls -al ../ from starting dir============="
-    ls -al ../ 
 
     echo "==========echo local channel dir========="
     echo $CONDA_CHANNEL_DIR
@@ -38,7 +30,8 @@ main() {
     echo -n "Building tip"
     ./conda_build.sh
 
-
+    tar -cvf local_channel.tar /local-channel
+    cp local_channel.tar $ARTIFACT_DIR/
 }
 
 if ! is_test ; then 
