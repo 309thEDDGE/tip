@@ -31,10 +31,11 @@ main() {
     echo -n "Building tip"
     ./conda_build.sh
     
-    mkdir $CONDA_CHANNEL_DIR
+    # mkdir $CONDA_CHANNEL_DIR
     echo "proof2" > $CONDA_CHANNEL_DIR/test_cache.txt
 
     cp -r $CONDA_CHANNEL_DIR/ $ARTIFACT_DIR/
+    cp -r $CONDA_CHANNEL_DIR/test_cache.txt $ARTIFACT_DIR/
     
     # # tar -cvf local_channel.tar /local-channel
     
