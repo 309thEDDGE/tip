@@ -13,18 +13,21 @@ main() {
     mkdir $ARTIFACT_DIR
     #if [[ ! -d ${CMAKE_BUILD_DIR} ]]; then mkdir $CMAKE_BUILD_DIR; fi 
 
-    echo -n "Installing Miniconda"
-    dnf install wget -y
-    wget --progress=dot:giga \
-         https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-         && bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA3_PATH
+    mkdir $CONDA_CHANNEL_DIR
+    echo "proof" > $CONDA_CHANNEL_DIR/test_cache.txt
 
-    echo -n "Installing conda-build"
-    conda install conda-build -y
-    echo -n "Change directory to conda-build recipes"
-    cd tip_scripts
-    echo -n "Building tip"
-    ./conda_build.sh
+    # echo -n "Installing Miniconda"
+    # dnf install wget -y
+    # wget --progress=dot:giga \
+    #      https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+    #      && bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA3_PATH
+
+    # echo -n "Installing conda-build"
+    # conda install conda-build -y
+    # echo -n "Change directory to conda-build recipes"
+    # cd tip_scripts
+    # echo -n "Building tip"
+    # ./conda_build.sh
 
     #cp -r $CONDA_CHANNEL_DIR/ $CMAKE_BUILD_DIR/
     #ls $CONDA_CHANNEL_DIR
