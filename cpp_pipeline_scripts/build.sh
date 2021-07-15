@@ -34,8 +34,8 @@ main() {
     # mkdir $CONDA_CHANNEL_DIR
     echo "proof2" > $CONDA_CHANNEL_DIR/test_cache.txt
 
-    cp -r $CONDA_CHANNEL_DIR/ $ARTIFACT_DIR/
-    cp -r $CONDA_CHANNEL_DIR/test_cache.txt $ARTIFACT_DIR/
+    cp /home/user/miniconda3/conda-bld/linux-64/click-8.0.1-py38_0.tar.bz2 $ARTIFACT_DIR/
+    cp $CONDA_CHANNEL_DIR/test_cache.txt $ARTIFACT_DIR/
     
     # # tar -cvf local_channel.tar /local-channel
     
