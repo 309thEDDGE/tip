@@ -11,11 +11,6 @@ main() {
     export CONDA_CHANNEL_DIR="/local-channel"
     export PATH="$MINICONDA3_PATH/bin:${PATH}"
 
-    mkdir $CONDA_CHANNEL_DIR
-    echo "proof2" > $CONDA_CHANNEL_DIR/test_cache.txt
-
-    cp -r $CONDA_CHANNEL_DIR/ $ARTIFACT_DIR/
-
 
 
     # mkdir $ARTIFACT_DIR
@@ -23,19 +18,24 @@ main() {
 
     
 
-    # echo -n "Installing Miniconda"
-    # dnf install wget -y
-    # wget --progress=dot:giga \
-    #      https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-    #      && bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA3_PATH
+    echo -n "Installing Miniconda"
+    dnf install wget -y
+    wget --progress=dot:giga \
+         https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+         && bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA3_PATH
 
-    # echo -n "Installing conda-build"
-    # conda install conda-build -y
-    # echo -n "Change directory to conda-build recipes"
-    # cd tip_scripts
-    # echo -n "Building tip"
-    # ./conda_build.sh
+    echo -n "Installing conda-build"
+    conda install conda-build -y
+    echo -n "Change directory to conda-build recipes"
+    cd tip_scripts
+    echo -n "Building tip"
+    ./conda_build.sh
+    
+    mkdir $CONDA_CHANNEL_DIR
+    echo "proof2" > $CONDA_CHANNEL_DIR/test_cache.txt
 
+    cp -r $CONDA_CHANNEL_DIR/ $ARTIFACT_DIR/
+    
     # # tar -cvf local_channel.tar /local-channel
     
     # echo "creating artifact dir if not already present"
