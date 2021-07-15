@@ -9,31 +9,33 @@ main() {
     export MINICONDA3_PATH="/home/user/miniconda3"
     export CONDA_CHANNEL_DIR="/local-channel"
     export PATH="$MINICONDA3_PATH/bin:${PATH}"
-    export ARTIFACT_DIR="${ARTIFACT_FOLDER}/build-metadata/local-channel"
+    export ARTIFACT_DIR="${ARTIFACT_FOLDER}/build-artifacts"
     mkdir $ARTIFACT_DIR
     #if [[ ! -d ${CMAKE_BUILD_DIR} ]]; then mkdir $CMAKE_BUILD_DIR; fi 
 
-    mkdir $CONDA_CHANNEL_DIR
-    echo "proof" > $CONDA_CHANNEL_DIR/test_cache.txt
 
-    # echo -n "Installing Miniconda"
-    # dnf install wget -y
-    # wget --progress=dot:giga \
-    #      https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-    #      && bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA3_PATH
+    echo -n "Installing Miniconda"
+    dnf install wget -y
+    wget --progress=dot:giga \
+         https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+         && bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA3_PATH
 
-    # echo -n "Installing conda-build"
-    # conda install conda-build -y
-    # echo -n "Change directory to conda-build recipes"
-    # cd tip_scripts
-    # echo -n "Building tip"
-    # ./conda_build.sh
+    echo -n "Installing conda-build"
+    conda install conda-build -y
+    echo -n "Change directory to conda-build recipes"
+    cd tip_scripts
+    echo -n "Building tip"
+    ./conda_build.sh
 
-    #cp -r $CONDA_CHANNEL_DIR/ $CMAKE_BUILD_DIR/
-    #ls $CONDA_CHANNEL_DIR
-    #echo "cmake build dir: $CMAKE_BUILD_DIR"
-    #ls $CMAKE_BUILD_DIR
-    cp -r $CONDA_CHANNEL_DIR/ $ARTIFACT_DIR/
+    # cp -r $CONDA_CHANNEL_DIR/ $CMAKE_BUILD_DIR/
+    # ls $CONDA_CHANNEL_DIR
+    # echo "cmake build dir: $CMAKE_BUILD_DIR"
+    
+    ls $CMAKE_BUILD_DIR
+    ls /
+    ls /$CONDA_CHANNEL_DIR
+    ls /$CONDA_CHANNEL_DIR/linux-64
+    cp $CONDA_CHANNEL_DIR/linux-64/*tip* $ARTIFACT_DIR/
     ls $ARTIFACT_DIR
 }
 
