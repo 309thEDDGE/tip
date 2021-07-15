@@ -4,7 +4,7 @@ SCRIPT_PATH=$(dirname $0)
 
 main() {
     echo -n "Setting up conda build channel..."
-    # mkdir -p $CONDA_CHANNEL_DIR
+    mkdir -p $CONDA_CHANNEL_DIR
     
     conda index $CONDA_CHANNEL_DIR -s linux-64 -s noarch
     echo -n "Building recipes"
