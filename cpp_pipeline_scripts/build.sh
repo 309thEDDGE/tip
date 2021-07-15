@@ -8,7 +8,7 @@ main() {
     setup
     export MINICONDA3_PATH="/home/user/miniconda3"
     export ARTIFACT_DIR="${ARTIFACT_FOLDER}/build-metadata/build-artifacts"
-    export CONDA_CHANNEL_DIR="/local-channel"
+    # export CONDA_CHANNEL_DIR="/local-channel"
     export PATH="$MINICONDA3_PATH/bin:${PATH}"
 
     # mkdir $ARTIFACT_DIR
@@ -38,12 +38,12 @@ main() {
     echo -n "Building tip"
     ./conda_build.sh
 
-    tar -cvf local_channel.tar /local-channel
+    # tar -cvf local_channel.tar /local-channel
     echo "creating artifact dir if not already present"
     if [[ ! -d ${ARTIFACT_DIR} ]]; then mkdir -p $ARTIFACT_DIR; fi
 
     echo "attempting copy of tarball"
-    cp local_channel.tar $ARTIFACT_DIR/
+    cp /home/user/miniconda3/conda-bld/linux-64/*.tar* $ARTIFACT_DIR/
     ls $ARTIFACT_DIR
 }
 
