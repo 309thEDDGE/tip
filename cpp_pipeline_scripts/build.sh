@@ -31,7 +31,7 @@ main() {
     # ls $CONDA_CHANNEL_DIR
     # echo "cmake build dir: $CMAKE_BUILD_DIR"
     
-    ls $CMAKE_BUILD_DIR
+
     ls /
     ls /$CONDA_CHANNEL_DIR
     ls /$CONDA_CHANNEL_DIR/linux-64
