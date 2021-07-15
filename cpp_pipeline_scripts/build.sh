@@ -9,8 +9,8 @@ main() {
     export MINICONDA3_PATH="/home/user/miniconda3"
     export CONDA_CHANNEL_DIR="/local-channel"
     export PATH="$MINICONDA3_PATH/bin:${PATH}"
-    export ARTIFACT_DIR="${ARTIFACT_FOLDER}/build-metadata"
-    
+    export ARTIFACT_DIR="${ARTIFACT_FOLDER}/build-metadata/local-channel"
+    mkdir $ARTIFACT_DIR
     #if [[ ! -d ${CMAKE_BUILD_DIR} ]]; then mkdir $CMAKE_BUILD_DIR; fi 
 
     echo -n "Installing Miniconda"
@@ -30,7 +30,7 @@ main() {
     #ls $CONDA_CHANNEL_DIR
     #echo "cmake build dir: $CMAKE_BUILD_DIR"
     #ls $CMAKE_BUILD_DIR
-    cp -r $CONDA_CHANNEL_DIR $ARTIFACT_DIR
+    cp -r $CONDA_CHANNEL_DIR/ $ARTIFACT_DIR/
     ls $ARTIFACT_DIR
 }
 
