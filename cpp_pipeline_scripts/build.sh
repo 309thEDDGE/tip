@@ -12,6 +12,9 @@ main() {
     export PATH="$MINICONDA3_PATH/bin:${PATH}"
     export SCRIPT_START_DIR=$(pwd)
 
+    echo "current working directory at start of script"
+    pwd
+    
     mkdir test_dir
     echo "proof1" > test_dir/test_cache.txt
 
@@ -24,20 +27,25 @@ main() {
 
     
 
-    echo -n "Installing Miniconda"
-    dnf install wget -y
-    wget --progress=dot:giga \
-         https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-         && bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA3_PATH
+    # echo -n "Installing Miniconda"
+    # dnf install wget -y
+    # wget --progress=dot:giga \
+    #      https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+    #      && bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA3_PATH
 
-    echo -n "Installing conda-build"
-    conda install conda-build -y
-    echo -n "Change directory to conda-build recipes"
-    cd tip_scripts
-    echo -n "Building tip"
-    ./conda_build.sh
+    # echo -n "Installing conda-build"
+    # conda install conda-build -y
+    # echo -n "Change directory to conda-build recipes"
+    # cd tip_scripts
+    # echo -n "Building tip"
+    # ./conda_build.sh
+    echo "print current working directory after script runs"
+    pwd
+
 
     cd $SCRIPT_START_DIR
+    echo "print current working dir after changing back to start"
+    pwd
 
     echo "testing copy of second test file"
     echo "proof2" > test_dir/test_cache2.txt
