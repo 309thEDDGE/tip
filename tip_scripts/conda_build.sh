@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
 SCRIPT_PATH=$(dirname $0)
+DIRECTORY_WHEN_EXECUTED=$(pwd)
 
 main() {
+    
     echo -n "Setting up conda build channel..."
     # mkdir -p $CONDA_CHANNEL_DIR
     
@@ -11,6 +13,8 @@ main() {
     cd $SCRIPT_PATH/conda-recipes
     conda build deleteme-click -c conda-forge --croot $CONDA_CHANNEL_DIR
     # conda build deleteme-click -c conda-forge
+
+    cd $DIRECTORY_WHEN_EXECUTED
 }
 
 main $@

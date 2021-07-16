@@ -10,6 +10,7 @@ main() {
     export ARTIFACT_DIR="${ARTIFACT_FOLDER}/build-metadata/build-artifacts"
     export CONDA_CHANNEL_DIR="/local-channel"
     export PATH="$MINICONDA3_PATH/bin:${PATH}"
+    export SCRIPT_START_DIR=$(pwd)
 
     mkdir test_dir
     echo "proof1" > test_dir/test_cache.txt
@@ -35,6 +36,8 @@ main() {
     cd tip_scripts
     echo -n "Building tip"
     ./conda_build.sh
+
+    cd $SCRIPT_START_DIR
 
     echo "proof2" > test_dir/test_cache2.txt
 
