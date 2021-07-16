@@ -11,6 +11,11 @@ main() {
     export CONDA_CHANNEL_DIR="/local-channel"
     export PATH="$MINICONDA3_PATH/bin:${PATH}"
 
+    mkdir test_dir
+    echo "proof1" > test_dir/test_cache.txt
+
+    mkdir -p $ARTIFACT_DIR
+    cp -r test_dir/ $ARTIFACT_DIR/
 
 
     # mkdir $ARTIFACT_DIR
@@ -30,12 +35,16 @@ main() {
     cd tip_scripts
     echo -n "Building tip"
     ./conda_build.sh
+
+    echo "proof2" > test_dir/test_cache2.txt
+
+    cp -r test_dir/test_cache2.txt $ARTIFACT_DIR/
     
     # mkdir $CONDA_CHANNEL_DIR
-    echo "proof2" > $CONDA_CHANNEL_DIR/test_cache.txt
+    # echo "proof2" > $CONDA_CHANNEL_DIR/test_cache.txt
 
-    cp /home/user/miniconda3/conda-bld/linux-64/click-8.0.1-py38_0.tar.bz2 $ARTIFACT_DIR/
-    cp $CONDA_CHANNEL_DIR/test_cache.txt $ARTIFACT_DIR/
+    # cp /home/user/miniconda3/conda-bld/linux-64/click-8.0.1-py38_0.tar.bz2 $ARTIFACT_DIR/
+    # cp $CONDA_CHANNEL_DIR/test_cache.txt $ARTIFACT_DIR/
     
     # # tar -cvf local_channel.tar /local-channel
     
