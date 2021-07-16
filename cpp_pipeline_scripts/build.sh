@@ -46,7 +46,16 @@ main() {
     # cp /home/user/miniconda3/conda-bld/linux-64/click-8.0.1-py38_0.tar.bz2 $ARTIFACT_DIR/
     # cp $CONDA_CHANNEL_DIR/test_cache.txt $ARTIFACT_DIR/
     
-    # # tar -cvf local_channel.tar /local-channel
+    tar -cvf local_channel.tar /local-channel
+
+    echo "listing and grepping for local_channel.tar"
+    ls -hl | grep "local_channel.tar"
+
+    echo "copying tarball to artifact dir"
+    cp local_channel.tar $ARTIFACT_DIR
+
+    echo "show all contents of artifact dir"
+    ls -hl $ARTIFACT_DIR
     
     # echo "creating artifact dir if not already present"
     # if [[ ! -d ${ARTIFACT_DIR} ]]; then mkdir -p $ARTIFACT_DIR; fi
