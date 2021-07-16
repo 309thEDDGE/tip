@@ -11,8 +11,7 @@ main() {
     conda index $CONDA_CHANNEL_DIR -s linux-64 -s noarch
     echo -n "Building recipes"
     cd $SCRIPT_PATH/conda-recipes
-    conda build deleteme-click -c conda-forge --croot $CONDA_CHANNEL_DIR
-    # conda build deleteme-click -c conda-forge
+    conda build tip -c conda-forge --croot $CONDA_CHANNEL_DIR
 
     cd $DIRECTORY_WHEN_EXECUTED
 }
