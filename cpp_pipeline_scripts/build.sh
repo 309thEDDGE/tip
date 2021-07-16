@@ -39,9 +39,17 @@ main() {
 
     cd $SCRIPT_START_DIR
 
+    echo "testing copy of second test file"
     echo "proof2" > test_dir/test_cache2.txt
 
     cp -r test_dir/test_cache2.txt $ARTIFACT_DIR/
+
+    echo "testing ability to save tar files"
+    tar -cvf test_dir.tar ./test_dir
+    cp test_dir.tar $ARTIFACT_DIR
+
+    echo "listing artifact DIR after test tar copy"
+    ls -hl $ARTIFACT_DIR
     
     # mkdir $CONDA_CHANNEL_DIR
     # echo "proof2" > $CONDA_CHANNEL_DIR/test_cache.txt
