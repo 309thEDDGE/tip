@@ -1,5 +1,6 @@
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0 AS builder
 
+
 RUN mkdir /tip
 # Tip source 
 COPY cpp_pipeline_scripts /tip/cpp_pipeline_scripts
@@ -12,36 +13,46 @@ COPY tip_scripts /tip/tip_scripts/
 COPY README.md /tip/README.md
 
 WORKDIR /tip
+
+ARG GITLAB_TOKEN
+
+RUN git clone https://__token__:${GITLAB_TOKEN}@code.il2.dso.mil/skicamp/project-opal/opal-operations.git
+
+ARG ARTIFACT_FOLDER
 ENV MINICONDA3_PATH="/home/user/miniconda3"
-ENV CONDA_CHANNEL_DIR="/local-channel"
+ENV CONDA_CHANNEL_DIR="/local-channels"
 ENV ARTIFACT_CHANNEL_DIR="${ARTIFACT_FOLDER}/build-metadata/local-channel"
-RUN mkdir ${CONDA_CHANNEL_DIR} && \
-dnf install wget-1.19.5-10.el8 -y && \
-dnf clean all && \
-wget --progress=dot:giga https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-bash Miniconda3-latest-Linux-x86_64.sh -b -p ${MINICONDA3_PATH}
-# RUN ./cpp_pipeline_scripts/build.sh
+
+COPY $ARTIFACT_CHANNEL_DIR/local_channel.tar $CONDA_CHANNEL_DIR/local_channel.tar
+RUN tar -xvf $CONDA_CHANNEL_DIR/local_channel.tar -C $CONDA_CHANNEL_DIR && \
+   mv $CONDA_CHANNEL_DIR/local-channel $CONDA_CHANNEL_DIR/tip-package-channel
+
+
+RUN dnf install wget-1.19.5-10.el8 -y && \
+    dnf clean all && \
+    wget --progress=dot:giga https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p ${MINICONDA3_PATH}
+
+
 ENV PATH="${MINICONDA3_PATH}/bin:${PATH}"
-#COPY ${CMAKE_BUILD_DIR}/ ${CONDA_CHANNEL_DIR}/ 
-#RUN echo "CMAKE_BUILD_DIR = ${CMAKE_BUILD_DIR}" && ls ${CMAKE_BUILD_DIR}
-#RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && ls ${CONDA_CHANNEL_DIR}
-#RUN echo "ls CONDA_CHANNEL_DIR/build" && ls ${CONDA_CHANNEL_DIR}/build
+
 COPY ${ARTIFACT_CHANNEL_DIR}/ ${CONDA_CHANNEL_DIR}/
-RUN echo "artifact channel dir: ${ARTIFACT_CHANNEL_DIR}" && ls ${ARTIFACT_CHANNEL_DIR}
-RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && ls ${CONDA_CHANNEL_DIR}
 
-RUN pip install --no-cache-dir conda-mirror==0.8.2
-ENV CONDA_MIRROR_DIR="/local-mirror"
-ENV MIRROR_CONFIG="tip_scripts/conda-mirror/mirror_config.yaml"
-RUN ./tip_scripts/conda-mirror/clone.sh
 
-WORKDIR /tip/tip_scripts/singleuser
-RUN pip install --no-cache-dir conda-lock==0.10.0
-ENV SINGLEUSER_CHANNEL_DIR = "/tip/tip_scripts/singleuser/singleuser-channel"
-RUN python -m conda_vendor local_channels -f singleuser.yml -c
-WORKDIR /
+RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
+    ls ${CONDA_CHANNEL_DIR} && \
+    pip install --no-cache-dir conda-mirror==0.8.2 && \
+    pip install opal-operations/conda-vendor && \
+    pip install --no-cache-dir conda-lock==0.10.0 
 
-RUN conda clean -afy
+ENV SINGLEUSER_CHANNEL_DIR = "${CONDA_CHANNEL_DIR}/singleuser-channel"
+
+
+RUN mkdir "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
+    python -m conda_vendor local-channels -f /tip/tip_scripts/singleuser/singleuser.yml --channel-root "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
+    mkdir "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
+    python -m conda_vendor local-channels -f /tip/tip_scripts/conda-mirror/tip_dependency_env.yml --channel-root "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
+    conda clean -afy
 
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0 
 #Twistlock: image should be created with non-root user
@@ -49,22 +60,20 @@ FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bun
 RUN groupadd -r user && useradd -r -g user user && mkdir /home/user && \ 
 chown -R user:user /home/user 
 USER user
-RUN mkdir /home/user/miniconda3 && mkdir /home/user/miniconda3/notebooks
+RUN mkdir /home/user/miniconda3 && \
+    mkdir /home/user/miniconda3/notebooks && \
+    mkdir /home/user/.jupyter/
 
 COPY --from=builder --chown=user:user /home/user/miniconda3 /home/user/miniconda3
-# tip built artifacts + conda packages that are not available in main channel
-COPY --from=builder --chown=user:user /local-channel /home/user/local-channel
-# tip dependencies e.g arrow-cpp (available in main channel repo.anaconda.com/main/)
-COPY --from=builder --chown=user:user /local-mirror /home/user/local-mirror
-# singleuser channel built with conda-vendor
-COPY --from=builder --chown=user:user /tip/tip_scripts/singleuser/local_channel /home/user/singleuser-channel
+# Copies the local channels:
+# singleuser-channel, tip-dependencies-channel, tip-package-channel
+COPY --from=builder --chown=user:user /local-channels /home/user/local-channels
 # Copy default conf directory for tip
 COPY --chown=user:user conf /home/user/miniconda3/conf
 # Nice user facing step so that users don't have to copy default conf from the
 # conf directory in /root/miniconda3/
 COPY --chown=user:user conf/default_conf/*.yaml /home/user/miniconda3/conf/
 # Copy Jupyterlab config
-RUN mkdir /home/user/.jupyter/
 COPY --chown=user:user tip_scripts/singleuser/jupyter_notebook_config.py /home/user/.jupyter/
 
 COPY --chown=user:user tip_scripts/single_env/ /home/user/user_scripts
@@ -85,5 +94,13 @@ ENV PATH=/home/user/miniconda3/bin:$PATH
 WORKDIR /home/user/
 
 # This is to validate the environment solves via local channels
-RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow -c file:///home/user/local-channel -c /home/user/local-mirror -c /home/user/singleuser-channel --offline --dry-run
-EXPOSE 8888
+# NOTE: Currently the mix of main and conda-forge isn't allowing an environment to solve
+RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
+    -c /home/user/local-channels/singleuser-channel/local_main \
+    -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
+    -c /home/user/local-channels/tip-package-channel \
+    --offline --dry-run
+
+
+
+
