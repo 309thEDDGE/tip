@@ -1,3 +1,4 @@
+
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0 AS builder
 
 
@@ -45,14 +46,13 @@ RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
     pip install opal-operations/conda-vendor && \
     pip install --no-cache-dir conda-lock==0.10.0 
 
-ENV SINGLEUSER_CHANNEL_DIR = "${CONDA_CHANNEL_DIR}/singleuser-channel"
 
 
 RUN mkdir "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
-    python -m conda_vendor local-channels -f /tip/tip_scripts/singleuser/singleuser.yml --channel-root "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
-    mkdir "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
-    python -m conda_vendor local-channels -f /tip/tip_scripts/conda-mirror/tip_dependency_env.yml --channel-root "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
-    conda clean -afy
+    python -m conda_vendor local-channels -f /tip/tip_scripts/singleuser/singleuser.yml --channel-root "${CONDA_CHANNEL_DIR}/singleuser-channel"
+    # mkdir "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
+    # python -m conda_vendor local-channels -f /tip/tip_scripts/conda-mirror/tip_dependency_env.yml --channel-root "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
+    # conda clean -afy
 
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0 
 #Twistlock: image should be created with non-root user
@@ -95,12 +95,13 @@ WORKDIR /home/user/
 
 # This is to validate the environment solves via local channels
 # NOTE: Currently the mix of main and conda-forge isn't allowing an environment to solve
-RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
-    -c /home/user/local-channels/singleuser-channel/local_main \
-    -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
+RUN conda create -n tip4 tip jupyterlab pandas matplotlib pyarrow \
+    -c /home/user/local-channels/singleuser-channel/local_conda-forge \
     -c /home/user/local-channels/tip-package-channel \
     --offline --dry-run
 
+EXPOSE 8888
 
 
+    # -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
 
