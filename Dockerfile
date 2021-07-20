@@ -1,10 +1,10 @@
-# FROM registry.il2.dso.mil/skicamp/project-opal/opal-operations:vendor-whl AS wheel
+FROM registry.il2.dso.mil/skicamp/project-opal/opal-operations:vendor-whl AS wheel
 
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0 AS builder
 
-# RUN mkdir /whl
+RUN mkdir /whl
 
-# COPY --from=wheel /whl /whl
+COPY --from=wheel /whl /whl
 
 RUN mkdir /tip
 # Tip source 
@@ -49,7 +49,7 @@ ARG GITLAB_TOKEN
 RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
     ls ${CONDA_CHANNEL_DIR} && \
     pip install --no-cache-dir conda-mirror==0.8.2 && \
-    pip install conda-vendor --extra-index-url https://__token__@code.il2.dso.mil/api/v4/projects/4347/packages/pypi/simple && \
+    pip install /whl/conda_vendor-0.1-py3-none-any.whl && \
     pip install --no-cache-dir conda-lock==0.10.0
 
 
