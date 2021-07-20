@@ -1,6 +1,14 @@
+FROM registry.il2.dso.mil/skicamp/project-opal/opal-operations:vendor-whl AS whl
+
+RUN mkdir /whl
+
+COPY /whl/conda_vendor-0.1-py3-none-any.whl /whl
 
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0 AS builder
 
+RUN mkdir /whl
+
+COPY --from=whl --chown=user:user /whl /whl
 
 RUN mkdir /tip
 # Tip source 
@@ -15,44 +23,44 @@ COPY README.md /tip/README.md
 
 WORKDIR /tip
 
-ARG GITLAB_TOKEN
+# ARG GITLAB_TOKEN
 
-RUN git clone https://__token__@code.il2.dso.mil/skicamp/project-opal/opal-operations.git
+# RUN git clone https://__token__@code.il2.dso.mil/skicamp/project-opal/opal-operations.git
 
-# ARG ARTIFACT_FOLDER
-# ENV MINICONDA3_PATH="/home/user/miniconda3"
-# ENV CONDA_CHANNEL_DIR="/local-channels"
-# ENV ARTIFACT_CHANNEL_DIR="${ARTIFACT_FOLDER}/build-metadata/local-channel"
+ARG ARTIFACT_FOLDER
+ENV MINICONDA3_PATH="/home/user/miniconda3"
+ENV CONDA_CHANNEL_DIR="/local-channels"
+ENV ARTIFACT_CHANNEL_DIR="${ARTIFACT_FOLDER}/build-metadata/local-channel"
 
 # COPY $ARTIFACT_CHANNEL_DIR/local_channel.tar $CONDA_CHANNEL_DIR/local_channel.tar
-# RUN tar -xvf $CONDA_CHANNEL_DIR/local_channel.tar -C $CONDA_CHANNEL_DIR && \
-#    mv $CONDA_CHANNEL_DIR/local-channel $CONDA_CHANNEL_DIR/tip-package-channel
+RUN tar -xvf $CONDA_CHANNEL_DIR/local_channel.tar -C $CONDA_CHANNEL_DIR && \
+   mv $CONDA_CHANNEL_DIR/local-channel $CONDA_CHANNEL_DIR/tip-package-channel
 
 
-# RUN dnf install wget-1.19.5-10.el8 -y && \
-#     dnf clean all && \
-#     wget --progress=dot:giga https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-#     bash Miniconda3-latest-Linux-x86_64.sh -b -p ${MINICONDA3_PATH}
+RUN dnf install wget-1.19.5-10.el8 -y && \
+    dnf clean all && \
+    wget --progress=dot:giga https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p ${MINICONDA3_PATH}
 
 
-# ENV PATH="${MINICONDA3_PATH}/bin:${PATH}"
+ENV PATH="${MINICONDA3_PATH}/bin:${PATH}"
 
-# COPY ${ARTIFACT_CHANNEL_DIR}/ ${CONDA_CHANNEL_DIR}/
-
-
-# RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
-#     ls ${CONDA_CHANNEL_DIR} && \
-#     pip install --no-cache-dir conda-mirror==0.8.2 && \
-#     pip install opal-operations/conda-vendor && \
-#     pip install --no-cache-dir conda-lock==0.10.0 
+COPY ${ARTIFACT_CHANNEL_DIR}/ ${CONDA_CHANNEL_DIR}/
 
 
+RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
+    ls ${CONDA_CHANNEL_DIR} && \
+    pip install --no-cache-dir conda-mirror==0.8.2 && \
+    pip install /whl/conda_vendor-0.1-py3-none-any.whl && \
+    pip install --no-cache-dir conda-lock==0.10.0
 
-# RUN mkdir "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
-#     python -m conda_vendor local-channels -f /tip/tip_scripts/singleuser/singleuser.yml --channel-root "${CONDA_CHANNEL_DIR}/singleuser-channel"
-#     # mkdir "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
-#     # python -m conda_vendor local-channels -f /tip/tip_scripts/conda-mirror/tip_dependency_env.yml --channel-root "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
-#     # conda clean -afy
+
+
+RUN mkdir "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
+    python -m conda_vendor local-channels -f /tip/tip_scripts/singleuser/singleuser.yml --channel-root "${CONDA_CHANNEL_DIR}/singleuser-channel"
+    # mkdir "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
+    # python -m conda_vendor local-channels -f /tip/tip_scripts/conda-mirror/tip_dependency_env.yml --channel-root "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
+    # conda clean -afy
 
 # FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0 
 # #Twistlock: image should be created with non-root user
