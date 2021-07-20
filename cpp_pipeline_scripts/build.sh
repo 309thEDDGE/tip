@@ -17,29 +17,31 @@ main() {
 
     mkdir -p $ARTIFACT_DIR
 
-    echo -n "Installing Miniconda"
-    dnf install wget -y
-    wget --progress=dot:giga \
-         https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-         && bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA3_PATH
+    echo "test" >> $ARTIFACT_DIR/test.txt
 
-    echo -n "Installing conda-build"
-    conda install conda-build -y
-    echo -n "Change directory to conda-build recipes"
-    cd tip_scripts
-    echo -n "Building tip"
-    ./conda_build.sh
+    # echo -n "Installing Miniconda"
+    # dnf install wget -y
+    # wget --progress=dot:giga \
+    #      https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+    #      && bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA3_PATH
 
-    cd $SCRIPT_START_DIR
+    # echo -n "Installing conda-build"
+    # conda install conda-build -y
+    # echo -n "Change directory to conda-build recipes"
+    # cd tip_scripts
+    # echo -n "Building tip"
+    # ./conda_build.sh
 
-    echo "tarballing files from local channel dir"
-    tar -cvf local_channel.tar $CONDA_CHANNEL_DIR
+    # cd $SCRIPT_START_DIR
 
-    echo "copying tarball to artifact dir"
-    cp local_channel.tar $ARTIFACT_DIR
+    # echo "tarballing files from local channel dir"
+    # tar -cvf local_channel.tar $CONDA_CHANNEL_DIR
 
-    echo "show all contents of artifact dir"
-    ls -hl $ARTIFACT_DIR
+    # echo "copying tarball to artifact dir"
+    # cp local_channel.tar $ARTIFACT_DIR
+
+    # echo "show all contents of artifact dir"
+    # ls -hl $ARTIFACT_DIR
 }
 
 if ! is_test ; then 
