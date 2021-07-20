@@ -32,6 +32,9 @@ main() {
     echo -n "Building tip"
     ./conda_build.sh
 
+    cd $CONDA_CHANNEL_DIR
+    conda index -s linux-64 -s noarch
+    
     cd $SCRIPT_START_DIR
 
     echo "tarballing files from local channel dir"
