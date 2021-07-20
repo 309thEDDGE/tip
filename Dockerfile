@@ -4,7 +4,7 @@ FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bun
 
 RUN mkdir /whl
 
-COPY --from=wheel --chown=user:user /whl /whl
+COPY --from=wheel /whl /whl
 
 RUN mkdir /tip
 # Tip source 
