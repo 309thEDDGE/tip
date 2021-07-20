@@ -1,14 +1,10 @@
-FROM registry.il2.dso.mil/skicamp/project-opal/opal-operations:vendor-whl AS whl
-
-RUN mkdir /whl
-
-COPY /whl/conda_vendor-0.1-py3-none-any.whl /whl
+FROM registry.il2.dso.mil/skicamp/project-opal/opal-operations:vendor-whl AS wheel
 
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0 AS builder
 
 RUN mkdir /whl
 
-COPY --from=whl --chown=user:user /whl /whl
+COPY --from=wheel --chown=user:user /whl /whl
 
 RUN mkdir /tip
 # Tip source 
