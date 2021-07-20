@@ -53,11 +53,12 @@ RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
     pip install --no-cache-dir conda-lock==0.10.0
 
 
-RUN mkdir "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
+RUN conda clean -afy && \
+    mkdir "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
     python -m conda_vendor local-channels -f /tip/tip_scripts/singleuser/singleuser.yml --channel-root "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
     mkdir "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
-    python -m conda_vendor local-channels -f /tip/tip_scripts/conda-mirror/tip_dependency_env.yml --channel-root "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
-    conda clean -afy
+    python -m conda_vendor local-channels -f /tip/tip_scripts/conda-mirror/tip_dependency_env.yml --channel-root "${CONDA_CHANNEL_DIR}/tip-dependencies-channel"
+    
 
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0
 #Twistlock: image should be created with non-root user
