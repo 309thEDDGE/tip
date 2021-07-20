@@ -52,7 +52,6 @@ RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
     pip install --no-cache-dir conda-lock==0.10.0
 
 
-
 RUN mkdir "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
     python -m conda_vendor local-channels -f /tip/tip_scripts/singleuser/singleuser.yml --channel-root "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
     mkdir "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
@@ -61,6 +60,8 @@ RUN mkdir "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
 
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0
 #Twistlock: image should be created with non-root user
+
+ENV CONDA_ADD_PIP_AS_PYTHON_DEPENDENCY=False
 
 RUN groupadd -r user && useradd -r -g user user && mkdir /home/user && \
 chown -R user:user /home/user
@@ -100,7 +101,7 @@ WORKDIR /home/user/
 
 # This is to validate the environment solves via local channels
 # NOTE: Currently the mix of main and conda-forge isn't allowing an environment to solve
-RUN conda create -n tip4 tip jupyterlab pandas matplotlib pyarrow \
+RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
     -c /home/user/local-channels/singleuser-channel/local_conda-forge \
     -c /home/user/local-channels/tip-package-channel \
     --offline --dry-run
