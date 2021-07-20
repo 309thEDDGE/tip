@@ -17,7 +17,7 @@ WORKDIR /tip
 
 ARG GITLAB_TOKEN
 
-RUN git clone https://code.il2.dso.mil/skicamp/project-opal/opal-operations.git
+RUN git clone https://__token__@code.il2.dso.mil/skicamp/project-opal/opal-operations.git
 
 # ARG ARTIFACT_FOLDER
 # ENV MINICONDA3_PATH="/home/user/miniconda3"
