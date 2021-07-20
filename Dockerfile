@@ -44,11 +44,12 @@ ENV PATH="${MINICONDA3_PATH}/bin:${PATH}"
 
 COPY ${ARTIFACT_CHANNEL_DIR}/ ${CONDA_CHANNEL_DIR}/
 
+ARG GITLAB_TOKEN
 
 RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
     ls ${CONDA_CHANNEL_DIR} && \
     pip install --no-cache-dir conda-mirror==0.8.2 && \
-    pip install conda-vendor --extra-index-url https://code.il2.dso.mil/api/v4/projects/4347/packages/pypi/simple && \
+    pip install conda-vendor --extra-index-url https://__token__@code.il2.dso.mil/api/v4/projects/4347/packages/pypi/simple && \
     pip install --no-cache-dir conda-lock==0.10.0
 
 
