@@ -27,9 +27,9 @@ ENV MINICONDA3_PATH="/home/user/miniconda3"
 ENV CONDA_CHANNEL_DIR="/local-channels"
 ENV ARTIFACT_CHANNEL_DIR=".ci_artifacts/build-metadata/build-artifacts"
 
-COPY $ARTIFACT_CHANNEL_DIR/test.txt $CONDA_CHANNEL_DIR/test.txt
+# COPY $ARTIFACT_CHANNEL_DIR/test.txt $CONDA_CHANNEL_DIR/test.txt
 
-# COPY $ARTIFACT_CHANNEL_DIR/local_channel.tar $CONDA_CHANNEL_DIR/local_channel.tar
+COPY $ARTIFACT_CHANNEL_DIR/local_channel.tar $CONDA_CHANNEL_DIR/local_channel.tar
 RUN tar -xvf $CONDA_CHANNEL_DIR/local_channel.tar -C $CONDA_CHANNEL_DIR && \
    mv $CONDA_CHANNEL_DIR/local-channel $CONDA_CHANNEL_DIR/tip-package-channel
 
