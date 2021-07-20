@@ -108,4 +108,12 @@ WORKDIR /home/user/
 #     -c /home/user/local-channels/tip-package-channel \
 #     --offline --dry-run
 
+# This is to validate the environment solves via local channels
+# NOTE: Currently the mix of main and conda-forge isn't allowing an environment to solve
+RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
+     -c /home/user/local-channels/singleuser-channel/local_conda-forge \
+     -c /home/user/local-channels/tip-package-channel \
+     -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
+     --offline --dry-run
+
 EXPOSE 8888
