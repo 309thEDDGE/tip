@@ -29,8 +29,8 @@ ENV CONDA_CHANNEL_DIR="/local-channels"
 ENV ARTIFACT_CHANNEL_DIR="${ARTIFACT_FOLDER}/build-metadata/local-channel"
 
 # COPY $ARTIFACT_CHANNEL_DIR/local_channel.tar $CONDA_CHANNEL_DIR/local_channel.tar
-RUN tar -xvf $CONDA_CHANNEL_DIR/local_channel.tar -C $CONDA_CHANNEL_DIR && \
-   mv $CONDA_CHANNEL_DIR/local-channel $CONDA_CHANNEL_DIR/tip-package-channel
+# RUN tar -xvf $CONDA_CHANNEL_DIR/local_channel.tar -C $CONDA_CHANNEL_DIR && \
+   # mv $CONDA_CHANNEL_DIR/local-channel $CONDA_CHANNEL_DIR/tip-package-channel
 
 
 RUN dnf install wget-1.19.5-10.el8 -y && \
