@@ -2,11 +2,14 @@
 
 # If tip environment does not already exist:
 conda env list | grep tip &> /dev/null
-printf "$?\n"
-if [ $? = 0 ]; then
+if [ $? = 1 ]; then
     printf "'tip' Conda env not found\n"
     # Create and activate conda environment with local channel
-    conda create -n tip tip jupyterlab pandas matplotlib pyarrow -c file:///home/user/local-channel -c /home/user/local-mirror -c /home/user/singleuser-channel --offline -y > /dev/null &
+    conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
+     -c /home/user/local-channels/singleuser-channel/local_conda-forge \
+     -c /home/user/local-channels/tip-package-channel \
+     -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
+     --offline -y > /dev/null &
     printf "Generating Conda env 'tip'\n"
     PID=$!
     sp="/-\|"
