@@ -573,7 +573,7 @@ uint8_t Translatable1553Table::configure_parquet_context(ManagedPath& output_dir
         char buff[20];
         snprintf(buff, sizeof(buff), "%02hhu.parquet", id);
         std::string thread_file_name(buff);
-        final_parquet_path = parquet_dir_path / thread_file_name; 
+        final_parquet_path = parquet_dir_path / thread_file_name;
     }
 
     // Create ParquetContext object.

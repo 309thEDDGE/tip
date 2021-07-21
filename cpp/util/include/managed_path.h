@@ -29,7 +29,7 @@ class ManagedPath : public fs::path
     //		- The system will only create directories up to 247 characters in order to allow
     //			the appending of a 12-char DOS-style 8.3 file name:
     //				259 - 12 = 247
-    static const int max_unamended_path_len_ = 247;
+    static constexpr std::size_t max_unamended_path_len_ = 247u;
 
     //////////////////////////////////////////
     // User functions
@@ -64,8 +64,8 @@ class ManagedPath : public fs::path
     //
 
     /*
-	Determine if a file or directory represented by a 
-	ManagedPath object exists. Same functionality as the 
+	Determine if a file or directory represented by a
+	ManagedPath object exists. Same functionality as the
 	std::filesystem::exists function.
 
 	Returns: true if exists, false otherwise.
@@ -74,14 +74,14 @@ class ManagedPath : public fs::path
 
     /*
 	Get a string that is formatted with special characters
-	necessary for long paths in windows, if necessary. 
+	necessary for long paths in windows, if necessary.
 
 	Returns: std::string
 	*/
     std::string string() const;
 
     /*
-	Get the parent path. Same functionality as the 
+	Get the parent path. Same functionality as the
 	std::filesystem::path::parent_path function.
 
 	Returns: A ManagedPath object containing the parent
@@ -153,7 +153,7 @@ class ManagedPath : public fs::path
 	Create a directory that is represented by the current
 	object, similar to std::filesystem::create_directory.
 
-	Returns: true if the directory does not exist and the 
+	Returns: true if the directory does not exist and the
 	directory is successfully created or if the directory
 	already exists, otherwise false.
 	*/
@@ -175,7 +175,7 @@ class ManagedPath : public fs::path
 	Return:
 		True if the file (object represents a file path) is removed
 		or all files and sub-directories (object represents a directory).
-		False if one or more files and/or directories fail to be removed 
+		False if one or more files and/or directories fail to be removed
 		or the file/directory does not exist.
 	*/
     bool RemoveTree() const;
@@ -190,16 +190,16 @@ class ManagedPath : public fs::path
 
     /*
 	Create a file/dir path using the current object path and the final
-	component of an input ManagedPath object. If the input object is 
-	is a file path, then the full file name will be used unless 
+	component of an input ManagedPath object. If the input object is
+	is a file path, then the full file name will be used unless
 	the extension_replacement argument is not the default value, in which
 	case the file name will be modifed by the extension replacement.
 
-	If the input object is a directory path, then the final component 
-	of the input path will be used and the extension_replacement argument 
+	If the input object is a directory path, then the final component
+	of the input path will be used and the extension_replacement argument
 	will be concatenated without a file path separator to the final component.
 
-	Input: 
+	Input:
 
 		output_fname			- ManagedPath object from which the file name
 		will be used to construct the output file name
@@ -216,7 +216,7 @@ class ManagedPath : public fs::path
     /*
 	Get the size of the file represented by the current object.
 
-	Input: 
+	Input:
 
 		success	- Output bool indicator if the file size was
 		correctly obtained. Set to false if the current object
@@ -239,14 +239,14 @@ class ManagedPath : public fs::path
 
 	Input:
 
-		success				- Output bool is true if the current object represents a 
-		directory and contents can be successfully iterated over using 
+		success				- Output bool is true if the current object represents a
+		directory and contents can be successfully iterated over using
 		std::filesystem::directory_iterator. Otherwise false.
 
 		output_list			- Vector of ManagedPath objects representative of the
 		directory contents.
 
-		exclude_matching	- Vector of strings used to exclude files from 
+		exclude_matching	- Vector of strings used to exclude files from
 		the output_list which contain sub-strings matching any of the files
 		in this list.
 	*/
@@ -254,14 +254,14 @@ class ManagedPath : public fs::path
 
     /*
 	Filter a vector of ManagedPath objects by removing all objects from the vector
-	that represent paths which contain a substring (in the filename() component) 
+	that represent paths which contain a substring (in the filename() component)
 	equal to one of the substrings in the substrings vector.
 
-	Input: 
+	Input:
 
 		input_paths	- Vector of ManagedPath objects
 
-		substrings	- Vector of strings used to exclude files from 
+		substrings	- Vector of strings used to exclude files from
 		the output list which contain sub-strings matching any of the files
 		in this list.
 
@@ -276,7 +276,7 @@ class ManagedPath : public fs::path
 
     /*
 	Filter a vector of ManagedPath objects by selecting/keeping all objects from the vector
-	that represent paths which contain (in the filename() component) a substring equal 
+	that represent paths which contain (in the filename() component) a substring equal
 	to one of the substrings in the substrings vector.
 
 	Input:

@@ -40,7 +40,7 @@ class Ch10VideoF0ComponentTest : public ::testing::Test
     const uint64_t TDP_ABSOLUTE_TIME = 344199919;
     const uint8_t TDP_DAY_OF_YEAR = 0;
 
-    Ch10VideoF0ComponentTest() : component_(&context_), rtc_(0), ch10_time_()
+    Ch10VideoF0ComponentTest() : component_(&context_), packet_header_{}, rtc_(0), ch10_time_()
     {
         // Set up packet as if with a TDP packet
         packet_header_.rtc1 = TDP_RTC1;

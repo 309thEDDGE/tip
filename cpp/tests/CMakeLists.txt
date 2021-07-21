@@ -1,7 +1,7 @@
 
 
 set(headers
-    include/spdlog_setup_helper_funcs.h
+    include/logger_setup.h
 )
 
 add_executable(tests
@@ -25,6 +25,7 @@ add_executable(tests
     src/icd_data_u.cpp
     src/icd_translate_u.cpp
     src/iterable_tools_u.cpp
+    src/logger_setup.cpp
     src/managed_path_u.cpp
     src/metadata_u.cpp
     src/network_packet_parser_u.cpp
@@ -32,10 +33,9 @@ add_executable(tests
     src/parquet_context_u.cpp
     src/parquet_reader_u.cpp
     src/parse_manager_u.cpp
+    src/parser_config_params_u.cpp
     src/parse_text_u.cpp
     src/parse_worker_u.cpp
-    src/parser_config_params_u.cpp
-    src/spdlog_setup_helper_funcs.cpp
     src/tmats_parser_u.cpp
     src/translation_config_params_u.cpp
     src/user_input_u.cpp

@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "ch10_context.h"
@@ -159,7 +161,7 @@ TEST(Ch10ContextTest, SetPacketTypeConfigDisallowTypeNotInDefault)
 TEST(Ch10ContextTest, UpdateContextSetVars)
 {
     Ch10Context ctx(0);
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
     uint64_t abs_pos = 344199919;
     hdr_fmt.pkt_size = 4320;
     hdr_fmt.data_size = 3399;
@@ -187,7 +189,7 @@ TEST(Ch10ContextTest, UpdateContextSetVars)
 TEST(Ch10ContextTest, UpdateContextInconclusiveTimeFormat)
 {
     Ch10Context ctx(0);
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
     uint64_t abs_pos = 344199919;
     uint64_t rtc = 0;
     hdr_fmt.intrapkt_ts_source = 0;
@@ -206,7 +208,7 @@ TEST(Ch10ContextTest, UpdateContextInconclusiveTimeFormat)
 TEST(Ch10ContextTest, UpdateWithTDPDataTDPIsNone)
 {
     Ch10Context ctx(0);
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
     uint64_t tdp_abs_time = 4772113676;
     uint64_t abs_pos = 344199919;
     hdr_fmt.pkt_size = 4320;
@@ -239,7 +241,7 @@ TEST(Ch10ContextTest, UpdateWithTDPDataVarsUpdated)
 {
     Ch10Context ctx(0);
     uint64_t tdp_abs_time = 344199919;
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
     uint64_t abs_pos = 344199919;
     hdr_fmt.pkt_size = 4320;
     hdr_fmt.data_size = 3399;
@@ -274,13 +276,15 @@ TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
     Ch10Context ctx(0);
 
     // Update context with "current" header data.
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
+
     hdr_fmt.rtc1 = 321053;
     hdr_fmt.rtc2 = 502976;
     uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
     uint64_t abs_pos = 4823829394;
     Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
     EXPECT_EQ(status, Ch10Status::OK);
+    assert(status == Ch10Status::OK);
 
     // Update context with TDP-specific data.
     uint64_t tdp_abs_time = 344199919;
@@ -299,7 +303,7 @@ TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
 TEST(Ch10ContextTest, GetPacketAbsoluteTimeFromHeaderRTC)
 {
     Ch10Context ctx(0);
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
     uint64_t tdp_abs_time = 1000000;
     uint64_t tdp_rtc1 = 1;
     uint64_t tdp_rtc2 = 2;
@@ -333,7 +337,7 @@ TEST(Ch10ContextTest, GetPacketAbsoluteTimeFromHeaderRTC)
 TEST(Ch10ContextTest, CalculateIPTSAbsTimeRTCSource)
 {
     Ch10Context ctx(0);
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
     uint64_t tdp_abs_time = 1000000;
     uint64_t tdp_rtc1 = 1;
     uint64_t tdp_rtc2 = 2;
@@ -375,7 +379,7 @@ TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsRTtoRT)
     // Update context with "current" header data. Only care about
     // chanID, which will create an entry in the map with an empty
     // set.
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
     hdr_fmt.chanID = 4;
     hdr_fmt.intrapkt_ts_source = 0;
     hdr_fmt.secondary_hdr = 0;
@@ -420,7 +424,7 @@ TEST(Ch10ContextTest, UpdateChannelIDToLRUAddressMapsNotRTtoRT)
     // Update context with "current" header data. Only care about
     // chanID, which will create an entry in the map with an empty
     // set.
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
     hdr_fmt.chanID = 4;
     hdr_fmt.intrapkt_ts_source = 0;
     hdr_fmt.secondary_hdr = 0;
@@ -565,7 +569,7 @@ TEST(Ch10ContextTest, CheckConfigurationPathsRequired)
 TEST(Ch10ContextTest, RecordMinVideoTimeStampChannelIDNotPresent)
 {
     Ch10Context ctx(0);
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
     hdr_fmt.chanID = 9;
     uint64_t abs_pos = 0;
     uint64_t rtc = 0;
@@ -586,7 +590,7 @@ TEST(Ch10ContextTest, RecordMinVideoTimeStampChannelIDNotPresent)
 TEST(Ch10ContextTest, RecordMinVideoTimeStampLessThan)
 {
     Ch10Context ctx(0);
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
     hdr_fmt.chanID = 9;
     uint64_t abs_pos = 0;
     uint64_t rtc = 0;
@@ -607,7 +611,7 @@ TEST(Ch10ContextTest, RecordMinVideoTimeStampLessThan)
 TEST(Ch10ContextTest, RecordMinVideoTimeStampGreaterThan)
 {
     Ch10Context ctx(0);
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
     hdr_fmt.chanID = 9;
     uint64_t abs_pos = 0;
     uint64_t rtc = 0;

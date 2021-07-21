@@ -718,7 +718,8 @@ std::vector<size_t> IterableTools::ArgSortAscending(const std::vector<T>& input)
 
     // Custom sort the index by the values of input.
     std::sort(idx.begin(), idx.end(),
-              [&input](size_t i1, size_t i2) { return input[i1] < input[i2]; });
+              [&input](size_t i1, size_t i2)
+              { return input[i1] < input[i2]; });
     return idx;
 }
 
@@ -732,7 +733,8 @@ std::vector<size_t> IterableTools::ArgSortDescending(const std::vector<T>& input
 
     // Custom sort the index by the values of input in descending order.
     std::sort(idx.begin(), idx.end(),
-              [&input](size_t i1, size_t i2) { return input[i1] > input[i2]; });
+              [&input](size_t i1, size_t i2)
+              { return input[i1] > input[i2]; });
     return idx;
 }
 

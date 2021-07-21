@@ -7,6 +7,14 @@ if(${CMAKE_VERSION} VERSION_LESS 3.17)
     cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 endif()
 
+#Hack for Ninja generator on windows.  This has to come before project()
+#see https://gitlab.kitware.com/cmake/cmake/-/issues/19401
+get_property(multiConfig GLOBAL PROPERTY GENERATOR_IS_MULTICONFIG)
+if (NOT multiConfig AND NOT DEFINED CMAKE_BUILD_TYPE)
+    set (CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build.")
+endif()
+
+
 project(TIP
         VERSION 0.1
         DESCRIPTION "Translate Ingest Parse (TIP) for Ch10 files"
@@ -17,8 +25,8 @@ set(CMAKE_PLATFORM_INDEPENDENT_CODE ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-	message(STATUS "Setting -s flag to strip symbols")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
+    message(STATUS "Setting -s flag to strip symbols")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 endif()
 
 #########################################################
@@ -47,10 +55,11 @@ message(STATUS "Dependencies dir: " ${deps_dir})
 if(NOT DEFINED CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
     message(STATUS "Not defined: Defining cmake_build_type: " ${CMAKE_BUILD_TYPE})
-elseif("${CMAKE_BUILD_TYPE}" MATCHES "")
+elseif("${CMAKE_BUILD_TYPE}" STREQUAL "")
     set(CMAKE_BUILD_TYPE Release)
     message(STATUS "Empty string: Defining cmake_build_type: " ${CMAKE_BUILD_TYPE})
 endif()
+message(STATUS "using cmake build type: ${CMAKE_BUILD_TYPE}")
 
 #########################################################
 #                      Build Parameters
@@ -111,18 +120,20 @@ endif()
 #########################################################
 
 if(linux)
-    add_definitions(-DPARQUET_STATIC
-                    -DARROW_STATIC
-                    -DTINS_STATIC
-                    -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+    add_definitions(
+        -DPARQUET_STATIC
+        -DARROW_STATIC
+        -DTINS_STATIC
+        -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 else()
-    add_compile_definitions(PARQUET_STATIC
-                            ARROW_STATIC
-                            TINS_STATIC
-                            SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+    add_compile_definitions(
+        PARQUET_STATIC
+        ARROW_STATIC
+        TINS_STATIC
+        SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 endif()
 
 # Add source files dir.
 if(NOT DEFINED CONDA)
-  add_subdirectory(cpp)
+    add_subdirectory(cpp)
 endif()
