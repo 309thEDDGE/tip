@@ -269,7 +269,7 @@ TEST_F(Ch10TDPComponentTest, ComputeIRIGTime)
     SetIRIGFormat();
 
     // Compare absolute time.
-    uint64_t test_abs_time = tdp_comp_.ComputeIRIGTime((const TDF1DataIRIGFmt* const) & irig_fmt_);
+    uint64_t test_abs_time = tdp_comp_.ComputeIRIGTime((const TDF1DataIRIGFmt* const)&irig_fmt_);
 
     ASSERT_EQ(abs_time_, test_abs_time);
 }
@@ -284,7 +284,7 @@ TEST_F(Ch10TDPComponentTest, ComputeNonIRIGTime)
 
     // Compare absolute time.
     uint64_t test_abs_time = tdp_comp_.ComputeNonIRIGTime(
-        (const TDF1DataNonIRIGFmt* const) & nonirig_fmt_);
+        (const TDF1DataNonIRIGFmt* const)&nonirig_fmt_);
 
     ASSERT_EQ(abs_time_, test_abs_time);
 }
@@ -299,7 +299,7 @@ TEST_F(Ch10TDPComponentTest, ParseIRIGTime)
 
     // Prepare the context.
     uint64_t abs_pos = 6112919;
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
     hdr_fmt.data_size = 3399;
     hdr_fmt.pkt_size = 4399;
     hdr_fmt.rtc1 = 321053;
@@ -342,7 +342,7 @@ TEST_F(Ch10TDPComponentTest, ParseNonIRIGTime)
 
     // Prepare the context.
     uint64_t abs_pos = 6112919;
-    Ch10PacketHeaderFmt hdr_fmt;
+    Ch10PacketHeaderFmt hdr_fmt{};
     hdr_fmt.data_size = 3399;
     hdr_fmt.pkt_size = 4399;
     hdr_fmt.rtc1 = 321053;

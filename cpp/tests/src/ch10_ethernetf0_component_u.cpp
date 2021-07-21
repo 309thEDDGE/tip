@@ -1,11 +1,17 @@
 #include <algorithm>
+#include <cassert>
+
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+
 #include "ch10_ethernetf0_component.h"
 #include "ch10_time.h"
 #include "ch10_context.h"
 #include "network_packet_parser.h"
-#include "spdlog_setup_helper_funcs.h"
+
+// DO NOT REORDER THIS INCLUDE
+// changing the positioning here breaks Windows build
+#include "spdlog/spdlog.h"
 
 using ::testing::_;
 using ::testing::DoAll;
@@ -73,7 +79,8 @@ class Ch10EthernetF0ComponentTest : public ::testing::Test
 
     static void SetUpTestCase()
     {
-        CreateStdoutLoggerWithName("ethf0_logger");
+        auto logger = spdlog::get("ethf0_logger");
+        assert(logger);
     }
 };
 

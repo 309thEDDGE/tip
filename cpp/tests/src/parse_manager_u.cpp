@@ -1,13 +1,16 @@
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+
 #include "parse_manager.h"
 #include "parser_config_params.h"
 #include "ch10_header_format.h"
 #include "ch10_1553f1_msg_hdr_format.h"
-#include <string>
-#include <fstream>
-#include <iostream>
-#include <sstream>
 
 // Mock BinBuff
 class MockBinBuffParseManager : public BinBuff
@@ -44,7 +47,11 @@ class ParseManagerTest : public ::testing::Test
     BinBuff* bb_ptr_;
     MockBinBuffParseManager mock_bb_;
 
-    ParseManagerTest() : result_(false), tmats_path_(), mock_bb_(), bb_ptr_(&mock_bb_), file()
+    ParseManagerTest() : result_(false),
+                         tmats_path_(),
+                         mock_bb_(),
+                         bb_ptr_(&mock_bb_),
+                         file()
     {
         tmats_path_ /= tmats_filename_;
     }
@@ -85,6 +92,12 @@ class ParseManagerTest : public ::testing::Test
             "worker_shift_wait_ms: 200\n"};
 
         return config.InitializeWithConfigString(config_yaml);
+    }
+
+    void SetUp() override
+    {
+        // delete file if it was there when the test starts
+        std::remove(tmats_filename_.c_str());
     }
 };
 
@@ -589,7 +602,7 @@ TEST_F(ParseManagerTest, ConfigureAppendWorkerAppendReadSizeLarge)
 {
     /*
 	This test is created to address the case in which the
-	default append_read_size (100MB) is greater than the 
+	default append_read_size (100MB) is greater than the
 	dangling bytes at the end of the current worker chunk
 	to the end of the file.
 	*/

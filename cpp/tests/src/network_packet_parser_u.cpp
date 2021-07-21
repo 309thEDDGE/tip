@@ -1,12 +1,15 @@
+#include <cassert>
 #include <cstdint>
-#include <vector>
 #include <string>
+#include <vector>
+
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "spdlog/spdlog.h"
+
 #include "managed_path.h"
 #include "network_packet_parser.h"
 #include "ethernet_data.h"
-#include "spdlog_setup_helper_funcs.h"
 
 using ::testing::_;
 using ::testing::DoAll;
@@ -67,7 +70,8 @@ class NetworkPacketParserTest : public ::testing::Test
 
     static void SetUpTestCase()
     {
-        CreateStdoutLoggerWithName("npp_logger");
+        auto logger = spdlog::get("npp_logger");
+        assert(logger);
     }
 };
 

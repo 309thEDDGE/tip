@@ -102,8 +102,6 @@ TEST(ManagedPathTest, StringConstructorRemovesTrailingSlash)
     EXPECT_EQ(mp.RawString(), expected_path.RawString());
 }
 
-
-
 TEST(ManagedPathTest, InitializerListConstructor1Arg)
 {
     std::string p = "data.txt";
@@ -230,7 +228,7 @@ TEST(ManagedPathTest, string)
    paths, combine them into a single method with a parameter that
    the tests will call.
 
-Input: 
+Input:
 	use_absolute_paths - flag indicating whether to use absolute paths
 */
 void TestCreateDirectoryFailsWithoutCorrection(bool use_absolute_path)
@@ -291,8 +289,8 @@ void TestCreateDirectoryFailsWithoutCorrection(bool use_absolute_path)
 
     /*
 	Catch the error. Also, one way to fix the create_directory
-	impl is to catch the error, amend path, and try again. 
-	This is an ugly approach but will likely solve the problem, 
+	impl is to catch the error, amend path, and try again.
+	This is an ugly approach but will likely solve the problem,
 	though it may need to be implemented in several functions
 	that operate on the real file system.
 	*/
@@ -351,26 +349,49 @@ TEST(ManagedPathTest, CreateDirectoryParentMustExist)
 
 TEST(ManagedPathTest, CreateDirectoryLongPath)
 {
-    /*
-	This test was created using TDD. See the comments below that
-	describe how failures were initially observed.
-	*/
+    // This test was created using TDD. See the comments below that
+    // describe how failures were initially observed.
+
+    const std::size_t max_len = ManagedPath::max_unamended_path_len_;
+
+    // helper to build a long path out of 42 char sections
+    struct
+    {
+        int i = 0;
+        char buf[1024];
+
+        std::size_t length() const { return 42u; }
+
+        const char* next()
+        {
+            std::snprintf(buf, sizeof(buf),
+                          "this_is_part_of_a_very_long_path_section%02d",
+                          i++);
+            return buf;
+        }
+    } section;
+
     ManagedPath mp;
     std::string root_dir_name = "test_dir";
 
-    // Create the part of the path that's less than ManagedPath::max_unamended_path_len_ + 1
-    // chars using std::filesystem.
+    // Create the part of the path that's less than
+    // ManagedPath::max_unamended_path_len_ + 1 chars using
+    // std::filesystem.
     mp /= ManagedPath(root_dir_name);
-    mp = mp / "this_is_part_of_a_very_long_path_section00" / "this_is_part_of_a_very_long_path_section01";
-    mp = mp / "this_is_part_of_a_very_long_path_section02" / "this_is_part_of_a_very_long_path_section03";
-    EXPECT_TRUE(mp.RawString().size() <= ManagedPath::max_unamended_path_len_);
+    EXPECT_TRUE(mp.RawString().length() <= max_len) << "test location path too long";
+
+    const std::size_t section_len = section.length();
+    while (mp.RawString().length() + section_len <= max_len)
+        mp /= section.next();
+    EXPECT_TRUE(mp.RawString().length() <= max_len);
 
     fs::path small_path(mp.RawString());
     EXPECT_TRUE(fs::create_directories(small_path));
 
     // Extend the path beyond ManagedPath::max_unamended_path_len_ and
     // create the final path.
-    mp = mp / "this_is_part_of_a_very_long_path_section04";
+    mp /= section.next();
+    EXPECT_TRUE(mp.RawString().size() > max_len);
 
     // Code below fails with an exception on Windows.
     /*fs::path long_path(mp.RawString());

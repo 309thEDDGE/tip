@@ -10,7 +10,7 @@ ManagedPath::ManagedPath(const std::string& input_path)
     // Remove trailiing "/"
     if (mod_input_path.find_last_of("/") == mod_input_path.size() - 1)
         mod_input_path = mod_input_path.substr(0, mod_input_path.size() - 1);
-    
+
     this->assign(mod_input_path);
 }
 
@@ -145,7 +145,7 @@ bool ManagedPath::create_directory() const
     // If the directory exists, return true.
     if (fs::is_directory(amended_path))
     {
-        /*printf("ManagedPath::create_directory(): Directory already exists - %s\n", 
+        /*printf("ManagedPath::create_directory(): Directory already exists - %s\n",
 			this->RawString().c_str());*/
         return true;
     }
