@@ -140,7 +140,11 @@ Replace `<latest>` with the most recent container tag from https://code.il2.dso.
 2. Once inside the container, build the tip environment using available
    local channels
 ```
-conda create -n tip tip jupyterlab pandas matplotlib pyarrow -c file:///home/user/local-channel -c /home/user/local-mirror -c /home/user/singleuser-channel --offline
+conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
+     -c /home/user/local-channels/singleuser-channel/local_conda-forge \
+     -c /home/user/local-channels/tip-package-channel \
+     -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
+     --offline -y
 ```
 3. Activate the newly created environment
 ```
@@ -150,14 +154,14 @@ jupyter lab --ip 0.0.0.0 --port 8888 --no-browser
 4. The command line will log the URL with token necessary to navigate to
    the jupyter lab instance.
 
-### Jupyterlab quickstart
+### Jupyterlab and Conda env quickstart
 
 Alternatively, run
 ```bash
 /home/user/user_scripts/jupyter_conda.sh
 ```
 
-To generate a conda environment and run a jupyterlab instance
+To generate a conda environment and run a jupyterlab instance. Rerunning this script will skip over the conda env generation process and immediately launch a new jupyterlab instance.
 
 ### Helper Script (preferred)
 
