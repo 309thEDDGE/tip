@@ -101,24 +101,30 @@ RUN echo "auth requisite pam_deny.so" >> /etc/pam.d/su && \
 
 USER ${NB_UID}
 
-COPY --from=builder --chown=${NB_USER}:${NB_USER} /home/user/miniconda3 /home/${NB_USER}/miniconda3
+COPY --from=builder /home/user/miniconda3 /home/${NB_USER}/miniconda3
 # Copies the local channels:
 # singleuser-channel, tip-dependencies-channel, tip-package-channel
-COPY --from=builder --chown=${NB_USER}:${NB_USER} /local-channels /home/${NB_USER}/local-channels
+COPY --from=builder /local-channels /home/${NB_USER}/local-channels
 # Copy default conf directory for tip
-COPY --chown=${NB_USER}:${NB_USER} conf /home/${NB_USER}/miniconda3/conf
+COPY conf /home/${NB_USER}/miniconda3/conf
 # Nice user facing step so that users don't have to copy default conf from the
 # conf directory in /root/miniconda3/
-COPY --chown=${NB_USER}:${NB_USER} conf/default_conf/*.yaml /home/${NB_USER}/miniconda3/conf/
+COPY conf/default_conf/*.yaml /home/${NB_USER}/miniconda3/conf/
 # Copy Jupyterlab config
-COPY --chown=${NB_USER}:${NB_USER} tip_scripts/singleuser/jupyter_notebook_config.py /home/${NB_USER}/.jupyter/
+COPY tip_scripts/singleuser/jupyter_notebook_config.py /home/${NB_USER}/.jupyter/
 
-COPY --chown=${NB_USER}:${NB_USER} tip_scripts/single_env/ /home/${NB_USER}/user_scripts
+COPY tip_scripts/single_env/ /home/${NB_USER}/user_scripts
 RUN chmod 700 /home/${NB_USER}/user_scripts/jupyter_conda.sh
 
 # Copy jupyterlab envvar scripts
-COPY --chown=${NB_USER}:${NB_USER} tip_scripts/single_env/start.sh tip_scripts/single_env/start-notebook.sh tip_scripts/single_env/start-singleuser.sh /usr/local/bin
-RUN chmod 700 /usr/local/bin/start*.sh
+COPY tip_scripts/single_env/start.sh tip_scripts/single_env/start-notebook.sh tip_scripts/single_env/start-singleuser.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/start*.sh && \
+    fix-permissions /home/${NB_USER}/miniconda3 && \
+    fix-permissions /home/${NB_USER}/local-channels && \
+    fix-permissions /home/${NB_USER}/miniconda3/conf && \
+    fix-permissions /home/${NB_USER}/.jupyter/ && \
+    fix-permissions /home/${NB_USER}/user_scripts && \
+
 
 USER root
 # Twistlock: private key stored in image
@@ -129,7 +135,6 @@ RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
     rm  /usr/share/gnupg/sks-keyservers.netCA.pem && \
     rm -rf /home/${NB_USER}/miniconda3/conda-meta && \
     rm -rf /home/${NB_USER}/miniconda3/include && \
-    fix-permissions /home/${NB_USER}/.jupyter/
 
 
 USER ${NB_UID}
