@@ -123,7 +123,7 @@ RUN chmod +x /usr/local/bin/start*.sh && \
     fix-permissions /home/${NB_USER}/local-channels && \
     fix-permissions /home/${NB_USER}/miniconda3/conf && \
     fix-permissions /home/${NB_USER}/.jupyter/ && \
-    fix-permissions /home/${NB_USER}/user_scripts && \
+    fix-permissions /home/${NB_USER}/user_scripts
 
 
 USER root
@@ -134,7 +134,7 @@ RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
     rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem && \
     rm  /usr/share/gnupg/sks-keyservers.netCA.pem && \
     rm -rf /home/${NB_USER}/miniconda3/conda-meta && \
-    rm -rf /home/${NB_USER}/miniconda3/include && \
+    rm -rf /home/${NB_USER}/miniconda3/include
 
 
 USER ${NB_UID}
