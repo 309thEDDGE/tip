@@ -9,7 +9,7 @@ conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
     --offline -y > /dev/null
 
 #activate our 'opal-singleuser' conda env
-source ~/.bashrc && conda activate tip
+/home/"${NB_USER}"/miniconda3/bin/conda activate tip
 set -e
 
 wrapper=""

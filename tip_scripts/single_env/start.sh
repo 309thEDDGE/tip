@@ -2,7 +2,7 @@
 # Reference: https://github.com/jupyter/docker-stacks/blob/master/base-notebook/start.sh
 
 #activate our 'opal-singleuser' conda env
-source ~/.bashrc && conda activate tip
+/home/"${NB_USER}"/miniconda3/bin/conda activate tip
 
 set -e
 

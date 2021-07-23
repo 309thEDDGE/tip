@@ -23,7 +23,7 @@ WORKDIR /tip
 
 # RUN git clone https://__token__@code.il2.dso.mil/skicamp/project-opal/opal-operations.git
 
-ENV MINICONDA3_PATH="/home/${NB_USER}/miniconda3"
+ENV MINICONDA3_PATH="/home/user/miniconda3"
 ENV CONDA_CHANNEL_DIR="/local-channels"
 ENV ARTIFACT_CHANNEL_DIR=".ci_artifacts/build-metadata/build-artifacts"
 
@@ -101,7 +101,7 @@ RUN echo "auth requisite pam_deny.so" >> /etc/pam.d/su && \
 
 USER ${NB_UID}
 
-COPY --from=builder --chown=${NB_USER}:${NB_USER} /home/${NB_USER}/miniconda3 /home/${NB_USER}/miniconda3
+COPY --from=builder --chown=${NB_USER}:${NB_USER} /home/user/miniconda3 /home/${NB_USER}/miniconda3
 # Copies the local channels:
 # singleuser-channel, tip-dependencies-channel, tip-package-channel
 COPY --from=builder --chown=${NB_USER}:${NB_USER} /local-channels /home/${NB_USER}/local-channels
@@ -120,18 +120,19 @@ RUN chmod 700 /home/${NB_USER}/user_scripts/jupyter_conda.sh
 COPY --chown=${NB_USER}:${NB_USER} tip_scripts/single_env/start.sh tip_scripts/single_env/start-notebook.sh tip_scripts/single_env/start-singleuser.sh /usr/local/bin
 RUN chmod 700 /usr/local/bin/start*.sh
 
-
-# Twistlock: private key stored in image
 USER root
+# Twistlock: private key stored in image
 RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
-rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem && \
-rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem && \
-rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem && \
-rm  /usr/share/gnupg/sks-keyservers.netCA.pem && \
-rm -rf /home/${NB_USER}/miniconda3/conda-meta && \
-rm -rf /home/${NB_USER}/miniconda3/include
+    rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem && \
+    rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem && \
+    rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem && \
+    rm  /usr/share/gnupg/sks-keyservers.netCA.pem && \
+    rm -rf /home/${NB_USER}/miniconda3/conda-meta && \
+    rm -rf /home/${NB_USER}/miniconda3/include && \
+    fix-permissions /home/${NB_USER}/.jupyter/
 
-USER ${NB_USER}
+
+USER ${NB_UID}
 ENV PATH=/home/${NB_USER}/miniconda3/bin:$PATH
 WORKDIR /home/${NB_USER}/
 
