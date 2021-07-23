@@ -80,7 +80,8 @@ ENV CONDA_DIR=/home/${NB_USER}/miniconda3 \
 
 USER root
 
-RUN mkdir /home/${NB_USER}/miniconda3 && \
+RUN mkdir /home/${NB_USER} && \
+    mkdir /home/${NB_USER}/miniconda3 && \
     mkdir /home/${NB_USER}/miniconda3/notebooks && \
     mkdir /home/${NB_USER}/.jupyter/
 
