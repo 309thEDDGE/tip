@@ -23,7 +23,7 @@ WORKDIR /tip
 
 # RUN git clone https://__token__@code.il2.dso.mil/skicamp/project-opal/opal-operations.git
 
-ENV MINICONDA3_PATH="/home/user/miniconda3"
+ENV MINICONDA3_PATH="/home/${NB_USER}/miniconda3"
 ENV CONDA_CHANNEL_DIR="/local-channels"
 ENV ARTIFACT_CHANNEL_DIR=".ci_artifacts/build-metadata/build-artifacts"
 
@@ -65,30 +65,63 @@ FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bun
 
 ENV CONDA_ADD_PIP_AS_PYTHON_DEPENDENCY=False
 
-RUN groupadd -r user && useradd -r -g user user && mkdir /home/user && \
-chown -R user:user /home/user
-USER user
-RUN mkdir /home/user/miniconda3 && \
-    mkdir /home/user/miniconda3/notebooks && \
-    mkdir /home/user/.jupyter/
 
-COPY --from=builder --chown=user:user /home/user/miniconda3 /home/user/miniconda3
+ARG NB_USER="jovyan"
+ARG NB_UID="1000"
+ARG NB_GID="100"
+
+ENV CONDA_DIR=/home/${NB_USER}/miniconda3 \
+    SHELL=/bin/bash \
+    NBUSER="${NB_USER}" \
+    NB_UID=${NB_UID} \
+    NB_GID=${NB_GID}
+# RUN groupadd -r user && useradd -r -g user user && mkdir /home/user && \
+# chown -R user:user /home/user
+
+USER root
+
+RUN mkdir /home/${NB_USER}/miniconda3 && \
+    mkdir /home/${NB_USER}/miniconda3/notebooks && \
+    mkdir /home/${NB_USER}/.jupyter/
+
+COPY fix-permissions /usr/local/bin/fix-permissions
+RUN chmod a+rx /usr/local/bin/fix-permissions
+
+RUN sed -i 's/^#force_color_prompt=yes/force_color_prompt=yes/' /etc/skel/.bashrc && \
+   # Add call to conda init script see https://stackoverflow.com/a/58081608/4413446
+    echo 'eval "$(command conda shell.bash hook 2> /dev/null)"' >> /etc/skel/.bashrc
+
+RUN echo "auth requisite pam_deny.so" >> /etc/pam.d/su && \
+    sed -i.bak -e 's/^%admin/#%admin/' /etc/sudoers && \
+    sed -i.bak -e 's/^%sudo/#%sudo/' /etc/sudoers && \
+    useradd -l -m -s /bin/bash -N -u "${NB_UID}" "${NB_USER}" && \
+    mkdir -p "${CONDA_DIR}" && \
+    chown "${NB_USER}:${NB_GID}" "${CONDA_DIR}" && \
+    chmod g+w /etc/passwd && \
+    fix-permissions "${HOME}" && \
+    fix-permissions "${CONDA_DIR}"
+
+USER ${NB_UID}
+
+COPY --from=builder --chown=${NB_USER}:${NB_USER} /home/${NB_USER}/miniconda3 /home/${NB_USER}/miniconda3
 # Copies the local channels:
 # singleuser-channel, tip-dependencies-channel, tip-package-channel
-COPY --from=builder --chown=user:user /local-channels /home/user/local-channels
+COPY --from=builder --chown=${NB_USER}:${NB_USER} /local-channels /home/${NB_USER}/local-channels
 # Copy default conf directory for tip
-COPY --chown=user:user conf /home/user/miniconda3/conf
+COPY --chown=${NB_USER}:${NB_USER} conf /home/${NB_USER}/miniconda3/conf
 # Nice user facing step so that users don't have to copy default conf from the
 # conf directory in /root/miniconda3/
-COPY --chown=user:user conf/default_conf/*.yaml /home/user/miniconda3/conf/
+COPY --chown=${NB_USER}:${NB_USER} conf/default_conf/*.yaml /home/${NB_USER}/miniconda3/conf/
 # Copy Jupyterlab config
-COPY --chown=user:user tip_scripts/singleuser/jupyter_notebook_config.py /home/user/.jupyter/
+COPY --chown=${NB_USER}:${NB_USER} tip_scripts/singleuser/jupyter_notebook_config.py /home/${NB_USER}/.jupyter/
 
-COPY --chown=user:user tip_scripts/single_env/ /home/user/user_scripts
-RUN chmod 700 /home/user/user_scripts/jupyter_conda.sh
+COPY --chown=${NB_USER}:${NB_USER} tip_scripts/single_env/ /home/${NB_USER}/user_scripts
+RUN chmod 700 /home/${NB_USER}/user_scripts/jupyter_conda.sh
 
 # Copy jupyterlab envvar scripts
-COPY tip_scripts/single_env/start.sh tip_scripts/single_env/start-notebook.sh tip_scripts/single_env/start-singleuser.sh /usr/local/bin
+COPY --chown=${NB_USER}:${NB_USER} tip_scripts/single_env/start.sh tip_scripts/single_env/start-notebook.sh tip_scripts/single_env/start-singleuser.sh /usr/local/bin
+RUN chmod 700 /usr/local/bin/start*.sh
+
 
 # Twistlock: private key stored in image
 USER root
@@ -97,12 +130,12 @@ rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem && \
 rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem && \
 rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem && \
 rm  /usr/share/gnupg/sks-keyservers.netCA.pem && \
-rm -rf /home/user/miniconda3/conda-meta && \
-rm -rf /home/user/miniconda3/include
+rm -rf /home/${NB_USER}/miniconda3/conda-meta && \
+rm -rf /home/${NB_USER}/miniconda3/include
 
-USER user
-ENV PATH=/home/user/miniconda3/bin:$PATH
-WORKDIR /home/user/
+USER ${NB_USER}
+ENV PATH=/home/${NB_USER}/miniconda3/bin:$PATH
+WORKDIR /home/${NB_USER}/
 
 # This is to validate the environment solves via local channels
 # NOTE: Currently the mix of main and conda-forge isn't allowing an environment to solve
@@ -114,9 +147,9 @@ WORKDIR /home/user/
 # This is to validate the environment solves via local channels
 # NOTE: Currently the mix of main and conda-forge isn't allowing an environment to solve
 RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
-     -c /home/user/local-channels/singleuser-channel/local_conda-forge \
-     -c /home/user/local-channels/tip-package-channel \
-     -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
+     -c /home/${NB_USER}/local-channels/singleuser-channel/local_conda-forge \
+     -c /home/${NB_USER}/local-channels/tip-package-channel \
+     -c /home/${NB_USER}/local-channels/tip-dependencies-channel/local_conda-forge \
      --offline --dry-run
 
 # # installs a lightweight init system called tini
@@ -126,7 +159,7 @@ EXPOSE 8888
 
 # # Uses tini for init, runs the jupyterlab scripts for proper envvars
 # ENTRYPOINT ["tini","-g","--"]
-CMD ["start-notebook.sh"]
+CMD ["/usr/local/bin/start-notebook.sh"]
 
 
 #RUN conda env list && source ~/.bashrc && conda activate tip && conda env list
