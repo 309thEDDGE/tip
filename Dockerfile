@@ -114,7 +114,7 @@ COPY conf/default_conf/*.yaml /home/${NB_USER}/miniconda3/conf/
 COPY tip_scripts/singleuser/jupyter_notebook_config.py /home/${NB_USER}/.jupyter/
 
 COPY tip_scripts/single_env/ /home/${NB_USER}/user_scripts
-RUN chmod 700 /home/${NB_USER}/user_scripts/jupyter_conda.sh
+#RUN chmod 700 /home/${NB_USER}/user_scripts/jupyter_conda.sh
 
 # Copy jupyterlab envvar scripts
 COPY tip_scripts/single_env/start.sh tip_scripts/single_env/start-notebook.sh tip_scripts/single_env/start-singleuser.sh /usr/local/bin
@@ -123,7 +123,7 @@ RUN chmod +x /usr/local/bin/start*.sh && \
     fix-permissions /home/${NB_USER}/local-channels && \
     fix-permissions /home/${NB_USER}/miniconda3/conf && \
     fix-permissions /home/${NB_USER}/.jupyter/ && \
-    fix-permissions /home/${NB_USER}/user_scripts
+    fix-permissions /home/${NB_USER}/user_scripts/jupyter_conda.sh
 
 
 USER root
