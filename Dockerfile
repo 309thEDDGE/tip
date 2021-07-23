@@ -118,12 +118,12 @@ COPY tip_scripts/single_env/ /home/${NB_USER}/user_scripts
 
 # Copy jupyterlab envvar scripts
 COPY tip_scripts/single_env/start.sh tip_scripts/single_env/start-notebook.sh tip_scripts/single_env/start-singleuser.sh /usr/local/bin
-RUN chmod +x /usr/local/bin/start*.sh && \
-    fix-permissions /home/${NB_USER}/miniconda3 && \
+RUN fix-permissions /home/${NB_USER}/miniconda3 && \
     fix-permissions /home/${NB_USER}/local-channels && \
     fix-permissions /home/${NB_USER}/miniconda3/conf && \
     fix-permissions /home/${NB_USER}/.jupyter/ && \
-    fix-permissions /home/${NB_USER}/user_scripts/jupyter_conda.sh
+    fix-permissions /home/${NB_USER}/user_scripts/jupyter_conda.sh && \
+    fix-permissions /usr/local/bin/
 
 
 USER root
