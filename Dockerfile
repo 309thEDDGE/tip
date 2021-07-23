@@ -87,6 +87,9 @@ COPY --chown=user:user tip_scripts/singleuser/jupyter_notebook_config.py /home/u
 COPY --chown=user:user tip_scripts/single_env/ /home/user/user_scripts
 RUN chmod 700 /home/user/user_scripts/jupyter_conda.sh
 
+# Copy jupyterlab envvar scripts
+COPY tip_scripts/single_env/start.sh tip_scripts/single_env/start-notebook.sh tip_scripts/single_env/start-singleuser.sh /usr/local/bin
+
 # Twistlock: private key stored in image
 USER root
 RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
@@ -125,6 +128,5 @@ EXPOSE 8888
 # ENTRYPOINT ["tini","-g","--"]
 CMD ["start-notebook.sh"]
 
-COPY tip_scripts/start.sh tip_scripts/start-notebook.sh tip_scripts/start-singleuser.sh /usr/local/bin
 
 #RUN conda env list && source ~/.bashrc && conda activate tip && conda env list
