@@ -102,7 +102,7 @@ RUN echo "auth requisite pam_deny.so" >> /etc/pam.d/su && \
 
 USER ${NB_UID}
 
-COPY --from=builder /home/user/miniconda3 /home/${NB_USER}/miniconda3
+COPY --from=builder /home/${NB_USER}/miniconda3 /home/${NB_USER}/miniconda3
 # Copies the local channels:
 # singleuser-channel, tip-dependencies-channel, tip-package-channel
 COPY --from=builder /local-channels /home/${NB_USER}/local-channels
