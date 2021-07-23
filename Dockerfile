@@ -22,8 +22,9 @@ WORKDIR /tip
 # ARG GITLAB_TOKEN
 
 # RUN git clone https://__token__@code.il2.dso.mil/skicamp/project-opal/opal-operations.git
+ARG NB_USER="jovyan"
 
-ENV MINICONDA3_PATH="/home/user/miniconda3"
+ENV MINICONDA3_PATH="/home/${NB_USER}/miniconda3"
 ENV CONDA_CHANNEL_DIR="/local-channels"
 ENV ARTIFACT_CHANNEL_DIR=".ci_artifacts/build-metadata/build-artifacts"
 
