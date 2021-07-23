@@ -116,13 +116,13 @@ RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
      -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
      --offline --dry-run
 
-# installs a lightweight init system called tini
-RUN conda install --quiet --yes tini
+# # installs a lightweight init system called tini
+# RUN conda install --quiet --yes tini
 
 EXPOSE 8888
 
-# Uses tini for init, runs the jupyterlab scripts for proper envvars
-ENTRYPOINT ["tini","-g","--"]
+# # Uses tini for init, runs the jupyterlab scripts for proper envvars
+# ENTRYPOINT ["tini","-g","--"]
 CMD ["start-notebook.sh"]
 
 COPY tip_scripts/start.sh tip_scripts/start-notebook.sh tip_scripts/start-singleuser.sh /usr/local/bin
