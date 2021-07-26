@@ -84,8 +84,8 @@ COPY --chown=user:user conf/default_conf/*.yaml /home/user/miniconda3/conf/
 # Copy Jupyterlab config
 COPY --chown=user:user tip_scripts/singleuser/jupyter_notebook_config.py /home/user/.jupyter/
 
-COPY --chown=user:user tip_scripts/single_env/ /home/user/user_scripts
-RUN chmod 700 /home/user/user_scripts/jupyter_conda.sh
+COPY --chown=user:user tip_scripts/single_env/start_jupyter_nb.sh /home/user/user_scripts
+RUN chmod 700 /home/user/user_scripts/start_jupyter_nb.sh
 
 # Twistlock: private key stored in image
 USER root

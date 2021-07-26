@@ -149,7 +149,7 @@ conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
 3. Activate the newly created environment
 ```
 source activate tip
-jupyter lab --ip 0.0.0.0 --port 8888 --no-browser
+jupyter lab
 ```
 4. The command line will log the URL with token necessary to navigate to
    the jupyter lab instance.
@@ -158,7 +158,7 @@ jupyter lab --ip 0.0.0.0 --port 8888 --no-browser
 
 Alternatively, run
 ```bash
-/home/user/user_scripts/jupyter_conda.sh
+/home/user/user_scripts/start_jupyter_nb.sh
 ```
 
 To generate a conda environment and run a jupyterlab instance. Rerunning this script will skip over the conda env generation process and immediately launch a new jupyterlab instance.
