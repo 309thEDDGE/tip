@@ -117,3 +117,5 @@ RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
      --offline --dry-run
 
 EXPOSE 8888
+
+ENTRYPOINT ["/usr/bin/bash","home/user/user_scripts/start_jupyter_nb.sh"]
