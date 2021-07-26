@@ -49,7 +49,7 @@ ARG GITLAB_TOKEN
 RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
     ls ${CONDA_CHANNEL_DIR} && \
     pip install --no-cache-dir conda-mirror==0.8.2 && \
-    pip install /whl/conda_vendor-0.1-py3-none-any.whl && \
+    pip install --no-cache-dir /whl/conda_vendor-0.1-py3-none-any.whl && \
     pip install --no-cache-dir conda-lock==0.10.0
 
 
