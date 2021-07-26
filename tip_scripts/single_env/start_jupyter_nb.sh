@@ -1,8 +1,8 @@
 #!/usr/bin/bash
 
 # Default vars
-export PACKAGE_LIST="tip jupyterlab pandas matplotlib pyarrow jupyterhub"
-export LAB_TYPE="lab"
+PACKAGE_LIST="tip jupyterlab pandas matplotlib pyarrow"
+LAB_TYPE="lab"
 
 ############################################################
 # Help                                                     #
@@ -49,14 +49,14 @@ Main()
     cd /home/user/ && source activate tip && jupyter ${LAB_TYPE}
 }
 
-while getopts ":hD:" option; do
+while getopts "hD" option; do
     case $option in
         h)  # display help
             Help
             exit;;
         D)  # set vars for hub
-            export PACKAGE_LIST="${PACKAGE_LIST} jupyterhub"
-            export LAB_TYPE="labhub"
+            PACKAGE_LIST="${PACKAGE_LIST} jupyterhub"
+            LAB_TYPE="labhub"
             ;;
         \?) # Invalid option
             echo "Error: Invalid option"
