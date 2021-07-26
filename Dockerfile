@@ -119,6 +119,9 @@ COPY tip_scripts/single_env/ /home/${NB_USER}/user_scripts
 
 # Copy jupyterlab envvar scripts
 COPY tip_scripts/single_env/start.sh tip_scripts/single_env/start-notebook.sh tip_scripts/single_env/start-singleuser.sh /usr/local/bin
+
+USER root
+
 RUN fix-permissions /home/${NB_USER}/miniconda3 && \
     fix-permissions /home/${NB_USER}/local-channels && \
     fix-permissions /home/${NB_USER}/miniconda3/conf && \
@@ -126,8 +129,6 @@ RUN fix-permissions /home/${NB_USER}/miniconda3 && \
     fix-permissions /home/${NB_USER}/user_scripts/jupyter_conda.sh && \
     fix-permissions /usr/local/bin/
 
-
-USER root
 # Twistlock: private key stored in image
 RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
     rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem && \
