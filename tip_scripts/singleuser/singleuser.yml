@@ -5,6 +5,7 @@ dependencies:
   - jupyter
   - python>3.9
   - jupyterlab
+  - jupyterhub
   - pandas
   - matplotlib
   - pyarrow
