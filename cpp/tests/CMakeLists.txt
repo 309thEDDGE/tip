@@ -62,4 +62,5 @@ install(
 # enable_testing()
 # include(GoogleTest)
 # gtest_discover_tests(tests)
+include(GoogleTest)
 gtest_discover_tests(tests)

@@ -65,5 +65,5 @@ add_subdirectory(cpp/tests)
 # Testing
 ##########################################
 enable_testing()
-include(GoogleTest)
+# include(GoogleTest)
 # gtest_discover_tests(tests)
