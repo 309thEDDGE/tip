@@ -40,6 +40,46 @@ Use `markdown_to_html.py` in the tip_scripts directory to convert md file to htm
 	- libirig106
 	- libtins
 	- npcap
+
+#### Development
+
+Development is done within conda environments. In order to first begin
+development install
+[conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)
+for your given operating system. All tip dependencies have been
+packaged for Windows, Linux, and OSX. Once conda has been installed
+create the development environment. If the environment name already
+exists you will want to update the environment instead.
+
+```shell
+conda env create -f environment.yaml
+# conda env update -f environment.yaml
+```
+
+Activate the development environment. Sometimes depending on how conda
+is installed it must be activated via `source activate ...`.
+
+```shell
+conda activate tip-dev
+# source activate tip-dev
+```
+
+Now start a tip build and all build dependencies should be available
+in your path automatically. The following works on all
+platforms.
+
+```shell
+mkdir build
+cd build
+
+# linux build
+cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_INSTALL_LIBDIR=lib
+cmake --build . --target install
+
+# windows build
+cmake .. -GNinja -DCONDA_PREFIX=%CONDA_PREFIX% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib
+cmake --build . --target install
+```
 	
 #### CMake
 

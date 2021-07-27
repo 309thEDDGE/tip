@@ -52,5 +52,9 @@ target_include_directories(tests
 target_link_libraries(tests
     PUBLIC ch10parse_lib ch10_parquet ch10ethernet parquet_context parserw translate_1553 tiputil parquet_compare pq_vid_extract yamlsv
     arrow_shared parquet spdlog::spdlog
-    PRIVATE gtest gmock gtest_main
+    PRIVATE ${GTEST_LIBRARIES}
+)
+
+install(
+    TARGETS tests
 )

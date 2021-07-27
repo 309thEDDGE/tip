@@ -5,7 +5,9 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <cctype>
 #include "iterable_tools.h"
+
 
 class ParseText
 {

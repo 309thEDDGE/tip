@@ -86,7 +86,7 @@ class ParseManagerTest : public ::testing::Test
             "  MILSTD1553_FORMAT1: true\n"
             "  VIDEO_FORMAT0 : true\n"
             "parse_chunk_bytes: 500\n"
-            "parse_thread_count: 4\n"
+            "parse_thread_count: 1\n"
             "max_chunk_read_count: 1000\n"
             "worker_offset_wait_ms: 200\n"
             "worker_shift_wait_ms: 200\n"};
