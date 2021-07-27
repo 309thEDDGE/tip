@@ -22,7 +22,7 @@ CodeName::CodeName(std::string raw, bool show_debug)
                 "raw %s, prefix %s, match_substr %s, regex_string %s, "
                 "subattr %s\n",
                 raw.c_str(), prefix.c_str(), match_substr.c_str(),
-                regex_string.c_str(), match.str(2));
+                regex_string.c_str(), match.str(2).c_str());
         }
         subattrs.push_back(match.str(2));
         raw = match.suffix().str();
@@ -184,7 +184,7 @@ std::map<std::string, std::string> TMATSParser::MapAttrs(std::string key_attr, s
         std::smatch code_matches;
 
         if (debug)
-            printf("\nbasic match codename: %s\n", codename);
+            printf("\nbasic match codename: %s\n", codename.c_str());
 
         // Get the value of the key attribute and its subattrs (x, n, etc.).
         if (regex_search(codename, code_matches, key.re))

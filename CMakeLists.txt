@@ -88,7 +88,7 @@ endif()
 #########################################################
 
 message(STATUS "System name: " ${CMAKE_SYSTEM_NAME})
-if(DEFINED CONDA)
+if(DEFINED CONDA_PREFIX)
     message(STATUS "Setting conda build options")
     include("CMake_conda.txt")
 elseif("${CMAKE_SYSTEM_NAME}" MATCHES "CYGWIN")
@@ -134,6 +134,6 @@ else()
 endif()
 
 # Add source files dir.
-if(NOT DEFINED CONDA)
+if(NOT DEFINED CONDA_PREFIX)
     add_subdirectory(cpp)
 endif()

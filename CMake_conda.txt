@@ -1,42 +1,37 @@
-set(CMAKE_GENERATOR "Unix Makefiles")
-
-add_compile_options("-m64")
-
 # NEWARROW is used if the new (~0.17+) version of
-# Arrow is used. Currently, only the most recent
-# Arrow version can be installed in Centos using
-# the package manager.
-if(container)
-    add_definitions(-DNEWARROW)
+# Arrow is used.
+add_definitions(-DNEWARROW)
+
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
+   add_compile_definitions(__WIN64)
+   link_directories("${CONDA_PREFIX}\\Library\\lib")
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+   add_definitions(-D__linux__)
+else()
+    message(FATAL_ERROR "No system-specific options: " ${CMAKE_SYSTEM_NAME})
 endif()
-
-add_definitions(-D__linux__)
-
-#########################################################
-#                     Linux-specific
-#########################################################
-add_definitions(-DLOCALDB
-                -DDEBUG=${debug})
-
-add_definitions(-DPARQUET_STATIC
-                -DPARQUET
-                -DARROW_STATIC
-                -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
-
-# filesystem
-set(fs_lib_name "stdc++fs")
-
-
-# thread
-set(thread_lib_name "pthread")
-set(dl_lib_name "dl")
-set(linux_libs ${fs_lib_name} ${thread_lib_name} ${dl_lib_name})
-
-# Link dirs
-link_directories(${lib_dir})
 
 # common same default install directories
 include(GNUInstallDirs)
+
+###########################################
+# Slight Hacks Remove Later
+###########################################
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
+   # wish that the same libraries would
+   # work for windows and linux for gtest
+   set(GTEST_LIBRARIES gmock_main-md gtest_main-md)
+   # Compatibility with CMakeLists.txt
+   # tip/cpp/ch10/main/ch10parse.cpp
+   add_compile_definitions(PARQUET_STATIC ARROW_STATIC)
+else()
+   # wish that the same libraries would
+   # work for windows and linux for gtest
+   set(GTEST_LIBRARIES gtest gmock gtest_main)
+   # Compatibility with CMakeLists.txt
+   # tip/cpp/ch10/main/ch10parse.cpp
+   add_definitions(-DARROW_STATIC -DPARQUET_STATIC)
+endif()
 
 ###########################################
 # Find Dependencies
@@ -45,9 +40,7 @@ find_package(PkgConfig)
 find_package(Arrow REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(spdlog REQUIRED)
-pkg_check_modules(LIBTINS REQUIRED libtins)
-# find_package(libtins REQUIRED)
-pkg_check_modules(LIBPCAP REQUIRED libpcap)
+find_package(libtins REQUIRED)
 
 ###########################################
 # Packages

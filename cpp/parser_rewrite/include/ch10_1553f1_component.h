@@ -79,7 +79,7 @@ class Ch101553F1Component : public Ch10PacketComponent
     Ch10Time ch10_time_;
 
    public:
-    const uint32_t& abs_time;
+    const uint64_t& abs_time;
     const int8_t& expected_payload_word_count;
     const int8_t& calc_payload_word_count;
     const uint8_t& is_payload_incomplete;

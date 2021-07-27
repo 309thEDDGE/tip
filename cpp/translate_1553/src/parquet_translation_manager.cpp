@@ -444,7 +444,7 @@ uint8_t ParquetTranslationManager::open_raw_1553_parquet_file(const ManagedPath&
 #ifdef NEWARROW
     try
     {
-        PARQUET_ASSIGN_OR_THROW(arrow_file_, arrow::io::ReadableFile::Open(current_path, pool_));
+        PARQUET_ASSIGN_OR_THROW(arrow_file_, arrow::io::ReadableFile::Open(current_path.string(), pool_));
     }
     catch (...)
     {
