@@ -191,7 +191,7 @@ This method is recommended for those who do not need access to a jupyterlab envi
 
 1. Boot into the container with
 ```bash
-docker run -it -p 8888:8888 -v <host path>:<container path> registry.il2.dso.mil/skicamp/project-opal/tip:<latest> bash
+docker run -it -p 8888:8888 -v <host path>:<container path> --entrypoint bash registry.il2.dso.mil/skicamp/project-opal/tip:<latest>
 ```
 
 2. Once inside the container, build the tip environment using available
