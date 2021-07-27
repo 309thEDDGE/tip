@@ -168,40 +168,81 @@ If the `parse_and_translate.py` script is used, relevant config files are automa
 
 ## Usage
 
-### How to use TIP singleuser container
-1. Run the container
-```
-docker run -it -p 8888:8888 registry.il2.dso.mil/skicamp/project-opal/tip:<latest>
+Several methods to setup the singleuser container are available.
 
+### Singleuser Container Quickstart
+
+This is the recommended setup method, as it places the user directly into a useable environment.
+
+1. Run the container
+```bash
+docker run -it -p 8888:8888 -v <host path>:<container path> registry.il2.dso.mil/skicamp/project-opal/tip:<latest>
 ```
 
 Replace `<latest>` with the most recent container tag from https://code.il2.dso.mil/skicamp/project-opal/tip/container_registry/1904
 
+This command will directly run a local jupyterlab server with tip, pandas, matplotlib, and pyarrow available.
+
+To enter juptyerlab, copy+paste the `127.0.0.1:8888/lab?token=...` link provided at the bottom of the end of jupyterlab's output.
+
+### Singleuser container manual setup 
+
+This method is recommended for those who do not need access to a jupyterlab environment, but still wish to use tip or the available data science tools.
+
+1. Boot into the container with
+```bash
+docker run -it -p 8888:8888 -v <host path>:<container path> registry.il2.dso.mil/skicamp/project-opal/tip:<latest> bash
+```
+
 2. Once inside the container, build the tip environment using available
    local channels
-```
+```bash
 conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
      -c /home/user/local-channels/singleuser-channel/local_conda-forge \
      -c /home/user/local-channels/tip-package-channel \
      -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
      --offline -y
 ```
-3. Activate the newly created environment
-```
+
+3. Activate the newly created environment and run jupyterlab
+```bash
 source activate tip
 jupyter lab
 ```
+
 4. The command line will log the URL with token necessary to navigate to
    the jupyter lab instance.
 
-### Jupyterlab and Conda env quickstart
+### Automagically create conda environment and run jupyterlab
 
-Alternatively, run
+This is a simpler alternative to the above step, and automatically provides the user with a running jupyterlab instance.
+
+A script has been provided to simplify the setup process within the container. 
+
+Run
 ```bash
 /home/user/user_scripts/start_jupyter_nb.sh
 ```
+To generate a conda environment and run a jupyterlab instance. Rerunning this script will skip the conda env generation process and immediately launch a new jupyterlab instance.
 
-To generate a conda environment and run a jupyterlab instance. Rerunning this script will skip over the conda env generation process and immediately launch a new jupyterlab instance.
+### Using TIP within the singleuser container
+
+When running TIP, the configuration path will need to be supplied as an argument. By default, the configuration files are located in `/home/user/miniconda3/conf`
+
+For example, `tip_parse` will need to be run as follows:
+```bash
+tip_parse <path to ch10> <output path> <configuration path> <logfile output path>
+```
+
+### For Deployment on Jupyterhub
+
+The setup script provided for launching a singleuser jupyterlab offers a flag for running a jupyterhub-specific lab instance.
+
+Run the script 
+```bash
+/home/user/user_scripts/start_jupyter_nb.sh -D
+```
+within jupyterhub's dockerspawner config. This will generate a jupyterhub-friendly conda environment, as well as run the `labhub` version of jupyterlab
 
 ### Helper Script (preferred)
 
