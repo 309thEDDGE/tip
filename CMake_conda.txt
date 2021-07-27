@@ -37,13 +37,15 @@ endif()
 ###########################################
 # Find Dependencies
 ###########################################
-find_package(PkgConfig)
 find_package(Arrow REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(spdlog REQUIRED)
-# find_package(libtins REQUIRED)
-pkg_check_modules(LIBTINS REQUIRED libtins)
-pkg_check_modules(LIBPCAP REQUIRED libpcap)
+
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+   find_package(PkgConfig)
+   pkg_check_modules(LIBTINS REQUIRED libtins)
+   pkg_check_modules(LIBPCAP REQUIRED libpcap)
+endif()
 
 ###########################################
 # Packages
