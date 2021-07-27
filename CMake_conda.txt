@@ -7,6 +7,7 @@ if("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
    link_directories("${CONDA_PREFIX}\\Library\\lib")
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
    add_definitions(-D__linux__)
+   # link_directories("${CONDA_PREFIX}/lib")
 else()
     message(FATAL_ERROR "No system-specific options: " ${CMAKE_SYSTEM_NAME})
 endif()
@@ -40,7 +41,9 @@ find_package(PkgConfig)
 find_package(Arrow REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(spdlog REQUIRED)
-find_package(libtins REQUIRED)
+# find_package(libtins REQUIRED)
+pkg_check_modules(LIBTINS REQUIRED libtins)
+pkg_check_modules(LIBPCAP REQUIRED libpcap)
 
 ###########################################
 # Packages
