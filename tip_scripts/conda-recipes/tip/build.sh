@@ -1,7 +1,7 @@
 #!/bin/bash
 
-mkdir build-release
-cd build-release
+mkdir build
+cd build
 
 cmake ${CMAKE_ARGS} .. \
     -G Ninja \
@@ -10,4 +10,6 @@ cmake ${CMAKE_ARGS} .. \
     -DCMAKE_PREFIX_PATH=$PREFIX \
     -DCMAKE_INSTALL_PREFIX=$PREFIX
 
-cmake --build . --target install -j2
+cmake --build . --target install
+
+ctest
