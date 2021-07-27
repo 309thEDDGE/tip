@@ -59,6 +59,6 @@ install(
     TARGETS tests
 )
 
-enable_testing()
-include(GoogleTest)
-gtest_discover_tests(tests)
+# enable_testing()
+# include(GoogleTest)
+# gtest_discover_tests(tests)

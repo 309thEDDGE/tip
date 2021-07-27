@@ -60,3 +60,10 @@ add_subdirectory(cpp/validation)
 add_subdirectory(cpp/video/parquet)
 add_subdirectory(cpp/ch10)
 add_subdirectory(cpp/tests)
+
+##########################################
+# Testing
+##########################################
+enable_testing()
+include(GoogleTest)
+gtest_discover_tests(tests)
