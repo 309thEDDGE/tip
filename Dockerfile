@@ -24,9 +24,8 @@ RUN tar -xvf $CONDA_CHANNEL_DIR/local_channel.tar -C $CONDA_CHANNEL_DIR && \
 
 ENV PATH="${CONDA_PATH}/bin:${PATH}"
 RUN conda init && source /root/.bashrc && conda activate base && \
-    pip3 install /whl/conda_vendor-0.1-py3-none-any.whl
-
-RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
+    pip3 install --no-cache-dir /whl/conda_vendor-0.1-py3-none-any.whl && \
+    echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
     ls ${CONDA_CHANNEL_DIR} && \
     mkdir "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
     python -m conda_vendor local-channels -f /tip/tip_scripts/singleuser/singleuser.yml --channel-root "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
@@ -49,11 +48,10 @@ COPY --from=builder --chown=user:user /local-channels /home/user/local-channels
 COPY --chown=user:user conf /home/user/conf
 COPY --chown=user:user conf/default_conf/*.yaml /home/user/conf/
 COPY --chown=user:user tip_scripts/singleuser/jupyter_notebook_config.py /home/user/.jupyter/
-
 COPY --chown=user:user tip_scripts/single_env/start_jupyter_nb.sh /home/user/user_scripts/
-RUN chmod 700 /home/user/user_scripts/start_jupyter_nb.sh
 
-RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
+RUN chmod 700 /home/user/user_scripts/start_jupyter_nb.sh && \
+    rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
     rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem && \
     rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem && \
     rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem && \
