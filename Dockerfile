@@ -1,6 +1,5 @@
 FROM registry.il2.dso.mil/skicamp/project-opal/opal-operations:vendor-whl AS wheel
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/ironbank/miniconda:4.9.2 AS builder
-#FROM registry.il2.dso.mil/skicamp/project-opal/tip/build:miniconda AS builder
 
 USER root
 
@@ -70,14 +69,14 @@ RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
 
 USER user
 #ENV PATH=/opt/conda/bin:$PATH
-RUN echo "CONDA_PATH = ${CONDA_PATH}"
-RUN ls -l /
-RUN ls -l /opt
-RUN ls -l "${CONDA_PATH}"
-#RUN conda init
-RUN source "${CONDA_PATH}/etc/profile.d/conda.sh"
+#RUN echo "CONDA_PATH = ${CONDA_PATH}"
+#RUN ls -l /
+#RUN ls -l /opt
+#RUN ls -l "${CONDA_PATH}"
+RUN conda init
+RUN source /home/user/.bashrc
 RUN conda env list 
-RUN conda activate base
+#RUN conda activate base
 WORKDIR /home/user
 
 RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
