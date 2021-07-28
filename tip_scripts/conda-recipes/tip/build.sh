@@ -1,7 +1,7 @@
 #!/bin/bash
 
-mkdir build
-cd build
+mkdir build-release
+cd build-release
 
 cmake ${CMAKE_ARGS} .. \
     -G Ninja \
