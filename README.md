@@ -80,6 +80,12 @@ cmake --build . --target install
 cmake .. -GNinja -DCONDA_PREFIX=%CONDA_PREFIX% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib
 cmake --build . --target install
 ```
+
+Running the tests within the build directory
+
+```shell
+ctest
+```
 	
 #### CMake
 

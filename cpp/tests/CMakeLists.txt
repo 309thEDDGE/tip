@@ -58,3 +58,7 @@ target_link_libraries(tests
 install(
     TARGETS tests
 )
+
+enable_testing()
+include(GoogleTest)
+gtest_discover_tests(tests)
