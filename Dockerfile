@@ -68,11 +68,11 @@ RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
     rm -rf ${CONDA_PATH}/include
 
 USER user
-#ENV PATH=/opt/conda/bin:$PATH
-#RUN echo "CONDA_PATH = ${CONDA_PATH}"
-#RUN ls -l /
-#RUN ls -l /opt
-#RUN ls -l "${CONDA_PATH}"
+ENV PATH=/opt/conda/bin:$PATH
+RUN echo "CONDA_PATH = ${CONDA_PATH}"
+RUN ls -l /
+RUN ls -l /opt
+RUN ls -l "${CONDA_PATH}"
 RUN conda init
 RUN source /home/user/.bashrc
 RUN conda env list 
