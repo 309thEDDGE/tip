@@ -6,14 +6,12 @@ USER root
 COPY --from=wheel /whl /whl
 
 RUN mkdir /tip
-#COPY cpp_pipeline_scripts /tip/cpp_pipeline_scripts
 COPY tip_scripts /tip/tip_scripts/
 COPY README.md /tip/README.md
 
 WORKDIR /tip
 
 # ARG GITLAB_TOKEN
-
 # RUN git clone https://__token__@code.il2.dso.mil/skicamp/project-opal/opal-operations.git
 
 ENV CONDA_PATH="/opt/conda"
@@ -26,11 +24,7 @@ RUN tar -xvf $CONDA_CHANNEL_DIR/local_channel.tar -C $CONDA_CHANNEL_DIR && \
 
 ENV PATH="${CONDA_PATH}/bin:${PATH}"
 RUN conda init && source /root/.bashrc && conda activate base && \
-    pip3 install /whl/conda_vendor-0.1-py3-none-any.whl 
-
-#COPY ${ARTIFACT_CHANNEL_DIR}/ ${CONDA_CHANNEL_DIR}/
-
-#ARG GITLAB_TOKEN
+    pip3 install /whl/conda_vendor-0.1-py3-none-any.whl
 
 RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
     ls ${CONDA_CHANNEL_DIR} && \
@@ -69,13 +63,12 @@ RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
 
 USER user
 ENV PATH=/opt/conda/bin:$PATH
-RUN echo "CONDA_PATH = ${CONDA_PATH}"
-RUN ls -l /
-RUN ls -l /opt
-RUN ls -l "${CONDA_PATH}"
-RUN conda init
-RUN source /home/user/.bashrc
-RUN conda env list 
+#RUN echo "CONDA_PATH = ${CONDA_PATH}"
+#RUN ls -l /
+#RUN ls -l /opt
+#RUN ls -l "${CONDA_PATH}"
+RUN conda init && source /home/user/.bashrc
+#RUN conda env list 
 #RUN conda activate base
 WORKDIR /home/user
 
