@@ -68,14 +68,15 @@ RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
     rm -rf ${CONDA_PATH}/include
 
 USER user
-ENV PATH="${CONDA_PATH}/bin:${PATH}"
+ENV PATH=/opt/conda/bin:$PATH
 RUN echo "CONDA_PATH = ${CONDA_PATH}"
 RUN ls -l /
 RUN ls -l /opt
 RUN ls -l "${CONDA_PATH}"
 RUN conda init
 RUN source /home/user/.bashrc
-RUN conda activate base
+RUN conda env list 
+#RUN conda activate base
 WORKDIR /home/user
 
 RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
