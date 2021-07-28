@@ -44,7 +44,7 @@ ENV CONDA_PATH="/opt/conda"
 RUN groupadd -r user && useradd -r -g user user && mkdir /home/user && \
     chown -R user:user /home/user
 
-COPY --from=builder --chown=user:user /opt/conda /opt/conda
+COPY --from=builder --chown=user:user $CONDA_PATH $CONDA_PATH
 COPY --from=builder --chown=user:user /local-channels /home/user/local-channels
 COPY --chown=user:user conf /home/user/conf
 COPY --chown=user:user conf/default_conf/*.yaml /home/user/conf/
@@ -63,13 +63,7 @@ RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
 
 USER user
 ENV PATH=/opt/conda/bin:$PATH
-#RUN echo "CONDA_PATH = ${CONDA_PATH}"
-#RUN ls -l /
-#RUN ls -l /opt
-#RUN ls -l "${CONDA_PATH}"
 RUN conda init && source /home/user/.bashrc
-#RUN conda env list 
-#RUN conda activate base
 WORKDIR /home/user
 
 RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
