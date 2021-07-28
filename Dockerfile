@@ -1,5 +1,6 @@
 FROM registry.il2.dso.mil/skicamp/project-opal/opal-operations:vendor-whl AS wheel
-FROM registry1.dso.mil/ironbank/opensource/dask-gateway/miniconda:4.9.2 AS builder
+#FROM registry1.dso.mil/ironbank/opensource/dask-gateway/miniconda:4.9.2 AS builder
+FROM registry.il2.dso.mil/skicamp/project-opal/tip/build:miniconda AS builder
 
 USER root
 
