@@ -44,11 +44,13 @@ RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0
 
 ENV CONDA_ADD_PIP_AS_PYTHON_DEPENDENCY=False
+ENV CONDA_PATH="/opt/conda"
+RUN echo "CONDA_PATH = ${CONDA_PATH}"
 
 RUN groupadd -r user && useradd -r -g user user && mkdir /home/user && \
     chown -R user:user /home/user
 
-COPY --from=builder --chown=user:user ${CONDA_PATH} ${CONDA_PATH}
+COPY --from=builder --chown=user:user /opt/conda /opt/conda
 COPY --from=builder --chown=user:user /local-channels /home/user/local-channels
 COPY --chown=user:user conf /home/user/conf
 COPY --chown=user:user conf/default_conf/*.yaml /home/user/conf/
@@ -67,9 +69,10 @@ RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
 
 USER user
 ENV PATH="${CONDA_PATH}/bin:${PATH}"
+RUN echo "CONDA_PATH = ${CONDA_PATH}"
 RUN ls -l /
 RUN ls -l /opt
-RUN ls -l ${CONDA_PATH}
+RUN ls -l "${CONDA_PATH}"
 RUN conda init
 RUN source /home/user/.bashrc
 RUN conda activate base
