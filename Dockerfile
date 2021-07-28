@@ -48,7 +48,7 @@ ENV CONDA_ADD_PIP_AS_PYTHON_DEPENDENCY=False
 RUN groupadd -r user && useradd -r -g user user && mkdir /home/user && \
     chown -R user:user /home/user
 
-COPY --from=builder --chown=user:user $CONDA_PATH $CONDA_PATH
+COPY --from=builder --chown=user:user ${CONDA_PATH} ${CONDA_PATH}
 COPY --from=builder --chown=user:user /local-channels /home/user/local-channels
 COPY --chown=user:user conf /home/user/conf
 COPY --chown=user:user conf/default_conf/*.yaml /home/user/conf/
@@ -62,11 +62,14 @@ RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
     rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem && \
     rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem && \
     rm  /usr/share/gnupg/sks-keyservers.netCA.pem && \
-    rm -rf $CONDA_PATH/conda-meta && \
-    rm -rf $CONDA_PATH/include
+    rm -rf ${CONDA_PATH}/conda-meta && \
+    rm -rf ${CONDA_PATH}/include
 
 USER user
 ENV PATH="${CONDA_PATH}/bin:${PATH}"
+RUN ls -l /
+RUN ls -l /opt
+RUN ls -l ${CONDA_PATH}
 RUN conda init
 RUN source /home/user/.bashrc
 RUN conda activate base
