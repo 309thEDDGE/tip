@@ -41,6 +41,7 @@ Main()
         while [ -d /proc/$PID ]
         do
             printf "\b${sp:i++%${#sp}:1}"
+            sleep 0.2
         done
     fi
 
