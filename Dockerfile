@@ -1,6 +1,6 @@
 FROM registry.il2.dso.mil/skicamp/project-opal/opal-operations:vendor-whl AS wheel
-#FROM registry1.dso.mil/ironbank/opensource/dask-gateway/miniconda:4.9.2 AS builder
-FROM registry.il2.dso.mil/skicamp/project-opal/tip/build:miniconda AS builder
+FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/ironbank/miniconda:4.9.2 AS builder
+#FROM registry.il2.dso.mil/skicamp/project-opal/tip/build:miniconda AS builder
 
 USER root
 
@@ -43,6 +43,8 @@ RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
 
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0
 
+SHELL ["/usr/bin/bash", "-c"] 
+
 ENV CONDA_ADD_PIP_AS_PYTHON_DEPENDENCY=False
 ENV CONDA_PATH="/opt/conda"
 RUN echo "CONDA_PATH = ${CONDA_PATH}"
@@ -75,8 +77,8 @@ RUN ls -l /opt
 RUN ls -l "${CONDA_PATH}"
 RUN conda init
 RUN source /home/user/.bashrc
-RUN conda env list 
-#RUN conda activate base
+#RUN conda env list 
+RUN conda activate base
 WORKDIR /home/user
 
 RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
