@@ -18,13 +18,8 @@ ENV CONDA_PATH="/opt/conda"
 ENV CONDA_CHANNEL_DIR="/local-channels"
 ENV ARTIFACT_CHANNEL_DIR=".ci_artifacts/build-metadata/build-artifacts"
 
-#COPY $ARTIFACT_CHANNEL_DIR/local_channel.tar $CONDA_CHANNEL_DIR/local_channel.tar
-#RUN tar -xvf $CONDA_CHANNEL_DIR/local_channel.tar -C $CONDA_CHANNEL_DIR && \
-#    mv $CONDA_CHANNEL_DIR/local-channel $CONDA_CHANNEL_DIR/tip-package-channel
-
 ADD $ARTIFACT_CHANNEL_DIR/local_channel.tar $CONDA_CHANNEL_DIR
-RUN ls "${CONDA_CHANNEL_DIR}" && ls "${CONDA_CHANNEL_DIR}/local-channel" && \
-    mv $CONDA_CHANNEL_DIR/local-channel $CONDA_CHANNEL_DIR/tip-package-channel
+RUN mv $CONDA_CHANNEL_DIR/local-channel $CONDA_CHANNEL_DIR/tip-package-channel
 
 ENV PATH="${CONDA_PATH}/bin:${PATH}"
 RUN conda init && source /root/.bashrc && conda activate base && \
