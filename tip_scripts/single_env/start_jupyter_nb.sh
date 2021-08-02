@@ -30,9 +30,9 @@ Main()
         printf "'tip' Conda env not found\n"
         # Create and activate conda environment with local channel
         conda create -n tip ${PACKAGE_LIST} \
-            -c /home/user/local-channels/singleuser-channel/local_conda-forge \
-            -c /home/user/local-channels/tip-package-channel \
-            -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
+            -c /home/${NB_USER}/local-channels/singleuser-channel/local_conda-forge \
+            -c /home/${NB_USER}/local-channels/tip-package-channel \
+            -c /home/${NB_USER}/local-channels/tip-dependencies-channel/local_conda-forge \
             --offline -y > /dev/null &
         printf "Generating Conda env 'tip'\n"
         PID=$!
@@ -47,7 +47,7 @@ Main()
 
     # Activate tip conda environment and run jupyterlab server
     printf "Launching Jupyterlab\n"
-    cd /home/user/ && source activate tip && jupyter ${LAB_TYPE}
+    cd /home/${NB_USER}/ && conda activate tip && jupyter ${LAB_TYPE}
 }
 
 while getopts "hD" option; do

@@ -41,18 +41,25 @@ SHELL ["/usr/bin/bash", "-c"]
 ENV CONDA_ADD_PIP_AS_PYTHON_DEPENDENCY=False
 ENV CONDA_PATH="/opt/conda"
 
-RUN groupadd -r user && useradd -r -g user user && mkdir /home/user && \
-    chown -R user:user /home/user
+ARG NB_USER="jovyan"
+ARG NB_UID="1000"
+ARG NB_GID="100"
 
-COPY --from=builder --chown=user:user $CONDA_PATH $CONDA_PATH
-COPY --from=builder --chown=user:user /local-channels /home/user/local-channels
-COPY --chown=user:user conf /home/user/conf
-COPY --chown=user:user conf/default_conf/*.yaml /home/user/conf/
-COPY --chown=user:user tip_scripts/singleuser/jupyter_notebook_config.py /home/user/.jupyter/
-COPY --chown=user:user tip_scripts/single_env/start_jupyter_nb.sh /home/user/user_scripts/
+ENV NBUSER="${NB_USER}" \
+    NB_UID=${NB_UID} \
+    NB_GID=${NB_GID}
 
+RUN groupadd -r ${NB_USER} && useradd -r -g ${NB_GID} -u ${NB_UID} ${NB_USER} && mkdir /home/${NB_USER} && \
+    chown -R ${NB_USER}:${NB_USER} /home/${NB_USER}
 
-RUN chmod 700 /home/user/user_scripts/start_jupyter_nb.sh && \
+COPY --from=builder --chown=${NB_USER}:${NB_USER} $CONDA_PATH $CONDA_PATH
+COPY --from=builder --chown=${NB_USER}:${NB_USER} /local-channels /home/${NB_USER}/local-channels
+COPY --chown=${NB_USER}:${NB_USER} conf /home/${NB_USER}/conf
+COPY --chown=${NB_USER}:${NB_USER} conf/default_conf/*.yaml /home/${NB_USER}/conf/
+COPY --chown=${NB_USER}:${NB_USER} tip_scripts/singleuser/jupyter_notebook_config.py /home/${NB_USER}/.jupyter/
+COPY --chown=${NB_USER}:${NB_USER} tip_scripts/single_env/start_jupyter_nb.sh /home/${NB_USER}/user_scripts/
+
+RUN chmod +x /home/${NB_USER}/user_scripts/start_jupyter_nb.sh && \
     rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
     rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem && \
     rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem && \
@@ -61,10 +68,12 @@ RUN chmod 700 /home/user/user_scripts/start_jupyter_nb.sh && \
     rm -rf ${CONDA_PATH}/conda-meta && \
     rm -rf ${CONDA_PATH}/include
 
-USER user
+USER ${NB_USER}
+RUN mkdir "/home/${NB_USER}/work"
+
 ENV PATH="${CONDA_PATH}/bin:$PATH"
-RUN conda init && source /home/user/.bashrc
-WORKDIR /home/user
+RUN conda init bash && source /home/${NB_USER}/.bashrc
+WORKDIR /home/${NB_USER}
 
 RUN conda create -n tip \
     tip \
@@ -82,15 +91,15 @@ RUN conda create -n tip \
     spdlog \
     libtins \
     pip \
-    -c /home/user/local-channels/singleuser-channel/local_conda-forge \
-    -c /home/user/local-channels/tip-package-channel \
-    -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
+    -c /home/${NB_USER}/local-channels/singleuser-channel/local_conda-forge \
+    -c /home/${NB_USER}/local-channels/tip-package-channel \
+    -c /home/${NB_USER}/local-channels/tip-dependencies-channel/local_conda-forge \
     --offline \
-    && rm -rf /home/user/local-channels/singleuser-channel/local_conda-forge \
-    && rm -rf /home/user/local-channels/tip-package-channel \
-    && rm -rf /home/user/local-channels/tip-dependencies-channel/local_conda-forge
+    && rm -rf /home/${NB_USER}/local-channels/singleuser-channel/local_conda-forge \
+    && rm -rf /home/${NB_USER}/local-channels/tip-package-channel \
+    && rm -rf /home/${NB_USER}/local-channels/tip-dependencies-channel/local_conda-forge
 
 EXPOSE 8888
 
-ENTRYPOINT ["/usr/bin/bash","/home/user/user_scripts/start_jupyter_nb.sh"]
+ENTRYPOINT ["/usr/bin/bash","/home/${NB_USER}/user_scripts/start_jupyter_nb.sh"]
 
