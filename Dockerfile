@@ -85,7 +85,10 @@ RUN conda create -n tip \
     -c /home/user/local-channels/singleuser-channel/local_conda-forge \
     -c /home/user/local-channels/tip-package-channel \
     -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
-    --offline
+    --offline \
+    && rm -rf /home/user/local-channels/singleuser-channel/local_conda-forge \
+    && rm -rf /home/user/local-channels/tip-package-channel \
+    && rm -rf /home/user/local-channels/tip-dependencies-channel/local_conda-forge
 
 EXPOSE 8888
 
