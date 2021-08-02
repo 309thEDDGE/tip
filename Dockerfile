@@ -45,11 +45,11 @@ ARG NB_USER="jovyan"
 ARG NB_UID="1000"
 ARG NB_GID="100"
 
-ENV NBUSER="${NB_USER}" \
+ENV NB_USER="${NB_USER}" \
     NB_UID=${NB_UID} \
     NB_GID=${NB_GID}
 
-RUN groupadd -r ${NB_USER} && useradd -r -g ${NB_GID} -u ${NB_UID} ${NB_USER} && mkdir /home/${NB_USER} && \
+RUN groupadd -r ${NB_USER} && useradd -l -r -g ${NB_GID} -u ${NB_UID} ${NB_USER} && mkdir /home/${NB_USER} && \
     chown -R ${NB_USER}:${NB_USER} /home/${NB_USER}
 
 COPY --from=builder --chown=${NB_USER}:${NB_USER} $CONDA_PATH $CONDA_PATH
