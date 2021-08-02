@@ -51,6 +51,7 @@ COPY --chown=user:user conf/default_conf/*.yaml /home/user/conf/
 COPY --chown=user:user tip_scripts/singleuser/jupyter_notebook_config.py /home/user/.jupyter/
 COPY --chown=user:user tip_scripts/single_env/start_jupyter_nb.sh /home/user/user_scripts/
 
+
 RUN chmod 700 /home/user/user_scripts/start_jupyter_nb.sh && \
     rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
     rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem && \
@@ -65,11 +66,26 @@ ENV PATH="${CONDA_PATH}/bin:$PATH"
 RUN conda init && source /home/user/.bashrc
 WORKDIR /home/user
 
-RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
-     -c /home/user/local-channels/singleuser-channel/local_conda-forge \
-     -c /home/user/local-channels/tip-package-channel \
-     -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
-     --offline --dry-run
+RUN conda create -n tip \
+    tip \
+    jupyter \
+    python>3.9 \
+    jupyterlab \
+    jupyterhub \
+    pandas \
+    matplotlib \
+    pyarrow \
+    yaml-cpp \
+    pyyaml \
+    libpcap \
+    arrow-cpp \
+    spdlog \
+    libtins \
+    pip \
+    -c /home/user/local-channels/singleuser-channel/local_conda-forge \
+    -c /home/user/local-channels/tip-package-channel \
+    -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
+    --offline
 
 EXPOSE 8888
 
