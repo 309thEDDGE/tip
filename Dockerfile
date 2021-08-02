@@ -32,7 +32,7 @@ RUN conda init && source /root/.bashrc && conda activate base && \
     python -m conda_vendor local-channels -f /tip/tip_scripts/conda-mirror/tip_dependency_env.yml --channel-root "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
     ls ${CONDA_CHANNEL_DIR} 
 
-#USER 1000
+USER 1000
 
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0
 
