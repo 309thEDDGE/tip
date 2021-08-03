@@ -187,6 +187,12 @@ docker run -it -p 8888:8888 -v <host path>:<container path> registry.il2.dso.mil
 
 Replace `<latest>` with the most recent container tag from https://code.il2.dso.mil/skicamp/project-opal/tip/container_registry/1904
 
+`<host path>` is the path to the data you want to work with on your host system. (ch10, parquet, etc.)
+
+`<container path>` is where the data will be mounted within the container.
+
+For example, `-v /home/user/data/ch10/:/data/` will mount the files in `/home/user/data/ch10/` on the host system to `/data/` in the container. If the container path does not exist, it will be created automatically.
+
 This command will directly run a local jupyterlab server with tip, pandas, matplotlib, and pyarrow available.
 
 To enter juptyerlab, copy+paste the `127.0.0.1:8888/lab?token=...` link provided at the bottom of the end of jupyterlab's output.
