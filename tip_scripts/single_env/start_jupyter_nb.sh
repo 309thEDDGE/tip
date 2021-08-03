@@ -47,7 +47,10 @@ Main()
 
     # Activate tip conda environment and run jupyterlab server
     printf "Launching Jupyterlab\n"
-    cd /home/${NB_USER}/ && conda activate tip && jupyter ${LAB_TYPE}
+    cd /home/${NB_USER}/
+    source /home/${NB_USER}/.bashrc
+    conda activate tip
+    jupyter ${LAB_TYPE}
 }
 
 while getopts "hD" option; do
