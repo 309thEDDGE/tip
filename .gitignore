@@ -61,6 +61,7 @@ tip_scripts/__pycache__
 !Sample_DTS.yaml
 !.clang-format
 !CPPLINT.cfg
+*.DS_Store
 
 # nix
 result*
