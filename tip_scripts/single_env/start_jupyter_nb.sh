@@ -9,7 +9,7 @@ Main()
 {
     # Checking to see if running from jupyterhub
     conda env list | grep tip &> /dev/null
-    if [ -z $JUPTYERHUB_API_TOKEN  ]; then
+    if [ -z "$JUPTYERHUB_API_TOKEN"  ]; then
     printf "Launching Jupyterlab\n"
     cd /home/${NB_USER}/
     source /home/${NB_USER}/.bashrc
