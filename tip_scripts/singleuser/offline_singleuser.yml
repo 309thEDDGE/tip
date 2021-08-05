@@ -1,0 +1,28 @@
+name: tip
+channels:
+  - file:///home/jovyan/local-channels/singleuser-channel/local_conda-forge 
+  - file:///home/jovyan/local-channels/tip-package-channel 
+  - file:///home/jovyan/local-channels/tip-dependencies-channel/local_conda-forge 
+  - nodefaults
+dependencies:
+  - python>3.9
+  - tip 
+  - jupyter
+  - jupyterlab
+  - jupyterhub
+  - pandas
+  - matplotlib
+  - pyarrow
+  - yaml-cpp
+  - pyyaml
+  - libpcap
+  - arrow-cpp
+  - libtins
+  - pip
+  - arrow-cpp
+  - spdlog
+  
+
+
+
+
