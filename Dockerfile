@@ -1,6 +1,6 @@
 FROM registry.il2.dso.mil/skicamp/project-opal/opal-operations:vendor-whl AS wheel
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/ironbank/miniconda:4.9.2 AS builder
-
+RUN   printenv >> vars.txt && cat vars.txt
 USER root
 
 COPY --from=wheel /whl /whl
@@ -67,6 +67,7 @@ COPY --chown=${NB_USER}:${NB_USER} conf /home/${NB_USER}/conf
 COPY --chown=${NB_USER}:${NB_USER} conf/default_conf/*.yaml /home/${NB_USER}/conf/
 COPY --chown=${NB_USER}:${NB_USER} tip_scripts/singleuser/jupyter_notebook_config.py /home/${NB_USER}/.jupyter/
 COPY --chown=${NB_USER}:${NB_USER} tip_scripts/single_env/start_jupyter_nb.sh /home/${NB_USER}/user_scripts/
+COPY --chown=${NB_USER}:${NB_USER} tip_scripts/singleuser/offline_singleuser.yml /home/${NB_USER}/
 
 RUN chmod +x /home/${NB_USER}/user_scripts/start_jupyter_nb.sh \
     && rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc \
@@ -86,26 +87,7 @@ WORKDIR /home/${NB_USER}
 
 RUN conda init bash  \
     && source /home/${NB_USER}/.bashrc \
-    && conda create -n tip \
-    tip \
-    jupyter \
-    python>3.9 \
-    jupyterlab \
-    jupyterhub \
-    pandas \
-    matplotlib \
-    pyarrow \
-    yaml-cpp \
-    pyyaml \
-    libpcap \
-    arrow-cpp \
-    spdlog \
-    libtins \
-    pip \
-    -c /home/${NB_USER}/local-channels/singleuser-channel/local_conda-forge \
-    -c /home/${NB_USER}/local-channels/tip-package-channel \
-    -c /home/${NB_USER}/local-channels/tip-dependencies-channel/local_conda-forge \
-    --offline \
+    conda env create -f offline_singleuser.yml -- offline \
     && rm -rf /home/${NB_USER}/local-channels/singleuser-channel/local_conda-forge \
     && rm -rf /home/${NB_USER}/local-channels/tip-package-channel \
     && rm -rf /home/${NB_USER}/local-channels/tip-dependencies-channel/local_conda-forge \
