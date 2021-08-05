@@ -1,6 +1,5 @@
 FROM registry.il2.dso.mil/skicamp/project-opal/opal-operations:vendor-whl AS wheel
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/ironbank/miniconda:4.9.2 AS builder
-RUN   printenv >> vars.txt && cat vars.txt
 USER root
 
 COPY --from=wheel /whl /whl
@@ -92,7 +91,8 @@ RUN conda init bash  \
     && rm -rf /home/${NB_USER}/local-channels/tip-package-channel \
     && rm -rf /home/${NB_USER}/local-channels/tip-dependencies-channel/local_conda-forge \
     && rm -f /home/jovyan/.conda/envs/tip/lib/python3.9/site-packages/tornado/test/test.key \
-    && rm -f /opt/conda/pkgs/tornado-6.1-py39h3811e60_1/lib/python3.9/site-packages/tornado/test/test.key
+    && rm -f /opt/conda/pkgs/tornado-6.1-py39h3811e60_1/lib/python3.9/site-packages/tornado/test/test.key \
+    &&   printenv >> /home/${NB_USER}/vars.txt 
 
 EXPOSE 8888
 
