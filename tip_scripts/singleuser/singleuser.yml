@@ -2,6 +2,7 @@ name: tip_singleuser
 channels:
   - conda-forge
 dependencies:
+<<<<<<< HEAD
   - python==3.9.6
   - jupyter==1.0.0
   - jupyterlab==3.1.2
@@ -19,3 +20,25 @@ dependencies:
   - libgcc-ng==9.3.0
   - libstdcxx-ng==9.3.0
   - spdlog==1.8.5
+=======
+  - jupyter
+  - python
+  - jupyterlab
+  - jupyterhub
+  - pandas
+  - matplotlib
+  - pyarrow
+  - yaml-cpp
+  - pyyaml
+  - libpcap
+  - arrow-cpp
+  - libtins
+  - pip
+  - arrow-cpp
+  - libgcc-ng
+  - libpcap
+  - libstdcxx-ng
+  - libtins
+  - spdlog
+  - yaml-cpp
+>>>>>>> master
