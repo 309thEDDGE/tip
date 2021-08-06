@@ -62,6 +62,7 @@ RUN groupadd -r ${NB_USER} \
 COPY --from=builder --chown=${NB_USER}:${NB_USER} /tip/ci_artifacts /home/${NB_USER}/ci_artifacts
 COPY --from=builder --chown=${NB_USER}:${NB_USER} $CONDA_PATH $CONDA_PATH
 COPY --from=builder --chown=${NB_USER}:${NB_USER} /local-channels /home/${NB_USER}/local-channels
+COPY --from=builder --chown=${NB_USER}:${NB_USER} /tip/tip_scripts/etl/ /home/${NB_USER}/user_scripts/etl
 COPY --chown=${NB_USER}:${NB_USER} conf /home/${NB_USER}/conf
 COPY --chown=${NB_USER}:${NB_USER} conf/default_conf/*.yaml /home/${NB_USER}/conf/
 COPY --chown=${NB_USER}:${NB_USER} tip_scripts/singleuser/jupyter_notebook_config.py /home/${NB_USER}/.jupyter/
