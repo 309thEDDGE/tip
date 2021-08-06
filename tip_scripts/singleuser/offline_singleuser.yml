@@ -21,8 +21,9 @@ dependencies:
   - pip
   - arrow-cpp
   - spdlog
-  
-
-
-
-
+  - intake
+  - intake-parquet
+  - pytest
+  - sqlalchemy
+  - psycopg2
+  - s3fs
