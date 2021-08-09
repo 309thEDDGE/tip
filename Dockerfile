@@ -85,7 +85,7 @@ ENV PATH="${CONDA_PATH}/bin:$PATH"
 WORKDIR /home/${NB_USER}
 
 RUN conda init bash  \
-    && conda env create -f offline_singleuser.yml -- offline
+    && conda env create -f offline_singleuser.yml -- offline \
     && rm -rf /home/${NB_USER}/local-channels/singleuser-channel/local_conda-forge \
     && rm -rf /home/${NB_USER}/local-channels/tip-package-channel \
     && rm -rf /home/${NB_USER}/local-channels/tip-dependencies-channel/local_conda-forge \
