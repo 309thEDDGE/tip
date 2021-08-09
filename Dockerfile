@@ -32,8 +32,6 @@ RUN conda init \
     && ls ${CONDA_CHANNEL_DIR} \
     && mkdir "${CONDA_CHANNEL_DIR}/singleuser-channel" \
     && python -m conda_vendor local-channels -f /tip/tip_scripts/singleuser/singleuser.yml --channel-root "${CONDA_CHANNEL_DIR}/singleuser-channel" \
-    && mkdir "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" \
-    && python -m conda_vendor local-channels -f /tip/tip_scripts/conda-mirror/tip_dependency_env.yml --channel-root "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" \
     && ls ${CONDA_CHANNEL_DIR} 
 
 USER 1000
@@ -88,7 +86,6 @@ RUN conda init bash  \
     && conda env create -f offline_singleuser.yml -- offline \
     && rm -rf /home/${NB_USER}/local-channels/singleuser-channel/local_conda-forge \
     && rm -rf /home/${NB_USER}/local-channels/tip-package-channel \
-    && rm -rf /home/${NB_USER}/local-channels/tip-dependencies-channel/local_conda-forge \
     && rm -f /home/jovyan/.conda/envs/tip/lib/python3.9/site-packages/tornado/test/test.key \
     && rm -f /opt/conda/pkgs/tornado-6.1-py39h3811e60_1/lib/python3.9/site-packages/tornado/test/test.key 
 
