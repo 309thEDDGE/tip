@@ -13,13 +13,13 @@ dependencies:
   - pyyaml==5.4.1
   - libpcap==1.10.1
   - arrow-cpp==5.0.0
-  - libtins==4.2
-  - pip==21.2.2
+  - libtins==4.3
+  - pip==21.2.3
   - arrow-cpp==5.0.0
-  - libgcc-ng==9.3.0
-  - libstdcxx-ng==9.3.0
-  - spdlog==1.8.5
-  - intake==0.6.0
+  - libgcc-ng==11.1.0
+  - libstdcxx-ng==11.1.0
+  - spdlog==1.9.1
+  - intake==0.6.2
   - intake-parquet==0.2.3
   - pytest==6.2.4
   - sqlalchemy==1.4.22

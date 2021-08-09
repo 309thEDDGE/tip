@@ -10,6 +10,6 @@ cmake ${CMAKE_ARGS} .. \
     -DCMAKE_PREFIX_PATH=$PREFIX \
     -DCMAKE_INSTALL_PREFIX=$PREFIX
 
-cmake --build . --target install
+cmake --build . --target install -j 1
 
 ctest
