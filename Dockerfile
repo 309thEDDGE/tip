@@ -93,3 +93,4 @@ EXPOSE 8888
 
 ENTRYPOINT ["/usr/bin/bash", "/home/jovyan/user_scripts/start_jupyter_nb.sh"]
 
+
