@@ -58,7 +58,6 @@ RUN groupadd -r ${NB_USER} \
     && mkdir /home/${NB_USER} \
     && chown -R ${NB_USER}:${NB_USER} /home/${NB_USER}
 
-
 COPY --from=builder --chown=${NB_USER}:${NB_USER} /tip/ci_artifacts /home/${NB_USER}/ci_artifacts
 COPY --from=builder --chown=${NB_USER}:${NB_USER} $CONDA_PATH $CONDA_PATH
 COPY --from=builder --chown=${NB_USER}:${NB_USER} /local-channels /home/${NB_USER}/local-channels
