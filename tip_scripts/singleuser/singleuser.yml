@@ -19,7 +19,7 @@ dependencies:
   - libgcc-ng==9.3.0
   - libstdcxx-ng==9.3.0
   - spdlog==1.8.5
-  - intake==0.6.2
+  - intake==0.6.0
   - intake-parquet==0.2.3
   - pytest==6.2.4
   - sqlalchemy==1.4.22
