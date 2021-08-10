@@ -27,11 +27,14 @@ main() {
 
     # Creating build environment
     conda env create -f environment.yaml
+    conda activate tip-dev
 
-    export "Running CMake"
+    echo "Running CMake"
     mkdir -p $BUILD_DIR
-    cd $BUILD_DIR
+    pushd $BUILD_DIR
+
     cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_INSTALL_LIBDIR=lib
+    popd
 
     echo -n "Installing conda-build"
     conda install conda-build -y
