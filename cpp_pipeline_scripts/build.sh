@@ -25,16 +25,19 @@ main() {
          https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
          && bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA3_PATH
 
+    # =============================
     # Creating build environment
+    # =============================
     conda env create -f environment.yaml
-    conda activate tip-dev
 
     echo "Running CMake"
     mkdir -p $BUILD_DIR
     pushd $BUILD_DIR
 
-    cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_INSTALL_LIBDIR=lib
+    conda run -n tip-dev cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_INSTALL_LIBDIR=lib
     popd
+
+    # ===========================
 
     echo -n "Installing conda-build"
     conda install conda-build -y
