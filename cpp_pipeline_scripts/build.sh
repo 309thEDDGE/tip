@@ -33,24 +33,9 @@ main() {
     echo "Running CMake"
     mkdir -p $BUILD_DIR
     pushd $BUILD_DIR
-
     conda run -n tip-dev cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_INSTALL_LIBDIR=lib
     conda run -n tip-dev cmake --build . --target install
     conda run -n tip-dev ctest
-
-    export UNITTEST_REPORT_DIR=$BASE_DIR/reports
-    mkdir -p ${UNITTEST_REPORT_DIR}
-    echo "Writing coverage reports in ${UNITTEST_REPORT_DIR}"
-    conda run -n tip-dev gcov gcovr -j --verbose \
-         --exclude-unreachable-branches \
-         --exclude-throw-branches \
-         --object-directory="${CMAKE_BUILD_DIR}/cpp" \
-         --xml ${UNITTEST_REPORT_DIR}/overall-coverage.xml \
-         --html ${UNITTEST_REPORT_DIR}/overall-coverage.html \
-         --sonarqube ${UNITTEST_REPORT_DIR}/overall-coverage-sonar.xml \
-         --filter "${CPP_COVERAGE_FILTER}" \
-         $([ -n "${CPP_COVERAGE_EXCLUDE}" ] && echo -n --exclude="${CPP_COVERAGE_EXCLUDE}")
-
     popd
 
     # ===========================
