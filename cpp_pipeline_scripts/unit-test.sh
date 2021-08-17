@@ -33,10 +33,10 @@ main() {
 
 
 	BASE_DIR=${PWD}
-	if [ -z "${CMAKE_BUILD_DIR}" ]; then 
+	if [ -z "${CMAKE_BUILD_DIR}" ]; then
 		LOCAL=True
 		# We are not in the pipeline; set vars for running locally
-		if [ -d /app ]; then 
+		if [ -d /app ]; then
 			BASE_DIR=/app
 		fi
 		CMAKE_BUILD_DIR=${BASE_DIR}/build
@@ -62,7 +62,7 @@ main() {
 		words=( $(grep -ie "$pattern" $file) )
 
 		# Get the word before "seconds"
-		if [ ${#words[*]} -gt 1 ]; then 
+		if [ ${#words[*]} -gt 1 ]; then
 			value="${words[-2]}"
 		fi
 
@@ -84,6 +84,6 @@ main() {
 
 
 # ------------------ RUN MAIN ---------------------
-if ! is_test ; then 
+if ! is_test ; then
 	main $@
 fi

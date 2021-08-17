@@ -25,6 +25,21 @@ main() {
          https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
          && bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA3_PATH
 
+    # =============================
+    # Creating build environment
+    # =============================
+    conda env create -f environment.yaml
+
+    echo "Running CMake"
+    mkdir -p $BUILD_DIR
+    pushd $BUILD_DIR
+    conda run -n tip-dev cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_INSTALL_LIBDIR=lib
+    conda run -n tip-dev cmake --build . --target install
+    conda run -n tip-dev ctest
+    popd
+
+    # ===========================
+
     echo -n "Installing conda-build"
     conda install conda-build -y
     echo -n "Change directory to conda-build recipes"
@@ -34,7 +49,7 @@ main() {
 
     cd $CONDA_CHANNEL_DIR
     conda index -s linux-64 -s noarch
-    
+
     cd $SCRIPT_START_DIR
 
     echo "tarballing files from local channel dir"
@@ -54,6 +69,6 @@ main() {
     ls -hl $ARTIFACT_DIR
 }
 
-if ! is_test ; then 
+if ! is_test ; then
 	main $@
 fi
