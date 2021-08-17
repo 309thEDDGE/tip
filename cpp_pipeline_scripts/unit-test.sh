@@ -46,34 +46,6 @@ main() {
 	TEST_DIR=${CMAKE_BUILD_DIR}/cpp
 
 	echo ""
-	echo "-------------------- Test Coverage --------------------"
-	echo "CMAKE_BUILD_DIR ${CMAKE_BUILD_DIR}"
-        echo "TEST_DIR ${TEST_DIR}"
-        echo "UNIT_TEST_REPORT_DIR {UNITTEST_REPORT_DIR}"
-        ls ${CMAKE_BUILD_DIR}
-
-	if which gcovr >& /dev/null; then
-		mkdir -p ${UNITTEST_REPORT_DIR}
-		echo "Writing coverage reports in ${UNITTEST_REPORT_DIR}"
-		GCOV=gcov
-		GCOV="${GCOV}" gcovr -j --verbose \
-			--exclude-unreachable-branches \
-			--exclude-throw-branches \
-			--object-directory="${CMAKE_BUILD_DIR}" \
-			--xml ${UNITTEST_REPORT_DIR}/overall-coverage.xml \
-			--html ${UNITTEST_REPORT_DIR}/overall-coverage.html \
-			--sonarqube ${UNITTEST_REPORT_DIR}/overall-coverage-sonar.xml \
-			--filter "${CPP_COVERAGE_FILTER}" \
-			$([ -n "${CPP_COVERAGE_EXCLUDE}" ] && echo -n --exclude="${CPP_COVERAGE_EXCLUDE}")
-	else
-		echo "*** No gcovr found. Skipping test coverage ***"
-		if [ -z "$LOCAL" ]; then
-			exit 1
-		fi
-	fi
-
-
-	echo ""
 	exit $EXIT_CODE
 } # main
 
