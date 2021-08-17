@@ -55,6 +55,13 @@ main() {
     echo "tarballing files from local channel dir"
     tar -cvf local_channel.tar $CONDA_CHANNEL_DIR
 
+    # Raises error if tip channel tarball less than 1MB
+    if (($(stat --printf="%s" local_channel.tar) < 1000000)); then
+	echo "Tip channel tarball less than 1MB."
+	echo "It is likely that the build failed silently. Exiting."
+	exit 1
+    fi 
+    
     echo "copying tarball to artifact dir"
     cp local_channel.tar $ARTIFACT_DIR
 

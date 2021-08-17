@@ -1,121 +1,96 @@
 FROM registry.il2.dso.mil/skicamp/project-opal/opal-operations:vendor-whl AS wheel
-
-FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0 AS builder
-
-RUN mkdir /whl
+FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/ironbank/miniconda:4.9.2 AS builder
+USER root
 
 COPY --from=wheel /whl /whl
 
-RUN mkdir /tip
-# Tip source
-COPY cpp_pipeline_scripts /tip/cpp_pipeline_scripts
+RUN mkdir -p /tip/ci_artifacts
 COPY tip_scripts /tip/tip_scripts/
-#COPY cpp /tip/cpp
-# CMake files explicity
-#COPY CMake_conda.txt /tip/CMake_conda.txt
-#COPY CMakeLists.txt  /tip/CMakeLists.txt
-# Add README for tip Licence meta.yaml requirement in conda-recepies
 COPY README.md /tip/README.md
 
 WORKDIR /tip
 
 # ARG GITLAB_TOKEN
-
 # RUN git clone https://__token__@code.il2.dso.mil/skicamp/project-opal/opal-operations.git
 
-ENV MINICONDA3_PATH="/home/user/miniconda3"
+ENV CONDA_PATH="/opt/conda"
 ENV CONDA_CHANNEL_DIR="/local-channels"
-ENV ARTIFACT_CHANNEL_DIR=".ci_artifacts/build-metadata/build-artifacts"
+ENV ARTIFACT_DIR=".ci_artifacts/build-metadata/build-artifacts"
 
-# COPY $ARTIFACT_CHANNEL_DIR/test.txt $CONDA_CHANNEL_DIR/test.txt
+COPY $ARTIFACT_DIR /tip/ci_artifacts/
 
-COPY $ARTIFACT_CHANNEL_DIR/local_channel.tar $CONDA_CHANNEL_DIR/local_channel.tar
-RUN tar -xvf $CONDA_CHANNEL_DIR/local_channel.tar -C $CONDA_CHANNEL_DIR && \
-   mv $CONDA_CHANNEL_DIR/local-channel $CONDA_CHANNEL_DIR/tip-package-channel
+# Below is the tarball with the tip channel
+ADD $ARTIFACT_DIR/local_channel.tar $CONDA_CHANNEL_DIR 
+RUN mv $CONDA_CHANNEL_DIR/local-channel $CONDA_CHANNEL_DIR/tip-package-channel
 
+ENV PATH="${CONDA_PATH}/bin:${PATH}"
+RUN conda init \
+    && source /root/.bashrc \
+    && conda activate base  \
+    && pip3 install --no-cache-dir /whl/conda_vendor-0.1-py3-none-any.whl \
+    && echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" \
+    && ls ${CONDA_CHANNEL_DIR} \
+    && mkdir "${CONDA_CHANNEL_DIR}/singleuser-channel" \
+    && python -m conda_vendor local-channels -f /tip/tip_scripts/singleuser/singleuser.yml --channel-root "${CONDA_CHANNEL_DIR}/singleuser-channel" \
+    && ls ${CONDA_CHANNEL_DIR} 
 
-RUN dnf install wget-1.19.5-10.el8 -y && \
-    dnf clean all && \
-    wget --progress=dot:giga https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p ${MINICONDA3_PATH}
-
-
-ENV PATH="${MINICONDA3_PATH}/bin:${PATH}"
-
-COPY ${ARTIFACT_CHANNEL_DIR}/ ${CONDA_CHANNEL_DIR}/
-
-ARG GITLAB_TOKEN
-
-RUN echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" && \
-    ls ${CONDA_CHANNEL_DIR} && \
-    pip install --no-cache-dir conda-mirror==0.8.2 && \
-    pip install --no-cache-dir /whl/conda_vendor-0.1-py3-none-any.whl && \
-    pip install --no-cache-dir conda-lock==0.10.0
-
-
-RUN conda clean -afy && \
-    mkdir "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
-    python -m conda_vendor local-channels -f /tip/tip_scripts/singleuser/singleuser.yml --channel-root "${CONDA_CHANNEL_DIR}/singleuser-channel" && \
-    mkdir "${CONDA_CHANNEL_DIR}/tip-dependencies-channel" && \
-    python -m conda_vendor local-channels -f /tip/tip_scripts/conda-mirror/tip_dependency_env.yml --channel-root "${CONDA_CHANNEL_DIR}/tip-dependencies-channel"
-
+USER 1000
 
 FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0
-#Twistlock: image should be created with non-root user
+
+SHELL ["/usr/bin/bash", "-c"] 
 
 ENV CONDA_ADD_PIP_AS_PYTHON_DEPENDENCY=False
+ENV CONDA_PATH="/opt/conda"
 
-RUN groupadd -r user && useradd -r -g user user && mkdir /home/user && \
-chown -R user:user /home/user
-USER user
-RUN mkdir /home/user/miniconda3 && \
-    mkdir /home/user/miniconda3/notebooks && \
-    mkdir /home/user/.jupyter/
+ARG NB_USER="jovyan"
+ARG NB_UID="1000"
+ARG NB_GID="100"
 
-COPY --from=builder --chown=user:user /home/user/miniconda3 /home/user/miniconda3
-# Copies the local channels:
-# singleuser-channel, tip-dependencies-channel, tip-package-channel
-COPY --from=builder --chown=user:user /local-channels /home/user/local-channels
-# Copy default conf directory for tip
-COPY --chown=user:user conf /home/user/miniconda3/conf
-# Nice user facing step so that users don't have to copy default conf from the
-# conf directory in /root/miniconda3/
-COPY --chown=user:user conf/default_conf/*.yaml /home/user/miniconda3/conf/
-# Copy Jupyterlab config
-COPY --chown=user:user tip_scripts/singleuser/jupyter_notebook_config.py /home/user/.jupyter/
+ENV NB_USER="${NB_USER}" \
+    NB_UID=${NB_UID} \
+    NB_GID=${NB_GID}
 
-COPY --chown=user:user tip_scripts/single_env/start_jupyter_nb.sh /home/user/user_scripts/
-RUN chmod 700 /home/user/user_scripts/start_jupyter_nb.sh
+RUN groupadd -r ${NB_USER} \
+    && useradd -l -r -g ${NB_GID} -u ${NB_UID} ${NB_USER} \
+    && mkdir /home/${NB_USER} \
+    && chown -R ${NB_USER}:${NB_USER} /home/${NB_USER}
 
-# Twistlock: private key stored in image
-USER root
-RUN rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc && \
-rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem && \
-rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem && \
-rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem && \
-rm  /usr/share/gnupg/sks-keyservers.netCA.pem && \
-rm -rf /home/user/miniconda3/conda-meta && \
-rm -rf /home/user/miniconda3/include
+COPY --from=builder --chown=${NB_USER}:${NB_USER} /tip/ci_artifacts /home/${NB_USER}/ci_artifacts
+COPY --from=builder --chown=${NB_USER}:${NB_USER} $CONDA_PATH $CONDA_PATH
+COPY --from=builder --chown=${NB_USER}:${NB_USER} /local-channels /home/${NB_USER}/local-channels
+COPY --from=builder --chown=${NB_USER}:${NB_USER} /tip/tip_scripts/etl/ /home/${NB_USER}/user_scripts/etl
+COPY --chown=${NB_USER}:${NB_USER} conf /home/${NB_USER}/conf
+COPY --chown=${NB_USER}:${NB_USER} conf/default_conf/*.yaml /home/${NB_USER}/conf/
+COPY --chown=${NB_USER}:${NB_USER} tip_scripts/singleuser/jupyter_notebook_config.py /home/${NB_USER}/.jupyter/
+COPY --chown=${NB_USER}:${NB_USER} tip_scripts/single_env/start_jupyter_nb.sh /home/${NB_USER}/user_scripts/
+COPY --chown=${NB_USER}:${NB_USER} tip_scripts/singleuser/offline_singleuser.yml /home/${NB_USER}/
 
-USER user
-ENV PATH=/home/user/miniconda3/bin:$PATH
-WORKDIR /home/user/
+RUN chmod +x /home/${NB_USER}/user_scripts/start_jupyter_nb.sh \
+    && rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc \
+    && rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem \
+    && rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem \
+    && rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem \
+    && rm  /usr/share/gnupg/sks-keyservers.netCA.pem \
+    && rm -rf ${CONDA_PATH}/conda-meta \
+    && rm -rf ${CONDA_PATH}/include
 
-# This is to validate the environment solves via local channels
-# NOTE: Currently the mix of main and conda-forge isn't allowing an environment to solve
-# RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
-#     -c /home/user/local-channels/singleuser-channel/local_conda-forge \
-#     -c /home/user/local-channels/tip-package-channel \
-#     --offline --dry-run
+USER ${NB_USER}
+RUN mkdir "/home/${NB_USER}/work"
 
-# This is to validate the environment solves via local channels
-# NOTE: Currently the mix of main and conda-forge isn't allowing an environment to solve
-RUN conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
-     -c /home/user/local-channels/singleuser-channel/local_conda-forge \
-     -c /home/user/local-channels/tip-package-channel \
-     -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
-     --offline --dry-run
+ENV PATH="${CONDA_PATH}/bin:$PATH"
+
+WORKDIR /home/${NB_USER}
+
+RUN conda init bash  \
+    && conda env create -f offline_singleuser.yml -- offline \
+    && rm -rf /home/${NB_USER}/local-channels/singleuser-channel/local_conda-forge \
+    && rm -rf /home/${NB_USER}/local-channels/tip-package-channel \
+    && rm -f /home/jovyan/.conda/envs/tip/lib/python3.9/site-packages/tornado/test/test.key \
+    && rm -f /opt/conda/pkgs/tornado-6.1-py39h3811e60_1/lib/python3.9/site-packages/tornado/test/test.key 
 
 EXPOSE 8888
 
-ENTRYPOINT ["/usr/bin/bash","/home/user/user_scripts/start_jupyter_nb.sh"]
+ENTRYPOINT ["/usr/bin/bash", "/home/jovyan/user_scripts/start_jupyter_nb.sh"]
+
+

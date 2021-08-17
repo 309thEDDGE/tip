@@ -24,19 +24,19 @@ requirements:
 
   host:
     - libpcap
-    - arrow-cpp
-    - spdlog
-    - yaml-cpp
+    - arrow-cpp==5.0.0
+    - spdlog==1.8.5
+    - yaml-cpp==0.6.3
     - gmock
     - gtest
-    - libtins
+    - libtins==4.2
 
   run:
-    - yaml-cpp
-    - libpcap
-    - arrow-cpp
-    - spdlog
-    - libtins
+    - yaml-cpp==0.6.3
+    - libpcap==1.10.1
+    - arrow-cpp==5.0.0
+    - spdlog==1.8.5
+    - libtins=4.2
 
 about:
   home: https://code.il2.dso.mil/skicamp/project-opal/tip
