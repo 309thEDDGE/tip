@@ -5,7 +5,35 @@ ParquetTranslationManager::ParquetTranslationManager(uint8_t id, const ICDData& 
 }
 
 ParquetTranslationManager::ParquetTranslationManager(const ManagedPath& parquet_path,
-                                                     const ManagedPath& output_root_dir, const ICDData& icd) : parquet_path_(parquet_path), pool_(arrow::default_memory_pool()), have_created_reader_(false), status_(1), table_count_(0), have_consumed_all_row_groups_(false), row_group_index_(0), raw_table_row_group_count_(0), raw_table_data_col_index_(0), data_org_(), output_dir_(), output_base_name_(), match_index_(UINT16_MAX), row_ind_(0), time_val_(0), raw_data_ptr_(nullptr), total_row_count_(0), current_row_count_(0), id_(UINT8_MAX), complete_(false), select_msgs_(false), table_indices_iterator_end_(table_indices_.end()), icd_(icd), iter_tools_(), table_name_(""), is_multithreaded_(false), output_root_dir_(output_root_dir)
+                                                     const ManagedPath& output_root_dir, 
+                                                     const ICDData& icd) : 
+                                                     parquet_path_(parquet_path), 
+                                                     pool_(arrow::default_memory_pool()),
+                                                     have_created_reader_(false), 
+                                                     status_(1), 
+                                                     table_count_(0), 
+                                                     have_consumed_all_row_groups_(false), 
+                                                     row_group_index_(0), 
+                                                     raw_table_row_group_count_(0), 
+                                                     raw_table_data_col_index_(0), 
+                                                     data_org_(), 
+                                                     output_dir_(), 
+                                                     output_base_name_(), 
+                                                     match_index_(UINT16_MAX), 
+                                                     row_ind_(0), 
+                                                     time_val_(0), 
+                                                     raw_data_ptr_(nullptr), 
+                                                     total_row_count_(0), 
+                                                     current_row_count_(0), 
+                                                     id_(UINT8_MAX), 
+                                                     complete_(false), 
+                                                     select_msgs_(false), 
+                                                     table_indices_iterator_end_(table_indices_.end()), 
+                                                     icd_(icd), 
+                                                     iter_tools_(), 
+                                                     table_name_(""), 
+                                                     is_multithreaded_(false), 
+                                                     output_root_dir_(output_root_dir)
 {
     if (setup_output_paths() == 1)
     {
@@ -533,7 +561,9 @@ uint8_t ParquetTranslationManager::open_raw_1553_parquet_file(const ManagedPath&
 uint8_t ParquetTranslationManager::close_raw_1553_parquet_file()
 {
     if (have_created_reader_)
+    {
         arrow_file_->Close();
+    }
 
     have_created_reader_ = false;
     raw_table_row_group_count_ = 0;
