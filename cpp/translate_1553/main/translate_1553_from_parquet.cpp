@@ -57,19 +57,11 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // Start translation routine for multi-threaded use case (or single-threaded using the threading framework
-    // if thread_count = 1 is specified).
     double duration = 0.0;
     if (thread_count > 0)
     {
         MTTranslate(config_params, input_path, output_dir, dts1553.GetICDData(),
                     icd_path, chanid_to_bus_name_map, excluded_channel_ids, duration);
-    }
-    // Start the translation routine that doesn't use threading.
-    else
-    {
-        Translate(config_params, input_path, output_dir, dts1553.GetICDData(),
-                  icd_path, chanid_to_bus_name_map, excluded_channel_ids, duration);
     }
 
     //system("pause");
