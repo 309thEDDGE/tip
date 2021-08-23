@@ -1,6 +1,9 @@
 '''
 Null/pass/fail logic:
 - if a test can be conducted, doesn't crash, doesn't find that files are missing, etc., then the result shall be pass or fail, otherwise null
+- the exception to the first bullet are the cases in which files are not required to be present:
+  - video *.parquet files
+  - 1553 *.parquet files
 - a superset of tests is pass only if every subset is pass
 - the presence of a single null value in the subset results in a superset null
 - a superset is fail if no nulls are present in subset and at least one fail is present in subset 
