@@ -8,6 +8,7 @@
 #include "parquet_context.h"
 #include "managed_path.h"
 #include "ch10_1553f1_msg_hdr_format.h"
+#include "spdlog/spdlog.h"
 
 const int DEFAULT_ROW_GROUP_COUNT = 10000;
 const int DEFAULT_BUFFER_SIZE_MULTIPLIER = 10;
@@ -17,9 +18,8 @@ class ParquetMilStd1553F1 : public ParquetContext
 {
    private:
     int max_temp_element_count_;
-    int temp_element_count_;
-    uint16_t id_;
     const uint16_t* commword_ptr_;
+    uint16_t thread_id_;
 
     // Set of msg names.
     std::set<std::string> name_set_;
@@ -56,13 +56,13 @@ class ParquetMilStd1553F1 : public ParquetContext
 
    public:
     ParquetMilStd1553F1();
-    ParquetMilStd1553F1(ManagedPath outfile, uint16_t ID, bool truncate);
-    void append_data(const uint64_t& time_stamp, uint8_t doy,
+    //ParquetMilStd1553F1(ManagedPath outfile, uint16_t ID, bool truncate);
+    bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
+    void Append(const uint64_t& time_stamp, uint8_t doy,
                      const MilStd1553F1CSDWFmt* const chan_spec,
                      const MilStd1553F1DataHeaderCommWordFmt* msg, const uint16_t* const data,
                      const uint16_t& chanid, int8_t calcwrdcnt,
                      uint8_t payload_incomplete);
-    void commit();
 };
 
 #endif

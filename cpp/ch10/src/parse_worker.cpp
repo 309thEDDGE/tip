@@ -79,7 +79,8 @@ bool ParseWorker::ConfigureContext(Ch10Context& ctx,
         // state between regular and append mode calls to this worker's operator().
         // Pass a pointer to the file writer to the relevant parser for use in
         // writing data to disk.
-        ctx.InitializeFileWriters(enabled_paths);
+        if(!ctx.InitializeFileWriters(enabled_paths))
+            return false;
     }
     return true;
 }

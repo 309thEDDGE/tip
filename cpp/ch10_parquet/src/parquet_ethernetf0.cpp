@@ -93,6 +93,8 @@ bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_i
         return false;
     }
 
+    EnableEmptyFileDeletion(outfile.string());
+
     return true;
 }
 

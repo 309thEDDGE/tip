@@ -6,6 +6,7 @@
 #include "parquet_context.h"
 #include "managed_path.h"
 #include "ch10_videof0_header_format.h"
+#include "spdlog/spdlog.h"
 
 const int DEFAULT_ROW_GROUP_COUNT_VIDEO = 10000;
 const int DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO = 10;
@@ -14,8 +15,7 @@ class ParquetVideoDataF0 : public ParquetContext
 {
    private:
     int max_temp_element_count_;
-    int temp_element_count_;
-    uint16_t id_;
+    uint16_t thread_id_;
 
     // Note: refer to the IRIG106 ch10 spec for additional information on many of these
     //		 parameters
@@ -84,19 +84,15 @@ class ParquetVideoDataF0 : public ParquetContext
     std::vector<uint16_t> channel_id_;
 
    public:
-    ParquetVideoDataF0(ManagedPath outfile, uint16_t ID, bool truncate);
-
-    /*
-		Writes the remaining rows that were not written by append_data
-	*/
-    void commit();
+	ParquetVideoDataF0();
+    bool Initialize(ManagedPath outfile, uint16_t thread_id);
 
     /*
 		Appends one video packet from the chapter 10
 		Writes to parquet once the added entries sum to:
 			DEFAULT_ROW_GROUP_COUNT* DEFAULT_BUFFER_SIZE_MULTIPLIER
 	*/
-    void append_data(
+    void Append(
         const uint64_t& time_stamp,
         const uint8_t& doy,
         const uint32_t& channel_id,

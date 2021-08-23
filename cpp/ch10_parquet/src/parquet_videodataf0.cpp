@@ -1,10 +1,14 @@
 #include "parquet_videodataf0.h"
 
-ParquetVideoDataF0::ParquetVideoDataF0(ManagedPath outfile, uint16_t ID, bool truncate) : max_temp_element_count_(DEFAULT_ROW_GROUP_COUNT_VIDEO * DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO),
+ParquetVideoDataF0::ParquetVideoDataF0() : max_temp_element_count_(DEFAULT_ROW_GROUP_COUNT_VIDEO * DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO),
                                                                                           ParquetContext(DEFAULT_ROW_GROUP_COUNT_VIDEO),
-                                                                                          id_(ID),
-                                                                                          temp_element_count_(0)
+                                                                                          thread_id_(UINT16_MAX)
+{}
+
+bool ParquetVideoDataF0::Initialize(ManagedPath outfile, uint16_t thread_id)                                                                                          
 {
+    thread_id_ = thread_id;
+
     // Allocate vector memory.
     doy_.resize(max_temp_element_count_);
     ET_.resize(max_temp_element_count_);
@@ -43,72 +47,49 @@ ParquetVideoDataF0::ParquetVideoDataF0(ManagedPath outfile, uint16_t ID, bool tr
     SetMemoryLocation<uint64_t>(time_, "time");
     SetMemoryLocation<uint16_t>(channel_id_, "channelid");
 
-    bool ret = OpenForWrite(outfile.string(), truncate);
-}
-
-void ParquetVideoDataF0::commit()
-{
-#ifdef DEBUG
-#if DEBUG > 1
-    printf("(%03u) ParquetMilStd1553F1::commit()\n", id_);
-#endif
-#endif
-
-    SPDLOG_INFO("({:02d}) commit(): Writing VideoDataF0 to Parquet, {:d} rows", id_, temp_element_count_);
-
-    if (temp_element_count_ > 0)
+    if(!OpenForWrite(outfile.string(), true))
     {
-        int n_calls = static_cast<int>(std::ceil(static_cast<double>(temp_element_count_) /
-                                                 static_cast<double>(DEFAULT_ROW_GROUP_COUNT_VIDEO)));
-        for (int i = 0; i < n_calls; i++)
-        {
-            if (i == n_calls - 1)
-            {
-                WriteColumns(temp_element_count_ - (n_calls - 1) * DEFAULT_ROW_GROUP_COUNT_VIDEO,
-                             i * DEFAULT_ROW_GROUP_COUNT_VIDEO);
-            }
-            else
-            {
-                WriteColumns(DEFAULT_ROW_GROUP_COUNT_VIDEO, i * DEFAULT_ROW_GROUP_COUNT_VIDEO);
-            }
-        }
-
-        std::fill(video_data_.begin(), video_data_.end(), 0);
+        SPDLOG_ERROR("({:03d}) OpenForWrite failed for file {:s}", thread_id_,
+                     outfile.string());
+        return false;
     }
+
+    // Setup automatic tracking of appended data.
+    if (!SetupRowCountTracking(DEFAULT_ROW_GROUP_COUNT_VIDEO,
+                               DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO, true, "VideoDataF0"))
+    {
+        SPDLOG_ERROR("({:03d}) SetupRowCountTracking not configured correctly",
+                     thread_id_);
+        return false;
+    }
+
+    EnableEmptyFileDeletion(outfile.string());
+    return true;
 }
 
-void ParquetVideoDataF0::append_data(
+void ParquetVideoDataF0::Append(
     const uint64_t& time_stamp,
     const uint8_t& doy,
     const uint32_t& channel_id,
     const Ch10VideoF0HeaderFormat& vid_flags,
     const video_datum* const data)
 {
-    doy_[temp_element_count_] = doy;
-    ET_[temp_element_count_] = vid_flags.ET;
-    IPH_[temp_element_count_] = vid_flags.IPH;
-    KLV_[temp_element_count_] = vid_flags.KLV;
-    PL_[temp_element_count_] = vid_flags.PL;
-    SRS_[temp_element_count_] = vid_flags.SRS;
-    time_[temp_element_count_] = time_stamp;
+    doy_[append_count_] = doy;
+    ET_[append_count_] = vid_flags.ET;
+    IPH_[append_count_] = vid_flags.IPH;
+    KLV_[append_count_] = vid_flags.KLV;
+    PL_[append_count_] = vid_flags.PL;
+    SRS_[append_count_] = vid_flags.SRS;
+    time_[append_count_] = time_stamp;
 
-    channel_id_[temp_element_count_] = channel_id;
+    channel_id_[append_count_] = channel_id;
 
     std::copy(data, data + TransportStream_DATA_COUNT,
-              video_data_.data() + temp_element_count_ * TransportStream_DATA_COUNT);
+              video_data_.data() + append_count_ * TransportStream_DATA_COUNT);
 
-    // Increment the count variable.
-    temp_element_count_++;
-
-    if (temp_element_count_ == max_temp_element_count_)
+    // Increment the count variable and write data if row group(s) are filled.
+    if (IncrementAndWrite(thread_id_))
     {
-        SPDLOG_INFO("({:02d}) Writing VideoDataF0 to Parquet, {:d} rows", id_, temp_element_count_);
-
-        for (int i = 0; i < DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO; i++)
-        {
-            WriteColumns(DEFAULT_ROW_GROUP_COUNT_VIDEO, i * DEFAULT_ROW_GROUP_COUNT_VIDEO);
-        }
-
-        temp_element_count_ = 0;
+      
     }
 }

@@ -13,7 +13,7 @@ bool ParseManager::Configure(ManagedPath input_ch10_file_path, ManagedPath outpu
     input_ch10_file_path.GetFileSize(success, ch10_file_size_);
     if (!success)
         return false;
-    spdlog::get("pm_logger")->info("Ch10 file size: {:d} MB", ch10_file_size_ / (1000 * 1000));
+    spdlog::get("pm_logger")->info("Ch10 file size: {:f} MB", ch10_file_size_ / (1000.0 * 1000.0));
 
     // Convert ch10_packet_type configuration map from string --> string to
     // Ch10PacketType --> bool
@@ -70,7 +70,7 @@ bool ParseManager::AllocateResources(const ParserConfigParams& user_config,
 
     // Calculate the number of workers necessary to parse the entire file
     // based on the chunk of binary that each worker will parse.
-    worker_count_ = static_cast<int>(ceil(static_cast<float>(ch10_file_size) / static_cast<float>(worker_chunk_size_bytes_)));
+    worker_count_ = static_cast<int>(ceil(static_cast<double>(ch10_file_size) / static_cast<double>(worker_chunk_size_bytes_)));
 
     spdlog::get("pm_logger")->info("AllocateResources: chunk size {:d} bytes", worker_chunk_size_bytes_);
     spdlog::get("pm_logger")->info("AllocateResources: using {:d} threads", user_config.parse_thread_count_);

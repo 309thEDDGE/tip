@@ -375,7 +375,7 @@ bool Ch10Context::IsConfigured()
     return is_configured_;
 }
 
-void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPath>& enabled_paths)
+bool Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPath>& enabled_paths)
 {
     // Loop over enabled packet types and create, then submit to relevant parser,
     // a pointer to the file writer.
@@ -394,8 +394,7 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
                 pkt_type_paths_enabled_map_[Ch10PacketType::MILSTD1553_F1] = it->second;
 
                 // Create the writer object.
-                milstd1553f1_pq_writer_ = std::make_unique<ParquetMilStd1553F1>(it->second,
-                                                                                thread_id, true);
+                milstd1553f1_pq_writer_ = std::make_unique<ParquetMilStd1553F1>();
 
                 // Creating this publically accessible pointer is probably not the best
                 // way to make the writer available, since it's now availalbe to everything.
@@ -404,6 +403,8 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
                 // in the parser class. This breaks the paradigm that a file writer is very context
                 // specific and should be held by Ch10Context. This will need careful thinking
                 // and rework at some point.
+                if(!milstd1553f1_pq_writer_->Initialize(it->second, thread_id))
+                    return false;
                 milstd1553f1_pq_writer = milstd1553f1_pq_writer_.get();
                 break;
             case Ch10PacketType::VIDEO_DATA_F0:
@@ -412,9 +413,9 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
                 pkt_type_paths_enabled_map_[Ch10PacketType::VIDEO_DATA_F0] = it->second;
 
                 // Create the writer object.
-                videof0_pq_writer_ = std::make_unique<ParquetVideoDataF0>(it->second,
-                                                                          thread_id, true);
-
+                videof0_pq_writer_ = std::make_unique<ParquetVideoDataF0>();
+                if(!videof0_pq_writer_->Initialize(it->second, thread_id))
+                    return false;
                 videof0_pq_writer = videof0_pq_writer_.get();
                 break;
             case Ch10PacketType::ETHERNET_DATA_F0:
@@ -422,7 +423,8 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
                 pkt_type_file_writers_enabled_map_[Ch10PacketType::ETHERNET_DATA_F0] = true;
                 pkt_type_paths_enabled_map_[Ch10PacketType::ETHERNET_DATA_F0] = it->second;
                 ethernetf0_pq_writer_ = std::make_unique<ParquetEthernetF0>();
-                ethernetf0_pq_writer_->Initialize(it->second, thread_id);
+                if(!ethernetf0_pq_writer_->Initialize(it->second, thread_id))
+                    return false;
                 ethernetf0_pq_writer = ethernetf0_pq_writer_.get();
                 break;
             default:
@@ -431,9 +433,10 @@ void Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
                 break;
         }
     }
+    return true;
 }
 
-void Ch10Context::CloseFileWriters()
+void Ch10Context::CloseFileWriters() const
 {
     using MapIt = std::unordered_map<Ch10PacketType, bool>::const_iterator;
     for (MapIt it = pkt_type_file_writers_enabled_map_.cbegin();
@@ -443,12 +446,12 @@ void Ch10Context::CloseFileWriters()
         {
             case Ch10PacketType::MILSTD1553_F1:
                 if (pkt_type_file_writers_enabled_map_.at(Ch10PacketType::MILSTD1553_F1))
-                    milstd1553f1_pq_writer_->commit();
+                    milstd1553f1_pq_writer_->Close(thread_id_);
                 break;
             case Ch10PacketType::VIDEO_DATA_F0:
                 if (pkt_type_file_writers_enabled_map_.at(Ch10PacketType::VIDEO_DATA_F0))
                 {
-                    videof0_pq_writer_->commit();
+                    videof0_pq_writer_->Close(thread_id_);
                 }
                 break;
             case Ch10PacketType::ETHERNET_DATA_F0:

@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <string>
 #include <typeinfo>
+#include <filesystem>
 #include "column_data.h"
 #include "spdlog/spdlog.h"
 
@@ -53,6 +54,14 @@ class ParquetContext
     std::shared_ptr<arrow::io::ReadableFile> input_file_;
     std::vector<std::shared_ptr<arrow::Field>> fields_;
     std::vector<uint8_t> cast_vec_;
+
+    // Initialize as false and set true when rows are written
+    // to the file. Used to determine if the parquet file is empty
+    // and should be deleted.
+    bool did_write_columns_;
+
+    // Set to true if empty file deletion is enabled.
+    bool empty_file_deletion_enabled_;
 
     std::unique_ptr<arrow::ArrayBuilder>
     GetBuilderFromDataType(
@@ -343,6 +352,19 @@ class ParquetContext
     bool SetupRowCountTracking(size_t row_group_count,
                                size_t row_group_count_multiplier, bool print_activity,
                                std::string print_msg = "");
+
+    /*
+        Enable automatic deletion of an output parquet file if the file has been built
+        using SetupRowCountTracking, IncrementAndWrite, and Finalize if zero row groups
+        were added by the time Finalize is called. If this
+        function is not called sometime after SetupRowCountTracking during file 
+        setup the default behavior is to allow a zero-row-group file to remain.
+
+        Inputs: output_path     -> std::string output file path. Same as input 
+                                   to OpenForWrite
+    */
+   void EnableEmptyFileDeletion(const std::string& path);
+
 
     /*
 	
