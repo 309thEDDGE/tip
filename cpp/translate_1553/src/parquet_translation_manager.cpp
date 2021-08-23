@@ -166,13 +166,20 @@ void ParquetTranslationManager::translate()
 void ParquetTranslationManager::run_translation_loop()
 {
     // Loop over all input Parquet files and process each in turn.
+    uint8_t open_status = 0;
     for (uint16_t file_ind = 0; file_ind < input_parquet_paths_.size(); file_ind++)
     {
-        if (open_raw_1553_parquet_file(input_parquet_paths_[file_ind]) == 1)
+        open_status = open_raw_1553_parquet_file(input_parquet_paths_[file_ind]);
+        if(open_status == 1)
         {
             status_ = -1;
             printf("Error opening raw 1553 Parquet file\n");
             return;
+        }
+        // Parquet file has zero row groups.
+        else if(open_status == 2)
+        {
+            continue;    
         }
 
         // Grab and parse data from raw 1553 Parquet file. Translate as necessary.
@@ -232,13 +239,15 @@ uint8_t ParquetTranslationManager::consume_row_group()
     printf("\rConsuming row group %03d                                       ", row_group_index_);
 #endif
 #endif
-    // Read row group with relevant columns only.
+
+// Read row group with relevant columns only.
     std::shared_ptr<arrow::Table> arrow_table;
     st_ = arrow_reader_->ReadRowGroup(row_group_index_, all_raw_table_indices_vec_, &arrow_table);
     if (!st_.ok())
     {
-        printf("arrow::io::ReadableFile::ReadRowGroup error (ID %s): %s\n",
-               st_.CodeAsString().c_str(), st_.message().c_str());
+        printf("consume_row_group(): parquet::arrow::FileReader::ReadRowGroup "
+                "error (ID %s): %s\n", st_.CodeAsString().c_str(), 
+                st_.message().c_str());
         return 1;
     }
 
@@ -518,6 +527,14 @@ uint8_t ParquetTranslationManager::open_raw_1553_parquet_file(const ManagedPath&
     printf("%02d row groups\n", raw_table_row_group_count_);
 #endif
 #endif
+
+    if(raw_table_row_group_count_ == 0)
+    {
+        printf("open_raw_1553_parquet_file(): Row group count equal 0. Skipping file.\n");
+        have_consumed_all_row_groups_ = true;
+        close_raw_1553_parquet_file();
+        return 2;
+    }
 
     // Reset control logic for single Parquet file row group consumption.
     have_consumed_all_row_groups_ = false;

@@ -158,6 +158,21 @@ class ValidationBase(object):
             return True
         return False
 
+    def directory_has_files_with_extensions(self, dir, exts_list):
+
+        dir_path = Path(dir)
+        if not dir_path.is_dir():
+            print('directory_has_files_with_extensions(): Input dir \"{:s}\" is '
+                  'not a directory'.format(dir))
+            return False
+
+        file_list = os.listdir(dir)
+        file_exts_list = [Path(f).suffix for f in file_list]
+        dot_exts_list = ['.' + ext for ext in exts_list]
+        if len(set(file_exts_list).intersection(set(dot_exts_list))) == 0:
+            return False
+        return True
+            
     def __repr__(self):
         r = '{:s}\ntruth: {:s}\ntest: {:s}'.format(self.prefix,
                                                    str(self.truth_path),

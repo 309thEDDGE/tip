@@ -12,4 +12,10 @@ class PqPqVideoValidation(FileValidation):
 
     def validate(self):
 
+       allowed_extensions = ['pq', 'parquet', 'Parquet']
+       if not self.directory_has_files_with_extensions(self.truth_path, allowed_extensions):
+           print('No files found with extensions: ', allowed_extensions)
+           self.test_passed = True
+           return True
+
        return self.do_directory_validation(self.pqcompare_exec_path)
