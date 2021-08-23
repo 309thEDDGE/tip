@@ -19,7 +19,9 @@ ParquetContext::ParquetContext() : ROW_GROUP_COUNT_(10000),
                                    row_group_count_multiplier_(1),
                                    ready_for_automatic_tracking_(false),
                                    print_activity_(false),
-                                   print_msg_("")
+                                   print_msg_(""),
+                                   did_write_columns_(false),
+                                   empty_file_deletion_enabled_(false)
 {
 }
 
@@ -42,7 +44,9 @@ ParquetContext::ParquetContext(int rgSize) : ROW_GROUP_COUNT_(rgSize),
                                              row_group_count_multiplier_(1),
                                              ready_for_automatic_tracking_(false),
                                              print_activity_(false),
-                                             print_msg_("")
+                                             print_msg_(""),
+                                             did_write_columns_(false),
+                                             empty_file_deletion_enabled_(false)
 {
 }
 
@@ -59,7 +63,6 @@ void ParquetContext::Close(const uint16_t& thread_id)
     if (ready_for_automatic_tracking_)
     {
         Finalize(thread_id);
-        ready_for_automatic_tracking_ = false;
     }
 
     if (have_created_writer_)
@@ -67,7 +70,27 @@ void ParquetContext::Close(const uint16_t& thread_id)
         writer_->Close();
         ostream_->Close();
         have_created_writer_ = false;
+
+        if(ready_for_automatic_tracking_ && !did_write_columns_)
+        {
+            SPDLOG_INFO("({:02d}) {:s}, Empty file: Zero rows written", thread_id,
+                print_msg_);
+
+            if(empty_file_deletion_enabled_)
+            { 
+                SPDLOG_INFO("({:02d}) {:s}, Automatic deletion enabled, deleting {:s}",
+                        thread_id, print_msg_, path_.c_str());            
+            
+                std::filesystem::path fspath(path_);
+                if(!std::filesystem::remove(fspath))
+                {
+                    SPDLOG_ERROR("({:02d}) {:s}, Automatic deletion failed for {:s}",
+                        thread_id, print_msg_, path_.c_str());            
+                }
+            }
+        }
     }
+    ready_for_automatic_tracking_ = false;
 }
 
 std::vector<int32_t>
@@ -832,6 +855,9 @@ bool ParquetContext::IncrementAndWrite(const uint16_t& thread_id)
                         print_msg_, appended_row_count_);
         }
 
+        // Indicate that some data have been written.
+        did_write_columns_ = true;
+
         // Write each of the row groups.
         for (int i = 0; i < row_group_count_multiplier_; i++)
         {
@@ -929,5 +955,14 @@ void ParquetContext::Finalize(const uint16_t& thread_id)
         }
 
         appended_row_count_ = 0;
+
+        // Indicate that data were written.
+        did_write_columns_ = true;
     }
+}
+
+void ParquetContext::EnableEmptyFileDeletion(const std::string& path)
+{
+    path_ = path;
+    empty_file_deletion_enabled_ = true;
 }

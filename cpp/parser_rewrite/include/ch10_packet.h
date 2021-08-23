@@ -63,8 +63,12 @@ class Ch10Packet
         // Comment to disable pcap output.
         if (ctx_->IsConfigured())
         {
-            ethernetf0_component_.EnablePcapOutput(
-                context->pkt_type_paths_map.at(Ch10PacketType::ETHERNET_DATA_F0));
+            // Enable Pcap output if Ethernet data packet parsing is enabled.
+            if(context->pkt_type_config_map.at(Ch10PacketType::ETHERNET_DATA_F0))
+            {
+                ethernetf0_component_.EnablePcapOutput(
+                    context->pkt_type_paths_map.at(Ch10PacketType::ETHERNET_DATA_F0));
+            }
         }
     }
 

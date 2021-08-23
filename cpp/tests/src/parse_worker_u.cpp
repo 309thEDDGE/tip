@@ -37,23 +37,40 @@ class ParseWorkerTest : public ::testing::Test
     }
 };
 
-TEST_F(ParseWorkerTest, ConfigureContextSetPacketType)
+TEST_F(ParseWorkerTest, ConfigureContextSetPacketTypeBadPaths)
 {
     // Ch10Context pkt_type_config_map is configured by the constructor
     // with (currently) four auto-enabled packet types, which are then
     // enabled/disabled by SetPacketTypeConfig which occurs in ConfigureContext.
     result_ = pw_.ConfigureContext(ctx_, worker_cfg_.ch10_packet_type_map_,
                                    worker_cfg_.output_file_paths_);
+
+    // Default paths do not exist. InitializeFileWriters will return false.                                   
+    EXPECT_FALSE(result_);
+    EXPECT_EQ(ctx_.pkt_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0), false);
+}
+
+TEST_F(ParseWorkerTest, ConfigureContextSetPacketTypeGoodPaths)
+{
+    ManagedPath path1553{"temp_1553"};
+    worker_cfg_.output_file_paths_[Ch10PacketType::MILSTD1553_F1] = path1553;
+    result_ = pw_.ConfigureContext(ctx_, worker_cfg_.ch10_packet_type_map_,
+                                   worker_cfg_.output_file_paths_);
+
     EXPECT_TRUE(result_);
     EXPECT_EQ(ctx_.pkt_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0), false);
+    pw_.ch10_context_.CloseFileWriters();
 }
 
 TEST_F(ParseWorkerTest, ConfigureContextCheckConfigurationGood)
 {
+    ManagedPath path1553({"temp_1553"});
+    worker_cfg_.output_file_paths_[Ch10PacketType::MILSTD1553_F1] = path1553;
     result_ = pw_.ConfigureContext(ctx_, worker_cfg_.ch10_packet_type_map_,
                                    worker_cfg_.output_file_paths_);
     EXPECT_TRUE(result_);
     EXPECT_TRUE(ctx_.IsConfigured());
+    pw_.ch10_context_.CloseFileWriters();
 }
 
 TEST_F(ParseWorkerTest, ConfigureContextCheckConfigurationBad)
@@ -70,6 +87,8 @@ TEST_F(ParseWorkerTest, ConfigureContextCheckConfigurationBad)
 
 TEST_F(ParseWorkerTest, ConfigureContextInitWriters)
 {
+    ManagedPath path1553({"temp_1553"});
+    worker_cfg_.output_file_paths_[Ch10PacketType::MILSTD1553_F1] = path1553;
     // Writers are initially nullptrs
     EXPECT_EQ(ctx_.milstd1553f1_pq_writer, nullptr);
     EXPECT_EQ(ctx_.videof0_pq_writer, nullptr);
@@ -80,10 +99,15 @@ TEST_F(ParseWorkerTest, ConfigureContextInitWriters)
     // Only the milstd1553, which is enabled, ought to have been updated
     // to a non-null pointer.
     EXPECT_TRUE(ctx_.milstd1553f1_pq_writer != nullptr);
+    pw_.ch10_context_.CloseFileWriters();
+
 }
 
 TEST_F(ParseWorkerTest, ConfigureContextNotIfAlreadyConfigured)
 {
+    ManagedPath path1553({"temp_1553"});
+    worker_cfg_.output_file_paths_[Ch10PacketType::MILSTD1553_F1] = path1553;
+
     result_ = pw_.ConfigureContext(ctx_, worker_cfg_.ch10_packet_type_map_,
                                    worker_cfg_.output_file_paths_);
     EXPECT_TRUE(result_);
@@ -96,4 +120,5 @@ TEST_F(ParseWorkerTest, ConfigureContextNotIfAlreadyConfigured)
 
     // Ch10Context did not update the map.
     EXPECT_FALSE(ctx_.pkt_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0));
+    pw_.ch10_context_.CloseFileWriters();
 }
