@@ -51,6 +51,7 @@ TEST_F(TranslationConfigParamsTest, InitializeValidEntry)
     file << "bus_name_exclusions :\n  [\n   BusA, \n   BusB\n  ]\n";
     file << "prompt_user : false\n";
     file << "translate_thread_count: 1\n";
+    file << "auto_sys_limits: true\n";
     file.close();
 
     bool status = config.Initialize(filepath);
@@ -66,6 +67,7 @@ TEST_F(TranslationConfigParamsTest, InitializeValidEntry)
     EXPECT_EQ(config.prompt_user_, false);
     EXPECT_THAT(config.bus_name_exclusions_, ::testing::ElementsAre("BusA", "BusB"));
     EXPECT_EQ(config.translate_thread_count_, 1);
+    EXPECT_EQ(config.auto_sys_limits_, true);
 }
 
 TEST_F(TranslationConfigParamsTest, InitializeEmptyList)
@@ -81,6 +83,7 @@ TEST_F(TranslationConfigParamsTest, InitializeEmptyList)
     file << "bus_name_exclusions :\n  [\n   BusA, \n   BusB\n  ]\n";
     file << "comet_busmap_replacement :\n  {}\n";
     file << "translate_thread_count: 1\n";
+    file << "auto_sys_limits: true\n";
     file.close();
 
     bool status = config.Initialize(filepath);
@@ -101,7 +104,8 @@ TEST_F(TranslationConfigParamsTest, InitializeWithConfigStringValidConfig)
         "vote_method_checks_tmats : false\n"
         "bus_name_exclusions :\n  [\n   BusA, \n   BusB\n  ]\n"
         "prompt_user : false\n"
-        "translate_thread_count: 1\n"};
+        "translate_thread_count: 1\n"
+        "auto_sys_limits: true\n"};
 
     bool status = config.InitializeWithConfigString(yaml_matter);
 

@@ -20,6 +20,7 @@ class TranslationConfigParams
     int vote_threshold_;
     bool prompt_user_;
     bool vote_method_checks_tmats_;
+    bool auto_sys_limits_;
     int translate_thread_count_;
     std::vector<std::string> bus_name_exclusions_;
 
@@ -68,6 +69,9 @@ class TranslationConfigParams
 
         success.insert(yr.GetParams("translate_thread_count",
                                     translate_thread_count_, 1, static_cast<int>(std::thread::hardware_concurrency() * 2), true));
+
+        success.insert(yr.GetParams("auto_sys_limits",
+                                    auto_sys_limits_, true));
 
         // If one config option was not read correctly return false
         if (success.find(false) != success.end())

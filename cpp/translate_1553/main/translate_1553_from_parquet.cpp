@@ -57,6 +57,12 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    if(config_params.auto_sys_limits_)
+    {
+        if(!SetSystemLimits(thread_count, dts1553.ICDDataPtr()->valid_message_count))
+            return 0;
+    }
+
     double duration = 0.0;
     if (thread_count > 0)
     {

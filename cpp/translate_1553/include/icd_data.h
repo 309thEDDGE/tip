@@ -45,6 +45,9 @@ class ICDData
     icdelem_vec icd_msg_elements_;
     std::vector<std::string> table_names_;
 
+    // Count of valid messages ingested from the DTS yaml.
+    size_t valid_message_count_;
+
     // Map a unique index to a vector of indices to ICDElement objects
     // in icd_elements_ that groups elements into tables.
     // The final lookup returns the unique index which is
@@ -69,6 +72,7 @@ class ICDData
     const size_t icd_sequence_size_ = 2;
 
    public:
+    const size_t& valid_message_count;
     ICDData();
     ~ICDData();
     bool PrepareICDQuery(const std::vector<std::string>& lines);

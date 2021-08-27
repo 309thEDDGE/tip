@@ -190,6 +190,17 @@ select_specific_messages:
 #
 exit_after_table_creation: false
  
-
+#
+# auto_sys_limits
+#
+# True or false. Set file descriptor (FD) limits at runtime to allow
+# 3 + m + n x m total FDs, where n = count of 1553 messages defined in DTS
+# file (ICD expressed in custom yaml format) and m = thread count set by
+# "translate_thread_count" parameter, defined above. Each thread may
+# open up to n messages simultaneously (n x m term) and each thread
+# will open a single parsed 1553 parquet at a time (m term). Also
+# account for stdin, stdout and stderr (+3). 
+#
+auto_sys_limits: true
 
 

@@ -8,7 +8,6 @@
 #include <cctype>
 #include "iterable_tools.h"
 
-
 class ParseText
 {
    private:

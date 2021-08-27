@@ -363,8 +363,7 @@ class ParquetContext
         Inputs: output_path     -> std::string output file path. Same as input 
                                    to OpenForWrite
     */
-   void EnableEmptyFileDeletion(const std::string& path);
-
+    void EnableEmptyFileDeletion(const std::string& path);
 
     /*
 	
