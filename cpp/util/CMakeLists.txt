@@ -12,6 +12,7 @@ set(headers
     include/translation_config_params.h
     include/user_input.h
     include/yaml_reader.h
+    include/resource_limits.h
 )
 
 add_library(tiputil STATIC
@@ -26,6 +27,7 @@ add_library(tiputil STATIC
             src/tmats_parser.cpp
             src/user_input.cpp
             src/yaml_reader.cpp
+            src/resource_limits.cpp
 )
 
 target_compile_features(tiputil PUBLIC cxx_std_17)

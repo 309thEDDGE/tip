@@ -9,4 +9,5 @@ vote_method_checks_tmats: BOOL
 bus_name_exclusions: [OPTSTR]
 select_specific_messages: [OPTSTR]
 exit_after_table_creation: BOOL
+auto_sys_limits: BOOL
 ...

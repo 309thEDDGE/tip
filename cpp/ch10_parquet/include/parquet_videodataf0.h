@@ -84,7 +84,7 @@ class ParquetVideoDataF0 : public ParquetContext
     std::vector<uint16_t> channel_id_;
 
    public:
-	ParquetVideoDataF0();
+    ParquetVideoDataF0();
     bool Initialize(ManagedPath outfile, uint16_t thread_id);
 
     /*

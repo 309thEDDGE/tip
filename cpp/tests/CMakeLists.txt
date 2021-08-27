@@ -22,6 +22,7 @@ add_executable(tests
     src/ch10_videof0_component_u.cpp
     src/dts1553_u.cpp
     src/file_reader_u.cpp
+    src/icd_element_u.cpp
     src/icd_data_u.cpp
     src/icd_translate_u.cpp
     src/iterable_tools_u.cpp
@@ -41,6 +42,7 @@ add_executable(tests
     src/user_input_u.cpp
     src/yaml_reader_u.cpp
     src/yaml_schema_validation_u.cpp
+    src/resource_limits_u.cpp
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)

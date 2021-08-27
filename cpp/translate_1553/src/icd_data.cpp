@@ -1,6 +1,9 @@
 #include "icd_data.h"
 
-ICDData::ICDData() : icd_ingest_success_(false), organize_icd_success_(false), iter_tools_(), yaml_msg_body_keys_({"msg_data", "word_elem", "bit_elem"}), yaml_msg_data_keys_({"lru_addr", "lru_subaddr", "lru_name", "bus", "wrdcnt", "rate", "mode_code", "desc"}), yaml_word_elem_keys_({"off", "cnt", "schema", "msbval", "uom", "multifmt", "class"}), yaml_bit_elem_keys_({"off", "cnt", "schema", "msbval", "uom", "multifmt", "class", "msb", "lsb", "bitcnt"})
+ICDData::ICDData() : icd_ingest_success_(false), organize_icd_success_(false), 
+    iter_tools_(), yaml_msg_body_keys_({"msg_data", "word_elem", "bit_elem"}), 
+    yaml_msg_data_keys_({"lru_addr", "lru_subaddr", "lru_name", "bus", "wrdcnt", "rate", "mode_code", "desc"}), yaml_word_elem_keys_({"off", "cnt", "schema", "msbval", "uom", "multifmt", "class"}), yaml_bit_elem_keys_({"off", "cnt", "schema", "msbval", "uom", "multifmt", "class", "msb", "lsb", "bitcnt"}),
+    valid_message_count_(0), valid_message_count(valid_message_count_)
 {
     MapICDElementSchemaToString();
 }
@@ -629,7 +632,8 @@ bool ICDData::IngestICDYamlNode(const YAML::Node& root_node,
 {
     // Iterate over all root-level maps, where each map is a message name to the
     // the message body data.
-    size_t fill_count = 0;
+    size_t element_count = 0;
+    valid_message_count_ = 0;
     std::string msg_name = "";
     std::string elem_name = "";
     YAML::Node msg_data_node;
@@ -638,7 +642,6 @@ bool ICDData::IngestICDYamlNode(const YAML::Node& root_node,
     bool is_bit = false;
     for (YAML::const_iterator it = root_node.begin(); it != root_node.end(); ++it)
     {
-        //should_continue = false;
         msg_name = it->first.as<std::string>();
         //printf("Ingesting message: %s\n", msg_name.c_str());
 
@@ -666,16 +669,21 @@ bool ICDData::IngestICDYamlNode(const YAML::Node& root_node,
         // Fill word elements.
         word_elem_node = it->second["word_elem"];
         is_bit = false;
-        fill_count += FillElementsFromYamlNodes(msg_name, msg_data_node, word_elem_node,
+        element_count += FillElementsFromYamlNodes(msg_name, msg_data_node, word_elem_node,
                                                 is_bit, icd_elems_output);
 
         // Fill bit elements.
         bit_elem_node = it->second["bit_elem"];
         is_bit = true;
-        fill_count += FillElementsFromYamlNodes(msg_name, msg_data_node, bit_elem_node,
+        element_count += FillElementsFromYamlNodes(msg_name, msg_data_node, bit_elem_node,
                                                 is_bit, icd_elems_output);
+
+        // Increment valid message count.
+        valid_message_count_++;
     }
-    printf("Ingested %zu ICD elements\n", fill_count);
+    printf("Ingested %zu ICD messages\n", valid_message_count_);
+    printf("Ingested %zu ICD elements\n", element_count);
+
     return true;
 }
 

@@ -386,6 +386,16 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
     return true;
 }
 
+bool SetSystemLimits(uint8_t thread_count, size_t message_count)
+{
+    uint64_t requested_file_limit = thread_count * message_count + thread_count + 3;
+    printf("Requested file descriptor limit: %llu\n", requested_file_limit);
+
+    if(!SetFileDescriptorLimits(requested_file_limit))
+        return false;
+    return true;
+}
+
 bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path,
                  const ManagedPath& output_dir, ICDData icd, const ManagedPath& dts_path,
                  std::map<uint64_t, std::string>& chanid_to_bus_name_map,

@@ -5,6 +5,7 @@
 #include <arrow/io/api.h>
 #include <iostream>
 #include <cstdlib>
+#include <cstdint>
 #include <set>
 #include <vector>
 #include <map>
@@ -19,6 +20,7 @@
 #include "translation_config_params.h"
 #include "argument_validation.h"
 #include "yaml_schema_validation.h"
+#include "resource_limits.h"
 
 bool ParseArgs(int argc, char* argv[], std::string& str_input_path,
                std::string& str_icd_path, std::string& str_output_dir, std::string& str_conf_dir,
@@ -52,6 +54,8 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
                       std::map<std::string, std::string>& tmats_bus_name_corrections,
                       bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
                       std::set<uint64_t>& excluded_channel_ids);
+
+bool SetSystemLimits(uint8_t thread_count, size_t message_count);
 
 bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path,
                  const ManagedPath& output_dir, ICDData icd, const ManagedPath& dts_path,
