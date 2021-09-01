@@ -79,12 +79,22 @@ cmake --build . --target install
 # windows build
 cmake .. -GNinja -DCONDA_PREFIX=%CONDA_PREFIX% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib
 cmake --build . --target install
+
+cd ..
 ```
 
 Running the tests within the build directory
 
 ```shell
 ctest
+```
+
+Checking code coverage. If you wish to check code coverage change the
+build option to `-DCMAKE_BUILD_TYPE=Debug` this will enable the
+compiler flags for debugging as well as code coverage.
+
+```shell
+gcovr -j --verbose --exclude-unreachable-branches --exclude-throw-branches --object-directory="build/cpp"
 ```
 	
 #### CMake

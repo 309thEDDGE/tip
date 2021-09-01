@@ -45,6 +45,16 @@ main() {
 	CMAKE_BUILD_DIR=$(readlink -f "$CMAKE_BUILD_DIR") # Change to absolute path
 	TEST_DIR=${CMAKE_BUILD_DIR}/cpp
 
+        echo "-------------------- Test Coverage --------------------"
+        mkdir -p ${UNITTEST_REPORT_DIR}
+        mkdir -p ${ARTIFACT_FOLDER}/unit_test_report/
+	echo "Writing coverage reports in ${UNITTEST_REPORT_DIR}"
+
+        cp ${CMAKE_BUILD_DIR}/reports/* ${UNITTEST_REPORT_DIR}
+        cp ${CMAKE_BUILD_DIR}/reports/* ${ARTIFACT_FOLDER}/unit_test_report/
+        ls -la ${UNITTEST_REPORT_DIR}
+        ls -la ${ARTIFACT_FOLDER}/unit_test_report/
+
 	echo ""
 	exit $EXIT_CODE
 } # main
