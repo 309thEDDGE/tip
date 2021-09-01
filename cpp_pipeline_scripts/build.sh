@@ -33,10 +33,22 @@ main() {
     echo "Running CMake"
     mkdir -p $BUILD_DIR
     pushd $BUILD_DIR
-    conda run -n tip-dev cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_INSTALL_LIBDIR=lib
+    conda run -n tip-dev cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_INSTALL_LIBDIR=lib
     conda run -n tip-dev cmake --build . --target install -j 2
     conda run -n tip-dev ctest --rerun-failed --output-on-failure
     popd
+
+    UNITTEST_REPORT_DIR=$BUILD_DIR/reports
+    mkdir -p $UNITTEST_REPORT_DIR
+    conda run -n tip-dev gcovr -j --verbose \
+	      --exclude-unreachable-branches \
+	      --exclude-throw-branches \
+	      --object-directory="$BUILD_DIR/cpp" \
+	      --xml ${UNITTEST_REPORT_DIR}/overall-coverage.xml \
+	      --html ${UNITTEST_REPORT_DIR}/overall-coverage.html \
+	      --sonarqube ${UNITTEST_REPORT_DIR}/overall-coverage-sonar.xml
+
+    ls -la ${UNITTEST_REPORT_DIR}
 
     # ===========================
 
@@ -57,11 +69,11 @@ main() {
 
     # Raises error if tip channel tarball less than 1MB
     if (($(stat --printf="%s" local_channel.tar) < 1000000)); then
-	echo "Tip channel tarball less than 1MB."
-	echo "It is likely that the build failed silently. Exiting."
-	exit 1
-    fi 
-    
+        echo "Tip channel tarball less than 1MB."
+        echo "It is likely that the build failed silently. Exiting."
+        exit 1
+    fi
+
     echo "copying tarball to artifact dir"
     cp local_channel.tar $ARTIFACT_DIR
 
