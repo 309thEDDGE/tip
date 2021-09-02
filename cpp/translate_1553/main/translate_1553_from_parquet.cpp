@@ -1,7 +1,16 @@
 #include "translator_helper_funcs.h"
+#include "version_info.h"
+
+#ifndef TRANSLATE_1553_EXE_NAME
+#error "translate_1553_from_parquet.cpp: TRANSLATE_1553_EXE_NAME must be defined"
+#endif
 
 int main(int argc, char* argv[])
 {
+    printf("%s version %s\n", TRANSLATE_1553_EXE_NAME, GetVersionString().c_str());
+    if(CheckForVersionArgument(argc, argv))
+        return 0;
+
     std::string str_input_path;
     std::string str_icd_path;
     std::string str_output_dir;

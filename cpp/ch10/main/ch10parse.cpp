@@ -8,10 +8,21 @@
 #error parquet_static must be defined in conjunction with parquet
 #endif
 
+#ifndef CH10_PARSE_EXE_NAME
+#error "ch10parse.cpp: CH10_PARSE_EXE_NAME must be defined"
+#endif
+
 #include "parser_helper_funcs.h"
+#include "version_info.h"
 
 int main(int argc, char* argv[])
 {
+    if(CheckForVersionArgument(argc, argv))
+    {
+        printf("%s version %s\n", CH10_PARSE_EXE_NAME, GetVersionString().c_str());
+        return 0;
+    }
+
     std::string str_input_path;
     std::string str_output_path;
     std::string str_conf_dir;
@@ -39,6 +50,7 @@ int main(int argc, char* argv[])
     if (!SetupLogging(log_dir))
         return 0;
 
+    spdlog::get("pm_logger")->info("{:s} version: {:s}", CH10_PARSE_EXE_NAME, GetVersionString());
     spdlog::get("pm_logger")->info("Ch10 file path: {:s}", input_path.absolute().RawString());
     spdlog::get("pm_logger")->info("Output path: {:s}", output_path.absolute().RawString());
     spdlog::get("pm_logger")->info("Configuration file path: {:s}", conf_file_path.absolute().RawString());
