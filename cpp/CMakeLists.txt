@@ -57,6 +57,7 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/managed_path.cpp         ${util_inc_dir}/managed_path.h
             ${util_src_dir}/argument_validation.cpp  ${util_inc_dir}/argument_validation.h
             ${util_src_dir}/resource_limits.cpp      ${util_inc_dir}/resource_limits.h
+            ${util_src_dir}/version_info.cpp         ${util_inc_dir}/version_info.h
  )
 
 target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir}
@@ -225,7 +226,6 @@ target_link_libraries(${parserw_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_n
 #########################################################
 #                Build/link ch10parse Lib
 #########################################################
-set(ch10parse_exe_name "tip_parse")
 set(ch10parse_lib_name "ch10parse_lib")
 add_library(${ch10parse_lib_name} STATIC
     ${ch10_inc_dir}/worker_config.h
@@ -270,7 +270,7 @@ install(TARGETS ${pqctx_lib_name}
 #########################################################
 #                Build/link ch10parse exe
 #########################################################
-set(ch10parse_exe_name "tip_parse")
+set(ch10parse_exe_name "${CH10_PARSE_EXE_NAME}")
 if(video_data)
     set(ch10parse_exe_name "tip_parse_video")
 endif()
@@ -290,7 +290,7 @@ target_link_libraries(${ch10parse_exe_name} ${ch10parse_lib_name} ${parserw_lib_
 #               Build/link translator Exe
 #########################################################
 
-set(trans_exe_name "tip_translate")
+set(trans_exe_name "${TRANSLATE_1553_EXE_NAME}")
 message(STATUS "Building exe: " "${trans_exe_name}")
 set(trans_main_dir ${trans_lib_name}/${main_dir_name})
 add_executable(${trans_exe_name} ${trans_main_dir}/translate_1553_from_parquet.cpp)
@@ -353,7 +353,8 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/user_input_u.cpp
 		${test_src_dir}/yaml_reader_u.cpp
                 ${test_src_dir}/yaml_schema_validation_u.cpp
-                ${test_src_dir}/resource_limits_u.cpp)
+                ${test_src_dir}/resource_limits_u.cpp
+                ${test_src_dir}/version_info_u.cpp)
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir}
                             ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir}

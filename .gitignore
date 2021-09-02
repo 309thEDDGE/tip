@@ -1,4 +1,6 @@
 *
+!cmake
+!cmake/**
 !*.Dockerfile
 !Dockerfile
 !cpp_pipeline_scripts
@@ -52,8 +54,6 @@ tip_scripts/__pycache__
 !CmakeLists.txt
 !di2e_bitbucket_clone.txt
 !.dockerignore
-!CMake_windows.txt
-!CMake_linux.txt
 **/build
 **/dist
 **/*.egg-info

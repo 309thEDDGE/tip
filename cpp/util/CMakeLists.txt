@@ -13,6 +13,7 @@ set(headers
     include/user_input.h
     include/yaml_reader.h
     include/resource_limits.h
+    include/version_info.h
 )
 
 add_library(tiputil STATIC
@@ -28,6 +29,7 @@ add_library(tiputil STATIC
             src/user_input.cpp
             src/yaml_reader.cpp
             src/resource_limits.cpp
+            src/version_info.cpp
 )
 
 target_compile_features(tiputil PUBLIC cxx_std_17)

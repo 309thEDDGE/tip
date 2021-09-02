@@ -43,6 +43,7 @@ add_executable(tests
     src/yaml_reader_u.cpp
     src/yaml_schema_validation_u.cpp
     src/resource_limits_u.cpp
+    src/version_info_u.cpp
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)

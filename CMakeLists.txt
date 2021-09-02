@@ -29,6 +29,18 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 endif()
 
+set(CH10_PARSE_EXE_NAME "tip_parse")
+set(TRANSLATE_1553_EXE_NAME "tip_translate")
+
+#########################################################
+#                      Version 
+#########################################################
+
+# Defines GIT_VERSION_STRING
+file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMake_version.txt" include_version_file)
+include("${include_version_file}")
+message(STATUS "Git version string: " "${GIT_VERSION_STRING}")
+
 #########################################################
 #                      Build Options
 #########################################################
@@ -89,15 +101,26 @@ endif()
 
 message(STATUS "System name: " ${CMAKE_SYSTEM_NAME})
 if(DEFINED CONDA_PREFIX)
+
+    add_definitions(
+        -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE
+        -DVERSION_STRING="${GIT_VERSION_STRING}"
+        -DCH10_PARSE_EXE_NAME="${CH10_PARSE_EXE_NAME}"
+        -DTRANSLATE_1553_EXE_NAME="${TRANSLATE_1553_EXE_NAME}")
     message(STATUS "Setting conda build options")
-    include("CMake_conda.txt")
+    file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMake_conda.txt" include_file)
+    include("${include_file}")
+    
 elseif("${CMAKE_SYSTEM_NAME}" MATCHES "CYGWIN")
+
     message(STATUS "Setting system-specific options: " ${CMAKE_SYSTEM_NAME})
     set(CMAKE_GENERATOR "Unix Makefiles")
     set(CMAKE_CXX_COMPILER "/usr/bin/g++")
     add_compile_options("-m64")
     add_compile_definitions(__linux__)
+
 elseif("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
+
     message(STATUS "Setting system-specific options: " ${CMAKE_SYSTEM_NAME})
 
     # Comment out the line below to use the default generator.
@@ -105,12 +128,16 @@ elseif("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
     # above somewhere as its not taking effect. However, "cmake -G Ninja .."
     # does create ninja build files.
     set(CMAKE_GENERATOR "Ninja")
+    file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMake_windows.txt" include_file)
+    include("${include_file}")
 
-    include("CMake_windows.txt")
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
     set(linux true)
     message(STATUS "Setting system-specific options: " ${CMAKE_SYSTEM_NAME})
-    include("CMake_linux.txt")
+    file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMake_linux.txt" include_file)
+    include("${include_file}")
+
 else()
     message(FATAL_ERROR "No system-specific options: " ${CMAKE_SYSTEM_NAME})
 endif()
@@ -124,13 +151,19 @@ if(linux)
         -DPARQUET_STATIC
         -DARROW_STATIC
         -DTINS_STATIC
-        -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+        -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE
+        -DVERSION_STRING="${GIT_VERSION_STRING}"
+        -DCH10_PARSE_EXE_NAME="${CH10_PARSE_EXE_NAME}"
+        -DTRANSLATE_1553_EXE_NAME="${TRANSLATE_1553_EXE_NAME}")
 else()
     add_compile_definitions(
         PARQUET_STATIC
         ARROW_STATIC
         TINS_STATIC
-        SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+        SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE
+        VERSION_STRING="${GIT_VERSION_STRING}"
+        CH10_PARSE_EXE_NAME="${CH10_PARSE_EXE_NAME}"
+        TRANSLATE_1553_EXE_NAME="${TRANSLATE_1553_EXE_NAME}")
 endif()
 
 # Add source files dir.

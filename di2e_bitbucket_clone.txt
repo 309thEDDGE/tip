@@ -1,2 +1,0 @@
-git clone ssh://git@bitbucket.di2e.net:7999/eddgeogden/tip.git
-

@@ -566,6 +566,7 @@ uint8_t Translatable1553Table::configure_parquet_context(ManagedPath& output_dir
         // If the path doesn't exist as a directory, create it.
         if (!parquet_dir_path.create_directory())
         {
+            bad_value_ = 1;
             return 1;
         }
 
