@@ -3,7 +3,7 @@
 ICDData::ICDData() : icd_ingest_success_(false), organize_icd_success_(false), 
     iter_tools_(), yaml_msg_body_keys_({"msg_data", "word_elem", "bit_elem"}), 
     yaml_msg_data_keys_({"lru_addr", "lru_subaddr", "lru_name", "bus", "wrdcnt", "rate", "mode_code", "desc"}), yaml_word_elem_keys_({"off", "cnt", "schema", "msbval", "uom", "multifmt", "class"}), yaml_bit_elem_keys_({"off", "cnt", "schema", "msbval", "uom", "multifmt", "class", "msb", "lsb", "bitcnt"}),
-    valid_message_count_(0), valid_message_count(valid_message_count_)
+    valid_message_count_(0), valid_message_count(valid_message_count_), uri_percent_encode_()
 {
     MapICDElementSchemaToString();
 }
@@ -165,9 +165,12 @@ bool ICDData::PrepareICDQuery(const std::vector<std::string>& lines)
     return true;
 }
 
-bool ICDData::PrepareICDQuery(const YAML::Node& msg_defs_node)
+bool ICDData::PrepareICDQuery(const YAML::Node& msg_defs_node,
+        std::map<std::string, std::string>& msg_name_substitutions,
+        std::map<std::string, std::string>& elem_name_substitutions)
 {
-    icd_ingest_success_ = IngestICDYamlNode(msg_defs_node, icd_elements_);
+    icd_ingest_success_ = IngestICDYamlNode(msg_defs_node, icd_elements_,
+        msg_name_substitutions, elem_name_substitutions);
     if (!icd_ingest_success_)
     {
         printf("IngestICDYamlFileLines() failure. Cannot proceed to PrepareICDQuery()\n");
@@ -628,13 +631,16 @@ bool ICDData::IsYamlFile(const std::string& icd_path)
 }
 
 bool ICDData::IngestICDYamlNode(const YAML::Node& root_node,
-                                std::vector<ICDElement>& icd_elems_output)
+                                std::vector<ICDElement>& icd_elems_output,
+                                std::map<std::string, std::string>& msg_name_substitutions,
+                                std::map<std::string, std::string>& elem_name_substitutions)
 {
     // Iterate over all root-level maps, where each map is a message name to the
     // the message body data.
     size_t element_count = 0;
     valid_message_count_ = 0;
     std::string msg_name = "";
+    std::string perc_enc_msg_name = "";
     std::string elem_name = "";
     YAML::Node msg_data_node;
     YAML::Node word_elem_node;
@@ -643,6 +649,16 @@ bool ICDData::IngestICDYamlNode(const YAML::Node& root_node,
     for (YAML::const_iterator it = root_node.begin(); it != root_node.end(); ++it)
     {
         msg_name = it->first.as<std::string>();
+        if(!uri_percent_encode_.PercentEncodeReservedASCIIChars(msg_name, perc_enc_msg_name))
+        {
+            printf("ICDData::IngestICDYamlNode(): msg_name is not ASCII\n",
+                msg_name.c_str());
+            return false;
+        }
+
+        if(msg_name.compare(perc_enc_msg_name) != 0)
+            msg_name_substitutions[msg_name] = perc_enc_msg_name;
+
         //printf("Ingesting message: %s\n", msg_name.c_str());
 
         // Confirm that message body has required keys.
@@ -651,7 +667,7 @@ bool ICDData::IngestICDYamlNode(const YAML::Node& root_node,
             printf(
                 "ICDData::IngestICDYamlFileLines(): Message %s body is not a map "
                 "does not have required keys!\n",
-                msg_name.c_str());
+                perc_enc_msg_name.c_str());
             continue;  // or exit?
         }
 
@@ -662,21 +678,21 @@ bool ICDData::IngestICDYamlNode(const YAML::Node& root_node,
             printf(
                 "ICDData::IngestICDYamlFileLines(): Message %s msg_data node "
                 "is not a map or does not have required keys!\n",
-                msg_name.c_str());
+                perc_enc_msg_name.c_str());
             continue;
         }
 
         // Fill word elements.
         word_elem_node = it->second["word_elem"];
         is_bit = false;
-        element_count += FillElementsFromYamlNodes(msg_name, msg_data_node, word_elem_node,
-                                                is_bit, icd_elems_output);
+        element_count += FillElementsFromYamlNodes(perc_enc_msg_name, msg_data_node, word_elem_node,
+                                                is_bit, icd_elems_output, elem_name_substitutions);
 
         // Fill bit elements.
         bit_elem_node = it->second["bit_elem"];
         is_bit = true;
-        element_count += FillElementsFromYamlNodes(msg_name, msg_data_node, bit_elem_node,
-                                                is_bit, icd_elems_output);
+        element_count += FillElementsFromYamlNodes(perc_enc_msg_name, msg_data_node, bit_elem_node,
+                                                is_bit, icd_elems_output, elem_name_substitutions);
 
         // Increment valid message count.
         valid_message_count_++;
@@ -736,7 +752,8 @@ bool ICDData::MapNodeHasRequiredKeys(const YAML::Node& node,
 }
 
 size_t ICDData::FillElementsFromYamlNodes(const std::string& msg_name, const YAML::Node& msg_data_node,
-                                          const YAML::Node& elem_node, bool is_bit_node, std::vector<ICDElement>& icd_elems)
+                                          const YAML::Node& elem_node, bool is_bit_node, std::vector<ICDElement>& icd_elems,
+                                          std::map<std::string, std::string>& elem_name_subs)
 {
     // word_elem and bit_elem nodes must be maps.
     size_t fill_count = 0;
@@ -752,12 +769,22 @@ size_t ICDData::FillElementsFromYamlNodes(const std::string& msg_name, const YAM
     // Confirm that each key in the elem map is a map to
     // a map with the correct keys.
     std::string elem_name = "";
+    std::string perc_enc_elem_name = "";
     bool is_map_and_has_keys = false;
     if (elem_node.size() > 0)
     {
         for (YAML::const_iterator it = elem_node.begin(); it != elem_node.end(); ++it)
         {
             elem_name = it->first.as<std::string>();
+            if(!uri_percent_encode_.PercentEncodeReservedASCIIChars(elem_name, perc_enc_elem_name))
+            {
+                printf("ICDData::FillElementsFromYamlNodes(): elem_name %s is not ASCII\n",
+                    elem_name.c_str());
+                return 0;
+            }
+
+            if(!elem_name.compare(perc_enc_elem_name) == 0)
+                elem_name_subs[elem_name] = perc_enc_elem_name;
 
             // Item must be a map and have the correct keys.
             if (is_bit_node)
@@ -770,7 +797,7 @@ size_t ICDData::FillElementsFromYamlNodes(const std::string& msg_name, const YAM
                     "ICDData::FillElementFromYamlNodes(): Message %s elem node "
                     "%s is not a map or does not have the correct keys!\n",
                     msg_name.c_str(),
-                    elem_name.c_str());
+                    perc_enc_elem_name.c_str());
                 continue;
             }
 
@@ -778,7 +805,7 @@ size_t ICDData::FillElementsFromYamlNodes(const std::string& msg_name, const YAM
             ICDElement temp_icd_elem;
             std::vector<std::string> icd_string(ICDElement::kFillElementCount);
             if (CreateVectorOfStringICDComponents(msg_name, msg_data_node,
-                                                  elem_name, it->second, is_bit_node, icd_string))
+                                                  perc_enc_elem_name, it->second, is_bit_node, icd_string))
             {
                 if (temp_icd_elem.FillElements(icd_string))
                 {
@@ -791,7 +818,7 @@ size_t ICDData::FillElementsFromYamlNodes(const std::string& msg_name, const YAM
                         "ICDData::FillElementFromYamlNodes(): Message %s elem node "
                         "%s failed to fill elements!\n",
                         msg_name.c_str(),
-                        elem_name.c_str());
+                        perc_enc_elem_name.c_str());
                 }
             }
         }

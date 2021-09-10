@@ -10,8 +10,8 @@ set(GIT_VERSION_STRING "")
 execute_process(COMMAND git log --pretty=format:%h -n 1
                 OUTPUT_VARIABLE GIT_SHORT_HASH
                 ERROR_VARIABLE GIT_SHORT_HASH_ERROR)
-message(STATUS "git short hash: " ${GIT_SHORT_HASH})
-message(STATUS "git short hash error: " ${GIT_SHORT_HASH_ERROR})
+#message(STATUS "git short hash: " ${GIT_SHORT_HASH})
+#message(STATUS "git short hash error: " ${GIT_SHORT_HASH_ERROR})
 
 if(NOT "${GIT_SHORT_HASH_ERROR}" STREQUAL "")
     message(FATAL_ERROR "GIT_SHORT_HASH_ERROR not empty string: " "${GIT_SHORT_HASH_ERROR}")
@@ -21,8 +21,8 @@ endif()
 execute_process(COMMAND git tag -l --contains ${GIT_SHORT_HASH}
                 OUTPUT_VARIABLE GIT_TAG
                 ERROR_VARIABLE GIT_TAG_ERROR)
-message(STATUS "git tag: " ${GIT_TAG})
-message(STATUS "git tag error: " ${GIT_TAG_ERROR})
+#message(STATUS "git tag: " ${GIT_TAG})
+#message(STATUS "git tag error: " ${GIT_TAG_ERROR})
 
 if(NOT "${GIT_TAG_ERROR}" STREQUAL "")
     message(FATAL_ERROR "GIT_TAG_ERROR not empty string: " "${GIT_TAG_ERROR}")

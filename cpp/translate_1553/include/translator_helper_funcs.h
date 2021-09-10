@@ -40,15 +40,19 @@ bool ValidateDTS1553YamlSchema(const ManagedPath& icd_path,
 
 bool SetupLogging(const ManagedPath& log_dir);
 
-bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
-                         const ManagedPath& dts_path, bool stop_after_bus_map, bool prompt_user,
-                         uint64_t vote_threshold, bool vote_method_checks_tmats,
-                         std::vector<std::string> bus_exclusions,
-                         std::map<std::string, std::string>& tmats_bus_name_corrections,
-                         bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-                         std::set<uint64_t>& excluded_channel_ids);
+bool IngestICD(DTS1553& dts1553, const ManagedPath& dts_path, 
+    std::map<std::string, std::string>& msg_name_substitutions,
+    std::map<std::string, std::string>& elem_name_substitutions);
 
-bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prompt_user,
+bool PrepareBusMap(const ManagedPath& input_path, DTS1553& dts1553,
+                    bool stop_after_bus_map, bool prompt_user,
+                    uint64_t vote_threshold, bool vote_method_checks_tmats,
+                    std::vector<std::string> bus_exclusions,
+                    std::map<std::string, std::string>& tmats_bus_name_corrections,
+                    bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
+                    std::set<uint64_t>& excluded_channel_ids);
+
+bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& md_path, bool prompt_user,
                       uint64_t vote_threshold, bool vote_method_checks_tmats,
                       std::vector<std::string> bus_exclusions,
                       std::map<std::string, std::string>& tmats_bus_name_corrections,
@@ -58,18 +62,14 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
 bool SetSystemLimits(uint8_t thread_count, size_t message_count);
 
 bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path,
-                 const ManagedPath& output_dir, ICDData icd, const ManagedPath& dts_path,
-                 std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-                 const std::set<uint64_t>& excluded_channel_ids, double& duration);
-
-bool Translate(TranslationConfigParams config, const ManagedPath& input_path,
-               const ManagedPath& output_dir, ICDData icd, const ManagedPath& dts_path,
-               std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-               const std::set<uint64_t>& excluded_channel_ids, double& duration);
+                 const ManagedPath& output_dir, ICDData icd, double& duration,
+                 ManagedPath& translated_data_dir, std::set<std::string>& translated_msg_names);
 
 bool RecordMetadata(TranslationConfigParams config, const ManagedPath& translated_data_dir,
                     const ManagedPath& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
                     const std::set<uint64_t>& excluded_channel_ids, const ManagedPath& input_path,
-                    const std::set<std::string>& translated_messages);
+                    const std::set<std::string>& translated_messages,
+                    const std::map<std::string, std::string>& msg_name_substitutions,
+                    const std::map<std::string, std::string>& elem_name_substitutions);
 
 #endif

@@ -58,6 +58,7 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/argument_validation.cpp  ${util_inc_dir}/argument_validation.h
             ${util_src_dir}/resource_limits.cpp      ${util_inc_dir}/resource_limits.h
             ${util_src_dir}/version_info.cpp         ${util_inc_dir}/version_info.h
+            ${util_src_dir}/uri_percent_encoding.cpp ${util_inc_dir}/uri_percent_encoding.h
  )
 
 target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir}
@@ -354,7 +355,8 @@ add_executable(${test_exe_name}
 		${test_src_dir}/yaml_reader_u.cpp
                 ${test_src_dir}/yaml_schema_validation_u.cpp
                 ${test_src_dir}/resource_limits_u.cpp
-                ${test_src_dir}/version_info_u.cpp)
+                ${test_src_dir}/version_info_u.cpp
+                ${test_src_dir}/uri_percent_encoding_u.cpp)
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir}
                             ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir}

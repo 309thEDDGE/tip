@@ -52,6 +52,7 @@ void Comparator::InitializeStats()
         columns_passed_[(i + 1)] = false;
     }
 }
+
 bool Comparator::CompareColumn(int column)
 {
     // Reset beginning vector positions to 0
@@ -86,10 +87,11 @@ bool Comparator::CompareColumn(int column)
     printf("File 2 Col Name: %s \n", file2_col_name.c_str());
 
     // Compare column names
+    bool col_names_equal = true;
     if (file1_col_name != file2_col_name)
     {
         printf("\nERROR!! Column names do not match\n");
-        return false;
+        col_names_equal = false;
     }
 
     // Start the comparison at the first parquet file in the folder
@@ -126,7 +128,11 @@ bool Comparator::CompareColumn(int column)
     }
 
     if (compare_col_schema_only)
+    {
+        if(!col_names_equal)
+            return false;
         return true;
+    }
 
     // If it is a list, assume the data type is Int32Type
     if (dtype1 == arrow::ListType::type_id)
@@ -202,6 +208,9 @@ bool Comparator::CompareColumn(int column)
         printf("approx rows Passed: %d\n", compared_count_[column]);
         printf("FAILED\n");
     }
+
+    if(!col_names_equal)
+        return false;
     return ret_status;
 }
 

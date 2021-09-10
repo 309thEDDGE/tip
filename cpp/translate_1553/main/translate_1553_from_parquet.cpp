@@ -55,9 +55,14 @@ int main(int argc, char* argv[])
     printf("Thread count: %hhu\n", thread_count);
 
     DTS1553 dts1553;
+    std::map<std::string, std::string> msg_name_substitutions;
+    std::map<std::string, std::string> elem_name_substitutions;
+    if(!IngestICD(dts1553, icd_path, msg_name_substitutions, elem_name_substitutions))
+        return false;
+
     std::map<uint64_t, std::string> chanid_to_bus_name_map;
     std::set<uint64_t> excluded_channel_ids = std::set<uint64_t>();
-    if (!PrepareICDAndBusMap(dts1553, input_path, icd_path, config_params.stop_after_bus_map_,
+    if (!PrepareBusMap(input_path, dts1553, config_params.stop_after_bus_map_,
                              config_params.prompt_user_, config_params.vote_threshold_,
                              config_params.vote_method_checks_tmats_, config_params.bus_name_exclusions_,
                              config_params.tmats_busname_corrections_, config_params.use_tmats_busmap_,
@@ -73,11 +78,18 @@ int main(int argc, char* argv[])
     }
 
     double duration = 0.0;
+    ManagedPath translated_data_dir;
+    std::set<std::string> translated_message_names;
     if (thread_count > 0)
     {
         MTTranslate(config_params, input_path, output_dir, dts1553.GetICDData(),
-                    icd_path, chanid_to_bus_name_map, excluded_channel_ids, duration);
+                    duration, translated_data_dir, translated_message_names);
     }
+
+    RecordMetadata(config_params, translated_data_dir, icd_path, chanid_to_bus_name_map,
+                   excluded_channel_ids, input_path, translated_message_names, 
+                   msg_name_substitutions, elem_name_substitutions);
+
 
     //system("pause");
     return 0;

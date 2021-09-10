@@ -567,12 +567,8 @@ class ICDDataIngestYamlTest : public ::testing::Test
     std::vector<std::string> string_icd_components1_;
     std::vector<std::string> string_icd_components2_;
     std::vector<std::string> string_icd_components3_;
-    /*std::vector<ICDElement> icd_msg_elems_;
-	std::vector<size_t> inds_vec_;
-	std::vector<std::vector<size_t>> table_indices_;
-	std::vector<std::string> table_names_;
-	std::map<std::string, std::set<uint64_t>> bus_lruaddrs_map_;
-	std::map<std::string, std::set<uint64_t>> update_map_;*/
+    std::map<std::string, std::string> msg_name_subs_;
+    std::map<std::string, std::string> elem_name_subs_;
 
     ICDDataIngestYamlTest() : res_(false),
                               msg_body_keys_({"msg_data", "word_elem", "bit_elem"}) {}
@@ -754,18 +750,6 @@ TEST_F(ICDDataIngestYamlTest, IsYamlFile)
     EXPECT_EQ(true, icd_.IsYamlFile(path));
 }
 
-//TEST_F(ICDDataIngestYamlTest, IngestICDYamlFileLinesEmptyReturnsFalse)
-//{
-//	ASSERT_EQ(false, icd_.IngestICDYamlFileLines(icd_lines_, icd_elems_));
-//}
-
-//TEST_F(ICDDataIngestYamlTest, IngestICDYamlFileLinesRootIsMap)
-//{
-//	FillYamlBasicStructureLines();
-//	EXPECT_EQ(true, icd_.IngestICDYamlFileLines(icd_lines_, icd_elems_));
-//	EXPECT_EQ(false, icd_.IngestICDYamlFileLines(bad_icd_lines1_, icd_elems_));
-//}
-
 TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeValidMsgCount)
 {
     // Initial message count ought to be zero.
@@ -782,7 +766,8 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeValidMsgCount)
     );
 
     EXPECT_TRUE(icd_node_.IsMap());
-    EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_));
+    EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
+        elem_name_subs_));
     EXPECT_EQ(icd_.valid_message_count, 1);
     
      icd_node_ = YAML::Load(
@@ -803,8 +788,175 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeValidMsgCount)
 
     );
 
-    EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_));
+    EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
+        elem_name_subs_));
     EXPECT_EQ(icd_.valid_message_count, 2);
+}
+
+TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeMsgNameSubstitutions)
+{
+    // No subtitutions required
+    icd_node_ = YAML::Load(
+        "Add:\n"
+        "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
+        "  word_elem:\n"
+        "    Add-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "  bit_elem:\n"
+        "    Add-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "Acc:\n"
+        "  msg_data: {command: [0, 330], lru_addr: [3, 9], lru_subaddr: [1, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
+        "  word_elem:\n"
+        "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "  bit_elem:\n"
+        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+
+    );
+
+    EXPECT_TRUE(icd_node_.IsMap());
+    EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
+        elem_name_subs_));
+    EXPECT_TRUE(msg_name_subs_.size() == 0);
+
+    // Unreserved chars in msg names ok
+    icd_node_ = YAML::Load(
+        "Ad-d:\n"
+        "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
+        "  word_elem:\n"
+        "    Add-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "  bit_elem:\n"
+        "    Add-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "A.~cc:\n"
+        "  msg_data: {command: [0, 330], lru_addr: [3, 9], lru_subaddr: [1, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
+        "  word_elem:\n"
+        "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "  bit_elem:\n"
+        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+
+    );
+
+    EXPECT_TRUE(icd_node_.IsMap());
+    EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
+        elem_name_subs_));
+    EXPECT_TRUE(msg_name_subs_.size() == 0);
+
+    // Expect subs in this case
+    icd_node_ = YAML::Load(
+        "Ad*d:\n"
+        "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
+        "  word_elem:\n"
+        "    Add-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "  bit_elem:\n"
+        "    Add-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "A/c+c:\n"
+        "  msg_data: {command: [0, 330], lru_addr: [3, 9], lru_subaddr: [1, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
+        "  word_elem:\n"
+        "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "  bit_elem:\n"
+        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+
+    );
+
+    std::map<std::string, std::string> expected = {
+        {"Ad*d", "Ad%2ad"},
+        {"A/c+c", "A%2fc%2bc"}
+    };
+    EXPECT_TRUE(icd_node_.IsMap());
+    EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
+        elem_name_subs_));
+    ASSERT_TRUE(msg_name_subs_.size() == 2);
+    ASSERT_TRUE(msg_name_subs_.count("Ad*d") == 1);
+    ASSERT_TRUE(msg_name_subs_.count("A/c+c") == 1);
+    EXPECT_EQ(msg_name_subs_.at("Ad*d"), expected.at("Ad*d"));
+    EXPECT_EQ(msg_name_subs_.at("A/c+c"), expected.at("A/c+c"));
+}
+
+TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeElemNameSubstitutions)
+{
+    // No subtitutions required
+    icd_node_ = YAML::Load(
+        "Add:\n"
+        "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
+        "  word_elem:\n"
+        "    Add-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "  bit_elem:\n"
+        "    Add-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "Acc:\n"
+        "  msg_data: {command: [0, 330], lru_addr: [3, 9], lru_subaddr: [1, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
+        "  word_elem:\n"
+        "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "  bit_elem:\n"
+        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+    );
+
+    EXPECT_TRUE(icd_node_.IsMap());
+    EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
+        elem_name_subs_));
+    EXPECT_TRUE(elem_name_subs_.size() == 0);
+
+    // Unreserved chars ok, no subs necessary
+    icd_node_ = YAML::Load(
+        "Add:\n"
+        "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
+        "  word_elem:\n"
+        "    A.d-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "  bit_elem:\n"
+        "    A_dd-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "Acc:\n"
+        "  msg_data: {command: [0, 330], lru_addr: [3, 9], lru_subaddr: [1, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
+        "  word_elem:\n"
+        "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    A~cc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "  bit_elem:\n"
+        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+    );
+
+    EXPECT_TRUE(icd_node_.IsMap());
+    EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
+        elem_name_subs_));
+    EXPECT_TRUE(elem_name_subs_.size() == 0);
+
+    // Subs expected
+    icd_node_ = YAML::Load(
+        "Add:\n"
+        "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
+        "  word_elem:\n"
+        "    A/d-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "  bit_elem:\n"
+        "    A#dd-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "Acc:\n"
+        "  msg_data: {command: [0, 330], lru_addr: [3, 9], lru_subaddr: [1, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
+        "  word_elem:\n"
+        "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    A*cc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "  bit_elem:\n"
+        "    Acc-02\\01: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+    );
+
+    std::map<std::string, std::string> expected = {
+        {"A/d-17", "A%2fd-17"},
+        {"A#dd-0201", "A%23dd-0201"},
+        {"A*cc-20", "A%2acc-20"},
+        {"Acc-02\\01", "Acc-02%5c01"}
+    };
+    EXPECT_TRUE(icd_node_.IsMap());
+    EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
+        elem_name_subs_));
+    ASSERT_TRUE(elem_name_subs_.size() == 4);
+    ASSERT_TRUE(elem_name_subs_.count("A/d-17") == 1);
+    ASSERT_TRUE(elem_name_subs_.count("A#dd-0201") == 1);
+    ASSERT_TRUE(elem_name_subs_.count("A*cc-20") == 1);
+    ASSERT_TRUE(elem_name_subs_.count("Acc-02\\01") == 1);
+    EXPECT_THAT(expected, ::testing::ContainerEq(elem_name_subs_));
 }
 
 TEST_F(ICDDataIngestYamlTest, MapNodeHasRequiredKeys)
@@ -824,35 +976,40 @@ TEST_F(ICDDataIngestYamlTest, FillElementsFromYamlNodes)
     size_t expected_fill_count = 3;
     size_t reported_fill_count = 0;
     reported_fill_count = icd_.FillElementsFromYamlNodes(msg_name_, msg_data_node_,
-                                                         icd_node_, is_bit_node_, icd_elems_);
+                                                         icd_node_, is_bit_node_, icd_elems_,
+                                                         elem_name_subs_);
     EXPECT_EQ(expected_fill_count, reported_fill_count);
     EXPECT_EQ(expected_fill_count, icd_elems_.size());
 
     is_bit_node_ = false;
     icd_elems_.clear();
     reported_fill_count = icd_.FillElementsFromYamlNodes(msg_name_, msg_data_node_,
-                                                         good_icd_node1_, is_bit_node_, icd_elems_);
+                                                         good_icd_node1_, is_bit_node_, icd_elems_,
+                                                         elem_name_subs_);
     EXPECT_EQ(expected_fill_count, reported_fill_count);
     EXPECT_EQ(expected_fill_count, icd_elems_.size());
 
     icd_elems_.clear();
     expected_fill_count = 0;
     reported_fill_count = icd_.FillElementsFromYamlNodes(msg_name_, msg_data_node_,
-                                                         bad_icd_node1_, is_bit_node_, icd_elems_);
+                                                         bad_icd_node1_, is_bit_node_, icd_elems_,
+                                                         elem_name_subs_);
     EXPECT_EQ(expected_fill_count, reported_fill_count);
     EXPECT_EQ(expected_fill_count, icd_elems_.size());
 
     icd_elems_.clear();
     expected_fill_count = 2;
     reported_fill_count = icd_.FillElementsFromYamlNodes(msg_name_, msg_data_node_,
-                                                         bad_icd_node2_, is_bit_node_, icd_elems_);
+                                                         bad_icd_node2_, is_bit_node_, icd_elems_,
+                                                         elem_name_subs_);
     EXPECT_EQ(expected_fill_count, reported_fill_count);
     EXPECT_EQ(expected_fill_count, icd_elems_.size());
 
     icd_elems_.clear();
     expected_fill_count = 1;
     reported_fill_count = icd_.FillElementsFromYamlNodes(msg_name_, msg_data_node_,
-                                                         bad_icd_node3_, is_bit_node_, icd_elems_);
+                                                         bad_icd_node3_, is_bit_node_, icd_elems_,
+                                                         elem_name_subs_);
     EXPECT_EQ(expected_fill_count, reported_fill_count);
     EXPECT_EQ(expected_fill_count, icd_elems_.size());
 }
