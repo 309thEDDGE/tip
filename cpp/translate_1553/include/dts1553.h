@@ -71,11 +71,17 @@ class DTS1553
 
 		lines:		All non-newline-terminated lines of text from the dts file.
 
+        msg_name_substitution:   Map of original message name to substituted name.
+
+        elem_name_substitution: Map of original elem name to substituted elem name.
+
 
 		return:		True if success, false if failure.
 	
 	*/
-    bool IngestLines(const ManagedPath& dts_path, const std::vector<std::string>& lines);
+    bool IngestLines(const ManagedPath& dts_path, const std::vector<std::string>& lines,
+        std::map<std::string, std::string>& msg_name_substitutions,
+        std::map<std::string, std::string>& elem_name_substitutions);
 
     /*
 		ProcessLinesAsYaml

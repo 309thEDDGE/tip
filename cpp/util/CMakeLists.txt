@@ -14,6 +14,7 @@ set(headers
     include/yaml_reader.h
     include/resource_limits.h
     include/version_info.h
+    include/uri_percent_encoding.h
 )
 
 add_library(tiputil STATIC
@@ -30,6 +31,7 @@ add_library(tiputil STATIC
             src/yaml_reader.cpp
             src/resource_limits.cpp
             src/version_info.cpp
+            src/uri_percent_encoding.cpp
 )
 
 target_compile_features(tiputil PUBLIC cxx_std_17)

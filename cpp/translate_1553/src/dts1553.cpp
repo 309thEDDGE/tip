@@ -1,6 +1,10 @@
 #include "dts1553.h"
 
-bool DTS1553::IngestLines(const ManagedPath& dts_path, const std::vector<std::string>& lines)
+bool DTS1553::IngestLines(const ManagedPath& dts_path, const std::vector<std::string>& lines,
+    std::map<std::string, std::string>& msg_name_substitutions,
+    std::map<std::string, std::string>& elem_name_substitutions)
+
+
 {
     // Check if yaml or text file.
     bool is_yaml = icd_data_.IsYamlFile(dts_path);
@@ -20,7 +24,8 @@ bool DTS1553::IngestLines(const ManagedPath& dts_path, const std::vector<std::st
             return false;
         }
 
-        if (!icd_data_.PrepareICDQuery(msg_defs))
+        if (!icd_data_.PrepareICDQuery(msg_defs, msg_name_substitutions,
+            elem_name_substitutions))
         {
             printf("DTS1553::IngestLines(): PrepareICDQuery failure!\n");
             return false;

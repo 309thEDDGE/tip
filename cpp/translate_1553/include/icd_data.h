@@ -12,6 +12,7 @@
 #include <string>
 #include "icd_element.h"
 #include "parse_text.h"
+#include "uri_percent_encoding.h"
 #include "managed_path.h"
 #include "yaml-cpp/yaml.h"
 
@@ -58,6 +59,9 @@ class ICDData
     // on the bus.
     std::map<std::string, std::set<uint64_t>> bus_name_to_lru_addrs_map_;
 
+    // For conversion of message and element names to percent-encoded strings
+    URIPercentEncoding uri_percent_encode_;
+
     /*
 	* Private high-level functions.
 	*/
@@ -76,7 +80,10 @@ class ICDData
     ICDData();
     ~ICDData();
     bool PrepareICDQuery(const std::vector<std::string>& lines);
-    bool PrepareICDQuery(const YAML::Node& msg_defs_node);
+    bool PrepareICDQuery(const YAML::Node& msg_defs_node,
+        std::map<std::string, std::string>& msg_name_substitutions,
+        std::map<std::string, std::string>& elem_name_substitutions);
+
     void PrepareMessageKeyMap(std::unordered_map<uint64_t, std::set<std::string>>& message_key_map,
                               const std::map<std::string, std::set<uint64_t>>& supplemental_map);
     std::vector<std::vector<size_t>> GetTableOrganizationIndices();
@@ -127,11 +134,15 @@ class ICDData
     bool IsYamlFile(const ManagedPath& icd_path);
     bool IsYamlFile(const std::string& icd_path);
     bool IngestICDYamlNode(const YAML::Node& root_node,
-                           std::vector<ICDElement>& icd_elems_output);
+                           std::vector<ICDElement>& icd_elems_output,
+                           std::map<std::string, std::string>& msg_name_substitutions,
+                           std::map<std::string, std::string>& elem_name_substitutions);
     bool MapNodeHasRequiredKeys(const YAML::Node& node,
                                 const std::vector<std::string>& required_keys);
     size_t FillElementsFromYamlNodes(const std::string& msg_name, const YAML::Node& msg_data_node,
-                                     const YAML::Node& elem_node, bool is_bit_node, std::vector<ICDElement>& icd_elems);
+                                     const YAML::Node& elem_node, bool is_bit_node, 
+                                     std::vector<ICDElement>& icd_elems, 
+                                     std::map<std::string, std::string>& elem_name_subs);
     bool CreateVectorOfStringICDComponents(const std::string& msg_name, const YAML::Node& msg_data_node,
                                            const std::string& elem_name, const YAML::Node& elem_data_node, bool is_bit_elem,
                                            std::vector<std::string>& output_vec);

@@ -167,13 +167,9 @@ bool SetupLogging(const ManagedPath& log_dir)
     return true;
 }
 
-bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
-                         const ManagedPath& dts_path, bool stop_after_bus_map, bool prompt_user,
-                         uint64_t vote_threshold, bool vote_method_checks_tmats,
-                         std::vector<std::string> bus_exclusions,
-                         std::map<std::string, std::string>& tmats_bus_name_corrections,
-                         bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-                         std::set<uint64_t>& excluded_channel_ids)
+bool IngestICD(DTS1553& dts1553, const ManagedPath& dts_path, 
+    std::map<std::string, std::string>& msg_name_substitutions,
+    std::map<std::string, std::string>& elem_name_substitutions)
 {
     // Read lines from ICD text file, ingest, and manipulate.
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -183,7 +179,9 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
         printf("Failed to read ICD: %s\n", dts_path.RawString().c_str());
         return false;
     }
-    if (!dts1553.IngestLines(dts_path, fr.GetLines()))
+
+    if (!dts1553.IngestLines(dts_path, fr.GetLines(), msg_name_substitutions,
+        elem_name_substitutions))
     {
         printf("Failed to ingest DTS1553 data\n");
         return false;
@@ -192,12 +190,29 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
     printf("DTS1553 ingest and message lookup table synthesis duration: %zd sec\n",
            std::chrono::duration_cast<std::chrono::seconds>(stop_time - start_time).count());
 
+    return true;
+}
+
+
+bool PrepareBusMap(const ManagedPath& input_path, DTS1553& dts1553,
+                         bool stop_after_bus_map, bool prompt_user,
+                         uint64_t vote_threshold, bool vote_method_checks_tmats,
+                         std::vector<std::string> bus_exclusions,
+                         std::map<std::string, std::string>& tmats_bus_name_corrections,
+                         bool use_tmats_busmap, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
+                         std::set<uint64_t>& excluded_channel_ids)
+{
     printf("\nStarting Bus Map\n");
     auto bus_map_start_time = std::chrono::high_resolution_clock::now();
 
+    // Create the metadata file path from the input raw parquet path.
+    Metadata input_md;
+    ManagedPath input_md_path = input_md.GetYamlMetadataPath(
+        input_path, "_metadata");
+
     // Generate the bus map from metadata and possibly user
     // input.
-    if (!SynthesizeBusMap(dts1553, input_path, prompt_user, vote_threshold,
+    if (!SynthesizeBusMap(dts1553, input_md_path, prompt_user, vote_threshold,
                           vote_method_checks_tmats, bus_exclusions, tmats_bus_name_corrections, use_tmats_busmap,
                           chanid_to_bus_name_map, excluded_channel_ids))
     {
@@ -216,7 +231,7 @@ bool PrepareICDAndBusMap(DTS1553& dts1553, const ManagedPath& input_path,
     return true;
 }
 
-bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prompt_user,
+bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& md_path, bool prompt_user,
                       uint64_t vote_threshold, bool vote_method_checks_tmats,
                       std::vector<std::string> bus_exclusions,
                       std::map<std::string, std::string>& tmats_bus_name_corrections,
@@ -228,14 +243,9 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
     dts1553.ICDDataPtr()->PrepareMessageKeyMap(message_key_to_busnames_map,
                                                dts1553.GetSupplBusNameToMessageKeyMap());
 
-    // Create the metadata file path from the input raw parquet path.
-    Metadata input_md;
-    ManagedPath input_md_path = input_md.GetYamlMetadataPath(
-        input_path, "_metadata");
-
     // Use YamlReader to read the yaml metadata file.
     YamlReader yr;
-    if (!yr.LinkFile(input_md_path.string()))
+    if (!yr.LinkFile(md_path.string()))
     {
         printf("Translate main: SynthesizeBusMap(): YamlReader failed to link file!\n");
         return false;
@@ -295,39 +305,6 @@ bool SynthesizeBusMap(DTS1553& dts1553, const ManagedPath& input_path, bool prom
                       bus_exclusions_set,
                       tmats_chanid_to_source_map,
                       tmats_bus_name_corrections);
-
-    ParquetReader pr;
-    pr.SetManualRowgroupIncrementMode();
-    if (!pr.SetPQPath(input_path))
-    {
-        printf("Non Existent Path %s\n", input_path.RawString().c_str());
-        return false;
-    };
-
-    std::vector<uint64_t> transmit_cmds;
-    std::vector<uint64_t> recieve_cmds;
-    std::vector<uint64_t> channel_ids;
-
-    int transmit_cmd_column = pr.GetColumnNumberFromName("txcommwrd");
-    int recieve_cmd_column = pr.GetColumnNumberFromName("rxcommwrd");
-    int channel_id_column = pr.GetColumnNumberFromName("channelid");
-
-    // if any of the essential columns don't exist for busmapping return
-    if (transmit_cmd_column == -1)
-    {
-        printf("txcommwrd doesn't exist in parquet table!\n");
-        return false;
-    }
-    if (recieve_cmd_column == -1)
-    {
-        printf("rxcommwrd doesn't exist in parquet table!\n");
-        return false;
-    }
-    if (channel_id_column == -1)
-    {
-        printf("channelid doesn't exist in parquet table!\n");
-        return false;
-    }
 
     // Submit votes for each transmit/recieve command word from each
     // channel ID found in metadata from parameter chanid_to_comm_words
@@ -397,9 +374,8 @@ bool SetSystemLimits(uint8_t thread_count, size_t message_count)
 }
 
 bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path,
-                 const ManagedPath& output_dir, ICDData icd, const ManagedPath& dts_path,
-                 std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-                 const std::set<uint64_t>& excluded_channel_ids, double& duration)
+                 const ManagedPath& output_dir, ICDData icd, double& duration,
+                 ManagedPath& translated_data_dir, std::set<std::string>& translated_msg_names)
 {
     bool select_msgs = !config.select_specific_messages_.empty();
 
@@ -414,36 +390,8 @@ bool MTTranslate(TranslationConfigParams config, const ManagedPath& input_path,
         return false;
     }
 
-    RecordMetadata(config, tm.GetTranslatedDataDirectory(), dts_path, chanid_to_bus_name_map,
-                   excluded_channel_ids, input_path, tm.GetTranslatedMessages());
-
-    auto stop_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> secs = stop_time - start_time;
-    duration = secs.count();
-    printf("Duration: %.3f sec\n", duration);
-    return true;
-}
-
-bool Translate(TranslationConfigParams config, const ManagedPath& input_path,
-               const ManagedPath& output_dir, ICDData icd, const ManagedPath& dts_path,
-               std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-               const std::set<uint64_t>& excluded_channel_ids, double& duration)
-{
-    bool select_msgs = !config.select_specific_messages_.empty();
-
-    ParquetTranslationManager ptm(input_path, output_dir, icd);
-    ptm.set_select_msgs_list(select_msgs, config.select_specific_messages_);
-
-    auto start_time = std::chrono::high_resolution_clock::now();
-    ptm.translate();
-    if (ptm.get_status() < 0)
-    {
-        printf("Translation error\n");
-        return false;
-    }
-
-    RecordMetadata(config, ptm.GetTranslatedDataDirectory(), dts_path, chanid_to_bus_name_map,
-                   excluded_channel_ids, input_path, ptm.GetTranslatedMessages());
+    translated_data_dir = tm.GetTranslatedDataDirectory();
+    translated_msg_names = tm.GetTranslatedMessages();
 
     auto stop_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> secs = stop_time - start_time;
@@ -455,7 +403,9 @@ bool Translate(TranslationConfigParams config, const ManagedPath& input_path,
 bool RecordMetadata(TranslationConfigParams config, const ManagedPath& translated_data_dir,
                     const ManagedPath& dts_path, std::map<uint64_t, std::string>& chanid_to_bus_name_map,
                     const std::set<uint64_t>& excluded_channel_ids, const ManagedPath& input_path,
-                    const std::set<std::string>& translated_messages)
+                    const std::set<std::string>& translated_messages,
+                    const std::map<std::string, std::string>& msg_name_substitutions,
+                    const std::map<std::string, std::string>& elem_name_substitutions)
 {
     // Use Metadata class to create the output metadata file path.
     Metadata md;
@@ -488,6 +438,13 @@ bool RecordMetadata(TranslationConfigParams config, const ManagedPath& translate
 
     // Record translated messages.
     md.RecordSingleKeyValuePair("translated_messages", translated_messages);
+
+    // Record message and element name substitutions which arise from URI 
+    // percent-encoding all such strings retrieved from the DTS 1553 yaml.
+    // Values are only recorded for those message or element names which 
+    // were modified by the percent-encoding algorithm.
+    md.RecordSimpleMap(msg_name_substitutions, "uri_percent_encoded_message_names");
+    md.RecordSimpleMap(elem_name_substitutions, "uri_percent_encoded_element_names");
 
     // Get a string containing the complete metadata output and
     // and write it to the yaml file.
