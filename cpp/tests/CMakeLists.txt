@@ -42,6 +42,7 @@ add_executable(tests
     src/user_input_u.cpp
     src/yaml_reader_u.cpp
     src/yaml_schema_validation_u.cpp
+    src/yamlsv_log_item_u.cpp
     src/resource_limits_u.cpp
     src/version_info_u.cpp
     src/uri_percent_encoding_u.cpp

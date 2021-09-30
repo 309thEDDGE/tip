@@ -1,3 +1,4 @@
+#include <sstream>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "yaml_schema_validation.h"
@@ -252,7 +253,6 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeIncorrectStructure)
     res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
     EXPECT_FALSE(res_);
     EXPECT_EQ(InfoLogEntryCount(), 1);
-    //EXPECT_TRUE(log_items_[0].message.find("time") != std::string::npos);
     EXPECT_TRUE(InFirstInfoEntry("time"));
 
     test_node_ = YAML::Load(
@@ -263,7 +263,6 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeIncorrectStructure)
     res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
     EXPECT_FALSE(res_);
     EXPECT_EQ(InfoLogEntryCount(), 1);
-    //EXPECT_TRUE(log_items_[0].message.find("data") != std::string::npos);
     EXPECT_TRUE(InFirstInfoEntry("data"));
 
     test_node_ = YAML::Load(
@@ -276,7 +275,6 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeIncorrectStructure)
     res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
     EXPECT_FALSE(res_);
     EXPECT_EQ(InfoLogEntryCount(), 1);
-    //EXPECT_TRUE(log_items_[0].message.find("state") != std::string::npos);
     EXPECT_TRUE(InFirstInfoEntry("state"));
 }
 
@@ -862,32 +860,33 @@ TEST_F(YamlSchemaValidationTest, CheckDataTypeStringRawTypes)
     std::string test_type = "INT";
     std::string str_type;
     bool is_opt;
+    bool has_allowed_vals_op;
 
-    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_op);
     EXPECT_TRUE(res_);
     EXPECT_EQ(str_type, test_type);
     EXPECT_FALSE(is_opt);
 
     test_type = "FLT";
-    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_op);
     EXPECT_TRUE(res_);
     EXPECT_EQ(str_type, test_type);
     EXPECT_FALSE(is_opt);
 
     test_type = "BOOL";
-    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_op);
     EXPECT_TRUE(res_);
     EXPECT_EQ(str_type, test_type);
     EXPECT_FALSE(is_opt);
 
     test_type = "STR";
-    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_op);
     EXPECT_TRUE(res_);
     EXPECT_EQ(str_type, test_type);
     EXPECT_FALSE(is_opt);
 
     test_type = "IN";
-    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_op);
     EXPECT_FALSE(res_);
     EXPECT_EQ(str_type, "");
     EXPECT_FALSE(is_opt);
@@ -898,43 +897,86 @@ TEST_F(YamlSchemaValidationTest, CheckDataTypeStringOptModifier)
     std::string test_type = "OPTINT";
     std::string str_type;
     bool is_opt;
+    bool has_allowed_vals_op;
 
-    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_op);
     EXPECT_TRUE(res_);
     EXPECT_EQ(str_type, "INT");
     EXPECT_TRUE(is_opt);
 
     test_type = "OPTFLT";
-    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_op);
     EXPECT_TRUE(res_);
     EXPECT_EQ(str_type, "FLT");
     EXPECT_TRUE(is_opt);
 
     test_type = "OPTBOOL";
-    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_op);
     EXPECT_TRUE(res_);
     EXPECT_EQ(str_type, "BOOL");
     EXPECT_TRUE(is_opt);
 
     test_type = "OPTSTR";
-    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_op);
+
     EXPECT_TRUE(res_);
     EXPECT_EQ(str_type, "STR");
     EXPECT_TRUE(is_opt);
 
     test_type = "OPTIN";
-    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_op);
     EXPECT_FALSE(res_);
     EXPECT_EQ(str_type, "");
     EXPECT_FALSE(is_opt);
 
     test_type = "OPBOOL";
-    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt);
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_op);
     EXPECT_FALSE(res_);
     EXPECT_EQ(str_type, "");
     EXPECT_FALSE(is_opt);
 }
 
+TEST_F(YamlSchemaValidationTest, CheckDataTypeStringHandleAllowedValsOperator)
+{
+    std::string test_type = "INT-->{10, 1}";
+    std::string str_type = "";
+    bool is_opt;
+    bool has_allowed_vals_opt;
+
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_opt);
+    EXPECT_TRUE(res_);
+    EXPECT_EQ(str_type, "INT");
+    EXPECT_FALSE(is_opt);
+    EXPECT_TRUE(has_allowed_vals_opt);
+}
+
+TEST_F(YamlSchemaValidationTest, CheckDataTypeStringHandleAllowedValsOperatorOptString)
+{
+    std::string test_type = "OPTINT-->{10, 1}";
+    std::string str_type = "";
+    bool is_opt;
+    bool has_allowed_vals_opt;
+
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_opt);
+    EXPECT_TRUE(res_);
+    EXPECT_EQ(str_type, "INT");
+    EXPECT_TRUE(is_opt);
+    EXPECT_TRUE(has_allowed_vals_opt);
+}
+
+TEST_F(YamlSchemaValidationTest, CheckDataTypeStringHandleAllowedValsOperatorOptBool)
+{
+    std::string test_type = "OPTBOOL-->{10, 1}";
+    std::string str_type = "";
+    bool is_opt;
+    bool has_allowed_vals_opt;
+
+    res_ = ysv_.CheckDataTypeString(test_type, str_type, is_opt, has_allowed_vals_opt);
+    EXPECT_TRUE(res_);
+    EXPECT_EQ(str_type, "BOOL");
+    EXPECT_TRUE(is_opt);
+    EXPECT_TRUE(has_allowed_vals_opt);
+}
 TEST_F(YamlSchemaValidationTest, TestSequenceOptBool)
 {
     schema_node_ = YAML::Load("[BOOL]\n");
@@ -1108,4 +1150,210 @@ TEST_F(YamlSchemaValidationTest, ProcessNodeMapOptGeneral)
     res_ = ysv_.ProcessNode(test_node_, schema_node_, log_items_);
     EXPECT_TRUE(res_);
     EXPECT_EQ(InfoLogEntryCount(), 0);
+}
+
+TEST_F(YamlSchemaValidationTest, ParseAllowedValues)
+{
+    // No commas
+    std::string test_type = "INT-->{0}";
+    std::vector<std::string> allowed_vals;
+    res_ = ysv_.ParseAllowedValues(test_type, allowed_vals, log_items_);
+    EXPECT_TRUE(res_);
+    EXPECT_THAT(allowed_vals, ::testing::ElementsAreArray({"0"}));
+
+    // Commas delimited
+    test_type = "INT-->{230,193949,89}";
+    allowed_vals.clear();
+    res_ = ysv_.ParseAllowedValues(test_type, allowed_vals, log_items_);
+    EXPECT_TRUE(res_);
+    EXPECT_THAT(allowed_vals, ::testing::ElementsAreArray({"230", "193949", "89"}));
+
+    // float
+    test_type = "FLT-->{23.0,1.93,8.9}";
+    allowed_vals.clear();
+    res_ = ysv_.ParseAllowedValues(test_type, allowed_vals, log_items_);
+    EXPECT_TRUE(res_);
+    EXPECT_THAT(allowed_vals, ::testing::ElementsAreArray({"23.0", "1.93", "8.9"}));
+
+}
+
+TEST_F(YamlSchemaValidationTest, ParseAllowedValuesWhiteSpace)
+{
+    std::string test_type = "INT-->{0 }";
+    std::vector<std::string> allowed_vals;
+    res_ = ysv_.ParseAllowedValues(test_type, allowed_vals, log_items_);
+    EXPECT_FALSE(res_);
+    EXPECT_EQ(allowed_vals.size(), 0);
+
+    test_type = "INT-->{45, 23,10}";
+    allowed_vals.clear();
+    res_ = ysv_.ParseAllowedValues(test_type, allowed_vals, log_items_);
+    EXPECT_FALSE(res_);
+    EXPECT_EQ(allowed_vals.size(), 0);
+}
+
+TEST_F(YamlSchemaValidationTest, ParseAllowedValuesBraces)
+{
+    std::string test_type = "INT-->{0,10,100]";
+    std::vector<std::string> allowed_vals;
+    res_ = ysv_.ParseAllowedValues(test_type, allowed_vals, log_items_);
+    EXPECT_FALSE(res_);
+    EXPECT_EQ(allowed_vals.size(), 0);
+
+    test_type = "INT-->[0,10,100}";
+    allowed_vals.clear();
+    res_ = ysv_.ParseAllowedValues(test_type, allowed_vals, log_items_);
+    EXPECT_FALSE(res_);
+    EXPECT_EQ(allowed_vals.size(), 0);
+
+}
+
+TEST_F(YamlSchemaValidationTest, CompareToAllowedValuesMatch)
+{
+    std::string test_string = "10";
+    std::vector<std::string> allowed_vals = {"1", "10", "100"};
+    res_ = ysv_.CompareToAllowedValues(test_string, allowed_vals);
+    EXPECT_TRUE(res_);
+
+    test_string = "34.4";
+    allowed_vals = std::vector<std::string>({"90.22", "0.4", "34.4"});
+    res_ = ysv_.CompareToAllowedValues(test_string, allowed_vals);
+    EXPECT_TRUE(res_);
+}
+
+TEST_F(YamlSchemaValidationTest, CompareToAllowedValuesNoMatch)
+{
+    std::string test_string = "10";
+    std::vector<std::string> allowed_vals = {"1", "11", "100"};
+    res_ = ysv_.CompareToAllowedValues(test_string, allowed_vals);
+    EXPECT_FALSE(res_);
+
+    test_string = "34.4";
+    allowed_vals = std::vector<std::string>({"90.22", "0.4", "34.2"});
+    res_ = ysv_.CompareToAllowedValues(test_string, allowed_vals);
+    EXPECT_FALSE(res_);
+}
+
+TEST_F(YamlSchemaValidationTest, TestMapElementAllowedValsOperatorBool)
+{
+    // BOOL not compatible with user-defined allowed values operator
+    schema_node_ = YAML::Load(
+        "data: BOOL-->{true, false}\n");
+    test_node_ = YAML::Load(
+        "data: true\n");
+
+    YAML::const_iterator it_schema = schema_node_.begin();
+    YAML::const_iterator it_test = test_node_.begin();
+
+    res_ = ysv_.TestMapElement(it_schema, it_test, log_items_);
+    // PrintLogs();
+    EXPECT_FALSE(res_);
+}
+
+TEST_F(YamlSchemaValidationTest, TestMapElementAllowedValsOperator)
+{
+    schema_node_ = YAML::Load(
+        "data: INT-->{0,12,56}\n");
+    test_node_ = YAML::Load(
+        "data: 12\n");
+
+    YAML::const_iterator it_schema = schema_node_.begin();
+    YAML::const_iterator it_test = test_node_.begin();
+
+    res_ = ysv_.TestMapElement(it_schema, it_test, log_items_);
+    EXPECT_TRUE(res_);
+
+    test_node_ = YAML::Load(
+        "data: 11\n");
+    it_test = test_node_.begin();
+    res_ = ysv_.TestMapElement(it_schema, it_test, log_items_);
+    EXPECT_FALSE(res_);
+}
+
+TEST_F(YamlSchemaValidationTest, PrintLogItems)
+{
+    std::string msg1 = "test data";
+    LogLevel level1 = LogLevel::Error;
+    LogItem item1(level1, msg1);
+
+    std::string msg2 = "another msg";
+    LogLevel level2 = LogLevel::Trace;
+    LogItem item2(level2, msg2);
+
+    std::string msg3 = "corrupt data at testing";
+    LogLevel level3 = LogLevel::Info;
+    LogItem item3(level3, msg3);
+
+    log_items_.push_back(item1);
+    log_items_.push_back(item2);
+    log_items_.push_back(item3);
+
+    std::string preface = "\nPrinting up to the last 3 YAML schema validator log items:\n";
+    std::string expected1 = "[ERROR] test data\n";
+    std::string expected2 = "[TRACE] another msg\n";
+    std::string expected3 = "[INFO ] corrupt data at testing\n\n";
+
+    std::stringstream stream;
+    YamlSV::PrintLogItems(log_items_, 3, stream);
+    EXPECT_EQ(preface + expected1 + expected2 + expected3, stream.str());
+}
+
+TEST_F(YamlSchemaValidationTest, PrintLogItemsExceedSize)
+{
+    std::string msg1 = "test data";
+    LogLevel level1 = LogLevel::Error;
+    LogItem item1(level1, msg1);
+
+    std::string msg2 = "another msg";
+    LogLevel level2 = LogLevel::Trace;
+    LogItem item2(level2, msg2);
+
+    std::string msg3 = "corrupt data at testing";
+    LogLevel level3 = LogLevel::Info;
+    LogItem item3(level3, msg3);
+
+    log_items_.push_back(item1);
+    log_items_.push_back(item2);
+    log_items_.push_back(item3);
+
+    std::string preface = "\nPrinting up to the last 5 YAML schema validator log items:\n";
+    std::string expected1 = "[ERROR] test data\n";
+    std::string expected2 = "[TRACE] another msg\n";
+    std::string expected3 = "[INFO ] corrupt data at testing\n\n";
+
+    std::stringstream stream;
+
+    // Request to print 5 items. Only three items present. 
+    YamlSV::PrintLogItems(log_items_, 5, stream);
+    EXPECT_EQ(preface + expected1 + expected2 + expected3, stream.str());
+}
+
+TEST_F(YamlSchemaValidationTest, PrintLogItemsFewerThanSize)
+{
+    std::string msg1 = "test data";
+    LogLevel level1 = LogLevel::Error;
+    LogItem item1(level1, msg1);
+
+    std::string msg2 = "another msg";
+    LogLevel level2 = LogLevel::Trace;
+    LogItem item2(level2, msg2);
+
+    std::string msg3 = "corrupt data at testing";
+    LogLevel level3 = LogLevel::Info;
+    LogItem item3(level3, msg3);
+
+    log_items_.push_back(item1);
+    log_items_.push_back(item2);
+    log_items_.push_back(item3);
+
+    std::string preface = "\nPrinting up to the last 2 YAML schema validator log items:\n";
+    std::string expected1 = "[ERROR] test data\n";
+    std::string expected2 = "[TRACE] another msg\n";
+    std::string expected3 = "[INFO ] corrupt data at testing\n\n";
+
+    std::stringstream stream;
+
+    // Request to print 2 items. 
+    YamlSV::PrintLogItems(log_items_, 2, stream);
+    EXPECT_EQ(preface + expected2 + expected3, stream.str());
 }

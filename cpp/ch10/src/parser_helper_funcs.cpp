@@ -129,12 +129,8 @@ bool ValidateConfig(ParserConfigParams& config, const ManagedPath& conf_file_pat
 
         // Print log items which may contain information about which yaml elements
         // do not conform to schema.
-        for (std::vector<LogItem>::const_iterator it = log_items.cbegin();
-             it != log_items.cend(); ++it)
-        {
-            if (static_cast<uint8_t>(it->log_level) > static_cast<uint8_t>(LogLevel::Debug))
-                it->Print();
-        }
+        int print_count = 20;
+        YamlSV::PrintLogItems(log_items, print_count, std::cout); 
         return false;
     }
 

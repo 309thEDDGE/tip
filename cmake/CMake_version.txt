@@ -9,7 +9,8 @@ set(GIT_VERSION_STRING "")
 # Get the latest commit hash
 execute_process(COMMAND git log --pretty=format:%h -n 1
                 OUTPUT_VARIABLE GIT_SHORT_HASH
-                ERROR_VARIABLE GIT_SHORT_HASH_ERROR)
+                ERROR_VARIABLE GIT_SHORT_HASH_ERROR
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
 #message(STATUS "git short hash: " ${GIT_SHORT_HASH})
 #message(STATUS "git short hash error: " ${GIT_SHORT_HASH_ERROR})
 
@@ -20,7 +21,8 @@ endif()
 # Get the git tag for the latest commit hash if it exists.
 execute_process(COMMAND git tag -l --contains ${GIT_SHORT_HASH}
                 OUTPUT_VARIABLE GIT_TAG
-                ERROR_VARIABLE GIT_TAG_ERROR)
+                ERROR_VARIABLE GIT_TAG_ERROR
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
 #message(STATUS "git tag: " ${GIT_TAG})
 #message(STATUS "git tag error: " ${GIT_TAG_ERROR})
 

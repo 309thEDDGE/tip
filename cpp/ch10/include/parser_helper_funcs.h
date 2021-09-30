@@ -3,6 +3,7 @@
 #define PARSER_HELPER_FUNCS_H_
 
 #include <string>
+#include <iostream>
 #include "parse_manager.h"
 #include "parser_config_params.h"
 #include "managed_path.h"

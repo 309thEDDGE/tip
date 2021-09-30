@@ -16,7 +16,6 @@
 #include "metadata.h"
 #include "dts1553.h"
 #include "bus_map.h"
-#include "parquet_reader.h"
 #include "translation_config_params.h"
 #include "argument_validation.h"
 #include "yaml_schema_validation.h"
