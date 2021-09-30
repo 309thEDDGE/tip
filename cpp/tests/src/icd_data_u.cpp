@@ -691,14 +691,14 @@ class ICDDataIngestYamlTest : public ::testing::Test
             "desc : description / description, uom : ' ', multifmt : False, class : 0}\n");
 
         // two incorrect elems, first is missing "schema", third is
-        // missing "multifmt".
+        // missing "off".
         bad_icd_node3_ = YAML::Load(
             "APP_2-03 : {off: 2, cnt : 1, msbval : 18, "
             "desc : description, uom : DAY, multifmt : False, class : 0}\n"
             "APP_2-04 : {off: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 323, "
             "desc : description, uom : YEAR, multifmt : False, class : 0}\n"
-            "APP_2-05 : {off: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 1, "
-            "desc : description / description, uom : ' ', class : 0}\n");
+            "APP_2-05 : {cnt : 1, schema : UNSIGNEDBITS, msbval : 1, "
+            "desc : description / description, uom : ' ', multifmt: False, class : 0}\n");
     }
 
     void FillSequenceNodes()
@@ -785,7 +785,6 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeValidMsgCount)
         "    Aee-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
         "    Aee-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
-
     );
 
     EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
@@ -1064,4 +1063,137 @@ TEST_F(ICDDataIngestYamlTest, CreateVectorOfStringICDComponents)
                                                   good_icd_node1_[elem_name], is_bit_elem, output_vec);
     EXPECT_TRUE(res_);
     EXPECT_THAT(string_icd_components3_, ::testing::ElementsAreArray(output_vec));
+}
+
+TEST_F(ICDDataIngestYamlTest, ConfigureMsgDataFromYamlNodeCorrectVals)
+{
+    FillYamlElementsNodes();
+    // msg_data_node_ = YAML::Load(
+    //     "{command: [40023, 0], lru_addr: [1, 2], lru_subaddr: [3, 0], lru_name: [LRUA, LRUB], bus: BUSB, wrdcnt: 20, rate: 12.5, mode_code: False, desc: \"description\"}\n");
+    ICDElement icdelem;
+    msg_name_ = "MSG";
+
+    res_ = icd_.ConfigureMsgDataFromYamlNode(icdelem, msg_name_, msg_data_node_);
+    EXPECT_TRUE(res_);
+    EXPECT_EQ(msg_name_, icdelem.msg_name_);
+
+    EXPECT_EQ(msg_data_node_["command"][0].as<int>(), icdelem.xmit_word_);
+    EXPECT_EQ(msg_data_node_["command"][1].as<int>(), icdelem.dest_word_);
+
+    EXPECT_EQ(msg_data_node_["wrdcnt"].as<int>(), icdelem.msg_word_count_);
+
+    EXPECT_EQ(msg_data_node_["bus"].as<std::string>(), icdelem.bus_name_);
+
+    EXPECT_EQ(msg_data_node_["lru_name"][0].as<std::string>(), icdelem.xmit_lru_name_);
+    EXPECT_EQ(msg_data_node_["lru_name"][1].as<std::string>(), icdelem.dest_lru_name_);
+
+    EXPECT_EQ(msg_data_node_["lru_addr"][0].as<int>(), icdelem.xmit_lru_addr_);
+    EXPECT_EQ(msg_data_node_["lru_addr"][1].as<int>(), icdelem.dest_lru_addr_);
+
+    EXPECT_EQ(msg_data_node_["lru_subaddr"][0].as<int>(), icdelem.xmit_lru_subaddr_);
+    EXPECT_EQ(msg_data_node_["lru_subaddr"][1].as<int>(), icdelem.dest_lru_subaddr_);
+
+    EXPECT_EQ(msg_data_node_["rate"].as<float>(), icdelem.rate_);
+}
+
+TEST_F(ICDDataIngestYamlTest, ConfigureMsgDataFromYamlNodeMissingRequiredMappedValue)
+{
+    // Missing "bus" key.
+    msg_data_node_ = YAML::Load(
+        "{command: [40023, 0], lru_addr: [1, 2], lru_subaddr: [3, 0], lru_name: [LRUA, LRUB], wrdcnt: 20, rate: 12.5, mode_code: False, desc: \"description\"}\n");
+    ICDElement icdelem;
+    msg_name_ = "MSG";
+
+    res_ = icd_.ConfigureMsgDataFromYamlNode(icdelem, msg_name_, msg_data_node_);
+    ASSERT_FALSE(res_);
+}
+
+TEST_F(ICDDataIngestYamlTest, ConfigureMsgDataFromYamlNodeMissingRequiredSequence)
+{
+    // Missing "lru_addr" key.
+    msg_data_node_ = YAML::Load(
+        "{command: [40023, 0], bus: BUSB, lru_subaddr: [3, 0], lru_name: [LRUA, LRUB], wrdcnt: 20, rate: 12.5, mode_code: False, desc: \"description\"}\n");
+    ICDElement icdelem;
+    msg_name_ = "MSG";
+
+    res_ = icd_.ConfigureMsgDataFromYamlNode(icdelem, msg_name_, msg_data_node_);
+    ASSERT_FALSE(res_);
+}
+
+TEST_F(ICDDataIngestYamlTest, ConfigureMsgDataFromYamlNodeMissingOptionalSequence)
+{
+    // Missing "lru_name" key.
+    msg_data_node_ = YAML::Load(
+        "{command: [40023, 0], lru_addr: [1, 2], bus: BUSB, lru_subaddr: [3, 0], wrdcnt: 20, rate: 12.5, mode_code: False, desc: \"description\"}\n");
+    ICDElement icdelem;
+    msg_name_ = "MSG";
+
+    res_ = icd_.ConfigureMsgDataFromYamlNode(icdelem, msg_name_, msg_data_node_);
+    // Note that return should be true indicating good configuration.
+    ASSERT_TRUE(res_);
+    EXPECT_EQ("", icdelem.xmit_lru_name_);
+    EXPECT_EQ("", icdelem.dest_lru_name_);
+}
+
+TEST_F(ICDDataIngestYamlTest, ConfigureWordElemDataFromYamlNodeCorrectVals)
+{
+    YAML::Node node = YAML::Load(
+            "{off: 2, cnt : 1, schema : UNSIGNED16, msbval : 18, "
+            "desc : description, uom : DAY, multifmt : False, class : 0}\n");
+    ICDElement icdelem;
+    std::string elem_name = "ytt644";
+
+    res_ = icd_.ConfigureWordElemDataFromYamlNode(icdelem, node, elem_name);
+    EXPECT_TRUE(res_);
+    
+    EXPECT_FALSE(icdelem.is_bitlevel_);
+    EXPECT_EQ(elem_name, icdelem.elem_name_);
+    EXPECT_EQ(node["off"].as<int>(), icdelem.offset_);
+    EXPECT_EQ(node["cnt"].as<int>(), icdelem.elem_word_count_);
+
+    ICDElementSchema schema = ICDElementSchema::BAD;
+    std::string schema_str = node["schema"].as<std::string>();
+    res_ = icd_.ICDSchemaStringToEnum(schema_str, schema);
+    EXPECT_TRUE(res_);
+
+    EXPECT_EQ(schema, icdelem.schema_);
+    EXPECT_EQ(node["msbval"].as<double>(), icdelem.msb_val_);
+    EXPECT_EQ(node["desc"].as<std::string>(), icdelem.description_);
+    EXPECT_EQ(node["uom"].as<std::string>(), icdelem.uom_);
+    EXPECT_EQ(node["multifmt"].as<bool>(), icdelem.is_multiformat_);
+    EXPECT_EQ(node["class"].as<int>(), icdelem.classification_);
+}
+
+TEST_F(ICDDataIngestYamlTest, ConfigureBitElemDataFromYamlNodeCorrectVals)
+{
+    YAML::Node node = YAML::Load(
+        "{off: 2, cnt: 1, schema: UNSIGNEDBITS, msbval: 18, "
+        "desc: \"description\", uom: \"DAY\", multifmt: False, "
+        "class: 0, msb: 1, lsb: 9, bitcnt: 9}\n"
+    );
+    ICDElement icdelem;
+    std::string elem_name = "532-xx";
+
+    res_ = icd_.ConfigureBitElemDataFromYamlNode(icdelem, node, elem_name);
+    EXPECT_TRUE(res_);
+    
+    EXPECT_TRUE(icdelem.is_bitlevel_);
+    EXPECT_EQ(elem_name, icdelem.elem_name_); 
+    EXPECT_EQ(node["off"].as<int>(), icdelem.offset_);
+    EXPECT_EQ(node["cnt"].as<int>(), icdelem.elem_word_count_);
+
+    ICDElementSchema schema = ICDElementSchema::BAD;
+    std::string schema_str = node["schema"].as<std::string>();
+    res_ = icd_.ICDSchemaStringToEnum(schema_str, schema);
+    EXPECT_TRUE(res_);
+    EXPECT_EQ(schema, icdelem.schema_);
+
+    EXPECT_EQ(node["msbval"].as<double>(), icdelem.msb_val_);
+    EXPECT_EQ(node["desc"].as<std::string>(), icdelem.description_);
+    EXPECT_EQ(node["uom"].as<std::string>(), icdelem.uom_);
+    EXPECT_EQ(node["multifmt"].as<bool>(), icdelem.is_multiformat_);
+    EXPECT_EQ(node["class"].as<int>(), icdelem.classification_);
+    EXPECT_EQ(node["msb"].as<int>(), icdelem.bitmsb_);
+    EXPECT_EQ(node["lsb"].as<int>(), icdelem.bitlsb_);
+    EXPECT_EQ(node["bitcnt"].as<int>(), icdelem.bit_count_);
 }

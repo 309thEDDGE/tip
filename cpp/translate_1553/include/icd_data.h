@@ -14,6 +14,7 @@
 #include "parse_text.h"
 #include "uri_percent_encoding.h"
 #include "managed_path.h"
+#include "yaml_reader.h"
 #include "yaml-cpp/yaml.h"
 
 class ICDData
@@ -46,7 +47,7 @@ class ICDData
     icdelem_vec icd_msg_elements_;
     std::vector<std::string> table_names_;
 
-    // Count of valid messages ingested from the DTS yaml.
+    // Count of valid messages ingested from the DTS yaml or csv.
     size_t valid_message_count_;
 
     // Map a unique index to a vector of indices to ICDElement objects
@@ -61,19 +62,29 @@ class ICDData
 
     // For conversion of message and element names to percent-encoded strings
     URIPercentEncoding uri_percent_encode_;
-
-    /*
-	* Private high-level functions.
-	*/
-    void MapICDElementSchemaToString();
-    bool CreateLookupMap();
-
+    
     // Yaml icd members.
     std::vector<std::string> yaml_msg_body_keys_;
     std::vector<std::string> yaml_msg_data_keys_;
     std::vector<std::string> yaml_word_elem_keys_;
     std::vector<std::string> yaml_bit_elem_keys_;
     const size_t icd_sequence_size_ = 2;
+
+    // Vectors to hold data retrieved from sequence nodes.
+    std::vector<int> temp_comm_word_vec_;
+    std::vector<std::string> temp_lru_name_vec_;
+    std::vector<int> temp_lru_addr_vec_;
+    std::vector<int> temp_lru_subaddr_vec_;
+
+    // Hold data retrieved from mapped parameters.
+    int temp_int_;
+    float temp_float_;
+
+    /*
+	* Private high-level functions.
+	*/
+    void MapICDElementSchemaToString();
+    bool CreateLookupMap();
 
    public:
     const size_t& valid_message_count;
@@ -148,6 +159,215 @@ class ICDData
                                            std::vector<std::string>& output_vec);
     bool SequenceNodeHasCorrectSize(const YAML::Node& node, const size_t& required_size);
     bool ICDSchemaStringToEnum(const std::string& schema_string, ICDElementSchema& schema);
+
+	/*
+	Set the ICDElement data member values from Yaml nodes which represent
+    a word element.
+
+	Args:
+        icd_elem        --> ICDElement object to be configured
+		msg_name		--> Name of message to which the ICD Element
+							is associated
+		msg_data_node   --> Yaml::Node which satisfies the criterion that
+                            MapNodeHasRequiredKeys(msg_data_node, yaml_msg_data_keys_)
+                            == true
+        word_elem_name  --> Name of element 
+        word_elem_node  --> Yaml::Node with word element data which satisfies
+                            the criteriion that 
+                            MapNodeHasRequiredKeys(word_elem_node, yaml_word_elem_keys_)
+                            == true
+    
+    Return:
+        True if all required member variables of the icd_elem can be set. False
+        if a required key-value pair is missing or a data component can't be 
+        converted or casted as expected.
+	*/
+    bool ConfigureWordElementFromYamlNodes(ICDElement& icd_elem, const std::string& msg_name,
+                                           const YAML::Node& msg_data_node, 
+                                           const std::string& word_elem_name,
+                                           const YAML::Node& word_elem_node);
+
+
+	/*
+	Set the ICDElement data member values from Yaml nodes which represent
+    a bit element.
+
+	Args:
+        icd_elem        --> ICDElement object to be configured
+		msg_name		--> Name of message to which the ICD Element
+							is associated
+		msg_data_node   --> Yaml::Node which satisfies the criterion that
+                            MapNodeHasRequiredKeys(msg_data_node, yaml_msg_data_keys_)
+                            == true
+        bit_elem_name  --> Name of element 
+        bit_elem_node  --> Yaml::Node with bit element data which satisfies
+                            the criteriion that 
+                            MapNodeHasRequiredKeys(bit_elem_node, yaml_bit_elem_keys_)
+                            == true
+    
+    Return:
+        True if all required member variables of the icd_elem can be set. False
+        if a required key-value pair is missing or a data component can't be 
+        converted or casted as expected.
+	*/
+    bool ConfigureBitElementFromYamlNodes(ICDElement& icd_elem, const std::string& msg_name,
+                                           const YAML::Node& msg_data_node, 
+                                           const std::string& bit_elem_name,
+                                           const YAML::Node& bit_elem_node);
+
+    /*
+    Set the ICDElement data member values that pertain to message-level
+    data from a message data node.
+
+	Args:
+        icd_elem        --> ICDElement object to be configured
+		msg_name		--> Name of message to which the ICD Element
+							is associated
+		msg_data_node   --> Yaml::Node which satisfies the criterion that
+                            MapNodeHasRequiredKeys(msg_data_node, yaml_msg_data_keys_)
+                            == true
+
+    Return:
+        True if all required fields of the msg_data_node are present and
+        can be casted to the correct values. False if a required field is
+        not present or any field fails to be casted.
+    */
+   bool ConfigureMsgDataFromYamlNode(ICDElement& icd_elem, const std::string& msg_name,
+                                     const YAML::Node& msg_data_node);
+
+    /*
+    Set the ICDElement data member values that pertain to word-level
+    data from a word element node.
+
+	Args:
+        icd_elem        --> ICDElement object to be configured
+		word_elem_node  --> Yaml::Node which satisfies the criterion that
+                            MapNodeHasRequiredKeys(word_elem_node, yaml_word_elem_keys_)
+                            == true
+        word_elem_name  --> Name of element 
+                           
+
+    Return:
+        True if all required fields of the word_elem_node are present and
+        can be casted to the correct values. False if a required field is
+        not present or any field fails to be casted.
+    */
+   bool ConfigureWordElemDataFromYamlNode(ICDElement& icd_elem, 
+                                         const YAML::Node& word_elem_node,
+                                         const std::string& word_elem_name);
+
+
+    /*
+    Set the ICDElement data member values that pertain to bit-level
+    data from a bit element node.
+
+	Args:
+        icd_elem        --> ICDElement object to be configured
+		bit_elem_node  --> Yaml::Node which satisfies the criterion that
+                            MapNodeHasRequiredKeys(bit_elem_node, yaml_bit_elem_keys_)
+                            == true
+        bit_elem_name  --> Name of element 
+                           
+
+    Return:
+        True if all required fields of the bit_elem_node are present and
+        can be casted to the correct values. False if a required field is
+        not present or any field fails to be casted.
+    */
+   bool ConfigureBitElemDataFromYamlNode(ICDElement& icd_elem, 
+                                         const YAML::Node& bit_elem_node,
+                                         const std::string& bit_elem_name);
+
+    /*
+    Fill an output variable from a yaml node using the parameter name as key. 
+    If the parameter name is not in a vector of required parameters, then the 
+    key and value are not required to be present.
+
+    Args:
+        node            --> YAML::Node from which key/val data are retrieved 
+        param_name      --> Name of the parameter which is being retrieved
+        required_params --> Vector of parameter names. Inclusion of a name in 
+                            the vector implies that the parameter is required.
+        output          --> Variable into which will be placed the mapped value
+
+    Return:
+        True if the mapped value is present and can be cast to the data type 
+        of the output variable or the param_name is not in required_params. 
+        False otherwise.
+    */
+   template <typename T>
+   bool GetMappedValueFromNode(const YAML::Node& node, std::string param_name, 
+                                const std::vector<std::string> required_params,
+                                T& output);
+
+
+    /*
+    Fill an output vector from a yaml sequence node. 
+    If the parameter name is not in a vector of required parameters, then the 
+    key and value are not required to be present.
+
+    Args:
+        node            --> YAML::Node which contains a sequence which is 
+                            mapped by the key param_name. The sequence which
+                            is mapped contains the values that will fill
+                            the output vector.
+        param_name      --> Name of the parameter which is being retrieved
+        required_params --> Vector of parameter names. Inclusion of a name in 
+                            the vector implies that the parameter is required.
+        output          --> Vector into which will be placed the mapped value
+
+    Return:
+        True if the mapped node is present and is a sequence node and 
+        the values in the sequence can be casted to the data type of 
+        the output vector OR the param_name is not in required_params. 
+        False otherwise.
+    */
+   template <typename T>
+   bool GetSequenceValuesFromNode(const YAML::Node& node, std::string param_name, 
+                                const std::vector<std::string> required_params,
+                                std::vector<T>& output);
+
 };
+
+template <typename T>
+bool ICDData::GetMappedValueFromNode(const YAML::Node& node, std::string param_name, 
+                            const std::vector<std::string> required_params,
+                            T& output)
+{
+    if(!YamlReader::GetMapNodeParameter(node, param_name, output))
+    {
+        printf("ICDData::GetMappedValueFromNode: Error obtaining mapped value "
+            "with parameter name \"%s\"\n", param_name.c_str());
+        if(std::find(required_params.begin(), required_params.end(), param_name)
+            != required_params.end())
+            return false;
+    }
+    return true;
+}
+
+template <typename T>
+bool ICDData::GetSequenceValuesFromNode(const YAML::Node& node, std::string param_name, 
+                            const std::vector<std::string> required_params,
+                            std::vector<T>& output)
+{
+    output.clear();
+    if(node[param_name])
+    {
+        if(!YamlReader::GetSequenceNodeVector(node[param_name], output))
+        {
+            printf("ICDData::GetSequenceValuesFromNode: Error obtaining sequence from "
+                "\"%s\" key\n", param_name.c_str());
+            return false;
+        }
+    }
+    else
+    {
+        if(std::find(required_params.begin(), required_params.end(), param_name)
+            != required_params.end())
+            return false;
+    }
+
+    return true;
+}
 
 #endif

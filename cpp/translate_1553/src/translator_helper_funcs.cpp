@@ -115,12 +115,11 @@ bool ValidateConfSchema(const ManagedPath& conf_file_path,
     std::vector<LogItem> log_items;
     if (!ysv.Validate(conf_doc, schema_doc, log_items))
     {
-        for (std::vector<LogItem>::const_iterator it = log_items.cbegin();
-             it != log_items.cend(); ++it)
-        {
-            if (static_cast<uint8_t>(it->log_level) > static_cast<uint8_t>(LogLevel::Debug))
-                it->Print();
-        }
+        printf("Failed to validate translator configuration file (%s) with schema "
+                "(%s)\n", conf_file_path.RawString().c_str(), 
+                conf_schema_file_path.RawString().c_str()); 
+        int print_count = 25;
+        YamlSV::PrintLogItems(log_items, print_count, std::cout);
         return false;
     }
     return true;
@@ -149,12 +148,9 @@ bool ValidateDTS1553YamlSchema(const ManagedPath& icd_path,
     {
         printf("Failed to validate DTS1553 file (%s) with schema (%s)\n",
                icd_path.RawString().c_str(), icd_schema_file_path.RawString().c_str());
-        for (std::vector<LogItem>::const_iterator it = log_items.cbegin();
-             it != log_items.cend(); ++it)
-        {
-            if (static_cast<uint8_t>(it->log_level) > static_cast<uint8_t>(LogLevel::Debug))
-                it->Print();
-        }
+               
+        int print_count = 25;
+        YamlSV::PrintLogItems(log_items, print_count, std::cout);
         return false;
     }
 

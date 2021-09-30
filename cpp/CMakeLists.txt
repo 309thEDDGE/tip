@@ -354,6 +354,7 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/user_input_u.cpp
 		${test_src_dir}/yaml_reader_u.cpp
                 ${test_src_dir}/yaml_schema_validation_u.cpp
+                ${test_src_dir}/yamlsv_log_item_u.cpp
                 ${test_src_dir}/resource_limits_u.cpp
                 ${test_src_dir}/version_info_u.cpp
                 ${test_src_dir}/uri_percent_encoding_u.cpp)

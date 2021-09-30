@@ -595,6 +595,7 @@ uint8_t Translatable1553Table::configure_parquet_context(ManagedPath& output_dir
         {
             printf("Translatable1553Table::configure_parquet_context(): Failed to set memory location on col %s\n",
                    ridealong_columns_[i]->name().c_str());
+            bad_value_ = 1;
             return 1;
         }
     }
@@ -618,6 +619,7 @@ uint8_t Translatable1553Table::configure_parquet_context(ManagedPath& output_dir
         {
             printf("Translatable1553Table::configure_parquet_context(): Failed to set memory location on col %s\n",
                    columns_[col_ind_]->name().c_str());
+            bad_value_ = 1;
             return 1;
         }
     }
@@ -628,6 +630,7 @@ uint8_t Translatable1553Table::configure_parquet_context(ManagedPath& output_dir
     {
         printf("Translatable1553Table::configure_parquet_context(): ParquetContext::open_for_write() error for path %s\n",
                final_parquet_path.RawString().c_str());
+        bad_value_ = 1;
         return 1;
     }
 
@@ -704,6 +707,11 @@ uint8_t Translatable1553Table::set_parquet_context_memory_location(uint16_t& col
                             temp_name_);
                     }
                     break;
+                default:
+                    printf("Translatable1553Table::set_parquet_context_memory_location(): "
+                            "Invalid bit_elem schema = %hhu\n",
+                           static_cast<uint8_t>(columns_[col_ind]->icd_elem_ptr_->schema_));
+                    return 1;
             }
         }
         else
@@ -773,7 +781,8 @@ uint8_t Translatable1553Table::set_parquet_context_memory_location(uint16_t& col
                         temp_name_);
                     break;
                 default:
-                    printf("Translatable1553Table::set_parquet_context_memory_location(): Invalid schema = %hhu\n",
+                    printf("Translatable1553Table::set_parquet_context_memory_location(): "
+                            "Invalid word_elem schema = %hhu\n",
                            static_cast<uint8_t>(columns_[col_ind]->icd_elem_ptr_->schema_));
                     return 1;
             }

@@ -3,6 +3,9 @@
 
 #include <cstdio>
 #include <cstdint>
+#include <ostream>
+#include <sstream>
+#include <iomanip>
 #include <map>
 #include <string>
 
@@ -42,6 +45,12 @@ class LogItem
     {
         printf("[%-5s] %s\n", loglevel_to_string_map.at(log_level).c_str(),
                message.c_str());
+    }
+
+    void PrintToStream(std::ostream& stream) const 
+    {
+        stream << "[" << std::setw(5) << std::left << loglevel_to_string_map.at(log_level)
+            << "] " << message << std::endl; 
     }
 };
 

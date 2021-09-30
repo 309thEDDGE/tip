@@ -2,7 +2,7 @@
 
 ICDData::ICDData() : icd_ingest_success_(false), organize_icd_success_(false), 
     iter_tools_(), yaml_msg_body_keys_({"msg_data", "word_elem", "bit_elem"}), 
-    yaml_msg_data_keys_({"lru_addr", "lru_subaddr", "lru_name", "bus", "wrdcnt", "rate", "mode_code", "desc"}), yaml_word_elem_keys_({"off", "cnt", "schema", "msbval", "uom", "multifmt", "class"}), yaml_bit_elem_keys_({"off", "cnt", "schema", "msbval", "uom", "multifmt", "class", "msb", "lsb", "bitcnt"}),
+    yaml_msg_data_keys_({"lru_addr", "lru_subaddr", "bus", "wrdcnt", "rate"}), yaml_word_elem_keys_({"off", "cnt", "schema", "msbval"}), yaml_bit_elem_keys_({"off", "cnt", "schema", "msbval", "msb", "lsb", "bitcnt"}),
     valid_message_count_(0), valid_message_count(valid_message_count_), uri_percent_encode_()
 {
     MapICDElementSchemaToString();
@@ -46,11 +46,6 @@ void ICDData::MapICDElementSchemaToString()
 
     bool lost_entries = false;
     string_to_icdschema_map_ = iter_tools_.ReverseMap(icdschema_to_string_map_, lost_entries);
-    /*for (std::unordered_map<std::string, ICDElementSchema>::const_iterator it = string_to_icdschema_map_.begin();
-		it != string_to_icdschema_map_.end(); ++it)
-	{
-		printf("%s: %hhu\n", it->first.c_str(), static_cast<uint8_t>(it->second));
-	}*/
 }
 
 bool ICDData::IngestICDTextFileLines(const std::vector<std::string>& lines,
@@ -264,6 +259,22 @@ bool ICDData::CreateTables(const std::vector<ICDElement>& icd_elems,
 
     // Find the unique values in msg_name_vec.
     std::vector<std::string> msg_name_unique = iter_tools_.UniqueElements(msg_name_vec);
+
+    // The size of unique messages ought to equal valid_message_count_ if the 
+    // input ICD format is yaml. If the input format is CSV, then valid_message_count_
+    // hasn't been determined yet and it will be set the size of unique message names.
+    if(valid_message_count_ != 0)
+    {
+        if (msg_name_unique.size() != valid_message_count_)
+        {
+            printf("ICDData::CreateTables: valid_message_count_ = %zu, size of "
+                    "msg_name_unique = %zu. Must be equal to continue.\n", 
+                    valid_message_count_, msg_name_unique.size());
+            return false;
+        }
+    }
+
+    valid_message_count_ = msg_name_unique.size();
 
     // Iterate over the unique message names and find the indices of all matching
     // elements in msg_name_vec. Place the indices in the tables_ vector. A
@@ -803,24 +814,52 @@ size_t ICDData::FillElementsFromYamlNodes(const std::string& msg_name, const YAM
 
             // Create the ICD element.
             ICDElement temp_icd_elem;
-            std::vector<std::string> icd_string(ICDElement::kFillElementCount);
-            if (CreateVectorOfStringICDComponents(msg_name, msg_data_node,
-                                                  perc_enc_elem_name, it->second, is_bit_node, icd_string))
+            // std::vector<std::string> icd_string(ICDElement::kFillElementCount);
+            // if (CreateVectorOfStringICDComponents(msg_name, msg_data_node,
+            //                                       perc_enc_elem_name, it->second, is_bit_node, icd_string))
+            // {
+            //     if (temp_icd_elem.FillElements(icd_string))
+            //     {
+            //         icd_elems.push_back(temp_icd_elem);
+            //         fill_count++;
+            //     }
+            //     else
+            //     {
+            //         printf(
+            //             "ICDData::FillElementFromYamlNodes(): Message %s elem node "
+            //             "%s failed to fill elements!\n",
+            //             msg_name.c_str(),
+            //             perc_enc_elem_name.c_str());
+            //     }
+            // }
+
+            if(is_bit_node)
             {
-                if (temp_icd_elem.FillElements(icd_string))
+                if(!ConfigureBitElementFromYamlNodes(temp_icd_elem, msg_name, 
+                                                    msg_data_node, perc_enc_elem_name,
+                                                    it->second))
                 {
-                    icd_elems.push_back(temp_icd_elem);
-                    fill_count++;
-                }
-                else
-                {
-                    printf(
-                        "ICDData::FillElementFromYamlNodes(): Message %s elem node "
-                        "%s failed to fill elements!\n",
-                        msg_name.c_str(),
-                        perc_enc_elem_name.c_str());
+                    printf("ICDData::FillElementsFromYamlNodes: Failed to configure "
+                            "ICDElement for msg \"%s\", bit element \"%s\"",
+                            msg_name.c_str(), perc_enc_elem_name.c_str());
+                    continue;
                 }
             }
+            else
+            {
+                if(!ConfigureWordElementFromYamlNodes(temp_icd_elem, msg_name,
+                                                    msg_data_node, perc_enc_elem_name,
+                                                    it->second))
+                {
+                    printf("ICDData::FillElementsFromYamlNodes: Failed to configure "
+                            "ICDElement for msg \"%s\", word element \"%s\"",
+                            msg_name.c_str(), perc_enc_elem_name.c_str());
+                    continue;
+                }
+            }
+
+            icd_elems.push_back(temp_icd_elem);
+            fill_count++;
         }
     }
     return fill_count;
@@ -839,8 +878,8 @@ bool ICDData::CreateVectorOfStringICDComponents(const std::string& msg_name, con
     if (!SequenceNodeHasCorrectSize(msg_data_node["command"], icd_sequence_size_))
     {
         printf(
-            "ICDData::CreateVectorOfStringICDComponents(): %s/%S msg_data[command] node "
-            "is not a sequence or does not have size = %zu!",
+            "ICDData::CreateVectorOfStringICDComponents(): %s/%s msg_data[command] node "
+            "is not a sequence or does not have size = %zu!\n",
             msg_name.c_str(), elem_name.c_str(), icd_sequence_size_);
         return false;
     }
@@ -848,8 +887,8 @@ bool ICDData::CreateVectorOfStringICDComponents(const std::string& msg_name, con
     if (!SequenceNodeHasCorrectSize(msg_data_node["lru_addr"], icd_sequence_size_))
     {
         printf(
-            "ICDData::CreateVectorOfStringICDComponents(): %s/%S msg_data[lru_addr] node "
-            "is not a sequence or does not have size = %zu!",
+            "ICDData::CreateVectorOfStringICDComponents(): %s/%s msg_data[lru_addr] node "
+            "is not a sequence or does not have size = %zu!\n",
             msg_name.c_str(), elem_name.c_str(), icd_sequence_size_);
         return false;
     }
@@ -857,16 +896,16 @@ bool ICDData::CreateVectorOfStringICDComponents(const std::string& msg_name, con
     if (!SequenceNodeHasCorrectSize(msg_data_node["lru_subaddr"], icd_sequence_size_))
     {
         printf(
-            "ICDData::CreateVectorOfStringICDComponents(): %s/%S msg_data[lru_subaddr] node "
-            "is not a sequence or does not have size = %zu!",
+            "ICDData::CreateVectorOfStringICDComponents(): %s/%s msg_data[lru_subaddr] node "
+            "is not a sequence or does not have size = %zu!\n",
             msg_name.c_str(), elem_name.c_str(), icd_sequence_size_);
         return false;
     }
     if (!SequenceNodeHasCorrectSize(msg_data_node["lru_name"], icd_sequence_size_))
     {
         printf(
-            "ICDData::CreateVectorOfStringICDComponents(): %s/%S msg_data[lru_name] node "
-            "is not a sequence or does not have size = %zu!",
+            "ICDData::CreateVectorOfStringICDComponents(): %s/%s msg_data[lru_name] node "
+            "is not a sequence or does not have size = %zu!\n",
             msg_name.c_str(), elem_name.c_str(), icd_sequence_size_);
         return false;
     }
@@ -900,7 +939,7 @@ bool ICDData::CreateVectorOfStringICDComponents(const std::string& msg_name, con
         output_vec[15] = std::to_string(static_cast<int>(schema));
     }
     else
-        printf("ICDData::CreateVectorOfStringICDComponents(): Failed ICDSchemaStringToEnum()\n");
+        printf("ICDData::CjreateVectorOfStringICDComponents(): Failed ICDSchemaStringToEnum()\n");
     output_vec[17] = std::to_string(static_cast<int>(elem_data_node["multifmt"].as<bool>()));
     output_vec[21] = elem_data_node["class"].as<std::string>();
     output_vec[22] = elem_data_node["desc"].as<std::string>();
@@ -934,5 +973,234 @@ bool ICDData::SequenceNodeHasCorrectSize(const YAML::Node& node, const size_t& r
     {
         return false;
     }
+    return true;
+}
+
+bool ICDData::ConfigureMsgDataFromYamlNode(ICDElement& icd_elem, const std::string& msg_name,
+                                     const YAML::Node& msg_data_node)
+{
+    /*
+    Note that mode_code and desc are not copied here because those are not
+    fields relevant to ICDElement.
+    */
+    icd_elem.msg_name_ = msg_name;
+    std::string param_name = "command";
+    if(!GetSequenceValuesFromNode(msg_data_node, param_name, yaml_msg_data_keys_,
+        temp_comm_word_vec_))
+        return false;
+    if(temp_comm_word_vec_.size() > 0)
+    {
+        icd_elem.xmit_word_ = static_cast<uint16_t>(temp_comm_word_vec_[0]);
+        icd_elem.dest_word_ = static_cast<uint16_t>(temp_comm_word_vec_[1]);
+    }
+
+    param_name = "lru_addr";
+    if(!GetSequenceValuesFromNode(msg_data_node, param_name, yaml_msg_data_keys_,
+        temp_lru_addr_vec_))
+        return false;
+    if(temp_lru_addr_vec_.size() > 0)
+    {
+        icd_elem.xmit_lru_addr_ = static_cast<uint8_t>(temp_lru_addr_vec_[0]);
+        icd_elem.dest_lru_addr_ = static_cast<uint8_t>(temp_lru_addr_vec_[1]);
+    }
+
+    param_name = "lru_subaddr";
+    if(!GetSequenceValuesFromNode(msg_data_node, param_name, yaml_msg_data_keys_,
+        temp_lru_subaddr_vec_))
+        return false;
+    if(temp_lru_subaddr_vec_.size() > 0)
+    {
+        icd_elem.xmit_lru_subaddr_ = static_cast<uint8_t>(temp_lru_subaddr_vec_[0]);
+        icd_elem.dest_lru_subaddr_ = static_cast<uint8_t>(temp_lru_subaddr_vec_[1]);
+    }
+   
+    param_name = "lru_name";
+    if(!GetSequenceValuesFromNode(msg_data_node, param_name, yaml_msg_data_keys_,
+        temp_lru_name_vec_))
+        return false;
+    if(temp_lru_name_vec_.size() > 0)
+    {
+        icd_elem.xmit_lru_name_ = temp_lru_name_vec_[0];
+        icd_elem.dest_lru_name_ = temp_lru_name_vec_[1];
+    }
+
+    param_name = "bus";
+    if(!GetMappedValueFromNode(msg_data_node, param_name, yaml_msg_data_keys_,
+                                icd_elem.bus_name_))
+        return false;
+
+    param_name = "wrdcnt";
+    if(!GetMappedValueFromNode(msg_data_node, param_name, yaml_msg_data_keys_,
+                                temp_int_))
+        return false;
+    icd_elem.msg_word_count_ = static_cast<uint8_t>(temp_int_);
+
+    param_name = "rate";
+    if(!GetMappedValueFromNode(msg_data_node, param_name, yaml_msg_data_keys_,
+                                icd_elem.rate_))
+        return false;
+
+    return true;                                        
+}
+
+bool ICDData::ConfigureWordElemDataFromYamlNode(ICDElement& icd_elem, 
+                                        const YAML::Node& word_elem_node,
+                                        const std::string& word_elem_name)
+{
+    icd_elem.is_bitlevel_ = false;
+    icd_elem.elem_name_ = word_elem_name;
+
+    std::string param_name = "off";
+    if(!GetMappedValueFromNode(word_elem_node, param_name, yaml_word_elem_keys_,
+                                temp_int_))
+        return false;
+    icd_elem.offset_ = static_cast<uint8_t>(temp_int_);
+
+    param_name = "cnt";
+     if(!GetMappedValueFromNode(word_elem_node, param_name, yaml_word_elem_keys_,
+                                temp_int_))
+        return false;
+    icd_elem.elem_word_count_ = static_cast<uint8_t>(temp_int_);
+
+    param_name = "schema";
+    std::string schema_str;
+    ICDElementSchema schema_enum = ICDElementSchema::BAD;
+    if(!GetMappedValueFromNode(word_elem_node, param_name, yaml_word_elem_keys_,
+                                schema_str))
+        return false;
+    if(!ICDSchemaStringToEnum(schema_str, schema_enum))
+        return false;
+    icd_elem.schema_ = schema_enum;
+
+    param_name = "msbval";
+    if(!GetMappedValueFromNode(word_elem_node, param_name, yaml_word_elem_keys_,
+                                icd_elem.msb_val_))
+        return false;
+   
+    param_name = "desc";
+    if(!GetMappedValueFromNode(word_elem_node, param_name, yaml_word_elem_keys_,
+                                icd_elem.description_))
+        return false;
+
+    param_name = "uom";
+    if(!GetMappedValueFromNode(word_elem_node, param_name, yaml_word_elem_keys_,
+                                icd_elem.uom_))
+        return false;
+
+    param_name = "multifmt";
+    if(!GetMappedValueFromNode(word_elem_node, param_name, yaml_word_elem_keys_,
+                                icd_elem.is_multiformat_))
+        return false;
+   
+    param_name = "class";
+    if(!GetMappedValueFromNode(word_elem_node, param_name, yaml_word_elem_keys_,
+                                temp_int_))
+        return false;
+    icd_elem.classification_ = static_cast<uint8_t>(temp_int_);
+   
+    return true;
+}
+
+bool ICDData::ConfigureBitElemDataFromYamlNode(ICDElement& icd_elem, 
+                                        const YAML::Node& bit_elem_node,
+                                        const std::string& bit_elem_name)
+{
+    icd_elem.is_bitlevel_ = true;
+    icd_elem.elem_name_ = bit_elem_name;
+
+    std::string param_name = "off";
+    if(!GetMappedValueFromNode(bit_elem_node, param_name, yaml_bit_elem_keys_,
+                                temp_int_))
+        return false;
+    icd_elem.offset_ = static_cast<uint8_t>(temp_int_);
+
+    param_name = "cnt";
+     if(!GetMappedValueFromNode(bit_elem_node, param_name, yaml_bit_elem_keys_,
+                                temp_int_))
+        return false;
+    icd_elem.elem_word_count_ = static_cast<uint8_t>(temp_int_);
+
+    param_name = "schema";
+    std::string schema_str;
+    ICDElementSchema schema_enum = ICDElementSchema::BAD;
+    if(!GetMappedValueFromNode(bit_elem_node, param_name, yaml_bit_elem_keys_,
+                                schema_str))
+        return false;
+    if(!ICDSchemaStringToEnum(schema_str, schema_enum))
+        return false;
+    icd_elem.schema_ = schema_enum;
+
+    param_name = "msbval";
+    if(!GetMappedValueFromNode(bit_elem_node, param_name, yaml_bit_elem_keys_,
+                                icd_elem.msb_val_))
+        return false;
+   
+    param_name = "desc";
+    if(!GetMappedValueFromNode(bit_elem_node, param_name, yaml_bit_elem_keys_,
+                                icd_elem.description_))
+        return false;
+
+    param_name = "uom";
+    if(!GetMappedValueFromNode(bit_elem_node, param_name, yaml_bit_elem_keys_,
+                                icd_elem.uom_))
+        return false;
+
+    param_name = "multifmt";
+    if(!GetMappedValueFromNode(bit_elem_node, param_name, yaml_bit_elem_keys_,
+                                icd_elem.is_multiformat_))
+        return false;
+   
+    param_name = "class";
+    if(!GetMappedValueFromNode(bit_elem_node, param_name, yaml_bit_elem_keys_,
+                                temp_int_))
+        return false;
+    icd_elem.classification_ = static_cast<uint8_t>(temp_int_);
+
+    param_name = "msb";
+    if(!GetMappedValueFromNode(bit_elem_node, param_name, yaml_bit_elem_keys_,
+                                temp_int_))
+        return false;
+    icd_elem.bitmsb_ = static_cast<uint8_t>(temp_int_);
+
+    param_name = "lsb";
+    if(!GetMappedValueFromNode(bit_elem_node, param_name, yaml_bit_elem_keys_,
+                                temp_int_))
+        return false;
+    icd_elem.bitlsb_ = static_cast<uint8_t>(temp_int_);
+
+    param_name = "bitcnt";
+    if(!GetMappedValueFromNode(bit_elem_node, param_name, yaml_bit_elem_keys_,
+                                temp_int_))
+        return false;
+    icd_elem.bit_count_ = static_cast<uint8_t>(temp_int_);
+
+    return true;
+}
+
+bool ICDData::ConfigureWordElementFromYamlNodes(ICDElement& icd_elem, const std::string& msg_name,
+                                        const YAML::Node& msg_data_node, 
+                                        const std::string& word_elem_name,
+                                        const YAML::Node& word_elem_node)
+{
+    if(!ConfigureMsgDataFromYamlNode(icd_elem, msg_name, msg_data_node)) 
+        return false;
+
+    if(!ConfigureWordElemDataFromYamlNode(icd_elem, word_elem_node, word_elem_name))
+        return false;
+        
+    return true;
+}
+
+bool ICDData::ConfigureBitElementFromYamlNodes(ICDElement& icd_elem, const std::string& msg_name,
+                                        const YAML::Node& msg_data_node, 
+                                        const std::string& bit_elem_name,
+                                        const YAML::Node& bit_elem_node)
+{
+    if(!ConfigureMsgDataFromYamlNode(icd_elem, msg_name, msg_data_node)) 
+        return false;
+   
+    if(!ConfigureBitElemDataFromYamlNode(icd_elem, bit_elem_node, bit_elem_name))
+        return false;
+
     return true;
 }
