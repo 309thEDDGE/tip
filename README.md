@@ -197,6 +197,8 @@ docker run -it -p 8888:8888 -v <host path>:<container path> registry.il2.dso.mil
 
 Replace `<latest>` with the most recent container tag from https://code.il2.dso.mil/skicamp/project-opal/tip/container_registry/1904
 
+The easiest way to find the latest image is to get the commit hash from the most recent successful pipeline run on master and then search the container registry.
+
 `<host path>` is the path to the data you want to work with on your host system. (ch10, parquet, etc.)
 
 `<container path>` is where the data will be mounted within the container.
