@@ -21,9 +21,9 @@ dependencies:
 # Note that the following required package pins are for the tip package.
 # They are defined in tip/tip_scripts/conda-recipes/tip/meta.yaml
   - arrow-cpp==5.0.0
-  - libgcc-ng==11.1.0
+  - libgcc-ng==11.2.0
   - libpcap==1.10.1
-  - libstdcxx-ng==11.1.0
+  - libstdcxx-ng==11.2.0
   - libtins==4.2
   - spdlog==1.8.5
   - yaml-cpp==0.6.3

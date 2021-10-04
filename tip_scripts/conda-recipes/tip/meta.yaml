@@ -16,19 +16,19 @@ build:
 
 requirements:
   build:
-    - gxx_linux-64 >=8
-    - make
-    - cmake
-    - ninja
-    - pkgconfig
+    - gxx_linux-64==11.2.0
+    - make==4.3
+    - cmake==3.21.3
+    - ninja==1.10.2
+    - pkgconfig==1.5.5
 
   host:
-    - libpcap
+    - libpcap==1.10.1
     - arrow-cpp==5.0.0
     - spdlog==1.8.5
     - yaml-cpp==0.6.3
-    - gmock
-    - gtest
+    - gmock==1.10.0
+    - gtest==1.10.0
     - libtins==4.2
 
   run:
@@ -36,7 +36,7 @@ requirements:
     - libpcap==1.10.1
     - arrow-cpp==5.0.0
     - spdlog==1.8.5
-    - libtins=4.2
+    - libtins==4.2
 
 about:
   home: https://code.il2.dso.mil/skicamp/project-opal/tip
