@@ -36,7 +36,8 @@ RUN conda init \
 
 USER 1000
 
-FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0
+#FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0
+FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/base-image/harden-python39:3.9.4
 
 SHELL ["/usr/bin/bash", "-c"] 
 
