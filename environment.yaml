@@ -1,6 +1,6 @@
 name: tip-dev
 channels:
- - conda-forge
+ - file:///local_channel
 dependencies:
  - cxx-compiler
  - make

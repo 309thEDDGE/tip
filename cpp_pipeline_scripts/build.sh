@@ -21,7 +21,7 @@ main() {
     # =============================
     # Creating build environment
     # =============================
-    conda env create -f environment.yaml
+    conda env create -f environment.yaml --offline
 
     echo "Running CMake"
     mkdir -p $BUILD_DIR
