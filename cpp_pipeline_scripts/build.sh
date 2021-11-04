@@ -6,11 +6,10 @@ source $SCRIPT_PATH/setup.sh
 main() {
     set_exit_on_error
     setup
-    export MINICONDA3_PATH="/home/user/miniconda3"
     export ARTIFACT_DIR="${ARTIFACT_FOLDER}/build-metadata/build-artifacts"
     export CONDA_CHANNEL_DIR="/local-channel"
-    export PATH="$MINICONDA3_PATH/bin:${PATH}"
     export SCRIPT_START_DIR=$(pwd)
+    export CONDA_PREFIX=/opt/conda
 
     echo "current working directory at start of script"
     pwd
@@ -18,12 +17,6 @@ main() {
     mkdir -p $ARTIFACT_DIR
 
     # echo "test" >> $ARTIFACT_DIR/test.txt
-
-    echo -n "Installing Miniconda"
-    dnf install wget -y
-    wget --progress=dot:giga \
-         https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-         && bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA3_PATH
 
     # =============================
     # Creating build environment
