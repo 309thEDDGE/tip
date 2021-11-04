@@ -7,7 +7,7 @@ main() {
     set_exit_on_error
     setup
     export ARTIFACT_DIR="${ARTIFACT_FOLDER}/build-metadata/build-artifacts"
-    export CONDA_CHANNEL_DIR="/local-channel"
+    export CONDA_CHANNEL_DIR="${HOME}/local-channel"
     export SCRIPT_START_DIR=$(pwd)
     export CONDA_PREFIX=/opt/conda
 
