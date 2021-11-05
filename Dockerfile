@@ -9,7 +9,9 @@ WORKDIR /home/jovyan
 
 COPY --chown=jovyan:jovyan $ARTIFACT_DIR/local_channel.tar .
 
-RUN tar xvf local_channel.tar && \
+RUN tar xvf local_channel.tar --strip-components=2 && \
+    ls -la && \
+    pwd && \
     source /opt/conda/bin/activate && \
     conda activate singleuser && \
     conda install -c file:///home/jovyan/local_channel/ -c file:///home/jovyan/local-channel tip --offline
