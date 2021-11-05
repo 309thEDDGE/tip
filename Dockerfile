@@ -1,96 +1,23 @@
-FROM registry.il2.dso.mil/skicamp/project-opal/opal-operations:vendor-whl AS wheel
-FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/ironbank/miniconda:4.9.2 AS builder
-USER root
+FROM registry1.dso.mil/ironbank/opensource/metrostar/tip-dependencies:0.0.3 AS tipdependencies
+FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:0.0.1 AS singleuser
 
-COPY --from=wheel /whl /whl
+COPY --from=tipdependencies /local_channel /home/jovyan/local_channel
 
-RUN mkdir -p /tip/ci_artifacts
-COPY tip_scripts /tip/tip_scripts/
-COPY README.md /tip/README.md
-
-WORKDIR /tip
-
-# ARG GITLAB_TOKEN
-# RUN git clone https://__token__@code.il2.dso.mil/skicamp/project-opal/opal-operations.git
-
-ENV CONDA_PATH="/opt/conda"
-ENV CONDA_CHANNEL_DIR="/local-channels"
 ENV ARTIFACT_DIR=".ci_artifacts/build-metadata/build-artifacts"
 
-COPY $ARTIFACT_DIR /tip/ci_artifacts/
+WORKDIR /home/jovyan
 
-# Below is the tarball with the tip channel
-ADD $ARTIFACT_DIR/local_channel.tar $CONDA_CHANNEL_DIR 
-RUN mv $CONDA_CHANNEL_DIR/local-channel $CONDA_CHANNEL_DIR/tip-package-channel
+COPY $ARTIFACT_DIR/local_channel.tar .
 
-ENV PATH="${CONDA_PATH}/bin:${PATH}"
-RUN conda init \
-    && source /root/.bashrc \
-    && conda activate base  \
-    && pip3 install --no-cache-dir /whl/conda_vendor-0.1-py3-none-any.whl \
-    && echo "CONDA_CHANNEL_DIR = ${CONDA_CHANNEL_DIR}" \
-    && ls ${CONDA_CHANNEL_DIR} \
-    && mkdir "${CONDA_CHANNEL_DIR}/singleuser-channel" \
-    && python -m conda_vendor local-channels -f /tip/tip_scripts/singleuser/singleuser.yml --channel-root "${CONDA_CHANNEL_DIR}/singleuser-channel" \
-    && ls ${CONDA_CHANNEL_DIR} 
+RUN tar xvf local_channel.tar && \
+    source /opt/conda/bin/activate && \
+    conda activate singleuser && \
+    conda install -c /home/jovyan/local_channel/ -c /home/jovyan/local-channel tip --offline
 
-USER 1000
+WORKDIR /home/jovyan/user_scripts
 
-FROM registry.il2.dso.mil/platform-one/devops/pipeline-templates/centos8-gcc-bundle:1.0
-
-SHELL ["/usr/bin/bash", "-c"] 
-
-ENV CONDA_ADD_PIP_AS_PYTHON_DEPENDENCY=False
-ENV CONDA_PATH="/opt/conda"
-
-ARG NB_USER="jovyan"
-ARG NB_UID="1000"
-ARG NB_GID="100"
-
-ENV NB_USER="${NB_USER}" \
-    NB_UID=${NB_UID} \
-    NB_GID=${NB_GID}
-
-RUN groupadd -r ${NB_USER} \
-    && useradd -l -r -g ${NB_GID} -u ${NB_UID} ${NB_USER} \
-    && mkdir /home/${NB_USER} \
-    && chown -R ${NB_USER}:${NB_USER} /home/${NB_USER}
-
-COPY --from=builder --chown=${NB_USER}:${NB_USER} /tip/ci_artifacts /home/${NB_USER}/ci_artifacts
-COPY --from=builder --chown=${NB_USER}:${NB_USER} $CONDA_PATH $CONDA_PATH
-COPY --from=builder --chown=${NB_USER}:${NB_USER} /local-channels /home/${NB_USER}/local-channels
-COPY --from=builder --chown=${NB_USER}:${NB_USER} /tip/tip_scripts/etl/ /home/${NB_USER}/user_scripts/etl
-COPY --chown=${NB_USER}:${NB_USER} conf /home/${NB_USER}/conf
-COPY --chown=${NB_USER}:${NB_USER} conf/default_conf/*.yaml /home/${NB_USER}/conf/
-COPY --chown=${NB_USER}:${NB_USER} tip_scripts/singleuser/jupyter_notebook_config.py /home/${NB_USER}/.jupyter/
-COPY --chown=${NB_USER}:${NB_USER} tip_scripts/single_env/start_jupyter_nb.sh /home/${NB_USER}/user_scripts/
-COPY --chown=${NB_USER}:${NB_USER} tip_scripts/singleuser/offline_singleuser.yml /home/${NB_USER}/
-
-RUN chmod +x /home/${NB_USER}/user_scripts/start_jupyter_nb.sh \
-    && rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.enc \
-    && rm -rf /usr/share/doc/perl-IO-Socket-SSL/certs/*.pem \
-    && rm -r /usr/share/doc/perl-Net-SSLeay/examples/*.pem \
-    && rm  /usr/lib/python3.6/site-packages/pip/_vendor/requests/cacert.pem \
-    && rm  /usr/share/gnupg/sks-keyservers.netCA.pem \
-    && rm -rf ${CONDA_PATH}/conda-meta \
-    && rm -rf ${CONDA_PATH}/include
-
-USER ${NB_USER}
-RUN mkdir "/home/${NB_USER}/work"
-
-ENV PATH="${CONDA_PATH}/bin:$PATH"
-
-WORKDIR /home/${NB_USER}
-
-RUN conda init bash  \
-    && conda env create -f offline_singleuser.yml -- offline \
-    && rm -rf /home/${NB_USER}/local-channels/singleuser-channel/local_conda-forge \
-    && rm -rf /home/${NB_USER}/local-channels/tip-package-channel \
-    && rm -f /home/jovyan/.conda/envs/tip/lib/python3.9/site-packages/tornado/test/test.key \
-    && rm -f /opt/conda/pkgs/tornado-6.1-py39h3811e60_1/lib/python3.9/site-packages/tornado/test/test.key 
+COPY --chown=jovyan:jovyan tip_scripts/single_env/start_jupyter_nb.sh .
 
 EXPOSE 8888
 
 ENTRYPOINT ["/usr/bin/bash", "/home/jovyan/user_scripts/start_jupyter_nb.sh"]
-
-
