@@ -46,7 +46,7 @@ main() {
     # ===========================
 
     echo -n "Installing conda-build"
-    conda install conda-build -y
+    conda install -c file:///local_channel conda-build --offline -y
     echo -n "Change directory to conda-build recipes"
     cd tip_scripts
     echo -n "Building tip"
