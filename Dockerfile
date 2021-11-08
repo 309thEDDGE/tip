@@ -25,3 +25,7 @@ RUN conda install -c conda-forge \
       pyarrow==5.0.0 \
       pyyaml==5.4.1 \
       intake-parquet==0.2.3 -y
+
+# Remove base environment
+RUN source /opt/conda/bin/activate && \
+    jupyter kernelspec remove base
