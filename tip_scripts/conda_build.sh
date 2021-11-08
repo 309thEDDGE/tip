@@ -9,7 +9,7 @@ main() {
 
     echo -n "Building recipes"
     cd $SCRIPT_PATH/conda-recipes
-    conda build tip -c conda-forge --croot ${HOME}/tmp-channel
+    conda build tip -c file:///local_channel --croot ${HOME}/tmp-channel
 
     mkdir -p $CONDA_CHANNEL_DIR/linux-64
     mkdir -p $CONDA_CHANNEL_DIR/noarch
