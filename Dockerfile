@@ -15,3 +15,5 @@ RUN tar xvf local_channel.tar --strip-components=2 && \
     source /opt/conda/bin/activate && \
     conda activate singleuser && \
     conda install -c file:///home/jovyan/local_channel/ -c file:///home/jovyan/local-channel tip --offline
+
+RUN chown jovyan:jovyan /home/jovyan/work
