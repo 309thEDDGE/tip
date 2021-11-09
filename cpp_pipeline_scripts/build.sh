@@ -46,7 +46,11 @@ main() {
     # ===========================
 
     echo -n "Installing conda-build"
+    # [OPAL-245] conda-build is being pulled from the internet because upstream
+    # tip-dependencies image does not have it. OPAL-245 is tracking
+    # the work.
     conda install -c conda-forge conda-build -y
+
     echo -n "Change directory to conda-build recipes"
     cd tip_scripts
     echo -n "Building tip"
