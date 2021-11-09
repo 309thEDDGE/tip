@@ -17,7 +17,8 @@ RUN tar xvf local_channel.tar --strip-components=2 && \
     conda install -c file:///home/jovyan/local_channel/ -c file:///home/jovyan/local-channel tip --offline
 
 # [OPAL-242] Install upstream dependencies from internet until these are in the singleuser ironbank image.
-RUN conda install -c conda-forge \
+RUN conda activate singleuser && \
+    conda install -c conda-forge \
       s3fs==2021.7.0 \
       pandas \
       matplotlib \
@@ -25,3 +26,7 @@ RUN conda install -c conda-forge \
       pyarrow==5.0.0 \
       pyyaml==5.4.1 \
       intake-parquet==0.2.3 -y
+
+RUN conda activate singleuser && \
+    jupyter kernelspec list
+
