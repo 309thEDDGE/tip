@@ -20,7 +20,7 @@ RUN tar xvf local_channel.tar --strip-components=2 && \
 RUN source /opt/conda/bin/activate && \
     conda activate singleuser && \
     conda install -c conda-forge \
-      s3fs==2021.7.0 \
+      s3fs==2021.11.0 \
       pandas \
       matplotlib \
       intake==0.6.4 \
