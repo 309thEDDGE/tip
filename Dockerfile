@@ -26,7 +26,7 @@ RUN source /opt/conda/bin/activate && \
       intake==0.6.4 \
       pyarrow==5.0.0 \
       pyyaml==5.4.1 \
-      dask==2021.09.1 \
+      dask \
       intake-parquet==0.2.3 -y
 
 RUN source /opt/conda/bin/activate && \
