@@ -19,4 +19,11 @@ RUN tar xvf local_channel.tar --strip-components=2 && \
 # [OPAL-242] Install upstream dependencies from internet until these are in the singleuser ironbank image.
 RUN source /opt/conda/bin/activate && \
     conda activate singleuser && \
-    pip install --no-cache-dir dask==2021.09.01
+    pip install --no-cache-dir  s3fs==2021.11.0 \
+      pandas==1.3.4 \
+      matplotlib==3.5.0 \
+      intake==0.6.4 \
+      pyarrow==5.0.0 \
+      pyyaml==5.4.1 \
+      dask==2021.11.01 \
+      intake-parquet==0.2.3
