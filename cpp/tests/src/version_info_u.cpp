@@ -46,5 +46,5 @@ TEST(VersionInfoTest, GetVersionString)
 {
     std::string ver_str = VERSION_STRING;
     std::string result = GetVersionString();
-    ASSERT_EQ(ver_str, result); 
+    ASSERT_EQ(ver_str, result);
 }

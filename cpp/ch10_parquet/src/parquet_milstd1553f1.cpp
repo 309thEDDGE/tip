@@ -7,7 +7,7 @@ ParquetMilStd1553F1::ParquetMilStd1553F1() : max_temp_element_count_(DEFAULT_ROW
 {
 }
 
-bool ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread_id)  
+bool ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread_id)
 {
     thread_id_ = thread_id;
 
@@ -101,7 +101,7 @@ bool ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread
     SetMemoryLocation(calcwrdcnt_, "calcwrdcnt");
     SetMemoryLocation(payload_incomplete_, "incomplete");
 
-    if(!OpenForWrite(outfile.string(), true))
+    if (!OpenForWrite(outfile.string(), true))
     {
         SPDLOG_ERROR("({:03d}) OpenForWrite failed for file {:s}", thread_id_,
                      outfile.string());
@@ -122,9 +122,9 @@ bool ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread
 }
 
 void ParquetMilStd1553F1::Append(const uint64_t& time_stamp, uint8_t doy,
-                                      const MilStd1553F1CSDWFmt* const chan_spec,
-                                      const MilStd1553F1DataHeaderCommWordFmt* msg, const uint16_t* const data,
-                                      const uint16_t& chanid, int8_t calcwrdcnt, uint8_t payload_incomplete)
+                                 const MilStd1553F1CSDWFmt* const chan_spec,
+                                 const MilStd1553F1DataHeaderCommWordFmt* msg, const uint16_t* const data,
+                                 const uint16_t& chanid, int8_t calcwrdcnt, uint8_t payload_incomplete)
 {
     WE_[append_count_] = msg->WE;
     SE_[append_count_] = msg->SE;

@@ -4,23 +4,22 @@
 
 class URIPercentEncodingTest : public ::testing::Test
 {
-    protected:
-        URIPercentEncoding uripe_;
-        std::stringstream enc_stream_;
-        char temp_char_;
-        std::string temp_string_;
-        std::string expected_string_;
-        bool ret_;
-        std::string output_string_;
-        URIPercentEncodingTest() : uripe_(), enc_stream_(), temp_char_('a'), 
-            expected_string_(""), temp_string_(""), ret_(false), output_string_("")
-        {
-        }
+   protected:
+    URIPercentEncoding uripe_;
+    std::stringstream enc_stream_;
+    char temp_char_;
+    std::string temp_string_;
+    std::string expected_string_;
+    bool ret_;
+    std::string output_string_;
+    URIPercentEncodingTest() : uripe_(), enc_stream_(), temp_char_('a'), expected_string_(""), temp_string_(""), ret_(false), output_string_("")
+    {
+    }
 };
 
 TEST_F(URIPercentEncodingTest, EncodeCharPadded)
 {
-    temp_char_ = '\n'; // 0x0a
+    temp_char_ = '\n';  // 0x0a
     uripe_.EncodeChar(temp_char_, enc_stream_);
     expected_string_ = "%0a";
     ASSERT_EQ(expected_string_, enc_stream_.str());
@@ -28,7 +27,7 @@ TEST_F(URIPercentEncodingTest, EncodeCharPadded)
 
 TEST_F(URIPercentEncodingTest, EncodeCharNonASCII)
 {
-    temp_char_ = static_cast<char>(0x8c); 
+    temp_char_ = static_cast<char>(0x8c);
     uripe_.EncodeChar(temp_char_, enc_stream_);
     expected_string_ = "%8c";
     ASSERT_EQ(expected_string_, enc_stream_.str());
@@ -36,7 +35,7 @@ TEST_F(URIPercentEncodingTest, EncodeCharNonASCII)
 
 TEST_F(URIPercentEncodingTest, AppendChar)
 {
-    temp_char_ = '-'; 
+    temp_char_ = '-';
     enc_stream_ << "this ";
     uripe_.AppendChar(temp_char_, enc_stream_);
     expected_string_ = "this -";

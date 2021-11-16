@@ -1112,3 +1112,53 @@ TEST_F(ParquetReaderTest, SetPQPathChecksForConsistentSchemaNames)
     ASSERT_EQ(size, 0);
     ASSERT_EQ(pm.GetInputParquetPathsCount(), 0);
 }
+
+TEST_F(ParquetReaderTest, SetPQPathSingleParquetFile)
+{
+    int size;
+    std::vector<int16_t> data1 = {1, 5, 4, 20};
+    std::string dirname = "file1.parquet";
+    int row_group_count = 2;
+    ASSERT_TRUE(CreateTwoColParquetFile(dirname, arrow::int16(), data1, "col1",
+                                        arrow::int16(), data1, "col2", row_group_count));
+
+    // Create path to the parquet file, not the parquet directory.
+    // CreateTwoColParquetFile should create a file 0.parquet.
+    ManagedPath single_pq_path(dirname);
+    single_pq_path /= "0.parquet";
+    ParquetReader pm;
+    ASSERT_TRUE(pm.SetPQPath(single_pq_path));
+    EXPECT_EQ(data1.size() / row_group_count, pm.GetRowGroupCount());
+}
+
+TEST_F(ParquetReaderTest, ColumnsPresentAllPresent)
+{
+    int size;
+    std::vector<int16_t> data1 = {1, 5, 4, 20};
+    std::string dirname = "file1.parquet";
+    int row_group_count = 2;
+    ASSERT_TRUE(CreateTwoColParquetFile(dirname, arrow::int16(), data1, "col1",
+                                        arrow::int16(), data1, "col2", row_group_count));
+
+    ParquetReader pm;
+    // all cols are present
+    std::vector<std::string> col_names{"col1", "col2"};
+    ASSERT_TRUE(pm.SetPQPath(dirname));
+    EXPECT_TRUE(pm.ColumnsPresent(col_names));
+}
+
+TEST_F(ParquetReaderTest, ColumnsPresentNotAllPresent)
+{
+    int size;
+    std::vector<int16_t> data1 = {1, 5, 4, 20};
+    std::string dirname = "file1.parquet";
+    int row_group_count = 2;
+    ASSERT_TRUE(CreateTwoColParquetFile(dirname, arrow::int16(), data1, "col1",
+                                        arrow::int16(), data1, "col2", row_group_count));
+
+    ParquetReader pm;
+    // "Col2" not present
+    std::vector<std::string> col_names{"col1", "Col2"};
+    ASSERT_TRUE(pm.SetPQPath(dirname));
+    EXPECT_FALSE(pm.ColumnsPresent(col_names));
+}

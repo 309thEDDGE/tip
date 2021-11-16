@@ -76,18 +76,27 @@ bool ParquetReader::SetPQPath(ManagedPath base_path)
 
     // Get list of files and dirs in base path.
     std::vector<ManagedPath> pq_paths_list;
-    bool list_dir_success = false;
-    base_path.ListDirectoryEntries(list_dir_success, pq_paths_list);
-    if (!list_dir_success)
-    {
-        printf("Invalid directory %s: \n", base_path.c_str());
-        return false;
-    }
 
-    // Exclude dirs and include only files with ".parquet" sub strings.
-    std::vector<std::string> select_substr({".parquet"});
-    pq_paths_list = ManagedPath::SelectPathsWithSubString(
-        ManagedPath::SelectFiles(pq_paths_list), select_substr);
+    // Check if the input path is a directory or a single file.
+    if (base_path.is_regular_file())
+    {
+        pq_paths_list.push_back(base_path);
+    }
+    else
+    {
+        bool list_dir_success = false;
+        base_path.ListDirectoryEntries(list_dir_success, pq_paths_list);
+        if (!list_dir_success)
+        {
+            printf("Invalid directory %s: \n", base_path.c_str());
+            return false;
+        }
+
+        // Exclude dirs and include only files with ".parquet" sub strings.
+        std::vector<std::string> select_substr({".parquet"});
+        pq_paths_list = ManagedPath::SelectPathsWithSubString(
+            ManagedPath::SelectFiles(pq_paths_list), select_substr);
+    }
 
     // Iterate over each .parquet file and check schema and
     // row group count information before adding the current
@@ -469,4 +478,18 @@ bool ParquetReader::GetNextRGString(int col, std::vector<std::string>& data,
 int ParquetReader::GetColumnNumberFromName(std::string col_name)
 {
     return schema_->GetFieldIndex(col_name);
+}
+
+bool ParquetReader::ColumnsPresent(const std::vector<std::string>& col_names)
+{
+    for (std::vector<std::string>::const_iterator it = col_names.cbegin();
+         it != col_names.cend(); ++it)
+    {
+        if (GetColumnNumberFromName(*it) < 0)
+        {
+            SPDLOG_WARN("Column name {:s} not present in schema", *it);
+            return false;
+        }
+    }
+    return true;
 }

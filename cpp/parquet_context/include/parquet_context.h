@@ -117,6 +117,7 @@ class ParquetContext
     // User-available variable to access the current
     // count of rows appended to buffers.
     const size_t& append_count_ = appended_row_count_;
+    const size_t& row_group_count;
 
     /*
 		Initializes parquet context with a default row
@@ -144,6 +145,18 @@ class ParquetContext
 		Inputs: thread_id		--> Optional index of current thread
 	*/
     void Close(const uint16_t& thread_id = 0);
+
+    /*
+    Get the count of columns by returning the count of the
+    fields in the schema. 
+
+    Return:
+        Count of columns/fields in the schema. 
+    */
+    size_t GetColumnCount()
+    {
+        return schema_->num_fields();
+    }
 
     /*
 		Adds a column to a parquet file. Used in conjunction with 
@@ -493,8 +506,10 @@ void ParquetContext::Append(const bool& isList,
                                    append_row_count_);
             }
             else
+            {
                 bldr->AppendValues(reinterpret_cast<T*>(columnData.data_) + offset,
                                    append_row_count_);
+            }
         }
         else
         {

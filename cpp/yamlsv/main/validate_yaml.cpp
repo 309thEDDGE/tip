@@ -32,8 +32,7 @@ int main(int argc, char* argv[])
     std::vector<std::string> test_lines = fr_test.GetLines();
     std::stringstream ss_test;
     std::for_each(test_lines.begin(), test_lines.end(),
-                  [&ss_test](const std::string& s)
-                  {
+                  [&ss_test](const std::string& s) {
                       ss_test << s;
                       ss_test << "\n";
                   });
@@ -42,8 +41,7 @@ int main(int argc, char* argv[])
     std::vector<std::string> schema_lines = fr_schema.GetLines();
     std::stringstream ss_schema;
     std::for_each(schema_lines.begin(), schema_lines.end(),
-                  [&ss_schema](const std::string& s)
-                  {
+                  [&ss_schema](const std::string& s) {
                       ss_schema << s;
                       ss_schema << "\n";
                   });

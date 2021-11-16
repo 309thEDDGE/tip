@@ -69,8 +69,8 @@ Ch10Status Ch101553F1Component::ParseMessages(const uint32_t& msg_count, const u
 
         // Append parsed data to the file.
         ctx_->milstd1553f1_pq_writer->Append(abs_time_, ctx_->tdp_doy,
-                                                  *milstd1553f1_csdw_elem_.element, milstd1553f1_data_hdr_commword_ptr_,
-                                                  payload_ptr_, ctx_->channel_id, calc_payload_word_count_, is_payload_incomplete_);
+                                             *milstd1553f1_csdw_elem_.element, milstd1553f1_data_hdr_commword_ptr_,
+                                             payload_ptr_, ctx_->channel_id, calc_payload_word_count_, is_payload_incomplete_);
     }
 
     return Ch10Status::OK;

@@ -6,7 +6,19 @@
 // Needed for ICDDataRealICDQueryTest
 #include "file_reader.h"
 
-TEST(ICDDataTest, FillElementsAcceptsNumberAsStringElement)
+class ICDDataTest : public ::testing::Test
+{
+   protected:
+    ICDData icd_;
+    bool res_;
+    std::string msg_name_;
+
+    ICDDataTest() : res_(false), msg_name_("")
+    {
+    }
+};
+
+TEST_F(ICDDataTest, FillElementsAcceptsNumberAsStringElement)
 {
     // Fields 0, 1, 5, 6, 8, 22, 24 are string data
 
@@ -23,41 +35,38 @@ TEST(ICDDataTest, FillElementsAcceptsNumberAsStringElement)
     ASSERT_TRUE(icd_element.FillElements(fields));
 }
 
-TEST(ICDDataTest, IngestICDTextFileLinesEmptyVector)
+TEST_F(ICDDataTest, IngestICDTextFileLinesEmptyVector)
 {
-    ICDData icd;
     std::vector<std::string> lines;
     std::vector<ICDElement> elems;
-    ASSERT_FALSE(icd.IngestICDTextFileLines(lines, elems));
+    ASSERT_FALSE(icd_.IngestICDTextFileLines(lines, elems));
 }
 
-TEST(ICDDataTest, IngestICDTextFileLinesNonEmptyOutputVector)
+TEST_F(ICDDataTest, IngestICDTextFileLinesNonEmptyOutputVector)
 {
-    ICDData icd;
     std::vector<std::string> lines;
     std::vector<ICDElement> elems;
     elems.push_back(ICDElement());
-    ASSERT_FALSE(icd.IngestICDTextFileLines(lines, elems));
+    ASSERT_FALSE(icd_.IngestICDTextFileLines(lines, elems));
 }
 
-TEST(ICDDataTest, IngestICDTextFileLinesHeaderColCount)
+TEST_F(ICDDataTest, IngestICDTextFileLinesHeaderColCount)
 {
     // Correct header count, currently 25 elements.
     std::vector<std::string> lines;
     lines.push_back("msg_name,elem_name,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y");
     std::vector<ICDElement> elems;
-    ICDData icd;
-    EXPECT_TRUE(icd.IngestICDTextFileLines(lines, elems));
+    EXPECT_TRUE(icd_.IngestICDTextFileLines(lines, elems));
 
     // Header only and no data. Elems will not be filled.
     EXPECT_EQ(elems.size(), 0);
 
     // Incorrect header count.
     lines[0] = "msg_name,elem_name,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X";
-    ASSERT_FALSE(icd.IngestICDTextFileLines(lines, elems));
+    ASSERT_FALSE(icd_.IngestICDTextFileLines(lines, elems));
 }
 
-TEST(ICDDataTest, IngestICDTextFileLinesHeaderColName)
+TEST_F(ICDDataTest, IngestICDTextFileLinesHeaderColName)
 {
     // Only care about correct values for the first two column headers.
 
@@ -66,15 +75,14 @@ TEST(ICDDataTest, IngestICDTextFileLinesHeaderColName)
     std::vector<std::string> lines;
     lines.push_back("msg_name,elemname,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y");
     std::vector<ICDElement> elems;
-    ICDData icd;
-    EXPECT_FALSE(icd.IngestICDTextFileLines(lines, elems));
+    EXPECT_FALSE(icd_.IngestICDTextFileLines(lines, elems));
 
     // Second column is now correct.
     lines[0] = "msg_name,elem_name,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y";
-    EXPECT_TRUE(icd.IngestICDTextFileLines(lines, elems));
+    EXPECT_TRUE(icd_.IngestICDTextFileLines(lines, elems));
 }
 
-TEST(ICDDataTest, IngestICDTextFileLinesExpectedElementCount)
+TEST_F(ICDDataTest, IngestICDTextFileLinesExpectedElementCount)
 {
     // Only care about correct values for the first two column headers.
 
@@ -96,13 +104,12 @@ TEST(ICDDataTest, IngestICDTextFileLinesExpectedElementCount)
         "ML00_6,ML00_6-0607,00000,28935,07,BD3,MIVU,23,BLATS,14,00,08,0.00,05,"
         "01,12,1,0,07,07,01,0,description 5,1.000000000000,NONE\n");
 
-    ICDData icd;
     std::vector<ICDElement> elems;
-    EXPECT_TRUE(icd.IngestICDTextFileLines(lines, elems));
+    EXPECT_TRUE(icd_.IngestICDTextFileLines(lines, elems));
     ASSERT_EQ(elems.size(), 3);
 }
 
-TEST(ICDDataTest, IngestICDTextFileLinesMalformedICDLine)
+TEST_F(ICDDataTest, IngestICDTextFileLinesMalformedICDLine)
 {
     // Only care about correct values for the first two column headers.
 
@@ -127,13 +134,12 @@ TEST(ICDDataTest, IngestICDTextFileLinesMalformedICDLine)
         "ML00_6,ML00_6-0607,00000,28935,07,BD3,MIVU,23,BLATS,14,00,08,0.00,05,"
         "01,12,1,0,07,07,01,0,description 6,1.000000000000,NONE\n");
 
-    ICDData icd;
     std::vector<ICDElement> elems;
-    EXPECT_TRUE(icd.IngestICDTextFileLines(lines, elems));
+    EXPECT_TRUE(icd_.IngestICDTextFileLines(lines, elems));
     ASSERT_EQ(elems.size(), 1);
 }
 
-TEST(ICDDataTest, PrepareMessageKeyMap)
+TEST_F(ICDDataTest, PrepareMessageKeyMap)
 {
     IterableTools iterable_tools;
     // Fill ICD lines.
@@ -152,14 +158,13 @@ TEST(ICDDataTest, PrepareMessageKeyMap)
         "GG01_H,GG01_H-0213,28894,00000,30,Bus2,MIVU,23,BLATS,14,00,06,0.00,01,01,12,1,0,13,13,01,0,description description,1.000000000000,NONE",
         "RPG4_I,RPG4_I-01,00000,39043,20,Bus4,MIVU,23,ORT,19,00,04,1.00,00,02,05,0,0,01,00,00,0,description description,21474348.000000000000,SECONDS"};
 
-    ICDData icd;
-    ASSERT_TRUE(icd.PrepareICDQuery(temp_lines));
+    ASSERT_TRUE(icd_.PrepareICDQuery(temp_lines));
 
     std::unordered_map<uint64_t, std::set<std::string>> message_key_map;
     std::map<std::string, std::set<uint64_t>> suppl_map;
     suppl_map["BusA"] = std::set<uint64_t>({39043, 999});
     suppl_map["BusB"] = std::set<uint64_t>({55360, 888});
-    icd.PrepareMessageKeyMap(message_key_map, suppl_map);
+    icd_.PrepareMessageKeyMap(message_key_map, suppl_map);
     int64_t key1 = 39043;
     int64_t key2 = 48192 << 16 | 55360;
     int64_t key3 = 55360;
@@ -762,15 +767,14 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeValidMsgCount)
         "    Add-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
         "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Add-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
-    );
+        "    Add-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
 
     EXPECT_TRUE(icd_node_.IsMap());
     EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
-        elem_name_subs_));
+                                       elem_name_subs_));
     EXPECT_EQ(icd_.valid_message_count, 1);
-    
-     icd_node_ = YAML::Load(
+
+    icd_node_ = YAML::Load(
         "Add:\n"
         "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
@@ -784,11 +788,10 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeValidMsgCount)
         "    Aee-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
         "    Aee-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Aee-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
-    );
+        "    Aee-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
 
     EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
-        elem_name_subs_));
+                                       elem_name_subs_));
     EXPECT_EQ(icd_.valid_message_count, 2);
 }
 
@@ -815,7 +818,7 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeMsgNameSubstitutions)
 
     EXPECT_TRUE(icd_node_.IsMap());
     EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
-        elem_name_subs_));
+                                       elem_name_subs_));
     EXPECT_TRUE(msg_name_subs_.size() == 0);
 
     // Unreserved chars in msg names ok
@@ -839,7 +842,7 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeMsgNameSubstitutions)
 
     EXPECT_TRUE(icd_node_.IsMap());
     EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
-        elem_name_subs_));
+                                       elem_name_subs_));
     EXPECT_TRUE(msg_name_subs_.size() == 0);
 
     // Expect subs in this case
@@ -863,11 +866,10 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeMsgNameSubstitutions)
 
     std::map<std::string, std::string> expected = {
         {"Ad*d", "Ad%2ad"},
-        {"A/c+c", "A%2fc%2bc"}
-    };
+        {"A/c+c", "A%2fc%2bc"}};
     EXPECT_TRUE(icd_node_.IsMap());
     EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
-        elem_name_subs_));
+                                       elem_name_subs_));
     ASSERT_TRUE(msg_name_subs_.size() == 2);
     ASSERT_TRUE(msg_name_subs_.count("Ad*d") == 1);
     ASSERT_TRUE(msg_name_subs_.count("A/c+c") == 1);
@@ -892,12 +894,11 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeElemNameSubstitutions)
         "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
         "    Acc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
-    );
+        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
 
     EXPECT_TRUE(icd_node_.IsMap());
     EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
-        elem_name_subs_));
+                                       elem_name_subs_));
     EXPECT_TRUE(elem_name_subs_.size() == 0);
 
     // Unreserved chars ok, no subs necessary
@@ -915,12 +916,11 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeElemNameSubstitutions)
         "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
         "    A~cc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
-    );
+        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
 
     EXPECT_TRUE(icd_node_.IsMap());
     EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
-        elem_name_subs_));
+                                       elem_name_subs_));
     EXPECT_TRUE(elem_name_subs_.size() == 0);
 
     // Subs expected
@@ -938,18 +938,16 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeElemNameSubstitutions)
         "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
         "    A*cc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Acc-02\\01: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
-    );
+        "    Acc-02\\01: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
 
     std::map<std::string, std::string> expected = {
         {"A/d-17", "A%2fd-17"},
         {"A#dd-0201", "A%23dd-0201"},
         {"A*cc-20", "A%2acc-20"},
-        {"Acc-02\\01", "Acc-02%5c01"}
-    };
+        {"Acc-02\\01", "Acc-02%5c01"}};
     EXPECT_TRUE(icd_node_.IsMap());
     EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
-        elem_name_subs_));
+                                       elem_name_subs_));
     ASSERT_TRUE(elem_name_subs_.size() == 4);
     ASSERT_TRUE(elem_name_subs_.count("A/d-17") == 1);
     ASSERT_TRUE(elem_name_subs_.count("A#dd-0201") == 1);
@@ -1138,14 +1136,14 @@ TEST_F(ICDDataIngestYamlTest, ConfigureMsgDataFromYamlNodeMissingOptionalSequenc
 TEST_F(ICDDataIngestYamlTest, ConfigureWordElemDataFromYamlNodeCorrectVals)
 {
     YAML::Node node = YAML::Load(
-            "{off: 2, cnt : 1, schema : UNSIGNED16, msbval : 18, "
-            "desc : description, uom : DAY, multifmt : False, class : 0}\n");
+        "{off: 2, cnt : 1, schema : UNSIGNED16, msbval : 18, "
+        "desc : description, uom : DAY, multifmt : False, class : 0}\n");
     ICDElement icdelem;
     std::string elem_name = "ytt644";
 
     res_ = icd_.ConfigureWordElemDataFromYamlNode(icdelem, node, elem_name);
     EXPECT_TRUE(res_);
-    
+
     EXPECT_FALSE(icdelem.is_bitlevel_);
     EXPECT_EQ(elem_name, icdelem.elem_name_);
     EXPECT_EQ(node["off"].as<int>(), icdelem.offset_);
@@ -1169,16 +1167,15 @@ TEST_F(ICDDataIngestYamlTest, ConfigureBitElemDataFromYamlNodeCorrectVals)
     YAML::Node node = YAML::Load(
         "{off: 2, cnt: 1, schema: UNSIGNEDBITS, msbval: 18, "
         "desc: \"description\", uom: \"DAY\", multifmt: False, "
-        "class: 0, msb: 1, lsb: 9, bitcnt: 9}\n"
-    );
+        "class: 0, msb: 1, lsb: 9, bitcnt: 9}\n");
     ICDElement icdelem;
     std::string elem_name = "532-xx";
 
     res_ = icd_.ConfigureBitElemDataFromYamlNode(icdelem, node, elem_name);
     EXPECT_TRUE(res_);
-    
+
     EXPECT_TRUE(icdelem.is_bitlevel_);
-    EXPECT_EQ(elem_name, icdelem.elem_name_); 
+    EXPECT_EQ(elem_name, icdelem.elem_name_);
     EXPECT_EQ(node["off"].as<int>(), icdelem.offset_);
     EXPECT_EQ(node["cnt"].as<int>(), icdelem.elem_word_count_);
 
@@ -1196,4 +1193,36 @@ TEST_F(ICDDataIngestYamlTest, ConfigureBitElemDataFromYamlNodeCorrectVals)
     EXPECT_EQ(node["msb"].as<int>(), icdelem.bitmsb_);
     EXPECT_EQ(node["lsb"].as<int>(), icdelem.bitlsb_);
     EXPECT_EQ(node["bitcnt"].as<int>(), icdelem.bit_count_);
+}
+
+TEST_F(ICDDataTest, GetTableIndexByName)
+{
+    std::vector<std::string> table_names{"a", "b", "c"};
+
+    // not in vector
+    msg_name_ = "d";
+    size_t index = 0;
+    index = icd_.GetTableIndexByName(msg_name_, table_names);
+    EXPECT_EQ(std::string::npos, index);
+
+    msg_name_ = "b";
+    index = icd_.GetTableIndexByName(msg_name_, table_names);
+    EXPECT_EQ(1, index);
+}
+
+TEST_F(ICDDataTest, GetSelectedTableIndicesSet)
+{
+    std::vector<std::string> table_names{"a", "b", "c"};
+    std::set<size_t> selected_indices;
+
+    // None present
+    std::set<std::string> selected_names{"d", "e"};
+    selected_indices = icd_.GetSelectedTableIndicesSet(selected_names, table_names);
+    EXPECT_EQ(0, selected_indices.size());
+
+    // Some present, others not
+    std::set<std::string> selected_names2{"d", "a", "e"};
+    selected_indices = icd_.GetSelectedTableIndicesSet(selected_names2, table_names);
+    EXPECT_EQ(1, selected_indices.size());
+    EXPECT_EQ(1, selected_indices.count(0));
 }

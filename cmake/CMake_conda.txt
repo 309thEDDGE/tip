@@ -4,7 +4,6 @@ if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 elseif("${CMAKE_BUILD_TYPE}" MATCHES "Release")
 endif()
 
-
 # NEWARROW is used if the new (~0.17+) version of
 # Arrow is used.
 add_definitions(-DNEWARROW)
@@ -62,10 +61,12 @@ add_subdirectory(cpp/yamlsv)
 add_subdirectory(cpp/ethernet)
 add_subdirectory(cpp/ch10_parquet)
 add_subdirectory(cpp/parser_rewrite)
-add_subdirectory(cpp/translate_1553)
+add_subdirectory(cpp/dts_1553)
+add_subdirectory(cpp/translate_tabular)
+add_subdirectory(cpp/translate_tabular_1553)
 add_subdirectory(cpp/validation)
 add_subdirectory(cpp/video/parquet)
-add_subdirectory(cpp/ch10)
+add_subdirectory(cpp/parse_ch10)
 add_subdirectory(cpp/tests)
 
 ##########################################
