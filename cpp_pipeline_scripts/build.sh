@@ -26,8 +26,8 @@ main() {
     echo "Running CMake"
     mkdir -p $BUILD_DIR
     pushd $BUILD_DIR
-    conda run -n tip-dev cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_INSTALL_LIBDIR=lib
-    conda run -n tip-dev cmake --build . --target install -j 2
+    conda run -n tip-dev cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_INSTALL_LIBDIR=lib
+    conda run -n tip-dev cmake --build . --target install
     conda run -n tip-dev ctest --rerun-failed --output-on-failure
     popd
 
