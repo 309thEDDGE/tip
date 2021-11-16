@@ -62,6 +62,7 @@ tip_scripts/__pycache__
 !.clang-format
 !CPPLINT.cfg
 *.DS_Store
+!environment*.yaml
 
 # nix
 result*

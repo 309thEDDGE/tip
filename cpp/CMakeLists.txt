@@ -9,10 +9,10 @@
 # successfully building in Linux, then remote them.
 
 # Include dirs needed for several libs.
-set(ch10_lib_name "ch10")
-set(ch10_src_dir ${ch10_lib_name}/${source_dir_name})
-set(ch10_inc_dir ${ch10_lib_name}/${include_dir_name})
-set(ch10_main_dir ${ch10_lib_name}/${main_dir_name})
+set(parsech10_lib_name "parse_ch10")
+set(parsech10_src_dir ${parsech10_lib_name}/${source_dir_name})
+set(parsech10_inc_dir ${parsech10_lib_name}/${include_dir_name})
+set(parsech10_main_dir ${parsech10_lib_name}/${main_dir_name})
 
 set(parserw_lib_name "parserw")
 set(parserw_dir_name "parser_rewrite")
@@ -59,6 +59,7 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/resource_limits.cpp      ${util_inc_dir}/resource_limits.h
             ${util_src_dir}/version_info.cpp         ${util_inc_dir}/version_info.h
             ${util_src_dir}/uri_percent_encoding.cpp ${util_inc_dir}/uri_percent_encoding.h
+            ${util_src_dir}/stream_buffering.cpp     ${util_inc_dir}/stream_buffering.h
  )
 
 target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir}
@@ -126,7 +127,7 @@ target_include_directories(${ch10pq_lib_name} PUBLIC
                             ${ch10pq_inc_dir}
                             ${pqctx_inc_dir}
                             ${eth_inc_dir}
-                            ${ch10_inc_dir} # Ch10 format headers.
+                            ${parsech10_inc_dir} # Ch10 format headers.
                             ${parserw_inc_dir} # parser rewrite format headers
                             ${util_inc_dir}
                             ${spdlog_inc_dir})
@@ -135,31 +136,85 @@ target_link_libraries(${ch10pq_lib_name} PUBLIC ${parquet_libs} ${pqctx_lib_name
                       ${util_lib_name} ${spdlog_lib_name})
 
 #########################################################
-#             Build/link translate_1553 lib
+#             Build/link dts_1553 lib
 #########################################################
-set(trans_lib_name "translate_1553")
-message(STATUS "Building lib: " "${trans_lib_name}")
-set(trans_src_dir ${trans_lib_name}/${source_dir_name})
-set(trans_inc_dir ${trans_lib_name}/${include_dir_name})
-add_library(${trans_lib_name} STATIC
-        ${trans_src_dir}/bus_map.cpp                        ${trans_inc_dir}/bus_map.h
-        ${trans_src_dir}/icd_data.cpp                       ${trans_inc_dir}/icd_data.h
-        ${trans_src_dir}/icd_element.cpp                    ${trans_inc_dir}/icd_element.h
-        ${trans_src_dir}/icd_translate.cpp                  ${trans_inc_dir}/icd_translate.h
-        ${trans_src_dir}/parquet_translation_manager.cpp    ${trans_inc_dir}/parquet_translation_manager.h
-        ${trans_src_dir}/translatable_1553_table.cpp        ${trans_inc_dir}/translatable_1553_table.h
-        ${trans_src_dir}/translatable_base.cpp              ${trans_inc_dir}/translatable_base.h
-        ${trans_src_dir}/translation_master.cpp             ${trans_inc_dir}/translation_master.h
-        ${trans_src_dir}/dts1553.cpp                        ${trans_inc_dir}/dts1553.h
-        ${trans_src_dir}/translator_helper_funcs.cpp        ${trans_inc_dir}/translator_helper_funcs.h
+set(dts1553_lib_name "dts_1553")
+message(STATUS "Building lib: " "${dts1553_lib_name}")
+set(dts1553_src_dir ${dts1553_lib_name}/${source_dir_name})
+set(dts1553_inc_dir ${dts1553_lib_name}/${include_dir_name})
+add_library(${dts1553_lib_name} STATIC
+        ${dts1553_src_dir}/bus_map.cpp                        ${dts1553_inc_dir}/bus_map.h
+        ${dts1553_src_dir}/icd_data.cpp                       ${dts1553_inc_dir}/icd_data.h
+        ${dts1553_src_dir}/icd_element.cpp                    ${dts1553_inc_dir}/icd_element.h
+        ${dts1553_src_dir}/icd_translate.cpp                  ${dts1553_inc_dir}/icd_translate.h
+        ${dts1553_src_dir}/dts1553.cpp                        ${dts1553_inc_dir}/dts1553.h
     )
 
-target_include_directories(${trans_lib_name} PUBLIC ${trans_inc_dir}
+target_include_directories(${dts1553_lib_name} PUBLIC ${dts1553_inc_dir}
                             ${util_inc_dir} ${ch10pq_inc_dir} ${yamlsv_inc_dir})
 
-target_link_libraries(${trans_lib_name} PUBLIC
+target_link_libraries(${dts1553_lib_name} PUBLIC
                         ${util_lib_name} ${ch10pq_lib_name} ${linux_libs} ${yamlsv_lib_name})
-target_compile_features(${trans_lib_name} PUBLIC cxx_std_17)
+target_compile_features(${dts1553_lib_name} PUBLIC cxx_std_17)
+
+
+#########################################################
+#             Build/link translate_tabular lib
+#########################################################
+set(transtab_lib_name "translate_tabular")
+message(STATUS "Building lib: ${transtab_lib_name}")
+set(transtab_src_dir ${transtab_lib_name}/${source_dir_name})
+set(transtab_inc_dir ${transtab_lib_name}/${include_dir_name})
+add_library(${transtab_lib_name} STATIC
+        ${transtab_inc_dir}/translate_tabular.h ${transtab_src_dir}/translate_tabular.cpp
+        ${transtab_inc_dir}/translate_tabular_context_base.h ${transtab_src_dir}/translate_tabular_context_base.cpp
+        ${transtab_inc_dir}/translatable_column_base.h ${transtab_src_dir}/translatable_column_base.cpp
+        ${transtab_inc_dir}/translatable_table_base.h ${transtab_src_dir}/translatable_table_base.cpp
+        ${transtab_inc_dir}/translation_manager.h ${transtab_src_dir}/translation_manager.cpp
+        ${transtab_inc_dir}/translate_status.h
+        ${transtab_inc_dir}/translatable_column_template.h
+)
+target_include_directories(${transtab_lib_name} PUBLIC ${transtab_inc_dir}
+                           ${util_inc_dir} ${ch10pq_inc_dir} ${dts1553_inc_dir}
+)
+target_link_libraries(${transtab_lib_name} PUBLIC
+                      ${util_lib_name} ${ch10pq_lib_name} ${dts1553_lib_name}
+)                      
+target_compile_features(${transtab_lib_name} PUBLIC cxx_std_17)
+
+#########################################################
+#               Build/link translate_tabular_1553 lib
+#########################################################
+
+set(transtab1553_lib_name "translate_tabular_1553")
+message(STATUS "Building lib: " "${transtab1553_lib_name}")
+set(transtab1553_main_dir ${transtab1553_lib_name}/${main_dir_name})
+set(transtab1553_inc_dir ${transtab1553_lib_name}/${include_dir_name})
+set(transtab1553_src_dir ${transtab1553_lib_name}/${source_dir_name})
+add_library(${transtab1553_lib_name} 
+                ${transtab1553_inc_dir}/helper_funcs.h ${transtab1553_src_dir}/helper_funcs.cpp
+                ${transtab1553_inc_dir}/translate_tabular_context_1553.h ${transtab1553_src_dir}/translate_tabular_context_1553.cpp
+)
+target_include_directories(${transtab1553_lib_name} PUBLIC 
+                        ${transtab1553_inc_dir}
+                        ${util_inc_dir}
+                        ${ch10pq_inc_dir}
+                        ${dts1553_inc_dir}
+                        ${yamlsv_inc_dir}
+                        ${transtab_inc_dir}
+                        ${spdlog_inc_dir}
+                        ${config_inc_dir}
+                        )
+target_link_libraries(${transtab1553_lib_name} ${transtab_lib_name}
+                    ${util_lib_name}
+                    ${ch10pq_lib_name}
+                    ${dts1553_lib_name}
+                    ${yamlsv_lib_name}
+                    ${spdlog_lib_name}
+                    ${config_lib_name}
+                    ${linux_libs}
+                    )
+target_compile_features(${transtab1553_lib_name} PUBLIC cxx_std_17)
 
 #########################################################
 #      Build/link Parquet-to-Parquet Comparator Lib
@@ -225,21 +280,20 @@ target_link_libraries(${parserw_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_n
                         ${spdlog_lib_name} ${all_tins_libs} ${eth_lib_name})
 
 #########################################################
-#                Build/link ch10parse Lib
+#                Build/link parse_ch10 Lib
 #########################################################
-set(ch10parse_lib_name "ch10parse_lib")
-add_library(${ch10parse_lib_name} STATIC
-    ${ch10_inc_dir}/worker_config.h
-    ${ch10_inc_dir}/parse_manager.h ${ch10_src_dir}/parse_manager.cpp
-    ${ch10_inc_dir}/parse_worker.h ${ch10_src_dir}/parse_worker.cpp
-    ${ch10_src_dir}/parser_helper_funcs.cpp ${ch10_inc_dir}/parser_helper_funcs.h
+add_library(${parsech10_lib_name} STATIC
+    ${parsech10_inc_dir}/worker_config.h
+    ${parsech10_inc_dir}/parse_manager.h ${parsech10_src_dir}/parse_manager.cpp
+    ${parsech10_inc_dir}/parse_worker.h ${parsech10_src_dir}/parse_worker.cpp
+    ${parsech10_src_dir}/parser_helper_funcs.cpp ${parsech10_inc_dir}/parser_helper_funcs.h
     )
-target_include_directories(${ch10parse_lib_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
+target_include_directories(${parsech10_lib_name} PUBLIC ${parsech10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs}
                             ${parserw_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir})
 
-target_compile_features(${ch10parse_lib_name} PUBLIC cxx_std_17)
-target_link_libraries(${ch10parse_lib_name} PUBLIC
+target_compile_features(${parsech10_lib_name} PUBLIC cxx_std_17)
+target_link_libraries(${parsech10_lib_name} PUBLIC
                       ${util_lib_name}
                       ${ch10pq_lib_name}
                       ${linux_libs}
@@ -257,10 +311,10 @@ install(DIRECTORY DESTINATION ${out_lib_dir})
 install(TARGETS ${pqctx_lib_name}
                 ${util_lib_name}
                 ${ch10pq_lib_name}
-                ${trans_lib_name}
+                ${dts1553_lib_name}
                 ${comp_lib_name}
                 ${eth_lib_name}
-                ${ch10parse_lib_name}
+                ${parsech10_lib_name}
                 ${videx_lib_name}
                 ${parserw_lib_name}
                 ${yamlsv_lib_name}
@@ -269,42 +323,34 @@ install(TARGETS ${pqctx_lib_name}
 
 
 #########################################################
-#                Build/link ch10parse exe
+#                Build/link tip_parse exe
 #########################################################
-set(ch10parse_exe_name "${CH10_PARSE_EXE_NAME}")
+set(parsech10_exe_name "${CH10_PARSE_EXE_NAME}")
 if(video_data)
-    set(ch10parse_exe_name "tip_parse_video")
+    set(parsech10_exe_name "tip_parse_video")
 endif()
 
-message(STATUS "Building exe: " "${ch10parse_exe_name}")
-add_executable(${ch10parse_exe_name} ${ch10_main_dir}/ch10parse.cpp
+message(STATUS "Building exe: " "${parsech10_exe_name}")
+add_executable(${parsech10_exe_name} ${parsech10_main_dir}/ch10parse.cpp
     )
-#set_property(TARGET ${ch10parse_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_include_directories(${ch10parse_exe_name} PUBLIC ${ch10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
+#set_property(TARGET ${parsech10_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_include_directories(${parsech10_exe_name} PUBLIC ${parsech10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs}
                             ${parserw_inc_dir}
                             )
-target_compile_features(${ch10parse_exe_name} PUBLIC cxx_std_17)
-target_link_libraries(${ch10parse_exe_name} ${ch10parse_lib_name} ${parserw_lib_name})
+target_compile_features(${parsech10_exe_name} PUBLIC cxx_std_17)
+target_link_libraries(${parsech10_exe_name} ${parsech10_lib_name} ${parserw_lib_name})
 
 #########################################################
-#               Build/link translator Exe
+#               Build/link translate_tabular_1553 Exe
 #########################################################
 
-set(trans_exe_name "${TRANSLATE_1553_EXE_NAME}")
-message(STATUS "Building exe: " "${trans_exe_name}")
-set(trans_main_dir ${trans_lib_name}/${main_dir_name})
-add_executable(${trans_exe_name} ${trans_main_dir}/translate_1553_from_parquet.cpp)
-#set_property(TARGET ${trans_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_include_directories(${trans_exe_name} PUBLIC
-                        ${trans_inc_dir}
-                        ${ch10pq_inc_dir}
-                        ${config_inc_dir}
-                        )
-target_link_libraries(${trans_exe_name} ${trans_lib_name}
-                    ${ch10pq_lib_name}
-                    ${config_lib_name}
-                    ${linux_libs})
+set(transtab1553_exe_name "${TRANSLATE_1553_EXE_NAME}")
+message(STATUS "Building exe: " "${transtab1553_exe_name}")
+add_executable(${transtab1553_exe_name} ${transtab1553_main_dir}/translate_tabular_1553.cpp)
+target_include_directories(${transtab1553_exe_name} PUBLIC ${transtab1553_inc_dir})
+target_link_libraries(${transtab1553_exe_name} ${transtab1553_lib_name}
+                      ${transtab_lib_name}) 
 
 #########################################################
 #                 Build/link tests Exe
@@ -357,26 +403,36 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/yamlsv_log_item_u.cpp
                 ${test_src_dir}/resource_limits_u.cpp
                 ${test_src_dir}/version_info_u.cpp
-                ${test_src_dir}/uri_percent_encoding_u.cpp)
+                ${test_src_dir}/uri_percent_encoding_u.cpp
+                ${test_src_dir}/translate_tabular_context_base_u.cpp
+                ${test_src_dir}/translate_tabular_u.cpp
+                ${test_src_dir}/translate_tabular_context_1553_u.cpp
+                ${test_src_dir}/translatable_table_base_u.cpp
+                ${test_src_dir}/translatable_column_base_u.cpp
+                ${test_src_dir}/translatable_column_template_u.cpp
+                ${test_src_dir}/stream_buffering_u.cpp)
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir}
-                            ${parquet_inc_dirs} ${trans_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir}
-                            ${tmats_inc_dir} ${ch10_inc_dir} ${eth_inc_dir}
-                            ${parserw_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir} )
+                            ${parquet_inc_dirs} ${dts1553_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir}
+                            ${tmats_inc_dir} ${parsech10_inc_dir} ${eth_inc_dir}
+                            ${parserw_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir} ${transtab_inc_dir}
+                            ${transtab1553_inc_dir})
 
 target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
 target_link_libraries(${test_exe_name}
                         ${gsuite_libs}
                         ${util_lib_name}
-                        ${trans_lib_name}
+                        ${dts1553_lib_name}
                         ${pqctx_lib_name}
                         ${comp_lib_name}
-                        ${ch10parse_lib_name}
+                        ${parsech10_lib_name}
                         ${parquet_libs}
                         ${eth_lib_name}
                         ${parserw_lib_name}
                         ${spdlog_lib_name}
                         ${yamlsv_lib_name}
+                        ${transtab_lib_name}
+                        ${transtab1553_lib_name}
                         ${linux_libs})
 
 # For Ctest
@@ -436,11 +492,11 @@ target_link_libraries(${yamlsv_exe_name} ${yamlsv_lib_name})
 #########################################################
 install(DIRECTORY DESTINATION ${out_bin_dir})
 
-install(TARGETS ${ch10parse_exe_name}
-                ${trans_exe_name}
+install(TARGETS ${parsech10_exe_name}
                 ${comp_exe_name}
                 ${bincomp_exe_name}
                 ${yamlsv_exe_name}
+                ${transtab1553_exe_name}
         DESTINATION ${out_bin_dir})
 
 install(TARGETS ${test_exe_name}

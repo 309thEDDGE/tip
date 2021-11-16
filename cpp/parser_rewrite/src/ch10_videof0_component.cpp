@@ -36,7 +36,7 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
             return status_;
 
         ctx_->videof0_pq_writer->Append(subpacket_absolute_times_[i], ctx_->tdp_doy, ctx_->channel_id,
-                                             **csdw_element.element, **video_payload_element_.element);
+                                        **csdw_element.element, **video_payload_element_.element);
     }
 
     return Ch10Status::OK;

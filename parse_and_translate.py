@@ -118,12 +118,12 @@ if __name__ == '__main__':
 
     if active_plat == 'windows':
         parser_exe_name = 'tip_parse.exe'
-        translator_exe_name = 'tip_translate.exe'
+        translator_exe_name = 'tip_translate_1553.exe'
         #comet_exe_name = 'cometparse.exe'
         video_extr_exe_name = 'parquet_video_extractor.exe'
     elif active_plat == 'linux':
         parser_exe_name = 'tip_parse'
-        translator_exe_name = 'tip_translate'
+        translator_exe_name = 'tip_translate_1553'
         #comet_exe_name = 'cometparse'
         video_extr_exe_name = 'parquet_video_extractor'
      

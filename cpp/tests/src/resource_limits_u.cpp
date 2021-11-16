@@ -50,17 +50,17 @@ TEST(ResourceLimitsTest, GetFileDescriptorLimitsFailure)
     int resource = -1;
 
     bool status = GetFileDescriptorLimits(fd_soft_limit, fd_hard_limit,
-                                          resource);    
+                                          resource);
     EXPECT_FALSE(status);
     EXPECT_EQ(0, fd_soft_limit);
     EXPECT_EQ(0, fd_hard_limit);
 }
-#endif // __linux__
+#endif  // __linux__
 
 TEST(ResourceLimitsTest, SetFileDescriptorLimitsSuccess)
 {
     uint64_t fd_soft_limit, fd_hard_limit;
-    
+
     // Get current limits.
     bool status = GetFileDescriptorLimits(fd_soft_limit, fd_hard_limit);
     ASSERT_TRUE(status);
@@ -82,7 +82,7 @@ TEST(ResourceLimitsTest, SetFileDescriptorLimitsSuccess)
 TEST(ResourceLimitsTest, SetFileDescriptorLimitsExceedsHardLimit)
 {
     uint64_t fd_soft_limit, fd_hard_limit;
-    
+
     // Get current limits.
     bool status = GetFileDescriptorLimits(fd_soft_limit, fd_hard_limit);
     ASSERT_TRUE(status);

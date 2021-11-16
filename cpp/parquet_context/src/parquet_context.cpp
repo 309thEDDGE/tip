@@ -21,7 +21,8 @@ ParquetContext::ParquetContext() : ROW_GROUP_COUNT_(10000),
                                    print_activity_(false),
                                    print_msg_(""),
                                    did_write_columns_(false),
-                                   empty_file_deletion_enabled_(false)
+                                   empty_file_deletion_enabled_(false),
+                                   row_group_count(ROW_GROUP_COUNT_)
 {
 }
 
@@ -46,7 +47,8 @@ ParquetContext::ParquetContext(int rgSize) : ROW_GROUP_COUNT_(rgSize),
                                              print_activity_(false),
                                              print_msg_(""),
                                              did_write_columns_(false),
-                                             empty_file_deletion_enabled_(false)
+                                             empty_file_deletion_enabled_(false),
+                                             row_group_count(ROW_GROUP_COUNT_)
 {
 }
 
@@ -71,21 +73,21 @@ void ParquetContext::Close(const uint16_t& thread_id)
         ostream_->Close();
         have_created_writer_ = false;
 
-        if(ready_for_automatic_tracking_ && !did_write_columns_)
+        if (ready_for_automatic_tracking_ && !did_write_columns_)
         {
             SPDLOG_INFO("({:02d}) {:s}, Empty file: Zero rows written", thread_id,
-                print_msg_);
+                        print_msg_);
 
-            if(empty_file_deletion_enabled_)
-            { 
+            if (empty_file_deletion_enabled_)
+            {
                 SPDLOG_INFO("({:02d}) {:s}, Automatic deletion enabled, deleting {:s}",
-                        thread_id, print_msg_, path_.c_str());            
-            
+                            thread_id, print_msg_, path_.c_str());
+
                 std::filesystem::path fspath(path_);
-                if(!std::filesystem::remove(fspath))
+                if (!std::filesystem::remove(fspath))
                 {
                     SPDLOG_ERROR("({:02d}) {:s}, Automatic deletion failed for {:s}",
-                        thread_id, print_msg_, path_.c_str());            
+                                 thread_id, print_msg_, path_.c_str());
                 }
             }
         }
@@ -387,7 +389,6 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 {
     int datatypeID = columnData.type_->id();
     bool isList = columnData.is_list_;
-
     bool castRequired;
 
     if (columnData.cast_from_ == CastFromType::TypeNONE)
@@ -859,10 +860,13 @@ bool ParquetContext::IncrementAndWrite(const uint16_t& thread_id)
         did_write_columns_ = true;
 
         // Write each of the row groups.
+        bool result = false;
         for (int i = 0; i < row_group_count_multiplier_; i++)
         {
             //printf("writecolumns(%zu, %zu)\n", ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
-            WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+            result = WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+            if (!result)
+                SPDLOG_ERROR("WriteColumns() failure");
         }
 
         // Reset
@@ -881,6 +885,8 @@ bool ParquetContext::SetupRowCountTracking(size_t row_group_count,
     // Do not allow unreasonable values.
     if (row_group_count < 1 || row_group_count_multiplier < 1)
     {
+        SPDLOG_ERROR("row_grou_count ({:d}) < 1 || row_group_count_multiplier ({:d}) < 1",
+                     row_group_count, row_group_count_multiplier);
         ready_for_automatic_tracking_ = false;
         parquet_stop_ = true;
         return ready_for_automatic_tracking_;
@@ -924,16 +930,16 @@ void ParquetContext::Finalize(const uint16_t& thread_id)
         }
 
         int n_calls = static_cast<int>(std::ceil(static_cast<double>(appended_row_count_) / static_cast<double>(ROW_GROUP_COUNT_)));
-        SPDLOG_INFO("({:02d}) {:s}, {:d} row groups", thread_id,
-                    print_msg_, n_calls);
+        SPDLOG_DEBUG("({:02d}) {:s}, {:d} row groups", thread_id,
+                     print_msg_, n_calls);
         for (int i = 0; i < n_calls; i++)
         {
             if (i == n_calls - 1)
             {
-                SPDLOG_INFO("({:02d}) {:s}, WriteColumns(count = {:d}, offset = {:d})",
-                            thread_id, print_msg_,
-                            appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_,
-                            i * ROW_GROUP_COUNT_);
+                SPDLOG_DEBUG("({:02d}) {:s}, WriteColumns(count = {:d}, offset = {:d})",
+                             thread_id, print_msg_,
+                             appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_,
+                             i * ROW_GROUP_COUNT_);
 
                 if (!WriteColumns(appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
                 {
@@ -943,8 +949,8 @@ void ParquetContext::Finalize(const uint16_t& thread_id)
             }
             else
             {
-                SPDLOG_INFO("({:02d}) {:s}, WriteColumns(count = {:d}, offset = {:d})",
-                            thread_id, print_msg_, ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+                SPDLOG_DEBUG("({:02d}) {:s}, WriteColumns(count = {:d}, offset = {:d})",
+                             thread_id, print_msg_, ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
 
                 if (!WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
                 {

@@ -46,6 +46,13 @@ add_executable(tests
     src/resource_limits_u.cpp
     src/version_info_u.cpp
     src/uri_percent_encoding_u.cpp
+    src/translate_tabular_context_base_u.cpp
+    src/translate_tabular_u.cpp
+    src/translate_tabular_context_1553_u.cpp
+    src/translatable_table_base_u.cpp
+    src/translatable_column_base_u.cpp
+    src/translatable_column_template_u.cpp
+    src/stream_buffering_u.cpp
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)
@@ -55,8 +62,9 @@ target_include_directories(tests
 )
 
 target_link_libraries(tests
-    PUBLIC ch10parse_lib ch10_parquet ch10ethernet parquet_context parserw translate_1553 tiputil parquet_compare pq_vid_extract yamlsv
-    arrow_shared parquet spdlog::spdlog
+    PUBLIC parsech10_lib ch10_parquet ch10ethernet parquet_context parserw 
+    dts_1553 tiputil parquet_compare pq_vid_extract yamlsv
+    arrow_shared parquet spdlog::spdlog translate_tabular translate_tabular_1553
     PRIVATE ${GTEST_LIBRARIES}
 )
 

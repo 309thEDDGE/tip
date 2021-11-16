@@ -13,33 +13,28 @@
 // See https://en.wikipedia.org/wiki/Percent-encoding
 class URIPercentEncoding
 {
-
-private:
-
+   private:
     // For functions such as IsASCII(), IsUTF8()
     ParseText parse_text_;
 
     // Hold unsigned byte value converted from char.
     uint8_t byte_val_;
 
-public:
+   public:
     const std::set<char> URI_unreserved_characters_ = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
-                                                 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
-                                                 'q', 'r', 's', 't', 'u', 'v', 'w',
-                                                 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E',
-                                                 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-                                                 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
-                                                 'W', 'X', 'Y', 'Z', '0', '1', '2', '3',
-                                                 '4', '5', '6', '7', '8', '9', '-', '_', 
-                                                 '.', '~'}; 
-
-
+                                                       'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
+                                                       'q', 'r', 's', 't', 'u', 'v', 'w',
+                                                       'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E',
+                                                       'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+                                                       'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+                                                       'W', 'X', 'Y', 'Z', '0', '1', '2', '3',
+                                                       '4', '5', '6', '7', '8', '9', '-', '_',
+                                                       '.', '~'};
 
     URIPercentEncoding();
 
-
     /////////////////////////////////////////////////////////////////////
-    //                         User Functions 
+    //                         User Functions
     /////////////////////////////////////////////////////////////////////
 
     /*
@@ -58,10 +53,8 @@ public:
     */
     bool PercentEncodeReservedASCIIChars(const std::string& input, std::string& output);
 
-
-
     /////////////////////////////////////////////////////////////////////
-    //                         Internal Functions 
+    //                         Internal Functions
     /////////////////////////////////////////////////////////////////////
 
     /*
@@ -77,8 +70,6 @@ public:
     */
     void EncodeChar(const char& input_char, std::stringstream& enc_stream);
 
-
-
     /*
     Append char to stream without encoding.
 
@@ -91,5 +82,5 @@ public:
     */
     void AppendChar(const char& input_char, std::stringstream& enc_stream);
 
-}; // end class URIPercentEncoding
-#endif // #ifndef URI_PERCENT_ENCODING_H_
+};      // end class URIPercentEncoding
+#endif  // #ifndef URI_PERCENT_ENCODING_H_

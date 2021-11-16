@@ -15,6 +15,7 @@ set(headers
     include/resource_limits.h
     include/version_info.h
     include/uri_percent_encoding.h
+    include/stream_buffering.h
 )
 
 add_library(tiputil STATIC
@@ -32,6 +33,7 @@ add_library(tiputil STATIC
             src/resource_limits.cpp
             src/version_info.cpp
             src/uri_percent_encoding.cpp
+            src/stream_buffering.cpp
 )
 
 target_compile_features(tiputil PUBLIC cxx_std_17)

@@ -1,11 +1,12 @@
 #include "parquet_videodataf0.h"
 
 ParquetVideoDataF0::ParquetVideoDataF0() : max_temp_element_count_(DEFAULT_ROW_GROUP_COUNT_VIDEO * DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO),
-                                                                                          ParquetContext(DEFAULT_ROW_GROUP_COUNT_VIDEO),
-                                                                                          thread_id_(UINT16_MAX)
-{}
+                                           ParquetContext(DEFAULT_ROW_GROUP_COUNT_VIDEO),
+                                           thread_id_(UINT16_MAX)
+{
+}
 
-bool ParquetVideoDataF0::Initialize(ManagedPath outfile, uint16_t thread_id)                                                                                          
+bool ParquetVideoDataF0::Initialize(ManagedPath outfile, uint16_t thread_id)
 {
     thread_id_ = thread_id;
 
@@ -47,7 +48,7 @@ bool ParquetVideoDataF0::Initialize(ManagedPath outfile, uint16_t thread_id)
     SetMemoryLocation<uint64_t>(time_, "time");
     SetMemoryLocation<uint16_t>(channel_id_, "channelid");
 
-    if(!OpenForWrite(outfile.string(), true))
+    if (!OpenForWrite(outfile.string(), true))
     {
         SPDLOG_ERROR("({:03d}) OpenForWrite failed for file {:s}", thread_id_,
                      outfile.string());
@@ -90,6 +91,5 @@ void ParquetVideoDataF0::Append(
     // Increment the count variable and write data if row group(s) are filled.
     if (IncrementAndWrite(thread_id_))
     {
-      
     }
 }

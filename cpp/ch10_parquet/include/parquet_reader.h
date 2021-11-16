@@ -17,7 +17,6 @@
 class ParquetReader
 {
    private:
-    //std::vector<std::string> input_parquet_paths_;
     std::vector<ManagedPath> input_parquet_paths_;
 
     // Arrow variables.
@@ -68,7 +67,8 @@ class ParquetReader
 							4. Column count not consistent
 							5. Schema types not consistent
 							6. Column names not consistent
-				 True  -> If valid parquet folder
+				 True  -> If valid parquet folder or valid
+                          single parquet file
 	*/
     bool SetPQPath(ManagedPath base_path);
     bool SetPQPath(std::string base_path);
@@ -102,6 +102,17 @@ class ParquetReader
 				   and -1 if the column name does not exist
 	*/
     int GetColumnNumberFromName(std::string col_name);
+
+    /*
+    Check if columns are present. 
+
+    Args:
+        col_names   --> Vector of column names
+    
+    Return:
+        True if all columns are present; false otherwise.
+    */
+    bool ColumnsPresent(const std::vector<std::string>& col_names);
 
     /*
 		Resets parquet file reads to the first

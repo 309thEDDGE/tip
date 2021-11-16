@@ -51,9 +51,14 @@ packaged for Windows, Linux, and OSX. Once conda has been installed
 create the development environment. If the environment name already
 exists you will want to update the environment instead.
 
+Note for Windows users: The `Visual Studio 2017 C++ x86/64 Build Tools`
+are required to build native C++ using Conda packages. The best way to
+obtain this tool set (currently) is to download VS 2022 Community and
+enable only that toolset. 
+
 ```shell
-conda env create -f environment.yaml
-# conda env update -f environment.yaml
+conda env create -f environment_local_build.yaml
+# conda env update -f environment_local_build.yaml
 ```
 
 Activate the development environment. Sometimes depending on how conda
@@ -76,8 +81,12 @@ cd build
 cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_INSTALL_LIBDIR=lib
 cmake --build . --target install
 
-# windows build
+# windows build (Command Prompt)
 cmake .. -GNinja -DCONDA_PREFIX=%CONDA_PREFIX% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib
+cmake --build . --target install
+
+# windows build (Powershell)
+cmake .. -GNinja -DCONDA_PREFIX="$Env:CONDA_PREFIX" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$Env:CONDA_PREFIX" -DCMAKE_INSTALL_LIBDIR=lib
 cmake --build . --target install
 
 cd ..

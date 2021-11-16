@@ -57,7 +57,6 @@ class YamlReader
     template <typename T>
     bool GetParams(std::string parameter, T& output, T lower_bound, T upper_bound, bool print = false);
 
-
     /*
     Get map node parameter casted to output type.
 
@@ -70,9 +69,9 @@ class YamlReader
         True if node is a map and the mapped parameter can be obtained
         as a the data type of the output variable. False otherwise.
     */
-   template <typename T>
-   static bool GetMapNodeParameter(const YAML::Node& node, std::string parameter,
-                            T& output);
+    template <typename T>
+    static bool GetMapNodeParameter(const YAML::Node& node, std::string parameter,
+                                    T& output);
 
     /*
     Get sequence node casted to vector of output type.
@@ -86,8 +85,8 @@ class YamlReader
         can be converted to vector of the type specified by the
         output vector type. False otherwise.
     */
-   template <typename T>
-   static bool GetSequenceNodeVector(const YAML::Node& node, std::vector<T>& output);
+    template <typename T>
+    static bool GetSequenceNodeVector(const YAML::Node& node, std::vector<T>& output);
 };
 
 template <typename T>
@@ -146,48 +145,45 @@ inline bool YamlReader::GetParams(std::string parameter, T& output, T lower_boun
     }
 }
 
-
 template <typename T>
 bool YamlReader::GetMapNodeParameter(const YAML::Node& node, std::string parameter,
-                        T& output)
+                                     T& output)
 {
-    if(!node.IsMap())
+    if (!node.IsMap())
         return false;
 
-    if(!node[parameter])
+    if (!node[parameter])
         return false;
 
     try
     {
         output = node[parameter].as<T>();
     }
-    catch(YAML::RepresentationException& e)
+    catch (YAML::RepresentationException& e)
     {
         return false;
     }
-    return true;                        
+    return true;
 }
-
-
 
 template <typename T>
 bool YamlReader::GetSequenceNodeVector(const YAML::Node& node, std::vector<T>& output)
 {
-    if(!node.IsSequence())
+    if (!node.IsSequence())
         return false;
 
     try
     {
-        for(YAML::const_iterator it = node.begin(); it != node.end(); ++it)
+        for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
         {
             output.push_back(it->as<T>());
         }
     }
-    catch(YAML::RepresentationException& e)
+    catch (YAML::RepresentationException& e)
     {
         return false;
     }
-    
+
     return true;
 }
 

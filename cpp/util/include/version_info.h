@@ -8,7 +8,7 @@
 // Require VERSION_STRING macro
 #ifndef VERSION_STRING
 #error "version_info.h: VERSION_STRING macro not defined!"
-#endif // #ifndef VERSION_STRING
+#endif  // #ifndef VERSION_STRING
 
 /*
 Check for version flag as first argument to main.
@@ -27,4 +27,4 @@ Return the version string as a std::string object.
 */
 std::string GetVersionString();
 
-#endif // #ifndef VERSION_INFO_H_
+#endif  // #ifndef VERSION_INFO_H_

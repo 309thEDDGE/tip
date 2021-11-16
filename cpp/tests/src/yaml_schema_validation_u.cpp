@@ -1174,7 +1174,6 @@ TEST_F(YamlSchemaValidationTest, ParseAllowedValues)
     res_ = ysv_.ParseAllowedValues(test_type, allowed_vals, log_items_);
     EXPECT_TRUE(res_);
     EXPECT_THAT(allowed_vals, ::testing::ElementsAreArray({"23.0", "1.93", "8.9"}));
-
 }
 
 TEST_F(YamlSchemaValidationTest, ParseAllowedValuesWhiteSpace)
@@ -1205,7 +1204,6 @@ TEST_F(YamlSchemaValidationTest, ParseAllowedValuesBraces)
     res_ = ysv_.ParseAllowedValues(test_type, allowed_vals, log_items_);
     EXPECT_FALSE(res_);
     EXPECT_EQ(allowed_vals.size(), 0);
-
 }
 
 TEST_F(YamlSchemaValidationTest, CompareToAllowedValuesMatch)
@@ -1323,7 +1321,7 @@ TEST_F(YamlSchemaValidationTest, PrintLogItemsExceedSize)
 
     std::stringstream stream;
 
-    // Request to print 5 items. Only three items present. 
+    // Request to print 5 items. Only three items present.
     YamlSV::PrintLogItems(log_items_, 5, stream);
     EXPECT_EQ(preface + expected1 + expected2 + expected3, stream.str());
 }
@@ -1353,7 +1351,7 @@ TEST_F(YamlSchemaValidationTest, PrintLogItemsFewerThanSize)
 
     std::stringstream stream;
 
-    // Request to print 2 items. 
+    // Request to print 2 items.
     YamlSV::PrintLogItems(log_items_, 2, stream);
     EXPECT_EQ(preface + expected2 + expected3, stream.str());
 }

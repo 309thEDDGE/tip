@@ -129,7 +129,7 @@ bool Comparator::CompareColumn(int column)
 
     if (compare_col_schema_only)
     {
-        if(!col_names_equal)
+        if (!col_names_equal)
             return false;
         return true;
     }
@@ -209,7 +209,7 @@ bool Comparator::CompareColumn(int column)
         printf("FAILED\n");
     }
 
-    if(!col_names_equal)
+    if (!col_names_equal)
         return false;
     return ret_status;
 }

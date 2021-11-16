@@ -47,10 +47,10 @@ class LogItem
                message.c_str());
     }
 
-    void PrintToStream(std::ostream& stream) const 
+    void PrintToStream(std::ostream& stream) const
     {
         stream << "[" << std::setw(5) << std::left << loglevel_to_string_map.at(log_level)
-            << "] " << message << std::endl; 
+               << "] " << message << std::endl;
     }
 };
 

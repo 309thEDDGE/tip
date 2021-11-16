@@ -45,7 +45,7 @@ TEST_F(ParseWorkerTest, ConfigureContextSetPacketTypeBadPaths)
     result_ = pw_.ConfigureContext(ctx_, worker_cfg_.ch10_packet_type_map_,
                                    worker_cfg_.output_file_paths_);
 
-    // Default paths do not exist. InitializeFileWriters will return false.                                   
+    // Default paths do not exist. InitializeFileWriters will return false.
     EXPECT_FALSE(result_);
     EXPECT_EQ(ctx_.pkt_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0), false);
 }
@@ -100,7 +100,6 @@ TEST_F(ParseWorkerTest, ConfigureContextInitWriters)
     // to a non-null pointer.
     EXPECT_TRUE(ctx_.milstd1553f1_pq_writer != nullptr);
     pw_.ch10_context_.CloseFileWriters();
-
 }
 
 TEST_F(ParseWorkerTest, ConfigureContextNotIfAlreadyConfigured)
