@@ -73,15 +73,16 @@ TranslatableColumnTemplate<RawType, TranslatedType>::TranslatableColumnTemplate(
                                                                                     translated_data_ptr_(nullptr),
                                                                                     raw_data(raw_data_),
                                                                                     translated_data(translated_data_),
-                                                                                    source_raw_data_ptr_(nullptr),                                                                                      source_translated_data_ptr_(nullptr)
+                                                                                    source_raw_data_ptr_(nullptr),
+                                                                                    source_translated_data_ptr_(nullptr)
 {
     raw_data_word_size_ = sizeof(RawType);
 }
 
 template <typename RawType, typename TranslatedType>
 TranslatableColumnTemplate<RawType, TranslatedType>::~TranslatableColumnTemplate()
-{ }
-
+{
+}
 
 template <typename RawType, typename TranslatedType>
 size_t TranslatableColumnTemplate<RawType, TranslatedType>::GetRawDataVectorSize()

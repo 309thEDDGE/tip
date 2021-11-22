@@ -18,7 +18,7 @@
 
 int main(int argc, char* argv[])
 {
-    if(!SetLineBuffering(stdout))
+    if (!SetLineBuffering(stdout))
         return 0;
 
     if (CheckForVersionArgument(argc, argv))

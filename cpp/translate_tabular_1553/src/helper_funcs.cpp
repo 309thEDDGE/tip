@@ -184,7 +184,7 @@ bool SetupLogging(const ManagedPath& log_dir)
 
         // file sink
         std::string log_base_name(TRANSLATE_1553_EXE_NAME);
-        ManagedPath trans_log_path = log_dir / (log_base_name + ".log"); 
+        ManagedPath trans_log_path = log_dir / (log_base_name + ".log");
         // Important! "mt" = multithreaded sink used with async_logger
         auto trans_log_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(trans_log_path.string(),
                                                                                      max_size, max_files);

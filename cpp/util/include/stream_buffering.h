@@ -17,8 +17,6 @@ Return:
 */
 bool SetStreamBufferAndMode(FILE* stream, char* buffer, int mode, size_t size);
 
-
-
 /*
 Set line buffering on a stream. Sets the automatically allocated
 buffer to size 2048.

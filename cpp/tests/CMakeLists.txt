@@ -53,6 +53,7 @@ add_executable(tests
     src/translatable_column_base_u.cpp
     src/translatable_column_template_u.cpp
     src/stream_buffering_u.cpp
+    src/sha256_tools_u.cpp
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)
