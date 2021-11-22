@@ -16,6 +16,7 @@ set(headers
     include/version_info.h
     include/uri_percent_encoding.h
     include/stream_buffering.h
+    include/sha256_tools.h
 )
 
 add_library(tiputil STATIC
@@ -34,6 +35,7 @@ add_library(tiputil STATIC
             src/version_info.cpp
             src/uri_percent_encoding.cpp
             src/stream_buffering.cpp
+            src/sha256_tools.cpp
 )
 
 target_compile_features(tiputil PUBLIC cxx_std_17)
@@ -43,7 +45,7 @@ target_include_directories(tiputil PUBLIC include)
 set_target_properties(tiputil PROPERTIES PUBLIC_HEADER "${headers}")
 
 target_link_libraries(tiputil
-    PUBLIC spdlog::spdlog yaml-cpp
+    PUBLIC spdlog::spdlog yaml-cpp sha256
 )
 
 install(

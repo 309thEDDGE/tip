@@ -8,7 +8,7 @@
 
 int main(int argc, char* argv[])
 {
-    if(!SetLineBuffering(stdout))
+    if (!SetLineBuffering(stdout))
         return 0;
 
     if (CheckForVersionArgument(argc, argv))
@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
             "Failed to configure 1553 translation stage or an error occurred "
             "during translation");
     }
-    
+
     auto stop_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> secs = stop_time - start_time;
     double duration = secs.count();

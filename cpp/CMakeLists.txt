@@ -20,6 +20,19 @@ set(parserw_src_dir ${parserw_dir_name}/${source_dir_name}) # util/src
 set(parserw_inc_dir ${parserw_dir_name}/${include_dir_name})
 
 #########################################################
+#              Build/link sha256 lib
+#########################################################
+set(sha256_lib_name "sha256")
+message(STATUS "Building lib: ${sha256_lib_name}")
+set(sha256_inc_dir ${sha256_lib_name}/${include_dir_name})
+set(sha256_src_dir ${sha256_lib_name}/${source_dir_name})
+add_library(${sha256_lib_name} STATIC
+            ${sha256_inc_dir}/sha256.h ${sha256_src_dir}/sha256.cpp
+)
+target_include_directories(${sha256_lib_name} PUBLIC ${sha256_inc_dir})
+target_compile_features(${sha256_lib_name} PUBLIC cxx_std_17)
+
+#########################################################
 #              Build/link parquet_context lib
 #########################################################
 set(pqctx_lib_name "parquet_context")
@@ -60,15 +73,17 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/version_info.cpp         ${util_inc_dir}/version_info.h
             ${util_src_dir}/uri_percent_encoding.cpp ${util_inc_dir}/uri_percent_encoding.h
             ${util_src_dir}/stream_buffering.cpp     ${util_inc_dir}/stream_buffering.h
+            ${util_src_dir}/sha256_tools.cpp         ${util_inc_dir}/sha256_tools.h
  )
 
 target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir}
+                           ${sha256_inc_dir}
                            ${yaml_inc_dir}
                            ${spdlog_inc_dir}
                            )
 target_compile_features(${util_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name}
-                      ${linux_libs} ${spdlog_lib_name}
+                      ${linux_libs} ${sha256_lib_name} ${spdlog_lib_name}
                       )
 
 #########################################################
@@ -308,7 +323,8 @@ target_link_libraries(${parsech10_lib_name} PUBLIC
 
 install(DIRECTORY DESTINATION ${out_lib_dir})
 
-install(TARGETS ${pqctx_lib_name}
+install(TARGETS ${sha256_lib_name} 
+                ${pqctx_lib_name}
                 ${util_lib_name}
                 ${ch10pq_lib_name}
                 ${dts1553_lib_name}
@@ -410,7 +426,8 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/translatable_table_base_u.cpp
                 ${test_src_dir}/translatable_column_base_u.cpp
                 ${test_src_dir}/translatable_column_template_u.cpp
-                ${test_src_dir}/stream_buffering_u.cpp)
+                ${test_src_dir}/stream_buffering_u.cpp
+                ${test_src_dir}/sha256_tools_u.cpp)
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir}
                             ${parquet_inc_dirs} ${dts1553_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir}

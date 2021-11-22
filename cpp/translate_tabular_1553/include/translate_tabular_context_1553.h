@@ -72,7 +72,7 @@ class TranslateTabularContext1553 : public TranslateTabularContextBase
 
     TranslateTabularContext1553(ICDData icd,
                                 const std::set<std::string>& selected_msg_names);
-    virtual ~TranslateTabularContext1553() { }
+    virtual ~TranslateTabularContext1553() {}
 
     /*
     Check the following:
