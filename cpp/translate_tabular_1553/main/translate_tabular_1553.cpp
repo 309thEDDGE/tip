@@ -78,6 +78,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    fflush(stdout);
     if (config_params.auto_sys_limits_)
     {
         if (!SetSystemLimits(thread_count, dts1553.ICDDataPtr()->valid_message_count))

@@ -17,6 +17,8 @@ set(headers
     include/ch10_tmats_component.h
     include/ch10_videof0_component.h
     include/ch10_videof0_header_format.h
+    include/ch10_arinc429f0_component.h
+    include/ch10_arinc429f0_msg_hdr_format.h
 )
 
 add_library(parserw
@@ -32,6 +34,7 @@ add_library(parserw
     src/ch10_time.cpp
     src/ch10_tmats_component.cpp
     src/ch10_videof0_component.cpp
+    src/ch10_arinc429f0_component.cpp
 )
 
 target_compile_features(parserw PUBLIC cxx_std_17)

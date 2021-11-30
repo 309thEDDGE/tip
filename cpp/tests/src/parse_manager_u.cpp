@@ -765,3 +765,53 @@ TEST_F(ParseManagerTest, CreateChannelIDToMinVideoTimestampsMetadata)
                                                    input_maps);
     EXPECT_EQ(expected, output_map);
 }
+
+TEST_F(ParseManagerTest, CombineChannelIDToLabelsMetadata)
+{
+    std::map<uint32_t, std::set<uint16_t>> output;
+    std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_labels_maps;
+
+    std::map<uint32_t, std::set<uint16_t>> map1_0 = {
+        {5, {194, 202}},
+        {10, {193, 202}}};
+    std::map<uint32_t, std::set<uint16_t>> map1_1 = {
+        {5, {201}},
+        {10, {67}}};
+
+    chanid_labels_maps.push_back(map1_0);
+    chanid_labels_maps.push_back(map1_1);
+
+    std::map<uint32_t, std::set<uint16_t>> expected = {
+        {5, {194, 201, 202}},
+        {10, {67, 193, 202}}};
+
+    result_ = pm.CombineChannelIDToLabelsMetadata(output,
+                                                  chanid_labels_maps);
+    EXPECT_TRUE(result_);
+    EXPECT_EQ(expected, output);
+}
+
+TEST_F(ParseManagerTest, CombineChannelIDToBusNumbersMetadata)
+{
+    std::map<uint32_t, std::set<uint16_t>> output;
+    std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_busnumbers_maps;
+
+    std::map<uint32_t, std::set<uint16_t>> map1_0 = {
+        {5, {1, 2}},
+        {10, {1, 2, 3}}};
+    std::map<uint32_t, std::set<uint16_t>> map1_1 = {
+        {5, {5}},
+        {10, {3, 4}}};
+
+    chanid_busnumbers_maps.push_back(map1_0);
+    chanid_busnumbers_maps.push_back(map1_1);
+
+    std::map<uint32_t, std::set<uint16_t>> expected = {
+        {5, {1, 2, 5}},
+        {10, {1, 2, 3, 4}}};
+
+    result_ = pm.CombineChannelIDToBusNumbersMetadata(output,
+                                                  chanid_busnumbers_maps);
+    EXPECT_TRUE(result_);
+    EXPECT_EQ(expected, output);
+}

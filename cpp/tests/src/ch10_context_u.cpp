@@ -627,3 +627,132 @@ TEST(Ch10ContextTest, RecordMinVideoTimeStampGreaterThan)
     EXPECT_EQ(ctx.chanid_minvideotimestamp_map.count(hdr_fmt.chanID), 1);
     EXPECT_EQ(ctx.chanid_minvideotimestamp_map.at(hdr_fmt.chanID), ts1);
 }
+
+TEST(Ch10ContextTest, Calculate429WordAbsTimeRTCSource)
+{
+    Ch10Context ctx(0);
+    Ch10PacketHeaderFmt hdr_fmt{};
+    uint64_t tdp_abs_time = 1000000;
+    uint64_t tdp_rtc1 = 1;
+    uint64_t tdp_rtc2 = 2;
+    uint64_t abs_pos = 0;
+    hdr_fmt.pkt_size = 4320;
+    hdr_fmt.data_size = 3399;
+    hdr_fmt.rtc1 = tdp_rtc1;
+    hdr_fmt.rtc2 = tdp_rtc2;
+    uint64_t rtc_to_ns = 100;
+    uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * rtc_to_ns;
+    hdr_fmt.intrapkt_ts_source = 0;
+    uint8_t tdp_doy = 1;
+
+    uint64_t total_gap_time = 121;
+    uint64_t gap_time_to_ns = 100;
+
+    // Update Context to assign rtc value internally
+    bool tdp_valid = true;
+    Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+    EXPECT_EQ(status, Ch10Status::OK);
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+
+    // Update context as if with a following non-TDP packet
+    hdr_fmt.rtc1 += 20;
+    rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * rtc_to_ns;
+    status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+
+    uint64_t expected_time = tdp_abs_time + 20 * rtc_to_ns + total_gap_time * gap_time_to_ns;
+    uint64_t packet_time = ctx.Calculate429WordAbsTime(total_gap_time);
+    ASSERT_EQ(expected_time, packet_time);
+}
+
+TEST(Ch10ContextTest, Calculate429AbsTimeSecondaryHeaderSource)
+{
+    Ch10Context ctx(0);
+    Ch10PacketHeaderFmt hdr_fmt{};
+    uint64_t tdp_abs_time = 1000000;
+    uint64_t tdp_rtc1 = 1;
+    uint64_t tdp_rtc2 = 2;
+    uint64_t abs_pos = 0;
+    hdr_fmt.pkt_size = 4320;
+    hdr_fmt.data_size = 3399;
+    hdr_fmt.rtc1 = tdp_rtc1;
+    hdr_fmt.rtc2 = tdp_rtc2;
+    uint64_t rtc_to_ns = 100;
+    uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * rtc_to_ns;
+    uint8_t tdp_doy = 1;
+
+    // Use Secondary Header
+    hdr_fmt.intrapkt_ts_source = 1;
+    hdr_fmt.secondary_hdr = 1;
+
+    // Update Context to assign rtc value internally
+    bool tdp_valid = true;
+    Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+    EXPECT_EQ(status, Ch10Status::OK);
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+
+    // Update context as if with a following non-TDP packet
+    hdr_fmt.rtc1 += 20;
+    rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * rtc_to_ns;
+    status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+
+    // Define seconday header and time gap info
+    uint64_t total_gap_time = 121;
+    uint64_t gap_time_to_ns = 100;
+    uint64_t packet_abs_time = 1007000;
+
+    // Matching the context above (where updated with non-TDP packet) the packet's
+    // absolute time would be 1002000.
+    // If the secondary header abs time is used (meaning packet_abs_time = 1007000),
+    // the Word's Abs Time will be 1007000 + total_gap_time * gap_time_to_ns = 1019100.
+    // Test will fail if RTC derived time is used making Word's Abs Time = 1014100.
+
+    // Update Context with Secondary Header Time
+    ctx.UpdateWithSecondaryHeaderTime(packet_abs_time);
+
+    uint64_t expected_time = packet_abs_time + total_gap_time * gap_time_to_ns;
+    uint64_t packet_time = ctx.Calculate429WordAbsTime(total_gap_time);
+    ASSERT_EQ(expected_time, packet_time);
+}
+
+TEST(Ch10ContextTest, UpdateARINC429Maps)
+{
+    Ch10Context ctx(0);
+
+    // Update context with "current" header data. Only care about
+    // chanID, which will create an entry in the map with an empty
+    // set.
+    Ch10PacketHeaderFmt hdr_fmt{};
+    hdr_fmt.chanID = 4;
+    hdr_fmt.intrapkt_ts_source = 0;
+    hdr_fmt.secondary_hdr = 0;
+    hdr_fmt.data_type = static_cast<uint8_t>(Ch10PacketType::ARINC429_F0);
+    uint64_t abs_pos = 4823829394;
+    uint64_t rtc = 0;
+    Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
+
+    // Update the maps.
+    ARINC429F0MsgFmt data_hdr;
+    data_hdr.label = 202;
+    data_hdr.bus = 1;
+    ctx.UpdateARINC429Maps(hdr_fmt.chanID, &data_hdr);
+
+    data_hdr.label = 194;
+    data_hdr.bus = 2;
+    ctx.UpdateARINC429Maps(hdr_fmt.chanID, &data_hdr);
+
+    data_hdr.label = 194;
+    data_hdr.bus = 3;
+    ctx.UpdateARINC429Maps(hdr_fmt.chanID, &data_hdr);
+
+    // Check if the key and values are correct.
+    EXPECT_TRUE(ctx.chanid_labels_map.count(hdr_fmt.chanID) == 1);
+    EXPECT_TRUE(ctx.chanid_busnumbers_map.count(hdr_fmt.chanID) == 1);
+
+    EXPECT_EQ(ctx.chanid_busnumbers_map.at(hdr_fmt.chanID).size(), 3);
+    EXPECT_THAT(ctx.chanid_busnumbers_map.at(hdr_fmt.chanID),
+                ::testing::UnorderedElementsAre(1, 2, 3));
+
+    EXPECT_EQ(ctx.chanid_labels_map.at(hdr_fmt.chanID).size(), 2);
+    EXPECT_THAT(ctx.chanid_labels_map.at(hdr_fmt.chanID),
+                ::testing::UnorderedElementsAre(202, 194));
+}

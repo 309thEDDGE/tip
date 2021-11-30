@@ -63,6 +63,7 @@ tip_scripts/__pycache__
 !CPPLINT.cfg
 *.DS_Store
 !environment*.yaml
+*.vscode
 
 # nix
 result*

@@ -54,6 +54,7 @@ add_executable(tests
     src/translatable_column_template_u.cpp
     src/stream_buffering_u.cpp
     src/sha256_tools_u.cpp
+    src/ch10_arinc429f0_component_u.cpp
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)
@@ -63,7 +64,7 @@ target_include_directories(tests
 )
 
 target_link_libraries(tests
-    PUBLIC parsech10_lib ch10_parquet ch10ethernet parquet_context parserw 
+    PUBLIC parsech10_lib ch10_parquet ch10ethernet parquet_context parserw
     dts_1553 tiputil parquet_compare pq_vid_extract yamlsv
     arrow_shared parquet spdlog::spdlog translate_tabular translate_tabular_1553
     PRIVATE ${GTEST_LIBRARIES}
