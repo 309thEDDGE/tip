@@ -26,7 +26,8 @@ bool ParseManager::Configure(ManagedPath input_ch10_file_path, ManagedPath outpu
     std::map<Ch10PacketType, std::string> append_str_map = {
         {Ch10PacketType::MILSTD1553_F1, "_1553.parquet"},
         {Ch10PacketType::VIDEO_DATA_F0, "_video.parquet"},
-        {Ch10PacketType::ETHERNET_DATA_F0, "_ethernet.parquet"}};
+        {Ch10PacketType::ETHERNET_DATA_F0, "_ethernet.parquet"},
+        {Ch10PacketType::ARINC429_F0, "_arinc429.parquet"}};
 
     if (!CreateCh10PacketOutputDirs(output_dir, input_ch10_file_path,
                                     packet_type_config_map, append_str_map, output_dir_map_, true))
@@ -202,6 +203,10 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
                     if (!RecordVideoDataF0Metadata(input_ch10_file_path, user_config))
                         return false;
                     break;
+                case Ch10PacketType::ARINC429_F0:
+                    if (!RecordARINC429F0Metadata(input_ch10_file_path, user_config))
+                        return false;
+                    break;
                 default:
                     spdlog::get("pm_logger")->warn(
                         "RecordMetadata: No metadata output "
@@ -315,6 +320,73 @@ bool ParseManager::RecordVideoDataF0Metadata(ManagedPath input_ch10_file_path,
                                         std::ofstream::out | std::ofstream::trunc);
     stream_video_metadata << vmd.GetMetadataString();
     stream_video_metadata.close();
+    return true;
+}
+
+bool ParseManager::RecordARINC429F0Metadata(ManagedPath input_ch10_file_path,
+                                              const ParserConfigParams& user_config)
+{
+    spdlog::get("pm_logger")->debug("RecordMetadata: recording {:s} metadata", ch10packettype_to_string_map.at(Ch10PacketType::ARINC429_F0));
+    Metadata md;
+    ManagedPath md_path = md.GetYamlMetadataPath(
+        output_dir_map_[Ch10PacketType::ARINC429_F0],
+        "_metadata");
+
+    // Record Config options used
+    md.RecordSimpleMap(user_config.ch10_packet_type_map_, "ch10_packet_type");
+    md.RecordSingleKeyValuePair("parse_chunk_bytes", user_config.parse_chunk_bytes_);
+    md.RecordSingleKeyValuePair("parse_thread_count", user_config.parse_thread_count_);
+    md.RecordSingleKeyValuePair("max_chunk_read_count", user_config.max_chunk_read_count_);
+    md.RecordSingleKeyValuePair("worker_offset_wait_ms", user_config.worker_offset_wait_ms_);
+    md.RecordSingleKeyValuePair("worker_shift_wait_ms", user_config.worker_shift_wait_ms_);
+
+    // Record the input ch10 path.
+    md.RecordSingleKeyValuePair("ch10_input_file_path", input_ch10_file_path.RawString());
+
+    // Obtain the channel ID to 429 label set map.
+    std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_label_maps;
+    for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
+        chanid_label_maps.push_back(
+            workers_vec_[worker_ind]->ch10_context_.chanid_labels_map);
+
+    std::map<uint32_t, std::set<uint16_t>> output_chanid_label_map;
+    if (!CombineChannelIDToLabelsMetadata(output_chanid_label_map,
+                                                chanid_label_maps))
+        return false;
+    md.RecordCompoundMapToSet(output_chanid_label_map, "chanid_to_labels");
+
+    // Obtain the channel ID to ARINC message header bus number set map.
+    std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_busnumber_maps;
+    for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
+        chanid_busnumber_maps.push_back(
+            workers_vec_[worker_ind]->ch10_context_.chanid_busnumbers_map);
+
+    std::map<uint32_t, std::set<uint16_t>> output_chanid_busnumber_map;
+    if (!CombineChannelIDToBusNumbersMetadata(output_chanid_busnumber_map,
+                                                chanid_busnumber_maps))
+        return false;
+    md.RecordCompoundMapToSet(output_chanid_busnumber_map, "chanid_to_bus_numbers");
+
+    // Create the output path for TMATs
+    ManagedPath tmats_path = output_dir_map_[Ch10PacketType::ARINC429_F0] / "_TMATS.txt";
+
+    // Process TMATs matter and record
+    std::map<std::string, std::string> TMATsChannelIDToSourceMap;
+    std::map<std::string, std::string> TMATsChannelIDToTypeMap;
+    ProcessTMATS(tmats_body_vec_, tmats_path, TMATsChannelIDToSourceMap,
+                 TMATsChannelIDToTypeMap);
+
+    // Record the TMATS channel ID to source map.
+    md.RecordSimpleMap(TMATsChannelIDToSourceMap, "tmats_chanid_to_source");
+
+    // Record the TMATS channel ID to type map.
+    md.RecordSimpleMap(TMATsChannelIDToTypeMap, "tmats_chanid_to_type");
+
+    // Write the complete Yaml record to the metadata file.
+    std::ofstream stream_429_metadata(md_path.string(),
+                                       std::ofstream::out | std::ofstream::trunc);
+    stream_429_metadata << md.GetMetadataString();
+    stream_429_metadata.close();
     return true;
 }
 
@@ -695,7 +767,8 @@ bool ParseManager::ConvertCh10PacketTypeMap(const std::map<std::string, std::str
     std::map<std::string, Ch10PacketType> conversion_map = {
         {"MILSTD1553_FORMAT1", Ch10PacketType::MILSTD1553_F1},
         {"VIDEO_FORMAT0", Ch10PacketType::VIDEO_DATA_F0},
-        {"ETHERNET_DATA0", Ch10PacketType::ETHERNET_DATA_F0}};
+        {"ETHERNET_DATA0", Ch10PacketType::ETHERNET_DATA_F0},
+        {"ARINC429_FORMAT0", Ch10PacketType::ARINC429_F0}};
 
     ParseText pt;
     std::string bool_string;
@@ -777,7 +850,7 @@ bool ParseManager::CreateCh10PacketOutputDirs(const ManagedPath& output_dir,
         {
             if (append_str_map.count(it->first) == 0)
             {
-                spdlog::get("pm_logger")->info(
+                spdlog::get("pm_logger")->warn(
                     "CreateCh10PacketOutputDirs: No append "
                     "string map entry for {:s}",
                     ch10packettype_to_string_map.at(it->first));
@@ -922,5 +995,41 @@ bool ParseManager::CombineChannelIDToCommandWordsMetadata(
         }
         output_chanid_commwords_map[it->first] = temp_vec_of_vec;
     }
+    return true;
+}
+
+bool ParseManager::CombineChannelIDToLabelsMetadata(
+    std::map<uint32_t, std::set<uint16_t>>& output_chanid_labels_map,
+        const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_labels_maps)
+{
+    // Collect maps into one.
+    std::map<uint32_t, std::set<uint16_t>> chanid_labels_map;
+    for (size_t i = 0; i < chanid_labels_maps.size(); i++)
+    {
+        chanid_labels_map = it_.CombineCompoundMapsToSet(chanid_labels_map,
+                                                            chanid_labels_maps.at(i));
+    }
+
+    // iterate chanid_labels_map and add to output_chanid_labels_map
+    output_chanid_labels_map = chanid_labels_map;
+
+    return true;
+}
+
+bool ParseManager::CombineChannelIDToBusNumbersMetadata(
+    std::map<uint32_t, std::set<uint16_t>>&  output_chanid_busnumbers_map,
+        const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_busnumbers_maps)
+{
+    // Collect maps into one.
+    std::map<uint32_t, std::set<uint16_t>> chanid_busnumbers_map;
+    for (size_t i = 0; i < chanid_busnumbers_maps.size(); i++)
+    {
+        chanid_busnumbers_map = it_.CombineCompoundMapsToSet(chanid_busnumbers_map,
+                                                            chanid_busnumbers_maps.at(i));
+    }
+
+    // iterate chanid_busnumbers_map and add to output_chanid_busnumbers_map
+    output_chanid_busnumbers_map = chanid_busnumbers_map;
+
     return true;
 }

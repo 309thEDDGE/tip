@@ -135,6 +135,7 @@ add_library(${ch10pq_lib_name} STATIC
             ${ch10pq_src_dir}/parquet_milstd1553f1.cpp ${ch10pq_inc_dir}/parquet_milstd1553f1.h
             ${ch10pq_src_dir}/parquet_videodataf0.cpp  ${ch10pq_inc_dir}/parquet_videodataf0.h
             ${ch10pq_src_dir}/parquet_ethernetf0.cpp ${ch10pq_inc_dir}/parquet_ethernetf0.h
+            ${ch10pq_src_dir}/parquet_arinc429f0.cpp ${ch10pq_inc_dir}/parquet_arinc429f0.h
     )
 
 target_include_directories(${ch10pq_lib_name} PUBLIC
@@ -286,6 +287,8 @@ add_library(${parserw_lib_name} STATIC
             ${parserw_inc_dir}/ch10_videof0_component.h ${parserw_src_dir}/ch10_videof0_component.cpp
             ${parserw_inc_dir}/ch10_ethernetf0_component.h ${parserw_src_dir}/ch10_ethernetf0_component.cpp
             ${parserw_inc_dir}/ch10_ethernetf0_msg_hdr_format.h
+            ${parserw_inc_dir}/ch10_arinc429f0_msg_hdr_format.h
+            ${parserw_inc_dir}/ch10_arinc429f0_component.h ${parserw_src_dir}/ch10_arinc429f0_component.cpp
     )
 
 target_include_directories(${parserw_lib_name} PUBLIC ${parserw_inc_dir} ${util_inc_dir}
@@ -427,7 +430,8 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/translatable_column_base_u.cpp
                 ${test_src_dir}/translatable_column_template_u.cpp
                 ${test_src_dir}/stream_buffering_u.cpp
-                ${test_src_dir}/sha256_tools_u.cpp)
+                ${test_src_dir}/sha256_tools_u.cpp
+                ${test_src_dir}/ch10_arinc429f0_component_u.cpp)
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir}
                             ${parquet_inc_dirs} ${dts1553_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir}

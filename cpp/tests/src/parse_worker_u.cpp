@@ -30,6 +30,7 @@ class ParseWorkerTest : public ::testing::Test
         worker_cfg_.ch10_packet_type_map_[Ch10PacketType::MILSTD1553_F1] = true;
         worker_cfg_.ch10_packet_type_map_[Ch10PacketType::VIDEO_DATA_F0] = false;
         worker_cfg_.ch10_packet_type_map_[Ch10PacketType::ETHERNET_DATA_F0] = false;
+        worker_cfg_.ch10_packet_type_map_[Ch10PacketType::ARINC429_F0] = false;
 
         // Initialize Ch10Context
         ctx_.Initialize(worker_cfg_.start_position_, worker_cfg_.worker_index_);

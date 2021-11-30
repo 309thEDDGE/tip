@@ -9,6 +9,7 @@
 #include "parquet_milstd1553f1.h"
 #include "parquet_videodataf0.h"
 #include "parquet_ethernetf0.h"
+#include "parquet_arinc429f0.h"
 
 #include <cstdint>
 #include <cstdio>
@@ -23,6 +24,7 @@
 #include "ch10_header_format.h"
 #include "ch10_1553f1_msg_hdr_format.h"
 #include "ch10_videof0_header_format.h"
+#include "ch10_arinc429f0_msg_hdr_format.h"
 #include "spdlog/spdlog.h"
 
 class Ch10Context
@@ -107,6 +109,12 @@ class Ch10Context
     // word values.
     std::map<uint32_t, std::set<uint32_t>> chanid_commwords_map_;
 
+    // Record mapping of ARINC 429 channel ID to word labels.
+    std::map<uint32_t, std::set<uint16_t>> chanid_labels_map_;
+
+    // Record mapping of ARINC 429 channel ID to IPDH bus number.
+    std::map<uint32_t, std::set<uint16_t>> chanid_busnumbers_map_;
+
     // Track the minimum (earliest) video timestamp per channel ID
     std::map<uint16_t, uint64_t> chanid_minvideotimestamp_map_;
 
@@ -128,6 +136,7 @@ class Ch10Context
     std::unique_ptr<ParquetMilStd1553F1> milstd1553f1_pq_writer_;
     std::unique_ptr<ParquetVideoDataF0> videof0_pq_writer_;
     std::unique_ptr<ParquetEthernetF0> ethernetf0_pq_writer_;
+    std::unique_ptr<ParquetARINC429F0> arinc429f0_pq_writer_;
 
    public:
     const uint16_t& thread_id;
@@ -149,10 +158,13 @@ class Ch10Context
     const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr1_map;
     const std::map<uint32_t, std::set<uint16_t>>& chanid_remoteaddr2_map;
     const std::map<uint32_t, std::set<uint32_t>>& chanid_commwords_map;
+    const std::map<uint32_t, std::set<uint16_t>>& chanid_labels_map;
+    const std::map<uint32_t, std::set<uint16_t>>& chanid_busnumbers_map;
     const std::map<uint16_t, uint64_t>& chanid_minvideotimestamp_map;
     ParquetMilStd1553F1* milstd1553f1_pq_writer;
     ParquetVideoDataF0* videof0_pq_writer;
     ParquetEthernetF0* ethernetf0_pq_writer;
+    ParquetARINC429F0* arinc429f0_pq_writer;
     const uint32_t intrapacket_ts_size_ = sizeof(uint64_t);
 
     Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
@@ -162,7 +174,7 @@ class Ch10Context
 
     /*
 	Return is_configured_. This value is set during call to CheckConfiguration.
-	If true, then CheckConfiguration has been called, presumably with the 
+	If true, then CheckConfiguration has been called, presumably with the
 	maps set during calls to SetPacketTypeConfig and SetOutputPathsMap and
 	all necessary data are present and ready for parsing.
 	*/
@@ -174,7 +186,7 @@ class Ch10Context
     /*
 	Advance the absolute position by advance_bytes.
 
-	Args: 
+	Args:
 		advance_bytes	--> Count of bytes by which to advance/increase
 							the absolute_position_
 	*/
@@ -205,20 +217,20 @@ class Ch10Context
     void CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketType, bool>& input);
 
     /*
-	Use a user-input map of Ch10PacketType to bool to assemble the 
+	Use a user-input map of Ch10PacketType to bool to assemble the
 	pkt_type_config_map_.
 
 	Args:
 		user_config		--> map of Ch10PacketType to bool. For the user-submitted
-							example map, 
+							example map,
 								{Ch10PacketType::MILSTD1553_F1 --> true},
 								{Ch10PacketType::VIDEO_DATA_F0 --> false}
-							1553 will be parsed and video (type f0) will not be 
-							parsed. TMATS (computer generated data, format 1) 
-							and time data packets (time data f1) cannot be 
+							1553 will be parsed and video (type f0) will not be
+							parsed. TMATS (computer generated data, format 1)
+							and time data packets (time data f1) cannot be
 							turned off. Data types that are not configured will
 							default to true.
-		default_config	--> The current default configuration, use 
+		default_config	--> The current default configuration, use
 							::pkt_type_config_map. This input can't be modified
 							because it is const, but provides a way to perform
 							certain tests without allowing the user access to
@@ -234,11 +246,11 @@ class Ch10Context
     /*
 	Update tdp_rtc_, tdp_abs_time_, tdp_doy_, tdp_valid_ and found_tdp_,
 	member vars necessary
-	for absolute time calculation for other data packets. 
+	for absolute time calculation for other data packets.
 
 	Args:
 		tdp_abs_time	--> absolute time in nanoseconds since the epoch
-							as calculated from data retrieved from the 
+							as calculated from data retrieved from the
 							TDP packet
 		tdp_doy			--> bit value, 1 = day-of-year time (IRIG time),
 							0 = year-mth-day time
@@ -266,7 +278,7 @@ class Ch10Context
 	Calculate this packet's absolute time using the time data packet
 	relative time counter (RTC) and absolute time, and the this packet's
 	relative time counter.
-	
+
 	Return:
 		Absolute time this packet was received in nanoseconds since the epoch
 	*/
@@ -274,25 +286,47 @@ class Ch10Context
 
     /*
 	Calculate and return the absolute time of an intra-packet time stamp (IPTS)
-	using the input time. 
+	using the input time.
 
 	The only validated form of time is the non-secondary header time RTC-type
 	IPTS. In this case we know it is relative time and therefore the time data
 	packet relative time and absolute time are used to calculate the absolute
-	time. 
+	time.
 
 	Information from the Ch10 suggest *all* non-RTC source (i.e., secondary
-	header time) time formats are absolute. In this case a calculation is 
+	header time) time formats are absolute. In this case a calculation is
 	not necessary.
 
 	Args:
 		ipts_time--> input variable which is set to the calculated absolute time
    		             value in units of nanosecond since the epoch
 
-	Return: 
+	Return:
 		Absolute time in units of nanoseconds since the epoch
 	*/
     virtual uint64_t& CalculateIPTSAbsTime(const uint64_t& ipts_time);
+
+    /*
+	Calculate and return the absolute time of an ARINC 429 word using the
+    sum of the packet gap time fields and the packet time stamp.
+
+	The only validated form of time is the non-secondary header time RTC-type
+	IPTS. In this case we know it is relative time and therefore the time data
+	packet relative time and absolute time are used to calculate the absolute
+	time.
+
+	Information from the Ch10 suggest *all* non-RTC source (i.e., secondary
+	header time) time formats are absolute. In this case a calculation is
+	not necessary.
+
+	Args:
+		total_gap_time--> input variable which is the sum of all Gap Time values
+                          from a 429 Ch10 packet's IPDHs. Units of 0.1 ms.
+
+	Return:
+		Absolute time in units of nanoseconds since the epoch
+	*/
+    virtual uint64_t& Calculate429WordAbsTime(const uint64_t& total_gap_time);
 
     /*
 	Update maps of channel ID to remote addresses 1 and 2 as obtained from
@@ -305,17 +339,27 @@ class Ch10Context
                                          const MilStd1553F1DataHeaderCommWordFmt* data_header);
 
     /*
+	Update maps of channel ID to ARINC 429 Bus Number as obtained from
+	the 429 intra-packet data headers.
+
+	Update the channel ID to ARINC 429 labels map. The integer inserted into
+	the set of uint32_t is the Label found in the ARINC message.
+	*/
+    void UpdateARINC429Maps(const uint32_t& chanid,
+                                         const ARINC429F0MsgFmt* data_header);
+
+    /*
 	Check if the configurations for packet type and output paths are consistent.
 	Return false if an enabled packet type does not have an output file specified.
-	Generate a Ch10PacketType to ManagedPath map that is consistent with enabled 
+	Generate a Ch10PacketType to ManagedPath map that is consistent with enabled
 	packet types and the selection of types for which a mapped ManagedPath exists
 	in the pkt_type_paths_config input map. The generated map is stored in map
-	that's passed by reference, 
+	that's passed by reference,
 
 	Args:
 		pkt_type_enabled_config	--> Map of Ch10PacketType to bool. Use map set by call
 									to SetPacketTypeConfig.
-		pkt_type_paths_config	--> Map of Ch10PacketType to ManagedPath. Use map set 
+		pkt_type_paths_config	--> Map of Ch10PacketType to ManagedPath. Use map set
 									by call to SetOutputPathsMap
 		enabled_paths			--> Reference to map of Ch10PacketType to ManagedPath,
 									the output of the configuration check. Only valid
@@ -341,15 +385,15 @@ class Ch10Context
 		enabled_paths	--> Const ref to map of Ch10PacketType to ManagedPath
 							containing only types that have been enabled (SetPacketTypeConfig)
 							by the user. This map is to be generated by CheckConfiguration.
-                        
+
     Return:
         True if all writers are initialized succesfully. False otherwise.
 	*/
     bool InitializeFileWriters(const std::map<Ch10PacketType, ManagedPath>& enabled_paths);
 
     /*
-	Close file writers for the various enabled packet types. Uses 
-	pkt_type_file_writers_enabled_map_, which is created during the call to 
+	Close file writers for the various enabled packet types. Uses
+	pkt_type_file_writers_enabled_map_, which is created during the call to
 	InitializeFileWriters and stored as a private member var.
 	*/
     void CloseFileWriters() const;
@@ -362,13 +406,13 @@ class Ch10Context
 	channel ID will be recorded.
 
 	Args:
-		ts		--> Video timestamp in nanosecond unit, counting from the 
+		ts		--> Video timestamp in nanosecond unit, counting from the
 					unix epoch
 	*/
     void RecordMinVideoTimeStamp(const uint64_t& ts);
 
     /*
-	Set the current packet secondary header time, which is 
+	Set the current packet secondary header time, which is
 	absolute time.
 
 	Args:

@@ -36,6 +36,8 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
                                                                  chanid_remoteaddr1_map(chanid_remoteaddr1_map_),
                                                                  chanid_remoteaddr2_map(chanid_remoteaddr2_map_),
                                                                  chanid_commwords_map(chanid_commwords_map_),
+                                                                 chanid_labels_map(chanid_labels_map_),
+                                                                 chanid_busnumbers_map(chanid_busnumbers_map_),
                                                                  command_word1_(nullptr),
                                                                  command_word2_(nullptr),
                                                                  is_configured_(false),
@@ -45,6 +47,8 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
                                                                  videof0_pq_writer(nullptr),
                                                                  ethernetf0_pq_writer_(nullptr),
                                                                  ethernetf0_pq_writer(nullptr),
+                                                                 arinc429f0_pq_writer_(nullptr),
+                                                                 arinc429f0_pq_writer(nullptr),
                                                                  chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_),
                                                                  pkt_type_paths_map(pkt_type_paths_enabled_map_)
 {
@@ -87,6 +91,8 @@ Ch10Context::Ch10Context() : absolute_position_(0),
                              chanid_remoteaddr1_map(chanid_remoteaddr1_map_),
                              chanid_remoteaddr2_map(chanid_remoteaddr2_map_),
                              chanid_commwords_map(chanid_commwords_map_),
+                             chanid_labels_map(chanid_labels_map_),
+                             chanid_busnumbers_map(chanid_busnumbers_map_),
                              command_word1_(nullptr),
                              command_word2_(nullptr),
                              is_configured_(false),
@@ -96,6 +102,8 @@ Ch10Context::Ch10Context() : absolute_position_(0),
                              videof0_pq_writer(nullptr),
                              ethernetf0_pq_writer_(nullptr),
                              ethernetf0_pq_writer(nullptr),
+                             arinc429f0_pq_writer_(nullptr),
+                             arinc429f0_pq_writer(nullptr),
                              chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_),
                              pkt_type_paths_map(pkt_type_paths_enabled_map_)
 {
@@ -218,6 +226,7 @@ void Ch10Context::CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketTyp
     input[Ch10PacketType::MILSTD1553_F1] = true;
     input[Ch10PacketType::VIDEO_DATA_F0] = true;
     input[Ch10PacketType::ETHERNET_DATA_F0] = true;
+    input[Ch10PacketType::ARINC429_F0] = true;
 }
 
 bool Ch10Context::SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user_config,
@@ -234,7 +243,8 @@ bool Ch10Context::SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user
         {
             SPDLOG_ERROR(
                 "({:02d}) The type {:s} can't be found in the "
-                "default config. Update the default config for consistency.",
+                "default config. Update the default config for consistency. "
+                "See Ch10Context::CreateDefaultPacketTypeConfig.",
                 thread_id, ch10packettype_to_string_map.at(it->first));
             return false;
         }
@@ -304,6 +314,27 @@ uint64_t& Ch10Context::CalculateIPTSAbsTime(const uint64_t& ipts_time)
     }
 }
 
+ uint64_t& Ch10Context::Calculate429WordAbsTime(const uint64_t& total_gap_time)
+{
+    // Handle RTC time or other format indicated by time_format_. RTC time is indicated
+    // by intrapkt_ts_src_ = 0.
+    if (intrapkt_ts_src_ == 0)
+    {
+        // modify the total_gap_time to be in units of ipts_time and add with abs time
+        temp_abs_time_ = GetPacketAbsoluteTimeFromHeaderRTC() + (total_gap_time * (uint64_t)100);
+        return temp_abs_time_;
+    }
+    else
+    {
+        // If the time source is the packet secondary header,
+        // the time of packt_abs_time_ is already abs_time.
+        // Simply add Gap Time (adjusted to nano seconds) to
+        // packet_abs_time and return.
+        temp_abs_time_ = packet_abs_time_ + (total_gap_time * (uint64_t)100);
+        return temp_abs_time_;
+    }
+}
+
 void Ch10Context::UpdateChannelIDToLRUAddressMaps(const uint32_t& chanid,
                                                   const MilStd1553F1DataHeaderCommWordFmt* const data_header)
 {
@@ -326,6 +357,13 @@ void Ch10Context::UpdateChannelIDToLRUAddressMaps(const uint32_t& chanid,
         else
             chanid_commwords_map_[chanid].insert(comm_words->comm_word1);
     }
+}
+
+void Ch10Context::UpdateARINC429Maps(const uint32_t& chanid,
+                                     const ARINC429F0MsgFmt* const data_header)
+{
+    chanid_labels_map_[chanid].insert(data_header->label);
+    chanid_busnumbers_map_[chanid].insert(data_header->bus);
 }
 
 bool Ch10Context::CheckConfiguration(
@@ -427,6 +465,21 @@ bool Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
                     return false;
                 ethernetf0_pq_writer = ethernetf0_pq_writer_.get();
                 break;
+            case Ch10PacketType::ARINC429_F0:
+
+                // Store the file writer status for this type as enabled.
+                pkt_type_file_writers_enabled_map_[Ch10PacketType::ARINC429_F0] = true;
+                pkt_type_paths_enabled_map_[Ch10PacketType::ARINC429_F0] = it->second;
+
+                // Create the writer object.
+                arinc429f0_pq_writer_ = std::make_unique<ParquetARINC429F0>();
+
+                // See note after the milstd1553f1_pq_writer_ defined above.
+                // That thought applies here.
+                if(!arinc429f0_pq_writer_->Initialize(it->second, thread_id))
+                    return false;
+                arinc429f0_pq_writer = arinc429f0_pq_writer_.get();
+                break;
             default:
                 SPDLOG_WARN("({:02d}) No writer defined for {:s}",
                             thread_id, ch10packettype_to_string_map.at(it->first));
@@ -458,6 +511,12 @@ void Ch10Context::CloseFileWriters() const
                 if (pkt_type_file_writers_enabled_map_.at(Ch10PacketType::ETHERNET_DATA_F0))
                 {
                     ethernetf0_pq_writer_->Close(thread_id_);
+                }
+                break;
+            case Ch10PacketType::ARINC429_F0:
+                if (pkt_type_file_writers_enabled_map_.at(Ch10PacketType::ARINC429_F0))
+                {
+                    arinc429f0_pq_writer_->Close(thread_id_);
                 }
                 break;
         }

@@ -7,6 +7,7 @@
 #include "ch10_context.h"
 #include "ch10_time.h"
 #include "ch10_1553f1_component.h"
+#include "ch10_arinc429f0_component.h"
 #include "ch10_videof0_component.h"
 #include "ch10_ethernetf0_component.h"
 #include "binbuff.h"
@@ -53,12 +54,13 @@ class Ch10Packet
     Ch101553F1Component milstd1553f1_component_;
     Ch10VideoF0Component videof0_component_;
     Ch10EthernetF0Component ethernetf0_component_;
+    Ch10429F0Component arinc429f0_component_;
     Ch10Time ch10_time_;
 
    public:
     const Ch10PacketType& current_pkt_type;
     Ch10Packet(BinBuff* binbuff, Ch10Context* context, std::vector<std::string>& tmats_vec)
-        : tmats_vec_(tmats_vec), ch10_time_(), secondary_hdr_time_ns_(0), bb_(binbuff), ctx_(context), data_ptr_(nullptr), bb_response_(0), status_(Ch10Status::OK), temp_pkt_size_(0), pkt_type_(Ch10PacketType::NONE), current_pkt_type(pkt_type_), header_(context), tmats_(context), tdp_component_(context), milstd1553f1_component_(context), videof0_component_(context), ethernetf0_component_(context)
+        : tmats_vec_(tmats_vec), ch10_time_(), secondary_hdr_time_ns_(0), bb_(binbuff), ctx_(context), data_ptr_(nullptr), bb_response_(0), status_(Ch10Status::OK), temp_pkt_size_(0), pkt_type_(Ch10PacketType::NONE), current_pkt_type(pkt_type_), header_(context), tmats_(context), tdp_component_(context), milstd1553f1_component_(context), arinc429f0_component_(context), videof0_component_(context), ethernetf0_component_(context)
     {
         // Comment to disable pcap output.
         if (ctx_->IsConfigured())
@@ -88,7 +90,7 @@ class Ch10Packet
 
         status --> Ch10Status returned from Ch10PacketHeaderComponent::Parse()
 
-        pkt_size --> Size of ch10 packet as given by pkt_size field in the 
+        pkt_size --> Size of ch10 packet as given by pkt_size field in the
             Ch10PacketHeaderFmt.
 
     Return:
@@ -102,7 +104,7 @@ class Ch10Packet
     Ch10Status ManageHeaderParseStatus(const Ch10Status& status, const uint64_t& pkt_size);
 
     /*
-    Maintain the logic for Ch10PacketHeaderComponent::ParseSecondaryHeader 
+    Maintain the logic for Ch10PacketHeaderComponent::ParseSecondaryHeader
     status. Header
     parsing outcome has great impact on the next parsing steps. Encapsulate
     the logic for the various status possibilities in this function.
@@ -132,9 +134,9 @@ class Ch10Packet
     Args:
 
         byte_count --> Count of bytes to advance buffer and absolute position.
-                       Input data type is uint32_t because the most common use 
+                       Input data type is uint32_t because the most common use
                        of this function will be to advance by the packet size
-                       to move from the beginning of the current packet to the 
+                       to move from the beginning of the current packet to the
                        beginning of the next packet. This value is parsed out
                        the ch10 packet header as a type uint32_t. This will
                        avoid casting during the vast majority of calls.

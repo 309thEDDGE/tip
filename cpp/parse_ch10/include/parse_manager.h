@@ -98,7 +98,7 @@ class ParseManager
 		output_dir				--> Directory in which to place
 									parsed data
 		config					--> ParserConfigParams object which has
-									been pre-configured with data from 
+									been pre-configured with data from
 									the parser_conf.yaml file
 
 	Return:
@@ -111,12 +111,12 @@ class ParseManager
     /*
 	** High-level function which coordinates lower-level functions. Intended
 	** to be called by the user after Configure.
-	
+
 	Parse the ch10 file and record data to the configured file type.
 
 	Args:
 		config					--> ParserConfigParams object which has
-									been pre-configured with data from 
+									been pre-configured with data from
 									the parser_conf.yaml file
 
 	Return:
@@ -128,7 +128,7 @@ class ParseManager
     /*
 	**High-level function which coordinates lower-level functions. Intended
 	**to be called by the user after Parse.
-	
+
 	Finalize the parse process by recording metadata.
 
 	Args:
@@ -182,16 +182,32 @@ class ParseManager
                                    const ParserConfigParams& user_config);
 
     /*
+	Record metadata specific to ARINC 429 format 0
+
+	Args:
+		input_ch10_file_path	--> Ch10 file that was parsed
+		config					--> ParserConfigParams object which has
+									been pre-configured with data from
+									the parser_conf.yaml file
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
+	*/
+    bool RecordARINC429F0Metadata(ManagedPath input_ch10_file_path,
+                                   const ParserConfigParams& user_config);
+
+    /*
 	Initialize parameters in the relevant WorkerConfig object in preparation
 	for parsing by a worker.
 
 	Args:
 		worker_config		--> WorkerConfig object which will be configured
 								for the relevant ParseWorker
-		worker_index		--> Index of the objects in worker_vecs_, threads_vec_, 
+		worker_index		--> Index of the objects in worker_vecs_, threads_vec_,
 								and worker_config_vec_ which are being configured
 								for parsing
-		worker_count		--> Total count of workers, also equal to .size() of 
+		worker_count		--> Total count of workers, also equal to .size() of
 								worker_vecs_, threads_vec_, and worker_config_vec_
 		read_pos			--> Position in bytes from which ch10 is read into
 								the buffer in preparation for parsing
@@ -202,11 +218,11 @@ class ParseManager
 								be read for this worker to consume
 		ch10_input_stream	--> Initialized input stream for the ch10 file to
 								be parsed
-		actual_read_size	--> Output variable to hold the size of bytes actually 
+		actual_read_size	--> Output variable to hold the size of bytes actually
 								read into the buffer
 		output_file_path_vec--> Output file path for each configured Ch10PacketType
 		packet_type_config_map--> Map of Ch10PacketType to boolean. True = enabled,
-								  False = disabled. This map is created from the 
+								  False = disabled. This map is created from the
 								  'ch10_packet_type' map in the parse_conf.yaml.
 
 	Return:
@@ -227,10 +243,10 @@ class ParseManager
 	Args:
 		worker_config		--> WorkerConfig object which will be configured
 								for the relevant ParseWorker
-		worker_index		--> Index of the objects in worker_vecs_, threads_vec_, 
+		worker_index		--> Index of the objects in worker_vecs_, threads_vec_,
 								and worker_config_vec_ which are being configured
 								for parsing
-		append_read_size	--> Size of chunk in bytes of ch10 to parse for each 
+		append_read_size	--> Size of chunk in bytes of ch10 to parse for each
 								append-mode worker
 
 	Return:
@@ -250,7 +266,7 @@ class ParseManager
 	Args:
 		append_mode			--> True if append_mode workers are to be started,
 								false otherwise
-		parse_worker_ptr	--> Pointer to ParseWorker object in which to 
+		parse_worker_ptr	--> Pointer to ParseWorker object in which to
 								parse the chunk indicated by other args to this
 								function
 		worker_thread		--> Thread in which to execute the ParseWorker
@@ -296,27 +312,27 @@ class ParseManager
     /*
 	Start workers in a queue in quantity up to the user-configured thread
 	count. Wait for available threads and start additional workers until
-	worker_count workers have run their course. Differentiate between 
+	worker_count workers have run their course. Differentiate between
 	first-pass and append-mode workers.
 
 	Args:
 		append_mode			--> True if append_mode workers are to be started,
 								false otherwise
-		ch10_input_stream	--> Initialized input stream for the ch10 file to 
+		ch10_input_stream	--> Initialized input stream for the ch10 file to
 								be parsed
 		worker_vec			--> Vector of ParseWorker pointers, each of which
-								parse a chunk of the ch10. 
+								parse a chunk of the ch10.
 		active_workers_vec	--> Track the index of active workers
 		worker_config_vec	--> Worker configuration objects which are associated
 								by index to worker_vec ParseWorkers. Must have size()
 								equal to worker_vec.size().
 		effective_worker_count> Maximum count of workers to start. Useful for
-								append_mode = true, in which case there is one 
-								fewer worker because the last worker reached the 
+								append_mode = true, in which case there is one
+								fewer worker because the last worker reached the
 								end of the file so there is no append mode.
-		read_size			--> Size of chunk in bytes of ch10 to parse for each 
+		read_size			--> Size of chunk in bytes of ch10 to parse for each
 								first-pass worker
-		append_read_size	--> Size of chunk in bytes of ch10 to parse for each 
+		append_read_size	--> Size of chunk in bytes of ch10 to parse for each
 								append-mode worker
 		total_size			--> Total size of the ch10 in bytes
 		output_file_path_vec--> Vector of maps in which the index in
@@ -329,7 +345,7 @@ class ParseManager
 		tmats_vec			--> Vector of strings into which workers will push
 								TMATS matter
 		user_config			--> ParserConfigParams object which has been
-								pre-configured with data from the 
+								pre-configured with data from the
 								parser_conf.yaml file
 
 	Return:
@@ -363,7 +379,7 @@ class ParseManager
 								equal to worker_vec.size().
 	threads_vec				--> Vector of std::thread objects. Must have size()
 								equal to worker_vec.size().
-	worker_shift_wait		--> Main thread sleep duration in loop after 
+	worker_shift_wait		--> Main thread sleep duration in loop after
 								checking for any completed workers, millisecond
 
 	Return:
@@ -380,8 +396,8 @@ class ParseManager
 	Convert the ch10_packet_type configuration map that is read from the
 	parse_conf.yaml as a map<std::string, std::string> to a map<Ch10PacketType, bool>.
 
-	Args: 
-		input_map	--> map<string, string> of the raw ch10_packet_type data 
+	Args:
+		input_map	--> map<string, string> of the raw ch10_packet_type data
 						structure found in the parse_conf.yaml file
 		output_map	--> map<Ch10PacketType, bool> passed by reference
 
@@ -396,20 +412,20 @@ class ParseManager
 	the clutter that this code introduces.
 
 	Args:
-		pkt_type_config_map	--> Input map of Ch10PacketType to bool that 
+		pkt_type_config_map	--> Input map of Ch10PacketType to bool that
 								represents the enable state of ch10 packet types
 	*/
     void LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map);
 
     /*
-	Create and verify output directories for enabled ch10 packet types. 
+	Create and verify output directories for enabled ch10 packet types.
 
 	Args:
-		output_dir			--> ManagedPath object giving the output directory into 
+		output_dir			--> ManagedPath object giving the output directory into
 								which packet type-specific dirs will be created
 		base_file_name		--> ManagedPath object with the base file name on which
-								to build the output directory name. May be a complete 
-								path to a file, in which case the parent path will be 
+								to build the output directory name. May be a complete
+								path to a file, in which case the parent path will be
 								stripped and only the file name used, or a file name
 								only.
 		packet_enabled_map	--> Map of Ch10PacketType to boolean. True = enabled,
@@ -417,7 +433,7 @@ class ParseManager
 		append_str_map		--> Map of Ch10PacketType to string. The mapped string is
 								appended to the base_file_name prior and ought to
 								include an extension if necessary, such as ".parquet"
-								in the case of Parquet files. Map must contain at 
+								in the case of Parquet files. Map must contain at
 								least all of the keys in the packet_enabled_map which
 								are also mapped to true.
 		pkt_type_output_dir_map --> Map of Ch10PacketType to specific output directory,
@@ -438,11 +454,11 @@ class ParseManager
 	Generate a vector of maps of Ch10PacketType to ManagedPath. The path object
 	is a file path to which data for the given Ch10PacketType
 	ought to be written by the worker associated with the index of the vector
-	from which the map was retrieved. 
+	from which the map was retrieved.
 
 	Args:
 		total_worker_count			--> Count of workers expected to be
-										created to parse according to 
+										created to parse according to
 										configuration settings
 		pkt_type_output_dir_map		--> Map of Ch10PacketType to base output
 										directory to which files associated
@@ -467,7 +483,7 @@ class ParseManager
 
 	Args:
 		user_config			--> ParserConfigParams object which has been
-								pre-configured with data from the 
+								pre-configured with data from the
 								parser_conf.yaml file
 		ch10_file_size		--> Total size of the ch10 in bytes
 
@@ -479,22 +495,22 @@ class ParseManager
                            const uint64_t& ch10_file_size);
 
     /*
-	Combine channel ID to LRU address maps from vector of maps, 
+	Combine channel ID to LRU address maps from vector of maps,
 	where each map in the vector corresponds to a map retrieved from
-	a worker. The output map is used in another function where it is 
+	a worker. The output map is used in another function where it is
 	recorded to metadata.
 
 	Args:
-		output_chanid_lruaddr_map	--> Output map, ch10 channel ID to set of 
-										all LRU addresses observed on the bus 
+		output_chanid_lruaddr_map	--> Output map, ch10 channel ID to set of
+										all LRU addresses observed on the bus
 										identifed by the given channel ID
-		chanid_lruaddr1_maps		--> Vector of maps of channel ID to set of 
+		chanid_lruaddr1_maps		--> Vector of maps of channel ID to set of
 										LRU addresses associated with the channel
 										ID for the TX/RX command word
 		chanid_lruaddr2_maps		--> Vector of maps of channel ID to set of
 										LRU addresses associated with the channel
-										ID for the RX command word for RT to RT 
-										messages. Must have size() equal to 
+										ID for the RX command word for RT to RT
+										messages. Must have size() equal to
 										chanid_lruaddr1_maps.
 
 	Return:
@@ -509,26 +525,26 @@ class ParseManager
     /*
 	Combine channel ID to command words maps from a vector of maps,
 	where each map in the vector corresponds to a map of observed channel ID
-	to command words retrieved from a worker. The output map is used in 
-	another function where it is recorded to metadata. 
+	to command words retrieved from a worker. The output map is used in
+	another function where it is recorded to metadata.
 
 	Args:
 	output_chanid_commwords_map	--> Output map, ch10 channel ID to a vector
-									of vectors. Each final vector must have size() 
-									equal to 2, where the first entry is TX/RX 
-									command word and second entry is the RX 
-									command word in the case of RT to RT type 
-									messages. So each channel ID is mapped to a 
-									vector of command words that were observed 
-									on the bus during parsing. The bus is not 
-									known at this time, only the channel ID 
+									of vectors. Each final vector must have size()
+									equal to 2, where the first entry is TX/RX
+									command word and second entry is the RX
+									command word in the case of RT to RT type
+									messages. So each channel ID is mapped to a
+									vector of command words that were observed
+									on the bus during parsing. The bus is not
+									known at this time, only the channel ID
 									which represents a specific bus.
-	chanid_commwords_maps		--> Vector of maps of channel ID to set of 
+	chanid_commwords_maps		--> Vector of maps of channel ID to set of
 									uint32_t value which is: commword1 << 16
 									+ commword2, where commword1 will be placed
 									in the first position of the size-2 vector
 									mentioned in the argument above, and
-									commword2 will be placed in the second 
+									commword2 will be placed in the second
 									position.
 
 	Return:
@@ -538,6 +554,49 @@ class ParseManager
     bool CombineChannelIDToCommandWordsMetadata(
         std::map<uint32_t, std::vector<std::vector<uint32_t>>>& output_chanid_commwords_map,
         const std::vector<std::map<uint32_t, std::set<uint32_t>>>& chanid_commwords_maps);
+
+    /*
+	Combine channel ID to 429 labels maps from a vector of maps,
+	where each map in the vector corresponds to a map of observed channel ID
+	to 429 labels retrieved from a worker. The output map is used in
+	another function where it is recorded to metadata.
+
+	Args:
+	output_chanid_labels_map	--> Output map, ch10 channel ID to set of
+									all 429 Labels observed on the bus
+									identifed by the given channel ID.
+	chanid_labels_maps  		--> Vector of maps of channel ID to set of ARINC
+									429 labels associated with the channel ID.
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
+	*/
+    bool CombineChannelIDToLabelsMetadata(
+        std::map<uint32_t, std::set<uint16_t>>& output_chanid_labels_map,
+        const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_labels_maps);
+
+    /*
+	Combine channel ID to 429 IPDH Bus Numbers maps from a vector of maps,
+	where each map in the vector corresponds to a map of observed channel ID
+	to 429 IPDH Bus Numbers retrieved from a worker. The output map is used in
+	another function where it is recorded to metadata.
+
+	Args:
+	output_chanid_busnumbers_map	--> Output map,ch10 channel ID to set of
+									all IPDH Bus Numbers observed on the bus
+									identifed by the given channel ID.
+	chanid_busnumbers_maps		--> Vector of maps of channel ID to set of ARINC
+									429 IPDH Bus Numbers associated with the channel
+									ID.
+
+	Return:
+		True if no errors, false if errors occur and
+		execution ought to stop.
+	*/
+    bool CombineChannelIDToBusNumbersMetadata(
+        std::map<uint32_t, std::set<uint16_t>>&  output_chanid_busnumbers_map,
+        const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_busnumbers_maps);
 
     /*
 	Combine the channel ID to minimum timestamps map from each worker, already
