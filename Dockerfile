@@ -8,6 +8,9 @@ ENV ARTIFACT_DIR=".ci_artifacts/build-metadata/build-artifacts"
 WORKDIR /home/jovyan
 
 COPY --chown=jovyan:jovyan $ARTIFACT_DIR/local_channel.tar .
+COPY --chown=jovyan:jovyan ./conf /home/jovyan/
+COPY --chown=jovyan:jovyan ./tip_scripts /home/jovyan/
+
 
 RUN tar xvf local_channel.tar --strip-components=2 && \
     ls -la && \
