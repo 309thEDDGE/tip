@@ -110,22 +110,22 @@ class DTSDTS429
 												values as sequences of pairs of
 												429 label and IPDH bus number.
 
-		output_suppl_busname_to_msg_key_map:	Output maps the bus name to a set
-												of message keys, where a message
+		output_suppl_busname_to_wrd_key_map:	Output maps the bus name to a set
+												of 429 wrod keys, where a word
 												key is an integer created from a
-												uint16_t transmit command word
-												upshifted by 16 bits added to a
-												uint16_t receive command word.
+												uint8_t ARINC 429 word label
+												upshifted by 8 bits added to a
+												uint8_t bus number from the IPDH.
 
 		return:									True if node is empty or has valid
 												structure (maps of strings to
 												sequences of sequences of two
-												uint16_t values) and false otherwise.
+												uint8_t values) and false otherwise.
 												Output map is empty if node is empty
 												or return value is false.
 	*/
     bool FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_node,
-                                     std::map<std::string, std::set<uint32_t>>& output_suppl_busname_to_msg_key_map);
+                                     std::map<std::string, std::set<uint32_t>>& output_suppl_busname_to_wrd_key_map);
 };
 
 #endif
