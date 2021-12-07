@@ -5,6 +5,7 @@ from tip_scripts.e2e_validation.directory_validation import DirectoryValidation
 from tip_scripts.e2e_validation.pqpq_translated1553_validation import PqPqTranslated1553Validation
 if config.COMPARE_YAML:
     from tip_scripts.e2e_validation.ymlyml_validation import YmlYmlValidation
+    from tip_scripts.e2e_validation.yaml_compare import exclude_from_comparison_funcs as exclude_funcs
 from tip_scripts.e2e_validation.txttxt_validation import TxtTxtValidation
 
 class PqPqTranslated1553DirValidation(DirectoryValidation):
@@ -15,38 +16,7 @@ class PqPqTranslated1553DirValidation(DirectoryValidation):
         self.pqcompare_exec_path = pqcompare_exec_path
         self.bincompare_exec_path = bincompare_exec_path
 
-        #if self.ready_to_validate:
         self._create_validation_objects()
-
-    #def _validate_top_level_dirs(self):
-
-    #    # Do both truth and test dirs exist?
-    #    if not os.path.isdir(self.truth_dir_path):
-    #        print('Top level truth dir does not exist: {:s}'.format(self.truth_dir_path))
-    #        self.top_level_dirs_validated = False
-    #        return
-       
-    #    if not os.path.isdir(self.test_dir_path):
-    #        print('Top level test dir does not exist: {:s}'.format(self.truth_dir_path))
-    #        self.top_level_dirs_validated = False
-    #        return
-
-    #    # Do both truth and test dirs contain files?
-    #    #self.truth_dir_list = [os.path.join(self.truth_dir, x) for x in os.listdir(self.truth_dir_path)]
-    #    self.truth_dir_list = os.listdir(self.truth_dir_path)
-    #    if len(self.truth_dir_list) == 0:
-    #        print('Top level truth dir is empty: {:s}'.format(self.truth_dir_path))
-    #        self.top_level_dirs_validated = False
-    #        return
-
-    #    #self.test_dir_list = [os.path.join(self.test_dir, x) for x in os.listdir(self.test_dir_path)]
-    #    self.test_dir_list = os.listdir(self.test_dir_path)
-    #    if len(self.test_dir_list) == 0:
-    #        print('Top level test dir is empty: {:s}'.format(self.test_dir_path))
-    #        self.top_level_dirs_validated = False
-    #        return
-
-    #    self.top_level_dirs_validated = True
 
     def _create_validation_objects(self):
 
@@ -81,7 +51,8 @@ class PqPqTranslated1553DirValidation(DirectoryValidation):
                     if config.COMPARE_YAML:
                         self.validation_objects.append(YmlYmlValidation(
                             str(truth_dir / truth_md_path),
-                            str(test_dir / truth_md_path)))
+                            str(test_dir / truth_md_path),
+                            exclude_func=exclude_funcs.translated_1553f1))
                 elif truth_md_path.suffix in ['.txt']:
                     self.validation_objects.append(TxtTxtValidation(
                         str(truth_dir / truth_md_path),

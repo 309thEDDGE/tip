@@ -1385,7 +1385,7 @@ TEST_F(EmitterTest, EmitKeyValuePairStrings)
     std::string val = "GitLab Project Management Demo";
     it_.EmitKeyValuePair(out_, key, val);
 
-    std::string expect = "the_key_is: GitLab Project Management Demo\n";
+    std::string expect = "the_key_is: GitLab Project Management Demo";
     ExpectEmit(expect, out_);
 }
 
@@ -1395,7 +1395,7 @@ TEST_F(EmitterTest, EmitKeyValuePairStringInt)
     int val = 1232;
     it_.EmitKeyValuePair(out_, key, val);
 
-    std::string expect = "integer for use: 1232\n";
+    std::string expect = "integer for use: 1232";
     ExpectEmit(expect, out_);
 }
 
@@ -1405,7 +1405,7 @@ TEST_F(EmitterTest, EmitKeyValuePairIntString)
     int key = 1232;
     it_.EmitKeyValuePair(out_, key, val);
 
-    std::string expect = "1232: integer for use\n";
+    std::string expect = "1232: integer for use";
     ExpectEmit(expect, out_);
 }
 
@@ -1415,7 +1415,7 @@ TEST_F(EmitterTest, EmitKeyValuePairIntInt)
     int val = -32;
     it_.EmitKeyValuePair(out_, key, val);
 
-    std::string expect = "80: -32\n";
+    std::string expect = "80: -32";
     ExpectEmit(expect, out_);
 }
 
@@ -1425,7 +1425,7 @@ TEST_F(EmitterTest, EmitSimpleMapStrings)
         {{"1", "big"}, {"22", "ten"}, {"fifty", "proton"}};
     it_.EmitSimpleMap(out_, test_map, "my_map");
 
-    std::string expect = "my_map:\n  1: big\n  22: ten\n  fifty: proton\n";
+    std::string expect = "my_map:\n  1: big\n  22: ten\n  fifty: proton";
     ExpectEmit(expect, out_);
 }
 
@@ -1437,7 +1437,7 @@ TEST_F(EmitterTest, EmitSimpleMapIntString)
 
     // Note the order of expected. Maps sort based on key type, apparently
     // in ascending order for int.
-    std::string expect = "my map:\n  -50: proton\n  1: big\n  22: ten\n";
+    std::string expect = "my map:\n  -50: proton\n  1: big\n  22: ten";
     ExpectEmit(expect, out_);
 }
 
@@ -1449,7 +1449,7 @@ TEST_F(EmitterTest, EmitSimpleMapIntInt)
 
     // Note the order of expected. Maps sort based on key type, apparently
     // in ascending order for int.
-    std::string expect = "my map:\n  -50: 1380\n  1: 55\n  22: 10\n";
+    std::string expect = "my map:\n  -50: 1380\n  1: 55\n  22: 10";
     ExpectEmit(expect, out_);
 }
 
@@ -1469,7 +1469,7 @@ TEST_F(EmitterTest, EmitCompoundMapStringString)
 
     std::string expect =
         "my_map:\n  1: [big, daddy]\n  22: [hi, speed, ten]\n  "
-        "fifty: [bunch, map, proton]\n";
+        "fifty: [bunch, map, proton]";
     ExpectEmit(expect, out_);
 
     // Create new emitter for second map.
@@ -1501,7 +1501,7 @@ TEST_F(EmitterTest, EmitCompoundMapIntInt)
 
     std::string expect =
         "the other map:\n  -33: [3, 4, 5]\n  22: [-6, -2, 43]\n  "
-        "634: [-1023, 1023, 5000]\n";
+        "634: [-1023, 1023, 5000]";
     ExpectEmit(expect, out_);
 
     // Create new emitter for second map.

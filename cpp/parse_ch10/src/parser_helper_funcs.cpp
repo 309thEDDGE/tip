@@ -139,7 +139,8 @@ bool ValidateConfig(ParserConfigParams& config, const ManagedPath& conf_file_pat
 }
 
 bool StartParse(ManagedPath input_path, ManagedPath output_path,
-                ParserConfigParams config, double& duration)
+                ParserConfigParams config, double& duration, 
+                const ProvenanceData& prov_data)
 {
     // Get start time.
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -156,7 +157,7 @@ bool StartParse(ManagedPath input_path, ManagedPath output_path,
         return false;
 
     // Record metadata
-    if (!pm.RecordMetadata(input_path, config))
+    if (!pm.RecordMetadata(input_path, config, prov_data))
         return false;
 
     // Get stop time and print duration.

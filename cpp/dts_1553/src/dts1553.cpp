@@ -12,21 +12,21 @@ bool DTS1553::IngestLines(const ManagedPath& dts_path, const std::vector<std::st
     // with intended object. Otherwise pass all lines to ICDData.
     if (is_yaml)
     {
-        printf("DTS1553::IngestLines(): Handling yaml file data\n");
+        SPDLOG_INFO("DTS1553: Handling yaml file data");
 
         // Obtain each DTS1553 component as a yaml node.
         YAML::Node msg_defs;
         YAML::Node suppl_busmap;
         if (!ProcessLinesAsYaml(lines, msg_defs, suppl_busmap))
         {
-            printf("DTS1553::IngestLines(): Process yaml lines failure!\n");
+            SPDLOG_ERROR("DTS1553: Process yaml lines failure!");
             return false;
         }
 
         if (!icd_data_.PrepareICDQuery(msg_defs, msg_name_substitutions,
                                        elem_name_substitutions))
         {
-            printf("DTS1553::IngestLines(): PrepareICDQuery failure!\n");
+            SPDLOG_ERROR("DTS1553: PrepareICDQuery failure!");
             return false;
         }
 
@@ -34,16 +34,16 @@ bool DTS1553::IngestLines(const ManagedPath& dts_path, const std::vector<std::st
         // than zero, fill the private member map.
         if (!FillSupplBusNameToMsgKeyMap(suppl_busmap, suppl_bus_name_to_message_key_map_))
         {
-            printf("DTS1553::IngestLines(): Failed to generate bus name to message key map!\n");
+            SPDLOG_ERROR("DTS1553: Failed to generate bus name to message key map!");
             return false;
         }
     }
     else
     {
-        printf("DTS1553::IngestLines(): Handling text/csv file data\n");
+        SPDLOG_INFO("DTS1553: Handling text/csv file data");
         if (!icd_data_.PrepareICDQuery(lines))
         {
-            printf("DTS1553::IngestLines(): Failed to parse input lines!\n");
+            SPDLOG_ERROR("DTS1553: Failed to parse input lines!");
             return false;
         }
     }
@@ -58,7 +58,7 @@ bool DTS1553::ProcessLinesAsYaml(const std::vector<std::string>& lines,
     // Bad if there are zero lines.
     if (lines.size() == 0)
     {
-        printf("DTS1553::ProcessLinesAsYaml(): Input lines vector has size 0\n");
+        SPDLOG_WARN("DTS1553: Input lines vector has size 0");
         return false;
     }
 
@@ -78,14 +78,14 @@ bool DTS1553::ProcessLinesAsYaml(const std::vector<std::string>& lines,
     // Root node must have at least one entry.
     if (root_node.size() == 0)
     {
-        printf("DTS1553::ProcessLinesAsYaml(): Root note has size 0\n");
+        SPDLOG_WARN("DTS1553: Root note has size 0");
         return false;
     }
 
     // Root node must be a map because all root-level items are maps.
     if (!root_node.IsMap())
     {
-        printf("DTS1553::ProcessLinesAsYaml(): Root node is not a map\n");
+        SPDLOG_ERROR("DTS1553: Root node is not a map");
         return false;
     }
 
@@ -112,7 +112,7 @@ bool DTS1553::ProcessLinesAsYaml(const std::vector<std::string>& lines,
 
     if (!message_definitions_exist)
     {
-        printf("DTS1553::ProcessLinesAsYaml(): Message definitions node not present!\n");
+        SPDLOG_ERROR("DTS1553: Message definitions node not present!");
         return false;
     }
 
@@ -128,7 +128,7 @@ bool DTS1553::FillSupplBusNameToMsgKeyMap(const YAML::Node& suppl_busmap_comm_wo
     // Root node must be a map.
     if (!suppl_busmap_comm_words_node.IsMap())
     {
-        printf("DTS1553::FillSupplBusNameToMsgKeyMap(): Root node is not a map\n");
+        SPDLOG_ERROR("DTS1553: Root node is not a map");
         return false;
     }
 
@@ -142,7 +142,7 @@ bool DTS1553::FillSupplBusNameToMsgKeyMap(const YAML::Node& suppl_busmap_comm_wo
         // Fail if the value part of each mapping is not a sequence.
         if (!busname_map->second.IsSequence())
         {
-            printf("DTS1553::FillSupplBusNameToMsgKeyMap(): Value of mapping is not a sequence\n");
+            SPDLOG_ERROR("DTS1553: Value of mapping is not a sequence");
             return false;
         }
 
@@ -154,9 +154,7 @@ bool DTS1553::FillSupplBusNameToMsgKeyMap(const YAML::Node& suppl_busmap_comm_wo
             // Fail if the item in the sequence is itself not a sequence.
             if (!comm_words_seq[comm_words_set_ind].IsSequence())
             {
-                printf(
-                    "DTS1553::FillSupplBusNameToMsgKeyMap(): "
-                    "Sequence item is not itself a sequence\n");
+                SPDLOG_ERROR("DTS1553: Sequence item is not itself a sequence");
                 return false;
             }
 
@@ -165,9 +163,7 @@ bool DTS1553::FillSupplBusNameToMsgKeyMap(const YAML::Node& suppl_busmap_comm_wo
             // Command words sequence must have two values.
             if (tx_rx_comm_words.size() != 2)
             {
-                printf(
-                    "DTS1553::FillSupplBusNameToMsgKeyMap(): "
-                    "Command words sequence does not have exactly two values\n");
+                printf("DTS1553: Command words sequence does not have exactly two values");
                 return false;
             }
 

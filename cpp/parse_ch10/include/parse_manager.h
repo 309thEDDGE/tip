@@ -23,9 +23,11 @@
 #include "parse_text.h"
 #include "parse_worker.h"
 #include "parser_config_params.h"
-#include "metadata.h"
 #include "tmats_parser.h"
 #include "managed_path.h"
+#include "provenance_data.h"
+#include "tip_md_document.h"
+#include "sha256_tools.h"
 #include "worker_config.h"
 #include "spdlog/spdlog.h"
 #include "ch10_packet_type.h"
@@ -136,17 +138,20 @@ class ParseManager
 		config					--> ParserConfigParams object which has
 									been pre-configured with data from
 									the parser_conf.yaml file
+		prov_data				--> Object of ProvenanceData that contains
+									pre-filled provenance data
 
 	Return:
 		True if no errors, false if errors occur and
 		execution ought to stop.
 	*/
     bool RecordMetadata(ManagedPath input_ch10_file_path,
-                        const ParserConfigParams& user_config);
+                        const ParserConfigParams& user_config,
+						const ProvenanceData& prov_data);
 
     //////////////////////////////////////////////////////////////////////////////
     // Functions below are considered to be internal functions. They
-    // are made public to help facilitate testing.
+    // are made public to facilitate testing.
     //////////////////////////////////////////////////////////////////////////////
 
     /*
@@ -157,13 +162,24 @@ class ParseManager
 		config					--> ParserConfigParams object which has
 									been pre-configured with data from
 									the parser_conf.yaml file
+		prov_data				--> Object of ProvenanceData that contains
+									pre-filled provenance data
+		tmats_chanid_source		--> Prepared TMATS channel ID to source map
+		tmats_chanid_type		--> Prepared TMATS channel ID to type map
+		packet_type_label		--> See ch10_packet_type.h
+		md_file_path			--> Output directory and file name for metadata
 
 	Return:
 		True if no errors, false if errors occur and
 		execution ought to stop.
 	*/
     bool RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
-                                    const ParserConfigParams& user_config);
+                                    const ParserConfigParams& user_config,
+									const ProvenanceData& prov_data,
+									const std::map<std::string, std::string> tmats_chanid_source,
+									const std::map<std::string, std::string> tmats_chanid_type,
+									const std::string& packet_type_label,
+									const ManagedPath& md_file_path);
 
     /*
 	Record metadata specific to Video data format 0
@@ -173,13 +189,60 @@ class ParseManager
 		config					--> ParserConfigParams object which has
 									been pre-configured with data from
 									the parser_conf.yaml file
+		prov_data				--> Object of ProvenanceData that contains
+									pre-filled provenance data
+		tmats_chanid_source		--> Prepared TMATS channel ID to source map
+		tmats_chanid_type		--> Prepared TMATS channel ID to type map
+		packet_type_label		--> See ch10_packet_type.h
+		md_file_path			--> Output directory and file name for metadata
 
 	Return:
 		True if no errors, false if errors occur and
 		execution ought to stop.
 	*/
     bool RecordVideoDataF0Metadata(ManagedPath input_ch10_file_path,
-                                   const ParserConfigParams& user_config);
+                                   const ParserConfigParams& user_config,
+								   const ProvenanceData& prov_data,
+							       const std::map<std::string, std::string> tmats_chanid_source,
+								   const std::map<std::string, std::string> tmats_chanid_type,
+								   const std::string& packet_type_label,
+								   const ManagedPath& md_file_path);
+
+	
+
+	/*
+	Add provenance data to metadata output.
+
+	Args:
+		md						--> TIPMDDocument object to which metadata 
+									will be added
+		input_ch10_file_path	--> Path to ch10 file which was parsed
+		packet_type_label		--> See ch10_packet_type.h
+		prov_data				--> Object of ProvenanceData that contains
+									pre-filled provenance data
+							
+	Return:
+		True if no problems occur; false otherwise.
+	*/
+	bool RecordProvenanceData(TIPMDDocument& md, const ManagedPath& input_ch10_file_path,
+		const std::string& packet_type_label, const ProvenanceData& prov_data);
+
+
+
+	/*
+	Add user configuration data to metadata output.
+
+	Args:
+		config_category			--> MDCategoryMap to which User configuration
+									metadata will be added  
+		user_config				--> ParserConfigParams object which has
+									been configured with data from the
+									user config file
+	*/
+	void RecordUserConfigData(std::shared_ptr<MDCategoryMap> config_category, 
+		const ParserConfigParams& user_config);
+
+
 
     /*
 	Record metadata specific to ARINC 429 format 0
@@ -189,13 +252,25 @@ class ParseManager
 		config					--> ParserConfigParams object which has
 									been pre-configured with data from
 									the parser_conf.yaml file
+		prov_data				--> Object of ProvenanceData that contains
+									pre-filled provenance data
+		tmats_chanid_source		--> Prepared TMATS channel ID to source map
+		tmats_chanid_type		--> Prepared TMATS channel ID to type map
+		packet_type_label		--> See ch10_packet_type.h
+		md_file_path			--> Output directory and file name for metadata
 
 	Return:
 		True if no errors, false if errors occur and
 		execution ought to stop.
 	*/
     bool RecordARINC429F0Metadata(ManagedPath input_ch10_file_path,
-                                   const ParserConfigParams& user_config);
+                                   const ParserConfigParams& user_config,
+								   const ProvenanceData& prov_data,
+							       const std::map<std::string, std::string> tmats_chanid_source,
+								   const std::map<std::string, std::string> tmats_chanid_type,
+								   const std::string& packet_type_label,
+								   const ManagedPath& md_file_path);
+
 
     /*
 	Initialize parameters in the relevant WorkerConfig object in preparation

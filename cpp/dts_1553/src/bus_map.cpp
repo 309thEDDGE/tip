@@ -47,17 +47,17 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
     tmats_chanid_to_source_map_ = temp;
 
     // Print out maps
-    printf("\nChannel IDs to Map----\n");
+    SPDLOG_INFO("----Channel IDs to Map----");
     for (auto channel_id : channel_ids_)
     {
-        printf("%i\n", channel_id);
+        SPDLOG_INFO("{:d}", channel_id);
     }
-    printf("----\n");
 
     // Print TMATS map before tmats busname corrections
-    iterable_tools_.PrintMapWithHeader_KeyToValue<uint64_t, std::string>(tmats_chanid_to_source_map_,
+    std::string print_matter = iterable_tools_.PrintMapWithHeader_KeyToValue<uint64_t, std::string>(tmats_chanid_to_source_map_,
                                                                          std::vector<std::string>({"chID", "Bus"}),
                                                                          "Original TMATS Map");
+    SPDLOG_INFO("{:s}", print_matter);
 
     if (tmats_chanid_to_source_map_.empty())
         tmats_present_ = false;
@@ -72,10 +72,10 @@ void BusMap::InitializeMaps(const std::unordered_map<uint64_t, std::set<std::str
     }
 
     // Print TMATS map after tmats busname corrections
-    iterable_tools_.PrintMapWithHeader_KeyToValue<uint64_t, std::string>(tmats_chanid_to_source_map_,
+    print_matter = iterable_tools_.PrintMapWithHeader_KeyToValue<uint64_t, std::string>(tmats_chanid_to_source_map_,
                                                                          std::vector<std::string>({"chID", "Bus"}),
                                                                          "TMATS Map After Corrections");
-
+    SPDLOG_INFO("{:s}", print_matter);
     // convert all bus exclusion elements to upper case
     // to remove case sensitivity
     for (auto bus : bus_exclusions)
@@ -145,7 +145,7 @@ std::string BusMap::PrintFinalMap()
 
     ss << iterable_tools_.GetPrintBar() << "\n\n";
 
-    printf("%s", ss.str().c_str());
+    SPDLOG_INFO("{:s}", ss.str());
     return ss.str();
 }
 
@@ -232,8 +232,7 @@ bool BusMap::SubmitMessages(
     // ensure vectors are of the same size
     if (transmit_cmd.size() != recieve_cmd.size() || transmit_cmd.size() != channel_ids.size())
     {
-        printf("Vectors must be of the same length in");
-        printf(" BusMap::SubmitMessages\n");
+        SPDLOG_INFO("Vectors must be of the same length in");
         return false;
     }
 
@@ -248,8 +247,7 @@ bool BusMap::SubmitMessages(
         count = submission_size;
         if (count > transmit_cmd.size())
         {
-            printf("message_count must be less than vector sizes ");
-            printf("in BusMap::SubmitMessages\n");
+            SPDLOG_INFO("message_count must be less than vector sizes ");
             return false;
         }
     }
@@ -560,23 +558,21 @@ bool BusMap::Finalize(std::map<uint64_t, std::string>& final_map,
 void BusMap::PrintVoteMap()
 {
     // print vote map
-    printf("\nChannel ID votes---\n");
+    SPDLOG_INFO("---Channel ID votes---");
     for (std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>>::iterator
              it = votes_.begin();
          it != votes_.end();
          ++it)
     {
-        printf("\n");
-        printf("Channel ID %i:\n", it->first);
+        SPDLOG_INFO("Channel ID {:d}:", it->first);
         for (std::unordered_map<std::string, uint64_t>::iterator
                  it2 = it->second.begin();
              it2 != it->second.end();
              ++it2)
         {
-            printf("%s=\t%i\n", it2->first.c_str(), it2->second);
+            SPDLOG_INFO("{:s}=\t{:d}", it2->first, it2->second);
         }
     }
-    printf("---\n\n");
 }
 void BusMap::Print()
 {

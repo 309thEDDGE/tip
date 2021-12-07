@@ -19,7 +19,7 @@ set_target_properties(translate_tabular_1553
 )
 
 target_link_libraries(translate_tabular_1553
-  PUBLIC translate_tabular tiputil ch10_parquet dts_1553 yamlsv 
+  PUBLIC translate_tabular tiputil ch10_parquet dts_1553 yamlsv metadata 
   spdlog::spdlog 
 )
 

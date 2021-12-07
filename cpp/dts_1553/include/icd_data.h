@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
+#include "spdlog/spdlog.h"
 #include "icd_element.h"
 #include "parse_text.h"
 #include "uri_percent_encoding.h"
@@ -367,10 +368,8 @@ bool ICDData::GetMappedValueFromNode(const YAML::Node& node, std::string param_n
 {
     if (!YamlReader::GetMapNodeParameter(node, param_name, output))
     {
-        printf(
-            "ICDData::GetMappedValueFromNode: Error obtaining mapped value "
-            "with parameter name \"%s\"\n",
-            param_name.c_str());
+        SPDLOG_ERROR("Error obtaining mapped value with parameter name \"{:s}\"",
+            param_name);
         if (std::find(required_params.begin(), required_params.end(), param_name) != required_params.end())
             return false;
     }
@@ -387,10 +386,7 @@ bool ICDData::GetSequenceValuesFromNode(const YAML::Node& node, std::string para
     {
         if (!YamlReader::GetSequenceNodeVector(node[param_name], output))
         {
-            printf(
-                "ICDData::GetSequenceValuesFromNode: Error obtaining sequence from "
-                "\"%s\" key\n",
-                param_name.c_str());
+            SPDLOG_ERROR("Error obtaining sequence from \"{:s}\" key", param_name);
             return false;
         }
     }

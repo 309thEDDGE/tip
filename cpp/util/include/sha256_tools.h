@@ -46,4 +46,17 @@ Return:
 bool ComputeFileSHA256(const ManagedPath& input_file, std::string& sha256_value,
                        size_t byte_count = 0);
 
+
+
+/*
+Compute sha256 from string.
+
+Args:
+    input   --> String for which sha shall be computed
+
+Return:
+    sha256 value of input
+*/
+std::string Sha256(std::string input);
+
 #endif  // SHA256_TOOLS_H_

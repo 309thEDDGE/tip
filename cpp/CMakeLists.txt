@@ -14,10 +14,24 @@ set(parsech10_src_dir ${parsech10_lib_name}/${source_dir_name})
 set(parsech10_inc_dir ${parsech10_lib_name}/${include_dir_name})
 set(parsech10_main_dir ${parsech10_lib_name}/${main_dir_name})
 
-set(parserw_lib_name "parserw")
-set(parserw_dir_name "parser_rewrite")
-set(parserw_src_dir ${parserw_dir_name}/${source_dir_name}) # util/src
-set(parserw_inc_dir ${parserw_dir_name}/${include_dir_name})
+set(ch10comp_lib_name "ch10comp")
+set(ch10comp_dir_name "ch10_components")
+set(ch10comp_src_dir ${ch10comp_dir_name}/${source_dir_name}) # util/src
+set(ch10comp_inc_dir ${ch10comp_dir_name}/${include_dir_name})
+
+#########################################################
+#              common headers
+#########################################################
+# set(common_lib_name "common")
+# message(STATUS "Building lib: ")
+set(common_inc_dir "common/${include_dir_name}")
+# set(common_src_dir ${sha256_lib_name}/${source_dir_name})
+# add_library( STATIC
+        #     ${common_inc_dir}/ch10_packet_type.h 
+# )
+# target_include_directories( PUBLIC ${common_inc_dir})
+# target_compile_features( PUBLIC cxx_std_17)
+# set_target_properties( PROPERTIES LINKER_LANGUAGE CXX)
 
 #########################################################
 #              Build/link sha256 lib
@@ -50,6 +64,32 @@ target_compile_features(${pqctx_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${pqctx_lib_name} PUBLIC ${parquet_libs} ${linux_libs}
                       ${spdlog_lib_name})
 
+
+#########################################################
+#                   Build/link metadata lib
+#########################################################
+set(md_lib_name "metadata")
+set(md_src_dir ${md_lib_name}/${source_dir_name})
+set(md_inc_dir ${md_lib_name}/${include_dir_name})
+add_library(${md_lib_name} STATIC
+        ${md_inc_dir}/md_category.h ${md_src_dir}/md_category.cpp
+        ${md_inc_dir}/md_category_scalar.h ${md_src_dir}/md_category_scalar.cpp
+        ${md_inc_dir}/md_category_map.h ${md_src_dir}/md_category_map.cpp
+        ${md_inc_dir}/md_category_sequence.h ${md_src_dir}/md_category_sequence.cpp
+        ${md_inc_dir}/md_document.h ${md_src_dir}/md_document.cpp
+        ${md_inc_dir}/yaml_md_document.h ${md_src_dir}/yaml_md_document.cpp
+        ${md_inc_dir}/tip_md_document.h ${md_src_dir}/tip_md_document.cpp
+)
+target_include_directories(${md_lib_name} PUBLIC ${md_inc_dir}
+        ${yaml_inc_dir} ${spdlog_inc_dir}        
+)
+target_compile_features(${md_lib_name} PUBLIC cxx_std_17)
+target_link_libraries(${md_lib_name} PUBLIC 
+                      ${yaml_lib_name} 
+                      ${spdlog_lib_name}
+)
+
+
 #########################################################
 #                   Build/link util lib
 #########################################################
@@ -66,7 +106,6 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/user_input.cpp           ${util_inc_dir}/user_input.h
             ${util_src_dir}/yaml_reader.cpp          ${util_inc_dir}/yaml_reader.h
             ${util_src_dir}/tmats_parser.cpp         ${util_inc_dir}/tmats_parser.h
-            ${util_src_dir}/metadata.cpp             ${util_inc_dir}/metadata.h
             ${util_src_dir}/managed_path.cpp         ${util_inc_dir}/managed_path.h
             ${util_src_dir}/argument_validation.cpp  ${util_inc_dir}/argument_validation.h
             ${util_src_dir}/resource_limits.cpp      ${util_inc_dir}/resource_limits.h
@@ -74,15 +113,16 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/uri_percent_encoding.cpp ${util_inc_dir}/uri_percent_encoding.h
             ${util_src_dir}/stream_buffering.cpp     ${util_inc_dir}/stream_buffering.h
             ${util_src_dir}/sha256_tools.cpp         ${util_inc_dir}/sha256_tools.h
+            ${util_src_dir}/provenance_data.cpp      ${util_inc_dir}/provenance_data.h
  )
 
-target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir}
+target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} 
                            ${sha256_inc_dir}
                            ${yaml_inc_dir}
                            ${spdlog_inc_dir}
                            )
 target_compile_features(${util_lib_name} PUBLIC cxx_std_17)
-target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name}
+target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} 
                       ${linux_libs} ${sha256_lib_name} ${spdlog_lib_name}
                       )
 
@@ -102,7 +142,7 @@ add_library(${yamlsv_lib_name} STATIC
 target_include_directories(${yamlsv_lib_name} PUBLIC ${yamlsv_inc_dir} ${yaml_inc_dir}
                            ${util_inc_dir})
 target_compile_features(${yamlsv_lib_name} PUBLIC cxx_std_17)
-target_link_libraries(${yamlsv_lib_name} PUBLIC ${yaml_lib_name} ${util_lib_name})
+target_link_libraries(${yamlsv_lib_name} PUBLIC ${yaml_lib_name}  ${util_lib_name})
 
 #########################################################
 #      Build/link ethernet lib
@@ -144,7 +184,7 @@ target_include_directories(${ch10pq_lib_name} PUBLIC
                             ${pqctx_inc_dir}
                             ${eth_inc_dir}
                             ${parsech10_inc_dir} # Ch10 format headers.
-                            ${parserw_inc_dir} # parser rewrite format headers
+                            ${ch10comp_inc_dir} # parser rewrite format headers
                             ${util_inc_dir}
                             ${spdlog_inc_dir})
 target_compile_features(${ch10pq_lib_name} PUBLIC cxx_std_17)
@@ -191,10 +231,10 @@ add_library(${transtab_lib_name} STATIC
         ${transtab_inc_dir}/translatable_column_template.h
 )
 target_include_directories(${transtab_lib_name} PUBLIC ${transtab_inc_dir}
-                           ${util_inc_dir} ${ch10pq_inc_dir} ${dts1553_inc_dir}
+                           ${common_inc_dir} ${util_inc_dir} ${ch10pq_inc_dir} ${dts1553_inc_dir}
 )
 target_link_libraries(${transtab_lib_name} PUBLIC
-                      ${util_lib_name} ${ch10pq_lib_name} ${dts1553_lib_name}
+                       ${util_lib_name} ${ch10pq_lib_name} ${dts1553_lib_name}
 )                      
 target_compile_features(${transtab_lib_name} PUBLIC cxx_std_17)
 
@@ -208,10 +248,12 @@ set(transtab1553_main_dir ${transtab1553_lib_name}/${main_dir_name})
 set(transtab1553_inc_dir ${transtab1553_lib_name}/${include_dir_name})
 set(transtab1553_src_dir ${transtab1553_lib_name}/${source_dir_name})
 add_library(${transtab1553_lib_name} 
+                ${common_inc_dir}/ch10_packet_type.h
                 ${transtab1553_inc_dir}/helper_funcs.h ${transtab1553_src_dir}/helper_funcs.cpp
                 ${transtab1553_inc_dir}/translate_tabular_context_1553.h ${transtab1553_src_dir}/translate_tabular_context_1553.cpp
 )
 target_include_directories(${transtab1553_lib_name} PUBLIC 
+                        ${common_inc_dir}
                         ${transtab1553_inc_dir}
                         ${util_inc_dir}
                         ${ch10pq_inc_dir}
@@ -219,7 +261,8 @@ target_include_directories(${transtab1553_lib_name} PUBLIC
                         ${yamlsv_inc_dir}
                         ${transtab_inc_dir}
                         ${spdlog_inc_dir}
-                        ${config_inc_dir}
+                        # ${config_inc_dir}
+                        ${md_inc_dir}
                         )
 target_link_libraries(${transtab1553_lib_name} ${transtab_lib_name}
                     ${util_lib_name}
@@ -227,7 +270,8 @@ target_link_libraries(${transtab1553_lib_name} ${transtab_lib_name}
                     ${dts1553_lib_name}
                     ${yamlsv_lib_name}
                     ${spdlog_lib_name}
-                    ${config_lib_name}
+                #     ${config_lib_name}
+                    ${md_lib_name}
                     ${linux_libs}
                     )
 target_compile_features(${transtab1553_lib_name} PUBLIC cxx_std_17)
@@ -265,59 +309,65 @@ target_link_libraries(${videx_lib_name} PUBLIC ${parquet_libs} ${util_lib_name} 
 target_compile_features(${videx_lib_name} PUBLIC cxx_std_17)
 
 #########################################################
-#          Build/link ch10 parser rewrite lib
+#          Build/link ch10_components lib
 #########################################################
 
-add_library(${parserw_lib_name} STATIC
-            ${parserw_inc_dir}/ch10_status.h ${parserw_src_dir}/ch10_status.cpp
-            ${parserw_inc_dir}/ch10_packet_type.h
-            ${parserw_inc_dir}/ch10_header_format.h
-            ${parserw_inc_dir}/ch10_1553f1_msg_hdr_format.h
-            ${parserw_inc_dir}/ch10_videof0_header_format.h
-            ${parserw_inc_dir}/ch10_packet_element_base.h
-            ${parserw_inc_dir}/ch10_packet_element.h
-            ${parserw_inc_dir}/ch10_time.h ${parserw_src_dir}/ch10_time.cpp
-            ${parserw_inc_dir}/ch10_packet_component.h ${parserw_src_dir}/ch10_packet_component.cpp
-            ${parserw_inc_dir}/ch10_packet_header_component.h ${parserw_src_dir}/ch10_packet_header_component.cpp
-            ${parserw_inc_dir}/ch10_packet.h ${parserw_src_dir}/ch10_packet.cpp
-            ${parserw_inc_dir}/ch10_context.h ${parserw_src_dir}/ch10_context.cpp
-            ${parserw_inc_dir}/ch10_tmats_component.h ${parserw_src_dir}/ch10_tmats_component.cpp
-            ${parserw_inc_dir}/ch10_tdp_component.h ${parserw_src_dir}/ch10_tdp_component.cpp
-            ${parserw_inc_dir}/ch10_1553f1_component.h ${parserw_src_dir}/ch10_1553f1_component.cpp
-            ${parserw_inc_dir}/ch10_videof0_component.h ${parserw_src_dir}/ch10_videof0_component.cpp
-            ${parserw_inc_dir}/ch10_ethernetf0_component.h ${parserw_src_dir}/ch10_ethernetf0_component.cpp
-            ${parserw_inc_dir}/ch10_ethernetf0_msg_hdr_format.h
-            ${parserw_inc_dir}/ch10_arinc429f0_msg_hdr_format.h
-            ${parserw_inc_dir}/ch10_arinc429f0_component.h ${parserw_src_dir}/ch10_arinc429f0_component.cpp
+add_library(${ch10comp_lib_name} STATIC
+            ${common_inc_dir}/ch10_packet_type.h
+            ${ch10comp_inc_dir}/ch10_status.h ${ch10comp_src_dir}/ch10_status.cpp
+            ${ch10comp_inc_dir}/ch10_header_format.h
+            ${ch10comp_inc_dir}/ch10_1553f1_msg_hdr_format.h
+            ${ch10comp_inc_dir}/ch10_videof0_header_format.h
+            ${ch10comp_inc_dir}/ch10_packet_element_base.h
+            ${ch10comp_inc_dir}/ch10_packet_element.h
+            ${ch10comp_inc_dir}/ch10_time.h ${ch10comp_src_dir}/ch10_time.cpp
+            ${ch10comp_inc_dir}/ch10_packet_component.h ${ch10comp_src_dir}/ch10_packet_component.cpp
+            ${ch10comp_inc_dir}/ch10_packet_header_component.h ${ch10comp_src_dir}/ch10_packet_header_component.cpp
+            ${ch10comp_inc_dir}/ch10_packet.h ${ch10comp_src_dir}/ch10_packet.cpp
+            ${ch10comp_inc_dir}/ch10_context.h ${ch10comp_src_dir}/ch10_context.cpp
+            ${ch10comp_inc_dir}/ch10_tmats_component.h ${ch10comp_src_dir}/ch10_tmats_component.cpp
+            ${ch10comp_inc_dir}/ch10_tdp_component.h ${ch10comp_src_dir}/ch10_tdp_component.cpp
+            ${ch10comp_inc_dir}/ch10_1553f1_component.h ${ch10comp_src_dir}/ch10_1553f1_component.cpp
+            ${ch10comp_inc_dir}/ch10_videof0_component.h ${ch10comp_src_dir}/ch10_videof0_component.cpp
+            ${ch10comp_inc_dir}/ch10_ethernetf0_component.h ${ch10comp_src_dir}/ch10_ethernetf0_component.cpp
+            ${ch10comp_inc_dir}/ch10_ethernetf0_msg_hdr_format.h
+            ${ch10comp_inc_dir}/ch10_arinc429f0_msg_hdr_format.h
+            ${ch10comp_inc_dir}/ch10_arinc429f0_component.h ${ch10comp_src_dir}/ch10_arinc429f0_component.cpp
     )
 
-target_include_directories(${parserw_lib_name} PUBLIC ${parserw_inc_dir} ${util_inc_dir}
+target_include_directories(${ch10comp_lib_name} PUBLIC ${ch10comp_inc_dir} ${common_inc_dir} 
+                           ${util_inc_dir}
                             ${ch10pq_inc_dir} ${spdlog_inc_dir} ${all_tins_incs} ${eth_inc_dir})
-target_compile_features(${parserw_lib_name} PUBLIC cxx_std_17)
-target_link_libraries(${parserw_lib_name} PUBLIC ${util_lib_name} ${ch10pq_lib_name}
+target_compile_features(${ch10comp_lib_name} PUBLIC cxx_std_17)
+target_link_libraries(${ch10comp_lib_name} PUBLIC ${util_lib_name}  
+                        ${ch10pq_lib_name}
                         ${spdlog_lib_name} ${all_tins_libs} ${eth_lib_name})
 
 #########################################################
 #                Build/link parse_ch10 Lib
 #########################################################
 add_library(${parsech10_lib_name} STATIC
+    ${common_inc_dir}/ch10_packet_type.h
     ${parsech10_inc_dir}/worker_config.h
     ${parsech10_inc_dir}/parse_manager.h ${parsech10_src_dir}/parse_manager.cpp
     ${parsech10_inc_dir}/parse_worker.h ${parsech10_src_dir}/parse_worker.cpp
     ${parsech10_src_dir}/parser_helper_funcs.cpp ${parsech10_inc_dir}/parser_helper_funcs.h
     )
-target_include_directories(${parsech10_lib_name} PUBLIC ${parsech10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
+target_include_directories(${parsech10_lib_name} PUBLIC ${common_inc_dir} ${parsech10_inc_dir}  
+                            ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs}
-                            ${parserw_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir})
+                            ${ch10comp_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir}
+                            ${md_inc_dir})
 
 target_compile_features(${parsech10_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${parsech10_lib_name} PUBLIC
                       ${util_lib_name}
                       ${ch10pq_lib_name}
                       ${linux_libs}
-                      ${parserw_lib_name}
+                      ${ch10comp_lib_name}
                       ${spdlog_lib_name}
                       ${yamlsv_lib_name}
+                      ${md_lib_name}
     )
 
 #########################################################
@@ -326,7 +376,8 @@ target_link_libraries(${parsech10_lib_name} PUBLIC
 
 install(DIRECTORY DESTINATION ${out_lib_dir})
 
-install(TARGETS ${sha256_lib_name} 
+install(TARGETS 
+                ${sha256_lib_name} 
                 ${pqctx_lib_name}
                 ${util_lib_name}
                 ${ch10pq_lib_name}
@@ -335,8 +386,9 @@ install(TARGETS ${sha256_lib_name}
                 ${eth_lib_name}
                 ${parsech10_lib_name}
                 ${videx_lib_name}
-                ${parserw_lib_name}
+                ${ch10comp_lib_name}
                 ${yamlsv_lib_name}
+                ${md_lib_name}
         DESTINATION ${out_lib_dir}
 )
 
@@ -352,13 +404,14 @@ endif()
 message(STATUS "Building exe: " "${parsech10_exe_name}")
 add_executable(${parsech10_exe_name} ${parsech10_main_dir}/ch10parse.cpp
     )
-#set_property(TARGET ${parsech10_exe_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_include_directories(${parsech10_exe_name} PUBLIC ${parsech10_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
+target_include_directories(${parsech10_exe_name} PUBLIC ${parsech10_inc_dir} 
+                            ${common_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs}
-                            ${parserw_inc_dir}
+                            ${ch10comp_inc_dir}
                             )
 target_compile_features(${parsech10_exe_name} PUBLIC cxx_std_17)
-target_link_libraries(${parsech10_exe_name} ${parsech10_lib_name} ${parserw_lib_name})
+target_link_libraries(${parsech10_exe_name} ${parsech10_lib_name}  
+                        ${ch10comp_lib_name})
 
 #########################################################
 #               Build/link translate_tabular_1553 Exe
@@ -405,7 +458,6 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/iterable_tools_u.cpp
                 ${test_src_dir}/logger_setup.cpp
                 ${test_src_dir}/managed_path_u.cpp
-		${test_src_dir}/metadata_u.cpp
                 ${test_src_dir}/network_packet_parser_u.cpp
                 ${test_src_dir}/parquet_arrow_validator_u.cpp
 		${test_src_dir}/parquet_context_u.cpp
@@ -431,13 +483,22 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/translatable_column_template_u.cpp
                 ${test_src_dir}/stream_buffering_u.cpp
                 ${test_src_dir}/sha256_tools_u.cpp
-                ${test_src_dir}/ch10_arinc429f0_component_u.cpp)
+                ${test_src_dir}/md_category_u.cpp
+                ${test_src_dir}/ch10_arinc429f0_component_u.cpp
+                ${test_src_dir}/md_category_scalar_u.cpp
+                ${test_src_dir}/md_category_map_u.cpp
+                ${test_src_dir}/md_category_sequence_u.cpp
+                ${test_src_dir}/md_document_u.cpp
+                ${test_src_dir}/yaml_md_document_u.cpp
+                ${test_src_dir}/tip_md_document_u.cpp
+                ${test_src_dir}/provenance_data_u.cpp)
 
-target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} ${util_inc_dir}
+target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} 
+                            ${common_inc_dir} ${util_inc_dir}
                             ${parquet_inc_dirs} ${dts1553_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir}
                             ${tmats_inc_dir} ${parsech10_inc_dir} ${eth_inc_dir}
-                            ${parserw_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir} ${transtab_inc_dir}
-                            ${transtab1553_inc_dir})
+                            ${ch10comp_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir} ${transtab_inc_dir}
+                            ${transtab1553_inc_dir} ${md_inc_dir})
 
 target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
 target_link_libraries(${test_exe_name}
@@ -449,12 +510,13 @@ target_link_libraries(${test_exe_name}
                         ${parsech10_lib_name}
                         ${parquet_libs}
                         ${eth_lib_name}
-                        ${parserw_lib_name}
+                        ${ch10comp_lib_name}
                         ${spdlog_lib_name}
                         ${yamlsv_lib_name}
                         ${transtab_lib_name}
                         ${transtab1553_lib_name}
-                        ${linux_libs})
+                        ${linux_libs}
+                        ${md_lib_name})
 
 # For Ctest
 #include(CTest)
@@ -503,10 +565,11 @@ set(yamlsv_exe_name "validate_yaml")
 message(STATUS "Building exe: " "${yamlsv_exe_name}")
 add_executable(${yamlsv_exe_name} ${yamlsv_main_dir}/validate_yaml.cpp)
 
-target_include_directories(${yamlsv_exe_name} PUBLIC ${yamlsv_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
+target_include_directories(${yamlsv_exe_name} PUBLIC ${yamlsv_inc_dir} ${yaml_inc_dir} 
+                           ${util_inc_dir}
                             )
 target_compile_features(${yamlsv_exe_name} PUBLIC cxx_std_17)
-target_link_libraries(${yamlsv_exe_name} ${yamlsv_lib_name})
+target_link_libraries(${yamlsv_exe_name} ${yamlsv_lib_name} )
 
 #########################################################
 #                   Install Exes
