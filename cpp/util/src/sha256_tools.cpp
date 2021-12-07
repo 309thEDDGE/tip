@@ -59,6 +59,16 @@ bool ComputeFileSHA256(const ManagedPath& input_file, std::string& sha256_value,
         return false;
     }
 
+    if(byte_count > 0)
+    {
+        input_stream.seekg(0, input_stream.end);
+        size_t stream_size = input_stream.tellg();
+        input_stream.seekg(0, input_stream.beg);
+
+        if(byte_count > stream_size)
+            byte_count = 0;
+    }
+
     if (!ComputeSHA256(input_stream, sha256_value, byte_count))
     {
         printf("ComputeFileSHA256(): Failed to compute SHA256 for file (%s)\n",
@@ -67,4 +77,10 @@ bool ComputeFileSHA256(const ManagedPath& input_file, std::string& sha256_value,
     }
 
     return true;
+}
+
+
+std::string Sha256(std::string input)
+{
+    return sha256(input);
 }

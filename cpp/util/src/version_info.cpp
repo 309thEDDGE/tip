@@ -20,6 +20,6 @@ bool CheckForVersionArgument(int argc, char* argv[])
 
 std::string GetVersionString()
 {
-    std::string ver_str = VERSION_STRING;
+    std::string ver_str(VERSION_STRING);
     return ver_str;
 }

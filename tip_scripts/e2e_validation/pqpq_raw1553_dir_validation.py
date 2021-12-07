@@ -6,6 +6,7 @@ from tip_scripts.e2e_validation.pqpq_raw1553_validation import PqPqRaw1553Valida
 from tip_scripts.e2e_validation.txttxt_validation import TxtTxtValidation
 if config.COMPARE_YAML:
     from tip_scripts.e2e_validation.ymlyml_validation import YmlYmlValidation
+    from tip_scripts.e2e_validation.yaml_compare import exclude_from_comparison_funcs as exclude_funcs
 
 class PqPqRaw1553DirValidation(DirectoryValidation):
 
@@ -47,7 +48,8 @@ class PqPqRaw1553DirValidation(DirectoryValidation):
                         if config.COMPARE_YAML:
                             self.validation_objects.append(YmlYmlValidation(
                                 str(truth_dir / truth_md_path),
-                                str(test_dir / truth_md_path)))
+                                str(test_dir / truth_md_path),
+                                exclude_func=exclude_funcs.parsed_1553f1))
                     elif truth_md_path.suffix in ['.txt']:
                         self.validation_objects.append(TxtTxtValidation(
                             str(truth_dir / truth_md_path),
