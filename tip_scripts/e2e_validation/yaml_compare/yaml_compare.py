@@ -15,7 +15,7 @@ class YamlCompare:
         self.truth_fp = truth_fp
         self.test_fp = test_fp
         
-    def Compare(self, verbosity=0):
+    def Compare(self, verbosity=0, exclude_func=None):
         '''
         Compare
         
@@ -31,7 +31,7 @@ class YamlCompare:
         mapped to key 'total'.
         '''
         if not self._file_check():
-            return self._ret_string(None)
+            return None
         
         with open(self.truth_fp, 'r') as f:
             truth_dict = yaml.load(f, Loader=yaml.FullLoader)
@@ -44,9 +44,7 @@ class YamlCompare:
             print('test_dict:', test_dict)
             print('')
             
-        results = self._do_comparison(truth_dict, test_dict, verbosity)
-        
-        return self._set_pass_fail_strings(results)
+        return self._do_comparison(truth_dict, test_dict, verbosity, exclude_func=exclude_func)
     
     def _set_pass_fail_strings(self, results_dict):
         
@@ -65,15 +63,11 @@ class YamlCompare:
             total_result = True
             
         results_dict['total'] = total_result
-        
-        #updated_results = {}
-        #for k,v in results_dict.items():
-        #    updated_results[k] = self._ret_string(v)
             
         return results_dict
 
 
-    def _do_comparison(self, truth_dict, test_dict, v):
+    def _do_comparison(self, truth_dict, test_dict, v, exclude_func=None):
         
         truth_keys = sorted(list(truth_dict.keys()))
         test_keys = sorted(list(test_dict.keys()))
@@ -81,21 +75,7 @@ class YamlCompare:
         single_result = None
         results = {}
         ddc = DeepDiffCompare()
-        for k in truth_keys:
-            
-            if k not in test_keys:
-                print('key: {:s}, not in test keys'.format(k))
-                results[k] = None
-                continue
-            
-            single_result = ddc.Compare(truth_dict[k], test_dict[k])
-            results[k] = single_result
-            
-            if single_result != True or v > 0:
-                print('key: {:s}, comparison = {:s}'.format(k,
-                        self._ret_string(single_result)))
-
-        return results
+        return ddc.Compare(truth_dict, test_dict, exclude_func=exclude_func)
         
     def _file_check(self):
         

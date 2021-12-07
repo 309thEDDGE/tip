@@ -9,6 +9,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "spdlog/spdlog.h"
 #include "iterable_tools.h"
 
 namespace fs = std::filesystem;
@@ -17,7 +18,7 @@ class ManagedPath : public fs::path
 {
    private:
     static const inline fs::path windows_prefix_ = "\\\\?\\";
-    static const int max_create_dir_attempts_ = 3;
+    static const int max_create_dir_attempts_;
 
    protected:
    public:

@@ -6,6 +6,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include "spdlog/spdlog.h"
 #include "yaml-cpp/yaml.h"
 #include "icd_data.h"
 #include "managed_path.h"

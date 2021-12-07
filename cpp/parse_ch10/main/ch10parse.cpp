@@ -15,6 +15,7 @@
 #include "parser_helper_funcs.h"
 #include "stream_buffering.h"
 #include "version_info.h"
+#include "provenance_data.h"
 
 int main(int argc, char* argv[])
 {
@@ -44,6 +45,13 @@ int main(int argc, char* argv[])
                        input_path, output_path, conf_file_path, schema_file_path, log_dir))
         return 0;
 
+    if (!SetupLogging(log_dir))
+        return 0;
+
+    ProvenanceData prov_data;
+    if(!GetProvenanceData(input_path.absolute(), static_cast<size_t>(150e6), prov_data)) 
+        return 0;
+
     ParserConfigParams config;
     std::string config_schema_path = "";
     ManagedPath final_config_path;
@@ -51,18 +59,16 @@ int main(int argc, char* argv[])
     if (!ValidateConfig(config, conf_file_path, schema_file_path))
         return 0;
 
-    if (!SetupLogging(log_dir))
-        return 0;
-
     spdlog::get("pm_logger")->info("{:s} version: {:s}", CH10_PARSE_EXE_NAME, GetVersionString());
     spdlog::get("pm_logger")->info("Ch10 file path: {:s}", input_path.absolute().RawString());
+    spdlog::get("pm_logger")->info("Ch10 hash: {:s}", prov_data.hash);
     spdlog::get("pm_logger")->info("Output path: {:s}", output_path.absolute().RawString());
     spdlog::get("pm_logger")->info("Configuration file path: {:s}", conf_file_path.absolute().RawString());
     spdlog::get("pm_logger")->info("Configuration schema path: {:s}", schema_file_path.absolute().RawString());
     spdlog::get("pm_logger")->info("Log directory: {:s}", log_dir.absolute().RawString());
 
     double duration;
-    StartParse(input_path, output_path, config, duration);
+    StartParse(input_path, output_path, config, duration, prov_data);
     spdlog::get("pm_logger")->info("Duration: {:.3f} sec", duration);
 
     // Avoid deadlock in windows, see

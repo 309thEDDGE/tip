@@ -10,6 +10,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include "spdlog/spdlog.h"
 #include "parse_text.h"
 #include "iterable_tools.h"
 #include "user_input.h"

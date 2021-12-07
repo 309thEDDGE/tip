@@ -51,14 +51,14 @@ bool ICDData::IngestICDTextFileLines(const std::vector<std::string>& lines,
     // Return false if empty.
     if (lines.size() == 0)
     {
-        printf("ICDData::IngestICDTextFileLines(): input vector size is zero\n");
+        SPDLOG_WARN("input vector size is zero");
         return false;
     }
 
     // Return false if destination vector has non-zero element count.
     if (icd_elems_output.size() > 0)
     {
-        printf("ICDData::IngestICDTextFileLines(): output vector size is non-zero\n");
+        SPDLOG_WARN("output vector size is non-zero");
         return false;
     }
 
@@ -69,11 +69,10 @@ bool ICDData::IngestICDTextFileLines(const std::vector<std::string>& lines,
     {
         std::string split_l0 = iter_tools_.GetIterablePrintString(col_hdr,
                                                                   "First line, split on \',\'", "%s", ",");
-        printf(
-            "ICDData::IngestICDTextFileLines(): first line column count "
-            "%zu (must be %d)\n",
-            col_hdr.size(), ICDElement::kFillElementCount);
-        printf("%s\n", split_l0.c_str());
+        SPDLOG_WARN(
+            "first line column count "
+            "{:d} (must be {:d})", col_hdr.size(), ICDElement::kFillElementCount);
+        SPDLOG_WARN("{:s}", split_l0);
         return false;
     }
 
@@ -81,9 +80,8 @@ bool ICDData::IngestICDTextFileLines(const std::vector<std::string>& lines,
     // "msg_name,elem_name,..."
     if (col_hdr[0] != "msg_name" || col_hdr[1] != "elem_name")
     {
-        printf(
-            "ICDData::IngestICDTextFileLines(): the first two column header "
-            "names must be \"msg_name\" and \"elem_name\" \n");
+        SPDLOG_WARN(
+            "the first two column header names must be \"msg_name\" and \"elem_name\"");
         return false;
     }
 
@@ -96,8 +94,7 @@ bool ICDData::IngestICDTextFileLines(const std::vector<std::string>& lines,
         fill_result = temp_icd_elem.Fill(lines[i]);
         if (!fill_result)
         {
-            printf("\nICDData::IngestICDTextFile(): Failed to fill ICD Element with line:\n%s\n",
-                   lines[i].c_str());
+            SPDLOG_ERROR("Failed to fill ICD Element with line: {:s}", lines[i]);
         }
         else
         {
@@ -110,9 +107,9 @@ bool ICDData::IngestICDTextFileLines(const std::vector<std::string>& lines,
     int required_fill_count = 100;
     if (fill_count < required_fill_count)
     {
-        printf("\nICDData::IngestICDTextFile(): Fill count < %d\n", required_fill_count);
+        SPDLOG_INFO("Fill count < {:d}", required_fill_count);
     }
-    printf("\nICDData::IngestICDTextFile(): Fill count = %d\n", fill_count);
+    SPDLOG_INFO("Fill count = {:d}", fill_count);
 
     return true;
 }
@@ -128,7 +125,7 @@ bool ICDData::PrepareICDQuery(const std::vector<std::string>& lines)
     icd_ingest_success_ = IngestICDTextFileLines(lines, icd_elements_);
     if (!icd_ingest_success_)
     {
-        printf("IngestICDTextFileLines() failure. Cannot proceed to PrepareICDQuery()\n");
+        SPDLOG_ERROR("IngestICDTextFileLines() failure. Cannot proceed to PrepareICDQuery()");
         return false;
     }
 
@@ -165,7 +162,7 @@ bool ICDData::PrepareICDQuery(const YAML::Node& msg_defs_node,
                                             msg_name_substitutions, elem_name_substitutions);
     if (!icd_ingest_success_)
     {
-        printf("IngestICDYamlFileLines() failure. Cannot proceed to PrepareICDQuery()\n");
+        SPDLOG_ERROR("IngestICDYamlFileLines() failure. Cannot proceed to PrepareICDQuery()");
         return false;
     }
 
@@ -264,9 +261,9 @@ bool ICDData::CreateTables(const std::vector<ICDElement>& icd_elems,
     {
         if (msg_name_unique.size() != valid_message_count_)
         {
-            printf(
-                "ICDData::CreateTables: valid_message_count_ = %zu, size of "
-                "msg_name_unique = %zu. Must be equal to continue.\n",
+            SPDLOG_ERROR(
+                "valid_message_count_ = {:d}, size of "
+                "msg_name_unique = {:d}. Must be equal to continue.",
                 valid_message_count_, msg_name_unique.size());
             return false;
         }
@@ -469,7 +466,7 @@ void ICDData::UpdateMapFromICDElementsToIndices(const dsub_to_elem_map& dsub_ele
 
             if (match_ind == std::string::npos)
             {
-                printf("ICDData::UpdateMapFromICDElementsToIndices(): match_inds size != 1!\n");
+                SPDLOG_ERROR("match_inds size != 1!");
                 return;
             }
             else
@@ -483,7 +480,7 @@ void ICDData::UpdateMapFromICDElementsToIndices(const dsub_to_elem_map& dsub_ele
             dsub_inds_map[it->first] = all_inds;
         else
         {
-            printf("ICDData::UpdateMapFromICDElementsToIndices(): all_inds size == 0!\n");
+            SPDLOG_ERROR("all_inds size == 0!");
             return;
         }
     }
@@ -675,8 +672,7 @@ bool ICDData::IngestICDYamlNode(const YAML::Node& root_node,
         msg_name = it->first.as<std::string>();
         if (!uri_percent_encode_.PercentEncodeReservedASCIIChars(msg_name, perc_enc_msg_name))
         {
-            printf("ICDData::IngestICDYamlNode(): msg_name is not ASCII\n",
-                   msg_name.c_str());
+            SPDLOG_ERROR("msg_name is not ASCII: {:s}", msg_name);
             return false;
         }
 
@@ -688,10 +684,8 @@ bool ICDData::IngestICDYamlNode(const YAML::Node& root_node,
         // Confirm that message body has required keys.
         if (!MapNodeHasRequiredKeys(it->second, yaml_msg_body_keys_))
         {
-            printf(
-                "ICDData::IngestICDYamlFileLines(): Message %s body is not a map "
-                "does not have required keys!\n",
-                perc_enc_msg_name.c_str());
+            SPDLOG_ERROR("Message {:s} body is not a map does not have required keys!",
+                perc_enc_msg_name);
             continue;  // or exit?
         }
 
@@ -699,10 +693,9 @@ bool ICDData::IngestICDYamlNode(const YAML::Node& root_node,
         msg_data_node = it->second["msg_data"];
         if (!MapNodeHasRequiredKeys(msg_data_node, yaml_msg_data_keys_))
         {
-            printf(
-                "ICDData::IngestICDYamlFileLines(): Message %s msg_data node "
-                "is not a map or does not have required keys!\n",
-                perc_enc_msg_name.c_str());
+            SPDLOG_ERROR(
+                "Message {:s} msg_data node is not a map or does not have required keys!",
+                perc_enc_msg_name);
             continue;
         }
 
@@ -721,8 +714,8 @@ bool ICDData::IngestICDYamlNode(const YAML::Node& root_node,
         // Increment valid message count.
         valid_message_count_++;
     }
-    printf("Ingested %zu ICD messages\n", valid_message_count_);
-    printf("Ingested %zu ICD elements\n", element_count);
+    SPDLOG_INFO("Ingested {:d} ICD messages", valid_message_count_);
+    SPDLOG_INFO("Ingested {:d} ICD elements", element_count);
 
     return true;
 }
@@ -733,7 +726,7 @@ bool ICDData::MapNodeHasRequiredKeys(const YAML::Node& node,
     // Node must be a map.
     if (!node.IsMap())
     {
-        printf("ICDData::MapNodeHasRequiredKeys(): Node is not map!\n");
+        SPDLOG_ERROR("Node is not map!");
         return false;
     }
 
@@ -761,7 +754,7 @@ bool ICDData::MapNodeHasRequiredKeys(const YAML::Node& node,
             // required key must be present once.
             if (current_state)
             {
-                printf("ICDData::MapNodeHasRequiredKeys(): Key %s already found!\n", node_key.c_str());
+                SPDLOG_ERROR("Key {:s} already found!", node_key);
                 return false;
             }
             keys_present[node_key] = true;
@@ -783,10 +776,8 @@ size_t ICDData::FillElementsFromYamlNodes(const std::string& msg_name, const YAM
     size_t fill_count = 0;
     if (!elem_node.IsMap())
     {
-        printf(
-            "ICDData::FillElementFromYamlNodes(): Message %s elem node "
-            "is not a map!\n",
-            msg_name.c_str());
+        SPDLOG_ERROR(
+            "Message {:s} elem node is not a map!", msg_name);
         return fill_count;
     }
 
@@ -802,8 +793,7 @@ size_t ICDData::FillElementsFromYamlNodes(const std::string& msg_name, const YAM
             elem_name = it->first.as<std::string>();
             if (!uri_percent_encode_.PercentEncodeReservedASCIIChars(elem_name, perc_enc_elem_name))
             {
-                printf("ICDData::FillElementsFromYamlNodes(): elem_name %s is not ASCII\n",
-                       elem_name.c_str());
+                SPDLOG_ERROR("elem_name {:s} is not ASCII", elem_name);
                 return 0;
             }
 
@@ -817,45 +807,23 @@ size_t ICDData::FillElementsFromYamlNodes(const std::string& msg_name, const YAM
                 is_map_and_has_keys = MapNodeHasRequiredKeys(it->second, yaml_word_elem_keys_);
             if (!is_map_and_has_keys)
             {
-                printf(
-                    "ICDData::FillElementFromYamlNodes(): Message %s elem node "
-                    "%s is not a map or does not have the correct keys!\n",
-                    msg_name.c_str(),
-                    perc_enc_elem_name.c_str());
+                SPDLOG_ERROR("Message {:s} elem node {:s} is not a map or does not have the correct keys!",
+                    msg_name, perc_enc_elem_name);
                 continue;
             }
 
             // Create the ICD element.
             ICDElement temp_icd_elem;
-            // std::vector<std::string> icd_string(ICDElement::kFillElementCount);
-            // if (CreateVectorOfStringICDComponents(msg_name, msg_data_node,
-            //                                       perc_enc_elem_name, it->second, is_bit_node, icd_string))
-            // {
-            //     if (temp_icd_elem.FillElements(icd_string))
-            //     {
-            //         icd_elems.push_back(temp_icd_elem);
-            //         fill_count++;
-            //     }
-            //     else
-            //     {
-            //         printf(
-            //             "ICDData::FillElementFromYamlNodes(): Message %s elem node "
-            //             "%s failed to fill elements!\n",
-            //             msg_name.c_str(),
-            //             perc_enc_elem_name.c_str());
-            //     }
-            // }
-
             if (is_bit_node)
             {
                 if (!ConfigureBitElementFromYamlNodes(temp_icd_elem, msg_name,
                                                       msg_data_node, perc_enc_elem_name,
                                                       it->second))
                 {
-                    printf(
-                        "ICDData::FillElementsFromYamlNodes: Failed to configure "
-                        "ICDElement for msg \"%s\", bit element \"%s\"",
-                        msg_name.c_str(), perc_enc_elem_name.c_str());
+                    SPDLOG_ERROR(
+                        "Failed to configure "
+                        "ICDElement for msg \"{:s}\", bit element \"{:s}\"",
+                        msg_name, perc_enc_elem_name);
                     continue;
                 }
             }
@@ -865,10 +833,10 @@ size_t ICDData::FillElementsFromYamlNodes(const std::string& msg_name, const YAM
                                                        msg_data_node, perc_enc_elem_name,
                                                        it->second))
                 {
-                    printf(
-                        "ICDData::FillElementsFromYamlNodes: Failed to configure "
-                        "ICDElement for msg \"%s\", word element \"%s\"",
-                        msg_name.c_str(), perc_enc_elem_name.c_str());
+                    SPDLOG_ERROR(
+                        "Failed to configure "
+                        "ICDElement for msg \"{:s}\", word element \"{:s}\"",
+                        msg_name, perc_enc_elem_name);
                     continue;
                 }
             }
@@ -886,42 +854,42 @@ bool ICDData::CreateVectorOfStringICDComponents(const std::string& msg_name, con
 {
     if (output_vec.size() != ICDElement::kFillElementCount)
     {
-        printf("ICDData::CreateVectorOfStringICDComponents(): Output vector has size zero!\n");
+        SPDLOG_ERROR("Output vector has size zero!");
         return false;
     }
 
     if (!SequenceNodeHasCorrectSize(msg_data_node["command"], icd_sequence_size_))
     {
-        printf(
-            "ICDData::CreateVectorOfStringICDComponents(): %s/%s msg_data[command] node "
-            "is not a sequence or does not have size = %zu!\n",
-            msg_name.c_str(), elem_name.c_str(), icd_sequence_size_);
+        SPDLOG_ERROR(
+            "{:s}/{:s} msg_data[command] node "
+            "is not a sequence or does not have size = {:d}!",
+            msg_name, elem_name, icd_sequence_size_);
         return false;
     }
 
     if (!SequenceNodeHasCorrectSize(msg_data_node["lru_addr"], icd_sequence_size_))
     {
-        printf(
-            "ICDData::CreateVectorOfStringICDComponents(): %s/%s msg_data[lru_addr] node "
-            "is not a sequence or does not have size = %zu!\n",
-            msg_name.c_str(), elem_name.c_str(), icd_sequence_size_);
+        SPDLOG_ERROR(
+            "{:s}/{:s} msg_data[lru_addr] node "
+            "is not a sequence or does not have size = {:d}!",
+            msg_name, elem_name, icd_sequence_size_);
         return false;
     }
 
     if (!SequenceNodeHasCorrectSize(msg_data_node["lru_subaddr"], icd_sequence_size_))
     {
-        printf(
-            "ICDData::CreateVectorOfStringICDComponents(): %s/%s msg_data[lru_subaddr] node "
-            "is not a sequence or does not have size = %zu!\n",
-            msg_name.c_str(), elem_name.c_str(), icd_sequence_size_);
+        SPDLOG_ERROR(
+            "{:s}/{:s} msg_data[lru_subaddr] node "
+            "is not a sequence or does not have size = {:d}!",
+            msg_name, elem_name, icd_sequence_size_);
         return false;
     }
     if (!SequenceNodeHasCorrectSize(msg_data_node["lru_name"], icd_sequence_size_))
     {
-        printf(
-            "ICDData::CreateVectorOfStringICDComponents(): %s/%s msg_data[lru_name] node "
-            "is not a sequence or does not have size = %zu!\n",
-            msg_name.c_str(), elem_name.c_str(), icd_sequence_size_);
+        SPDLOG_ERROR(
+            "{:s}/{:s} msg_data[lru_name] node "
+            "is not a sequence or does not have size = {:d}!",
+            msg_name, elem_name, icd_sequence_size_);
         return false;
     }
 
@@ -954,7 +922,10 @@ bool ICDData::CreateVectorOfStringICDComponents(const std::string& msg_name, con
         output_vec[15] = std::to_string(static_cast<int>(schema));
     }
     else
-        printf("ICDData::CjreateVectorOfStringICDComponents(): Failed ICDSchemaStringToEnum()\n");
+    {
+        SPDLOG_ERROR("Failed ICDSchemaStringToEnum()");
+        return false;
+    }
     output_vec[17] = std::to_string(static_cast<int>(elem_data_node["multifmt"].as<bool>()));
     output_vec[21] = elem_data_node["class"].as<std::string>();
     output_vec[22] = elem_data_node["desc"].as<std::string>();

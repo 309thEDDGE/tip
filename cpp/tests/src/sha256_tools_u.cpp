@@ -266,3 +266,22 @@ TEST(SHA256ToolsTest, ComputeFileSHA256)
     EXPECT_EQ(expected_hash, hash);
     EXPECT_TRUE(temp_path.remove());
 }
+
+TEST(SHA256ToolsTest, ComputeFileSHA256ByteCountGreaterThanSize)
+{
+    ManagedPath temp_path;
+    temp_path /= "sha256_test.bin";
+    std::ofstream outstream(temp_path.string(), std::ofstream::binary);
+    ASSERT_TRUE(outstream.is_open());
+    outstream << test_data;
+    outstream.close();
+    ASSERT_TRUE(temp_path.is_regular_file());
+
+    std::string hash;
+    std::string expected_hash = "bbff0ed06d7f7e5e9769936dfd3f42ccd9b9dbbec016015691c616e4f2eba00f";
+    size_t hash_byte_count = 100e6;  // Much greater than total size of file
+    bool status = ComputeFileSHA256(temp_path, hash, hash_byte_count);
+    EXPECT_TRUE(status);
+    EXPECT_EQ(expected_hash, hash);
+    EXPECT_TRUE(temp_path.remove());
+}

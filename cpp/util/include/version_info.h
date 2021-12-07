@@ -1,6 +1,9 @@
 #ifndef VERSION_INFO_H_
 #define VERSION_INFO_H_
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
 #include <cstdio>
 #include <string>
 #include <vector>

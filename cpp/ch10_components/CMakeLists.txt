@@ -10,7 +10,6 @@ set(headers
     include/ch10_packet_element.h
     include/ch10_packet_element_base.h
     include/ch10_packet_header_component.h
-    include/ch10_packet_type.h
     include/ch10_status.h
     include/ch10_tdp_component.h
     include/ch10_time.h
@@ -21,7 +20,7 @@ set(headers
     include/ch10_arinc429f0_msg_hdr_format.h
 )
 
-add_library(parserw
+add_library(ch10comp
     STATIC
     src/ch10_1553f1_component.cpp
     src/ch10_context.cpp
@@ -37,20 +36,20 @@ add_library(parserw
     src/ch10_arinc429f0_component.cpp
 )
 
-target_compile_features(parserw PUBLIC cxx_std_17)
+target_compile_features(ch10comp PUBLIC cxx_std_17)
 
-target_include_directories(parserw
+target_include_directories(ch10comp 
     PUBLIC include
 )
 
-set_target_properties(parserw
+set_target_properties(ch10comp
     PROPERTIES PUBLIC_HEADER "${headers}"
 )
 
-target_link_libraries(parserw
-    PUBLIC tiputil ch10_parquet spdlog::spdlog
+target_link_libraries(ch10comp
+    PUBLIC common tiputil ch10_parquet spdlog::spdlog
 )
 
 install(
-    TARGETS parserw
+    TARGETS ch10comp
 )

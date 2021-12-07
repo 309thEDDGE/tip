@@ -1,5 +1,3 @@
-
-
 set(headers
     include/logger_setup.h
 )
@@ -28,7 +26,6 @@ add_executable(tests
     src/iterable_tools_u.cpp
     src/logger_setup.cpp
     src/managed_path_u.cpp
-    src/metadata_u.cpp
     src/network_packet_parser_u.cpp
     src/parquet_arrow_validator_u.cpp
     src/parquet_context_u.cpp
@@ -55,6 +52,14 @@ add_executable(tests
     src/stream_buffering_u.cpp
     src/sha256_tools_u.cpp
     src/ch10_arinc429f0_component_u.cpp
+    src/md_category_u.cpp
+    src/md_category_scalar_u.cpp
+    src/md_category_sequence_u.cpp
+    src/md_category_map_u.cpp
+    src/md_document_u.cpp
+    src/yaml_md_document_u.cpp
+    src/tip_md_document_u.cpp
+    src/provenance_data_u.cpp 
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)
@@ -64,9 +69,10 @@ target_include_directories(tests
 )
 
 target_link_libraries(tests
-    PUBLIC parsech10_lib ch10_parquet ch10ethernet parquet_context parserw
+    PUBLIC common parsech10_lib ch10_parquet ch10ethernet parquet_context ch10comp 
     dts_1553 tiputil parquet_compare pq_vid_extract yamlsv
     arrow_shared parquet spdlog::spdlog translate_tabular translate_tabular_1553
+    metadata
     PRIVATE ${GTEST_LIBRARIES}
 )
 

@@ -1,5 +1,7 @@
 #include "managed_path.h"
 
+const int ManagedPath::max_create_dir_attempts_ = 3;
+
 ManagedPath::ManagedPath(const std::string& input_path)
 {
     // Remove unnecessary leading chars: "./"
@@ -145,8 +147,7 @@ bool ManagedPath::create_directory() const
     // If the directory exists, return true.
     if (fs::is_directory(amended_path))
     {
-        /*printf("ManagedPath::create_directory(): Directory already exists - %s\n",
-			this->RawString().c_str());*/
+        SPDLOG_DEBUG("Directory already exists - {:s}", this->RawString());
         return true;
     }
 
@@ -154,8 +155,8 @@ bool ManagedPath::create_directory() const
     ManagedPath parent = this->parent_path();
     if (!parent.is_directory())
     {
-        printf("ManagedPath::create_directory(): Parent directory does not exist - %s\n",
-               parent.RawString().c_str());
+        SPDLOG_INFO("Parent directory does not exist - {:s}",
+               parent.RawString());
         return false;
     }
 
@@ -171,8 +172,8 @@ bool ManagedPath::create_directory() const
         }
         else
         {
-            printf("ManagedPath::create_directory(): Failed to created dir (attempt %d) - %s\n",
-                   i + 1, this->RawString().c_str());
+            SPDLOG_WARN("Failed to created dir (attempt {:d}) - {:s}",
+                   i + 1, this->RawString());
         }
 
         // Sleep to give the OS some time before the next file is created.
@@ -183,8 +184,8 @@ bool ManagedPath::create_directory() const
             break;
         else if (i == max_create_dir_attempts_ - 1)
         {
-            printf("ManagedPath::create_directory(): Failed to created dir after %d attemps - %s\n",
-                   max_create_dir_attempts_, this->RawString().c_str());
+            SPDLOG_ERROR("Failed to created dir after {:d} attempts - {:s}",
+                   max_create_dir_attempts_, this->RawString());
             return false;
         }
     }
@@ -279,7 +280,7 @@ void ManagedPath::GetFileSize(bool& success, uint64_t& result) const
         }
         catch (fs::filesystem_error& e)
         {
-            printf("ManagedPath::GetFileSize Error: %s\n", e.what());
+            SPDLOG_ERROR("Error: {:s}", e.what());
             success = false;
             result = 0;
         }
@@ -317,10 +318,8 @@ void ManagedPath::ListDirectoryEntries(bool& success, std::vector<ManagedPath>& 
     }
     else
     {
-        printf(
-            "ManagedPath::GetListOfFiles(): Object represents path that does not exist or "
-            "is not a directory (%s)\n",
-            this->RawString().c_str());
+        SPDLOG_WARN("Path that does not exist or is not a directory ({:s})",
+            this->RawString());
         success = false;
     }
 }

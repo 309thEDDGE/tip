@@ -9,6 +9,7 @@
 #include "managed_path.h"
 #include "argument_validation.h"
 #include "yaml_schema_validation.h"
+#include "provenance_data.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/async.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
@@ -26,7 +27,8 @@ bool ValidateConfig(ParserConfigParams& config, const ManagedPath& conf_file_pat
                     const ManagedPath& schema_file_path);
 
 bool StartParse(ManagedPath input_path, ManagedPath output_path,
-                ParserConfigParams config, double& duration);
+                ParserConfigParams config, double& duration, 
+                const ProvenanceData& prov_data);
 
 bool SetupLogging(const ManagedPath& log_dir);
 

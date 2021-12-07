@@ -22,14 +22,14 @@ set_target_properties(parsech10_lib
 )
 
 target_link_libraries(parsech10_lib
-    PUBLIC tiputil parserw yamlsv spdlog::spdlog
+    PUBLIC tiputil ch10comp yamlsv spdlog::spdlog metadata
 )
 
 add_executable("${CH10_PARSE_EXE_NAME}" main/ch10parse.cpp)
 
 target_compile_features("${CH10_PARSE_EXE_NAME}" PUBLIC cxx_std_17)
 
-target_link_libraries("${CH10_PARSE_EXE_NAME}" PUBLIC parsech10_lib)
+target_link_libraries("${CH10_PARSE_EXE_NAME}" PUBLIC common parsech10_lib)
 
 install(
     TARGETS parsech10_lib "${CH10_PARSE_EXE_NAME}"

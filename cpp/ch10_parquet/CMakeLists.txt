@@ -26,7 +26,7 @@ set_target_properties(ch10_parquet
 )
 
 target_link_libraries(ch10_parquet
-    PUBLIC parquet_context ch10ethernet tiputil parserw
+    PUBLIC parquet_context ch10ethernet tiputil ch10comp
     arrow_shared parquet spdlog::spdlog
 )
 

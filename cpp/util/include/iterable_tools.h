@@ -381,7 +381,8 @@ class IterableTools
     // is not intended to be used multiple times to accomplish emission
     // of a multiple-key/value map. The pair emitted via this function
     // is intended to be a standalone pairing, such as configuration
-    // key and value.
+    // key and value. See EmitKeyValuePairWithinMap for use within
+    // a map that has already been created.
     //
     // Inputs:
     //	- YAML::Emitter e: Emitter to which Yaml is emitted
@@ -391,6 +392,10 @@ class IterableTools
     template <typename Key, typename Val>
     void EmitKeyValuePair(YAML::Emitter& e, const Key& input_key,
                           const Val& input_value);
+    template <typename Key, typename Val>
+    void EmitKeyValuePairWithinMap(YAML::Emitter& e, const Key& input_key,
+                          const Val& input_value);
+
 
     // Emits a key:value map to the Yaml emitter passed as an argument.
     //
@@ -401,6 +406,9 @@ class IterableTools
     //
     template <typename Key, typename Val>
     void EmitSimpleMap(YAML::Emitter& e, const std::map<Key, Val>& input_map,
+                       const std::string& map_name);
+    template <typename Key, typename Val>
+    void EmitSimpleMapWithinMap(YAML::Emitter& e, const std::map<Key, Val>& input_map,
                        const std::string& map_name);
 
     // Emits a key:set<values> map to the Yaml emitter passed as an argument.
@@ -413,6 +421,10 @@ class IterableTools
     template <typename Key, typename Val>
     void EmitCompoundMapToSet(YAML::Emitter& e,
                               const std::map<Key, std::set<Val>>& input_map, const std::string& key);
+    template <typename Key, typename Val>
+    void EmitCompoundMapToSetWithinMap(YAML::Emitter& e,
+                              const std::map<Key, std::set<Val>>& input_map, const std::string& key);
+
 
     // Emits a key:vector<values> map to the Yaml emitter passed as an argument.
     //
@@ -423,6 +435,9 @@ class IterableTools
     //
     template <typename Key, typename Val>
     void EmitCompoundMapToVector(YAML::Emitter& e,
+                                 const std::map<Key, std::vector<Val>>& input_map, const std::string& key);
+    template <typename Key, typename Val>
+    void EmitCompoundMapToVectorWithinMap(YAML::Emitter& e,
                                  const std::map<Key, std::vector<Val>>& input_map, const std::string& key);
 
     // Emits a sequence<vector<Value>> map to the Yaml emitter passed as an argument.
@@ -1179,7 +1194,7 @@ std::string IterableTools::PrintMapWithHeader_KeyToSet(const std::map<Key, std::
     ss << GetHeader(columns, map_name);
     ss << GetPrintableMapElements_KeyToSet(input_map);
     ss << GetPrintBar() << "\n\n";
-    return print(ss.str());
+    return ss.str();
 }
 
 template <typename Key, typename Val>
@@ -1189,7 +1204,7 @@ std::string IterableTools::PrintMapWithHeader_KeyToValue(const std::map<Key, Val
     ss << GetHeader(columns, map_name);
     ss << GetPrintableMapElements_KeyToValue(input_map);
     ss << GetPrintBar() << "\n\n";
-    return print(ss.str());
+    return ss.str();
 }
 
 template <typename Key>
@@ -1199,7 +1214,15 @@ std::string IterableTools::PrintMapWithHeader_KeyToBool(const std::map<Key, bool
     ss << GetHeader(columns, map_name);
     ss << GetPrintableMapElements_KeyToBool(input_map);
     ss << GetPrintBar() << "\n\n";
-    return print(ss.str());
+    return ss.str();
+}
+
+template <typename Key, typename Val>
+void IterableTools::EmitKeyValuePairWithinMap(YAML::Emitter& e, const Key& input_key,
+                                     const Val& input_value)
+{
+    e << YAML::Key << input_key;
+    e << YAML::Value << input_value;
 }
 
 template <typename Key, typename Val>
@@ -1207,10 +1230,17 @@ void IterableTools::EmitKeyValuePair(YAML::Emitter& e, const Key& input_key,
                                      const Val& input_value)
 {
     e << YAML::BeginMap;
-    e << YAML::Key << input_key;
-    e << YAML::Value << input_value;
+    EmitKeyValuePairWithinMap(e, input_key, input_value);
     e << YAML::EndMap;
-    e << YAML::Newline;
+}
+
+template <typename Key, typename Val>
+void IterableTools::EmitSimpleMapWithinMap(YAML::Emitter& e, 
+                            const std::map<Key, Val>& input_map,
+                            const std::string& map_name)
+{
+    e << YAML::Key << map_name;
+    e << YAML::Value << input_map;
 }
 
 template <typename Key, typename Val>
@@ -1218,17 +1248,14 @@ void IterableTools::EmitSimpleMap(YAML::Emitter& e,
                                   const std::map<Key, Val>& input_map, const std::string& map_name)
 {
     e << YAML::BeginMap;
-    e << YAML::Key << map_name;
-    e << YAML::Value << input_map;
+    EmitSimpleMapWithinMap(e, input_map, map_name);
     e << YAML::EndMap;
-    e << YAML::Newline;
 }
 
 template <typename Key, typename Val>
-void IterableTools::EmitCompoundMapToSet(YAML::Emitter& e,
+void IterableTools::EmitCompoundMapToSetWithinMap(YAML::Emitter& e,
                                          const std::map<Key, std::set<Val>>& input_map, const std::string& map_name)
 {
-    e << YAML::BeginMap;
     e << YAML::Key << map_name;
     e << YAML::Value << YAML::BeginMap;
     typename std::map<Key, std::set<Val>>::const_iterator it;
@@ -1238,15 +1265,21 @@ void IterableTools::EmitCompoundMapToSet(YAML::Emitter& e,
         e << YAML::Key << it->first << YAML::Value << YAML::Flow << intermediate;
     }
     e << YAML::EndMap;
-    e << YAML::EndMap;
-    e << YAML::Newline;
 }
 
 template <typename Key, typename Val>
-void IterableTools::EmitCompoundMapToVector(YAML::Emitter& e,
-                                            const std::map<Key, std::vector<Val>>& input_map, const std::string& map_name)
+void IterableTools::EmitCompoundMapToSet(YAML::Emitter& e,
+                                         const std::map<Key, std::set<Val>>& input_map, const std::string& map_name)
 {
     e << YAML::BeginMap;
+    EmitCompoundMapToSetWithinMap(e, input_map, map_name);
+    e << YAML::EndMap;
+}
+
+template <typename Key, typename Val>
+void IterableTools::EmitCompoundMapToVectorWithinMap(YAML::Emitter& e,
+                                            const std::map<Key, std::vector<Val>>& input_map, const std::string& map_name)
+{
     e << YAML::Key << map_name;
     e << YAML::Value << YAML::BeginMap;
     typename std::map<Key, std::vector<Val>>::const_iterator it;
@@ -1256,8 +1289,15 @@ void IterableTools::EmitCompoundMapToVector(YAML::Emitter& e,
         e << YAML::Key << it->first << YAML::Value << YAML::Flow << intermediate;
     }
     e << YAML::EndMap;
+}
+
+template <typename Key, typename Val>
+void IterableTools::EmitCompoundMapToVector(YAML::Emitter& e,
+                                            const std::map<Key, std::vector<Val>>& input_map, const std::string& map_name)
+{
+    e << YAML::BeginMap;
+    EmitCompoundMapToVectorWithinMap(e, input_map, map_name);
     e << YAML::EndMap;
-    e << YAML::Newline;
 }
 
 template <typename Val>
