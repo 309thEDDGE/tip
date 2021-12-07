@@ -16,7 +16,7 @@ translatable_word_definitions:              # (R)
   _NOT_DEFINED_:                            # (WR), alias: wrd_name = 429 message name
     wrd_data:                               # (R)
       label: INT                            # (R)
-      bus: STR                              # (R)
+      bus: INT                              # (R)
       sdiusd: BOOL                          # (R)
       sdi: INT                              # (R)
       rate: OPTFLT                            # (O)
