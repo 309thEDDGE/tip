@@ -1,6 +1,6 @@
 #include "dts429.h"
 
-bool DTS429::IngestLines(const ManagedPath& dts_path, const std::vector<std::string>& lines,
+bool DTS429::IngestLines(const std::vector<std::string>& lines,
                           std::map<std::string, std::string>& wrd_name_substitutions,
                           std::map<std::string, std::string>& elem_name_substitutions)
 
