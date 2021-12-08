@@ -59,6 +59,9 @@ def get_list_of_files_with_suffix(input_path, the_suffix):
 
 def skip_message(skip_name):
     print('\nSkipping {:s} - Use --overwrite to force'.format(skip_name))
+	
+def skip_null_message(skip_name):
+	print(f"\nSkipping {skip_name} - ICD name is \"null\"")
 
 def ow_message(ov_name):
     print('\nOverwriting files with call to {:s}'.format(ov_name))
@@ -302,12 +305,15 @@ if __name__ == '__main__':
         #
         # Set up Translator call.
         #
-        if native_python:
+
+        # Skip if icd_path is null.*
+        if Path(args.icd_path).stem == 'null':
+            skip_null_message(translator_exe_name)
+        elif native_python:
             trans_dir_exists = os.path.isdir(trans_1553_dir)
             if not trans_dir_exists or args.overwrite:
                 ret = tip.translate(raw_1553_pq_dir, args.icd_path)
                 exec_duration[ch10path]['transl1553'] = ret[1]
-            
         else:
             trans_call = RunCLProcess()
 
