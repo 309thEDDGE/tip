@@ -11,6 +11,7 @@ class ValidationBase(object):
         self.regex_translated_1553_msg_dir = re.compile(".+parquet")
         self.regex_raw_1553_dir = re.compile(".+_1553.parquet")
         self.regex_raw_video_dir = re.compile(".+_video.parquet")
+        self.regex_parsed_arinc429_dir = re.compile(".+_arinc429.parquet")
         self.ready_to_validate = False
         self.prefix = prefix
         self.truth_dir_exists = None
@@ -90,12 +91,12 @@ class ValidationBase(object):
 
         return True
 
-    def set_1553_paths(self, truth_path, test_path, type_str):
+    def set_type_paths(self, truth_path, test_path, type_str):
 
         if not self.set_paths(truth_path, test_path):
             return False
 
-        if type_str == 'transl1553':
+        if type_str == 'transl1553f1':
             if not self._is_translated_1553_msg_dir(self.truth_path):
                 print('{:s} - {:s} is not a translated 1553 msg dir!'.format(self.prefix, self.truth_path))
                 self.truth_dir_exists = False
@@ -106,30 +107,45 @@ class ValidationBase(object):
                 self.test_dir_exists = False
                 return False
             self.test_dir_exists = True
-        elif type_str == 'raw1553':
+
+        elif type_str == 'parsed1553f1':
             if not self._is_raw_1553_dir(self.truth_path):
-                print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.truth_path))
+                print('{:s} - {:s} is not a parsed 1553 dir!'.format(self.prefix, self.truth_path))
                 self.truth_dir_exists = False
                 return False
             self.truth_dir_exists = True
             if not self._is_raw_1553_dir(self.test_path):
-                print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.test_path))
+                print('{:s} - {:s} is not a parsed 1553 dir!'.format(self.prefix, self.test_path))
                 self.test_dir_exists = False
                 return False
             self.test_dir_exists = True
-        elif type_str == 'rawvideo':
+
+        elif type_str == 'parsedvideof0':
             if not self._is_raw_video_dir(self.truth_path):
-                print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.truth_path))
+                print('{:s} - {:s} is not a parsed video dir!'.format(self.prefix, self.truth_path))
                 self.truth_dir_exists = False
                 return False
             self.truth_dir_exists = True
             if not self._is_raw_video_dir(self.test_path):
-                print('{:s} - {:s} is not a raw 1553 dir!'.format(self.prefix, self.test_path))
+                print('{:s} - {:s} is not a parsed video dir!'.format(self.prefix, self.test_path))
                 self.test_dir_exists = False
                 return False
             self.test_dir_exists = True
+
+        elif type_str == 'parsedarinc429f0':
+            if not self._is_parsed_arinc429_dir(self.truth_path):
+                print('{:s} - {:s} is not a parsed arinc429 dir!'.format(self.prefix, self.truth_path))
+                self.truth_dir_exists = False
+                return False
+            self.truth_dir_exists = True
+            if not self._is_parsed_arinc429_dir(self.test_path):
+                print('{:s} - {:s} is not a parsed arinc429 dir!'.format(self.prefix, self.test_path))
+                self.test_dir_exists = False
+                return False
+            self.test_dir_exists = True
+
         else:
-            print('ValidationBase.set_1553_paths(): type_str = {:s} not defined!'.format(type_str))
+            print('ValidationBase.set_type_paths(): type_str = {:s} not defined!'.format(type_str))
             return False
 
         return True
@@ -156,6 +172,15 @@ class ValidationBase(object):
 
         if bool(re.match(self.regex_raw_video_dir, input_path)):
             return True
+        return False
+
+    def _is_parsed_arinc429_dir(self, input_path):
+        if not os.path.isdir(input_path):
+            return False
+
+        if bool(re.match(self.regex_parsed_arinc429_dir, input_path)):
+            return True
+
         return False
 
     def directory_has_files_with_extensions(self, dir, exts_list):

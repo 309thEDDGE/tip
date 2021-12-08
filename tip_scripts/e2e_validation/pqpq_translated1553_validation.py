@@ -5,7 +5,7 @@ class PqPqTranslated1553Validation(FileValidation):
     def __init__(self, truth_path, test_path, exec_path):
         prefix = 'PqPqTranslated1553Validation'
         FileValidation.__init__(self, prefix)
-        self.ready_to_validate = self.set_1553_paths(truth_path, test_path, 'transl1553')
+        self.ready_to_validate = self.set_type_paths(truth_path, test_path, 'transl1553f1')
         self.exec_path = exec_path
 
     def validate(self):
