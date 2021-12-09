@@ -27,7 +27,7 @@ set(ch10comp_inc_dir ${ch10comp_dir_name}/${include_dir_name})
 set(common_inc_dir "common/${include_dir_name}")
 # set(common_src_dir ${sha256_lib_name}/${source_dir_name})
 # add_library( STATIC
-        #     ${common_inc_dir}/ch10_packet_type.h 
+        #     ${common_inc_dir}/ch10_packet_type.h
 # )
 # target_include_directories( PUBLIC ${common_inc_dir})
 # target_compile_features( PUBLIC cxx_std_17)
@@ -81,11 +81,11 @@ add_library(${md_lib_name} STATIC
         ${md_inc_dir}/tip_md_document.h ${md_src_dir}/tip_md_document.cpp
 )
 target_include_directories(${md_lib_name} PUBLIC ${md_inc_dir}
-        ${yaml_inc_dir} ${spdlog_inc_dir}        
+        ${yaml_inc_dir} ${spdlog_inc_dir}
 )
 target_compile_features(${md_lib_name} PUBLIC cxx_std_17)
-target_link_libraries(${md_lib_name} PUBLIC 
-                      ${yaml_lib_name} 
+target_link_libraries(${md_lib_name} PUBLIC
+                      ${yaml_lib_name}
                       ${spdlog_lib_name}
 )
 
@@ -116,13 +116,13 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/provenance_data.cpp      ${util_inc_dir}/provenance_data.h
  )
 
-target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir} 
+target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir}
                            ${sha256_inc_dir}
                            ${yaml_inc_dir}
                            ${spdlog_inc_dir}
                            )
 target_compile_features(${util_lib_name} PUBLIC cxx_std_17)
-target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name} 
+target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name}
                       ${linux_libs} ${sha256_lib_name} ${spdlog_lib_name}
                       )
 
@@ -213,6 +213,27 @@ target_link_libraries(${dts1553_lib_name} PUBLIC
                         ${util_lib_name} ${ch10pq_lib_name} ${linux_libs} ${yamlsv_lib_name})
 target_compile_features(${dts1553_lib_name} PUBLIC cxx_std_17)
 
+#########################################################
+#             Build/link dts_429 lib
+#########################################################
+set(dts429_lib_name "dts_429")
+message(STATUS "Building lib: " "${dts1553_lib_name}")
+set(dts429_src_dir ${dts429_lib_name}/${source_dir_name})
+set(dts429_inc_dir ${dts429_lib_name}/${include_dir_name})
+add_library(${dts429_lib_name} STATIC
+        ${dts1553_src_dir}/bus_map.cpp                        ${dts1553_inc_dir}/bus_map.h
+        ${dts1553_src_dir}/icd_data.cpp                       ${dts1553_inc_dir}/icd_data.h
+        ${dts1553_src_dir}/icd_element.cpp                    ${dts1553_inc_dir}/icd_element.h
+        ${dts1553_src_dir}/icd_translate.cpp                  ${dts1553_inc_dir}/icd_translate.h
+        ${dts429_src_dir}/dts429.cpp                         ${dts429_inc_dir}/dts429.h
+    )
+
+target_include_directories(${dts429_lib_name} PUBLIC ${dts429_inc_dir}
+                            ${util_inc_dir} ${ch10pq_inc_dir} ${yamlsv_inc_dir})
+
+target_link_libraries(${dts429_lib_name} PUBLIC
+                        ${util_lib_name} ${ch10pq_lib_name} ${linux_libs} ${yamlsv_lib_name})
+target_compile_features(${dts429_lib_name} PUBLIC cxx_std_17)
 
 #########################################################
 #             Build/link translate_tabular lib
@@ -235,7 +256,7 @@ target_include_directories(${transtab_lib_name} PUBLIC ${transtab_inc_dir}
 )
 target_link_libraries(${transtab_lib_name} PUBLIC
                        ${util_lib_name} ${ch10pq_lib_name} ${dts1553_lib_name}
-)                      
+)
 target_compile_features(${transtab_lib_name} PUBLIC cxx_std_17)
 
 #########################################################
@@ -247,12 +268,12 @@ message(STATUS "Building lib: " "${transtab1553_lib_name}")
 set(transtab1553_main_dir ${transtab1553_lib_name}/${main_dir_name})
 set(transtab1553_inc_dir ${transtab1553_lib_name}/${include_dir_name})
 set(transtab1553_src_dir ${transtab1553_lib_name}/${source_dir_name})
-add_library(${transtab1553_lib_name} 
+add_library(${transtab1553_lib_name}
                 ${common_inc_dir}/ch10_packet_type.h
                 ${transtab1553_inc_dir}/helper_funcs.h ${transtab1553_src_dir}/helper_funcs.cpp
                 ${transtab1553_inc_dir}/translate_tabular_context_1553.h ${transtab1553_src_dir}/translate_tabular_context_1553.cpp
 )
-target_include_directories(${transtab1553_lib_name} PUBLIC 
+target_include_directories(${transtab1553_lib_name} PUBLIC
                         ${common_inc_dir}
                         ${transtab1553_inc_dir}
                         ${util_inc_dir}
@@ -335,11 +356,11 @@ add_library(${ch10comp_lib_name} STATIC
             ${ch10comp_inc_dir}/ch10_arinc429f0_component.h ${ch10comp_src_dir}/ch10_arinc429f0_component.cpp
     )
 
-target_include_directories(${ch10comp_lib_name} PUBLIC ${ch10comp_inc_dir} ${common_inc_dir} 
+target_include_directories(${ch10comp_lib_name} PUBLIC ${ch10comp_inc_dir} ${common_inc_dir}
                            ${util_inc_dir}
                             ${ch10pq_inc_dir} ${spdlog_inc_dir} ${all_tins_incs} ${eth_inc_dir})
 target_compile_features(${ch10comp_lib_name} PUBLIC cxx_std_17)
-target_link_libraries(${ch10comp_lib_name} PUBLIC ${util_lib_name}  
+target_link_libraries(${ch10comp_lib_name} PUBLIC ${util_lib_name}
                         ${ch10pq_lib_name}
                         ${spdlog_lib_name} ${all_tins_libs} ${eth_lib_name})
 
@@ -353,7 +374,7 @@ add_library(${parsech10_lib_name} STATIC
     ${parsech10_inc_dir}/parse_worker.h ${parsech10_src_dir}/parse_worker.cpp
     ${parsech10_src_dir}/parser_helper_funcs.cpp ${parsech10_inc_dir}/parser_helper_funcs.h
     )
-target_include_directories(${parsech10_lib_name} PUBLIC ${common_inc_dir} ${parsech10_inc_dir}  
+target_include_directories(${parsech10_lib_name} PUBLIC ${common_inc_dir} ${parsech10_inc_dir}
                             ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs}
                             ${ch10comp_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir}
@@ -376,8 +397,8 @@ target_link_libraries(${parsech10_lib_name} PUBLIC
 
 install(DIRECTORY DESTINATION ${out_lib_dir})
 
-install(TARGETS 
-                ${sha256_lib_name} 
+install(TARGETS
+                ${sha256_lib_name}
                 ${pqctx_lib_name}
                 ${util_lib_name}
                 ${ch10pq_lib_name}
@@ -404,13 +425,13 @@ endif()
 message(STATUS "Building exe: " "${parsech10_exe_name}")
 add_executable(${parsech10_exe_name} ${parsech10_main_dir}/ch10parse.cpp
     )
-target_include_directories(${parsech10_exe_name} PUBLIC ${parsech10_inc_dir} 
+target_include_directories(${parsech10_exe_name} PUBLIC ${parsech10_inc_dir}
                             ${common_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs}
                             ${ch10comp_inc_dir}
                             )
 target_compile_features(${parsech10_exe_name} PUBLIC cxx_std_17)
-target_link_libraries(${parsech10_exe_name} ${parsech10_lib_name}  
+target_link_libraries(${parsech10_exe_name} ${parsech10_lib_name}
                         ${ch10comp_lib_name})
 
 #########################################################
@@ -422,7 +443,7 @@ message(STATUS "Building exe: " "${transtab1553_exe_name}")
 add_executable(${transtab1553_exe_name} ${transtab1553_main_dir}/translate_tabular_1553.cpp)
 target_include_directories(${transtab1553_exe_name} PUBLIC ${transtab1553_inc_dir})
 target_link_libraries(${transtab1553_exe_name} ${transtab1553_lib_name}
-                      ${transtab_lib_name}) 
+                      ${transtab_lib_name})
 
 #########################################################
 #                 Build/link tests Exe
@@ -493,7 +514,7 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/tip_md_document_u.cpp
                 ${test_src_dir}/provenance_data_u.cpp)
 
-target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs} 
+target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs}
                             ${common_inc_dir} ${util_inc_dir}
                             ${parquet_inc_dirs} ${dts1553_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir}
                             ${tmats_inc_dir} ${parsech10_inc_dir} ${eth_inc_dir}
@@ -565,7 +586,7 @@ set(yamlsv_exe_name "validate_yaml")
 message(STATUS "Building exe: " "${yamlsv_exe_name}")
 add_executable(${yamlsv_exe_name} ${yamlsv_main_dir}/validate_yaml.cpp)
 
-target_include_directories(${yamlsv_exe_name} PUBLIC ${yamlsv_inc_dir} ${yaml_inc_dir} 
+target_include_directories(${yamlsv_exe_name} PUBLIC ${yamlsv_inc_dir} ${yaml_inc_dir}
                            ${util_inc_dir}
                             )
 target_compile_features(${yamlsv_exe_name} PUBLIC cxx_std_17)
