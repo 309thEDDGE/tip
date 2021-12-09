@@ -472,6 +472,7 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/ch10_tmats_component_u.cpp
                 ${test_src_dir}/ch10_videof0_component_u.cpp
                 ${test_src_dir}/dts1553_u.cpp
+                ${test_src_dir}/dts429_u.cpp
 		${test_src_dir}/file_reader_u.cpp
                 ${test_src_dir}/icd_element_u.cpp
                 ${test_src_dir}/icd_data_u.cpp
@@ -519,13 +520,14 @@ target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_
                             ${parquet_inc_dirs} ${dts1553_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir}
                             ${tmats_inc_dir} ${parsech10_inc_dir} ${eth_inc_dir}
                             ${ch10comp_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir} ${transtab_inc_dir}
-                            ${transtab1553_inc_dir} ${md_inc_dir})
+                            ${transtab1553_inc_dir} ${md_inc_dir} ${dts429_inc_dir})
 
 target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
 target_link_libraries(${test_exe_name}
                         ${gsuite_libs}
                         ${util_lib_name}
                         ${dts1553_lib_name}
+                        ${dts429_lib_name}
                         ${pqctx_lib_name}
                         ${comp_lib_name}
                         ${parsech10_lib_name}
