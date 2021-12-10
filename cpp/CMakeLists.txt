@@ -517,7 +517,7 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/provenance_data_u.cpp)
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs}
-                            ${common_inc_dir} ${util_inc_dir} "dts_429/dts429.h"
+                            ${common_inc_dir} ${util_inc_dir} ${dts429_inc_dir}
                             ${parquet_inc_dirs} ${dts1553_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir}
                             ${tmats_inc_dir} ${parsech10_inc_dir} ${eth_inc_dir}
                             ${ch10comp_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir} ${transtab_inc_dir}
