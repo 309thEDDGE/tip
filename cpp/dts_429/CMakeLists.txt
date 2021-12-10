@@ -1,8 +1,10 @@
+set(dts_1553_inc_dir ../../dts_1553/include)
+
 set(headers
-    include/../dts_1553/include/bus_map.h
-    include/../dts_1553/include/icd_data.h
-    include/../dts_1553/include/icd_element.h
-    include/../dts_1553/include/icd_translate.h
+    include/${dts_1553_inc_dir}/bus_map.h
+    include/${dts_1553_inc_dir}/icd_data.h
+    include/${dts_1553_inc_dir}/icd_element.h
+    include/${dts_1553_inc_dir}/icd_translate.h
     include/dts429.h
 )
 

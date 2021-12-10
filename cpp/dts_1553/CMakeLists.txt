@@ -4,7 +4,6 @@ set(headers
     include/icd_data.h
     include/icd_element.h
     include/icd_translate.h
-    include/dts429.h
 )
 
 add_library(dts_1553

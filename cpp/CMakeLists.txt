@@ -217,7 +217,7 @@ target_compile_features(${dts1553_lib_name} PUBLIC cxx_std_17)
 #             Build/link dts_429 lib
 #########################################################
 set(dts429_lib_name "dts_429")
-message(STATUS "Building lib: " "${dts1553_lib_name}")
+message(STATUS "Building lib: " "${dts429_lib_name}")
 set(dts429_src_dir ${dts429_lib_name}/${source_dir_name})
 set(dts429_inc_dir ${dts429_lib_name}/${include_dir_name})
 add_library(${dts429_lib_name} STATIC
@@ -225,14 +225,15 @@ add_library(${dts429_lib_name} STATIC
         ${dts1553_src_dir}/icd_data.cpp                       ${dts1553_inc_dir}/icd_data.h
         ${dts1553_src_dir}/icd_element.cpp                    ${dts1553_inc_dir}/icd_element.h
         ${dts1553_src_dir}/icd_translate.cpp                  ${dts1553_inc_dir}/icd_translate.h
-        ${dts429_src_dir}/dts429.cpp                         ${dts429_inc_dir}/dts429.h
+        ${dts429_src_dir}/dts429.cpp                          ${dts429_inc_dir}/dts429.h
     )
 
-target_include_directories(${dts429_lib_name} PUBLIC ${dts429_inc_dir}
+target_include_directories(${dts429_lib_name} PUBLIC ${dts429_inc_dir} ${dts1553_inc_dir}
                             ${util_inc_dir} ${ch10pq_inc_dir} ${yamlsv_inc_dir})
 
 target_link_libraries(${dts429_lib_name} PUBLIC
-                        ${util_lib_name} ${ch10pq_lib_name} ${linux_libs} ${yamlsv_lib_name})
+                        ${util_lib_name} ${ch10pq_lib_name} ${dts1553_lib_name}
+                        ${linux_libs} ${yamlsv_lib_name})
 target_compile_features(${dts429_lib_name} PUBLIC cxx_std_17)
 
 #########################################################
@@ -516,11 +517,11 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/provenance_data_u.cpp)
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs}
-                            ${common_inc_dir} ${util_inc_dir}
+                            ${common_inc_dir} ${util_inc_dir} "dts_429/dts429.h"
                             ${parquet_inc_dirs} ${dts1553_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir}
                             ${tmats_inc_dir} ${parsech10_inc_dir} ${eth_inc_dir}
                             ${ch10comp_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir} ${transtab_inc_dir}
-                            ${transtab1553_inc_dir} ${md_inc_dir} ${dts429_inc_dir})
+                            ${transtab1553_inc_dir} ${md_inc_dir} )
 
 target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
 target_link_libraries(${test_exe_name}
