@@ -1,5 +1,24 @@
 #include "dts429.h"
 
+
+bool DTS429::OpenYamlFile(const ManagedPath& dts_path)
+{_
+    // Check if yaml or text file
+    bool is_yaml = icd_data_.IsYamlFile(dts_path);
+
+    if (is_yaml)
+    {
+
+    }
+    else
+    {
+        printf("DTS429::OpenYamlFile(): Faild. dts_path is not a yaml file\n")
+        return false;
+    }
+    // return IngestLines()
+    return false;
+}
+
 bool DTS429::IngestLines(const std::vector<std::string>& lines,
                           std::map<std::string, std::string>& wrd_name_substitutions,
                           std::map<std::string, std::string>& elem_name_substitutions)

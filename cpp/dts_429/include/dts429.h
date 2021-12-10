@@ -33,12 +33,13 @@ enum class DTS429Componant : uint8_t
 // Currently a yaml file, containing message definitions and supplemental bus
 // map labels, is allowed as input.
 
-class DTSDTS429
+class DTS429
 {
    private:
     // Ingest and manipulate ICD data
     ICDData icd_data_;
     ICDData* icd_data_ptr_;
+    const std::vector<std::string>& yaml_lines_;
 
     // Map the top-level DTS1553 yaml file key string to a DTS1553Component
     const std::map<std::string, DTS429Componant> yaml_key_to_component_map_ = {
@@ -57,10 +58,26 @@ class DTSDTS429
 
     ICDData GetICDData() { return icd_data_; }
     ICDData* ICDDataPtr() { return icd_data_ptr_; }
+    const std::vector<std::string>& GetYamlLines() { return yaml_lines_; }
     std::map<std::string, std::set<uint32_t>> GetSupplBusNameToWordKeyMap()
     {
         return suppl_bus_name_to_word_key_map_;
     }
+
+
+    /*
+		OpenYamlFile
+
+		dts_path:	Full path to dts file. File name is used determine file type,
+		            either yaml or text/csv. The input file is opened and all data
+                    is stored individually as new line terminated strings in
+                    yaml_lines_.
+
+
+		return:		True if success, false if failure.
+
+	*/
+    bool OpenYamlFile(const ManagedPath& dts_path);
 
     /*
 		IngestLines
@@ -68,9 +85,9 @@ class DTSDTS429
 		dts_path:	Full path to dts file. File name is used determine file type,
 		            either yaml or text/csv.
 
-		lines:		All non-newline-terminated lines of text from the dts file.
+		lines:		All newline-terminated lines of text from the dts file.
 
-        msg_name_substitution:   Map of original word name to substituted name.
+        wrd_name_substitution:   Map of original word name to substituted name.
 
         elem_name_substitution: Map of original elem name to substituted elem name.
 
