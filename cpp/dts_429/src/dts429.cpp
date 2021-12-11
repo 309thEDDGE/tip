@@ -42,7 +42,7 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
             return false;
         }
 
-        if (!icd_data_.PrepareICDQuery(msg_defs, msg_name_substitutions,
+        if (!icd_data_.PrepareICDQuery(msg_defs, wrd_name_substitutions,
                                        elem_name_substitutions))
         {
             printf("DTS429::IngestLines(): PrepareICDQuery failure!\n");

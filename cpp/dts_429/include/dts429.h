@@ -10,7 +10,7 @@
 #include "icd_data.h"
 #include "managed_path.h"
 
-// Explicit indication of DTS1553 components
+// Explicit indication of DTS429 components
 enum class DTS429Componant : uint8_t
 {
     BAD = 0,
@@ -28,7 +28,7 @@ enum class DTS429Componant : uint8_t
 // Data supplemental to bus mapping and which include 429 Labels of
 // words which may be present in the raw 429 parquet tables that are not
 // included in the 429 message descriptions are processed by the
-// SupplementalBusMapCommWords class.
+// SupplementalBusMapLabels class.
 //
 // Currently a yaml file, containing message definitions and supplemental bus
 // map labels, is allowed as input.
