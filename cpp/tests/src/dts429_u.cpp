@@ -72,16 +72,15 @@ class Dts429Test
 
 };
 
-TEST(DTS429Test, NonNewlineTerminatedLinesVector)
+TEST(DTS429Test, IngestLinesNonNewlineTerminatedLinesVector)
 {
     DTS429 dts;
     std::map<std::string, std::string> wrd_name_substitutions;
     std::map<std::string, std::string> elem_name_substitutions;
 
-    EXPECT_FALSE(dts.IngestLines(yaml_lines_1, elem_name_substitutions, wrd_name_substitutions));
+    EXPECT_FALSE(dts.IngestLines(yaml_lines_0, elem_name_substitutions, wrd_name_substitutions));
 
 }
-
 
 TEST(DTS429Test, IngestLines)
 {
@@ -89,21 +88,66 @@ TEST(DTS429Test, IngestLines)
     std::map<std::string, std::string> wrd_name_substitutions;
     std::map<std::string, std::string> elem_name_substitutions;
 
-    EXPECT_TRUE(dts.IngestLines(yaml_lines_0, elem_name_substitutions, wrd_name_substitutions));
+    EXPECT_TRUE(dts.IngestLines(yaml_lines_1, elem_name_substitutions, wrd_name_substitutions));
+
+    // if there are further output checks, add here
+}
+
+TEST(DTS429Test, FillSupplBusNameToWordKeyMapValidateInput)
+{
+    // NOTE: Not spending too much effort on input validation
+    DTS429 dts;
+
+    // if the size == zero, the private map should not be filled
+    YAML::Node suppl_busmap_node;
+    std::map<std::string, std::set<uint32_t>> out_map;
+
+    // If empty return true and leave output map empty.
+    EXPECT_TRUE(dts.FillSupplBusNameToWrdKeyMap(suppl_busmap_node, out_map));
+    EXPECT_TRUE(out_map.size() == 0);
+}
+
+TEST(DTS429Test, FillSupplBusNameToWordKeyMapValidateOutput)
+{
+    // Tests to ensure output validity
+
+    // expect fillSuppleBusNametoWrdKeyMap True
 
     EXPECT_FALSE(true);
 }
 
-
-
-TEST(DTS429Test, YamlParsedCorrectly)
+TEST(DTS429Test, ProcessLinesAsYamlValidateInput)
 {
+    // Test root node entry == size 0 - ensure there are lines passed in or else it fails
+    std::vector<std::string> lines;
+    YAML::Node wrd_defs_node;
+    YAML::Node suppl_busmap_node;
 
-    EXPECT_FALSE(true);
+    // Empty lines vector fails
+    EXPECT_FALSE(dts.ProcessLinesAsYaml(lines, wrd_defs_node, suppl_busmap_node));
+
+    // test to ensure that yaml lines are all new line terminated on the way in
+    Dts429Test test429lines = Dts429Test();
+
+    // non-newline-terminated lines vector fails
+    lines = test429lines.yaml_lines_0;
+    EXPECT_FALSE(dts.ProcessLinesAsYaml(lines, wrd_defs_node, suppl_busmap_node));
+
+    // newline-terminated lines vector pass
+    lines = test429lines.yaml_lines_1;
+    EXPECT_TRUE(dts.ProcessLinesAsYaml(lines, wrd_defs_node, suppl_busmap_node));
 }
 
-TEST(DTS429Test, StoreParsedInMap)
+TEST(DTS429Test, ProcessLinesAsYamlValidateOutput)
 {
+    // Ensure that SupplementalBusMapLabels are stored in the correct
+    // map, and the translateable_word_defs are stored in correct map
+    YAML::Node wrd_defs_node;
+    YAML::Node suppl_busmap_node;
+    std::vector<std::string> lines;
 
-    EXPECT_FALSE(true);
+    lines = test429lines.yaml_lines_1;
+    EXPECT_TRUE(dts.ProcessLinesAsYaml(lines, wrd_defs_node, suppl_busmap_node));
+    EXPECT_TRUE(wrd_defs_node["TestWord"]);
+    EXPECT_TRUE(suppl_busmap_node["A429BusAlpha"]);
 }
