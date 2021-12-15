@@ -1,7 +1,9 @@
 #include "dts429.h"
 
 
-bool DTS429::OpenYamlFile(const ManagedPath& dts_path)
+bool DTS429::OpenYamlFile(const ManagedPath& dts_path,
+                        std::map<std::string, std::string>& wrd_name_substitutions,
+                        std::map<std::string, std::string>& elem_name_substitutions));)
 {_
     // Check if yaml or text file
     bool is_yaml = icd_data_.IsYamlFile(dts_path);
@@ -27,11 +29,9 @@ bool DTS429::OpenYamlFile(const ManagedPath& dts_path)
         }
         fin.close();
 
-        // ensure that lines list is formatted properly
-
-
-        // create wrd_defs node and suppl_busmap node
-
+        // Obtain each DST429 component as a yaml node.
+        YAML::Node wrd_defs;
+        YAML::Node suppl_busmap;
 
         //
 

@@ -77,7 +77,9 @@ class DTS429
 		return:		True if success, false if failure.
 
 	*/
-    bool OpenYamlFile(const ManagedPath& dts_path);
+    bool OpenYamlFile(const ManagedPath& dts_path,
+                        std::map<std::string, std::string>& wrd_name_substitutions,
+                        std::map<std::string, std::string>& elem_name_substitutions));
 
     /*
 		IngestLines
