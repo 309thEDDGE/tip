@@ -66,7 +66,7 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
         return false;
     }
 
-    if (!icd_data_.PrepareICDQuery(msg_defs, wrd_name_substitutions,
+    if (!icd_data_.PrepareICDQuery(msg_defs, wrd_name_substitutions,  // big TODO here
                                     elem_name_substitutions))
     {
         printf("DTS429::IngestLines(): PrepareICDQuery failure!\n");
@@ -122,9 +122,9 @@ bool DTS429::ProcessLinesAsYaml(const std::vector<std::string>& lines,
         return false;
     }
 
-    // The message definitions map MUST be present.
+    // The word definitions map MUST be present.
     std::string key_name = "";
-    bool message_definitions_exist = false;
+    bool word_definitions_exist = false;
     for (YAML::const_iterator it = root_node.begin(); it != root_node.end(); ++it)
     {
         key_name = it->first.as<std::string>();
@@ -132,20 +132,20 @@ bool DTS429::ProcessLinesAsYaml(const std::vector<std::string>& lines,
         {
             switch (yaml_key_to_component_map_.at(key_name))
             {
-                case DTS429Component::TRANSL_MESSAGE_DEFS:
-                    message_definitions_exist = true;
+                case DTS429Component::TRANSL_WORD_DEFS:
+                    word_definitions_exist = true;
                     transl_msg_defs_node = it->second;
                     break;
-                case DTS429Component::SUPPL_BUSMAP_COMM_WORDS:
+                case DTS429Component::SUPPL_BUSMAP_LABELS:
                     suppl_busmap_comm_words_node = it->second;
                     break;
             }
         }
     }
 
-    if (!message_definitions_exist)
+    if (!word_definitions_exist)
     {
-        printf("DTS429::ProcessLinesAsYaml(): Message definitions node not present!\n");
+        printf("DTS429::ProcessLinesAsYaml(): Word definitions node not present!\n");
         return false;
     }
 
