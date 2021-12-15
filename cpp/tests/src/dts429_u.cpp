@@ -38,7 +38,7 @@ class Dts429Test
                                 "    - [ 7, 4, 12, 124]"
     };
 
-    const std::vector<std::string> yaml_lines_1{"translatable_word_definitions:",
+    const std::vector<std::string> yaml_lines_1{"translatable_word_definitions:\n",
                                 " TestWord:\n",
                                 "    wrd_data:\n",
                                 "      label: 107\n",
@@ -78,7 +78,7 @@ TEST(DTS429Test, IngestLinesNonNewlineTerminatedLinesVector)
     std::map<std::string, std::string> wrd_name_substitutions;
     std::map<std::string, std::string> elem_name_substitutions;
 
-    EXPECT_FALSE(dts.IngestLines(yaml_lines_0, elem_name_substitutions, wrd_name_substitutions));
+    EXPECT_FALSE(dts.IngestLines(yaml_lines_1, elem_name_substitutions, wrd_name_substitutions));
 
 }
 
@@ -88,7 +88,7 @@ TEST(DTS429Test, IngestLines)
     std::map<std::string, std::string> wrd_name_substitutions;
     std::map<std::string, std::string> elem_name_substitutions;
 
-    EXPECT_TRUE(dts.IngestLines(yaml_lines_1, elem_name_substitutions, wrd_name_substitutions));
+    EXPECT_TRUE(dts.IngestLines(yaml_lines_0, elem_name_substitutions, wrd_name_substitutions));
 
     // if there are further output checks, add here
 }
@@ -129,12 +129,12 @@ TEST(DTS429Test, ProcessLinesAsYamlValidateInput)
     // test to ensure that yaml lines are all new line terminated on the way in
     Dts429Test test429lines = Dts429Test();
 
-    // non-newline-terminated lines vector fails
-    lines = test429lines.yaml_lines_0;
+    // newline-terminated lines vector fails
+    lines = test429lines.yaml_lines_1;
     EXPECT_FALSE(dts.ProcessLinesAsYaml(lines, wrd_defs_node, suppl_busmap_node));
 
-    // newline-terminated lines vector pass
-    lines = test429lines.yaml_lines_1;
+    // non-newline-terminated lines vector pass
+    lines = test429lines.yaml_lines_0;
     EXPECT_TRUE(dts.ProcessLinesAsYaml(lines, wrd_defs_node, suppl_busmap_node));
 }
 
@@ -146,7 +146,7 @@ TEST(DTS429Test, ProcessLinesAsYamlValidateOutput)
     YAML::Node suppl_busmap_node;
     std::vector<std::string> lines;
 
-    lines = test429lines.yaml_lines_1;
+    lines = test429lines.yaml_lines_0;
     EXPECT_TRUE(dts.ProcessLinesAsYaml(lines, wrd_defs_node, suppl_busmap_node));
     EXPECT_TRUE(wrd_defs_node["TestWord"]);
     EXPECT_TRUE(suppl_busmap_node["A429BusAlpha"]);

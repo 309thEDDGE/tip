@@ -87,7 +87,7 @@ class DTS429
 		dts_path:	Full path to dts file. File name is used determine file type,
 		            either yaml or text/csv.
 
-		lines:		All newline-terminated lines of text from the dts file.
+		lines:		All non-newline-terminated lines of text from the dts file.
 
         wrd_name_substitution:   Map of original word name to substituted name.
 
