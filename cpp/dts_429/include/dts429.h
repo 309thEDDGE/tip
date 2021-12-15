@@ -130,7 +130,7 @@ class DTS429
 												429 label and IPDH bus number.
 
 		output_suppl_busname_to_wrd_key_map:	Output maps the bus name to a set
-												of 429 wrod keys, where a word
+												of 429 word keys, where a word
 												key is an integer created from a
 												uint8_t ARINC 429 word label
 												upshifted by 8 bits added to a

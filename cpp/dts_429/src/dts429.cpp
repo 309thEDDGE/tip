@@ -134,10 +134,10 @@ bool DTS429::ProcessLinesAsYaml(const std::vector<std::string>& lines,
             {
                 case DTS429Component::TRANSL_WORD_DEFS:
                     word_definitions_exist = true;
-                    transl_msg_defs_node = it->second;
+                    transl_wrd_defs_node = it->second;
                     break;
                 case DTS429Component::SUPPL_BUSMAP_LABELS:
-                    suppl_busmap_comm_words_node = it->second;
+                    suppl_busmap_labels_node = it->second;
                     break;
             }
         }
@@ -155,22 +155,22 @@ bool DTS429::ProcessLinesAsYaml(const std::vector<std::string>& lines,
 bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_node,
                                           std::map<std::string, std::set<uint64_t>>& output_suppl_busname_to_wrd_key_map)
 {
-    if (suppl_busmap_comm_words_node.size() == 0)
+    if (suppl_busmap_labels_node.size() == 0)
         return true;
 
     // Root node must be a map.
-    if (!suppl_busmap_comm_words_node.IsMap())
+    if (!suppl_busmap_labels_node.IsMap())
     {
         printf("DTS429::FillSupplBusNameToMsgKeyMap(): Root node is not a map\n");
         return false;
     }
 
     std::string bus_name = "";
-    // Use uint64_t to avoid the need for casting prior to upshifting the original
-    // 16-bit value by 16 bits.
-    std::vector<uint64_t> tx_rx_comm_words;
-    for (YAML::Node::const_iterator busname_map = suppl_busmap_comm_words_node.begin();
-         busname_map != suppl_busmap_comm_words_node.end(); ++busname_map)
+    // Use uint32_t to avoid the need for casting prior to upshifting the original
+    // 8-bit value by 8 bits.
+    std::vector<uint32_t> arinc_labels;// tx_rx_comm_words;  TODO Pick up here and think/work through following
+    for (YAML::Node::const_iterator busname_map = suppl_busmap_labels_node.begin();
+         busname_map != suppl_busmap_labels_node.end(); ++busname_map)
     {
         // Fail if the value part of each mapping is not a sequence.
         if (!busname_map->second.IsSequence())
@@ -206,15 +206,15 @@ bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_
 
             // Build the output map.
             bus_name = busname_map->first.as<std::string>();
-            if (output_suppl_busname_to_msg_key_map.count(bus_name) == 0)
+            if (output_suppl_busname_to_wrd_key_map.count(bus_name) == 0)
             {
-                std::set<uint64_t> temp_msg_key_set(
+                std::set<uint64_t> temp_wrd_key_set(
                     {(tx_rx_comm_words[0] << 16) + tx_rx_comm_words[1]});
-                output_suppl_busname_to_msg_key_map[bus_name] = temp_msg_key_set;
+                output_suppl_busname_to_wrd_key_map[bus_name] = temp_wrd_key_set;
             }
-            else
+            else  // TODO - this needs to be corrected
             {
-                output_suppl_busname_to_msg_key_map[bus_name].insert(
+                output_suppl_busname_to_wrd_key_map[bus_name].insert(
                     (tx_rx_comm_words[0] << 16) + tx_rx_comm_words[1]);
             }
         }
