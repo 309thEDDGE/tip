@@ -29,10 +29,6 @@ bool DTS429::OpenYamlFile(const ManagedPath& dts_path,
         }
         fin.close();
 
-        // Obtain each DST429 component as a yaml node.
-        YAML::Node wrd_defs;
-        YAML::Node suppl_busmap;
-
         // Ingest Lines from input file
         if(!IngestLines(yaml_lines_, wrd_name_substitutions,
         elem_name_substitutions))
@@ -40,7 +36,6 @@ bool DTS429::OpenYamlFile(const ManagedPath& dts_path,
             SPDLOG_INFO("DTS::OpenYamlFile(): Faild. IngestLines failure\n");
             return false;
         }
-        return true;
 
     }
     else
@@ -48,8 +43,8 @@ bool DTS429::OpenYamlFile(const ManagedPath& dts_path,
         printf("DTS429::OpenYamlFile(): Faild. dts_path is not a yaml file\n")
         return false;
     }
-    // return IngestLines()
-    return false;
+
+    return true;
 }
 
 bool DTS429::IngestLines(const std::vector<std::string>& lines,
