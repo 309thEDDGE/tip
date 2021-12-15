@@ -8,6 +8,33 @@ bool DTS429::OpenYamlFile(const ManagedPath& dts_path)
 
     if (is_yaml)
     {
+        SPDLOG_INFO("DTS429: Handling yaml file data");
+
+        // Iterate and build lines list
+        std::ifstream fin(dts_path);
+        std::string str;
+        if(!fin)
+        {
+            SPDLOG_INFO("DTS429: Cannot open file at path")
+            return false;
+        }
+        while (std::getline(fin, str))
+        {
+            if(str.size() > 0)
+            {
+                yaml_lines_.push_back(str);
+            }
+        }
+        fin.close();
+
+        // ensure that lines list is formatted properly
+
+
+        // create wrd_defs node and suppl_busmap node
+
+
+        //
+
 
     }
     else
