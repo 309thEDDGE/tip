@@ -52,47 +52,30 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
                           std::map<std::string, std::string>& elem_name_substitutions)
 
 {
-    // Check if yaml or text file.
-    bool is_yaml = icd_data_.IsYamlFile(dts_path);
+    printf("DTS429::IngestLines(): Handling yaml file data\n");
 
-    // If yaml file, interpret lines as yaml and handle each component
-    // with intended object. Otherwise pass all lines to ICDData.
-    if (is_yaml)
+    // Obtain each DTS429 component as a yaml node.
+    YAML::Node msg_defs;
+    YAML::Node suppl_busmap;
+    if (!ProcessLinesAsYaml(lines, msg_defs, suppl_busmap))
     {
-        printf("DTS429::IngestLines(): Handling yaml file data\n");
-
-        // Obtain each DTS429 component as a yaml node.
-        YAML::Node msg_defs;
-        YAML::Node suppl_busmap;
-        if (!ProcessLinesAsYaml(lines, msg_defs, suppl_busmap))
-        {
-            printf("DTS429::IngestLines(): Process yaml lines failure!\n");
-            return false;
-        }
-
-        if (!icd_data_.PrepareICDQuery(msg_defs, wrd_name_substitutions,
-                                       elem_name_substitutions))
-        {
-            printf("DTS429::IngestLines(): PrepareICDQuery failure!\n");
-            return false;
-        }
-
-        // If the supplemental bus map command words node has a size greater
-        // than zero, fill the private member map.
-        if (!FillSupplBusNameToMsgKeyMap(suppl_busmap, suppl_bus_name_to_message_key_map_))
-        {
-            printf("DTS429::IngestLines(): Failed to generate bus name to message key map!\n");
-            return false;
-        }
+        printf("DTS429::IngestLines(): Process yaml lines failure!\n");
+        return false;
     }
-    else
+
+    if (!icd_data_.PrepareICDQuery(msg_defs, wrd_name_substitutions,
+                                    elem_name_substitutions))
     {
-        printf("DTS429::IngestLines(): Handling text/csv file data\n");
-        if (!icd_data_.PrepareICDQuery(lines))
-        {
-            printf("DTS429::IngestLines(): Failed to parse input lines!\n");
-            return false;
-        }
+        printf("DTS429::IngestLines(): PrepareICDQuery failure!\n");
+        return false;
+    }
+
+    // If the supplemental bus map labels node has a size greater
+    // than zero, fill the private member map.
+    if (!FillSupplBusNameToMsgKeyMap(suppl_busmap, suppl_bus_name_to_word_key_map_))
+    {
+        printf("DTS429::IngestLines(): Failed to generate bus name to message key map!\n");
+        return false;
     }
 
     return true;
