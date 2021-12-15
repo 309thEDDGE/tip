@@ -22,6 +22,9 @@ bool DTS429::OpenYamlFile(const ManagedPath& dts_path,
         }
         while (std::getline(fin, str))
         {
+            // remove newline from string
+            str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+
             if(str.size() > 0)
             {
                 yaml_lines_.push_back(str);
