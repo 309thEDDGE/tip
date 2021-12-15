@@ -3,7 +3,7 @@
 
 bool DTS429::OpenYamlFile(const ManagedPath& dts_path,
                         std::map<std::string, std::string>& wrd_name_substitutions,
-                        std::map<std::string, std::string>& elem_name_substitutions));)
+                        std::map<std::string, std::string>& elem_name_substitutions)
 {_
     // Check if yaml or text file
     bool is_yaml = icd_data_.IsYamlFile(dts_path);
