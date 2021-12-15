@@ -12,12 +12,12 @@ bool DTS429::OpenYamlFile(const ManagedPath& dts_path,
     {
         SPDLOG_INFO("DTS429: Handling yaml file data");
 
-        // Iterate and build lines list
+        // Open input file and build vector<string> of it's lines
         std::ifstream fin(dts_path);
         std::string str;
         if(!fin)
         {
-            SPDLOG_INFO("DTS429: Cannot open file at path")
+            SPDLOG_INFO("DTS429: Cannot open file at path\n")
             return false;
         }
         while (std::getline(fin, str))
@@ -33,8 +33,14 @@ bool DTS429::OpenYamlFile(const ManagedPath& dts_path,
         YAML::Node wrd_defs;
         YAML::Node suppl_busmap;
 
-        //
-
+        // Ingest Lines from input file
+        if(!IngestLines(yaml_lines_, wrd_name_substitutions,
+        elem_name_substitutions))
+        {
+            SPDLOG_INFO("DTS::OpenYamlFile(): Faild. IngestLines failure\n");
+            return false;
+        }
+        return true;
 
     }
     else
