@@ -138,8 +138,8 @@ class DTS429
 
 		return:									True if node is empty or has valid
 												structure (maps of strings to
-												sequences of sequences of two
-												uint8_t values) and false otherwise.
+												sequences of integer values)
+                                                and false otherwise.
 												Output map is empty if node is empty
 												or return value is false.
 	*/
