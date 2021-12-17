@@ -126,15 +126,14 @@ class DTS429
 
 		suppl_busmap_labels_node:			    Yaml node containing maps with
 												keys corresponding bus names and
-												values as sequences of pairs of
-												429 label and IPDH bus number.
+												values as sequences of integers
+												representing ARINC 429 labels.
 
 		output_suppl_busname_to_wrd_key_map:	Output maps the bus name to a set
 												of 429 word keys, where a word
-												key is an integer created from a
-												uint8_t ARINC 429 word label
-												upshifted by 8 bits added to a
-												uint8_t bus number from the IPDH.
+												key is an integer representing an
+                                                ARINC label that is associated with
+                                                the bus name.
 
 		return:									True if node is empty or has valid
 												structure (maps of strings to

@@ -161,14 +161,12 @@ bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_
     // Root node must be a map.
     if (!suppl_busmap_labels_node.IsMap())
     {
-        printf("DTS429::FillSupplBusNameToMsgKeyMap(): Root node is not a map\n");
+        printf("DTS429::FillSupplBusNameToWrdKeyMap(): Root node is not a map\n");
         return false;
     }
 
     std::string bus_name = "";
-    // Use uint32_t to avoid the need for casting prior to upshifting the original
-    // 8-bit value by 8 bits.
-    std::vector<uint32_t> arinc_labels;// tx_rx_comm_words;  TODO Pick up here and think/work through following
+    std::vector<uint32_t> arinc_labels;
     for (YAML::Node::const_iterator busname_map = suppl_busmap_labels_node.begin();
          busname_map != suppl_busmap_labels_node.end(); ++busname_map)
     {
@@ -179,45 +177,31 @@ bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_
             return false;
         }
 
-        // Iterate over the sequence in the bus name map.
-        YAML::Node comm_words_seq = busname_map->second;
-        for (int comm_words_set_ind = 0; comm_words_set_ind < comm_words_seq.size();
-             comm_words_set_ind++)
+        // Iterate over the integers in the bus name sequence map to check type is int.
+        YAML::Node labels_seq = busname_map->second;
+        for (int labels_set_ind = 0; labels_set_ind < labels_seq.size();
+             labels_set_ind++)
         {
-            // Fail if the item in the sequence is itself not a sequence.
-            if (!comm_words_seq[comm_words_set_ind].IsSequence())
+            // Fail if the item in the sequence is not an int.
+            try
             {
+                if (typeid(labels_seq[labels_set_ind].as<int>()) != typeid(int()))  throw 1;
+            }
+            catch (...)
+            {
+                // catch case of error in 'casting' to int
                 printf(
-                    "DTS429::FillSupplBusNameToMsgKeyMap(): "
-                    "Sequence item is not itself a sequence\n");
+                    "DTS429::FillSupplBusNameToWrdKeyMap(): "
+                    "Sequence item is not an integer\n");
                 return false;
-            }
-
-            tx_rx_comm_words = comm_words_seq[comm_words_set_ind].as<std::vector<uint64_t>>();
-
-            // Command words sequence must have two values.
-            if (tx_rx_comm_words.size() != 2)
-            {
-                printf(
-                    "DTS429::FillSupplBusNameToMsgKeyMap(): "
-                    "Command words sequence does not have exactly two values\n");
-                return false;
-            }
-
-            // Build the output map.
-            bus_name = busname_map->first.as<std::string>();
-            if (output_suppl_busname_to_wrd_key_map.count(bus_name) == 0)
-            {
-                std::set<uint64_t> temp_wrd_key_set(
-                    {(tx_rx_comm_words[0] << 16) + tx_rx_comm_words[1]});
-                output_suppl_busname_to_wrd_key_map[bus_name] = temp_wrd_key_set;
-            }
-            else  // TODO - this needs to be corrected
-            {
-                output_suppl_busname_to_wrd_key_map[bus_name].insert(
-                    (tx_rx_comm_words[0] << 16) + tx_rx_comm_words[1]);
             }
         }
+
+        // Build the output map.
+        bus_name = busname_map->first.as<std::string>();
+        arinc_labels = labels_seq.as<std::vector<uint32_t>>();
+        output_suppl_busname_to_wrd_key_map[bus_name] = arinc_labels;
+
     }
     return true;
 }
