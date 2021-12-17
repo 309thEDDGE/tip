@@ -109,11 +109,26 @@ TEST(DTS429Test, FillSupplBusNameToWordKeyMapValidateInput)
 
 TEST(DTS429Test, FillSupplBusNameToWordKeyMapValidateOutput)
 {
+    DTS429 dts;
+
     // Tests to ensure output validity
+    std::map<std::string, std::set<uint32_t>> out_map;
+    std::map<std::string, std::set<uint32_t>> expected_map;
+    YAML::Node suppl_busmap_node = YAML::Load(
+        "supplemental_bus_map_labels:\n  {A429BusAlpha:\n    - [ 7, 4, 12, 124] }");
+
+    std::set<uint32_t> alpha = {7, 4, 12, 124};
+    expected_map["A429BusAlpha"] = alpha;
+
+    // fill output map
+    dts.FillSupplBusNameToWordKeyMap(suppl_busmap_node, out_map);
 
     // expect fillSuppleBusNametoWrdKeyMap True
+    bool map_equality = expected_map.size() == out_map.size()
+        && std::equal(expected_map.begin(), expected_map.end(),
+                      out_map.begin());
 
-    EXPECT_FALSE(true);
+    EXPECT_TRUE(map_equality);
 }
 
 TEST(DTS429Test, ProcessLinesAsYamlValidateInput)
