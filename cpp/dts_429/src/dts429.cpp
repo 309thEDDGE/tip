@@ -199,7 +199,7 @@ bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_
 
         // Build the output map.
         bus_name = busname_map->first.as<std::string>();
-        arinc_labels = labels_seq.as<std::vector<uint32_t>>();
+        arinc_labels = labels_seq.as<std::set<uint32_t>>();
         output_suppl_busname_to_wrd_key_map[bus_name] = arinc_labels;
 
     }
