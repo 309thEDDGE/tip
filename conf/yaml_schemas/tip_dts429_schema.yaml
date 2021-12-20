@@ -17,9 +17,8 @@ translatable_word_definitions:              # (R)
     wrd_data:                               # (R)
       label: INT                            # (R)
       bus: INT                              # (R)
-      sdiusd: BOOL                          # (R)
       sdi: INT                              # (R)
-      rate: OPTFLT                            # (O)
+      rate: OPTINT                            # (O)
       desc: OPTSTR                            # (O)
       lru_name: OPTSTR                        # (O)
     elem:                                   # (R)
@@ -142,15 +141,6 @@ supplemental_bus_map_labels:                # (R)
 # word through 'bus' field in the IPDH.
 #
 
-#
-# sdiusd
-#
-# Required, structure included exactly once in the current map
-#
-# Default value = false. This would be true if a bus has multiple
-# word formats associated with a single 429 label, and those formats
-# are differentiated by the value of the SDI bits.
-#
 
 #
 # sdi
@@ -163,7 +153,9 @@ supplemental_bus_map_labels:                # (R)
 #
 # Example: To define that the bits [10,9] are of the value [1,0]
 # you would set 'sdi' = 2. To define bits [10,9] as having the
-# value [1,1] you would set 'sdi' = 3.
+# value [1,1] you would set 'sdi' = 3. There are cases where the
+# sdi bits should be ignored. If the SDI bits are irrelevant and
+# should be ignored, use the value -1 for sdi.
 #
 
 #
