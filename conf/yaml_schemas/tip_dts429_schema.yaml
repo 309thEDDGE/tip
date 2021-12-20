@@ -163,8 +163,11 @@ supplemental_bus_map_labels:                # (R)
 #
 # Optional, structure included exactly once in the current map
 #
-# Key maps to a float value which gives the message transmission
-# rate with Hz unit.
+# Key maps to a INT value which gives the message transmission
+# rate. The rate matches the defintion of the IPDH's bus speed
+# field, as found in IRIG106 Chapter 11.
+#       0 = Indicates low-speed ARINC-429 bus (12.5 kHz)
+#       1 = Indicates high-speed ARINC-429 bus (100 kHz)
 #
 
 #
