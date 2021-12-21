@@ -126,9 +126,8 @@ supplemental_bus_map_labels:                # (R)
 #
 # Required, structure included exactly once in the current map
 #
-# Key maps to a single decimal value that is eqeal to the octal
-# label of the ARINC 429 word. e.g. 302(oct) = 131(dec) => the
-# value for this label would be 131.
+# Key maps to a single octal value that is eqeal to the represents
+# the label of the ARINC 429 word.
 #
 
 #
@@ -140,7 +139,6 @@ supplemental_bus_map_labels:                # (R)
 # relevant message occurs. This bus is associated with an ARINC 429
 # word through 'bus' field in the IPDH.
 #
-
 
 #
 # sdi
