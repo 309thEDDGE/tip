@@ -102,6 +102,8 @@ void ParquetARINC429F0::Append(const uint64_t& time_stamp, uint8_t doy,
         std::fill(data_.begin(), data_.end(), 0);
     }
 
+}
+
 uint16_t ParquetARINC429F0::EncodeARINC429Label(uint8_t& raw_label)
 {
     // reverse bits in label
@@ -115,6 +117,4 @@ uint16_t ParquetARINC429F0::EncodeARINC429Label(uint8_t& raw_label)
     octal_label = octal_label + (raw_label & 7);
 
     return octal_label;
-}
-
 }
