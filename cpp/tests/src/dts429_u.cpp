@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "dts429.h"
+// #include "dts429.h"
 
 
 class Dts429Test
@@ -71,7 +71,7 @@ class Dts429Test
     };
 
 };
-
+/*
 TEST(DTS429Test, IngestLinesNonNewlineTerminatedLinesVector)
 {
     DTS429 dts;
@@ -166,3 +166,4 @@ TEST(DTS429Test, ProcessLinesAsYamlValidateOutput)
     EXPECT_TRUE(wrd_defs_node["TestWord"]);
     EXPECT_TRUE(suppl_busmap_node["A429BusAlpha"]);
 }
+*/

@@ -30,12 +30,30 @@ class ParquetARINC429F0 : public ParquetContext
     std::vector<uint8_t> PE_;           // save as single bit
     std::vector<uint8_t> FE_;           // save as single bit
     std::vector<uint8_t> bus_;          // save as int16
-    std::vector<uint8_t> label_;        // save as int16
+    std::vector<uint16_t> label_;        // save as int16
     std::vector<uint8_t> SDI_;          // save as int8
     std::vector<uint32_t> data_;        // save as int32
     std::vector<uint8_t> SSM_;          // save as int8
     std::vector<uint8_t> parity_;       // save as single bit
     std::vector<uint16_t> channel_id_;
+
+    /*
+	Take the raw uint8_t ARINC 429 label value parsed directly from the
+    429 word in the chapter 10 source. Convert the value to octal label format.
+
+    Args:
+        raw_label   --> uint8_t taken directly from the ARINC 429 label field
+
+    Return:
+        uint8_t storing value equal to the ARINC 429 label if it were in it's
+        octal form.
+
+    Example:
+    Parsed label == 83(dec) == 01010011(bin)  ===> 11001010(bin)  ==  312(oct)
+    Return uint8_t with value = 312. This will allow the parsed parquet label
+    output to equal 312.
+	*/
+    uint16_t EncodeARINC429Label(uint8_t& raw_label);
 
    public:
     ParquetARINC429F0();

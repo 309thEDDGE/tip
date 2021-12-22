@@ -756,21 +756,3 @@ TEST(Ch10ContextTest, UpdateARINC429Maps)
     EXPECT_THAT(ctx.chanid_labels_map.at(hdr_fmt.chanID),
                 ::testing::UnorderedElementsAre(202, 194));
 }
-
-TEST(Ch10ContextTest, EncodeARINC429Label)
-{
-    Ch10Context ctx(0);
-
-    uint8_t raw_label = 83;
-
-    // Expect 83 dec => 312 oct
-    EXPECT_EQ(ctx.EncodeARINC429Label(raw_label), 312);
-
-    raw_label = 154;
-    // Expect 154 dec => 131 oct
-    EXPECT_EQ(ctx.EncodeARINC429Label(raw_label), 131);
-
-    raw_label = 153;
-    // Expect 153 dec == 231 oct
-    EXPECT_EQ(ctx.EncodeARINC429Label(raw_label), 231);
-}
