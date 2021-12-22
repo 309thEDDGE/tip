@@ -114,7 +114,7 @@ TEST_F(Ch10429F0ComponentTest, ParseMessagesFormatError)
     EXPECT_EQ(status_, Ch10Status::ARINC429F0_FORMAT_ERROR);
 }
 
-TEST(Ch10ContextTest, EncodeARINC429Label)
+TEST(Ch10429F0ComponentTest, EncodeARINC429Label)
 {
     Ch10Context ctx(0);
 

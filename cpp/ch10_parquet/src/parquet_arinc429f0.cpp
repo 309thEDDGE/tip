@@ -102,7 +102,7 @@ void ParquetARINC429F0::Append(const uint64_t& time_stamp, uint8_t doy,
         std::fill(data_.begin(), data_.end(), 0);
     }
 
-    uint16_t Ch10Context::EncodeARINC429Label(uint8_t& raw_label)
+uint16_t ParquetARINC429F0::EncodeARINC429Label(uint8_t& raw_label)
 {
     // reverse bits in label
     raw_label = (raw_label & 0xF0) >> 4 | (raw_label & 0x0F) << 4;

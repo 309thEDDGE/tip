@@ -53,7 +53,7 @@ class ParquetARINC429F0 : public ParquetContext
     Return uint8_t with value = 312. This will allow the parsed parquet label
     output to equal 312.
 	*/
-    uint16_t EncodeARINC429Label(uint8_t& raw_label);
+   uint16_t EncodeARINC429Label(uint8_t& raw_label);
 
    public:
     ParquetARINC429F0();
