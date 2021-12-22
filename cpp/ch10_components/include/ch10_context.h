@@ -364,7 +364,7 @@ class Ch10Context
     Return uint8_t with value = 312. This will allow the parsed parquet label
     output to equal 312.
 	*/
-    uint8_t EncodeARINC429Label(uint8_t& raw_label);
+    uint16_t EncodeARINC429Label(uint8_t& raw_label);
 
     /*
 	Check if the configurations for packet type and output paths are consistent.
