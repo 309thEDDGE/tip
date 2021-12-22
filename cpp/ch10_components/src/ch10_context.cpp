@@ -408,6 +408,16 @@ bool Ch10Context::CheckConfiguration(
     return true;
 }
 
+uint8_t Ch10Context::EncodeARINC429Label(uint8_t& raw_label)
+{
+    uint8_t octal_label = 0;
+    octal_label = octal_label + ((raw_label >> 5) & 7)*((uint8_t)100);
+    octal_label = octal_label + ((raw_label >> 2) & 7)*((uint8_t)10);
+    octal_label = octal_label + (raw_label & 3);
+
+    return octal_label;
+}
+
 bool Ch10Context::IsConfigured()
 {
     return is_configured_;
