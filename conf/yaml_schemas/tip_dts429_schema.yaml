@@ -18,7 +18,7 @@ translatable_word_definitions:              # (R)
       label: INT                            # (R)
       bus: INT                              # (R)
       sdi: INT                              # (R)
-      rate: OPTINT                            # (O)
+      rate: OPTBOOL                           # (O)
       desc: OPTSTR                            # (O)
       lru_name: OPTSTR                        # (O)
     elem:                                   # (R)
@@ -161,11 +161,11 @@ supplemental_bus_map_labels:                # (R)
 #
 # Optional, structure included exactly once in the current map
 #
-# Key maps to a INT value which gives the message transmission
+# Key maps to a BOOL value which gives the message transmission
 # rate. The rate matches the defintion of the IPDH's bus speed
 # field, as found in IRIG106 Chapter 11.
-#       0 = Indicates low-speed ARINC-429 bus (12.5 kHz)
-#       1 = Indicates high-speed ARINC-429 bus (100 kHz)
+#       False = Indicates low-speed ARINC-429 bus (12.5 kHz)
+#       True = Indicates high-speed ARINC-429 bus (100 kHz)
 #
 
 #
