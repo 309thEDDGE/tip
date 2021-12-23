@@ -7,7 +7,7 @@ TEST(ParquetARINC429F0Test, EncodeARINC429Label)
 {
     ParquetARINC429F0 parquet429;
 
-    uint8_t raw_label = 83;
+    uint32_t raw_label = 83;
 
     // Expect 83 dec => 312 oct
     EXPECT_EQ(parquet429.EncodeARINC429Label(raw_label), 312);

@@ -88,7 +88,12 @@ void ParquetARINC429F0::Append(const uint64_t& time_stamp, uint8_t doy,
     PE_[append_count_] = msg->PE;
     FE_[append_count_] = msg->FE;
     bus_[append_count_] = msg->bus;
-    label_[append_count_] = msg->label;
+    // SPDLOG_PRINT("({:03d}) label in",
+    //                  msg->label);
+    // SPDLOG_PRINT("({:03d}) label out",
+    //                  EncodeARINC429Label((uint8_t&)msg->label));
+    // uint32_t label = EncodeARINC429Label(msg->label);
+    label_[append_count_] = EncodeARINC429Label(msg->label);
     SDI_[append_count_] = msg->SDI;
     data_[append_count_] = msg->data;
     SSM_[append_count_] = msg->SSM;
@@ -104,14 +109,14 @@ void ParquetARINC429F0::Append(const uint64_t& time_stamp, uint8_t doy,
 
 }
 
-uint16_t ParquetARINC429F0::EncodeARINC429Label(uint8_t& raw_label)
+uint32_t ParquetARINC429F0::EncodeARINC429Label(uint32_t raw_label)
 {
     // reverse bits in label
     raw_label = (raw_label & 0xF0) >> 4 | (raw_label & 0x0F) << 4;
     raw_label = (raw_label & 0xCC) >> 2 | (raw_label & 0x33) << 2;
     raw_label = (raw_label & 0xAA) >> 1 | (raw_label & 0x55) << 1;
 
-    uint16_t octal_label = 0;
+    uint32_t octal_label = 0;
     octal_label = octal_label + ((raw_label >> 6) & 3)*((uint16_t)100);
     octal_label = octal_label + ((raw_label >> 3) & 7)*((uint16_t)10);
     octal_label = octal_label + (raw_label & 7);
