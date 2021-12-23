@@ -113,21 +113,3 @@ TEST_F(Ch10429F0ComponentTest, ParseMessagesFormatError)
     status_ = comp_.ParseMessages(1, data_ptr_);
     EXPECT_EQ(status_, Ch10Status::ARINC429F0_FORMAT_ERROR);
 }
-
-TEST(Ch10429F0ComponentTest, EncodeARINC429Label)
-{
-    Ch10Context ctx(0);
-
-    uint8_t raw_label = 83;
-
-    // Expect 83 dec => 312 oct
-    EXPECT_EQ(ctx.EncodeARINC429Label(raw_label), 312);
-
-    raw_label = 154;
-    // Expect 154 dec => 131 oct
-    EXPECT_EQ(ctx.EncodeARINC429Label(raw_label), 131);
-
-    raw_label = 153;
-    // Expect 153 dec == 231 oct
-    EXPECT_EQ(ctx.EncodeARINC429Label(raw_label), 231);
-}
