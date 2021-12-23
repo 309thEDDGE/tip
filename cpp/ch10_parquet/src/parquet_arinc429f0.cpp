@@ -88,11 +88,6 @@ void ParquetARINC429F0::Append(const uint64_t& time_stamp, uint8_t doy,
     PE_[append_count_] = msg->PE;
     FE_[append_count_] = msg->FE;
     bus_[append_count_] = msg->bus;
-    // SPDLOG_PRINT("({:03d}) label in",
-    //                  msg->label);
-    // SPDLOG_PRINT("({:03d}) label out",
-    //                  EncodeARINC429Label((uint8_t&)msg->label));
-    // uint32_t label = EncodeARINC429Label(msg->label);
     label_[append_count_] = EncodeARINC429Label(msg->label);
     SDI_[append_count_] = msg->SDI;
     data_[append_count_] = msg->data;
