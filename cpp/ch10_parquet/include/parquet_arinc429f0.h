@@ -37,7 +37,15 @@ class ParquetARINC429F0 : public ParquetContext
     std::vector<uint8_t> parity_;       // save as single bit
     std::vector<uint16_t> channel_id_;
 
-    /*
+   public:
+    ParquetARINC429F0();
+    //ParquetMilStd1553F1(ManagedPath outfile, uint16_t ID, bool truncate);
+    bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
+    void Append(const uint64_t& time_stamp, uint8_t doy,
+                const ARINC429F0CSDWFmt* const chan_spec,
+                const ARINC429F0MsgFmt* msg, const uint16_t& chanid);
+
+   /*
 	Take the raw uint8_t ARINC 429 label value parsed directly from the
     429 word in the chapter 10 source. Convert the value to octal label format.
 
@@ -54,14 +62,6 @@ class ParquetARINC429F0 : public ParquetContext
     output to equal 312.
 	*/
    uint16_t EncodeARINC429Label(uint8_t& raw_label);
-
-   public:
-    ParquetARINC429F0();
-    //ParquetMilStd1553F1(ManagedPath outfile, uint16_t ID, bool truncate);
-    bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
-    void Append(const uint64_t& time_stamp, uint8_t doy,
-                const ARINC429F0CSDWFmt* const chan_spec,
-                const ARINC429F0MsgFmt* msg, const uint16_t& chanid);
 };
 
 #endif
