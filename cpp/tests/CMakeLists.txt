@@ -72,7 +72,7 @@ target_include_directories(tests
 
 target_link_libraries(tests
     PUBLIC common parsech10_lib ch10_parquet ch10ethernet parquet_context ch10comp
-    dts_1553 tiputil parquet_compare pq_vid_extract yamlsv
+    dts_1553 dts_429 tiputil parquet_compare pq_vid_extract yamlsv
     arrow_shared parquet spdlog::spdlog translate_tabular translate_tabular_1553
     metadata
     PRIVATE ${GTEST_LIBRARIES}
