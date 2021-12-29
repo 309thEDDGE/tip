@@ -7,7 +7,6 @@ set(headers
     include/managed_path.h
     include/parser_config_params.h
     include/parse_text.h
-    include/tmats_parser.h
     include/translation_config_params.h
     include/user_input.h
     include/yaml_reader.h
@@ -27,7 +26,6 @@ add_library(tiputil STATIC
             src/iterable_tools.cpp
             src/managed_path.cpp
             src/parse_text.cpp
-            src/tmats_parser.cpp
             src/user_input.cpp
             src/yaml_reader.cpp
             src/resource_limits.cpp

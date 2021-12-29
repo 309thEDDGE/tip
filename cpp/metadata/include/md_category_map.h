@@ -118,13 +118,10 @@ public:
     template<class K, class V>
     void PopulateNode(YAML::Node& node, const std::map<K, std::vector<std::vector<V>>>& data);
 
-};
+    template<class K1, class K2, class V>
+    void PopulateNode(YAML::Node& node, const std::map<K1, std::map<K2, V>>& data);
 
-// template<class T>
-//     bool MDCategoryMap::SetMappedValue(std::string key, const T&& val)
-// {
-//     SetMappedValueImpl(key, std::forward<T>(val));
-// }
+};
 
 
 template<class T>
@@ -144,34 +141,12 @@ bool MDCategoryMap::SetMappedValue(std::string key, const T& val)
     return true;
 }
 
-// template<class T>
-// bool MDCategoryMap::SetMappedValueImpl(std::string key, const T&& val)
-// {
-//     if(keys_.size() == 0)
-//         return false;
-
-//     if(std::count(keys_.begin(), keys_.end(), key) == 0)
-//     {
-//         return false;
-//     }
-
-//     PopulateNode(node_[key], val);
-
-//     return true;
-// }
-
 template<class T>
 void MDCategoryMap::SetArbitraryMappedValue(std::string key, const T& type)
 {
     YAML::Node temp_node = node_[key];
     PopulateNode(temp_node, type);
 }
-
-// template<class T>
-// void MDCategoryMap::SetArbitraryMappedValue(std::string key, const T&& type)
-// {
-//     PopulateNode(node_[key], type);
-// }
 
 template<class T>
 void MDCategoryMap::PopulateNode(YAML::Node& node, const std::set<T>& data)
@@ -264,6 +239,20 @@ void MDCategoryMap::PopulateNode(YAML::Node& node,
             key_node.push_back(vec_node);
         }
         key_node.SetStyle(YAML::EmitterStyle::Block);
+    }
+}
+
+template<class K1, class K2, class V>
+void MDCategoryMap::PopulateNode(YAML::Node& node, 
+    const std::map<K1, std::map<K2, V>>& data)
+{
+    node = YAML::Node(YAML::NodeType::Map);
+    typename std::map<K1, std::map<K2, V>>::const_iterator it;
+    for(it = data.cbegin(); it != data.cend(); ++it)
+    {
+        YAML::Node key_node = node[it->first];
+        PopulateNode(key_node, it->second);
+        key_node.SetStyle(YAML::EmitterStyle::Flow);
     }
 }
 

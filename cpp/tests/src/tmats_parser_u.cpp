@@ -1,5 +1,5 @@
-
 #include <gtest/gtest.h>
+#include "gmock/gmock.h"
 #include "tmats_parser.h"
 
 const std::string TMATS =
@@ -123,6 +123,12 @@ const std::string TMATS =
     "\n"
     R"(B-3\NBS\N:1;)"
     "\n"
+    R"(R-1\ASN-2-8:8;)"
+    "\n"
+    R"(R-1\ASN-2-9:9;)"
+    "\n"
+    R"(R-1\ASN-2-10:10;)"
+    "\n"
     R"(R-1\ASN-18-6:6;)"
     "\n"
     R"(R-1\ANM-18-6:EEC3B;)"
@@ -154,14 +160,566 @@ const std::string TMATS =
     R"(R-1\CDLN-19:ARR40-1-2;)"
     "\n";
 
+class TMATSParserTest : public ::testing::Test
+{
+   protected:
+    TMATSParser parser_;
+    std::vector<subattr_data_tuple> keys_;
+    std::vector<subattr_data_tuple> values_;
+    subattr_index_map kmap_;
+    subattr_index_map vmap_;
+    std::string kdata_;
+    std::string vdata_;
+    subattr_index_map::const_iterator index_map_it_;
+
+   public:
+    TMATSParserTest() : parser_(TMATS, false), kdata_(""), vdata_("")
+    {
+    }
+
+    bool GetIndexMaps(size_t key_index, size_t val_index)
+    {
+        if((key_index > (int(keys_.size()) - 1)) || (val_index > (int(values_.size()) - 1)))
+            return false;
+        kmap_ = std::get<0>(keys_.at(key_index));
+        vmap_ = std::get<0>(values_.at(val_index)); 
+        return true;
+    }
+
+    bool GetData(size_t key_index, size_t val_index)
+    {
+        if((key_index > (int(keys_.size()) - 1)) || (val_index > (int(values_.size()) - 1)))
+            return false;
+        kdata_ = std::get<1>(keys_.at(key_index));
+        vdata_ = std::get<1>(values_.at(val_index));
+        return true;
+    }
+
+    bool FindKeyInIndexMap(const subattr_index_map& index_map, std::string key)
+    {
+        index_map_it_ = index_map.find(key);
+        if(index_map_it_ == index_map.cend())
+            return false;
+        return true; 
+    }
+};
+
 TEST(CodeNameTest, RegexCorrect)
 {
-    CodeName c = CodeName(R"(R-x\DSI-n)");
+    CodeName c = CodeName(R"(R-x\DSI-n)", false);
 
     EXPECT_EQ("R-([0-9]+)\\\\DSI-([0-9]+)", c.regex_string);
 }
 
-TEST(TMATSParserTest, MapAttrsMatchesGroups)
+TEST(CodeNameTest, RegexCorrectCompound)
+{
+    CodeName c = CodeName(R"(R-x\ASN-n-m)", false);
+
+    EXPECT_EQ("R-([0-9]+)\\\\ASN-([0-9]+)-([0-9]+)", c.regex_string);
+}
+
+TEST_F(TMATSParserTest, ParseLinesSingleVar)
+{
+    ASSERT_TRUE(parser_.ParseLines("G\\DSI-x", "G\\DST-x", keys_, values_));
+    ASSERT_TRUE(GetIndexMaps(0, 0));
+    ASSERT_EQ(1, kmap_.size());
+    ASSERT_EQ(1, vmap_.size());
+    ASSERT_TRUE(FindKeyInIndexMap(kmap_, "x"));
+    ASSERT_TRUE(FindKeyInIndexMap(vmap_, "x"));
+    EXPECT_EQ(kmap_.at("x"), vmap_.at("x"));
+    EXPECT_EQ(1, kmap_.at("x"));
+    ASSERT_TRUE(GetData(0, 0));
+    EXPECT_EQ("DATASOURCE", kdata_);
+    EXPECT_EQ("OTH", vdata_);
+}
+
+TEST_F(TMATSParserTest, ParseLinesNoVar)
+{
+    ASSERT_FALSE(parser_.ParseLines("G\\DSI\\N", "R-x\\TK1-n", keys_, values_));
+}
+
+TEST_F(TMATSParserTest, ParseLinesTwoVar)
+{
+    ASSERT_TRUE(parser_.ParseLines("R-x\\DSI-n", "R-x\\TK1-n", keys_, values_));
+    ASSERT_EQ(4, keys_.size());
+    ASSERT_EQ(4, values_.size());
+    ASSERT_TRUE(GetIndexMaps(0, 0));
+    ASSERT_EQ(2, kmap_.size());
+    ASSERT_EQ(2, vmap_.size());
+    ASSERT_TRUE(FindKeyInIndexMap(kmap_, "x"));
+    ASSERT_TRUE(FindKeyInIndexMap(vmap_, "x"));
+    ASSERT_TRUE(FindKeyInIndexMap(kmap_, "n"));
+    ASSERT_TRUE(FindKeyInIndexMap(vmap_, "n"));
+
+    // R-1\DSI-3:UAR-2;
+    // R-1\TK1-3:3;
+    ASSERT_TRUE(GetIndexMaps(2, 2));
+    ASSERT_TRUE(GetData(2, 2));
+    EXPECT_EQ(3, kmap_.at("n"));
+    EXPECT_EQ(3, vmap_.at("n"));
+    EXPECT_EQ("UAR-2", kdata_);
+    EXPECT_EQ("3", vdata_);
+}
+
+TEST_F(TMATSParserTest, ParseLinesThreeVar)
+{
+    ASSERT_TRUE(parser_.ParseLines("R-x\\ASN-n-m", "R-x\\ANM-n-m", keys_, values_));
+    ASSERT_EQ(6, keys_.size());
+    ASSERT_EQ(3, values_.size());
+    ASSERT_TRUE(GetIndexMaps(0, 0));
+    ASSERT_EQ(3, kmap_.size());
+    ASSERT_EQ(3, vmap_.size());
+    ASSERT_TRUE(FindKeyInIndexMap(kmap_, "x"));
+    ASSERT_TRUE(FindKeyInIndexMap(vmap_, "x"));
+    ASSERT_TRUE(FindKeyInIndexMap(kmap_, "n"));
+    ASSERT_TRUE(FindKeyInIndexMap(vmap_, "n"));
+    ASSERT_TRUE(FindKeyInIndexMap(kmap_, "m"));
+    ASSERT_TRUE(FindKeyInIndexMap(vmap_, "m"));
+
+    // R-1\ASN-18-8:8;
+    // R-1\ANM-18-8:EEC4B;
+    ASSERT_TRUE(GetIndexMaps(5, 2));
+    ASSERT_TRUE(GetData(5, 2));
+    EXPECT_EQ(18, kmap_.at("n"));
+    EXPECT_EQ(18, vmap_.at("n"));
+    EXPECT_EQ(8, kmap_.at("m"));
+    EXPECT_EQ(8, vmap_.at("m"));
+    EXPECT_EQ("8", kdata_);
+    EXPECT_EQ("EEC4B", vdata_);
+}
+
+TEST_F(TMATSParserTest, CheckVarCountOneVar)
+{
+    kmap_["n"] = 1;
+    subattr_data_tuple temp_tuple(kmap_, "data");
+    keys_.push_back(temp_tuple);
+    subattr_data_tuple temp_tuple2(kmap_, "other");
+    keys_.push_back(temp_tuple2);
+
+    EXPECT_FALSE(parser_.CheckVarCount(keys_, 2));
+    EXPECT_TRUE(parser_.CheckVarCount(keys_, 1));
+
+    kmap_["x"] = 1;
+    subattr_data_tuple temp_tuple3(kmap_, "bad");
+    keys_.push_back(temp_tuple3);
+    EXPECT_FALSE(parser_.CheckVarCount(keys_, 2));
+    EXPECT_FALSE(parser_.CheckVarCount(keys_, 1));
+}
+
+TEST_F(TMATSParserTest, CheckVarCountTwoVar)
+{
+    kmap_["n"] = 4;
+    kmap_["m"] = 17;
+    subattr_data_tuple temp_tuple(kmap_, "data");
+    keys_.push_back(temp_tuple);
+    subattr_data_tuple temp_tuple2(kmap_, "other");
+    keys_.push_back(temp_tuple2);
+
+    EXPECT_TRUE(parser_.CheckVarCount(keys_, 2));
+    EXPECT_FALSE(parser_.CheckVarCount(keys_, 1));
+
+    kmap_["x"] = 1;
+    subattr_data_tuple temp_tuple3(kmap_, "bad");
+    keys_.push_back(temp_tuple3);
+    EXPECT_FALSE(parser_.CheckVarCount(keys_, 2));
+    EXPECT_FALSE(parser_.CheckVarCount(keys_, 3));
+}
+
+TEST_F(TMATSParserTest, MapKeyToValueOneToOne)
+{
+    kmap_["x"] = 4;
+    subattr_data_tuple dt0(kmap_, "10");
+    kmap_["x"] = 14;
+    subattr_data_tuple dt1(kmap_, "12");
+    keys_.push_back(dt0);
+    keys_.push_back(dt1);
+
+    vmap_["x"] = 14;
+    subattr_data_tuple dt2(vmap_, "12");
+    vmap_["x"] = 4;
+    subattr_data_tuple dt3(vmap_, "10");
+    values_.push_back(dt2);
+    values_.push_back(dt3);
+
+    std::map<std::string, std::string> expected = {
+        {"10", "10"},
+        {"12", "12"}
+    };
+    std::map<std::string, std::string> result;
+    EXPECT_TRUE(parser_.MapKeyToValue(keys_, values_, result));
+    EXPECT_THAT(expected, ::testing::ContainerEq(result));
+}
+
+TEST_F(TMATSParserTest, MapKeyToValueOneToOneIncomplete)
+{
+    kmap_["x"] = 4;
+    subattr_data_tuple dt0(kmap_, "10");
+    kmap_["x"] = 14;
+    subattr_data_tuple dt1(kmap_, "12");
+    keys_.push_back(dt0);
+    keys_.push_back(dt1);
+
+    // 13 is not one of the x values of the keys map
+    vmap_["x"] = 13;
+    subattr_data_tuple dt2(vmap_, "11");
+    vmap_["x"] = 4;
+    subattr_data_tuple dt3(vmap_, "10");
+    values_.push_back(dt2);
+    values_.push_back(dt3);
+
+    std::map<std::string, std::string> result;
+    std::map<std::string, std::string> expected = {
+        {"10", "10"}
+    };
+    EXPECT_TRUE(parser_.MapKeyToValue(keys_, values_, result));
+    EXPECT_THAT(expected, ::testing::ContainerEq(result));
+}
+
+TEST_F(TMATSParserTest, MapKeyToValueOneToOneVarMismatch)
+{
+    // Two variables not permitted for 1-to-1
+    kmap_["x"] = 4;
+    kmap_["n"] = 2;
+    subattr_data_tuple dt0(kmap_, "10");
+    kmap_["x"] = 14;
+    subattr_data_tuple dt1(kmap_, "12");
+    keys_.push_back(dt0);
+    keys_.push_back(dt1);
+
+    // 13 is not one of the x values of the keys map
+    vmap_["x"] = 14;
+    subattr_data_tuple dt2(vmap_, "11");
+    vmap_["x"] = 4;
+    subattr_data_tuple dt3(vmap_, "10");
+    values_.push_back(dt2);
+    values_.push_back(dt3);
+
+    std::map<std::string, std::string> result;
+    EXPECT_FALSE(parser_.MapKeyToValue(keys_, values_, result));
+    EXPECT_TRUE(result.size() == 0);
+}
+
+TEST_F(TMATSParserTest, MapKeyToValueTwoToTwo)
+{
+    // Two variables not permitted for 1-to-1
+    kmap_["x"] = 4;
+    kmap_["n"] = 2;
+    subattr_data_tuple dt0(kmap_, "10");
+    kmap_["x"] = 14;
+    kmap_["n"] = 7;
+    subattr_data_tuple dt1(kmap_, "12");
+    keys_.push_back(dt0);
+    keys_.push_back(dt1);
+
+    vmap_["x"] = 14;
+    vmap_["n"] = 7;
+    subattr_data_tuple dt2(vmap_, "11");
+    vmap_["x"] = 4;
+    vmap_["n"] = 2;
+    subattr_data_tuple dt3(vmap_, "data");
+    values_.push_back(dt2);
+    values_.push_back(dt3);
+
+    std::map<std::string, std::string> expected = {
+        {"10", "data"},
+        {"12", "11"}
+    };
+
+    std::map<std::string, std::string> result;
+    EXPECT_TRUE(parser_.MapKeyToValue(keys_, values_, result));
+    EXPECT_THAT(expected, ::testing::ContainerEq(result));
+}
+
+TEST_F(TMATSParserTest, MapKeyToValueOneToMany)
+{
+    kmap_["x"] = 1;
+    kmap_["n"] = 3;
+    subattr_data_tuple dt0(kmap_, "data0");
+    kmap_["x"] = 1;
+    kmap_["n"] = 15;
+    subattr_data_tuple dt1(kmap_, "data1");
+    keys_.push_back(dt0);
+    keys_.push_back(dt1);
+
+    vmap_["x"] = 1;
+    vmap_["n"] = 15;
+    vmap_["m"] = 100;
+    subattr_data_tuple dt2(vmap_, "label1a");
+    vmap_["m"] = 101;
+    subattr_data_tuple dt4(vmap_, "label1b");
+    vmap_["x"] = 1;
+    vmap_["n"] = 3; 
+    vmap_["m"] = 23;
+    subattr_data_tuple dt3(vmap_, "label0a");
+    values_.push_back(dt2);
+    values_.push_back(dt3);
+    values_.push_back(dt4);
+
+    std::map<std::string, std::vector<std::string>> expected = {
+        {"data0", {"label0a"}},
+        {"data1", {"label1a", "label1b"}}
+    };
+    std::map<std::string, std::vector<std::string>> result;
+    EXPECT_TRUE(parser_.MapKeyToValue(keys_, values_, result));
+    EXPECT_THAT(expected, ::testing::ContainerEq(result));
+}
+
+TEST_F(TMATSParserTest, MapKeyToValueOneToManySingle)
+{
+    kmap_["x"] = 1;
+    subattr_data_tuple dt0(kmap_, "data0");
+    kmap_["x"] = 2;
+    subattr_data_tuple dt1(kmap_, "data1");
+    keys_.push_back(dt0);
+    keys_.push_back(dt1);
+
+    vmap_["x"] = 2;
+    vmap_["n"] = 15;
+    subattr_data_tuple dt2(vmap_, "label1a");
+    vmap_["n"] = 101;
+    subattr_data_tuple dt4(vmap_, "label1b");
+    vmap_["x"] = 1;
+    vmap_["n"] = 3; 
+    subattr_data_tuple dt3(vmap_, "label0a");
+    values_.push_back(dt2);
+    values_.push_back(dt3);
+    values_.push_back(dt4);
+
+    std::map<std::string, std::vector<std::string>> expected = {
+        {"data0", {"label0a"}},
+        {"data1", {"label1a", "label1b"}}
+    };
+    std::map<std::string, std::vector<std::string>> result;
+    EXPECT_TRUE(parser_.MapKeyToValue(keys_, values_, result));
+    EXPECT_THAT(expected, ::testing::ContainerEq(result));
+}
+
+TEST_F(TMATSParserTest, MapKeyToValueOneToMaps)
+{
+    kmap_["x"] = 1;
+    kmap_["n"] = 3;
+    subattr_data_tuple dt0(kmap_, "data0");
+    kmap_["x"] = 1;
+    kmap_["n"] = 15;
+    subattr_data_tuple dt1(kmap_, "data1");
+    keys_.push_back(dt0);
+    keys_.push_back(dt1);
+
+    vmap_["x"] = 1;
+    vmap_["n"] = 15;
+    vmap_["m"] = 100;
+    subattr_data_tuple dt2(vmap_, "label1a");
+    vmap_["m"] = 101;
+    subattr_data_tuple dt4(vmap_, "label1b");
+    vmap_["x"] = 1;
+    vmap_["n"] = 3; 
+    vmap_["m"] = 23;
+    subattr_data_tuple dt3(vmap_, "label0a");
+    values_.push_back(dt2);
+    values_.push_back(dt3);
+    values_.push_back(dt4);
+
+    std::map<std::string, std::map<std::string, std::string>> expected = {
+        {"data0", {{"23", "label0a"}}},
+        {"data1", {{"100", "label1a"}, {"101", "label1b"}}}
+    };
+    std::map<std::string, std::map<std::string, std::string>> result;
+    EXPECT_TRUE(parser_.MapKeyToValue(keys_, values_, result));
+    EXPECT_THAT(expected, ::testing::ContainerEq(result));
+}
+
+TEST_F(TMATSParserTest, MapKeyToValueOneToMapsSingle)
+{
+    kmap_["x"] = 1;
+    subattr_data_tuple dt0(kmap_, "data0");
+    kmap_["x"] = 2;
+    subattr_data_tuple dt1(kmap_, "data1");
+    keys_.push_back(dt0);
+    keys_.push_back(dt1);
+
+    vmap_["x"] = 2;
+    vmap_["n"] = 15;
+    subattr_data_tuple dt2(vmap_, "label1a");
+    vmap_["n"] = 101;
+    subattr_data_tuple dt4(vmap_, "label1b");
+    vmap_["x"] = 1;
+    vmap_["n"] = 3; 
+    subattr_data_tuple dt3(vmap_, "label0a");
+    values_.push_back(dt2);
+    values_.push_back(dt3);
+    values_.push_back(dt4);
+
+    std::map<std::string, std::map<std::string, std::string>> expected = {
+        {"data0", {{"3", "label0a"}}},
+        {"data1", {{"15", "label1a"}, {"101", "label1b"}}}
+    };
+    std::map<std::string, std::map<std::string, std::string>> result;
+    EXPECT_TRUE(parser_.MapKeyToValue(keys_, values_, result));
+    EXPECT_THAT(expected, ::testing::ContainerEq(result));
+}
+
+TEST_F(TMATSParserTest, MapKeyToValueOneToManyInvalidVarCount)
+{
+    kmap_["x"] = 1;
+    kmap_["n"] = 3;
+    subattr_data_tuple dt0(kmap_, "data0");
+    kmap_["x"] = 1;
+    kmap_["n"] = 15;
+    subattr_data_tuple dt1(kmap_, "data1");
+    keys_.push_back(dt0);
+    keys_.push_back(dt1);
+
+    // vmap must have count + 1 vars
+    vmap_["x"] = 1;
+    vmap_["n"] = 15;
+    subattr_data_tuple dt2(vmap_, "label1a");
+    vmap_["x"] = 1;
+    vmap_["n"] = 3; 
+    subattr_data_tuple dt3(vmap_, "label0a");
+    values_.push_back(dt2);
+    values_.push_back(dt3);
+
+    std::map<std::string, std::vector<std::string>> result;
+    EXPECT_FALSE(parser_.MapKeyToValue(keys_, values_, result));
+}
+
+TEST_F(TMATSParserTest, GetIndependentVarName)
+{
+    kmap_["x"] = 1;
+    kmap_["n"] = 30;
+    subattr_data_tuple dt0(kmap_, "data0");
+    keys_.push_back(dt0);
+
+    vmap_["x"] = 1;
+    vmap_["n"] = 15;
+    vmap_["m"] = 33;
+    subattr_data_tuple dt2(vmap_, "label1a");
+    values_.push_back(dt2);
+
+    ASSERT_EQ("m", parser_.GetIndependentVarName(keys_, values_));
+}
+
+TEST_F(TMATSParserTest, CheckVarCountEqualityEmptyVec)
+{
+    vmap_["x"] = 4;
+    subattr_data_tuple dt2(vmap_, "11");
+    values_.push_back(dt2);
+
+    // keys_ is empty.
+    ASSERT_FALSE(parser_.CheckVarCountEquality(keys_, values_));
+
+    kmap_["x"] = 4;
+    subattr_data_tuple dt0(kmap_, "10");
+    keys_.push_back(dt0);
+    values_.clear();
+
+    // values_ is empty
+    ASSERT_FALSE(parser_.CheckVarCountEquality(keys_, values_));
+}
+
+TEST_F(TMATSParserTest, CheckVarCountEqualityKeysNotConsistent)
+{
+    kmap_["x"] = 4;
+    subattr_data_tuple dt0(kmap_, "10");
+
+    // First tuple has map with one var
+    keys_.push_back(dt0);
+
+    kmap_["n"] = 1;
+    subattr_data_tuple dt1(kmap_, "data");
+
+    // Second tuple has map with two vars
+    keys_.push_back(dt1);
+
+    vmap_["x"] = 4;
+    subattr_data_tuple dt2(vmap_, "11");
+    values_.push_back(dt2);
+
+    ASSERT_FALSE(parser_.CheckVarCountEquality(keys_, values_));
+}
+
+TEST_F(TMATSParserTest, CheckVarCountEqualityValuesNotEqual)
+{
+    kmap_["x"] = 4;
+    subattr_data_tuple dt0(kmap_, "10");
+    keys_.push_back(dt0);
+    kmap_["x"] = 7;
+    subattr_data_tuple dt1(kmap_, "data");
+    keys_.push_back(dt1);
+
+    // two vars 
+    vmap_["x"] = 4;
+    vmap_["n"] = 5;
+    subattr_data_tuple dt2(vmap_, "11");
+    values_.push_back(dt2);
+
+    ASSERT_FALSE(parser_.CheckVarCountEquality(keys_, values_));
+}
+
+TEST_F(TMATSParserTest, CheckVarCountEquality)
+{
+    kmap_["x"] = 4;
+    kmap_["n"] = 10;
+    subattr_data_tuple dt0(kmap_, "10");
+    keys_.push_back(dt0);
+    kmap_["x"] = 7;
+    kmap_["n"] = 11;
+    subattr_data_tuple dt1(kmap_, "data");
+    keys_.push_back(dt1);
+
+    // two vars 
+    vmap_["x"] = 4;
+    vmap_["n"] = 5;
+    subattr_data_tuple dt2(vmap_, "11");
+    values_.push_back(dt2);
+
+    ASSERT_TRUE(parser_.CheckVarCountEquality(keys_, values_));
+}
+
+TEST_F(TMATSParserTest, CheckVarCountEqualityUseAdjustment)
+{
+    kmap_["x"] = 4;
+    kmap_["n"] = 10;
+    subattr_data_tuple dt0(kmap_, "10");
+    keys_.push_back(dt0);
+    kmap_["x"] = 7;
+    kmap_["n"] = 11;
+    subattr_data_tuple dt1(kmap_, "data");
+    keys_.push_back(dt1);
+
+    // two vars 
+    vmap_["x"] = 4;
+    vmap_["n"] = 5;
+    vmap_["m"] = 3;
+    subattr_data_tuple dt2(vmap_, "11");
+    values_.push_back(dt2);
+
+    ASSERT_TRUE(parser_.CheckVarCountEquality(keys_, values_, 1));
+}
+
+TEST_F(TMATSParserTest, MapAttrsOneToMany)
+{
+    std::map<std::string, std::vector<std::string>> result;
+    std::map<std::string, std::vector<std::string>> expected = {
+        {"2", {"8", "9", "10"}}
+    };
+
+    ASSERT_TRUE(parser_.MapAttrs("R-x\\TK1-n", "R-x\\ASN-n-m", result));
+    EXPECT_EQ(expected, result);
+}
+
+TEST_F(TMATSParserTest, MapAttrsOneToMaps)
+{
+    std::map<std::string, std::map<std::string, std::string>> result;
+    std::map<std::string, std::map<std::string, std::string>> expected = {
+        {"2", {{"8", "8"}, {"9", "9"}, {"10", "10"}}}
+    };
+
+    ASSERT_TRUE(parser_.MapAttrs("R-x\\TK1-n", "R-x\\ASN-n-m", result));
+    EXPECT_EQ(expected, result);
+}
+
+TEST_F(TMATSParserTest, MapAttrsMatchesGroups)
 {
     std::map<std::string, std::string> expected;
     std::map<std::string, std::string> result;
@@ -170,28 +728,11 @@ TEST(TMATSParserTest, MapAttrsMatchesGroups)
     expected["UAR-1"] = "2";
     expected["UAR-2"] = "3";
 
-    TMATSParser parser = TMATSParser(TMATS);
-    result = parser.MapAttrs("R-x\\DSI-n", "R-x\\TK1-n");
-
+    ASSERT_TRUE(parser_.MapAttrs("R-x\\DSI-n", "R-x\\TK1-n", result));
     EXPECT_EQ(expected, result);
 }
 
-TEST(TMATSParserTest, MapAttrsSkipsMismatch)
-{
-    std::map<std::string, std::string> expected;
-    std::map<std::string, std::string> result;
-    expected["ARR40-1-2"] = "19";
-    expected["Time"] = "1";
-    expected["UAR-1"] = "2";
-    expected["UAR-2"] = "3";
-
-    TMATSParser parser = TMATSParser(TMATS);
-    result = parser.MapAttrs("R-x\\DSI-n", "R-x\\TK1-n");
-
-    EXPECT_EQ(expected, result);
-}
-
-TEST(TMATSParserTest, MapAttrs3Subattrs)
+TEST_F(TMATSParserTest, MapAttrs3Subattrs)
 {
     std::map<std::string, std::string> expected;
     std::map<std::string, std::string> result;
@@ -199,13 +740,11 @@ TEST(TMATSParserTest, MapAttrs3Subattrs)
     expected["7"] = "EEC4A";
     expected["8"] = "EEC4B";
 
-    TMATSParser parser = TMATSParser(TMATS);
-    result = parser.MapAttrs("R-x\\ASN-n-m", "R-x\\ANM-n-m");
-
+    ASSERT_TRUE(parser_.MapAttrs("R-x\\ASN-n-m", "R-x\\ANM-n-m", result));
     EXPECT_EQ(expected, result);
 }
 
-TEST(TMATSParserTest, MapAttrsHandleRepeatData)
+TEST_F(TMATSParserTest, MapAttrsHandleRepeatData)
 {
     // Note about creating test lines from a tmats text file:
     // 1) Read in with Python via with open(...), a = f.readlines();
@@ -314,6 +853,6 @@ TEST(TMATSParserTest, MapAttrsHandleRepeatData)
     std::map<std::string, std::string> result;
 
     TMATSParser parser = TMATSParser(custom_tmats, false);
-    result = parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n");
+    ASSERT_TRUE(parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n", result));
     EXPECT_EQ(expected, result);
 }
