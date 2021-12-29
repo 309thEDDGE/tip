@@ -23,7 +23,7 @@
 #include "parse_text.h"
 #include "parse_worker.h"
 #include "parser_config_params.h"
-#include "tmats_parser.h"
+#include "tmats_data.h"
 #include "managed_path.h"
 #include "provenance_data.h"
 #include "tip_md_document.h"
@@ -31,6 +31,8 @@
 #include "worker_config.h"
 #include "spdlog/spdlog.h"
 #include "ch10_packet_type.h"
+
+
 
 class ParseManager
 {
@@ -164,8 +166,7 @@ class ParseManager
 									the parser_conf.yaml file
 		prov_data				--> Object of ProvenanceData that contains
 									pre-filled provenance data
-		tmats_chanid_source		--> Prepared TMATS channel ID to source map
-		tmats_chanid_type		--> Prepared TMATS channel ID to type map
+		tmats_data				--> TMATSData object which has parsed and stored data
 		packet_type_label		--> See ch10_packet_type.h
 		md_file_path			--> Output directory and file name for metadata
 
@@ -176,8 +177,7 @@ class ParseManager
     bool RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
                                     const ParserConfigParams& user_config,
 									const ProvenanceData& prov_data,
-									const std::map<std::string, std::string> tmats_chanid_source,
-									const std::map<std::string, std::string> tmats_chanid_type,
+									const TMATSData& tmats_data,
 									const std::string& packet_type_label,
 									const ManagedPath& md_file_path);
 
@@ -191,8 +191,7 @@ class ParseManager
 									the parser_conf.yaml file
 		prov_data				--> Object of ProvenanceData that contains
 									pre-filled provenance data
-		tmats_chanid_source		--> Prepared TMATS channel ID to source map
-		tmats_chanid_type		--> Prepared TMATS channel ID to type map
+		tmats_data				--> TMATSData object which has parsed and stored data
 		packet_type_label		--> See ch10_packet_type.h
 		md_file_path			--> Output directory and file name for metadata
 
@@ -203,8 +202,7 @@ class ParseManager
     bool RecordVideoDataF0Metadata(ManagedPath input_ch10_file_path,
                                    const ParserConfigParams& user_config,
 								   const ProvenanceData& prov_data,
-							       const std::map<std::string, std::string> tmats_chanid_source,
-								   const std::map<std::string, std::string> tmats_chanid_type,
+								   const TMATSData& tmats_data,
 								   const std::string& packet_type_label,
 								   const ManagedPath& md_file_path);
 
@@ -254,8 +252,7 @@ class ParseManager
 									the parser_conf.yaml file
 		prov_data				--> Object of ProvenanceData that contains
 									pre-filled provenance data
-		tmats_chanid_source		--> Prepared TMATS channel ID to source map
-		tmats_chanid_type		--> Prepared TMATS channel ID to type map
+		tmats_data				--> TMATSData object which has parsed and stored data
 		packet_type_label		--> See ch10_packet_type.h
 		md_file_path			--> Output directory and file name for metadata
 
@@ -266,8 +263,7 @@ class ParseManager
     bool RecordARINC429F0Metadata(ManagedPath input_ch10_file_path,
                                    const ParserConfigParams& user_config,
 								   const ProvenanceData& prov_data,
-							       const std::map<std::string, std::string> tmats_chanid_source,
-								   const std::map<std::string, std::string> tmats_chanid_type,
+								   const TMATSData& tmats_data,
 								   const std::string& packet_type_label,
 								   const ManagedPath& md_file_path);
 
@@ -701,14 +697,12 @@ class ParseManager
 									TMATS matter
 	tmats_file_path				--> Complete path including the output file name
 									to which TMATS matter is recorded
-	TMATsChannelIDToSourceMap	--> Output artifact maps channel ID to source
-	TMATsChannelIDToTypeMap		--> Output artifact maps channel ID to type
+	tmats_data					--> TMATSData object
 
 	*/
     void ProcessTMATS(const std::vector<std::string>& tmats_vec,
                       const ManagedPath& tmats_file_path,
-                      std::map<std::string, std::string>& TMATsChannelIDToSourceMap,
-                      std::map<std::string, std::string>& TMATsChannelIDToTypeMap);
+					  TMATSData& tmats_data);
 };
 
 #endif

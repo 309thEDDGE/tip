@@ -3,12 +3,16 @@ set(headers
     include/parser_helper_funcs.h
     include/parse_worker.h
     include/worker_config.h
+    include/tmats_parser.h
+    include/tmats_data.h
 )
 
 add_library(parsech10_lib
     src/parse_manager.cpp
     src/parser_helper_funcs.cpp
     src/parse_worker.cpp
+    src/tmats_parser.cpp 
+    src/tmats_data.cpp
 )
 
 target_compile_features(parsech10_lib PUBLIC cxx_std_17)

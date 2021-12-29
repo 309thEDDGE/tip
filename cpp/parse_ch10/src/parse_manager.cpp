@@ -191,11 +191,8 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
     ManagedPath tmats_path = output_dir_map_[Ch10PacketType::MILSTD1553_F1] / "_TMATS.txt";
 
     // Process TMATs matter and record
-    std::map<std::string, std::string> TMATsChannelIDToSourceMap;
-    std::map<std::string, std::string> TMATsChannelIDToTypeMap;
-    ProcessTMATS(tmats_body_vec_, tmats_path, TMATsChannelIDToSourceMap,
-                 TMATsChannelIDToTypeMap);
-
+    TMATSData tmats_data;
+    ProcessTMATS(tmats_body_vec_, tmats_path, tmats_data);
     spdlog::get("pm_logger")->debug("RecordMetadata: begin record metadata");
 
     std::string md_filename("_metadata.yaml");
@@ -209,24 +206,21 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
             {
                 case Ch10PacketType::MILSTD1553_F1:
                     if (!RecordMilStd1553F1Metadata(input_ch10_file_path, 
-                        user_config, prov_data, TMATsChannelIDToSourceMap,
-                        TMATsChannelIDToTypeMap, 
+                        user_config, prov_data, tmats_data,
                         ch10packettype_to_string_map.at(Ch10PacketType::MILSTD1553_F1),
                         output_dir_map_[Ch10PacketType::MILSTD1553_F1] / md_filename))
                         return false;
                     break;
                 case Ch10PacketType::VIDEO_DATA_F0:
                     if (!RecordVideoDataF0Metadata(input_ch10_file_path, 
-                        user_config, prov_data, TMATsChannelIDToSourceMap,
-                        TMATsChannelIDToTypeMap,
+                        user_config, prov_data, tmats_data,
                         ch10packettype_to_string_map.at(Ch10PacketType::VIDEO_DATA_F0),
                         output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] / md_filename))
                         return false;
                     break;
                 case Ch10PacketType::ARINC429_F0:
                     if (!RecordARINC429F0Metadata(input_ch10_file_path, 
-                        user_config, prov_data, TMATsChannelIDToSourceMap,
-                        TMATsChannelIDToTypeMap,
+                        user_config, prov_data, tmats_data,
                         ch10packettype_to_string_map.at(Ch10PacketType::ARINC429_F0),
                         output_dir_map_[Ch10PacketType::ARINC429_F0] / md_filename))
                         return false;
@@ -283,8 +277,7 @@ void ParseManager::RecordUserConfigData(std::shared_ptr<MDCategoryMap> config_ca
 bool ParseManager::RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
                                               const ParserConfigParams& user_config,
                                               const ProvenanceData& prov_data,
-                                              const std::map<std::string, std::string> tmats_chanid_source,
-                                              const std::map<std::string, std::string> tmats_chanid_type,
+                                              const TMATSData& tmats_data,
                                               const std::string& packet_type_label,
                                               const ManagedPath& md_file_path)
 {
@@ -330,11 +323,11 @@ bool ParseManager::RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
 
     // Record the TMATS channel ID to source map.
     md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_source",
-        tmats_chanid_source);
+        tmats_data.chanid_to_source_map);
 
     // Record the TMATS channel ID to type map.
     md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_type",
-        tmats_chanid_type);
+        tmats_data.chanid_to_type_map);
 
     // Write the complete Yaml record to the metadata file.
     md.CreateDocument();
@@ -348,8 +341,7 @@ bool ParseManager::RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
 bool ParseManager::RecordVideoDataF0Metadata(ManagedPath input_ch10_file_path,
                                              const ParserConfigParams& user_config,
                                              const ProvenanceData& prov_data,
-							                 const std::map<std::string, std::string> tmats_chanid_source,
-								             const std::map<std::string, std::string> tmats_chanid_type,
+                                             const TMATSData& tmats_data,
                                              const std::string& packet_type_label,
                                              const ManagedPath& md_file_path)
 
@@ -379,11 +371,11 @@ bool ParseManager::RecordVideoDataF0Metadata(ManagedPath input_ch10_file_path,
 
     // Record the TMATS channel ID to source map.
     md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_source",
-        tmats_chanid_source);
+        tmats_data.chanid_to_source_map);
 
     // Record the TMATS channel ID to type map.
     md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_type",
-        tmats_chanid_type);
+        tmats_data.chanid_to_type_map);
 
     md.CreateDocument();
     std::ofstream stream_video_metadata(md_file_path.string(),
@@ -396,8 +388,7 @@ bool ParseManager::RecordVideoDataF0Metadata(ManagedPath input_ch10_file_path,
 bool ParseManager::RecordARINC429F0Metadata(ManagedPath input_ch10_file_path,
                                    const ParserConfigParams& user_config,
 								   const ProvenanceData& prov_data,
-							       const std::map<std::string, std::string> tmats_chanid_source,
-								   const std::map<std::string, std::string> tmats_chanid_type,
+                                   const TMATSData& tmats_data,
 								   const std::string& packet_type_label,
 								   const ManagedPath& md_file_path)
 {
@@ -436,11 +427,19 @@ bool ParseManager::RecordARINC429F0Metadata(ManagedPath input_ch10_file_path,
 
     // Record the TMATS channel ID to source map.
     md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_source",
-        tmats_chanid_source);
+        tmats_data.chanid_to_source_map);
 
     // Record the TMATS channel ID to type map.
     md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_type",
-        tmats_chanid_type);
+        tmats_data.chanid_to_type_map);
+
+    // Record ARINC429-specific TMATS data
+    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_429_format",
+        tmats_data.chanid_to_429_format);
+    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_429_subchans",
+        tmats_data.chanid_to_429_subchans);
+    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_429_subchan_and_name",
+        tmats_data.chanid_to_429_subchan_and_name);
 
     // Write the complete Yaml record to the metadata file.
     std::ofstream stream_429_metadata(md_file_path.string(),
@@ -783,8 +782,7 @@ ParseManager::~ParseManager()
 
 void ParseManager::ProcessTMATS(const std::vector<std::string>& tmats_vec,
                                 const ManagedPath& tmats_file_path,
-                                std::map<std::string, std::string>& TMATsChannelIDToSourceMap,
-                                std::map<std::string, std::string>& TMATsChannelIDToTypeMap)
+                                TMATSData& tmats_data)
 {
     // if tmats doesn't exist return
     if (tmats_vec.size() == 0)
@@ -811,9 +809,10 @@ void ParseManager::ProcessTMATS(const std::vector<std::string>& tmats_vec,
 
     // Gather TMATs attributes of interest
     // for metadata
-    TMATSParser tmats_parser = TMATSParser(full_TMATS_string);
-    TMATsChannelIDToSourceMap = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\DSI-n");
-    TMATsChannelIDToTypeMap = tmats_parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n");
+    if(!tmats_data.Parse(full_TMATS_string))
+    {
+        spdlog::get("pm_logger")->info("ProcessTMATS:: Failed to parse TMATS");
+    }
 }
 
 bool ParseManager::ConvertCh10PacketTypeMap(const std::map<std::string, std::string>& input_map,
