@@ -1,6 +1,6 @@
 #include "icd_data.h"
 
-ICDData::ICDData() : icd_ingest_success_(false), organize_icd_success_(false), iter_tools_(), yaml_msg_body_keys_({"msg_data", "word_elem", "bit_elem"}), yaml_msg_data_keys_({"lru_addr", "lru_subaddr", "bus", "wrdcnt", "rate"}), yaml_word_elem_keys_({"off", "cnt", "schema", "msbval"}), yaml_bit_elem_keys_({"off", "cnt", "schema", "msbval", "msb", "lsb", "bitcnt"}), valid_message_count_(0), valid_message_count(valid_message_count_), uri_percent_encode_(), table_names(table_names_)
+ICDData::ICDData() : icd_ingest_success_(false), organize_icd_success_(false), iter_tools_(), yaml_msg_body_keys_({"msg_data", "word_elem", "bit_elem"}), yaml_msg_data_keys_({"lru_addr", "lru_subaddr", "bus", "wrdcnt", "rate"}), yaml_word_elem_keys_({"offset", "cnt", "schema", "msbval"}), yaml_bit_elem_keys_({"offset", "cnt", "schema", "msbval", "msb", "lsb", "bitcnt"}), valid_message_count_(0), valid_message_count(valid_message_count_), uri_percent_encode_(), table_names(table_names_)
 {
     MapICDElementSchemaToString();
 }
@@ -732,8 +732,8 @@ bool ICDData::MapNodeHasRequiredKeys(const YAML::Node& node,
 
     // Create a map for the required keys.
     std::unordered_map<std::string, bool> keys_present;
-    for (std::vector<std::string>::const_iterator it = required_keys.begin();
-         it != required_keys.end(); ++it)
+    std::vector<std::string>::const_iterator it;
+    for (it = required_keys.begin(); it != required_keys.end(); ++it)
     {
         keys_present[*it] = false;
     }
@@ -763,7 +763,17 @@ bool ICDData::MapNodeHasRequiredKeys(const YAML::Node& node,
     }
 
     if (present_count != required_keys.size())
+    {
+        for(std::unordered_map<std::string, bool>::const_iterator it2 = keys_present.cbegin();
+            it2 != keys_present.cend(); ++it2)
+        {
+            if(!(it2->second))
+            {
+                SPDLOG_ERROR("Key {:s} not found!", it2->first);
+            }
+        }
         return false;
+    }
 
     return true;
 }
@@ -913,7 +923,7 @@ bool ICDData::CreateVectorOfStringICDComponents(const std::string& msg_name, con
 
     //output_vec[12] = std::to_string(msg_data_node["rate"].as<double>());
     output_vec[12] = msg_data_node["rate"].as<std::string>();
-    output_vec[13] = elem_data_node["off"].as<std::string>();
+    output_vec[13] = elem_data_node["offset"].as<std::string>();
     output_vec[14] = elem_data_node["cnt"].as<std::string>();
     ICDElementSchema schema;
     std::string schema_string = elem_data_node["schema"].as<std::string>();
@@ -1036,7 +1046,7 @@ bool ICDData::ConfigureWordElemDataFromYamlNode(ICDElement& icd_elem,
     icd_elem.is_bitlevel_ = false;
     icd_elem.elem_name_ = word_elem_name;
 
-    std::string param_name = "off";
+    std::string param_name = "offset";
     if (!GetMappedValueFromNode(word_elem_node, param_name, yaml_word_elem_keys_,
                                 temp_int_))
         return false;
@@ -1094,7 +1104,7 @@ bool ICDData::ConfigureBitElemDataFromYamlNode(ICDElement& icd_elem,
     icd_elem.is_bitlevel_ = true;
     icd_elem.elem_name_ = bit_elem_name;
 
-    std::string param_name = "off";
+    std::string param_name = "offset";
     if (!GetMappedValueFromNode(bit_elem_node, param_name, yaml_bit_elem_keys_,
                                 temp_int_))
         return false;
