@@ -642,9 +642,9 @@ class ICDDataIngestYamlTest : public ::testing::Test
 
         // correct bit elems
         icd_node_ = YAML::Load(
-            "APP_2-0301: {off: 2, cnt: 1, schema: UNSIGNEDBITS, msbval: 18, desc: \"description\", uom: \"DAY\", multifmt: False, class: 0, msb: 1, lsb: 9, bitcnt: 9}\n"
-            "APP_2-0310: {off: 2, cnt: 1, schema: UNSIGNEDBITS, msbval: 323, desc: description, uom: YEAR, multifmt: False, class: 0, msb: 10, lsb: 15, bitcnt: 6}\n"
-            "APP_2-0316: {off: 2, cnt: 1, schema: UNSIGNEDBITS, msbval: 1, desc: \"description / description\", uom: ' ', multifmt: False, class: 0, msb: 16, lsb: 16, bitcnt: 1}\n");
+            "APP_2-0301: {offset: 2, cnt: 1, schema: UNSIGNEDBITS, msbval: 18, desc: \"description\", uom: \"DAY\", multifmt: False, class: 0, msb: 1, lsb: 9, bitcnt: 9}\n"
+            "APP_2-0310: {offset: 2, cnt: 1, schema: UNSIGNEDBITS, msbval: 323, desc: description, uom: YEAR, multifmt: False, class: 0, msb: 10, lsb: 15, bitcnt: 6}\n"
+            "APP_2-0316: {offset: 2, cnt: 1, schema: UNSIGNEDBITS, msbval: 1, desc: \"description / description\", uom: ' ', multifmt: False, class: 0, msb: 16, lsb: 16, bitcnt: 1}\n");
 
         // For msg_data_node_ and icd_node_, element 2.
         string_icd_components1_ = {
@@ -658,11 +658,11 @@ class ICDDataIngestYamlTest : public ::testing::Test
 
         // correct word elems
         good_icd_node1_ = YAML::Load(
-            "APP_2-03 : {off: 2, cnt : 1, schema : UNSIGNED16, msbval : 18, "
+            "APP_2-03 : {offset: 2, cnt : 1, schema : UNSIGNED16, msbval : 18, "
             "desc : description, uom : DAY, multifmt : False, class : 0}\n"
-            "APP_2-04 : {off: 2, cnt : 1, schema : UNSIGNED16, msbval : 323, "
+            "APP_2-04 : {offset: 2, cnt : 1, schema : UNSIGNED16, msbval : 323, "
             "desc : description, uom : YEAR, multifmt : False, class : 0}\n"
-            "APP_2-05 : {off: 2, cnt : 1, schema : UNSIGNED16, msbval : 1000, "
+            "APP_2-05 : {offset: 2, cnt : 1, schema : UNSIGNED16, msbval : 1000, "
             "desc : description / description, uom : ' ', multifmt : False, class : 0}\n");
 
         // For msg_data_node_ and good_icd_node1_, element 3, APP_2-05.
@@ -672,17 +672,17 @@ class ICDDataIngestYamlTest : public ::testing::Test
 
         // incorrect, is sequence of maps
         bad_icd_node1_ = YAML::Load(
-            "- APP_2-03 : {off: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 18, "
+            "- APP_2-03 : {offset: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 18, "
             "desc : description, uom : DAY, multifmt : False, class : 0}\n"
-            "- APP_2-04 : {off: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 323, "
+            "- APP_2-04 : {offset: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 323, "
             "desc : description, uom : YEAR, multifmt : False, class : 0}\n"
-            "- APP_2-05 : {off: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 1, "
+            "- APP_2-05 : {offset: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 1, "
             "desc : description / description, uom : ' ', multifmt : False, class : 0}\n");
 
         // one incorrect elem, value is not a map
         bad_icd_node2_ = YAML::Load(
             "APP_2-03 :\n"
-            "    - off: 2\n"
+            "    - offset: 2\n"
             "    - cnt : 1\n"
             "    - schema : UNSIGNEDBITS\n"
             "    - msbval : 18\n"
@@ -690,17 +690,17 @@ class ICDDataIngestYamlTest : public ::testing::Test
             "    - uom : DAY\n"
             "    - multifmt : False\n"
             "    - class : 0\n"
-            "APP_2-04 : {off: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 323, "
+            "APP_2-04 : {offset: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 323, "
             "desc : description, uom : YEAR, multifmt : False, class : 0}\n"
-            "APP_2-05 : {off: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 1, "
+            "APP_2-05 : {offset: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 1, "
             "desc : description / description, uom : ' ', multifmt : False, class : 0}\n");
 
         // two incorrect elems, first is missing "schema", third is
         // missing "off".
         bad_icd_node3_ = YAML::Load(
-            "APP_2-03 : {off: 2, cnt : 1, msbval : 18, "
+            "APP_2-03 : {offset: 2, cnt : 1, msbval : 18, "
             "desc : description, uom : DAY, multifmt : False, class : 0}\n"
-            "APP_2-04 : {off: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 323, "
+            "APP_2-04 : {offset: 2, cnt : 1, schema : UNSIGNEDBITS, msbval : 323, "
             "desc : description, uom : YEAR, multifmt : False, class : 0}\n"
             "APP_2-05 : {cnt : 1, schema : UNSIGNEDBITS, msbval : 1, "
             "desc : description / description, uom : ' ', multifmt: False, class : 0}\n");
@@ -764,10 +764,10 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeValidMsgCount)
         "Add:\n"
         "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    Add-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Add-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
+        "    Add-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
 
     EXPECT_TRUE(icd_node_.IsMap());
     EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
@@ -778,17 +778,17 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeValidMsgCount)
         "Add:\n"
         "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    Add-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Add-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "    Add-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
         "Aee:\n"
         "  msg_data: {command: [0, 2190], lru_addr: [3, 3], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    Aee-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    Aee-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    Aee-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Aee-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Aee-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
+        "    Aee-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
 
     EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
                                        elem_name_subs_));
@@ -802,17 +802,17 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeMsgNameSubstitutions)
         "Add:\n"
         "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    Add-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Add-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "    Add-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
         "Acc:\n"
         "  msg_data: {command: [0, 330], lru_addr: [3, 9], lru_subaddr: [1, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    Acc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "    Acc-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
 
     );
 
@@ -826,17 +826,17 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeMsgNameSubstitutions)
         "Ad-d:\n"
         "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    Add-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Add-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "    Add-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
         "A.~cc:\n"
         "  msg_data: {command: [0, 330], lru_addr: [3, 9], lru_subaddr: [1, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    Acc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "    Acc-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
 
     );
 
@@ -850,17 +850,17 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeMsgNameSubstitutions)
         "Ad*d:\n"
         "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    Add-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Add-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "    Add-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
         "A/c+c:\n"
         "  msg_data: {command: [0, 330], lru_addr: [3, 9], lru_subaddr: [1, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    Acc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "    Acc-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
 
     );
 
@@ -884,17 +884,17 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeElemNameSubstitutions)
         "Add:\n"
         "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    Add-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Add-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "    Add-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
         "Acc:\n"
         "  msg_data: {command: [0, 330], lru_addr: [3, 9], lru_subaddr: [1, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    Acc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
+        "    Acc-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
 
     EXPECT_TRUE(icd_node_.IsMap());
     EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
@@ -906,17 +906,17 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeElemNameSubstitutions)
         "Add:\n"
         "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    A.d-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    A.d-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    A_dd-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "    A_dd-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
         "Acc:\n"
         "  msg_data: {command: [0, 330], lru_addr: [3, 9], lru_subaddr: [1, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    A~cc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    A~cc-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Acc-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
+        "    Acc-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
 
     EXPECT_TRUE(icd_node_.IsMap());
     EXPECT_TRUE(icd_.IngestICDYamlNode(icd_node_, icd_elems_, msg_name_subs_,
@@ -928,17 +928,17 @@ TEST_F(ICDDataIngestYamlTest, IngestICDYamlNodeElemNameSubstitutions)
         "Add:\n"
         "  msg_data: {command: [0, 390], lru_addr: [0, 9], lru_subaddr: [0, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    A/d-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    Add-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    A/d-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    Add-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    A#dd-0201: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
+        "    A#dd-0201: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n"
         "Acc:\n"
         "  msg_data: {command: [0, 330], lru_addr: [3, 9], lru_subaddr: [1, 3], lru_name: [m1, m2], bus: b1, wrdcnt: 22, rate: 12.5, mode_code: False, desc: CONTROL}\n"
         "  word_elem:\n"
-        "    Acc-17: {off: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
-        "    A*cc-20: {off: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
+        "    Acc-17: {offset: 16, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE, uom: NONE, multifmt: False, class: 0}\n"
+        "    A*cc-20: {offset: 19, cnt: 2, schema: SIGNED32, msbval: 1, desc: MODE5, uom: NONE, multifmt: False, class: 0}\n"
         "  bit_elem:\n"
-        "    Acc-02\\01: {off: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
+        "    Acc-02\\01: {offset: 1, cnt: 1, schema: UNSIGNEDBITS, msbval: 8, desc: MODE4, uom: NONE, multifmt: False, class: 0, msb: 1, lsb: 4, bitcnt: 4}\n");
 
     std::map<std::string, std::string> expected = {
         {"A/d-17", "A%2fd-17"},
@@ -1136,7 +1136,7 @@ TEST_F(ICDDataIngestYamlTest, ConfigureMsgDataFromYamlNodeMissingOptionalSequenc
 TEST_F(ICDDataIngestYamlTest, ConfigureWordElemDataFromYamlNodeCorrectVals)
 {
     YAML::Node node = YAML::Load(
-        "{off: 2, cnt : 1, schema : UNSIGNED16, msbval : 18, "
+        "{offset: 2, cnt : 1, schema : UNSIGNED16, msbval : 18, "
         "desc : description, uom : DAY, multifmt : False, class : 0}\n");
     ICDElement icdelem;
     std::string elem_name = "ytt644";
@@ -1146,7 +1146,7 @@ TEST_F(ICDDataIngestYamlTest, ConfigureWordElemDataFromYamlNodeCorrectVals)
 
     EXPECT_FALSE(icdelem.is_bitlevel_);
     EXPECT_EQ(elem_name, icdelem.elem_name_);
-    EXPECT_EQ(node["off"].as<int>(), icdelem.offset_);
+    EXPECT_EQ(node["offset"].as<int>(), icdelem.offset_);
     EXPECT_EQ(node["cnt"].as<int>(), icdelem.elem_word_count_);
 
     ICDElementSchema schema = ICDElementSchema::BAD;
@@ -1165,7 +1165,7 @@ TEST_F(ICDDataIngestYamlTest, ConfigureWordElemDataFromYamlNodeCorrectVals)
 TEST_F(ICDDataIngestYamlTest, ConfigureBitElemDataFromYamlNodeCorrectVals)
 {
     YAML::Node node = YAML::Load(
-        "{off: 2, cnt: 1, schema: UNSIGNEDBITS, msbval: 18, "
+        "{offset: 2, cnt: 1, schema: UNSIGNEDBITS, msbval: 18, "
         "desc: \"description\", uom: \"DAY\", multifmt: False, "
         "class: 0, msb: 1, lsb: 9, bitcnt: 9}\n");
     ICDElement icdelem;
@@ -1176,7 +1176,7 @@ TEST_F(ICDDataIngestYamlTest, ConfigureBitElemDataFromYamlNodeCorrectVals)
 
     EXPECT_TRUE(icdelem.is_bitlevel_);
     EXPECT_EQ(elem_name, icdelem.elem_name_);
-    EXPECT_EQ(node["off"].as<int>(), icdelem.offset_);
+    EXPECT_EQ(node["offset"].as<int>(), icdelem.offset_);
     EXPECT_EQ(node["cnt"].as<int>(), icdelem.elem_word_count_);
 
     ICDElementSchema schema = ICDElementSchema::BAD;

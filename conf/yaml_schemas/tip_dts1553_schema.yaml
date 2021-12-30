@@ -37,7 +37,7 @@ translatable_message_definitions:           # (R)
       desc: OPTSTR                             # (OR)
     word_elem:                              # (R)
       _NOT_DEFINED_OPT_:                    # (WO), alias: wrd_elem_name = word/multiple word element
-        off: INT                            # (R)
+        offset: INT                            # (R)
         cnt: INT                            # (R)
         schema: STR-->{SIGNED16,SIGNED32,UNSIGNED16,UNSIGNED32,FLOAT32_1750,FLOAT32_IEEE,FLOAT64_IEEE,FLOAT16,CAPS,FLOAT32_GPS,FLOAT64_GPS}     # (R)
         msbval: FLT                         # (R)
@@ -47,7 +47,7 @@ translatable_message_definitions:           # (R)
         class: OPTINT                          # (OR)
     bit_elem:                               # (R)
       _NOT_DEFINED_OPT_:                    # (WO), alias: bit_elem_name = bit/multiple bit element
-        off: INT                            # (R)
+        offset: INT                            # (R)
         cnt: INT                            # (R)
         schema: STR-->{UNSIGNEDBITS,SIGNEDBITS,ASCII}  # (R)
         msbval: FLT                         # (R)
@@ -278,7 +278,7 @@ supplemental_bus_map_command_words:         # (R)
 #
 
 # 
-# off (relative to wrd_elem_name data structure)
+# offset (relative to wrd_elem_name data structure)
 # 
 # Required, structure included exactly once in the current map
 # 
@@ -434,7 +434,7 @@ supplemental_bus_map_command_words:         # (R)
 #
 
 #
-# off (relative to bit_elem_name data structure)
+# offset (relative to bit_elem_name data structure)
 # 
 # Required, structure included exactly once in the current map
 # 
