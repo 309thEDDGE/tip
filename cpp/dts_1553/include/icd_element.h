@@ -95,8 +95,8 @@ class ICDElement
 		-special cases:
 		-examples:
 			1. MSG01
-			2. MSG02		
-					
+			2. MSG02
+
 	*/
     std::string msg_name_;
 
@@ -104,7 +104,7 @@ class ICDElement
 		-name:			element_name
 		-description:	Name of message element
 		-format/range:	<message name>_<2 digit word number><2 digit bit number (if any)>
-		-special cases:	 
+		-special cases:
 		-examples:
 			1. MSG01-01
 				(element name of word 1 in message MSG01)
@@ -134,16 +134,16 @@ class ICDElement
 						14..
 						15..
 						16..
-		-special cases: 
+		-special cases:
 			1. set xmit_word to 0 if message is Bus Controller to Remote Terminal
 			2. word count bits are 0b00000 if word count = 32
 			3. subaddress = 0b00000 or 0b11111 for mode codes
 			4. if the subaddress is 0b00000 or 0b11111 the word count bits (bits 12-16)
-			   no longer define word count. They  define a mode command. Mode 
+			   no longer define word count. They  define a mode command. Mode
 			   commands of 0b00000 through 0b01111 are used for mode codes which do
-               not require transfer of a data word. For these codes, the T/R bit 
-			   is set to 1. Codes 0b10000 through 0b11111 are only used for mode codes 
-			   that require transfer of a single data word. For these mode codes, 
+               not require transfer of a data word. For these codes, the T/R bit
+			   is set to 1. Codes 0b10000 through 0b11111 are only used for mode codes
+			   that require transfer of a single data word. For these mode codes,
 			   the T/R bit should be set to indicate the direction of data word flow.
 			   See section 4.3.3.5.1.7 of below link for more information on mode codes.
 			   http://www.milstd1553.com/wp-content/uploads/2012/12/MIL-STD-1553B.pdf
@@ -175,16 +175,16 @@ class ICDElement
 						14..
 						15..
 						16..
-		-special cases: 
+		-special cases:
 			1. set dest_word to 0 if message is Remote Terminal to Bus Controller
 			2. word count bits are 0b00000 if word count = 32
 			3. subaddress = 0b00000 or 0b11111 for mode codes
 			4. if the subaddress is 0b00000 or 0b11111 the word count bits (bits 12-16)
-			   no longer define word count. They  define a mode command. Mode 
+			   no longer define word count. They  define a mode command. Mode
 			   commands of 0b00000 through 0b01111 are used for mode codes which do
-               not require transfer of a data word. For these codes, the T/R bit 
-			   is set to 1. Codes 0b10000 through 0b11111 are only used for mode codes 
-			   that require transfer of a single data word. For these mode codes, 
+               not require transfer of a data word. For these codes, the T/R bit
+			   is set to 1. Codes 0b10000 through 0b11111 are only used for mode codes
+			   that require transfer of a single data word. For these mode codes,
 			   the T/R bit should be set to indicate the direction of data word flow.
 			   See section 4.3.3.5.1.7 of below link for more information on mode codes.
 			   http://www.milstd1553.com/wp-content/uploads/2012/12/MIL-STD-1553B.pdf
@@ -203,11 +203,11 @@ class ICDElement
 						This is a count of the data words
 						transmitted after the command word.
 						It is not a direct read out from the
-						word count bits (12-16) in the command word. 
-						The word count bits in the command word have 
+						word count bits (12-16) in the command word.
+						The word count bits in the command word have
 						special cases as described above
 		-format/range:	[0 - 32]
-		-special cases: 
+		-special cases:
 		-examples:
 			1. 32 word message
 				msg_word_count = 32
@@ -219,7 +219,7 @@ class ICDElement
     /*
 		-name:			bus_name
 		-description:	Name of bus on which message is transmitted
-		-format/range:	
+		-format/range:
 		-special cases:
 		-examples:
 	*/
@@ -228,7 +228,7 @@ class ICDElement
     /*
 		-name:			xmit_lru_name
 		-description:	Transmit LRU name
-		-format/range:	
+		-format/range:
 		-special cases:
 		-examples:
 	*/
@@ -246,8 +246,8 @@ class ICDElement
     /*
 		-name:			dest_lru_name
 		-description:	Recieve LRU name
-		-format/range:	
-		-special cases: 
+		-format/range:
+		-special cases:
 		-examples:
 	*/
     std::string dest_lru_name_;
@@ -293,7 +293,7 @@ class ICDElement
     /*
 		-name:			offset
 		-description:	Integer offset of first
-						16-bit raw data word 1553 msg payload in which 
+						16-bit raw data word 1553 msg payload in which
 						the bits that define this element value
 						are found.
 		-format/range:	[0,31]
@@ -327,8 +327,8 @@ class ICDElement
 
     /*
 		-name:			schema
-		-description:	Enum representative of comet schema. 
-						Refer to ICDElementSchema above for 
+		-description:	Enum representative of comet schema.
+						Refer to ICDElementSchema above for
 						integer values and more detail.
 						Ingested from ICD text file as unsigned
 						integer value.
@@ -341,17 +341,17 @@ class ICDElement
 				schema = 12
 			3. two word signed IEEE integer (SIGNED32)
 				schema = 3
-				
+
 	*/
     ICDElementSchema schema_;
 
     /*
 		-name:			is_bitlevel
-		-description:	If true, indicates that the element is a 
-						bit-level specification, in contrast with 
+		-description:	If true, indicates that the element is a
+						bit-level specification, in contrast with
 						word-level spec. If false then the element
 						is word-level spec and will be comprised of
-						one or more 16-bit words. SIGNEDBITS or 
+						one or more 16-bit words. SIGNEDBITS or
 						UNSIGNEDBITS schema should be used when
 						is_bitlevel_ is true.
 		-format/range:	[0,1] 1 = bit level, 0 = not bit level
@@ -372,16 +372,16 @@ class ICDElement
 						Multiformat elements are word- or bit-
 						level elements which have the '@' symbol
 						in their name (elem_name_). The multiformat
-						mechanism provides a way to economize 
+						mechanism provides a way to economize
 						1553 message slots on the bus while offering
-						different information as intended by OFP 
+						different information as intended by OFP
 						developers. The decimal value that follows the
 						'@' symbol in the element name indicates which
 						multiformat element version is being defined.
 		-format/range:	[0,1] 1 = multi format, 0 = not multi format
 		-special cases:
 		-examples:
-			1. MSG01-01@01 
+			1. MSG01-01@01
 				is_multiformat = 1
 			2. MSG01-02
 				is_multiformat = 0
@@ -392,11 +392,11 @@ class ICDElement
 		-name:			bitmsb
 		-description:	Only applies when is_bitlevel_ = true.
 						Most significant bit of the first word
-						in the bit-level spec. This follows the 
+						in the bit-level spec. This follows the
 						comet standard for bit numbering. (1 in 0b1000
 						is bit # 1, and 1 in 0b0001 is bit # 4)
 		-format/range:	[1,16]
-		-special cases: 
+		-special cases:
 			1. only used when is_bitlevel = 1 (set to 0 when is_bitlevel = 0)
 			2. bitmsb should be the signed bit position when using the SIGNEDBITS schema
 		-examples:
@@ -411,14 +411,14 @@ class ICDElement
 		-name:			bitlsb
 		-description:	Only applies when is_bitlevel_ = true.
 						Least significant bit of the last word
-						in the bit-level spec. This follows the 
+						in the bit-level spec. This follows the
 						comet standard for bit numbering. (1 in 0b1000
 						is bit # 1, and 1 in 0b0001 is bit # 4)
 		-format/range:	[1,16]
-		-special cases: 
+		-special cases:
 			1. only used when is_bitlevel = 1 (set to 0 when is_bitlevel = 0)
 		-examples:
-			1. bit level element from word 3 bit 2 -> word 4 bit 5 
+			1. bit level element from word 3 bit 2 -> word 4 bit 5
 				bitlsb = 5
 			2. single bit element at word 3 bit 4
 				bitlsb = 4
@@ -430,7 +430,7 @@ class ICDElement
 		-description:	Only applies when is_bitlevel_ = true.
 						Count of all bits that define the
 						element value. If only one 16-bit word
-						is needed then: 
+						is needed then:
 						bitcount = bitlsb - bitmsb + 1,
 						otherwise bitcount is
 						bitcount = [1st word](16 - bitmsb + 1) +
@@ -446,10 +446,10 @@ class ICDElement
 
     /*
 		-name:			classification
-		-description:	Classification value as found 
+		-description:	Classification value as found
 						in comet wrd tables.
 
-						Classification is the classification level of the word. 
+						Classification is the classification level of the word.
 						Classification options are:
 						0 - UNCLASSIFIED
 						1 - CONFIDENTIAL
@@ -476,19 +476,19 @@ class ICDElement
 
     /*
 		-name:			msb_val
-		-description:	Value of the most significant bit. Used to 
+		-description:	Value of the most significant bit. Used to
 						scale the translated value. As an example,
 						for an 8 bit unsigned integer the scale factor
 						would follow the formula 0b10000000 * scale = msb_val.
-						The scaling would then be applied to each value coming 
+						The scaling would then be applied to each value coming
 						off the bus after it is read into the datatype specified
-						by schema. Scaling is only done for IEEE standard integer, 
+						by schema. Scaling is only done for IEEE standard integer,
 						and bit level schema types.
-		-format/range: 
-		-special cases: 
-			1. note that the msb value for SIGNEDBIT types 
-			   is associated with the bit at position 
-			   bitmsb + 1 
+		-format/range:
+		-special cases:
+			1. note that the msb value for SIGNEDBIT types
+			   is associated with the bit at position
+			   bitmsb + 1
 			   (since bitmsb for SIGNEDBIT is defined to be
 				in the sign bit location)
 			2. sometimes comet flat files place a 0 in msb_val
@@ -498,7 +498,7 @@ class ICDElement
 			1. no scaling wanted for an unsigned IEEE 16 bit integer
 				msb_val = 2^15
 			2. no scaling wanted for an signed IEEE 32 bit integer
-				msb_val = 2^30				
+				msb_val = 2^30
 	*/
     double msb_val_;
 
@@ -506,13 +506,63 @@ class ICDElement
 		-name:			uom
 		-description:	Unit of measure of the Engineering Unit.
 		-format/range:	Generally all caps
-		-special cases: 
+		-special cases:
 			1. not used for translation, if unsure set to NONE
 		-examples:
 			1. FT-SEC
 			2. PIRAD
 	*/
     std::string uom_;
+
+	/*
+		-name: label_
+		-description: 429 Word Label
+		-format/range: Integer. Octal representaion of 429 label
+		-special cases:
+
+		-examples:
+			1. 131
+			2. 211
+	*/
+	uint16_t label_;
+
+	/*
+		-name: bus_num_
+		-description: Integer representing the ARINC 429 IPDH bus number
+		-format/range: 0 <= bus_429_ < 256
+		-special cases:
+
+		-examples:
+			1. 7
+			2. 1
+	*/
+	uint16_t bus_num_;
+
+	/*
+		-name: sdi_
+		-description: Intiger representing the
+		-format/range: -1 to ignore this when translating or integer 0-3
+		-special cases:
+			1. If sdi_ isn't used for translation, then
+		-examples:
+			1. 0
+			2. 3
+			3. -1
+	*/
+	uint8_t sdi_;
+
+	/*
+		-name: rate_429_
+		-description: Boolean to provide ARINC 249 bus speed
+		-format/range: False = Low speed, True = High speed
+		-special cases:
+
+		-examples:
+			1. true
+			2. false
+
+	*/
+	bool rate_429_;
 
     // methods/c'tors
     ICDElement();
