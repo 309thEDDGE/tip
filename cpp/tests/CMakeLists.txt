@@ -35,6 +35,7 @@ add_executable(tests
     src/parse_text_u.cpp
     src/parse_worker_u.cpp
     src/tmats_parser_u.cpp
+    src/tmats_data_u.cpp
     src/translation_config_params_u.cpp
     src/user_input_u.cpp
     src/yaml_reader_u.cpp

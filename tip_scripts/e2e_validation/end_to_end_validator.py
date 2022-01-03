@@ -62,6 +62,7 @@ tip_root_path = os.path.dirname(os.path.abspath(os.path.join(os.path.realpath(__
 from tip_scripts.e2e_validation.pqpq_raw1553_dir_validation import PqPqRaw1553DirValidation
 from tip_scripts.e2e_validation.pqpq_translated1553_dir_validation import PqPqTranslated1553DirValidation
 from tip_scripts.e2e_validation.pqpq_video_dir_validation import PqPqVideoDirValidation
+from tip_scripts.e2e_validation.pqpq_rawARINC429_dir_validation import PqPqRawARINC429DirValidation
 from tip_scripts.exec import Exec
 
 class E2EValidator(object):
@@ -125,10 +126,12 @@ class E2EValidator(object):
                                                       'basename': basename,
                                                       'raw1553': basename + '_1553.parquet',
                                                       'transl1553': basename + '_1553_translated',
-                                                      'rawvideo': basename + '_video.parquet'}
+                                                      'rawvideo': basename + '_video.parquet',
+                                                      'parsedarinc429f0': basename + '_arinc429.parquet'}
             self.all_validation_obj[ch10name] = {}
             self.validation_results_dict[ch10name] = {}
-            self.duration_data[ch10name] = {'raw1553': None, 'transl1553': None}
+            self.duration_data[ch10name] = {'raw1553': None, 'transl1553': None, 
+                'parsedarinc429f0': None, }
 
         #print(self.files_under_test)
 
@@ -239,6 +242,7 @@ class E2EValidator(object):
         self._create_raw1553_validation_objects()
         self._create_transl1553_validation_objects()
         self._create_rawvideo_validation_objects()
+        self._create_rawarinc429f0_validation_objects()
 
         # Validate all objects 
         self._validate_objects()
@@ -268,6 +272,9 @@ class E2EValidator(object):
             ########### video ###########
             self.all_validation_obj[ch10name]['rawvideo'].print_results(self.print)
 
+            ########### arinc429f0 #########
+            self.all_validation_obj[ch10name]['parsedarinc429f0'].print_results(self.print)
+
             ########### super set ##########
             msg = '\nTotal Ch10 result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['ch10']))
             print(msg)
@@ -277,10 +284,15 @@ class E2EValidator(object):
             print(msg)
             self.print(msg)
 
-        msg = 'Total raw 1553 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_raw1553_pass']))
+        msg = 'Total parsed 1553 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_raw1553_pass']))
         print(msg)
         self.print(msg)
+
         msg = 'Total translated 1553 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_transl1553_pass']))
+        print(msg)
+        self.print(msg)
+
+        msg = 'Total parsed ARINC429F0 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_parsedarinc429f0_pass']))
         print(msg)
         self.print(msg)
 
@@ -362,11 +374,14 @@ class E2EValidator(object):
         single_ch10_bulk_transl1553_pass = True
         single_ch10_raw1553_pass = True
         single_ch10_video_pass = True
-        data1553_stats = {'raw1553': [], 'transl1553': [], 'ch10': []}
+        single_ch10_parsedarinc429f0_pass = True
+        total_stats = {'raw1553': [], 'transl1553': [], 'ch10': [],
+            'parsedarinc429f0': []}
         for ch10name in self.files_under_test.keys():
 
             self.validation_results_dict[ch10name] = {'ch10': None, 'raw1553': None, 
-                                                      'translated1553': None}
+                                                      'translated1553': None,
+                                                      'parsedarinc429f0': None}
 
             ########## 1553 ############
             single_ch10_raw1553_pass = self.all_validation_obj[ch10name]['raw1553'].get_test_result()
@@ -375,8 +390,13 @@ class E2EValidator(object):
             self.validation_results_dict[ch10name]['raw1553'] = single_ch10_raw1553_pass
             self.validation_results_dict[ch10name]['translated1553'] = single_ch10_bulk_transl1553_pass
 
-            data1553_stats['raw1553'].append(single_ch10_raw1553_pass)
-            data1553_stats['transl1553'].append(single_ch10_bulk_transl1553_pass)
+            total_stats['raw1553'].append(single_ch10_raw1553_pass)
+            total_stats['transl1553'].append(single_ch10_bulk_transl1553_pass)
+
+            ########### ARINC429F0 ###########
+            single_ch10_parsedarinc429f0_pass = self.all_validation_obj[ch10name]['parsedarinc429f0'].get_test_result()
+            self.validation_results_dict[ch10name]['parsedarinc429f0'] = single_ch10_parsedarinc429f0_pass
+            total_stats['parsedarinc429f0'].append(single_ch10_parsedarinc429f0_pass)
 
             ########### video ###########
             single_ch10_video_pass = self.all_validation_obj[ch10name]['rawvideo'].get_test_result()
@@ -384,20 +404,21 @@ class E2EValidator(object):
             ########### super set ##########
 
             if (single_ch10_raw1553_pass == True and single_ch10_bulk_transl1553_pass == True
-                and single_ch10_video_pass == True):
+                and single_ch10_video_pass == True and single_ch10_parsedarinc429f0_pass == True):
                 single_ch10_pass = True
             elif (single_ch10_raw1553_pass is None or single_ch10_bulk_transl1553_pass is None
-                  or single_ch10_video_pass is None):
+                  or single_ch10_video_pass is None or single_ch10_parsedarinc429f0_pass is None):
                 single_ch10_pass = None
             else:
                 single_ch10_pass = False
 
             self.validation_results_dict[ch10name]['ch10'] = single_ch10_pass
-            data1553_stats['ch10'].append(single_ch10_pass)
+            total_stats['ch10'].append(single_ch10_pass)
 
-        self.validation_results_dict['all_ch10'] = self._get_pass_fail_null(data1553_stats['ch10'])
-        self.validation_results_dict['all_raw1553_pass'] = self._get_pass_fail_null(data1553_stats['raw1553'])
-        self.validation_results_dict['all_transl1553_pass'] = self._get_pass_fail_null(data1553_stats['transl1553'])
+        self.validation_results_dict['all_ch10'] = self._get_pass_fail_null(total_stats['ch10'])
+        self.validation_results_dict['all_raw1553_pass'] = self._get_pass_fail_null(total_stats['raw1553'])
+        self.validation_results_dict['all_transl1553_pass'] = self._get_pass_fail_null(total_stats['transl1553'])
+        self.validation_results_dict['all_parsedarinc429f0_pass'] = self._get_pass_fail_null(total_stats['parsedarinc429f0'])
 
 
     def _validate_objects(self):
@@ -413,24 +434,39 @@ class E2EValidator(object):
 
             ############# Raw ##############
             raw1553_validation_obj = self.all_validation_obj[ch10name]['raw1553']
-            self.print('\n-- Raw 1553 Comparison --\n')
+            self.print('\n-- Parsed 1553F1 Comparison --\n')
             raw1553_validation_obj.validate_dir(self.print)
 
             ############# Translated ##############
             transl1553_validation_obj = self.all_validation_obj[ch10name]['transl1553']
-            self.print('\n-- Translation 1553 Comparison --\n')
+            self.print('\n-- Translation 1553F1 Comparison --\n')
             transl1553_validation_obj.validate_dir(self.print)
 
             ################################
             #            video 
             ################################
             video_validation_obj = self.all_validation_obj[ch10name]['rawvideo']
-            self.print('\n-- Raw Video Comparison --\n')
+            self.print('\n-- Raw VideoF0 Comparison --\n')
             video_validation_obj.validate_dir(self.print)
+
+            ################################
+            #            ARINC429F0 
+            ################################
+
+            ############# Parsed ##############
+            parsedarinc429f0_validation_obj = self.all_validation_obj[ch10name]['parsedarinc429f0']
+            self.print('\n-- Parsed ARINC429F0 Comparison --\n')
+            parsedarinc429f0_validation_obj.validate_dir(self.print)
+
+            ############# Translated ##############
+            # translarinc429f0_validation_obj = self.all_validation_obj[ch10name]['translarinc429f0']
+            # self.print('\n-- Translation ARINC429F0 Comparison --\n')
+            # translarinc429f0_validation_obj.validate_dir(self.print)
+
 
 
     def _create_raw1553_validation_objects(self):
-        print("\n-- Create raw 1553 validation objects --\n")    
+        print("\n-- Create parsed 1553F1 validation objects --\n")    
         for ch10name,d in self.files_under_test.items():
             rawname = d['raw1553']
             self.all_validation_obj[ch10name]['raw1553'] = PqPqRaw1553DirValidation(
@@ -439,8 +475,17 @@ class E2EValidator(object):
                 self.pqcompare_exec_path,
                 self.bincompare_exec_path)
 
+    def _create_rawarinc429f0_validation_objects(self):
+        print("\n-- Create parsed ARINC429F0 validation objects --\n")
+        for ch10name,d in self.files_under_test.items():
+            rawname = d['parsedarinc429f0']
+            self.all_validation_obj[ch10name]['parsedarinc429f0'] = PqPqRawARINC429DirValidation(
+                os.path.join(self.truth_set_dir, rawname), 
+                os.path.join(self.test_set_dir, rawname), 
+                self.pqcompare_exec_path, self.bincompare_exec_path)
+
     def _create_transl1553_validation_objects(self):
-        print("\n-- Create translated 1553 validation objects --\n")
+        print("\n-- Create translated 1553F1 validation objects --\n")
         for ch10name,d in self.files_under_test.items():
             translname = d['transl1553']
             self.all_validation_obj[ch10name]['transl1553'] = PqPqTranslated1553DirValidation(
@@ -449,7 +494,7 @@ class E2EValidator(object):
                 self.pqcompare_exec_path, self.bincompare_exec_path)
 
     def _create_rawvideo_validation_objects(self):
-        print("\n-- Create raw video validation objects --\n")
+        print("\n-- Create parsed VIDEOF0 validation objects --\n")
         for ch10name,d in self.files_under_test.items():
             videoname = d['rawvideo']
             self.all_validation_obj[ch10name]['rawvideo'] = PqPqVideoDirValidation(

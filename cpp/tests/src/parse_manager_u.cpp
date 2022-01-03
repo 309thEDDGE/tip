@@ -8,6 +8,7 @@
 #include "gmock/gmock.h"
 
 #include "parse_manager.h"
+#include "tmats_data.h"
 #include "parser_config_params.h"
 #include "ch10_header_format.h"
 #include "ch10_1553f1_msg_hdr_format.h"
@@ -111,8 +112,8 @@ TEST_F(ParseManagerTest, NoTMATSLeftFromPriorTests)
 TEST_F(ParseManagerTest, NoTMATSPresent)
 {
     std::vector<std::string> tmats;
-    pm.ProcessTMATS(tmats, tmats_path_, TMATsChannelIDToSourceMap_,
-                    TMATsChannelIDToTypeMap_);
+    TMATSData tmats_data;
+    pm.ProcessTMATS(tmats, tmats_path_, tmats_data);
     file.open(tmats_filename_);
     // file shouldn't exist if tmats did
     // not exist
@@ -123,8 +124,8 @@ TEST_F(ParseManagerTest, NoTMATSPresent)
 TEST_F(ParseManagerTest, TMATSWritten)
 {
     std::vector<std::string> tmats = {"line1\nline2\n", "line3\nline4\n"};
-    pm.ProcessTMATS(tmats, tmats_path_, TMATsChannelIDToSourceMap_,
-                    TMATsChannelIDToTypeMap_);
+    TMATSData tmats_data;
+    pm.ProcessTMATS(tmats, tmats_path_, tmats_data);
     file.open(tmats_filename_);
     ASSERT_TRUE(file.good());
     std::ostringstream ss;
@@ -153,8 +154,8 @@ TEST_F(ParseManagerTest, TMATSParsed)
         "comment;\n",
         "Junk-1\\Junk1-1;\n\n",
     };
-    pm.ProcessTMATS(tmats, tmats_path_, TMATsChannelIDToSourceMap_,
-                    TMATsChannelIDToTypeMap_);
+    TMATSData tmats_data;
+    pm.ProcessTMATS(tmats, tmats_path_, tmats_data);
 
     std::map<std::string, std::string> source_map_truth =
         {{"1", "Bus1"}, {"2", "Bus2"}, {"3", "Bus3"}};
@@ -162,8 +163,8 @@ TEST_F(ParseManagerTest, TMATSParsed)
     std::map<std::string, std::string> type_map_truth =
         {{"1", "type1"}, {"2", "type2"}, {"3", "type3"}};
 
-    ASSERT_TRUE(map_compare(TMATsChannelIDToSourceMap_, source_map_truth));
-    ASSERT_TRUE(map_compare(TMATsChannelIDToTypeMap_, type_map_truth));
+    ASSERT_TRUE(map_compare(tmats_data.chanid_to_source_map, source_map_truth));
+    ASSERT_TRUE(map_compare(tmats_data.chanid_to_type_map, type_map_truth));
     RemoveFile();
 }
 

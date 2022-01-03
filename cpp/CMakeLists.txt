@@ -105,7 +105,6 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/parse_text.cpp           ${util_inc_dir}/parse_text.h
             ${util_src_dir}/user_input.cpp           ${util_inc_dir}/user_input.h
             ${util_src_dir}/yaml_reader.cpp          ${util_inc_dir}/yaml_reader.h
-            ${util_src_dir}/tmats_parser.cpp         ${util_inc_dir}/tmats_parser.h
             ${util_src_dir}/managed_path.cpp         ${util_inc_dir}/managed_path.h
             ${util_src_dir}/argument_validation.cpp  ${util_inc_dir}/argument_validation.h
             ${util_src_dir}/resource_limits.cpp      ${util_inc_dir}/resource_limits.h
@@ -374,6 +373,8 @@ add_library(${parsech10_lib_name} STATIC
     ${parsech10_inc_dir}/parse_manager.h ${parsech10_src_dir}/parse_manager.cpp
     ${parsech10_inc_dir}/parse_worker.h ${parsech10_src_dir}/parse_worker.cpp
     ${parsech10_src_dir}/parser_helper_funcs.cpp ${parsech10_inc_dir}/parser_helper_funcs.h
+    ${parsech10_src_dir}/tmats_parser.cpp ${parsech10_inc_dir}/tmats_parser.h
+    ${parsech10_src_dir}/tmats_data.cpp ${parsech10_inc_dir}/tmats_data.h
     )
 target_include_directories(${parsech10_lib_name} PUBLIC ${common_inc_dir} ${parsech10_inc_dir}
                             ${yaml_inc_dir} ${util_inc_dir}
@@ -490,6 +491,7 @@ add_executable(${test_exe_name}
 		${test_src_dir}/parse_text_u.cpp
                 ${test_src_dir}/parse_worker_u.cpp
                 ${test_src_dir}/tmats_parser_u.cpp
+                ${test_src_dir}/tmats_data_u.cpp
 		${test_src_dir}/translation_config_params_u.cpp
                 ${test_src_dir}/user_input_u.cpp
 		${test_src_dir}/yaml_reader_u.cpp

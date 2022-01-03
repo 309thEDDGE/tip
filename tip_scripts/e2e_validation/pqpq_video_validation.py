@@ -5,10 +5,10 @@ from tip_scripts.e2e_validation.file_validation import FileValidation
 class PqPqVideoValidation(FileValidation):
 
     def __init__(self, truth_path, test_path, pqcompare_exec_path):
-        prefix = 'PqPqVideoValidation'
+        prefix = 'PqPqParsedVideoF0Validation'
         FileValidation.__init__(self, prefix)
         self.pqcompare_exec_path = pqcompare_exec_path
-        self.ready_to_validate = self.set_1553_paths(truth_path, test_path, 'rawvideo')
+        self.ready_to_validate = self.set_type_paths(truth_path, test_path, 'parsedvideof0')
 
     def validate(self):
 

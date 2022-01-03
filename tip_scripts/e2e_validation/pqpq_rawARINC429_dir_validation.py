@@ -2,16 +2,15 @@ import os
 from pathlib import Path
 from tip_scripts.e2e_validation import config
 from tip_scripts.e2e_validation.directory_validation import DirectoryValidation
-from tip_scripts.e2e_validation.pqpq_raw1553_validation import PqPqRaw1553Validation
-from tip_scripts.e2e_validation.txttxt_validation import TxtTxtValidation
+from tip_scripts.e2e_validation.pqpq_rawARINC429_validation import PqPqRawARINC429Validation
 if config.COMPARE_YAML:
     from tip_scripts.e2e_validation.ymlyml_validation import YmlYmlValidation
     from tip_scripts.e2e_validation.yaml_compare import exclude_from_comparison_funcs as exclude_funcs
 
-class PqPqRaw1553DirValidation(DirectoryValidation):
+class PqPqRawARINC429DirValidation(DirectoryValidation):
 
     def __init__(self, truth_path, test_path, pqcompare_exec_path, bincompare_exec_path):
-        DirectoryValidation.__init__(self, 'PqPqParsed1553F1DirValidation')
+        DirectoryValidation.__init__(self, 'PqPqParsedARINC429F0DirValidation')
         self.ready_to_validate = self.set_directory_paths(truth_path, test_path)
         self.pqcompare_exec_path = pqcompare_exec_path
         self.bincompare_exec_path = bincompare_exec_path
@@ -26,12 +25,12 @@ class PqPqRaw1553DirValidation(DirectoryValidation):
 
         # Add pq comparison object first.
         self.validation_objects.append(
-            PqPqRaw1553Validation(self.truth_path, self.test_path, self.pqcompare_exec_path))
+            PqPqRawARINC429Validation(self.truth_path, self.test_path, self.pqcompare_exec_path))
 
         # Add metadata objects.
         if self.truth_dir_exists == True:
 
-            extension_list = ['.txt', '.yml', '.yaml']
+            extension_list = ['.yml', '.yaml']
             # Search list of files for those with extension matching
             # an entry in the extension_list, which includes the leading '.'
             # (ex: ['.txt', '.yml']).
@@ -50,8 +49,3 @@ class PqPqRaw1553DirValidation(DirectoryValidation):
                                 str(truth_dir / truth_md_path),
                                 str(test_dir / truth_md_path),
                                 exclude_func=exclude_funcs.parsed_1553f1))
-                    elif truth_md_path.suffix in ['.txt']:
-                        self.validation_objects.append(TxtTxtValidation(
-                            str(truth_dir / truth_md_path),
-                            str(test_dir / truth_md_path),
-                            self.bincompare_exec_path))
