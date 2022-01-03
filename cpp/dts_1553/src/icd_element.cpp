@@ -2,7 +2,7 @@
 
 const int ICDElement::kFillElementCount = 25;
 
-ICDElement::ICDElement() : msg_name_(""), elem_name_(""), xmit_word_(UINT16_MAX), dest_word_(UINT16_MAX), msg_word_count_(UINT8_MAX), bus_name_(""), xmit_lru_name_(""), xmit_lru_addr_(UINT8_MAX), dest_lru_name_(""), dest_lru_addr_(UINT8_MAX), xmit_lru_subaddr_(UINT8_MAX), dest_lru_subaddr_(UINT8_MAX), rate_(0.0), offset_(UINT8_MAX), elem_word_count_(UINT8_MAX), schema_(ICDElementSchema::BAD), is_bitlevel_(false), is_multiformat_(false), bitmsb_(UINT8_MAX), bitlsb_(UINT8_MAX), bit_count_(UINT8_MAX), classification_(0), description_(""), msb_val_(0.0), uom_(""), pt(), channel_id_(UINT16_MAX)
+ICDElement::ICDElement() : msg_name_(""), elem_name_(""), xmit_word_(UINT16_MAX), dest_word_(UINT16_MAX), msg_word_count_(UINT8_MAX), bus_name_(""), xmit_lru_name_(""), xmit_lru_addr_(UINT8_MAX), dest_lru_name_(""), dest_lru_addr_(UINT8_MAX), xmit_lru_subaddr_(UINT8_MAX), dest_lru_subaddr_(UINT8_MAX), rate_(0.0), offset_(UINT8_MAX), elem_word_count_(UINT8_MAX), schema_(ICDElementSchema::BAD), is_bitlevel_(false), is_multiformat_(false), bitmsb_(UINT8_MAX), bitlsb_(UINT8_MAX), bit_count_(UINT8_MAX), classification_(0), description_(""), msb_val_(0.0), uom_(""), pt(), label_(0), bus_num_(0),  sdi_(-1), rate_bool_(false), channel_id_(UINT16_MAX)
 {
 }
 
@@ -37,6 +37,10 @@ ICDElement::ICDElement(const ICDElement& C)
     description_ = C.description_;
     msb_val_ = C.msb_val_;
     uom_ = C.uom_;
+    label_ = C.label_;
+    bus_num_ = C.bus_num_;
+    sdi_ = C.sdi_;
+    rate_bool_ = C.rate_bool_;
     channel_id_ = C.channel_id_;
 }
 
@@ -67,6 +71,10 @@ ICDElement& ICDElement::operator=(const ICDElement& C)
     description_ = C.description_;
     msb_val_ = C.msb_val_;
     uom_ = C.uom_;
+    label_ = C.label_;
+    bus_num_ = C.bus_num_;
+    sdi_ = C.sdi_;
+    rate_bool_ = C.rate_bool_;
     channel_id_ = C.channel_id_;
     return *this;
 }
@@ -333,6 +341,8 @@ bool ICDElement::FillElements(const std::vector<std::string>& input_str_vec)
     // string, uom_
     curr_str = input_str_vec[24];
     uom_ = curr_str;
+
+    // add in the new elements below (label_, bus_num_, sdi_, rate_bool_) Will it break this?
 
     return true;
 }

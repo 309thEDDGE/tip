@@ -549,7 +549,7 @@ class ICDElement
 			2. 3
 			3. -1
 	*/
-	uint8_t sdi_;
+	int8_t sdi_;
 
 	/*
 		-name: rate_429_
@@ -562,7 +562,7 @@ class ICDElement
 			2. false
 
 	*/
-	bool rate_429_;
+	bool rate_bool_;
 
     // methods/c'tors
     ICDElement();
