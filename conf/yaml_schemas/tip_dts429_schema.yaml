@@ -16,9 +16,9 @@ translatable_word_definitions:              # (R)
   _NOT_DEFINED_:                            # (WR), alias: wrd_name = 429 message name
     wrd_data:                               # (R)
       label: INT                            # (R)
-      bus: INT                              # (R)
+      bus: STR                              # (R)
       sdi: INT                              # (R)
-      rate: OPTBOOL                           # (O)
+      rate: OPTFLT                            # (O)
       desc: OPTSTR                            # (O)
       lru_name: OPTSTR                        # (O)
     elem:                                   # (R)
@@ -135,9 +135,11 @@ supplemental_bus_map_labels:                # (R)
 #
 # Required, structure included exactly once in the current map
 #
-# Key maps to an integer which is the number of the bus on which the
-# relevant message occurs. This bus is associated with an ARINC 429
-# word through 'bus' field in the IPDH.
+# String which provides the name of the bus. This string will provide
+# a name in the format as would be used by TMATS' ARINC 429 subchannel
+# name (R-x\ANM-n-m).
+#
+# Example: EEC1 EEC2B
 #
 
 #
@@ -161,11 +163,11 @@ supplemental_bus_map_labels:                # (R)
 #
 # Optional, structure included exactly once in the current map
 #
-# Key maps to a BOOL value which gives the message transmission
+# Key maps to a float value which gives the message transmission
 # rate. The rate matches the defintion of the IPDH's bus speed
 # field, as found in IRIG106 Chapter 11.
-#       False = Indicates low-speed ARINC-429 bus (12.5 kHz)
-#       True = Indicates high-speed ARINC-429 bus (100 kHz)
+# Low-speed ARINC-429 bus (12.5 kHz)
+# High-speed ARINC-429 bus (100 kHz)
 #
 
 #
