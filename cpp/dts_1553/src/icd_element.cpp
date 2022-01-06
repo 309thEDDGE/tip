@@ -37,9 +37,9 @@ ICDElement::ICDElement(const ICDElement& C)
     description_ = C.description_;
     msb_val_ = C.msb_val_;
     uom_ = C.uom_;
+    channel_id_ = C.channel_id_;
     label_ = C.label_;
     sdi_ = C.sdi_;
-    channel_id_ = C.channel_id_;
 }
 
 ICDElement& ICDElement::operator=(const ICDElement& C)
@@ -69,9 +69,10 @@ ICDElement& ICDElement::operator=(const ICDElement& C)
     description_ = C.description_;
     msb_val_ = C.msb_val_;
     uom_ = C.uom_;
+    channel_id_ = C.channel_id_;
     label_ = C.label_;
     sdi_ = C.sdi_;
-    channel_id_ = C.channel_id_;
+
     return *this;
 }
 
@@ -338,7 +339,23 @@ bool ICDElement::FillElements(const std::vector<std::string>& input_str_vec)
     curr_str = input_str_vec[24];
     uom_ = curr_str;
 
-    // add in the new elements below (label_, sdi_) Will it break this?
+    // uint16_t label_ 26
+    curr_str = input_str_vec[26];
+    if (!pt.ConvertInt(curr_str, int_val))
+    {
+        printf("ICDElement::FillElements(): returning at label_\n");
+        return false;
+    }
+    label_ = int_val;
+
+    // uint8_t, sdi_ 27
+    curr_str = input_str_vec[27];
+    if (!pt.ConvertInt(curr_str, int_val))
+    {
+        printf("ICDElement::FillElements(): returning at sdi\n");
+        return false;
+    }
+    sdi_ = int_val;
 
     return true;
 }
