@@ -527,18 +527,6 @@ class ICDElement
 	uint16_t label_;
 
 	/*
-		-name: bus_num_
-		-description: Integer representing the ARINC 429 IPDH bus number
-		-format/range: 0 <= bus_429_ < 256
-		-special cases:
-
-		-examples:
-			1. 7
-			2. 1
-	*/
-	uint16_t bus_num_;
-
-	/*
 		-name: sdi_
 		-description: Intiger representing the
 		-format/range: -1 to ignore this when translating or integer 0-3
@@ -550,19 +538,6 @@ class ICDElement
 			3. -1
 	*/
 	int8_t sdi_;
-
-	/*
-		-name: rate_429_
-		-description: Boolean to provide ARINC 249 bus speed
-		-format/range: False = Low speed, True = High speed
-		-special cases:
-
-		-examples:
-			1. true
-			2. false
-
-	*/
-	bool rate_bool_;
 
     // methods/c'tors
     ICDElement();

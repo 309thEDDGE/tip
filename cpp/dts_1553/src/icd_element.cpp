@@ -342,7 +342,7 @@ bool ICDElement::FillElements(const std::vector<std::string>& input_str_vec)
     curr_str = input_str_vec[24];
     uom_ = curr_str;
 
-    // add in the new elements below (label_, bus_num_, sdi_, rate_bool_) Will it break this?
+    // add in the new elements below (label_, sdi_) Will it break this?
 
     return true;
 }
