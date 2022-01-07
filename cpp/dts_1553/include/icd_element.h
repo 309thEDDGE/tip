@@ -76,7 +76,7 @@ class ICDElement
 
    public:
     // Count of input columns required to fill data members.
-    static const int kFillElementCount;
+    static const int kFillElementCount = 27;
 
     // Channel ID as obtained from the Ch10. This
     // is a value that will have to be matched based on the ICD

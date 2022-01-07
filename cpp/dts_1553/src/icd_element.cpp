@@ -1,6 +1,6 @@
 #include "icd_element.h"
 
-const int ICDElement::kFillElementCount = 25;
+// const int ICDElement::kFillElementCount = 27;
 
 ICDElement::ICDElement() : msg_name_(""), elem_name_(""), xmit_word_(UINT16_MAX), dest_word_(UINT16_MAX), msg_word_count_(UINT8_MAX), bus_name_(""), xmit_lru_name_(""), xmit_lru_addr_(UINT8_MAX), dest_lru_name_(""), dest_lru_addr_(UINT8_MAX), xmit_lru_subaddr_(UINT8_MAX), dest_lru_subaddr_(UINT8_MAX), rate_(0.0), offset_(UINT8_MAX), elem_word_count_(UINT8_MAX), schema_(ICDElementSchema::BAD), is_bitlevel_(false), is_multiformat_(false), bitmsb_(UINT8_MAX), bitlsb_(UINT8_MAX), bit_count_(UINT8_MAX), classification_(0), description_(""), msb_val_(0.0), uom_(""), pt(), label_(0), sdi_(-1), channel_id_(UINT16_MAX)
 {
@@ -96,7 +96,7 @@ bool ICDElement::Fill(const std::string& icdelem_str)
     // Split input string.
     std::vector<std::string> split_data = pt.Split(in_str, ',');
 
-    // Input string must currently have 25 elements.
+    // Input string must currently have 27 elements.
     if (split_data.size() != kFillElementCount)
     {
         //printf("split_data count: %zu\n", split_data.size());
@@ -348,7 +348,7 @@ bool ICDElement::FillElements(const std::vector<std::string>& input_str_vec)
     }
     label_ = int_val;
 
-    // uint8_t, sdi_ 27
+    // int8_t, sdi_ 27
     curr_str = input_str_vec[27];
     if (!pt.ConvertInt(curr_str, int_val))
     {
