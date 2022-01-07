@@ -2,7 +2,7 @@
 
 const int ICDElement::kFillElementCount = 25;
 
-ICDElement::ICDElement() : msg_name_(""), elem_name_(""), xmit_word_(UINT16_MAX), dest_word_(UINT16_MAX), msg_word_count_(UINT8_MAX), bus_name_(""), xmit_lru_name_(""), xmit_lru_addr_(UINT8_MAX), dest_lru_name_(""), dest_lru_addr_(UINT8_MAX), xmit_lru_subaddr_(UINT8_MAX), dest_lru_subaddr_(UINT8_MAX), rate_(0.0), offset_(UINT8_MAX), elem_word_count_(UINT8_MAX), schema_(ICDElementSchema::BAD), is_bitlevel_(false), is_multiformat_(false), bitmsb_(UINT8_MAX), bitlsb_(UINT8_MAX), bit_count_(UINT8_MAX), classification_(0), description_(""), msb_val_(0.0), uom_(""), pt(), channel_id_(UINT16_MAX)
+ICDElement::ICDElement() : msg_name_(""), elem_name_(""), xmit_word_(UINT16_MAX), dest_word_(UINT16_MAX), msg_word_count_(UINT8_MAX), bus_name_(""), xmit_lru_name_(""), xmit_lru_addr_(UINT8_MAX), dest_lru_name_(""), dest_lru_addr_(UINT8_MAX), xmit_lru_subaddr_(UINT8_MAX), dest_lru_subaddr_(UINT8_MAX), rate_(0.0), offset_(UINT8_MAX), elem_word_count_(UINT8_MAX), schema_(ICDElementSchema::BAD), is_bitlevel_(false), is_multiformat_(false), bitmsb_(UINT8_MAX), bitlsb_(UINT8_MAX), bit_count_(UINT8_MAX), classification_(0), description_(""), msb_val_(0.0), uom_(""), pt(), channel_id_(UINT16_MAX), bcd_partial_(0)
 {
 }
 
@@ -38,6 +38,7 @@ ICDElement::ICDElement(const ICDElement& C)
     msb_val_ = C.msb_val_;
     uom_ = C.uom_;
     channel_id_ = C.channel_id_;
+    bcd_partial_ = C.bcd_partial_;
 }
 
 ICDElement& ICDElement::operator=(const ICDElement& C)
@@ -68,6 +69,7 @@ ICDElement& ICDElement::operator=(const ICDElement& C)
     msb_val_ = C.msb_val_;
     uom_ = C.uom_;
     channel_id_ = C.channel_id_;
+    bcd_partial_ = C.bcd_partial_;
     return *this;
 }
 

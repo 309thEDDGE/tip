@@ -15,6 +15,7 @@
 #include "parse_text.h"
 #include "uri_percent_encoding.h"
 #include "managed_path.h"
+#include "iterable_tools.h"
 #include "yaml_reader.h"
 #include "yaml-cpp/yaml.h"
 

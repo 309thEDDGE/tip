@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "argument_validation.h"
+#include <map>
 #include <cstdio>
 #include <fstream>
 
@@ -315,4 +316,115 @@ TEST_F(ArgumentValidationTest, ValidateDefaultOutputDirectoryUserDirPresent)
     EXPECT_TRUE(av_.ValidateDefaultOutputDirectory(default_dir, user_dir, final_path, false));
     EXPECT_EQ(final_path.RawString(), user_full_path.RawString());
     EXPECT_TRUE(final_path.remove());
+}
+
+TEST_F(ArgumentValidationTest, ParseArgsInsufficientArgCount)
+{
+    const int arg_count = 3;
+    int argc = arg_count;
+    char* argv[arg_count] = {"a", "b", "see"};
+
+    std::map<int, std::string> def_args = {
+        {1, "A"},
+        {2, "B"},
+        {3, "C"},
+        {4, "D"}
+    };
+    std::map<std::string, std::string> out_args;
+    ASSERT_FALSE(av_.ParseArgs(argc, argv, def_args, out_args));
+}
+
+TEST_F(ArgumentValidationTest, ParseArgs)
+{
+    const int arg_count = 4;
+    int argc = arg_count;
+    char* argv[arg_count] = {"a", "b", "see", "dee"};
+
+    std::map<int, std::string> def_args = {
+        {1, "A"},
+        {2, "B"},
+        {3, "C"}
+    };
+    std::map<std::string, std::string> out_args;
+    ASSERT_TRUE(av_.ParseArgs(argc, argv, def_args, out_args));
+    ASSERT_TRUE(out_args.size() == (arg_count-1));
+    EXPECT_EQ("b", out_args.at("A"));
+    EXPECT_EQ("see", out_args.at("B"));
+    EXPECT_EQ("dee", out_args.at("C"));
+}
+
+TEST_F(ArgumentValidationTest, ParseArgsInsufficientArgCountAllowFewer)
+{
+    const int arg_count = 3;
+    int argc = arg_count;
+    char* argv[arg_count] = {"a", "b", "see"};
+
+    std::map<int, std::string> def_args = {
+        {1, "A"},
+        {2, "B"},
+        {3, "C"},
+        {4, "D"}
+    };
+    std::map<std::string, std::string> out_args;
+    ASSERT_TRUE(av_.ParseArgs(argc, argv, def_args, out_args, true));
+    EXPECT_EQ("b", out_args.at("A"));
+    EXPECT_EQ("see", out_args.at("B"));
+    EXPECT_EQ("", out_args.at("C"));
+    EXPECT_EQ("", out_args.at("D"));
+}
+
+TEST_F(ArgumentValidationTest, TestOptionalArgCountGreaterThanMax)
+{
+    const int arg_count = 6;
+
+    std::map<int, std::string> req_args = {
+        {1, "print statement 1"},
+        {3, "print 2"},
+        {4, "print this"}
+    };
+    ASSERT_FALSE(av_.TestOptionalArgCount(arg_count, req_args));
+
+    std::map<int, std::string> req_args2 = {
+        {1, "print statement 1"},
+    };
+    ASSERT_FALSE(av_.TestOptionalArgCount(arg_count, req_args2));
+}
+
+TEST_F(ArgumentValidationTest, TestOptionalArgCountZeroMapSize)
+{
+    const int arg_count = 5;
+    std::map<int, std::string> req_args;
+    ASSERT_TRUE(av_.TestOptionalArgCount(arg_count, req_args));
+}
+
+TEST_F(ArgumentValidationTest, TestOptionalArgCountLessThanMin)
+{
+    const int arg_count = 1;
+
+    std::map<int, std::string> req_args = {
+        {2, "print statement 1"},
+        {3, "print 2"},
+        {4, "print this"}
+    };
+    ASSERT_FALSE(av_.TestOptionalArgCount(arg_count, req_args));
+}
+
+TEST_F(ArgumentValidationTest, TestOptionalArgCountNotOneOf)
+{
+    const int arg_count = 3;
+    std::map<int, std::string> req_args = {
+        {1, "print statement 1"},
+        {3, "print 2"}
+    };
+    ASSERT_FALSE(av_.TestOptionalArgCount(arg_count, req_args));
+}
+
+TEST_F(ArgumentValidationTest, TestOptionalArgCount)
+{
+    const int arg_count = 2;
+    std::map<int, std::string> req_args = {
+        {1, "print statement 1"},
+        {2, "print 2"}
+    };
+    ASSERT_TRUE(av_.TestOptionalArgCount(arg_count, req_args));
 }

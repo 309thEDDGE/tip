@@ -1,5 +1,5 @@
-#ifndef HELPER_FUNCS_H_
-#define HELPER_FUNCS_H_
+#ifndef TRANSLATE_TABULAR_1553_HELPER_FUNCS_H_
+#define TRANSLATE_TABULAR_1553_HELPER_FUNCS_H_
 
 /*
 Include parquet_reader.h first to avoid complications
@@ -28,26 +28,15 @@ with re-definitions by spdlog headers of arrow defs.
 #include "bus_map.h"
 #include "translation_config_params.h"
 #include "argument_validation.h"
-#include "yaml_schema_validation.h"
 #include "resource_limits.h"
 #include "provenance_data.h"
 #include "tip_md_document.h"
-
-bool ParseArgs(int argc, char* argv[], std::string& str_input_path,
-               std::string& str_icd_path, std::string& str_output_dir, std::string& str_conf_dir,
-               std::string& str_log_dir);
 
 bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
                    const std::string& str_output_dir, const std::string& str_conf_dir,
                    const std::string& str_log_dir, ManagedPath& input_path, ManagedPath& icd_path,
                    ManagedPath& output_dir, ManagedPath& conf_file_path, ManagedPath& conf_schema_file_path,
                    ManagedPath& icd_schema_file_path, ManagedPath& log_dir);
-
-bool ValidateConfSchema(const ManagedPath& conf_file_path,
-                        const ManagedPath& conf_schema_file_path, std::string& conf_doc);
-
-bool ValidateDTS1553YamlSchema(const ManagedPath& icd_path,
-                               const ManagedPath& icd_schema_file_path);
 
 bool SetupLogging(const ManagedPath& log_dir);
 
@@ -89,4 +78,4 @@ bool RecordMetadata(const TranslationConfigParams& config,
 bool GetParsed1553Metadata(const ManagedPath& input_md_path, 
     TIPMDDocument& parser_md_doc);
 
-#endif
+#endif  // TRANSLATE_TABULAR_1553_HELPER_FUNCS_H_

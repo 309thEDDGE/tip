@@ -5,9 +5,12 @@
 #include <cstdarg>
 #include <string>
 #include <algorithm>
+#include <iostream>
 #include <ostream>
 #include "yaml-cpp/yaml.h"
 #include "parse_text.h"
+#include "argument_validation.h"
+#include "managed_path.h"
 #include "yamlsv_log_item.h"
 #include "yamlsv_schema.h"
 
@@ -84,6 +87,25 @@ class YamlSV
 	*/
     static void PrintLogItems(const std::vector<LogItem>& log_items, int print_count,
                               std::ostream& stream);
+
+	
+	/*
+	Validate document under test and schema path for existence, UTF-8 conformity
+	of the path strings, then read the files and check for UTF-8 conformity of the
+	file contents. Finally, validate the document under test according to 
+	the yaml schema.
+
+	Args:
+		doc			--> YAML Document under test
+		schema		-->	YAML Schema doc
+		doc_string	--> String repr of doc
+		schema_string-->String repr of schema
+
+	Return:
+		False if a validation stage fails; true otherwise.
+	*/
+	bool ValidateDocument(const ManagedPath& doc, const ManagedPath& schema,
+		std::string& doc_string, std::string& schema_string);
 
     /////////////////////////////////////////////////////////////////////////////////
     // Internal use functions below

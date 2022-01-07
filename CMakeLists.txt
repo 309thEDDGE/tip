@@ -31,6 +31,7 @@ endif()
 
 set(CH10_PARSE_EXE_NAME "tip_parse")
 set(TRANSLATE_1553_EXE_NAME "tip_translate_1553")
+set(TRANSLATE_429_EXE_NAME "tip_translate_arinc429")
 
 #########################################################
 #                      Version 
@@ -106,7 +107,8 @@ if(DEFINED CONDA_PREFIX)
         -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
         -DVERSION_STRING="${GIT_VERSION_STRING}"
         -DCH10_PARSE_EXE_NAME="${CH10_PARSE_EXE_NAME}"
-        -DTRANSLATE_1553_EXE_NAME="${TRANSLATE_1553_EXE_NAME}")
+        -DTRANSLATE_1553_EXE_NAME="${TRANSLATE_1553_EXE_NAME}"
+        -DTRANSLATE_429_EXE_NAME="${TRANSLATE_429_EXE_NAME}")
     message(STATUS "Setting conda build options")
     file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMake_conda.txt" include_file)
     include("${include_file}")
@@ -154,7 +156,8 @@ if(linux)
         -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
         -DVERSION_STRING="${GIT_VERSION_STRING}"
         -DCH10_PARSE_EXE_NAME="${CH10_PARSE_EXE_NAME}"
-        -DTRANSLATE_1553_EXE_NAME="${TRANSLATE_1553_EXE_NAME}")
+        -DTRANSLATE_1553_EXE_NAME="${TRANSLATE_1553_EXE_NAME}"
+        -DTRANSLATE_429_EXE_NAME="${TRANSLATE_429_EXE_NAME}")
 else()
     add_compile_definitions(
         PARQUET_STATIC
@@ -163,7 +166,8 @@ else()
         SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
         VERSION_STRING="${GIT_VERSION_STRING}"
         CH10_PARSE_EXE_NAME="${CH10_PARSE_EXE_NAME}"
-        TRANSLATE_1553_EXE_NAME="${TRANSLATE_1553_EXE_NAME}")
+        TRANSLATE_1553_EXE_NAME="${TRANSLATE_1553_EXE_NAME}"
+        TRANSLATE_429_EXE_NAME="${TRANSLATE_429_EXE_NAME}")
 endif()
 
 # Add source files dir.

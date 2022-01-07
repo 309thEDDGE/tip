@@ -1,28 +1,18 @@
-#include "translate_tabular_context_1553.h"
+#include "translate_tabular_context_arinc429.h"
 
-const size_t TranslateTabularContext1553::raw_data_count_per_row_ = 32;
+TranslateTabularContextARINC429::TranslateTabularContextARINC429() : TranslateTabularParquet()
+{}
 
-TranslateTabularContext1553::TranslateTabularContext1553(ICDData icd,
-                                                         const std::set<std::string>& selected_msg_names) : 
-                                                         TranslateTabularParquet(), icd_data_(icd), 
-                                                         should_select_msgs_(false), 
-                                                         selected_msg_names_(selected_msg_names), 
-                                                         translated_msg_names(translated_msg_names_)
+std::shared_ptr<TranslateTabularContextBase> TranslateTabularContextARINC429::Clone()
 {
-    selected_table_indices_ = icd_data_.GetSelectedTableIndicesSet(selected_msg_names_,
-                                                                   icd_data_.table_names);
-}
-
-std::shared_ptr<TranslateTabularContextBase> TranslateTabularContext1553::Clone()
-{
-    std::shared_ptr<TranslateTabularContext1553> temp =
-        std::make_shared<TranslateTabularContext1553>(this->icd_data_,
-                                                      this->selected_msg_names_);
+    std::shared_ptr<TranslateTabularContextARINC429> temp =
+        std::make_shared<TranslateTabularContextARINC429>();
     temp->SetColumnNames(this->ridealong_col_names_, this->data_col_names_);
     return temp;
 }
 
-TranslateStatus TranslateTabularContext1553::ConsumeRowGroup(const size_t& thread_index)
+
+TranslateStatus TranslateTabularContextARINC429::ConsumeRowGroup(const size_t& thread_index)
 {
     TranslateStatus status = ReadRowGroup(thread_index, input_row_group_count_, row_group_index_);
     if(status != TranslateStatus::OK)
@@ -38,22 +28,18 @@ TranslateStatus TranslateTabularContext1553::ConsumeRowGroup(const size_t& threa
     {
         // Use the ICD lookup created from the DTS1553 to identify all table
         // indices which match the given criteria.
-        matching_table_inds = icd_data_.LookupTableIndex(channelid_[row_ind],
-                                                         txrtaddr_[row_ind],
-                                                         rxrtaddr_[row_ind],
-                                                         txsubaddr_[row_ind],
-                                                         rxsubaddr_[row_ind]);
+        // matching_table_inds = icd_data_.LookupTableIndex(channelid_[row_ind],
+        //                                                  txrtaddr_[row_ind],
+        //                                                  rxrtaddr_[row_ind],
+        //                                                  txsubaddr_[row_ind],
+        //                                                  rxsubaddr_[row_ind]);
 
         // Iterate over the matching table indices. Create a TranslatableTable
         // or append data to an existing table.
         for (table_ind_it = matching_table_inds.cbegin();
              table_ind_it != matching_table_inds.cend(); ++table_ind_it)
         {
-            if(!IsSelectedMessage(thread_index, should_select_msgs_, 
-                selected_table_indices_, *table_ind_it))
-                continue;
-
-            table_name = icd_data_.table_names.at(*table_ind_it);
+            // table_name = icd_data_.table_names.at(*table_ind_it);
 
             // If the table index is not present in the set of already created table
             // indices, then create the table and its columns and add it to the set.
@@ -68,16 +54,16 @@ TranslateStatus TranslateTabularContext1553::ConsumeRowGroup(const size_t& threa
 
                 SPDLOG_DEBUG("{:02d} Creating table with index {:d}",
                              thread_index, *table_ind_it);
-                result = CreateTable(icd_data_, *table_ind_it, table_index_to_table_map_,
-                    output_path, thread_index);
+                // result = CreateTable(icd_data_, *table_ind_it, table_index_to_table_map_,
+                    // output_path, thread_index);
 
                 // Add the index to the set to track table creation.
                 table_indices_.insert(*table_ind_it);
 
                 if (!result)
                 {
-                    SPDLOG_WARN("{:02d} Failed to create table for message: {:s}",
-                                thread_index, icd_data_.table_names.at(*table_ind_it));
+                    // SPDLOG_WARN("{:02d} Failed to create table for message: {:s}",
+                                // thread_index, icd_data_.table_names.at(*table_ind_it));
                     continue;
                 }
                 translated_msg_names_.insert(table_name);
@@ -86,14 +72,15 @@ TranslateStatus TranslateTabularContext1553::ConsumeRowGroup(const size_t& threa
             // Append data to the table if it is valid.
             AppendTimeAndRawDataToTable(thread_index, table_index_to_table_map_[*table_ind_it],
                 reinterpret_cast<const uint8_t*>(time_.data() + row_ind),
-                reinterpret_cast<const uint8_t*>(raw_data_.data() + row_ind * raw_data_count_per_row_),
-                raw_data_count_per_row_, table_name);
+                reinterpret_cast<const uint8_t*>(data_.data() + row_ind),
+                1, table_name);
         }
     }
     return TranslateStatus::OK;
+
 }
 
-bool TranslateTabularContext1553::FillRowGroupVectors()
+bool TranslateTabularContextARINC429::FillRowGroupVectors()
 {
     int row_count = 0;
 
@@ -102,86 +89,91 @@ bool TranslateTabularContext1553::FillRowGroupVectors()
                                                                        "time", row_count, false))
         return false;
 
-    if (!FillRGVector<uint16_t, arrow::NumericArray<arrow::Int32Type>>(raw_data_,
-                                                                       "data", row_count, true))
-        return false;
-
     if (!FillRGVector<uint16_t, arrow::NumericArray<arrow::Int32Type>>(channelid_,
                                                                        "channelid", row_count, false))
         return false;
 
-    if (!FillRGVector<uint8_t, arrow::NumericArray<arrow::Int8Type>>(txrtaddr_,
-                                                                     "txrtaddr", row_count, false))
+    if (!FillRGVector<uint8_t, arrow::NumericArray<arrow::Int16Type>>(bus_,
+                                                                     "bus", row_count, false))
         return false;
 
-    if (!FillRGVector<uint8_t, arrow::NumericArray<arrow::Int8Type>>(rxrtaddr_,
-                                                                     "rxrtaddr", row_count, false))
+    if (!FillRGVector<uint16_t, arrow::NumericArray<arrow::Int16Type>>(label_,
+                                                                     "label", row_count, false))
         return false;
 
-    if (!FillRGVector<uint8_t, arrow::NumericArray<arrow::Int8Type>>(txsubaddr_,
-                                                                     "txsubaddr", row_count, false))
+    if (!FillRGVector<uint8_t, arrow::NumericArray<arrow::Int8Type>>(sdi_,
+                                                                     "SDI", row_count, false))
         return false;
 
-    if (!FillRGVector<uint8_t, arrow::NumericArray<arrow::Int8Type>>(rxsubaddr_,
-                                                                     "rxsubaddr", row_count, false))
+    if (!FillRGVector<uint32_t, arrow::NumericArray<arrow::Int32Type>>(data_,
+                                                                     "data", row_count, false))
+        return false;
+
+    if (!FillRGVector<uint8_t, arrow::NumericArray<arrow::Int8Type>>(ssm_,
+                                                                     "SSM", row_count, false))
+        return false;
+
+    if (!FillRGVector<uint8_t, arrow::NumericArray<arrow::BooleanType>>(parity_,
+                                                                     "parity", row_count, false))
         return false;
 
     current_row_group_row_count_ = row_count;
     return true;
 }
 
-bool TranslateTabularContext1553::CreateTable(const ICDData& icd_data, size_t table_index,
-                                              std::unordered_map<size_t, std::shared_ptr<TranslatableTableBase>>& table_map,
-                                              const ManagedPath& output_path, const size_t& thread_index)
-{
-    // Create the table object relevant to the ICDData object
-    size_t row_group_size = current_row_group_row_count_;
-    std::string table_name = icd_data.LookupTableNameByIndex(table_index);
-    if (!CreateTranslatableTable(table_name, row_group_size, table_index,
-                                 table_index_to_table_map_, output_path, thread_index))
-    {
-        SPDLOG_WARN("{:02d} Failed to Create table: {:s}", thread_index, table_name);
-        return false;
-    }
 
-    // Create the ridealong column(s), which in the case of 1553 is only the
-    // time column.
-    std::shared_ptr<TranslatableTableBase>& table_ptr = table_index_to_table_map_[table_index];
-    ICDElement icd_elem;
-    icd_elem.elem_word_count_ = 1;
-    if (!AppendColumn<uint16_t, uint64_t>(table_ptr, "time", true, icd_elem))
-    {
-        SPDLOG_WARN("{:02d} Failed to create \"time\" column", thread_index);
-        return false;
-    }
+// bool TranslateTabularContext1553::CreateTable(const ICDData& icd_data, size_t table_index,
+//                                               std::unordered_map<size_t, std::shared_ptr<TranslatableTableBase>>& table_map,
+//                                               const ManagedPath& output_path, const size_t& thread_index)
+// {
+//     // Create the table object relevant to the ICDData object
+//     size_t row_group_size = current_row_group_row_count_;
+//     std::string table_name = icd_data.LookupTableNameByIndex(table_index);
+//     if (!CreateTranslatableTable(table_name, row_group_size, table_index,
+//                                  table_index_to_table_map_, output_path, thread_index))
+//     {
+//         SPDLOG_WARN("{:02d} Failed to Create table: {:s}", thread_index, table_name);
+//         return false;
+//     }
 
-    // Loop over the ICDElement objects associated with the table and
-    // create columns in the table object.
-    const std::vector<size_t>& elem_inds = icd_data.GetTableElementIndices(table_index);
-    for (std::vector<size_t>::const_iterator elem_ind_it = elem_inds.cbegin();
-         elem_ind_it != elem_inds.cend(); ++elem_ind_it)
-    {
-        if (!AppendColumnFromICDElement(table_ptr, icd_data.GetElementByIndex(*elem_ind_it)))
-        {
-            SPDLOG_WARN("{:02d} Failed to create column: {:s}, table: {:s}",
-                        thread_index, icd_data.GetElementByIndex(*elem_ind_it).elem_name_, table_name);
-            return false;
-        }
-    }
+//     // Create the ridealong column(s), which in the case of 1553 is only the
+//     // time column.
+//     std::shared_ptr<TranslatableTableBase>& table_ptr = table_index_to_table_map_[table_index];
+//     ICDElement icd_elem;
+//     icd_elem.elem_word_count_ = 1;
+//     if (!AppendColumn<uint16_t, uint64_t>(table_ptr, "time", true, icd_elem))
+//     {
+//         SPDLOG_WARN("{:02d} Failed to create \"time\" column", thread_index);
+//         return false;
+//     }
 
-    // Configure Parquet writer functionality
-    if (!table_ptr->ConfigurePqContext())
-    {
-        SPDLOG_WARN("{:02d} Failed to configure parquet context", thread_index);
-        return false;
-    }
+//     // Loop over the ICDElement objects associated with the table and
+//     // create columns in the table object.
+//     const std::vector<size_t>& elem_inds = icd_data.GetTableElementIndices(table_index);
+//     for (std::vector<size_t>::const_iterator elem_ind_it = elem_inds.cbegin();
+//          elem_ind_it != elem_inds.cend(); ++elem_ind_it)
+//     {
+//         if (!AppendColumnFromICDElement(table_ptr, icd_data.GetElementByIndex(*elem_ind_it)))
+//         {
+//             SPDLOG_WARN("{:02d} Failed to create column: {:s}, table: {:s}",
+//                         thread_index, icd_data.GetElementByIndex(*elem_ind_it).elem_name_, table_name);
+//             return false;
+//         }
+//     }
 
-    table_ptr->LogSchema();
+//     // Configure Parquet writer functionality
+//     if (!table_ptr->ConfigurePqContext())
+//     {
+//         SPDLOG_WARN("{:02d} Failed to configure parquet context", thread_index);
+//         return false;
+//     }
 
-    return true;
-}
+//     table_ptr->LogSchema();
 
-bool TranslateTabularContext1553::AppendColumnFromICDElement(
+//     return true;
+// }
+
+bool TranslateTabularContextARINC429::AppendColumnFromICDElement(
     std::shared_ptr<TranslatableTableBase>& table_ptr,
     const ICDElement& icd_elem)
 {
@@ -307,36 +299,5 @@ bool TranslateTabularContext1553::AppendColumnFromICDElement(
         return false;
     }
 
-    return true;
-}
-
-
-
-void TranslateTabularContext1553::PrintPayloadVals(std::string table_name,
-                                                   const uint16_t* data_ptr)
-{
-    std::stringstream s;
-    for (size_t i = 0; i < raw_data_count_per_row_; i++)
-    {
-        if (i == raw_data_count_per_row_ - 1)
-            s << i << ":" << data_ptr[i];
-        else
-            s << i << ":" << data_ptr[i] << ", ";
-    }
-    SPDLOG_INFO("{:s} payload - {:s}", table_name, s.str());
-}
-
-bool TranslateTabularContext1553::IsSelectedMessage(const size_t& thread_index, 
-    bool should_select_msg, const std::set<size_t>& selected_tables, const size_t& table_index)
-{
-    if(should_select_msg)
-    {
-        if (selected_tables.count(table_index) == 0)
-        {
-            SPDLOG_TRACE("{:02d} table index {:d} not a selected table",
-                            thread_index, table_index);
-            return false;
-        }
-    }
     return true;
 }
