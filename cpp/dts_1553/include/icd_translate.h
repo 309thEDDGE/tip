@@ -10,6 +10,8 @@
 #include <cmath>
 #include "icd_element.h"
 
+const size_t BCDDigitBitCount = 4;
+
 class ICDTranslate
 {
    private:
@@ -45,6 +47,9 @@ class ICDTranslate
     uint16_t mask1_twos_;
     uint16_t mask2_twos_;
     uint16_t sign_bit_mask_;
+    uint8_t bit_count_;
+    uint8_t bitmsb_;
+    uint8_t bitlsb_;
 
     // Scale to apply to raw translated value for unsigned and signed, respectively.
     double scale_;
@@ -68,11 +73,26 @@ class ICDTranslate
     the extant translation functions which assume a raw word data type of uint16_t and
     which is carried out by TranslateArrayOfElement.
 
+    Each of the current translation schemes was written with the goal
+    of translating 1553 data which comes packed in 16-bit words (uint16_t on
+    delivery). 1553 data is big-endian at source, thus the swap of 16-bit values
+    in, for example, TranslateSigned32. 
+
+    This TranslateArray function must account for the 16-bit word size and
+    big-endian ordering for which the translate functions were written and 
+    tested. 
+
     Args:
 
     */
     template <typename RawType, typename OutType>
     bool TranslateArray(const std::vector<RawType>& input_words,
+                        std::vector<OutType>& output_eu, const ICDElement& icd_elem);
+
+    // Assumes 32-bit words, little-endian (first 32-bit word in 64-bit int is 
+    // least significant)
+    template <typename OutType>
+    bool TranslateArray(const std::vector<uint32_t>& input_words,
                         std::vector<OutType>& output_eu, const ICDElement& icd_elem);
 
     template <typename OutType>
@@ -90,6 +110,12 @@ class ICDTranslate
                                std::vector<OutType>& output_eu);
     template <typename OutType>
     void TranslateSignedBits(const std::vector<uint16_t>& input_words,
+                             std::vector<OutType>& output_eu);
+    template <typename OutType>
+    void TranslateBCD(const std::vector<uint16_t>& input_words,
+                             std::vector<OutType>& output_eu, int8_t bcd_partial = 0);
+    template <typename OutType>
+    void TranslateSignMag(const std::vector<uint16_t>& input_words,
                              std::vector<OutType>& output_eu);
     template <typename OutType>
     void TranslateUnsigned16(const std::vector<uint16_t>& input_words,
@@ -132,6 +158,62 @@ class ICDTranslate
     void GetConfigParams(size_t& n_vals, uint16_t& dshift1, uint16_t& dshift2,
                          uint16_t& mask1, uint16_t& mask2, uint16_t& mask1_twos, uint16_t& mask2_twos, double& scale,
                          double& scale_twos, uint16_t& sign_bit_mask);
+
+    /*
+    Modify the members of an ICDElement object relevant to ICDElementSchema::SIGNEDBITS
+    or ICDElementSchema::UNSIGNEDBITS for an input type of uint32_t such that it 
+    can be processed as a uint16_t type.
+
+    Args:
+        icd_elem        --> Object of ICDElement which will be modified.
+        input_words     --> Vector of input words 
+        output_words    --> Vector of uint16_t output words
+    */
+    void ConfigureU32BitElemForU16(ICDElement& icd_elem, 
+        const std::vector<uint32_t>& input_words, std::vector<uint16_t>& output_words);    
+
+
+
+    /*
+    Swap 16-bit words. Intended to reconcile (in some cases) input data type
+    with uint16_t type expected for translation routines.
+
+    Args:
+        input_words     --> Vector of input words for which
+                            16-bit components will be swapped
+        output_words    --> Vector of uint16_t output words
+    */
+    void Swap16(const std::vector<uint32_t>& input_words, 
+        std::vector<uint16_t>& output_words);
+
+
+    
+    /*
+    Keep only the most significant 16 bits and save the
+    output.
+
+    Args:
+        input_words     --> Vector of input words for which the MS 
+                            16-bits will be kept
+        output_words    --> Vector of uint16_t output words
+    */
+    void KeepMS16(const std::vector<uint32_t>& input_words,
+        std::vector<uint16_t>& output_words);
+
+    
+
+    /*
+    Keep only the least significant 16 bits and save the
+    output.
+
+    Args:
+        input_words     --> Vector of input words for which the LS 
+                            16-bits will be kept
+        output_words    --> Vector of uint16_t output words
+    */
+    void KeepLS16(const std::vector<uint32_t>& input_words,
+        std::vector<uint16_t>& output_words);
+
 };
 
 template <typename OutType>
@@ -155,7 +237,6 @@ bool ICDTranslate::TranslateArrayOfElement(const std::vector<uint16_t>& input_wo
         switch (icd_elem.schema_)
         {
             case ICDElementSchema::ASCII:
-                //if (strcmp(TypeTranslateTraits<OutType>::name, "int8_t") != 0) return false;
                 if (!CheckType<OutType>(std::vector<std::string>(
                                             {"int8_t"}),
                                         icd_elem.elem_name_)) return false;
@@ -166,9 +247,6 @@ bool ICDTranslate::TranslateArrayOfElement(const std::vector<uint16_t>& input_wo
                 if (!CheckType<OutType>(std::vector<std::string>(
                                             {"float", "double"}),
                                         icd_elem.elem_name_)) return false;
-                /*if (!(strcmp(TypeTranslateTraits<OutType>::name, "float") == 0  
-				|| strcmp(TypeTranslateTraits<OutType>::name, "double") == 0))
-				return false;*/
                 ConfigureBitLevel(input_words.size(), output_eu, icd_elem);
                 TranslateSignedBits(input_words, output_eu);
                 break;
@@ -176,13 +254,22 @@ bool ICDTranslate::TranslateArrayOfElement(const std::vector<uint16_t>& input_wo
                 if (!CheckType<OutType>(std::vector<std::string>(
                                             {"uint8_t", "float", "double"}),
                                         icd_elem.elem_name_)) return false;
-                /*if (!(strcmp(TypeTranslateTraits<OutType>::name, "float") == 0
-				|| strcmp(TypeTranslateTraits<OutType>::name, "double") == 0
-				|| strcmp(TypeTranslateTraits<OutType>::name, "uint8_t") == 0))
-				return false;*/
-
                 ConfigureBitLevel(input_words.size(), output_eu, icd_elem);
                 TranslateUnsignedBits(input_words, output_eu);
+                break;
+            case ICDElementSchema::BCD:
+                if(!CheckType<OutType>(std::vector<std::string>(
+                    {"uint8_t", "uint16_t", "uint32_t", "uint64_t", "float", "double"}),
+                    icd_elem.elem_name_)) return false;
+                ConfigureBitLevel(input_words.size(), output_eu, icd_elem);
+                TranslateBCD(input_words, output_eu, icd_elem.bcd_partial_);
+                break;
+            case ICDElementSchema::SIGNMAG:
+                if(!CheckType<OutType>(std::vector<std::string>(
+                    {"int16_t", "int32_t", "int64_t", "float", "double"}),
+                    icd_elem.elem_name_)) return false;
+                ConfigureBitLevel(input_words.size(), output_eu, icd_elem);
+                TranslateSignMag(input_words, output_eu);
                 break;
             default:
                 return false;
@@ -304,10 +391,13 @@ void ICDTranslate::ConfigureBitLevel(size_t input_word_count, std::vector<OutTyp
         output_eu.resize(n_translated_values_);
 
     downshift1_ = 16 - icd_elem.bitlsb_;
-    mask1_ = (1 << (icd_elem.bitlsb_ - icd_elem.bitmsb_ + 1)) - 1;
-    mask1_twos_ = (1 << (icd_elem.bitlsb_ - icd_elem.bitmsb_)) - 1;
-    scale_ = icd_elem.msb_val_ / static_cast<double>(ICDTranslate::wide_one_ << (icd_elem.bitlsb_ - icd_elem.bitmsb_));
-    scale_twos_ = icd_elem.msb_val_ / static_cast<double>(ICDTranslate::wide_one_ << (icd_elem.bitlsb_ - icd_elem.bitmsb_ - 1));
+    bitmsb_ = icd_elem.bitmsb_;
+    bitlsb_ = icd_elem.bitlsb_;
+    bit_count_ = icd_elem.bitlsb_ - icd_elem.bitmsb_ + 1;
+    mask1_ = (1 << bit_count_) - 1;
+    mask1_twos_ = (1 << (bit_count_ - 1)) - 1;
+    scale_ = icd_elem.msb_val_ / static_cast<double>(ICDTranslate::wide_one_ << (bit_count_ - 1));
+    scale_twos_ = icd_elem.msb_val_ / static_cast<double>(ICDTranslate::wide_one_ << (bit_count_ - 2));
     sign_bit_mask_ = 1 << (16 - icd_elem.bitmsb_);
 
     // Handle case with more than one word.
@@ -322,8 +412,9 @@ void ICDTranslate::ConfigureBitLevel(size_t input_word_count, std::vector<OutTyp
         uint8_t bits_1st_word = 16 - icd_elem.bitmsb_ + 1;
         uint8_t bits_last_word = icd_elem.bitlsb_;
         uint8_t bits_other_words = 16 * (icd_elem.elem_word_count_ - 2);
-        scale_ = icd_elem.msb_val_ / static_cast<double>(ICDTranslate::wide_one_ << (bits_1st_word + bits_last_word + bits_other_words - 1));
-        scale_twos_ = icd_elem.msb_val_ / static_cast<double>(ICDTranslate::wide_one_ << (bits_1st_word + bits_last_word + bits_other_words - 2));
+        bit_count_ = bits_1st_word + bits_last_word + bits_other_words;
+        scale_ = icd_elem.msb_val_ / static_cast<double>(ICDTranslate::wide_one_ << (bit_count_ - 1));
+        scale_twos_ = icd_elem.msb_val_ / static_cast<double>(ICDTranslate::wide_one_ << (bit_count_ - 2));
     }
 
     if (scale_ == 0.0)
@@ -552,6 +643,208 @@ void ICDTranslate::TranslateSignedBits(const std::vector<uint16_t>& input_words,
             }
             else
                 output_eu[i] = static_cast<double>((input_words[elem_word_count_ * i] >> downshift1_) & mask1_twos_) * scale_twos_;
+        }
+    }
+}
+
+template <typename OutType>
+void ICDTranslate::TranslateBCD(const std::vector<uint16_t>& input_words,
+                                         std::vector<OutType>& output_eu, int8_t bcd_partial)
+{
+    float digit_count = static_cast<float>(bit_count_) / static_cast<float>(BCDDigitBitCount);
+    size_t bcd_digit_count = bcd_partial ? static_cast<size_t>(ceil(digit_count)): 
+        static_cast<size_t>(floor(digit_count));
+    uint16_t partial_bit_count = static_cast<uint16_t>(bit_count_ % BCDDigitBitCount);
+    size_t digit_ind = 0;
+    uint16_t downshift = 0;
+    uint16_t mask = 0b1111; 
+    uint16_t partial_mask = (1 << partial_bit_count) - 1;
+    OutType bcd = 0;
+    OutType digit = 0;
+    double ten = 10.0;
+    if(elem_word_count_ > 1)
+    {
+        if(elem_word_count_ == 2)
+        {
+            uint32_t val = 0;
+            uint16_t* ui16ptr = reinterpret_cast<uint16_t*>(&val);
+            if(partial_bit_count == 0 || bcd_partial == 0)
+            {
+                for (size_t i = 0; i < n_translated_values_; i++)
+                {
+                    bcd = 0;
+                    ui16ptr[0] = input_words[2 * i + 1];
+                    ui16ptr[1] = input_words[2 * i];
+                    for(digit_ind = 0; digit_ind < bcd_digit_count; digit_ind++)
+                    {
+                        downshift = 32 - bitmsb_ - BCDDigitBitCount * (digit_ind + 1) + 1;
+                        digit = static_cast<OutType>((val >> downshift) & mask);
+                        bcd += (static_cast<OutType>(pow(ten, bcd_digit_count - 1 - digit_ind)) * digit);
+                    }
+                    output_eu[i] = bcd;
+                }
+            }
+            else if(bcd_partial > 0)
+            {
+                for(size_t i = 0; i < n_translated_values_; i++)
+                {
+                    bcd = 0;
+                    ui16ptr[0] = input_words[2 * i + 1];
+                    ui16ptr[1] = input_words[2 * i];
+                    for(digit_ind = 0; digit_ind < bcd_digit_count; digit_ind++)
+                    {
+                        if(digit_ind == (bcd_digit_count - 1))
+                        {
+                            downshift = 32 - bitmsb_ - (BCDDigitBitCount * digit_ind) - partial_bit_count + 1;
+                            digit = static_cast<OutType>((val >> downshift) & partial_mask);
+                            bcd += (static_cast<OutType>(pow(ten, bcd_digit_count - 1 - digit_ind)) * digit);
+                        }
+                        else
+                        {
+                            downshift = 32 - bitmsb_ - BCDDigitBitCount * (digit_ind + 1) + 1;
+                            digit = static_cast<OutType>((val >> downshift) & mask);
+                            bcd += (static_cast<OutType>(pow(ten, bcd_digit_count - 1 - digit_ind)) * digit);
+                        }
+                    }
+                    output_eu[i] = bcd;
+                }
+            }
+            else
+            {
+                for(size_t i = 0; i < n_translated_values_; i++)
+                {
+                    bcd = 0;
+                    ui16ptr[0] = input_words[2 * i + 1];
+                    ui16ptr[1] = input_words[2 * i];
+                    for(digit_ind = 0; digit_ind < bcd_digit_count; digit_ind++)
+                    {
+                        if(digit_ind == 0)
+                        {
+                            downshift = 32 - bitmsb_ - partial_bit_count + 1;
+                            digit = static_cast<OutType>((val >> downshift) & partial_mask);
+                            bcd += (static_cast<OutType>(pow(ten, bcd_digit_count - 1 - digit_ind)) * digit);
+                        }
+                        else
+                        {
+                            downshift = 32 - bitmsb_ - (BCDDigitBitCount * digit_ind) - partial_bit_count + 1;
+                            digit = static_cast<OutType>((val >> downshift) & mask);
+                            bcd += (static_cast<OutType>(pow(ten, bcd_digit_count - 1 - digit_ind)) * digit);
+                        }
+                    }
+                    output_eu[i] = bcd;
+                }
+            }
+        }       
+        else
+        {
+            printf("ICDTranslate::TranslateBCD: elem_word_count_ = %hhu\n not implemented!\n",
+                elem_word_count_);
+        }
+    }
+    else
+    {
+        if(partial_bit_count == 0 || bcd_partial == 0)
+        {
+            for(size_t i = 0; i < n_translated_values_; i++)
+            {
+                bcd = 0;
+                for(digit_ind = 0; digit_ind < bcd_digit_count; digit_ind++)
+                {
+                    downshift = 16 - bitmsb_ - BCDDigitBitCount * (digit_ind + 1) + 1;
+                    digit = static_cast<OutType>((input_words[i] >> downshift) & mask);
+                    bcd += (static_cast<OutType>(pow(ten, bcd_digit_count - 1 - digit_ind)) * digit);
+                }
+                output_eu[i] = bcd;
+            }
+        }
+        else if(bcd_partial > 0)
+        {
+            for(size_t i = 0; i < n_translated_values_; i++)
+            {
+                bcd = 0;
+                for(digit_ind = 0; digit_ind < bcd_digit_count; digit_ind++)
+                {
+                    if(digit_ind == (bcd_digit_count - 1))
+                    {
+                        downshift = 16 - bitmsb_ - (BCDDigitBitCount * digit_ind) - partial_bit_count + 1;
+                        digit = static_cast<OutType>((input_words[i] >> downshift) & partial_mask);
+                        bcd += (static_cast<OutType>(pow(ten, bcd_digit_count - 1 - digit_ind)) * digit);
+                    }
+                    else
+                    {
+                        downshift = 16 - bitmsb_ - BCDDigitBitCount * (digit_ind + 1) + 1;
+                        digit = static_cast<OutType>((input_words[i] >> downshift) & mask);
+                        bcd += (static_cast<OutType>(pow(ten, bcd_digit_count - 1 - digit_ind)) * digit);
+                    }
+                }
+                output_eu[i] = bcd;
+            }
+        }
+        else
+        {
+            for(size_t i = 0; i < n_translated_values_; i++)
+            {
+                bcd = 0;
+                for(digit_ind = 0; digit_ind < bcd_digit_count; digit_ind++)
+                {
+                    if(digit_ind == 0)
+                    {
+                        downshift = 16 - bitmsb_ - partial_bit_count + 1;
+                        digit = static_cast<OutType>((input_words[i] >> downshift) & partial_mask);
+                        bcd += (static_cast<OutType>(pow(ten, bcd_digit_count - 1 - digit_ind)) * digit);
+                    }
+                    else
+                    {
+                        downshift = 16 - bitmsb_ - (BCDDigitBitCount * digit_ind) - partial_bit_count + 1;
+                        digit = static_cast<OutType>((input_words[i] >> downshift) & mask);
+                        bcd += (static_cast<OutType>(pow(ten, bcd_digit_count - 1 - digit_ind)) * digit);
+                    }
+                }
+                output_eu[i] = bcd;
+            }
+        }
+    }
+}
+
+template <typename OutType>
+void ICDTranslate::TranslateSignMag(const std::vector<uint16_t>& input_words,
+                            std::vector<OutType>& output_eu)
+{
+    scale_ = 1.0;
+    if(elem_word_count_ > 1)
+    {
+        if(elem_word_count_ == 2)
+        {
+            std::vector<uint32_t> temp_output(input_words.size() / 2);
+            TranslateUnsignedBits(input_words, temp_output);
+            uint32_t sign_mask = 1 << (bit_count_ - 1);
+            uint32_t mag_mask = sign_mask - 1;
+            for(size_t i = 0; i < temp_output.size(); i++)
+            {
+                output_eu[i] = static_cast<OutType>(
+                    static_cast<double>(temp_output[i] & mag_mask) * scale_twos_);
+                if(temp_output[i] & sign_mask)
+                    output_eu[i] = -output_eu[i];
+            }
+        }
+        else
+        {
+            printf("ICDTranslate::TranslateSignMag: elem_word_count_ = %hhu\n not implemented!\n",
+                elem_word_count_);
+        }
+    }
+    else
+    {
+        std::vector<uint16_t> temp_output(input_words.size());
+        TranslateUnsignedBits(input_words, temp_output);
+        uint16_t sign_mask = 1 << (bit_count_ - 1);
+        uint16_t mag_mask = sign_mask - 1;
+        for(size_t i = 0; i < temp_output.size(); i++)
+        {
+            output_eu[i] = static_cast<OutType>(
+                static_cast<double>(temp_output[i] & mag_mask) * scale_twos_);
+            if(temp_output[i] & sign_mask)
+                output_eu[i] = -output_eu[i];
         }
     }
 }
@@ -893,6 +1186,74 @@ bool ICDTranslate::TranslateArray(const std::vector<RawType>& input_words,
             "raw input words");
         return false;
     }
+}
+
+template <typename OutType>
+bool ICDTranslate::TranslateArray(const std::vector<uint32_t>& input_words,
+                    std::vector<OutType>& output_eu, const ICDElement& icd_elem)
+{
+    // Expect elem word count = 1 for rawtype uint32_t and translated type
+    // 32 bits.
+    ICDElement elem = icd_elem;
+    std::vector<uint16_t> mod_input;
+    switch(icd_elem.schema_)
+    {
+        case ICDElementSchema::UNSIGNED32:
+            if(icd_elem.elem_word_count_ != 1)
+            {
+                printf("ICDTranslate::TranslateArray<uint32_t>: elem_word_count_ != 1\n");
+                return false;
+            }
+            elem.elem_word_count_ = 2;
+            Swap16(input_words, mod_input);
+            break;
+        case ICDElementSchema::SIGNED32:
+            if(icd_elem.elem_word_count_ != 1)
+            {
+                printf("ICDTranslate::TranslateArray<uint32_t>: elem_word_count_ != 1\n");
+                return false;
+            }
+            elem.elem_word_count_ = 2;
+            Swap16(input_words, mod_input);
+            break;
+        case ICDElementSchema::SIGNEDBITS:
+            if(icd_elem.elem_word_count_ != 1)
+            {
+                printf("ICDTranslate::TranslateArray<uint32_t>: elem_word_count_ != 1\n");
+                return false;
+            }
+            ConfigureU32BitElemForU16(elem, input_words, mod_input);
+            break;
+        case ICDElementSchema::UNSIGNEDBITS:
+            if(icd_elem.elem_word_count_ != 1)
+            {
+                printf("ICDTranslate::TranslateArray<uint32_t>: elem_word_count_ != 1\n");
+                return false;
+            }
+            ConfigureU32BitElemForU16(elem, input_words, mod_input);
+            break;
+        case ICDElementSchema::BCD:
+            if(icd_elem.elem_word_count_ != 1)
+            {
+                printf("ICDTranslate::TranslateArray<uint32_t>: elem_word_count_ != 1\n");
+                return false;
+            }
+            ConfigureU32BitElemForU16(elem, input_words, mod_input);
+            break;
+        case ICDElementSchema::SIGNMAG:
+            if(icd_elem.elem_word_count_ != 1)
+            {
+                printf("ICDTranslate::TranslateArray<uint32_t>: elem_word_count_ != 1\n");
+                return false;
+            }
+            ConfigureU32BitElemForU16(elem, input_words, mod_input);
+            break;
+       default:
+            printf("ICDTranslate::TranslateArray<uint32_t>: type %s not handled\n",
+                ICDElementSchemaToStringMap.at(icd_elem.schema_).c_str());
+            return false;
+    }
+    return TranslateArrayOfElement(mod_input, output_eu, elem);
 }
 
 #endif

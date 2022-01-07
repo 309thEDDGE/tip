@@ -35,6 +35,40 @@ bool YamlSV::Validate(const std::string& test_doc, const std::string& schema_doc
     return Validate(test_node, schema_node, log_output);
 }
 
+bool YamlSV::ValidateDocument(const ManagedPath& doc, const ManagedPath& schema,
+    std::string& doc_string, std::string& schema_string)
+{
+    ArgumentValidation av;
+
+    if(!(av.CheckExtension(doc.RawString(), "yaml", "yml") && 
+        av.CheckExtension(schema.RawString(), "yaml", "yml")))
+        return false;
+
+    if(!(av.ValidateDocument(doc, doc_string) && av.ValidateDocument(schema, schema_string))) 
+    {
+        doc_string = "";
+        schema_string = "";
+        return false;
+    }
+
+    std::vector<LogItem> log_items;
+    if (!Validate(doc_string, schema_string, log_items))
+    {
+        printf("Failed to validate file (%s) against schema (%s)\n",
+               doc.RawString().c_str(), schema.RawString().c_str());
+
+        // Print log items which may contain information about which yaml elements
+        // do not conform to schema.
+        int print_count = 20;
+        YamlSV::PrintLogItems(log_items, print_count, std::cout);
+        doc_string = "";
+        schema_string = "";
+        return false;
+    }
+    return true;
+}
+
+
 void YamlSV::AddLogItem(std::vector<LogItem>& log_output, LogLevel level,
                         std::string message)
 {
@@ -221,10 +255,18 @@ bool YamlSV::ProcessNode(const YAML::Node& test_node, const YAML::Node& schema_n
         // Verify the value against the schema type.
         if (!VerifyType(schema_node.as<std::string>(), test_node.as<std::string>()))
         {
-            AddLogItem(log_output, LogLevel::Info,
-                       "YamlSV::ProcessNode: Test value %s is not compatible with type %s",
-                       test_node.as<std::string>().c_str(),
-                       schema_node.as<std::string>().c_str());
+            if(string_to_schema_type_map.at(str_type_) == static_cast<uint8_t>(YamlSVSchemaType::STR))
+            {
+                AddLogItem(log_output, LogLevel::Info,
+                        "YamlSV::ProcessNode: Empty string not allowed for Non-OPTSTR fields");
+            }
+            else
+            {
+                AddLogItem(log_output, LogLevel::Info,
+                        "YamlSV::ProcessNode: Test value %s is not compatible with type %s",
+                        test_node.as<std::string>().c_str(),
+                        schema_node.as<std::string>().c_str());
+            }
             return false;
         }
     }
@@ -242,10 +284,6 @@ bool YamlSV::VerifyType(const std::string& str_type, const std::string& test_val
     if (schema_string_type_set.count(str_type) == 0)
         return false;
 
-    // No need to check string. Anything can be interpreted as a string.
-    // Use switch for now in case we add more types later. This is currently
-    // probably not as efficient as using if, else if, etc. If we add another
-    // case or several then it will likely be more efficient than if, else if.
     switch (string_to_schema_type_map.at(str_type))
     {
         case static_cast<uint8_t>(YamlSVSchemaType::INT):
@@ -260,6 +298,12 @@ bool YamlSV::VerifyType(const std::string& str_type, const std::string& test_val
         {
             bool_tolower_ = parse_text_.ToLower(test_val);
             if (!(bool_tolower_ == "true" || bool_tolower_ == "false"))
+                return false;
+        }
+        case static_cast<uint8_t>(YamlSVSchemaType::STR):
+        {
+            // Do not allow empty string
+            if(test_val == "")
                 return false;
         }
     }
@@ -322,13 +366,26 @@ bool YamlSV::TestMapElement(YAML::const_iterator& schema_it, YAML::const_iterato
 
         if (!VerifyType(str_type_, scalar_test_str_))
         {
-            AddLogItem(log_output, LogLevel::Info,
-                       "YamlSV::TestMapElement: Value \"%s\" for key \"%s\" does not"
-                       " match type \"%s\"",
-                       scalar_test_str_.c_str(),
-                       test_it->first.as<std::string>().c_str(),
-                       str_type_.c_str());
-            return false;
+            if(string_to_schema_type_map.at(str_type_) == static_cast<uint8_t>(YamlSVSchemaType::STR))
+            {
+                if(!is_opt_)
+                {
+                    AddLogItem(log_output, LogLevel::Info,
+                            "YamlSV::TestMapElement: Empty string value for key \"%s\" not "
+                            "allowed for Non-OPTSTR fields", test_it->first.as<std::string>().c_str());
+                    return false;
+                }
+            }
+            else
+            {
+                AddLogItem(log_output, LogLevel::Info,
+                        "YamlSV::TestMapElement: Value \"%s\" for key \"%s\" does not"
+                        " match type \"%s\"",
+                        scalar_test_str_.c_str(),
+                        test_it->first.as<std::string>().c_str(),
+                        str_type_.c_str());
+                return false;
+            }
         }
 
         if (has_allowed_vals_operator_)
@@ -450,9 +507,24 @@ bool YamlSV::TestSequence(const YAML::Node& schema_node, const YAML::Node& test_
     {
         if (!VerifyType(str_type_, it->as<std::string>()))
         {
-            AddLogItem(log_output, LogLevel::Info,
-                       "YamlSV::TestSequence: Value \"%s\" does not match type \"%s\"",
-                       it->as<std::string>().c_str(), str_type_.c_str());
+            if(string_to_schema_type_map.at(str_type_) == static_cast<uint8_t>(YamlSVSchemaType::STR))
+            {
+                if(is_opt_)
+                {
+                    continue;
+                }
+                else
+                {
+                    AddLogItem(log_output, LogLevel::Info,
+                            "YamlSV::TestSequence: Empty string not allowed for Non-OPTSTR fields");
+                }
+            }
+            else
+            {
+                AddLogItem(log_output, LogLevel::Info,
+                        "YamlSV::TestSequence: Value \"%s\" does not match type \"%s\"",
+                        it->as<std::string>().c_str(), str_type_.c_str());
+            }
             return false;
         }
     }

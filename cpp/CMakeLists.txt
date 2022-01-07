@@ -250,6 +250,7 @@ add_library(${transtab_lib_name} STATIC
         ${transtab_inc_dir}/translation_manager.h ${transtab_src_dir}/translation_manager.cpp
         ${transtab_inc_dir}/translate_status.h
         ${transtab_inc_dir}/translatable_column_template.h
+        ${transtab_inc_dir}/translate_tabular_parquet.h ${transtab_src_dir}/translate_tabular_parquet.cpp
 )
 target_include_directories(${transtab_lib_name} PUBLIC ${transtab_inc_dir}
                            ${common_inc_dir} ${util_inc_dir} ${ch10pq_inc_dir} ${dts1553_inc_dir}
@@ -296,6 +297,41 @@ target_link_libraries(${transtab1553_lib_name} ${transtab_lib_name}
                     ${linux_libs}
                     )
 target_compile_features(${transtab1553_lib_name} PUBLIC cxx_std_17)
+
+#########################################################
+#               Build/link translate_tabular_429 lib
+#########################################################
+
+set(transtab429_lib_name "translate_tabular_arinc429")
+message(STATUS "Building lib: " "${transtab429_lib_name}")
+set(transtab429_main_dir ${transtab429_lib_name}/${main_dir_name})
+set(transtab429_inc_dir ${transtab429_lib_name}/${include_dir_name})
+set(transtab429_src_dir ${transtab429_lib_name}/${source_dir_name})
+add_library(${transtab429_lib_name} 
+        ${common_inc_dir}/ch10_packet_type.h
+        ${transtab429_inc_dir}/translate_tabular_context_arinc429.h ${transtab429_src_dir}/translate_tabular_context_arinc429.cpp 
+        ${transtab429_inc_dir}/helper_funcs.h ${transtab429_src_dir}/helper_funcs.cpp 
+)
+target_include_directories(${transtab429_lib_name} PUBLIC 
+                        ${common_inc_dir}
+                        ${transtab429_inc_dir}
+                        ${util_inc_dir}
+                        ${ch10pq_inc_dir}
+                        ${yamlsv_inc_dir}
+                        ${transtab_inc_dir}
+                        ${spdlog_inc_dir}
+                        ${md_inc_dir}
+                        )
+target_link_libraries(${transtab429_lib_name} ${transtab_lib_name}
+                    ${util_lib_name}
+                    ${ch10pq_lib_name}
+                    ${yamlsv_lib_name}
+                    ${spdlog_lib_name}
+                    ${md_lib_name}
+                    ${linux_libs}
+                    )
+target_compile_features(${transtab429_lib_name} PUBLIC cxx_std_17)
+
 
 #########################################################
 #      Build/link Parquet-to-Parquet Comparator Lib
@@ -411,6 +447,8 @@ install(TARGETS
                 ${videx_lib_name}
                 ${ch10comp_lib_name}
                 ${yamlsv_lib_name}
+                ${transtab1553_lib_name}
+                ${transtab429_lib_name}
                 ${md_lib_name}
         DESTINATION ${out_lib_dir}
 )
@@ -446,6 +484,18 @@ add_executable(${transtab1553_exe_name} ${transtab1553_main_dir}/translate_tabul
 target_include_directories(${transtab1553_exe_name} PUBLIC ${transtab1553_inc_dir})
 target_link_libraries(${transtab1553_exe_name} ${transtab1553_lib_name}
                       ${transtab_lib_name})
+
+#########################################################
+#               Build/link translate_tabular_429 Exe
+#########################################################
+
+set(transtab429_exe_name "${TRANSLATE_429_EXE_NAME}")
+message(STATUS "Building exe: " "${transtab429_exe_name}")
+add_executable(${transtab429_exe_name} ${transtab429_main_dir}/translate_tabular_arinc429.cpp)
+target_include_directories(${transtab429_exe_name} PUBLIC ${transtab429_inc_dir})
+target_link_libraries(${transtab429_exe_name} ${transtab429_lib_name}
+                      ${transtab_lib_name}) 
+
 
 #########################################################
 #                 Build/link tests Exe
@@ -506,6 +556,7 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/translatable_table_base_u.cpp
                 ${test_src_dir}/translatable_column_base_u.cpp
                 ${test_src_dir}/translatable_column_template_u.cpp
+                ${test_src_dir}/translate_tabular_parquet_u.cpp
                 ${test_src_dir}/stream_buffering_u.cpp
                 ${test_src_dir}/sha256_tools_u.cpp
                 ${test_src_dir}/md_category_u.cpp
@@ -607,6 +658,7 @@ install(TARGETS ${parsech10_exe_name}
                 ${bincomp_exe_name}
                 ${yamlsv_exe_name}
                 ${transtab1553_exe_name}
+                ${transtab429_exe_name}
         DESTINATION ${out_bin_dir})
 
 install(TARGETS ${test_exe_name}

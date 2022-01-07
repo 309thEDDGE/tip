@@ -1,5 +1,65 @@
 #include "argument_validation.h"
 
+
+bool ArgumentValidation::ParseArgs(int argc, char* argv[], 
+    const std::map<int, std::string>& def_args, 
+    std::map<std::string, std::string>& args, bool allow_fewer)
+{
+    if(!allow_fewer)
+    {
+        if(def_args.size() > argc-1)
+        {
+            printf("Not enough args: %zu required\n", def_args.size());
+            return false;
+        }
+    }
+
+    int arg_ind = 1;
+    for(std::map<int, std::string>::const_iterator it = def_args.cbegin(); 
+        it != def_args.cend(); ++it)
+    {
+        if(arg_ind < argc)
+            args[it->second] = argv[arg_ind]; 
+        else
+            args[it->second] = "";
+
+        arg_ind++;
+    }
+    return true;
+}
+
+bool ArgumentValidation::TestOptionalArgCount(int argc, 
+    const std::map<int, std::string>& req_args)
+{
+    if(req_args.size() == 0)
+    {
+        SPDLOG_WARN("req_args size equal to zero");
+        return true;
+    }
+
+    int curr_req_arg = 0;
+    int actual_argc = argc - 1;
+    for (std::map<int, std::string>::const_iterator it = req_args.cbegin(); 
+        it != req_args.cend(); ++it)
+    {
+        if(actual_argc < it->first)
+        {
+            // This is where the informative print statements, values in the
+            // req_args map, are printed to stdout.
+            printf("%s\n", it->second.c_str());
+            return false;
+        }
+        else if(actual_argc == it->first)
+            return true;
+
+        curr_req_arg = it->first;
+    }        
+
+    printf("Argument count-1 (%d) greater than max: %d",
+        actual_argc, curr_req_arg);
+    return false;
+}
+
 bool ArgumentValidation::ValidateDefaultInputFilePath(
     const ManagedPath& default_base_path,
     const std::string& user_base_path, std::string file_name, ManagedPath& full_path)
