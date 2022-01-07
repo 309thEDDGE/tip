@@ -1,44 +1,5 @@
 #include "parser_helper_funcs.h"
 
-bool ParseArgs(int argc, char* argv[], std::string& str_input_path, std::string& str_output_path,
-               std::string& str_conf_dir, std::string& str_log_dir)
-
-{
-    if (argc < 2)
-    {
-        printf(
-            "Usage: tip_parse <ch10 path> [output path] [config dir] [log dir]\n"
-            "Needs ch10 input path.\n");
-        return false;
-    }
-    str_input_path = std::string(argv[1]);
-
-    str_output_path = "";
-    str_conf_dir = "";
-    str_log_dir = "";
-    if (argc < 3) return true;
-    str_output_path = std::string(argv[2]);
-
-    // If a third argument is passed, also require the fourth
-    // argument. This prevents the case in which the user specifies
-    // a configuration files directory and does not specify a log
-    // directory, perhaps by mistake, then forgets where the relative
-    // path from the cwd places the logs directory.
-    if (argc < 4) return true;
-    str_conf_dir = std::string(argv[3]);
-
-    if (argc < 5)
-    {
-        printf(
-            "If a configuration directory is specified by the user then "
-            "an output log directory must also be specified\n");
-        return false;
-    }
-    str_log_dir = std::string(argv[4]);
-
-    return true;
-}
-
 bool ValidatePaths(const std::string& str_input_path, const std::string& str_output_path,
                    const std::string& str_conf_dir, const std::string& str_log_dir,
                    ManagedPath& input_path, ManagedPath& output_path,
@@ -49,8 +10,8 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_out
     if (!av.CheckExtension(str_input_path, "ch10", "c10"))
     {
         printf(
-            "User-defined input path does not have one of the case-insensitive "
-            "extensions: ch10, c10\n");
+            "User-defined input path (%s) does not have one of the case-insensitive "
+            "extensions: ch10, c10\n", str_input_path.c_str());
         return false;
     }
     // Check utf-8 conformity and verify existence of input path
@@ -103,39 +64,11 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_out
         return false;
     }
 
-    if (!ValidateLogDir(str_log_dir, log_dir)) return false;
+    ManagedPath default_log_dir({"..", "logs"});
+    if (!av.ValidateDefaultOutputDirectory(default_log_dir, str_log_dir, log_dir, true))
+        return false;
 
     return true;
-}
-
-bool ValidateConfig(ParserConfigParams& config, const ManagedPath& conf_file_path,
-                    const ManagedPath& schema_file_path)
-{
-    ArgumentValidation av;
-
-    std::string schema_doc;
-    if (!av.ValidateDocument(schema_file_path, schema_doc)) return false;
-
-    std::string config_doc;
-    if (!av.ValidateDocument(conf_file_path, config_doc)) return false;
-
-    // Validate configuration file using yaml schema
-    YamlSV yamlsv;
-    std::vector<LogItem> log_items;
-    if (!yamlsv.Validate(config_doc, schema_doc, log_items))
-    {
-        printf("Failed to validate config file (%s) against schema (%s)\n",
-               conf_file_path.RawString().c_str(), schema_file_path.RawString().c_str());
-
-        // Print log items which may contain information about which yaml elements
-        // do not conform to schema.
-        int print_count = 20;
-        YamlSV::PrintLogItems(log_items, print_count, std::cout);
-        return false;
-    }
-
-    bool settings_validated = config.InitializeWithConfigString(config_doc);
-    return settings_validated;
 }
 
 bool StartParse(ManagedPath input_path, ManagedPath output_path,
@@ -163,25 +96,6 @@ bool StartParse(ManagedPath input_path, ManagedPath output_path,
     // Get stop time and print duration.
     auto stop_time = std::chrono::high_resolution_clock::now();
     duration = (stop_time - start_time).count() / 1.0e9;
-
-    return true;
-}
-
-bool ValidateLogDir(const std::string& user_log_dir, ManagedPath& final_log_dir)
-{
-    // Note: In later iterations, this function may receive optional
-    // arguments which instruct it to use the %LOCALAPPDIR% (or whatever the
-    // default is in windows) or the linux equivalent.
-
-    // Set up the default logging directory, relative to assumed bin dir.
-    ManagedPath default_log_dir({"..", "logs"});
-
-    // Create the final log dir object, using the value of user_log_dir
-    // if it is not an empty string.
-    ArgumentValidation av;
-    if (!av.ValidateDefaultOutputDirectory(default_log_dir, user_log_dir,
-                                           final_log_dir, true))
-        return false;
 
     return true;
 }

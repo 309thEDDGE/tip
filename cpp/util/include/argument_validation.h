@@ -3,9 +3,13 @@
 #define ARGUMENT_VALIDATION_H_
 
 #include <string>
+#include <map>
+#include <vector>
 #include "managed_path.h"
+#include "iterable_tools.h"
 #include "parse_text.h"
 #include "file_reader.h"
+#include "spdlog/spdlog.h"
 
 class ArgumentValidation
 {
@@ -15,6 +19,56 @@ class ArgumentValidation
 
    public:
     ArgumentValidation() {}
+
+
+	/*
+	Check for existence of expected count of input arguments
+	and parse according to the order of mapped keys.
+	Assign arguments to the corresponding mapped values.
+
+	Args:
+		argc    --> Argument count, including executable name
+		argv    --> Array of arguments
+		def_args--> Map of key value pairs. Keys define the order
+					of expected arguments and values are used 
+					as the keys of the args map which are associated
+					with values retrieved from argv.
+		args	--> Map in which parsed arguments are stored as values. 
+					Keys are the argument names specified as values in
+					def_args
+		allow_fewer--> Set to true if count of args passed to main
+					   can be fewer than than expected
+
+	Return:
+		False if the expected count of arguments is not present; true
+		otherwise.	
+	*/
+	static bool ParseArgs(int argc, char* argv[], 
+		const std::map<int, std::string>& def_args, 
+		std::map<std::string, std::string>& args, bool allow_fewer=false);
+
+
+
+	/*
+	Handle optional args in simplistic way.
+
+	Set required min, max and intermediate levels of arguments via a
+	map with associated print statements. If input argc is less than minimum
+	or greater than max return false. Or if argc is not equal to one of the
+	required levels, return false.
+
+	Print the string mapped to the next highest required argument count
+	relative to the argc value.
+
+	Args:
+		argc    --> Argument count, including executable name
+		req_args--> Map of required argument counts and associated print string
+
+	Return:
+		False if one of the required arg counts is not met; true otherwise.
+	*/
+	static bool TestOptionalArgCount(int argc, const std::map<int, std::string>& req_args);
+
 
     /*
 	TODO: If the print statements in any of these functions are important enough to log,
@@ -42,6 +96,8 @@ class ArgumentValidation
 		otherwise false.
 	*/
     bool ValidateInputFilePath(std::string input_path, ManagedPath& mp_input_path);
+
+
 
     /*
 	Create default file path consisting of a default base path joined

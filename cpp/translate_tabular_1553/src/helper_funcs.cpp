@@ -1,38 +1,5 @@
 #include "helper_funcs.h"
 
-bool ParseArgs(int argc, char* argv[], std::string& str_input_path,
-               std::string& str_icd_path, std::string& str_output_dir, std::string& str_conf_dir,
-               std::string& str_log_dir)
-{
-    if (argc < 3)
-    {
-        printf(
-            "Usage: tip_translate <1553 Parquet path> <DTS1553 path> [output dir] "
-            "[config dir path] [log dir]\nNeeds ch10 and DTS (ICD) input paths.\n");
-        return false;
-    }
-    str_input_path = std::string(argv[1]);
-    str_icd_path = std::string(argv[2]);
-
-    str_output_dir = "";
-    str_conf_dir = "";
-    str_log_dir = "";
-    if (argc < 4) return true;
-    str_output_dir = std::string(argv[3]);
-
-    if (argc < 6)
-    {
-        printf(
-            "If an output directory is specified then a confguration files directory "
-            "and log directory must also be specified\n");
-        return false;
-    }
-    str_conf_dir = std::string(argv[4]);
-    str_log_dir = std::string(argv[5]);
-
-    return true;
-}
-
 bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
                    const std::string& str_output_dir, const std::string& str_conf_dir,
                    const std::string& str_log_dir, ManagedPath& input_path, ManagedPath& icd_path,
@@ -102,63 +69,6 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd
     return true;
 }
 
-bool ValidateConfSchema(const ManagedPath& conf_file_path,
-                        const ManagedPath& conf_schema_file_path, std::string& conf_doc)
-{
-    ArgumentValidation av;
-    if (!av.ValidateDocument(conf_file_path, conf_doc)) return false;
-
-    std::string schema_doc;
-    if (!av.ValidateDocument(conf_schema_file_path, schema_doc)) return false;
-
-    YamlSV ysv;
-    std::vector<LogItem> log_items;
-    if (!ysv.Validate(conf_doc, schema_doc, log_items))
-    {
-        printf(
-            "Failed to validate translator configuration file (%s) with schema "
-            "(%s)\n",
-            conf_file_path.RawString().c_str(),
-            conf_schema_file_path.RawString().c_str());
-        int print_count = 25;
-        YamlSV::PrintLogItems(log_items, print_count, std::cout);
-        return false;
-    }
-    return true;
-}
-
-bool ValidateDTS1553YamlSchema(const ManagedPath& icd_path,
-                               const ManagedPath& icd_schema_file_path)
-{
-    // Do not proceed if the dts_path does not have a yaml or yml
-    // extension.
-    ArgumentValidation av;
-    if (!av.CheckExtension(icd_path.RawString(), "yaml", "yml"))
-        return true;
-
-    // Check the schema and dts1553 documents for utf-8 conformity
-    std::string schema_doc;
-    if (!av.ValidateDocument(icd_schema_file_path, schema_doc)) return false;
-
-    std::string icd_doc;
-    if (!av.ValidateDocument(icd_path, icd_doc)) return false;
-
-    // Validate the dts1553 document using schema validator.
-    YamlSV ysv;
-    std::vector<LogItem> log_items;
-    if (!ysv.Validate(icd_doc, schema_doc, log_items))
-    {
-        printf("Failed to validate DTS1553 file (%s) with schema (%s)\n",
-               icd_path.RawString().c_str(), icd_schema_file_path.RawString().c_str());
-
-        int print_count = 25;
-        YamlSV::PrintLogItems(log_items, print_count, std::cout);
-        return false;
-    }
-
-    return true;
-}
-
 bool SetupLogging(const ManagedPath& log_dir)
 {
     // Use the chart on this page for logging level reference:
@@ -174,15 +84,12 @@ bool SetupLogging(const ManagedPath& log_dir)
         int max_files = 5;
 
         // Console sink
-        // Important! "mt" = multithreaded sink used with async_logger
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         console_sink->set_level(spdlog::level::info);
         console_sink->set_pattern("%^[%T %L] %v%$");
 
         // file sink
-        std::string log_base_name(TRANSLATE_1553_EXE_NAME);
-        ManagedPath trans_log_path = log_dir / (log_base_name + ".log");
-        // Important! "mt" = multithreaded sink used with async_logger
+        ManagedPath trans_log_path = log_dir / (TRANSLATE_1553_EXE_NAME ".log");
         auto trans_log_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(trans_log_path.string(),
                                                                                      max_size, max_files);
         trans_log_sink->set_level(spdlog::level::trace);
@@ -276,7 +183,7 @@ bool SynthesizeBusMap(DTS1553& dts1553, const TIPMDDocument& parser_md_doc,
     // Get the set of channel IDs from metadata -- REQUIRED.
     // Initially read in a map of uint64_t to vector of uint64_t
     // and then get channel IDs from the map keys
-    std::set<uint64_t> chanid_to_lruaddrs_set;
+    std::set<uint64_t> chanid_set;
     std::map<uint64_t, std::vector<std::vector<uint16_t>>> chanid_to_comm_words_map;
     if(!YamlReader::GetMapNodeParameter(parser_md_doc.runtime_category_->node, 
         "chanid_to_comm_words", chanid_to_comm_words_map))
@@ -292,7 +199,7 @@ bool SynthesizeBusMap(DTS1553& dts1553, const TIPMDDocument& parser_md_doc,
          it != chanid_to_comm_words_map.end();
          ++it)
     {
-        chanid_to_lruaddrs_set.insert(it->first);
+        chanid_set.insert(it->first);
     }
 
     // Get the map of TMATS channel ID to source -- NOT REQUIRED.
@@ -323,7 +230,7 @@ bool SynthesizeBusMap(DTS1553& dts1553, const TIPMDDocument& parser_md_doc,
     // the command words found in the input icd file unless they are masked to zero.
     uint64_t mask = 0b1111111111111111111111111111111111111111111000001111111111100000;
     bm.InitializeMaps(&message_key_to_busnames_map,
-                      chanid_to_lruaddrs_set,
+                      chanid_set,
                       mask,
                       config_params.vote_threshold_,
                       config_params.vote_method_checks_tmats_,
@@ -365,10 +272,10 @@ bool SynthesizeBusMap(DTS1553& dts1553, const TIPMDDocument& parser_md_doc,
         chanid_to_bus_name_set_map[it->first] = bus_name_set;
     }
 
-    // If a channel ID from chanid_to_lruaddrs_set is not in
+    // If a channel ID from chanid_set is not in
     // chanid_to_bus_name_map add it as an excluded channel
     // id and save to metadata later
-    for (auto channel_id : chanid_to_lruaddrs_set)
+    for (auto channel_id : chanid_set)
     {
         if (chanid_to_bus_name_map.count(channel_id) == 0)
             excluded_channel_ids.insert(channel_id);
@@ -486,6 +393,15 @@ bool GetParsed1553Metadata(const ManagedPath& input_md_path,
     {
         SPDLOG_ERROR("Failed to interpret input metadata as TIPMDDocument: {:s}",
             input_md_path.RawString());
+        return false;
+    }
+
+    std::string parsed_type = parser_md_doc.type_category_->node.as<std::string>();
+    std::string expected_type = "parsed_" + ch10packettype_to_string_map.at(Ch10PacketType::MILSTD1553_F1);
+    if(parsed_type != expected_type)
+    {
+        SPDLOG_ERROR("Parsed metadata document at {:s} has type {:s}. "
+            "Must be {:s}", input_md_path.RawString(), parsed_type, expected_type);
         return false;
     }
     return true;

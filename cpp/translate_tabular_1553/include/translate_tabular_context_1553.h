@@ -13,13 +13,13 @@
 Include parquet_reader.h first
 */
 #include "parquet_reader.h"
-#include "translate_tabular_context_base.h"
+#include "translate_tabular_parquet.h"
 #include "translatable_table_base.h"
 #include "icd_data.h"
 #include "managed_path.h"
 #include "spdlog/spdlog.h"
 
-class TranslateTabularContext1553 : public TranslateTabularContextBase
+class TranslateTabularContext1553 : public TranslateTabularParquet
 {
    private:
     // Organized data specific to identifying 1553 messages and defining
@@ -40,23 +40,6 @@ class TranslateTabularContext1553 : public TranslateTabularContextBase
     std::set<size_t> selected_table_indices_;
     bool should_select_msgs_;
 
-    // Indices of messages for which tables have been created
-    std::set<size_t> table_indices_;
-
-    // Names of messages which are translated, for metadata records
-    // after the translate stage is complete.
-    std::set<std::string> translated_msg_names_;
-
-    // The output dir and path.
-    ManagedPath output_dir_;
-    ManagedPath output_base_path_;
-
-    // Read parquet files
-    ParquetReader pq_reader_;
-    size_t input_row_group_count_;
-    size_t current_row_group_row_count_;
-    size_t row_group_index_;
-    std::shared_ptr<arrow::Schema> schema_;
 
     // Vectors into which row group data will be read.
     std::vector<uint64_t> time_;
@@ -74,15 +57,6 @@ class TranslateTabularContext1553 : public TranslateTabularContextBase
                                 const std::set<std::string>& selected_msg_names);
     virtual ~TranslateTabularContext1553() {}
 
-    /*
-    Check the following:
-        - TranslateTabularContextBase::IsConfigured is true
-        - 
-
-    Return:
-        True if configuration is as required; false otherwise.
-    */
-    virtual bool IsConfigured();
 
     //////////////////////////////////////////////////////////////////
     //                     Internal Functions
@@ -91,64 +65,20 @@ class TranslateTabularContext1553 : public TranslateTabularContextBase
     virtual std::shared_ptr<TranslateTabularContextBase> Clone();
 
     // See description in TranslateTabularContextBase
-    virtual TranslateStatus OpenInputFile(const ManagedPath& input_path,
-                                          const size_t& thread_index);
-    virtual TranslateStatus OpenOutputFile(const ManagedPath& output_dir,
-                                           const ManagedPath& output_base_name, const size_t& thread_index);
-    virtual TranslateStatus CloseOutputFile(const size_t& thread_index,
-                                            bool is_final_file);
 
     // Note: no need to override CloseInputFile because ParquetReader will
     // close the first file by default if SetPQPath is called again.
 
-    virtual TranslateStatus ConsumeFile(const size_t& thread_index);
 
     /*
     Get vectors of data from the current row group and iterate
     over data, identify messages, create tables, and translate as 
     necessary.
     */
-    TranslateStatus ConsumeRowGroup(const size_t& thread_index);
+    virtual TranslateStatus ConsumeRowGroup(const size_t& thread_index);
 
-    /*
-    Fill vectors of data from the current row group.
+    virtual bool FillRowGroupVectors();
 
-    TODO: Need to determine how to generalize and test this function.
-
-    Return:
-        True if no errors; false otherwise.
-    */
-    bool FillRowGroupVectors();
-
-    /*
-    Helper function to fill a vector from a column in the current
-    row group using ParquetReader::GetNextRG().
-
-
-    */
-    template <typename vectype, typename arrowtype>
-    bool FillRGVector(std::vector<vectype>& output_vec, std::string col_name,
-                      int& row_count, bool is_list);
-
-    /*
-    Create the complete output path given the current table name
-    and thread index.
-
-    Args:
-        output_dir      --> Base output dir
-        output_base_name--> base name of output file
-        table_name      --> Name of 1553 message/table
-        thread_index--> Index of the thread in which the context is
-                        processed, counting from zero for the first
-                        thread and incrementing for each additional
-                        thread.
-    
-    Return:
-        Output path
-    */
-    ManagedPath CreateTableOutputPath(const ManagedPath& output_dir,
-                                      const ManagedPath& output_base_name, std::string table_name,
-                                      size_t thread_index);
 
     /*
     Wrapper function TranslatableTabularContextBase::CreateTranslatableTable() 
@@ -190,22 +120,31 @@ class TranslateTabularContext1553 : public TranslateTabularContextBase
     Print all current row payload values to logs.
     */
     void PrintPayloadVals(std::string table_name, const uint16_t* data_ptr);
+
+
+
+    /*
+    Check if table index is one of a pre-selected set of table which ought
+    to be translated. 
+
+    Args:
+        thread_index        --> current thread index
+        should_select_msg   --> True if messages ought to be
+                                selected for translation based on 
+                                a set of indices
+        selected_tables     --> Set of indices which are considered
+                                to be table/message selections
+        table_index         --> Index of table which is to be checked
+                                against the selection
+    
+    Return:
+        This check is only relevant if should_select_msg bool
+        is true. If false, the function shall always return true. Otherwise
+        return true if the table index is in the selected_tables.
+    */
+    bool IsSelectedMessage(const size_t& thread_index, bool should_select_msg,
+        const std::set<size_t>& selected_tables, const size_t& table_index);
 };
 
-template <typename vectype, typename arrowtype>
-bool TranslateTabularContext1553::FillRGVector(std::vector<vectype>& output_vec,
-                                               std::string col_name,
-                                               int& row_count, bool is_list)
-{
-    if (!pq_reader_.GetNextRG<vectype, arrowtype>(
-            pq_reader_.GetColumnNumberFromName(col_name), output_vec, row_count, is_list))
-    {
-        SPDLOG_ERROR("Failed to read column \"{:s}\" from current row group", col_name);
-        return false;
-    }
-    SPDLOG_DEBUG("Filled column \"{:s}\" with {:d} rows from current row group", col_name,
-                 row_count);
-    return true;
-}
 
 #endif  // #define TRANSLATE_TABULAR_CONTEXT_1553_H_

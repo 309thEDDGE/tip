@@ -111,6 +111,14 @@ TEST_F(YamlSchemaValidationTest, VerifyTypeString)
     EXPECT_TRUE(res_);
 }
 
+TEST_F(YamlSchemaValidationTest, VerifyTypeEmptyStringFails)
+{
+    std::string str_type = "STR";
+    std::string test_val = "";
+    res_ = ysv_.VerifyType(str_type, test_val);
+    EXPECT_FALSE(res_);
+}
+
 TEST_F(YamlSchemaValidationTest, VerifyTypeInt)
 {
     std::string str_type = "INT";
@@ -977,6 +985,7 @@ TEST_F(YamlSchemaValidationTest, CheckDataTypeStringHandleAllowedValsOperatorOpt
     EXPECT_TRUE(is_opt);
     EXPECT_TRUE(has_allowed_vals_opt);
 }
+
 TEST_F(YamlSchemaValidationTest, TestSequenceOptBool)
 {
     schema_node_ = YAML::Load("[BOOL]\n");
@@ -1014,6 +1023,22 @@ TEST_F(YamlSchemaValidationTest, TestSequenceOpt)
     EXPECT_EQ(InfoLogEntryCount(), 0);
 
     test_node_ = YAML::Load("[23.2, 321]\n");
+    res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
+    EXPECT_TRUE(res_);
+    EXPECT_EQ(InfoLogEntryCount(), 0);
+}
+
+TEST_F(YamlSchemaValidationTest, TestSequenceOptString)
+{
+    schema_node_ = YAML::Load("[OPTSTR]\n");
+    test_node_ = YAML::Load("[]\n");
+
+    res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
+    EXPECT_TRUE(res_);
+    EXPECT_EQ(InfoLogEntryCount(), 0);
+
+    // Empty string ok for OPTSTR case
+    test_node_ = YAML::Load("[\'\']\n");
     res_ = ysv_.TestSequence(schema_node_, test_node_, log_items_);
     EXPECT_TRUE(res_);
     EXPECT_EQ(InfoLogEntryCount(), 0);
@@ -1120,6 +1145,21 @@ TEST_F(YamlSchemaValidationTest, TestMapElementOptGeneral)
     res_ = ysv_.TestMapElement(it_schema, it_test, log_items_);
     EXPECT_FALSE(res_);
     EXPECT_EQ(InfoLogEntryCount(), 1);
+}
+
+TEST_F(YamlSchemaValidationTest, TestMapElementOptStringEmptyString)
+{
+    schema_node_ = YAML::Load(
+        "data: OPTSTR\n");
+    test_node_ = YAML::Load(
+        "data: ''\n");
+
+    YAML::const_iterator it_schema = schema_node_.begin();
+    YAML::const_iterator it_test = test_node_.begin();
+
+    res_ = ysv_.TestMapElement(it_schema, it_test, log_items_);
+    EXPECT_TRUE(res_);
+    EXPECT_EQ(InfoLogEntryCount(), 0);
 }
 
 TEST_F(YamlSchemaValidationTest, ProcessNodeMapOptGeneral)

@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdint>
 #include <vector>
+#include <map>
 #include "parse_text.h"
 #include "yaml-cpp/yaml.h"
 
@@ -63,6 +64,32 @@ enum class ICDElementSchema : uint8_t
     // 64-bit floating point value -- standard currently unknown.
     FLOAT64_GPS = 16,
 
+	// Binary-coded decimal, ex: 10010110 = 96
+	BCD = 17,
+
+	// Sign-magnitude, ex: 10011 = -1 * 011 = -3, 00011 = 3
+	SIGNMAG = 18,
+
+};
+
+const std::map<ICDElementSchema, std::string> ICDElementSchemaToStringMap = {
+	{ICDElementSchema::SIGNED16, "SIGNED16"},
+	{ICDElementSchema::SIGNED32, "SIGNED32"},
+	{ICDElementSchema::UNSIGNED16, "UNSIGNED16"},
+	{ICDElementSchema::UNSIGNED32, "UNSIGNED32"},
+	{ICDElementSchema::FLOAT32_1750, "FLOAT32_1750"},
+	{ICDElementSchema::FLOAT32_IEEE, "FLOAT32_IEEE"},
+	{ICDElementSchema::FLOAT64_IEEE, "FLOAT64_IEEE"},
+	{ICDElementSchema::FLOAT16, "FLOAT16"},
+	{ICDElementSchema::ASCII, "ASCII"},
+	{ICDElementSchema::SIGNEDBITS, "SIGNEDBITS"},
+	{ICDElementSchema::UNSIGNEDBITS, "UNSIGNEDBITS"},
+	{ICDElementSchema::BAD, "BAD"},
+	{ICDElementSchema::CAPS, "CAPS"},
+	{ICDElementSchema::FLOAT32_GPS, "FLOAT32_GPS"},
+	{ICDElementSchema::FLOAT64_GPS, "FLOAT64_GPS"},
+	{ICDElementSchema::BCD, "BCD"},
+	{ICDElementSchema::SIGNMAG, "SIGNMAG"}
 };
 
 class ICDElement
@@ -513,6 +540,36 @@ class ICDElement
 			2. PIRAD
 	*/
     std::string uom_;
+
+	/*
+		-name:			bcd_partial
+		-description: 	Indicates which digits in bit_count_ will comprise a
+						non-standard BCD digit (i.e., not 4 bits per BCD digit)
+						in the case that bit_count_ % 4 not equal zero.
+						0: non-standard (i.e., non 4-bit) BCD digits not allowed
+							If bit_count_ % 4 not equal 0, only int(bit_count_) / int(4)
+							BCD digits shall be formed, each with 4 bits, starting with
+							the MSB.
+						+1: Use all bit_count_ bits assuming the MS bits form a standard
+							4-bit BCD digit. The LS bits will comprise a non-standard
+							(fewer than four bit) BCD digit.
+						-1: Use all bit_count_ bits assuming the LS bits form a standard
+							4-bit BCD digit. The MS bits will comprise a non-stanard
+							(fewer than four bit) BCD digit.
+						If bit_count_ % 4 equal zero the bcd_partial_ value is not relevant.
+		-format/range:  -1, 0, +1
+		-special cases: 
+		-examples: 
+			1. bit_count_ = 5, bcd_partial_ = 0 ==> Calculate one BCD digit using the MS 4 bits
+			2. bit_count_ = i * 4, where i in ints, bcd_partial_ is not relevant.
+			3. bit_count_ = 5, bcd_partial_ = +1 ==> MS 4 bits form first BCD digit; second 
+			   BCD digit is the LS bit value
+			4. bit_count_ = 5, bcd_partial_ = -1 ==> MS bit is the first BCD digit; LS 4 
+			   bits form the second BCD digit
+			5. bit_count_ = 11, bcd_partial_ = +1 ==> MS 8 bits form the first and second
+			   BCD digit, respectively; LS 3 bits form the third BCD digit 
+	*/
+	int8_t bcd_partial_;
 
     // methods/c'tors
     ICDElement();

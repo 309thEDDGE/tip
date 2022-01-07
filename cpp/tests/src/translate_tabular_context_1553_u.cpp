@@ -28,37 +28,32 @@ TEST_F(TranslateTabularContext1553Test, Clone)
     EXPECT_THAT(data_col_names, ctx->data_col_names);
 }
 
-TEST_F(TranslateTabularContext1553Test, CreateTableOutputPathEmptyBaseName)
+TEST_F(TranslateTabularContext1553Test, IsSelectedMessageNotEnabled)
 {
-    ManagedPath outdir("data");
-    outdir /= "translated";
-    ManagedPath base_name("");
-    std::string table_name = "table";
-    size_t index = 3;
-    ManagedPath expected("data");
-    expected /= "translated";
-    expected /= (table_name + ".parquet");
-    expected /= "03.parquet";
-
-    EXPECT_EQ(expected.RawString(), context_.CreateTableOutputPath(outdir,
-                                                                   base_name, table_name, index)
-                                        .RawString());
+    bool should_select_msg = false;
+    std::set<size_t> selected_tables;
+    size_t table_ind = 0;
+    size_t thread_index = 2;
+    ASSERT_TRUE(context_.IsSelectedMessage(thread_index, should_select_msg,
+        selected_tables, table_ind));
 }
 
-TEST_F(TranslateTabularContext1553Test, CreateTableOutputPath)
+TEST_F(TranslateTabularContext1553Test, IsSelectedMessageNotSelected)
 {
-    ManagedPath outdir("data");
-    outdir /= "translated";
-    ManagedPath base_name("table");
-    std::string table_name = "table";
+    bool should_select_msg = true;
+    std::set<size_t> selected_tables{10, 23};
+    size_t table_ind = 8;
+    size_t thread_index = 2;
+    ASSERT_FALSE(context_.IsSelectedMessage(thread_index, should_select_msg,
+        selected_tables, table_ind));
+}
 
-    size_t index = 3;
-    ManagedPath expected("data");
-    expected /= "translated";
-    expected /= (table_name + ".parquet");
-    expected /= "table03.parquet";
-
-    EXPECT_EQ(expected.RawString(), context_.CreateTableOutputPath(outdir,
-                                                                   base_name, table_name, index)
-                                        .RawString());
+TEST_F(TranslateTabularContext1553Test, IsSelectedMessageIsSelected)
+{
+    bool should_select_msg = true;
+    std::set<size_t> selected_tables{10, 23};
+    size_t table_ind = 23;
+    size_t thread_index = 2;
+    ASSERT_TRUE(context_.IsSelectedMessage(thread_index, should_select_msg,
+        selected_tables, table_ind));
 }

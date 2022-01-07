@@ -38,7 +38,9 @@ class ParquetReader
     bool OpenNextParquetFile();
 
    public:
-    ParquetReader()
+
+    const int& current_row_group;
+    ParquetReader() : current_row_group(current_row_group_)
     {
         manual_rowgroup_increment_mode_ = false;
         row_group_count_ = 0;
