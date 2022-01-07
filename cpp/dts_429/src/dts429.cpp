@@ -4,7 +4,7 @@
 bool DTS429::OpenYamlFile(const ManagedPath& dts_path,
                         std::map<std::string, std::string>& wrd_name_substitutions,
                         std::map<std::string, std::string>& elem_name_substitutions)
-{_
+{
     // Check if yaml or text file
     bool is_yaml = icd_data_.IsYamlFile(dts_path);
 
@@ -17,7 +17,7 @@ bool DTS429::OpenYamlFile(const ManagedPath& dts_path,
         std::string str;
         if(!fin)
         {
-            SPDLOG_INFO("DTS429: Cannot open file at path\n")
+            SPDLOG_INFO("DTS429: Cannot open file at path\n");
             return false;
         }
         while (std::getline(fin, str))
@@ -66,12 +66,12 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
         return false;
     }
 
-    if (!icd_data_.PrepareICDQuery(msg_defs, wrd_name_substitutions,  // big TODO here
-                                    elem_name_substitutions))
-    {
-        printf("DTS429::IngestLines(): PrepareICDQuery failure!\n");
-        return false;
-    }
+    // if (!icd_data_.PrepareICDQuery(msg_defs, wrd_name_substitutions,  // big TODO here
+    //                                 elem_name_substitutions))
+    // {
+    //     printf("DTS429::IngestLines(): PrepareICDQuery failure!\n");
+    //     return false;
+    // }
 
     // If the supplemental bus map labels node has a size greater
     // than zero, fill the private member map.
@@ -153,7 +153,7 @@ bool DTS429::ProcessLinesAsYaml(const std::vector<std::string>& lines,
 }
 
 bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_node,
-                                          std::map<std::string, std::set<uint64_t>>& output_suppl_busname_to_wrd_key_map)
+                                          std::map<std::string, std::set<uint32_t>>& output_suppl_busname_to_wrd_key_map)
 {
     if (suppl_busmap_labels_node.size() == 0)
         return true;
