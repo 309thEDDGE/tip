@@ -43,7 +43,7 @@ bool DTS429::OpenYamlFile(const ManagedPath& dts_path,
     }
     else
     {
-        printf("DTS429::OpenYamlFile(): Faild. dts_path is not a yaml file\n")
+        printf("DTS429::OpenYamlFile(): Faild. dts_path is not a yaml file\n");
         return false;
     }
 
@@ -75,7 +75,7 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
 
     // If the supplemental bus map labels node has a size greater
     // than zero, fill the private member map.
-    if (!FillSupplBusNameToMsgKeyMap(suppl_busmap, suppl_bus_name_to_word_key_map_))
+    if (!FillSupplBusNameToWordKeyMap(suppl_busmap, suppl_bus_name_to_word_key_map_))
     {
         printf("DTS429::IngestLines(): Failed to generate bus name to message key map!\n");
         return false;
@@ -199,8 +199,10 @@ bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_
 
         // Build the output map.
         bus_name = busname_map->first.as<std::string>();
-        arinc_labels = labels_seq.as<std::set<uint32_t>>();
-        output_suppl_busname_to_wrd_key_map[bus_name] = arinc_labels;
+        arinc_labels = labels_seq.as<std::vector<uint32_t>>();
+        for(int i = 0; i < arinc_labels.size(); i++){
+            output_suppl_busname_to_wrd_key_map[bus_name].insert(arinc_labels[i]);
+        }
 
     }
     return true;

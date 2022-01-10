@@ -11,7 +11,7 @@
 #include "managed_path.h"
 
 // Explicit indication of DTS429 components
-enum class DTS429Componant : uint8_t
+enum class DTS429Component : uint8_t
 {
     BAD = 0,
     TRANSL_WORD_DEFS = 1,
@@ -39,12 +39,12 @@ class DTS429
     // Ingest and manipulate ICD data
     ICDData icd_data_;
     ICDData* icd_data_ptr_;
-    const std::vector<std::string>& yaml_lines_;
+    std::vector<std::string> yaml_lines_;
 
     // Map the top-level DTS1553 yaml file key string to a DTS1553Component
-    const std::map<std::string, DTS429Componant> yaml_key_to_component_map_ = {
-        {"supplemental_bus_map_labels", DTS429Componant::SUPPL_BUSMAP_LABELS},
-        {"translatable_word_definitions", DTS429Componant::TRANSL_WORD_DEFS}};
+    const std::map<std::string, DTS429Component> yaml_key_to_component_map_ = {
+        {"supplemental_bus_map_labels", DTS429Component::SUPPL_BUSMAP_LABELS},
+        {"translatable_word_definitions", DTS429Component::TRANSL_WORD_DEFS}};
 
     // Fill with supplemental bus map labels data if present in the
     // yaml file. The word key is an integer created by upshifting the 429
@@ -54,7 +54,7 @@ class DTS429
     std::map<std::string, std::set<uint32_t>> suppl_bus_name_to_word_key_map_;
 
    public:
-    DTS429() : icd_data_(), icd_data_ptr_(&icd_data_) {}
+    DTS429() : icd_data_(), icd_data_ptr_(&icd_data_), yaml_lines_() {}
 
     ICDData GetICDData() { return icd_data_; }
     ICDData* ICDDataPtr() { return icd_data_ptr_; }
