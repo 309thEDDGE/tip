@@ -27,17 +27,17 @@
 class SubchannelMap
 {
    private:
-    unordered_map<int, unordered_map<int, string>> channel_id_to_subchannel_map;
+    unordered_map<uint32_t, unordered_map<uint16_t, string>> channel_id_to_subchannel_map;
 
    public:
     SubchannelMap();
 
+    // TODO - find out the input format that has most synergy with rest of project
     bool MapSubchannelNameAndNumberToChannelID(YAML::Node& tmats_chanid_to_429_subchan_and_name);
 
     string GetNameOfARINC429Bus(uint32_t channelid, uint16_t subchannel_number);
 
 }
-
 
 
 #endif
