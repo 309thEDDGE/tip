@@ -33,9 +33,37 @@ class SubchannelMap
     SubchannelMap();
 
     // TODO - find out the input format that has most synergy with rest of project
+    /*
+		MapSubchannelNameAndNumberToChannelID
+
+		tmats_chanid_to_429_subchan_and_name:   -->	Node built from metadata genereated from TIPs
+                                                    parsing of ARINC 429 channels. Node contains a
+                                                    map of channelid to subchannel numbers and names,
+                                                    in the following format:
+
+                                                            31: {1: ARBusName1}
+
+            return:							    --> True if success, otherwise false.
+
+	*/
     bool MapSubchannelNameAndNumberToChannelID(YAML::Node& tmats_chanid_to_429_subchan_and_name);
 
-    string GetNameOfARINC429Bus(uint32_t channelid, uint16_t subchannel_number);
+    /*
+		GetNameOfARINC429Bus
+
+		channelid:          --> Integer representing the channelid associated with the ARINC 429
+                                bus.
+
+        subchannel_number:  --> The subchannel id (number) assocaited with the name of the ARINC 429
+                                bus. This subchannel id association is made in TMATS and is stored
+                                in the ARINC 429 parsed data parquet.
+
+        bus_name:           --> If found, bus name string will be stored in bus_name.
+
+		return:				--> True if success, otherwise false.
+
+	*/
+    bool GetNameOfARINC429Bus(uint32_t channelid, uint16_t subchannel_number, string& bus_name);
 
 }
 
