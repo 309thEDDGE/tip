@@ -18,5 +18,5 @@ set_target_properties(dts_429
 
 target_link_libraries(dts_429
   PUBLIC tiputil parquet_context yamlsv ch10_parquet
-  yaml-cpp arrow_shared parquet tins dts_1553
+  yaml-cpp arrow_shared parquet tins dts_1553 metadata
 )
