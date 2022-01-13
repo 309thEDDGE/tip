@@ -212,9 +212,24 @@ bool ManageParseMetadata(TIPMDDocument& parser_md_doc)
 {
     // build yaml nodes from parser_md_doc
 
-    // use yaml_reader.cpp to Ingest from string and GetMapNodeParameter()?? Try this
+    std::map<uint64_t, std::map<uint16_t, string>>> tmats_chanid_to_429_subchan_and_name;
+    if(!YamlReader::GetMapNodeParameter(parser_md_doc.runtime_category_->node,
+        "tmats_chanid_to_429_subchan_and_name", tmats_chanid_to_429_subchan_and_name))
+    {
+        SPDLOG_ERROR(
+            "ManageParseMetadata(): Failed to get"
+            " tmats_chanid_to_429_subchan_and_name map from metadata!");
+        return false;
+    }
 
     // if no data, return false
+    if(tmats_chanid_to_429_subchan_and_name.empty())
+    {
+        SPDLOG_ERROR(
+            "ManageParseMetadata(): tmats_chanid_to_429_subchan_and_name"
+            " map from metadata contains no subchannel mappings!");
+        return false;
+    }
 
     // pass node tmats_chanid_to_429_subchan_and_name into subchannel mapping tool
 
