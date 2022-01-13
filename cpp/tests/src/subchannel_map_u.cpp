@@ -78,5 +78,3 @@ TEST_F(SubchannelMapTest, Ingest429ParserMDDocNoTMATSChanTo429SubchanElement)
     EXPECT_TRUE(false);
 }
 
-
-
