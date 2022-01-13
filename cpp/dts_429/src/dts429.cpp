@@ -210,29 +210,32 @@ bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_
 
 bool ManageParseMetadata(TIPMDDocument& parser_md_doc)
 {
-    // build yaml nodes from parser_md_doc
-    std::unordered_map<uint64_t, std::unordered_map<uint16_t, string>>> tmats_chanid_to_429_subchan_and_name;
-    if(!YamlReader::GetMapNodeParameter(parser_md_doc.runtime_category_->node,
-        "tmats_chanid_to_429_subchan_and_name", tmats_chanid_to_429_subchan_and_name))
+
+    if(!subchannel_map_.IngestParserMDDoc(parser_md_doc))
     {
-        SPDLOG_ERROR(
-            "ManageParseMetadata(): Failed to get"
-            " tmats_chanid_to_429_subchan_and_name map from metadata!");
+        SPDLOG_ERROR("ManageParseMetadata():"
+        " Channel id to subchannel mapping failed!");
         return false;
     }
+    // // build yaml nodes from parser_md_doc
+    // std::unordered_map<uint64_t, std::unordered_map<uint16_t, string>>> tmats_chanid_to_429_subchan_and_name;
+    // if(!YamlReader::GetMapNodeParameter(parser_md_doc.runtime_category_->node,
+    //     "tmats_chanid_to_429_subchan_and_name", tmats_chanid_to_429_subchan_and_name))
+    // {
+    //     SPDLOG_ERROR(
+    //         "ManageParseMetadata(): Failed to get"
+    //         " tmats_chanid_to_429_subchan_and_name map from metadata!");
+    //     return false;
+    // }
 
-    // if no data, return false
-    if(tmats_chanid_to_429_subchan_and_name.empty())
-    {
-        SPDLOG_ERROR(
-            "ManageParseMetadata(): tmats_chanid_to_429_subchan_and_name"
-            " map from metadata contains no subchannel mappings!");
-        return false;
-    }
+    // // if no data, return false
+    // if(tmats_chanid_to_429_subchan_and_name.empty())
+    // {
+    //     SPDLOG_ERROR(
+    //         "ManageParseMetadata(): tmats_chanid_to_429_subchan_and_name"
+    //         " map from metadata contains no subchannel mappings!");
+    //     return false;
+    // }
 
-    // pass node tmats_chanid_to_429_subchan_and_name into subchannel mapping tool
-
-
-
-    return false;
+    return true;
 }
