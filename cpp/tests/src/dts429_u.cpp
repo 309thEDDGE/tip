@@ -184,6 +184,6 @@ TEST(DTS429Test, ManageParseMetadataEmptyMDDoc)
 
     EXPECT_FALSE(dts.ManageParseMetadata(parser_md_doc));
 
-    // Other method calls in function will be tested
+    // Other method calls in class will be tested
     // in the pertinent test file
 }
