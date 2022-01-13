@@ -207,3 +207,13 @@ bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_
     }
     return true;
 }
+
+bool ManageParseMetadata(TIPMDDocument& parser_md_doc)
+{
+    // build yaml nodes from parser_md_doc
+
+    // pass node tmats_chanid_to_429_subchan_and_name into subchannel mapping tool
+
+
+    return false;
+}
