@@ -212,6 +212,8 @@ bool ManageParseMetadata(TIPMDDocument& parser_md_doc)
 {
     // build yaml nodes from parser_md_doc
 
+    // use yaml_reader.cpp to Ingest from string and GetMapNodeParameter()?? Try this
+
     // if no data, return false
 
     // pass node tmats_chanid_to_429_subchan_and_name into subchannel mapping tool
