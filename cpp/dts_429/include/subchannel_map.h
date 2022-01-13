@@ -8,8 +8,8 @@
 #include <string>
 #include <unordered_map>
 #include "yaml-cpp/yaml.h"
-// #include "icd_data.h"
-// #include "managed_path.h"
+#include "tip_md_document.h"
+#include "yaml_reader.h"
 
 
 // The pupose of this class is to build nested maps. The class will map
@@ -27,41 +27,55 @@
 class SubchannelMap
 {
    private:
-    unordered_map<uint32_t, unordered_map<uint16_t, string>> channel_id_to_subchannel_map;
+    unordered_map<uint64_t, unordered_map<uint16_t, string>> channel_id_to_subchannel_map_;
 
    public:
     SubchannelMap();
 
-    /*
-		MapSubchannelNameAndNumberToChannelID
-
-		tmats_chanid_to_429_subchan_and_name:   -->	Node built from metadata genereated from TIPs
-                                                    parsing of ARINC 429 channels. Node contains a
-                                                    map of channelid to subchannel numbers and names,
-                                                    in the following format:
-
-                                                            31: {1: ARBusName1}
-
-            return:							    --> True if success, otherwise false.
-
-	*/
-    bool MapSubchannelNameAndNumberToChannelID(YAML::Node& tmats_chanid_to_429_subchan_and_name);
+    unordered_map<uint64_t, unordered_map<uint16_t, string>> GetChanIDToSubchanMap() { return channel_id_to_subchannel_map_;}
 
     /*
-		GetNameOfARINC429Bus
+      Ingest429ParserMDDoc
 
-		channelid:          --> Integer representing the channelid associated with the ARINC 429
-                                bus.
+		  parser_md_doc:	--> TIPMDDocument which read in string representation of
+                          the ARINC 429 metadata file, containing new line
+                          character at the end of each line.
 
-        subchannel_number:  --> The subchannel id (number) assocaited with the name of the ARINC 429
-                                bus. This subchannel id association is made in TMATS and is stored
-                                in the ARINC 429 parsed data parquet.
+      return:	        --> True if success, otherwise false.
 
-        bus_name:           --> If found, bus name string will be stored in bus_name.
+	  */
+    bool Ingest429ParserMDDoc(TIPMDDocument& parser_md_doc);
 
-		return:				--> True if success, otherwise false.
+    /*
+      MapSubchannelNameAndNumberToChannelID
 
-	*/
+      tmats_chanid_to_429_subchan_and_name:   -->	Node built from metadata genereated from TIPs
+                                                      parsing of ARINC 429 channels. Node contains a
+                                                      map of channelid to subchannel numbers and names,
+                                                      in the following format:
+
+                                                              31: {1: ARBusName1}
+
+              return:							    --> True if success, otherwise false.
+
+	  */
+    bool MapSubchannelNameAndNumberToChannelID(unordered_map<uint64_t, unordered_map<uint16_t, string>>>& tmats_chanid_to_429_subchan_and_name);
+
+    /*
+      GetNameOfARINC429Bus
+
+      channelid:          --> Integer representing the channelid associated with the ARINC 429
+                                  bus.
+
+          subchannel_number:  --> The subchannel id (number) assocaited with the name of the ARINC 429
+                                  bus. This subchannel id association is made in TMATS and is stored
+                                  in the ARINC 429 parsed data parquet.
+
+          bus_name:           --> If found, bus name string will be stored in bus_name.
+
+      return:				--> True if success, otherwise false.
+
+    */
     bool GetNameOfARINC429Bus(uint32_t channelid, uint16_t subchannel_number, string& bus_name);
 
 }

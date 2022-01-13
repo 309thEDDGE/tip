@@ -10,7 +10,6 @@
 #include "icd_data.h"
 #include "managed_path.h"
 #include "tip_md_document.h"
-#include "yaml_reader.h"
 #include "subchannel_map.h"
 
 // Explicit indication of DTS429 components
