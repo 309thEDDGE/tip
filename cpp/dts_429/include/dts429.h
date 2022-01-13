@@ -11,6 +11,7 @@
 #include "managed_path.h"
 #include "tip_md_document.h"
 #include "yaml_reader.h"
+#include "subchannel_map.h"
 
 // Explicit indication of DTS429 components
 enum class DTS429Component : uint8_t
@@ -44,6 +45,7 @@ class DTS429
     std::vector<std::string> yaml_lines_;
     TIPMDDocument parse_metadata_doc_;
     TIPMDDocument* parse_metadata_doc_ptr_;
+    SubchannelMap subchannel_map_;
 
     // Map the top-level DTS1553 yaml file key string to a DTS1553Component
     const std::map<std::string, DTS429Component> yaml_key_to_component_map_ = {
@@ -62,6 +64,7 @@ class DTS429
 
     ICDData GetICDData() { return icd_data_; }
     ICDData* ICDDataPtr() { return icd_data_ptr_; }
+    SubchannelMap GetSubchannelMap() { return subchannel_map_;}
     const std::vector<std::string>& GetYamlLines() { return yaml_lines_; }
     std::map<std::string, std::set<uint32_t>> GetSupplBusNameToWordKeyMap()
     {
