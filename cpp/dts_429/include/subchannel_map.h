@@ -76,7 +76,7 @@ class SubchannelMap
       return:				--> True if success, otherwise false.
 
     */
-    bool GetNameOfARINC429Bus(uint32_t channelid, uint16_t subchannel_number, string& bus_name);
+    bool GetNameOfARINC429Bus(uint64_t channelid, uint16_t subchannel_number, string& bus_name);
 
 }
 
