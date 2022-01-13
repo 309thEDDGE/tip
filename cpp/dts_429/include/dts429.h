@@ -9,6 +9,7 @@
 #include "yaml-cpp/yaml.h"
 #include "icd_data.h"
 #include "managed_path.h"
+#include "tip_md_document.h"
 
 // Explicit indication of DTS429 components
 enum class DTS429Component : uint8_t
@@ -40,6 +41,8 @@ class DTS429
     ICDData icd_data_;
     ICDData* icd_data_ptr_;
     std::vector<std::string> yaml_lines_;
+    TIPMDDocument parse_metadata_doc_;
+    TIPMDDocument* parse_metadata_doc_ptr_;
 
     // Map the top-level DTS1553 yaml file key string to a DTS1553Component
     const std::map<std::string, DTS429Component> yaml_key_to_component_map_ = {
@@ -54,7 +57,7 @@ class DTS429
     std::map<std::string, std::set<uint32_t>> suppl_bus_name_to_word_key_map_;
 
    public:
-    DTS429() : icd_data_(), icd_data_ptr_(&icd_data_), yaml_lines_() {}
+    DTS429() : icd_data_(), icd_data_ptr_(&icd_data_), yaml_lines_(), parse_metadata_doc_(), parse_metadata_doc_ptr_(&parse_metadata_doc_),  {}
 
     ICDData GetICDData() { return icd_data_; }
     ICDData* ICDDataPtr() { return icd_data_ptr_; }
@@ -144,6 +147,20 @@ class DTS429
 	*/
     bool FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_node,
                                      std::map<std::string, std::set<uint32_t>>& output_suppl_busname_to_wrd_key_map);
+
+
+    /*
+
+		OrganizeParseMetadata
+
+		parser_md_doc:	TIPMDDocument which read in string representation of
+                        the ARINC 429 metadata file, containing new line
+                        character at the end of each line.
+
+		return:	  True if success. False if fails at any step.
+	*/
+    bool ManageParseMetadata(TIPMDDocument& parser_md_doc);
+
 };
 
 #endif
