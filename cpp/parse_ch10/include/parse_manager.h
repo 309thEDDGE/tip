@@ -703,6 +703,25 @@ class ParseManager
     void ProcessTMATS(const std::vector<std::string>& tmats_vec,
                       const ManagedPath& tmats_file_path,
 					  TMATSData& tmats_data);
+
+
+	
+	/*
+	Filter TMATS data based on packet type and add filtered
+	maps to metadata.
+
+	Args:
+
+		tmats_data				--> TMATSData object
+		md						--> TIPMDDocument object to which metadata 
+									will be added
+		pkt_type				--> Ch10PacketType
+
+	Return:
+		False if errors occur; true otherwise
+	*/
+	bool ProcessTMATSForType(const TMATSData& tmats_data, TIPMDDocument& md,
+		Ch10PacketType pkt_type);
 };
 
 #endif
