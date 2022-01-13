@@ -32,7 +32,7 @@ class SubchannelMap
    public:
     SubchannelMap();
 
-    // TODO - find out the input format that has most synergy with rest of project
+
     /*
 		MapSubchannelNameAndNumberToChannelID
 
