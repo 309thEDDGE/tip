@@ -63,3 +63,20 @@ TEST_F(SubchannelMapTest, GetNameOfARINC429BusFoundName)
     // item found and returned where multiple subchannels map to single channel id
     EXPECT_TRUE(false);
 }
+
+
+TEST_F(SubchannelMapTest, Ingest429ParserMDDocNoTMATSChanTo429SubchanElement)
+{
+    // Expect false if no tmats_chanid_to_429_subchan_and_name element in metadata
+    EXPECT_TRUE(false);
+}
+
+
+TEST_F(SubchannelMapTest, Ingest429ParserMDDocNoTMATSChanTo429SubchanElement)
+{
+    // Expect false if tmats_chanid_to_429_subchan_and_name is present but has no associated data
+    EXPECT_TRUE(false);
+}
+
+
+
