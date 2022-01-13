@@ -274,6 +274,33 @@ void ParseManager::RecordUserConfigData(std::shared_ptr<MDCategoryMap> config_ca
         user_config.worker_shift_wait_ms_);
 }
 
+bool ParseManager::ProcessTMATSForType(const TMATSData& tmats_data, TIPMDDocument& md,
+		Ch10PacketType pkt_type)
+{
+    // Filter TMATS maps
+    std::map<std::string, std::string> tmats_chanid_to_type_filtered;
+    if(!tmats_data.FilterTMATSType(tmats_data.chanid_to_type_map, 
+        pkt_type, tmats_chanid_to_type_filtered))
+    {
+        SPDLOG_ERROR("Failed to filter TMATS for type \"{:s}\"", 
+            ch10packettype_to_string_map.at(pkt_type));
+        return false;
+    }
+    std::map<std::string, std::string> tmats_chanid_to_source_filtered;
+    tmats_chanid_to_source_filtered = tmats_data.FilterByChannelIDToType(
+        tmats_chanid_to_type_filtered, tmats_data.chanid_to_source_map);
+
+    // Record the TMATS channel ID to source map.
+    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_source",
+        tmats_chanid_to_source_filtered);
+
+    // Record the TMATS channel ID to type map.
+    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_type",
+        tmats_chanid_to_type_filtered);
+
+    return true;
+}
+
 bool ParseManager::RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
                                               const ParserConfigParams& user_config,
                                               const ProvenanceData& prov_data,
@@ -321,13 +348,8 @@ bool ParseManager::RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
     md.runtime_category_->SetArbitraryMappedValue("chanid_to_comm_words",
         output_chanid_commwords_map);
 
-    // Record the TMATS channel ID to source map.
-    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_source",
-        tmats_data.chanid_to_source_map);
-
-    // Record the TMATS channel ID to type map.
-    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_type",
-        tmats_data.chanid_to_type_map);
+    if(!ProcessTMATSForType(tmats_data, md, Ch10PacketType::MILSTD1553_F1))
+        return false;
 
     // Write the complete Yaml record to the metadata file.
     md.CreateDocument();
@@ -369,13 +391,8 @@ bool ParseManager::RecordVideoDataF0Metadata(ManagedPath input_ch10_file_path,
     md.runtime_category_->SetArbitraryMappedValue("chanid_to_first_timestamp",
         output_min_timestamp_map);
 
-    // Record the TMATS channel ID to source map.
-    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_source",
-        tmats_data.chanid_to_source_map);
-
-    // Record the TMATS channel ID to type map.
-    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_type",
-        tmats_data.chanid_to_type_map);
+    if(!ProcessTMATSForType(tmats_data, md, Ch10PacketType::VIDEO_DATA_F0))
+        return false;
 
     md.CreateDocument();
     std::ofstream stream_video_metadata(md_file_path.string(),
@@ -425,13 +442,8 @@ bool ParseManager::RecordARINC429F0Metadata(ManagedPath input_ch10_file_path,
     md.runtime_category_->SetArbitraryMappedValue("chanid_to_bus_numbers",
         output_chanid_busnumber_map);
 
-    // Record the TMATS channel ID to source map.
-    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_source",
-        tmats_data.chanid_to_source_map);
-
-    // Record the TMATS channel ID to type map.
-    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_type",
-        tmats_data.chanid_to_type_map);
+    if(!ProcessTMATSForType(tmats_data, md, Ch10PacketType::ARINC429_F0))
+        return false;
 
     // Record ARINC429-specific TMATS data
     md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_429_format",
