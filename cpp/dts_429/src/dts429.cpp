@@ -207,16 +207,3 @@ bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_
     }
     return true;
 }
-
-bool ManageParseMetadata(TIPMDDocument& parser_md_doc)
-{
-
-    if(!subchannel_map_.IngestParserMDDoc(parser_md_doc))
-    {
-        SPDLOG_ERROR("ManageParseMetadata():"
-        " Channel id to subchannel mapping failed!");
-        return false;
-    }
-
-    return true;
-}
