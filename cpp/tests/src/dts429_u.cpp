@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "dts429.h"
-#include "tip_md_document.h"
 
 
 class Dts429Test
@@ -174,16 +173,3 @@ TEST(DTS429Test, ProcessLinesAsYamlValidateOutput)
     EXPECT_TRUE(suppl_busmap_node["A429BusAlpha"]);
 }
 
-TEST(DTS429Test, ManageParseMetadataEmptyMDDoc)
-{
-    // Ensure that when parser_md_doc is "empty"
-    // ManageParseMetadata returns false
-
-    DTS429 dts;
-    TIPMDDocument parser_md_doc;
-
-    EXPECT_FALSE(dts.ManageParseMetadata(parser_md_doc));
-
-    // Other method calls in class will be tested
-    // in the pertinent test file
-}
