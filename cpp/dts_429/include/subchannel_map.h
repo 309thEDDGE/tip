@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include "yaml-cpp/yaml.h"
 #include "tip_md_document.h"
+#include "spdlog/spdlog.h"
 #include "yaml_reader.h"
 
 

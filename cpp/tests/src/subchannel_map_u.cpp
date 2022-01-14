@@ -1,10 +1,20 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "subchannel_map.h"
+#include "tip_md_document.h"
 
 class SubchannelMapTest : public ::testing::Test
 {
    protected:
+    TIPMDDocument md_loaded_;
+    TIPMDDocument md_empty_;
+   public:
+    SubchannelMap subchan_map;
+    bool result;
+
+    // write a method to load metadata to md_loaded
+
+    // for example see
 
 };
 
@@ -68,7 +78,8 @@ TEST_F(SubchannelMapTest, GetNameOfARINC429BusFoundName)
 TEST_F(SubchannelMapTest, Ingest429ParserMDDocNoTMATSChanTo429SubchanElement)
 {
     // Expect false if no tmats_chanid_to_429_subchan_and_name element in metadata
-    EXPECT_TRUE(false);
+    result = subchan_map.Ingest429ParserMDDoc(md_empty_);
+    EXPECT_FALSE(result);
 }
 
 
