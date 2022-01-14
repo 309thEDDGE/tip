@@ -59,7 +59,6 @@ class DTS429
 
     ICDData GetICDData() { return icd_data_; }
     ICDData* ICDDataPtr() { return icd_data_ptr_; }
-    SubchannelMap GetSubchannelMap() { return subchannel_map_;}
     const std::vector<std::string>& GetYamlLines() { return yaml_lines_; }
     std::map<std::string, std::set<uint32_t>> GetSupplBusNameToWordKeyMap()
     {
