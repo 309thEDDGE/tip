@@ -103,7 +103,7 @@ class ICDElement
 
    public:
     // Count of input columns required to fill data members.
-    static const int kFillElementCount = 27;
+    static const int kFillElementCount;
 
     // Channel ID as obtained from the Ch10. This
     // is a value that will have to be matched based on the ICD
@@ -570,30 +570,30 @@ class ICDElement
 			   BCD digit, respectively; LS 3 bits form the third BCD digit
 	*/
 	int8_t bcd_partial_;
-	/*
-		-name: label_
-		-description: 429 Word Label
-		-format/range: Integer. Octal representaion of 429 label
-		-special cases:
+	// /*
+	// 	-name: label_
+	// 	-description: 429 Word Label
+	// 	-format/range: Integer. Octal representaion of 429 label
+	// 	-special cases:
 
-		-examples:
-			1. 131
-			2. 211
-	*/
-	uint16_t label_;
+	// 	-examples:
+	// 		1. 131
+	// 		2. 211
+	// */
+	// uint16_t label_;
 
-	/*
-		-name: sdi_
-		-description: Intiger representing the
-		-format/range: -1 to ignore this when translating or integer 0-3
-		-special cases:
-			1. If sdi_ isn't used for translation, then
-		-examples:
-			1. 0
-			2. 3
-			3. -1
-	*/
-	int8_t sdi_;
+	// /*
+	// 	-name: sdi_
+	// 	-description: Intiger representing the
+	// 	-format/range: -1 to ignore this when translating or integer 0-3
+	// 	-special cases:
+	// 		1. If sdi_ isn't used for translation, then
+	// 	-examples:
+	// 		1. 0
+	// 		2. 3
+	// 		3. -1
+	// */
+	// int8_t sdi_;
     // methods/c'tors
     ICDElement();
     ~ICDElement();
