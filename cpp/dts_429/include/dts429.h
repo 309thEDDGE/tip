@@ -8,6 +8,7 @@
 #include <string>
 #include "yaml-cpp/yaml.h"
 #include "icd_data.h"
+#include "icd_element.h"
 #include "managed_path.h"
 #include "spdlog/spdlog.h"
 
@@ -41,6 +42,7 @@ class DTS429
     ICDData icd_data_;
     ICDData* icd_data_ptr_;
     std::vector<std::string> yaml_lines_;
+    std::unordered_map<std::string, std::vector<ICDElement>> word_name_to_elements_map_;
 
     // Map the top-level DTS1553 yaml file key string to a DTS1553Component
     const std::map<std::string, DTS429Component> yaml_key_to_component_map_ = {
@@ -74,13 +76,14 @@ class DTS429
                     is stored individually as new line terminated strings in
                     yaml_lines_.
 
+        word_elements:       Map of ARINC 429 word name to vector of all elements
+                                associated with it (as ICDElment)
 
 		return:		True if success, false if failure.
 
 	*/
     bool OpenYamlFile(const ManagedPath& dts_path,
-                        std::map<std::string, std::string>& wrd_name_substitutions,
-                        std::map<std::string, std::string>& elem_name_substitutions);
+                      std::unordered_map<std::string, std::vector<ICDElement>> word_elements);
 
     /*
 		IngestLines
@@ -90,17 +93,14 @@ class DTS429
 
 		lines:		All non-newline-terminated lines of text from the dts file.
 
-        wrd_name_substitution:   Map of original word name to substituted name.
-
-        elem_name_substitution: Map of original elem name to substituted elem name.
-
+        word_elements:       Map of ARINC 429 word name to vector of all elements
+                                associated with it (as ICDElment)
 
 		return:		True if success, false if failure.
 
 	*/
     bool IngestLines(const std::vector<std::string>& lines,
-                     std::map<std::string, std::string>& wrd_name_substitutions,
-                     std::map<std::string, std::string>& elem_name_substitutions);
+                     std::unordered_map<std::string, std::vector<ICDElement>> word_elements);
 
     /*
 		ProcessLinesAsYaml
@@ -111,7 +111,7 @@ class DTS429
 		transl_wrd_defs_node:			Output root node for translated word
 										definitions map.
 
-		suppl_busmap_comm_words_node:	Output root node for supplemental bus
+		suppl_busmap_labels_node:	Output root node for supplemental bus
 										map labels.
 
 		return:							True if success, otherwise false.
