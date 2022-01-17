@@ -342,14 +342,16 @@ bool ICDElement::FillElements(const std::vector<std::string>& input_str_vec)
     curr_str = input_str_vec[24];
     uom_ = curr_str;
 
-    // uint8, bcd_partial_
-    curr_str = input_str_vec[25];
-    if (!pt.ConvertInt(curr_str, int_val))
-    {
-        printf("ICDElement::FillElements(): returning at bcd_partial_\n");
-        return false;
-    }
-    bcd_partial_ = int_val;
+    // uint16_t, channelid_ = input_str_vec[25]
+
+    // // uint8, bcd_partial_
+    // curr_str = input_str_vec[26];
+    // if (!pt.ConvertInt(curr_str, int_val))
+    // {
+    //     printf("ICDElement::FillElements(): returning at bcd_partial_\n");
+    //     return false;
+    // }
+    // bcd_partial_ = int_val;
 
     // // uint16_t label_ 26
     // curr_str = input_str_vec[26];
