@@ -74,6 +74,12 @@ class Dts429Test
                                 "supplemental_bus_map_labels: {}\n",
     };
 
+    std::vector<std::string> yaml_lines_4{"translatable_word_definitions: 'Empty'\n",
+    };
+
+    std::vector<std::string> yaml_lines_5{"translatable_word_definitions: 'Empty'\n",
+                                "supplemental_bus_map_labels: {}\n",
+    };
 };
 
 // If ManagedPath isn't to a yaml file, then return false
@@ -86,8 +92,30 @@ TEST(DTS429Test, IngestLinesNoStringsInVector)
     std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
 
     EXPECT_FALSE(dts.IngestLines(input.yaml_lines_2, word_elements));
-
 }
+
+// root node must have entry for translateable_word_defintions and supplemental_bus_maps
+TEST(DTS429Test, IngestLinesTwoMapsInRootNode)
+{
+    DTS429 dts;
+    Dts429Test input;
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
+
+    EXPECT_FALSE(dts.IngestLines(input.yaml_lines_4, word_elements));
+}
+
+// Root Node's translateable_word_defintions and supplemental_bus_maps are Maps
+TEST(DTS429Test, IngestLinesElementsAreMaps)
+{
+    DTS429 dts;
+    Dts429Test input;
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
+
+    EXPECT_TRUE(dts.IngestLines(input.yaml_lines_3, word_elements));
+
+    EXPECT_FALSE(dts.IngestLines(input.yaml_lines_5, word_elements));
+}
+
 
 // TEST_F(DTS429Test, IngestLinesNonNewlineTerminatedLinesVector)
 // {

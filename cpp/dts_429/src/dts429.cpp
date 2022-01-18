@@ -52,7 +52,6 @@
 
 bool DTS429::IngestLines(const std::vector<std::string>& lines,
                       std::unordered_map<std::string, std::vector<ICDElement>> word_elements)
-
 {
     printf("DTS429::IngestLines(): Handling yaml file data\n");
 
@@ -62,6 +61,33 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
         return false;
     }
 
+    // Concatenate all lines into a single string. It is requisite to append
+    // to each line the newline character. Yaml loader must see new lines to
+    // understand context.
+    std::stringstream ss;
+    std::for_each(lines.begin(), lines.end(),
+                  [&ss](const std::string& s) {
+                      ss << s;
+                      ss << "\n";
+                  });
+    std::string all_lines = ss.str();
+
+    YAML::Node root_node = YAML::Load(all_lines.c_str());
+
+    // Root node must have entry for translatable_word_definitions and supplemental_bus_map_labels.
+    if (root_node.size() < 2)
+    {
+        printf("DTS429::IngestLines(): Root note has size 0\n");
+        return false;
+    }
+
+    // Root node must be a map because all root-level items are maps.
+    if (!root_node["translatable_word_definitions"].IsMap() ||
+        !root_node["supplemental_bus_map_labels"].IsMap())
+    {
+        printf("DTS429::IngestLines(): Root node is not a map\n");
+        return false;
+    }
 
     /*
     // Obtain each DTS429 component as a yaml node.
@@ -92,43 +118,10 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
     return true;
 }
 
-// bool DTS429::ProcessLinesAsYaml(const std::vector<std::string>& lines,
-//                                  YAML::Node& transl_wrd_defs_node,
-//                                  YAML::Node& suppl_busmap_labels_node)
-// {
-//     // Bad if there are zero lines.
-//     if (lines.size() == 0)
-//     {
-//         printf("DTS429::ProcessLinesAsYaml(): Input lines vector has size 0\n");
-//         return false;
-//     }
-
-//     // Concatenate all lines into a single string. It is requisite to append
-//     // to each line the newline character. Yaml loader must see new lines to
-//     // understand context.
-//     std::stringstream ss;
-//     std::for_each(lines.begin(), lines.end(),
-//                   [&ss](const std::string& s) {
-//                       ss << s;
-//                       ss << "\n";
-//                   });
-//     std::string all_lines = ss.str();
-
-//     YAML::Node root_node = YAML::Load(all_lines.c_str());
-
-//     // Root node must have at least one entry.
-//     if (root_node.size() == 0)
-//     {
-//         printf("DTS429::ProcessLinesAsYaml(): Root note has size 0\n");
-//         return false;
-//     }
-
-//     // Root node must be a map because all root-level items are maps.
-//     if (!root_node.IsMap())
-//     {
-//         printf("DTS429::ProcessLinesAsYaml(): Root node is not a map\n");
-//         return false;
-//     }
+bool DTS429::ProcessLinesAsYaml(const std::vector<std::string>& lines,
+                                 YAML::Node& transl_wrd_defs_node,
+                                 YAML::Node& suppl_busmap_labels_node)
+{
 
 //     // The word definitions map MUST be present.
 //     std::string key_name = "";
@@ -157,8 +150,8 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
 //         return false;
 //     }
 
-//     return true;
-// }
+    return true;
+}
 
 // bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_node,
 //                                           std::map<std::string, std::set<uint32_t>>& output_suppl_busname_to_wrd_key_map)
