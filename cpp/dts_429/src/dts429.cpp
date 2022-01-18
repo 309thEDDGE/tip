@@ -89,38 +89,36 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
         return false;
     }
 
-    /*
-    // Obtain each DTS429 component as a yaml node.
-    YAML::Node msg_defs;
-    YAML::Node suppl_busmap;
-    if (!ProcessLinesAsYaml(lines, msg_defs, suppl_busmap))
-    {
-        printf("DTS429::IngestLines(): Process yaml lines failure!\n");
-        return false;
-    }
 
-    // if (!icd_data_.PrepareICDQuery(msg_defs, wrd_name_substitutions,  // big TODO here
-    //                                 elem_name_substitutions))
+    // // Obtain each DTS429 component as a yaml node.
+    // YAML::Node msg_defs;
+    // YAML::Node suppl_busmap;
+    // if (!ProcessLinesAsYaml(root_node, msg_defs, suppl_busmap))
     // {
-    //     printf("DTS429::IngestLines(): PrepareICDQuery failure!\n");
+    //     printf("DTS429::IngestLines(): Process yaml lines failure!\n");
     //     return false;
     // }
 
-    // If the supplemental bus map labels node has a size greater
-    // than zero, fill the private member map.
-    if (!FillSupplBusNameToWordKeyMap(suppl_busmap, suppl_bus_name_to_word_key_map_))
-    {
-        printf("DTS429::IngestLines(): Failed to generate bus name to message key map!\n");
-        return false;
-    }
-    */
+    // // If the supplemental bus map labels node has a size greater
+    // // than zero, fill the private member map.
+    // if (!FillSupplBusNameToWordKeyMap(suppl_busmap, suppl_bus_name_to_word_key_map_))
+    // {
+    //     printf("DTS429::IngestLines(): Failed to generate bus name to message key map!\n");
+    //     return false;
+    // }
 
     return true;
 }
 
-bool DTS429::ProcessLinesAsYaml(const std::vector<std::string>& lines,
-                                 YAML::Node& transl_wrd_defs_node,
-                                 YAML::Node& suppl_busmap_labels_node)
+bool DTS429::BuildNameToICDElementMap(YAML::Node& root_node,
+                std::unordered_map<std::string, std::vector<ICDElement>> word_elements)
+{
+    return true;
+}
+
+bool DTS429::ProcessLinesAsYaml(YAML::Node& root_node,
+                                YAML::Node& transl_wrd_defs_node,
+                                YAML::Node& suppl_busmap_labels_node)
 {
 
 //     // The word definitions map MUST be present.

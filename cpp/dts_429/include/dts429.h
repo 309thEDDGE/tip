@@ -105,9 +105,6 @@ class DTS429
     /*
 		ProcessLinesAsYaml
 
-		lines:							All non-newline-terminated lines of
-										text from the dts file.
-
 		transl_wrd_defs_node:			Output root node for translated word
 										definitions map.
 
@@ -117,9 +114,25 @@ class DTS429
 		return:							True if success, otherwise false.
 
 	*/
-    bool ProcessLinesAsYaml(const std::vector<std::string>& lines,
+    bool ProcessLinesAsYaml(YAML::Node& root_node,
                             YAML::Node& transl_wrd_defs_node,
                             YAML::Node& suppl_busmap_labels_node);
+
+
+    /*
+		BuildNameToICDElementMap
+
+		transl_wrd_defs_node:		Output root node for translated word
+									definitions map.
+
+        word_elements:              Map of ARINC 429 word name to vector of all elements
+                                    associated with it (as ICDElment)
+
+		return:					    True if success, otherwise false.
+
+	*/
+    bool BuildNameToICDElementMap(YAML::Node& transl_wrd_defs_node,
+                     std::unordered_map<std::string, std::vector<ICDElement>> word_elements);
 
     /*
 
