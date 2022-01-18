@@ -80,6 +80,22 @@ class Dts429Test
     std::vector<std::string> yaml_lines_5{"translatable_word_definitions: 'Empty'\n",
                                 "supplemental_bus_map_labels: {}\n",
     };
+
+    // builds yaml root node from one of yaml_lines_n above
+    void build_root_node( const std::vector<std::string>& lines,
+                          YAML::Node& root_node)
+    {
+        std::stringstream ss;
+        std::for_each(lines.begin(), lines.end(),
+                    [&ss](const std::string& s) {
+                        ss << s;
+                        ss << "\n";
+                    });
+        std::string all_lines = ss.str();
+
+        root_node = YAML::Load(all_lines.c_str());
+    }
+
 };
 
 // If ManagedPath isn't to a yaml file, then return false
@@ -114,6 +130,23 @@ TEST(DTS429Test, IngestLinesElementsAreMaps)
     EXPECT_TRUE(dts.IngestLines(input.yaml_lines_3, word_elements));
 
     EXPECT_FALSE(dts.IngestLines(input.yaml_lines_5, word_elements));
+}
+
+TEST(DTS429Test, ProcessLinesAsYamlValidateOutput)
+{
+    // Ensure that SupplementalBusMapLabels are stored in the correct
+    // map, and the translateable_word_defs are stored in correct map
+    YAML::Node wrd_defs_node;
+    YAML::Node suppl_busmap_node;
+    YAML::Node root_node;
+    Dts429Test input;
+    DTS429 dts;
+
+    input.build_root_node(input.yaml_lines_0, root_node);
+
+    EXPECT_TRUE(dts.ProcessLinesAsYaml(root_node, wrd_defs_node, suppl_busmap_node));
+    EXPECT_TRUE(wrd_defs_node["TestWord"]);
+    EXPECT_TRUE(suppl_busmap_node["A429BusAlpha"]);
 }
 
 
@@ -202,19 +235,5 @@ TEST(DTS429Test, IngestLinesElementsAreMaps)
 //     EXPECT_TRUE(dts.ProcessLinesAsYaml(lines, wrd_defs_node, suppl_busmap_node));
 // }
 
-// TEST(DTS429Test, ProcessLinesAsYamlValidateOutput)
-// {
-//     // Ensure that SupplementalBusMapLabels are stored in the correct
-//     // map, and the translateable_word_defs are stored in correct map
-//     YAML::Node wrd_defs_node;
-//     YAML::Node suppl_busmap_node;
-//     std::vector<std::string> lines;
-//     Dts429Test input;
-//     DTS429 dts;
 
-//     lines = input.yaml_lines_0;
-//     EXPECT_TRUE(dts.ProcessLinesAsYaml(lines, wrd_defs_node, suppl_busmap_node));
-//     EXPECT_TRUE(wrd_defs_node["TestWord"]);
-//     EXPECT_TRUE(suppl_busmap_node["A429BusAlpha"]);
-// }
 
