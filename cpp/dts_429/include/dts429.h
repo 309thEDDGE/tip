@@ -114,7 +114,7 @@ class DTS429
 		return:							True if success, otherwise false.
 
 	*/
-    bool ProcessLinesAsYaml(YAML::Node& root_node,
+    bool ProcessLinesAsYaml(const YAML::Node& root_node,
                             YAML::Node& transl_wrd_defs_node,
                             YAML::Node& suppl_busmap_labels_node);
 

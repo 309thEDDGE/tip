@@ -90,14 +90,14 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
     }
 
 
-    // // Obtain each DTS429 component as a yaml node.
-    // YAML::Node msg_defs;
-    // YAML::Node suppl_busmap;
-    // if (!ProcessLinesAsYaml(root_node, msg_defs, suppl_busmap))
-    // {
-    //     printf("DTS429::IngestLines(): Process yaml lines failure!\n");
-    //     return false;
-    // }
+    // Obtain each DTS429 component as a yaml node.
+    YAML::Node msg_defs;
+    YAML::Node suppl_busmap;
+    if (!ProcessLinesAsYaml(root_node, msg_defs, suppl_busmap))
+    {
+        printf("DTS429::IngestLines(): Process yaml lines failure!\n");
+        return false;
+    }
 
     // // If the supplemental bus map labels node has a size greater
     // // than zero, fill the private member map.
@@ -110,43 +110,43 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
     return true;
 }
 
-bool DTS429::BuildNameToICDElementMap(YAML::Node& root_node,
+bool DTS429::BuildNameToICDElementMap(YAML::Node&  transl_wrd_defs_node,
                 std::unordered_map<std::string, std::vector<ICDElement>> word_elements)
 {
     return true;
 }
 
-bool DTS429::ProcessLinesAsYaml(YAML::Node& root_node,
+bool DTS429::ProcessLinesAsYaml(const YAML::Node& root_node,
                                 YAML::Node& transl_wrd_defs_node,
                                 YAML::Node& suppl_busmap_labels_node)
 {
 
-//     // The word definitions map MUST be present.
-//     std::string key_name = "";
-//     bool word_definitions_exist = false;
-//     for (YAML::const_iterator it = root_node.begin(); it != root_node.end(); ++it)
-//     {
-//         key_name = it->first.as<std::string>();
-//         if (yaml_key_to_component_map_.count(key_name) != 0)
-//         {
-//             switch (yaml_key_to_component_map_.at(key_name))
-//             {
-//                 case DTS429Component::TRANSL_WORD_DEFS:
-//                     word_definitions_exist = true;
-//                     transl_wrd_defs_node = it->second;
-//                     break;
-//                 case DTS429Component::SUPPL_BUSMAP_LABELS:
-//                     suppl_busmap_labels_node = it->second;
-//                     break;
-//             }
-//         }
-//     }
+    // The word definitions map MUST be present.
+    std::string key_name = "";
+    bool word_definitions_exist = false;
+    for (YAML::const_iterator it = root_node.begin(); it != root_node.end(); ++it)
+    {
+        key_name = it->first.as<std::string>();
+        if (yaml_key_to_component_map_.count(key_name) != 0)
+        {
+            switch (yaml_key_to_component_map_.at(key_name))
+            {
+                case DTS429Component::TRANSL_WORD_DEFS:
+                    word_definitions_exist = true;
+                    transl_wrd_defs_node = it->second;
+                    break;
+                case DTS429Component::SUPPL_BUSMAP_LABELS:
+                    suppl_busmap_labels_node = it->second;
+                    break;
+            }
+        }
+    }
 
-//     if (!word_definitions_exist)
-//     {
-//         printf("DTS429::ProcessLinesAsYaml(): Word definitions node not present!\n");
-//         return false;
-//     }
+    if (!word_definitions_exist)
+    {
+        printf("DTS429::ProcessLinesAsYaml(): Word definitions node not present!\n");
+        return false;
+    }
 
     return true;
 }
