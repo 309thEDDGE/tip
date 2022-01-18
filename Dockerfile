@@ -23,5 +23,21 @@ RUN tar xvf local_channel.tar --strip-components=2 && \
     pwd && \
     source /opt/conda/bin/activate && \
     conda activate singleuser && \
-    conda install -c file:///home/jovyan/local_channel/ -c file:///home/jovyan/local-channel tip --offline
+    conda install -c file:///home/jovyan/local_channel/ -c file:///home/jovyan/local-channel tip --offline \
+    rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/badcert.pem && \
+    rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/badkey.pem && \
+    rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/keycert.passwd.pem && \
+    rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/keycert.pem && \
+    rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/keycert2.pem && \
+    rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/ssl_key.passwd.pem && \
+    rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/ssl_key.pem && \
+    rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/tornado/test/test.key && \
+    rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/badcert.pem && \
+    rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/badkey.pem && \
+    rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/keycert.passwd.pem && \
+    rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/keycert.pem && \
+    rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/keycert2.pem && \
+    rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/ssl_key.passwd.pem && \
+    rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/ssl_key.pem && \
+    rm -rf /opt/conda/pkgs/tornado-6.1-py39h3811e60_2/lib/python3.9/site-packages/tornado/test/test.ke
 
