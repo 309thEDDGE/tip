@@ -81,6 +81,13 @@ class Dts429Test
                                 "supplemental_bus_map_labels: {}\n",
     };
 
+    std::vector<std::string> yaml_lines_6{"translatable_word_definitions:",
+                                " TestWord: 'wrd_data'",
+                                "supplemental_bus_map_labels:",
+                                "  A429BusAlpha:",
+                                "    - [ 7, 4, 12, 124]"
+    };
+
     // builds yaml root node from one of yaml_lines_n above
     void build_root_node( const std::vector<std::string>& lines,
                           YAML::Node& root_node)
@@ -147,6 +154,21 @@ TEST(DTS429Test, ProcessLinesAsYamlValidateOutput)
     EXPECT_TRUE(dts.ProcessLinesAsYaml(root_node, wrd_defs_node, suppl_busmap_node));
     EXPECT_TRUE(wrd_defs_node["TestWord"]);
     EXPECT_TRUE(suppl_busmap_node["A429BusAlpha"]);
+}
+
+TEST(DTS429Test, BuildNameToICDElementMapValidateInput)
+{
+    // Ensure that the input maps to a map
+    YAML::Node wrd_defs_node;
+    YAML::Node suppl_busmap_node;
+    YAML::Node root_node;
+    Dts429Test input;
+    DTS429 dts;
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements
+
+    input.build_root_node(input.yaml_lines_6, root_node);
+
+    EXPECT_FALSE(dts.BuildNameToICDElementMap(root_node["translatable_word_definitions"], word_elements));
 }
 
 

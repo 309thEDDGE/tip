@@ -91,9 +91,9 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
 
 
     // Obtain each DTS429 component as a yaml node.
-    YAML::Node msg_defs;
+    YAML::Node wrd_defs;
     YAML::Node suppl_busmap;
-    if (!ProcessLinesAsYaml(root_node, msg_defs, suppl_busmap))
+    if (!ProcessLinesAsYaml(root_node, wrd_defs, suppl_busmap))
     {
         printf("DTS429::IngestLines(): Process yaml lines failure!\n");
         return false;
@@ -113,6 +113,22 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
 bool DTS429::BuildNameToICDElementMap(YAML::Node&  transl_wrd_defs_node,
                 std::unordered_map<std::string, std::vector<ICDElement>> word_elements)
 {
+
+    // The word definitions map MUST be present.
+    std::string key_name = "";
+    bool word_definitions_exist = false;
+    for (YAML::const_iterator it = transl_wrd_defs_node.begin(); it != transl_wrd_defs_node.end(); ++it)
+    {
+        key_name = it->first.as<std::string>();
+
+        // check that the transl_wrd_defs_node map not empty
+        if(!transl_wrd_defs_node[key_name].IsMap())
+        {
+            printf("DTS429::BuildNameToICDElementMap(): Name of word doesn't map to map!\n");
+            return false;
+        }
+
+    }
     return true;
 }
 
