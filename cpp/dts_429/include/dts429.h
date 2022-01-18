@@ -49,6 +49,7 @@ class DTS429
         {"supplemental_bus_map_labels", DTS429Component::SUPPL_BUSMAP_LABELS},
         {"translatable_word_definitions", DTS429Component::TRANSL_WORD_DEFS}};
 
+
     // Fill with supplemental bus map labels data if present in the
     // yaml file. The word key is an integer created by upshifting the 429
     // label by 8 bits and adding bus number from the IPDH. The key is
@@ -132,7 +133,7 @@ class DTS429
 
 	*/
     bool BuildNameToICDElementMap(YAML::Node& transl_wrd_defs_node,
-                     std::unordered_map<std::string, std::vector<ICDElement>> word_elements);
+                     std::unordered_map<std::string, std::vector<ICDElement>>& word_elements);
 
     /*
 
@@ -159,6 +160,43 @@ class DTS429
     bool FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_node,
                                      std::map<std::string, std::set<uint32_t>>& output_suppl_busname_to_wrd_key_map);
 
+                        
+    /*
+    Perform validation of single word_node, the key:value YAML::Node in which
+    the key is a 429 word name and the value is a map with keys 'wrd_data' and 
+    'elem'.
+
+    Args:
+        word_node       --> YAML::Node that is expected to the value which
+                            is mapped to the word name/label
+    
+    Return:
+        True if word_node is validated; false otherwise
+    */
+    bool ValidateWordNode(const YAML::Node& word_node);
+
+    /*
+    Create a new ICDElement from wrd_data and an elem as defined in 
+    tip_dts429_schema.yaml
+    
+    Args:
+        wrd_data        --> YAML::Node containing ARINC 429 word level
+                            information. 
+
+        wrd_data        --> YAML::Node which stores information specific
+                            to a single parameter tied to the word defined
+                            in wrd_data        
+
+        arinc_param     --> ICDElement object being created.
+    
+    Return:
+        True if new ICDElement is created; false otherwise
+
+    */
+
+    bool CreateICDElementFromWordNodes(const YAML::Node& wrd_data, 
+                                      const YAML::Node& elem_data,
+                                      ICDElement& arinc_param);
 };
 
 #endif

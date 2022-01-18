@@ -88,8 +88,10 @@ class Dts429Test
                                 "    - [ 7, 4, 12, 124]"
     };
 
+
+
     // builds yaml root node from one of yaml_lines_n above
-    void build_root_node( const std::vector<std::string>& lines,
+    void build_node( const std::vector<std::string>& lines,
                           YAML::Node& root_node)
     {
         std::stringstream ss;
@@ -149,7 +151,7 @@ TEST(DTS429Test, ProcessLinesAsYamlValidateOutput)
     Dts429Test input;
     DTS429 dts;
 
-    input.build_root_node(input.yaml_lines_0, root_node);
+    input.build_node(input.yaml_lines_0, root_node);
 
     EXPECT_TRUE(dts.ProcessLinesAsYaml(root_node, wrd_defs_node, suppl_busmap_node));
     EXPECT_TRUE(wrd_defs_node["TestWord"]);
@@ -164,13 +166,75 @@ TEST(DTS429Test, BuildNameToICDElementMapValidateInput)
     YAML::Node root_node;
     Dts429Test input;
     DTS429 dts;
-    std::unordered_map<std::string, std::vector<ICDElement>> word_elements
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
 
-    input.build_root_node(input.yaml_lines_6, root_node);
+    input.build_node(input.yaml_lines_6, root_node);
 
     EXPECT_FALSE(dts.BuildNameToICDElementMap(root_node["translatable_word_definitions"], word_elements));
 }
 
+TEST(DTS429Test, ValidateWordNodeNotAMap)
+{
+    YAML::Node word_node(YAML::NodeType::Scalar);
+    DTS429 dts;
+    ASSERT_FALSE(dts.ValidateWordNode(word_node));
+}
+
+TEST(DTS429Test, ValidateWordNodeMissingRequiredKey)
+{
+    // Ought to have "elem" as key
+    YAML::Node word_node = YAML::Load(
+        "wrd_data: \n"
+        "element: \n"
+    );
+
+    DTS429 dts;
+    ASSERT_FALSE(dts.ValidateWordNode(word_node));
+
+    // Ought to have "wrd_data" as key
+    YAML::Node word_node2 = YAML::Load(
+        "elem: \n"
+    );
+    ASSERT_FALSE(dts.ValidateWordNode(word_node));
+}
+
+
+TEST(DTS429Test, CreateICDElementFromWordNode)
+{   
+    Dts429Test input;
+
+    YAML::Node root_node;
+    input.build_node(input.yaml_lines_0, root_node);
+
+    YAML::Node word_name_node = root_node["TestWord"];
+
+    // create nodes to build a specific element
+    YAML::Node wrd_data_node = word_name_node["wrd_data"];
+    YAML::Node elem_node = word_name_node["elem"][];
+    ICDElement output_element;
+
+    // create element
+    ICDElement expected_element;
+    expected_element.label_= 107;
+    expected_element.sdi_=2;
+    expected_element.bus_name_=5;
+    expected_element.msg_name_="TestWord";
+    expected_element.rate_=1.1;
+    expected_element.description_="Altitude";
+    expected_element.xmit_lru_name_="LRU921";
+    expected_element.elem_name_="107_ALT";
+    expected_element.schema_=ICDElementSchema::UNSIGNEDBITS;
+    expected_element.is_bitlevel_=true;
+    expected_element.bcd_partial_=-1;
+    expected_element.msb_val_=1.0;
+    expected_element.bitlsb_=11;
+    expected_element.bit_count_=8;
+    expected_element.uom_="FT";
+    expected_element.classification_=0;
+
+    EXPECT_EQ(expected_element.label_, output_element.label_);
+    
+}
 
 // TEST_F(DTS429Test, IngestLinesNonNewlineTerminatedLinesVector)
 // {

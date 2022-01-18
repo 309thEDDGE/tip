@@ -111,25 +111,60 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
 }
 
 bool DTS429::BuildNameToICDElementMap(YAML::Node&  transl_wrd_defs_node,
-                std::unordered_map<std::string, std::vector<ICDElement>> word_elements)
+                std::unordered_map<std::string, std::vector<ICDElement>>& word_elements)
 {
 
     // The word definitions map MUST be present.
     std::string key_name = "";
     bool word_definitions_exist = false;
+    ICDElement icd_element;
+    YAML::Node word_data;
+    YAML::Node elem_data;
     for (YAML::const_iterator it = transl_wrd_defs_node.begin(); it != transl_wrd_defs_node.end(); ++it)
     {
         key_name = it->first.as<std::string>();
 
-        // check that the transl_wrd_defs_node map not empty
-        if(!transl_wrd_defs_node[key_name].IsMap())
-        {
-            printf("DTS429::BuildNameToICDElementMap(): Name of word doesn't map to map!\n");
+        if(!ValidateWordNode(it->second))
             return false;
-        }
 
+        word_data = (it->second)["wrd_data"];
+        elem_data = (it->second)["elem"];
+         
+        // CreateICDElementFromWordNode(it)
     }
     return true;
+}
+
+
+bool DTS429::ValidateWordNode(const YAML::Node& word_node)
+{
+    if(!word_node.IsMap())
+    {
+        SPDLOG_WARN("word_node is not a map");
+        return false;
+    }
+
+    if(!word_node["wrd_data"])
+    {
+        SPDLOG_WARN("word_node is missing \"wrd_data\" key");
+        return false;
+    }
+    
+    if(!word_node["elem"])
+    {
+        SPDLOG_WARN("word_node is missing \"elem\" key");
+        return false;
+    }
+   
+    return true;
+}
+
+bool DTS429::CreateICDElementFromWordNodes(const YAML::Node& wrd_data, 
+                                          const YAML::Node& elem_data,
+                                          ICDElement& arinc_param)
+{
+
+    return true; 
 }
 
 bool DTS429::ProcessLinesAsYaml(const YAML::Node& root_node,
@@ -166,6 +201,8 @@ bool DTS429::ProcessLinesAsYaml(const YAML::Node& root_node,
 
     return true;
 }
+
+
 
 // bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_node,
 //                                           std::map<std::string, std::set<uint32_t>>& output_suppl_busname_to_wrd_key_map)

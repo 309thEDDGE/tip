@@ -570,6 +570,7 @@ class ICDElement
 			   BCD digit, respectively; LS 3 bits form the third BCD digit
 	*/
 	int8_t bcd_partial_;
+	
 	/*
 		-name: label_
 		-description: 429 Word Label
@@ -594,6 +595,8 @@ class ICDElement
 			3. -1
 	*/
 	int8_t sdi_;
+
+
     // methods/c'tors
     ICDElement();
     ~ICDElement();

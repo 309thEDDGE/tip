@@ -23,7 +23,8 @@ translatable_word_definitions:              # (R)
       lru_name: OPTSTR                        # (O)
     elem:                                   # (R)
       _NOT_DEFINED_:                        # (WR), alias: elem_name = bit/multiple bit element
-        schema: STR-->{UNSIGNEDBITS,SIGNEDBITS,ASCII}  # (R)
+        schema: STR-->{UNSIGNEDBITS,
+            SIGNEDBITS,ASCII,BCD,SIGNMAG}   # (R)
         msbval: FLT                         # (R)
         lsb: INT                            # (R)
         bitcnt: INT                         # (R)
