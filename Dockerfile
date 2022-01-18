@@ -23,7 +23,7 @@ RUN tar xvf local_channel.tar --strip-components=2 && \
     pwd && \
     source /opt/conda/bin/activate && \
     conda activate singleuser && \
-    conda install -c file:///home/jovyan/local_channel/ -c file:///home/jovyan/local-channel tip --offline \
+    conda install -c file:///home/jovyan/local_channel/ -c file:///home/jovyan/local-channel tip --offline && \
     rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/badcert.pem && \
     rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/badkey.pem && \
     rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/keycert.passwd.pem && \
