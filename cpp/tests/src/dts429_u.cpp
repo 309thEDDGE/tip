@@ -107,9 +107,6 @@ class Dts429Test
 
 };
 
-// If ManagedPath isn't to a yaml file, then return false
-
-
 TEST(DTS429Test, IngestLinesNoStringsInVector)
 {
     DTS429 dts;
@@ -158,21 +155,6 @@ TEST(DTS429Test, ProcessLinesAsYamlValidateOutput)
     EXPECT_TRUE(suppl_busmap_node["A429BusAlpha"]);
 }
 
-TEST(DTS429Test, BuildNameToICDElementMapValidateInput)
-{
-    // Ensure that the input maps to a map
-    YAML::Node wrd_defs_node;
-    YAML::Node suppl_busmap_node;
-    YAML::Node root_node;
-    Dts429Test input;
-    DTS429 dts;
-    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
-
-    input.build_node(input.yaml_lines_6, root_node);
-
-    EXPECT_FALSE(dts.BuildNameToICDElementMap(root_node["translatable_word_definitions"], word_elements));
-}
-
 TEST(DTS429Test, ValidateWordNodeNotAMap)
 {
     YAML::Node word_node(YAML::NodeType::Scalar);
@@ -199,21 +181,22 @@ TEST(DTS429Test, ValidateWordNodeMissingRequiredKey)
 }
 
 
-TEST(DTS429Test, CreateICDElementFromWordNodeTestEqual)
+TEST(DTS429Test, CreateICDElementFromWordNodesTestOutput)
 {
     Dts429Test input;
+    DTS429 dts;
 
     YAML::Node root_node;
     input.build_node(input.yaml_lines_0, root_node);
+    YAML::Node transl_wrd_defs_node = root_node["translatable_word_definitions"];
+    YAML::Node word_name_node = transl_wrd_defs_node["TestWord"];
 
-    YAML::Node word_name_node = root_node["TestWord"];
-
-    // create nodes to build a specific element
+    // build nodes to build a specific element
     YAML::Node wrd_data_node = word_name_node["wrd_data"];
     YAML::Node elem_node = word_name_node["elem"]["107_alt"];
     ICDElement output_element;
 
-    // create element
+    // create expected element
     ICDElement expected_element;
     expected_element.label_= 107;
     expected_element.sdi_=2;
@@ -231,6 +214,8 @@ TEST(DTS429Test, CreateICDElementFromWordNodeTestEqual)
     expected_element.bit_count_=8;
     expected_element.uom_="FT";
     expected_element.classification_=0;
+
+    dts.CreateICDElementFromWordNodes("TestWord",wrd_data_node, elem_node, output_element);
 
     EXPECT_EQ(expected_element.label_, output_element.label_);
     EXPECT_EQ(expected_element.sdi_, output_element.sdi_);
@@ -251,37 +236,47 @@ TEST(DTS429Test, CreateICDElementFromWordNodeTestEqual)
 
 }
 
+TEST(DTS429Test, BuildNameToICDElementMapTestNullNode)
+{
+    DTS429 dts;
+    YAML::Node root_node;
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
 
-// write isEmpty check
+    EXPECT_FALSE(dts.BuildNameToICDElementMap(root_node, word_elements));
+}
 
+TEST(DTS429Test, BuildNameToICDElementMapValidateYamlNodeIsMap)
+{
+    // Ensure that the input maps to a map
+    YAML::Node root_node;
+    YAML::Node transl_wrd_defs;
+    Dts429Test input;
+    DTS429 dts;
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
 
-// write, ICDElement vector size check - if two elemes - vector should be of size 2
+    input.build_node(input.yaml_lines_5, root_node);
+    transl_wrd_defs = root_node["translatable_word_definitions"];
 
+    EXPECT_FALSE(dts.BuildNameToICDElementMap(transl_wrd_defs, word_elements));
+}
 
+TEST(DTS429Test, BuildNameToICDElementMapValidateOutputVectorSize)
+{
+    YAML::Node root_node;
+    YAML::Node transl_wrd_defs;
+    Dts429Test input;
+    DTS429 dts;
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
 
+    input.build_node(input.yaml_lines_0, root_node);
+    transl_wrd_defs = root_node["translatable_word_definitions"];
 
-// TEST_F(DTS429Test, IngestLinesNonNewlineTerminatedLinesVector)
-// {
-//     DTS429 dts;
-//     Dts429Test input;
-//     std::map<std::string, std::string> wrd_name_substitutions;
-//     std::map<std::string, std::string> elem_name_substitutions;
+    dts.BuildNameToICDElementMap(transl_wrd_defs, word_elements);
+    std::vector<ICDElement> output_elements = word_elements["TestWord"];
 
-//     EXPECT_FALSE(dts.IngestLines(input.yaml_lines_1, elem_name_substitutions, wrd_name_substitutions));
+    EXPECT_EQ(2,output_elements.size());
 
-// }
-
-// TEST(DTS429Test, IngestLines)
-// {
-//     DTS429 dts;
-//     Dts429Test input;
-//     std::map<std::string, std::string> wrd_name_substitutions;
-//     std::map<std::string, std::string> elem_name_substitutions;
-
-//     EXPECT_TRUE(dts.IngestLines(input.yaml_lines_0, elem_name_substitutions, wrd_name_substitutions));
-
-//     // if there are further output checks, add here
-// }
+}
 
 // TEST(DTS429Test, FillSupplBusNameToWordKeyMapValidateInput)
 // {
@@ -321,29 +316,4 @@ TEST(DTS429Test, CreateICDElementFromWordNodeTestEqual)
 
 //     EXPECT_TRUE(map_equality);
 // }
-
-// TEST(DTS429Test, ProcessLinesAsYamlValidateInput)
-// {
-//     DTS429 dts;
-//     // Test root node entry == size 0 - ensure there are lines passed in or else it fails
-//     std::vector<std::string> lines;
-//     YAML::Node wrd_defs_node;
-//     YAML::Node suppl_busmap_node;
-
-//     // Empty lines vector fails
-//     EXPECT_FALSE(dts.ProcessLinesAsYaml(lines, wrd_defs_node, suppl_busmap_node));
-
-//     // test to ensure that yaml lines are all new line terminated on the way in
-//     Dts429Test input;
-
-//     // newline-terminated lines vector fails
-//     lines = input.yaml_lines_1;
-//     EXPECT_FALSE(dts.ProcessLinesAsYaml(lines, wrd_defs_node, suppl_busmap_node));
-
-//     // non-newline-terminated lines vector pass
-//     lines = input.yaml_lines_0;
-//     EXPECT_TRUE(dts.ProcessLinesAsYaml(lines, wrd_defs_node, suppl_busmap_node));
-// }
-
-
 
