@@ -199,8 +199,8 @@ TEST(DTS429Test, ValidateWordNodeMissingRequiredKey)
 }
 
 
-TEST(DTS429Test, CreateICDElementFromWordNode)
-{   
+TEST(DTS429Test, CreateICDElementFromWordNodeTestEqual)
+{
     Dts429Test input;
 
     YAML::Node root_node;
@@ -210,7 +210,7 @@ TEST(DTS429Test, CreateICDElementFromWordNode)
 
     // create nodes to build a specific element
     YAML::Node wrd_data_node = word_name_node["wrd_data"];
-    YAML::Node elem_node = word_name_node["elem"][];
+    YAML::Node elem_node = word_name_node["elem"]["107_alt"];
     ICDElement output_element;
 
     // create element
@@ -222,7 +222,7 @@ TEST(DTS429Test, CreateICDElementFromWordNode)
     expected_element.rate_=1.1;
     expected_element.description_="Altitude";
     expected_element.xmit_lru_name_="LRU921";
-    expected_element.elem_name_="107_ALT";
+    expected_element.elem_name_="107_alt";
     expected_element.schema_=ICDElementSchema::UNSIGNEDBITS;
     expected_element.is_bitlevel_=true;
     expected_element.bcd_partial_=-1;
@@ -233,8 +233,32 @@ TEST(DTS429Test, CreateICDElementFromWordNode)
     expected_element.classification_=0;
 
     EXPECT_EQ(expected_element.label_, output_element.label_);
-    
+    EXPECT_EQ(expected_element.sdi_, output_element.sdi_);
+    EXPECT_EQ(expected_element.bus_name_, output_element.bus_name_);
+    EXPECT_EQ(expected_element.msg_name_, output_element.msg_name_);
+    EXPECT_EQ(expected_element.rate_, output_element.rate_);
+    EXPECT_EQ(expected_element.description_, output_element.description_);
+    EXPECT_EQ(expected_element.xmit_lru_name_, output_element.xmit_lru_name_);
+    EXPECT_EQ(expected_element.elem_name_, output_element.elem_name_);
+    EXPECT_EQ(expected_element.schema_, output_element.schema_);
+    EXPECT_EQ(expected_element.is_bitlevel_, output_element.is_bitlevel_);
+    EXPECT_EQ(expected_element.bcd_partial_, output_element.bcd_partial_);
+    EXPECT_EQ(expected_element.msb_val_, output_element.msb_val_);
+    EXPECT_EQ(expected_element.bitlsb_, output_element.bitlsb_);
+    EXPECT_EQ(expected_element.bit_count_, output_element.bit_count_);
+    EXPECT_EQ(expected_element.uom_, output_element.uom_);
+    EXPECT_EQ(expected_element.classification_, output_element.classification_);
+
 }
+
+
+// write isEmpty check
+
+
+// write, ICDElement vector size check - if two elemes - vector should be of size 2
+
+
+
 
 // TEST_F(DTS429Test, IngestLinesNonNewlineTerminatedLinesVector)
 // {
