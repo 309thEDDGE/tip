@@ -10,7 +10,7 @@ class Dts429Test
                                 " TestWord:",
                                 "    wrd_data:",
                                 "      label: 107",
-                                "      bus: 5",
+                                "      bus: 'bus5'",
                                 "      sdi: 2",
                                 "      rate: 1.1",
                                 "      desc: 'Test'",
@@ -41,7 +41,7 @@ class Dts429Test
                                 " TestWord:\n",
                                 "    wrd_data:\n",
                                 "      label: 107\n",
-                                "      bus: 5\n",
+                                "      bus: 'bus5'\n",
                                 "      sdi: 2\n",
                                 "      rate: 1.1\n",
                                 "      desc: 'Test'\n",
@@ -87,8 +87,6 @@ class Dts429Test
                                 "  A429BusAlpha:",
                                 "    - [ 7, 4, 12, 124]"
     };
-
-
 
     // builds yaml root node from one of yaml_lines_n above
     void build_node( const std::vector<std::string>& lines,
@@ -199,8 +197,8 @@ TEST(DTS429Test, CreateICDElementFromWordNodesTestOutput)
     // create expected element
     ICDElement expected_element;
     expected_element.label_= 107;
-    expected_element.sdi_=2;
-    expected_element.bus_name_=5;
+    expected_element.sdi_= 2;            // 8-bit
+    expected_element.bus_name_="bus5";
     expected_element.msg_name_="TestWord";
     expected_element.rate_=1.1;
     expected_element.description_="Altitude";
@@ -210,12 +208,12 @@ TEST(DTS429Test, CreateICDElementFromWordNodesTestOutput)
     expected_element.is_bitlevel_=true;
     expected_element.bcd_partial_=-1;
     expected_element.msb_val_=1.0;
-    expected_element.bitlsb_=11;
-    expected_element.bit_count_=8;
+    expected_element.bitlsb_= 11;        // 8-bit
+    expected_element.bit_count_= 8;      // 8-bit
     expected_element.uom_="FT";
-    expected_element.classification_=0;
+    expected_element.classification_=0;  // 8-bit
 
-    dts.CreateICDElementFromWordNodes("TestWord",wrd_data_node, elem_node, output_element);
+    dts.CreateICDElementFromWordNodes("TestWord","107_alt",wrd_data_node, elem_node, output_element);
 
     EXPECT_EQ(expected_element.label_, output_element.label_);
     EXPECT_EQ(expected_element.sdi_, output_element.sdi_);
