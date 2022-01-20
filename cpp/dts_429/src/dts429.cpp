@@ -113,12 +113,19 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
 bool DTS429::BuildNameToICDElementMap(YAML::Node& transl_wrd_defs_node,
                 std::unordered_map<std::string, std::vector<ICDElement>>& word_elements)
 {
-    if(transl_wrd_defs_node.IsNull()) //==YAML::NodeType::Null)
+    if(transl_wrd_defs_node.IsNull())
     {
         SPDLOG_WARN("DTS429::BuildNameToICDElementMap(): Argument transl_wrd_defs_node"
                     " is null.");
         return false;
     }
+   if(!transl_wrd_defs_node.IsMap())
+    {
+        SPDLOG_WARN("DTS429::BuildNameToICDElementMap(): Argument transl_wrd_defs_node"
+                    " doesn't contain a map.");
+        return false;
+    }
+
     // The word definitions map MUST be present.
     std::string key_name = "";
     bool word_definitions_exist = false;
