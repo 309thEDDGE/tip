@@ -1,5 +1,5 @@
 FROM registry1.dso.mil/ironbank/opensource/metrostar/tip-dependencies:0.0.3 AS tipdependencies
-FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:torch_1.10.0_v2 AS pytorch
+FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:torch_1.10.0_v3 AS pytorch
 FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:0.0.1 AS singleuser
 
 COPY --from=tipdependencies /local_channel /home/jovyan/local_channel
