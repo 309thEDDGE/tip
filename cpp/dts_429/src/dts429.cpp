@@ -43,7 +43,7 @@
 //     }
 //     else
 //     {
-//         printf("DTS429::OpenYamlFile(): Faild. dts_path is not a yaml file\n");
+//         SPDLOG_WARN("DTS429::OpenYamlFile(): Faild. dts_path is not a yaml file\n");
 //         return false;
 //     }
 
@@ -53,11 +53,11 @@
 bool DTS429::IngestLines(const std::vector<std::string>& lines,
                       std::unordered_map<std::string, std::vector<ICDElement>> word_elements)
 {
-    printf("DTS429::IngestLines(): Handling yaml file data\n");
+    SPDLOG_WARN("DTS429::IngestLines(): Handling yaml file data\n");
 
     if(lines.empty())
     {
-        printf("DTS429::IngestLines(): const std::vector<std::string>& lines is empty");
+        SPDLOG_WARN("DTS429::IngestLines(): const std::vector<std::string>& lines is empty");
         return false;
     }
 
@@ -77,7 +77,7 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
     // Root node must have entry for translatable_word_definitions and supplemental_bus_map_labels.
     if (root_node.size() < 2)
     {
-        printf("DTS429::IngestLines(): Root note has size 0\n");
+        SPDLOG_WARN("DTS429::IngestLines(): Root note has size 0\n");
         return false;
     }
 
@@ -85,7 +85,7 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
     if (!root_node["translatable_word_definitions"].IsMap() ||
         !root_node["supplemental_bus_map_labels"].IsMap())
     {
-        printf("DTS429::IngestLines(): Root node is not a map\n");
+        SPDLOG_WARN("DTS429::IngestLines(): Root node is not a map\n");
         return false;
     }
 
@@ -95,7 +95,7 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
     YAML::Node suppl_busmap;
     if (!ProcessLinesAsYaml(root_node, wrd_defs, suppl_busmap))
     {
-        printf("DTS429::IngestLines(): Process yaml lines failure!\n");
+        SPDLOG_WARN("DTS429::IngestLines(): Process yaml lines failure!\n");
         return false;
     }
 
@@ -103,14 +103,14 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
     // // than zero, fill the private member map.
     // if (!FillSupplBusNameToWordKeyMap(suppl_busmap, suppl_bus_name_to_word_key_map_))
     // {
-    //     printf("DTS429::IngestLines(): Failed to generate bus name to message key map!\n");
+    //     SPDLOG_WARN("DTS429::IngestLines(): Failed to generate bus name to message key map!\n");
     //     return false;
     // }
 
     return true;
 }
 
-bool DTS429::BuildNameToICDElementMap(YAML::Node&  transl_wrd_defs_node,
+bool DTS429::BuildNameToICDElementMap(YAML::Node& transl_wrd_defs_node,
                 std::unordered_map<std::string, std::vector<ICDElement>>& word_elements)
 {
 
@@ -129,8 +129,13 @@ bool DTS429::BuildNameToICDElementMap(YAML::Node&  transl_wrd_defs_node,
 
         word_data = (it->second)["wrd_data"];
         elem_data = (it->second)["elem"];
-         
+
         // CreateICDElementFromWordNode(it)
+
+        // Iterate over elem data -
+
+        //      pass into builder for ICD element
+        //      Add element to the map
     }
     return true;
 }
@@ -149,22 +154,53 @@ bool DTS429::ValidateWordNode(const YAML::Node& word_node)
         SPDLOG_WARN("word_node is missing \"wrd_data\" key");
         return false;
     }
-    
+
     if(!word_node["elem"])
     {
         SPDLOG_WARN("word_node is missing \"elem\" key");
         return false;
     }
-   
+
     return true;
 }
 
-bool DTS429::CreateICDElementFromWordNodes(const YAML::Node& wrd_data, 
-                                          const YAML::Node& elem_data,
-                                          ICDElement& arinc_param)
+bool DTS429::CreateICDElementFromWordNodes(const std::string& msg_name,
+                                           const std::string& elem_name,
+                                           const YAML::Node& wrd_data,
+                                           const YAML::Node& elem_data,
+                                           ICDElement& arinc_param)
 {
-
-    return true; 
+    // 8-bit fields are accessed as 16-bit then cast to 8-bit
+    // because it was found that accessing directly as 8 bit
+    // caused the value at key to be stored as the ASCII binary
+    // value rather than integer's value
+    try
+    {
+        arinc_param.label_=wrd_data["label"].as<uint16_t>();
+        arinc_param.sdi_=(int8_t)wrd_data["sdi"].as<int16_t>();
+        arinc_param.bus_name_=wrd_data["bus"].as<std::string>();
+        arinc_param.msg_name_= msg_name;
+        arinc_param.rate_=wrd_data["rate"].as<float>();
+        arinc_param.xmit_lru_name_=wrd_data["lru_name"].as<std::string>();
+        arinc_param.description_=elem_data["desc"].as<std::string>();
+        arinc_param.elem_name_=elem_name;
+        arinc_param.schema_=StringToICDElementSchemaMap.find(
+                elem_data["schema"].as<std::string>())->second;
+        arinc_param.is_bitlevel_=true;
+        arinc_param.bcd_partial_=-1;
+        arinc_param.msb_val_=elem_data["msbval"].as<float>();
+        arinc_param.bitlsb_=(uint8_t)elem_data["lsb"].as<uint16_t>();
+        arinc_param.bit_count_=(uint8_t)elem_data["bitcnt"].as<uint16_t>();
+        arinc_param.uom_=elem_data["uom"].as<std::string>();
+        arinc_param.classification_=(uint8_t)elem_data["class"].as<uint16_t>();
+    }
+    catch(...)
+    {
+        SPDLOG_WARN("DTS429::CreateICDElementFromWordNodes(): Error "
+            "bulding ICDElement from Nodes!");
+        return false;
+    }
+    return true;
 }
 
 bool DTS429::ProcessLinesAsYaml(const YAML::Node& root_node,
@@ -195,7 +231,8 @@ bool DTS429::ProcessLinesAsYaml(const YAML::Node& root_node,
 
     if (!word_definitions_exist)
     {
-        printf("DTS429::ProcessLinesAsYaml(): Word definitions node not present!\n");
+        SPDLOG_WARN("DTS429::ProcessLinesAsYaml(): Word definitions "
+            "node not present!\n");
         return false;
     }
 
@@ -213,7 +250,7 @@ bool DTS429::ProcessLinesAsYaml(const YAML::Node& root_node,
 //     // Root node must be a map.
 //     if (!suppl_busmap_labels_node.IsMap())
 //     {
-//         printf("DTS429::FillSupplBusNameToWrdKeyMap(): Root node is not a map\n");
+//         SPDLOG_WARN("DTS429::FillSupplBusNameToWrdKeyMap(): Root node is not a map\n");
 //         return false;
 //     }
 
@@ -225,7 +262,7 @@ bool DTS429::ProcessLinesAsYaml(const YAML::Node& root_node,
 //         // Fail if the value part of each mapping is not a sequence.
 //         if (!busname_map->second.IsSequence())
 //         {
-//             printf("DTS429::FillSupplBusNameToMsgKeyMap(): Value of mapping is not a sequence\n");
+//             SPDLOG_WARN("DTS429::FillSupplBusNameToMsgKeyMap(): Value of mapping is not a sequence\n");
 //             return false;
 //         }
 
@@ -242,7 +279,7 @@ bool DTS429::ProcessLinesAsYaml(const YAML::Node& root_node,
 //             catch (...)
 //             {
 //                 // catch case of error in 'casting' to int
-//                 printf(
+//                 SPDLOG_WARN(
 //                     "DTS429::FillSupplBusNameToWrdKeyMap(): "
 //                     "Sequence item is not an integer\n");
 //                 return false;
