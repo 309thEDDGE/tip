@@ -24,7 +24,16 @@ RUN tar xvf local_channel.tar --strip-components=2 && \
     source /opt/conda/bin/activate && \
     conda activate singleuser && \
     conda install -c file:///home/jovyan/local_channel/ -c file:///home/jovyan/local-channel tip --offline && \
-    rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/badcert.pem && \
+    pip install --no-cache-dir  s3fs==2021.11.0 \
+      pandas==1.3.4 \
+      matplotlib==3.5.0 \
+      intake==0.6.4 \
+      pyarrow==5.0.0 \
+      pyyaml==5.4.1 \
+      dask==2021.11.01 \
+      intake-parquet==0.2.3
+
+RUN rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/badcert.pem && \
     rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/badkey.pem && \
     rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/keycert.passwd.pem && \
     rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/keycert.pem && \
