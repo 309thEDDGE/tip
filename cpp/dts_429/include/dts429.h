@@ -20,6 +20,14 @@ enum class DTS429Component : uint8_t
     SUPPL_BUSMAP_LABELS = 2
 };
 
+const std::map<std::string, ICDElementSchema> StringToICDElementSchemaMap = {
+	{"ASCII", ICDElementSchema::ASCII},
+	{"SIGNEDBITS", ICDElementSchema::SIGNEDBITS},
+	{"UNSIGNEDBITS", ICDElementSchema::UNSIGNEDBITS},
+	{"BCD", ICDElementSchema::BCD},
+	{"SIGNMAG", ICDElementSchema::SIGNMAG}
+};
+
 // DTS429 - Data Translation Specification, 429
 //
 // This class manages the parsing, manipulation and processing of all data
@@ -160,43 +168,52 @@ class DTS429
     bool FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_node,
                                      std::map<std::string, std::set<uint32_t>>& output_suppl_busname_to_wrd_key_map);
 
-                        
+
     /*
     Perform validation of single word_node, the key:value YAML::Node in which
-    the key is a 429 word name and the value is a map with keys 'wrd_data' and 
+    the key is a 429 word name and the value is a map with keys 'wrd_data' and
     'elem'.
 
     Args:
         word_node       --> YAML::Node that is expected to the value which
                             is mapped to the word name/label
-    
+
     Return:
         True if word_node is validated; false otherwise
     */
     bool ValidateWordNode(const YAML::Node& word_node);
 
     /*
-    Create a new ICDElement from wrd_data and an elem as defined in 
+    Create a new ICDElement from wrd_data and an elem as defined in
     tip_dts429_schema.yaml
-    
-    Args:
-        wrd_data        --> YAML::Node containing ARINC 429 word level
-                            information. 
 
-        wrd_data        --> YAML::Node which stores information specific
+    Args:
+        msg_name        --> std::string - the name of the message with
+                            which the element is associated. Alias in
+                            tip_dts429_schema.yaml is wrd_name.
+
+        elem_name       --> std::string - the name of the element being
+                            created by this method. Alias in
+                            tip_dts429_schema.yaml is elem_name.
+
+        wrd_data        --> YAML::Node containing ARINC 429 word level
+                            information.
+
+        elem_data       --> YAML::Node which stores information specific
                             to a single parameter tied to the word defined
-                            in wrd_data        
+                            in wrd_data
 
         arinc_param     --> ICDElement object being created.
-    
+
     Return:
         True if new ICDElement is created; false otherwise
 
     */
-
-    bool CreateICDElementFromWordNodes(const YAML::Node& wrd_data, 
-                                      const YAML::Node& elem_data,
-                                      ICDElement& arinc_param);
+    bool CreateICDElementFromWordNodes(const std::string& msg_name,
+                                       const std::string& elem_name,
+                                       const YAML::Node& wrd_data,
+                                       const YAML::Node& elem_data,
+                                       ICDElement& arinc_param);
 };
 
 #endif
