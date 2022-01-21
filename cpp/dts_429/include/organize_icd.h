@@ -27,8 +27,8 @@ class Organize429ICD
                                         all elements associated with it (as ICDElment).
                                         Produced by DTS429()
 
-        md_chanid_to_subchan_node   --> YAML::Node that is expected to the value which
-                                        is mapped to the word name/label
+        md_chanid_to_subchan_node   --> YAML::Node that is found in the ARINC429 parsing
+                                        metadata otuput under tmats_chanid_to_429_subchan_and_name.
 
         organized_output_map        --> unordered_map - nested maps to the ICDElement vector.
                                         The output map will be structured such that the
@@ -43,28 +43,32 @@ class Organize429ICD
                         std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
                         uint16_t,std::unordered_map<int8_t, std::vector<ICDElement>>>>>& organized_output_map);
 
-
-
-
     /*
     Iterate and reorganize tmats_chanid_to_429_subchan_and_name from parsed
     ARINC 429metadata to build busname_to_channel_subchannel_ids_ map.
 
     Args:
-        md_chanid_to_subchan_node   --> YAML::Node that is expected to the value which
-                                        is mapped to the word name/label
+        md_chanid_to_subchan_node   --> YAML::Node that is found in the ARINC429 parsing
+                                        metadata otuput under tmats_chanid_to_429_subchan_and_name.
 
     Return:
         True if map successfully constructed; false otherwise
     */
     bool BuildBusToSubchannelInfo(YAML::Node& md_chanid_to_subchan_node);
 
+    /*
+    Iterate subchannel info mapped to channelid in tmats_chanid_to_429_subchan_and_name
+    mapping. Build buld tuple and add to busname_to_channel_subchannel_ids_.
+
+    Args:
+        chanid_node --> YAML::Node representing single chanid with mapped subchannel
+                        info from tmats_chanid_to_429_subchan_and_name in metadata.
+
+    Return:
+        True if tuples successfully constructed and added to map; false otherwise
+    */
+    bool AddInfoFromChannelIDToMap(YAML::Node& chanid_node);
 
 };
 
-
-
-
-
 #endif
-
