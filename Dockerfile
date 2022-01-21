@@ -5,7 +5,6 @@ FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:0.0.1 AS singleu
 COPY --from=tipdependencies /local_channel /home/jovyan/local_channel
 COPY --chown=jovyan:jovyan --from=pytorch /home/jovyan/local-channel /home/jovyan/local-channel
 
-
 ENV ARTIFACT_DIR=".ci_artifacts/build-metadata/build-artifacts"
 
 WORKDIR /home/jovyan
