@@ -7,7 +7,7 @@
 #include "yaml-cpp/yaml.h"
 #include "spdlog/spdlog.h"
 
-class OrganizeICD
+class Organize429ICD
 {
    private:
    // string is busname (subchannel name from TMATS), tuple will
@@ -24,7 +24,8 @@ class OrganizeICD
 
     Args:
         word_elements:              --> unordered_map of ARINC 429 word name to vector of
-                                        all elements associated with it (as ICDElment)
+                                        all elements associated with it (as ICDElment).
+                                        Produced by DTS429()
 
         md_chanid_to_subchan_node   --> YAML::Node that is expected to the value which
                                         is mapped to the word name/label
@@ -34,14 +35,29 @@ class OrganizeICD
                                         ICDElement vector can be reached using the following:
                                         organized_output_map[chanid][subchan_id][label][sdi]
 
+    Return:
+        True if map successfully constructed; false otherwise
+    */
+    bool OrganizeICDMap(std::unordered_map<std::string, std::vector<ICDElement>>& word_elements,
+                        YAML::Node& md_chanid_to_subchan_node,
+                        std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
+                        uint16_t,std::unordered_map<int8_t, std::vector<ICDElement>>>>>& organized_output_map);
+
+
+
+
+    /*
+    Iterate and reorganize tmats_chanid_to_429_subchan_and_name from parsed
+    ARINC 429metadata to build busname_to_channel_subchannel_ids_ map.
+
+    Args:
+        md_chanid_to_subchan_node   --> YAML::Node that is expected to the value which
+                                        is mapped to the word name/label
 
     Return:
         True if map successfully constructed; false otherwise
     */
-    bool OrganizeICDMap(std::unordered_map<std::string, std::vector<ICDElement>> word_elements,
-                        YAML::Node md_chanid_to_subchan_node,
-                        std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
-                        uint16_t,std::unordered_map<int8_t, ICDElement>>>> organized_output_map);
+    bool BuildBusToSubchannelInfo(YAML::Node& md_chanid_to_subchan_node);
 
 
 };
