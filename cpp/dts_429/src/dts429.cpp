@@ -1,55 +1,6 @@
 #include "dts429.h"
 
 
-// bool DTS429::OpenYamlFile(const ManagedPath& dts_path,
-//                         std::map<std::string, std::string>& wrd_name_substitutions,
-//                         std::map<std::string, std::string>& elem_name_substitutions)
-// {
-//     // Check if yaml or text file
-//     bool is_yaml = icd_data_.IsYamlFile(dts_path);
-
-//     if (is_yaml)
-//     {
-//         SPDLOG_INFO("DTS429: Handling yaml file data");
-
-//         // Open input file and build vector<string> of it's lines
-//         std::ifstream fin(dts_path);
-//         std::string str;
-//         if(!fin)
-//         {
-//             SPDLOG_INFO("DTS429: Cannot open file at path\n");
-//             return false;
-//         }
-//         while (std::getline(fin, str))
-//         {
-//             // remove newline from string
-//             str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
-
-//             if(str.size() > 0)
-//             {
-//                 yaml_lines_.push_back(str);
-//             }
-//         }
-//         fin.close();
-
-//         // Ingest Lines from input file
-//         if(!IngestLines(yaml_lines_, wrd_name_substitutions,
-//         elem_name_substitutions))
-//         {
-//             SPDLOG_INFO("DTS429::OpenYamlFile(): Faild. IngestLines failure\n");
-//             return false;
-//         }
-
-//     }
-//     else
-//     {
-//         SPDLOG_WARN("DTS429::OpenYamlFile(): Faild. dts_path is not a yaml file\n");
-//         return false;
-//     }
-
-//     return true;
-// }
-
 bool DTS429::IngestLines(const std::vector<std::string>& lines,
                       std::unordered_map<std::string, std::vector<ICDElement>> word_elements)
 {
@@ -256,6 +207,54 @@ bool DTS429::ProcessLinesAsYaml(const YAML::Node& root_node,
     return true;
 }
 
+// bool DTS429::OpenYamlFile(const ManagedPath& dts_path,
+//                         std::map<std::string, std::string>& wrd_name_substitutions,
+//                         std::map<std::string, std::string>& elem_name_substitutions)
+// {
+//     // Check if yaml or text file
+//     bool is_yaml = icd_data_.IsYamlFile(dts_path);
+
+//     if (is_yaml)
+//     {
+//         SPDLOG_INFO("DTS429: Handling yaml file data");
+
+//         // Open input file and build vector<string> of it's lines
+//         std::ifstream fin(dts_path);
+//         std::string str;
+//         if(!fin)
+//         {
+//             SPDLOG_INFO("DTS429: Cannot open file at path\n");
+//             return false;
+//         }
+//         while (std::getline(fin, str))
+//         {
+//             // remove newline from string
+//             str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+
+//             if(str.size() > 0)
+//             {
+//                 yaml_lines_.push_back(str);
+//             }
+//         }
+//         fin.close();
+
+//         // Ingest Lines from input file
+//         if(!IngestLines(yaml_lines_, wrd_name_substitutions,
+//         elem_name_substitutions))
+//         {
+//             SPDLOG_INFO("DTS429::OpenYamlFile(): Faild. IngestLines failure\n");
+//             return false;
+//         }
+
+//     }
+//     else
+//     {
+//         SPDLOG_WARN("DTS429::OpenYamlFile(): Faild. dts_path is not a yaml file\n");
+//         return false;
+//     }
+
+//     return true;
+// }
 
 
 // bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_node,
