@@ -1,9 +1,11 @@
 set(headers
     include/dts429.h
+    include/organize_icd_map.h
 )
 
 add_library(dts_429
     src/dts429.cpp
+    src/organize_icd_map.cpp
 )
 
 target_compile_features(dts_429 PUBLIC cxx_std_17)
