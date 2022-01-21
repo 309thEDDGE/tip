@@ -273,7 +273,22 @@ TEST(DTS429Test, BuildNameToICDElementMapValidateOutputVectorSize)
     std::vector<ICDElement> output_elements = word_elements["TestWord"];
 
     EXPECT_EQ(2,output_elements.size());
+}
 
+TEST(DTS429Test, BuildNameToICDElementMapValidateOutputMapFeatures)
+{
+    YAML::Node root_node;
+    YAML::Node transl_wrd_defs;
+    Dts429Test input;
+    DTS429 dts;
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
+
+    input.build_node(input.yaml_lines_0, root_node);
+    transl_wrd_defs = root_node["translatable_word_definitions"];
+
+    dts.BuildNameToICDElementMap(transl_wrd_defs, word_elements);
+
+    EXPECT_TRUE(word_elements.count("TestWord"));
 }
 
 // TEST(DTS429Test, FillSupplBusNameToWordKeyMapValidateInput)
