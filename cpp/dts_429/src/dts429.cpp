@@ -127,14 +127,14 @@ bool DTS429::BuildNameToICDElementMap(YAML::Node& transl_wrd_defs_node,
     }
 
     // The word definitions map MUST be present.
-    std::string key_name = "";
-    bool word_definitions_exist = false;
+    std::string word_name = "";
+    std::string elem_name = "";
     ICDElement icd_element;
     YAML::Node word_data;
     YAML::Node elem_data;
     for (YAML::const_iterator it = transl_wrd_defs_node.begin(); it != transl_wrd_defs_node.end(); ++it)
     {
-        key_name = it->first.as<std::string>();
+        word_name = it->first.as<std::string>();
 
         if(!ValidateWordNode(it->second))
             return false;
@@ -142,13 +142,18 @@ bool DTS429::BuildNameToICDElementMap(YAML::Node& transl_wrd_defs_node,
         word_data = (it->second)["wrd_data"];
         elem_data = (it->second)["elem"];
 
-        // CreateICDElementFromWordNode(it)
+        // Iterate over elem data
+        for(YAML::const_iterator it2 = elem_data.begin(); it2 != elem_data.end(); ++it2)
+        {
+            elem_name = it2->first.as<std::string>();
+            if(!CreateICDElementFromWordNodes(word_name,
+                        elem_name, word_data, (it2->second), icd_element))
+                return false;
 
-        // Iterate over elem data -
-
-        //      pass into builder for ICD element
-        //      Add element to the map
+            word_elements[word_name].push_back(icd_element);
+        }
     }
+
     return true;
 }
 
