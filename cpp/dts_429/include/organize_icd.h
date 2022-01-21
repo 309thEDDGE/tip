@@ -15,7 +15,7 @@ class Organize429ICD
     std::unordered_map<std::string, std::tuple<uint16_t, uint16_t>> busname_to_channel_subchannel_ids_;
 
    public:
-    OrganizeICD() {};
+    Organize429ICD(){}
 
     /*
     Perform organization of nested maps to vector<ICDElement>. Resulting map
@@ -54,11 +54,11 @@ class Organize429ICD
     Return:
         True if map successfully constructed; false otherwise
     */
-    bool BuildBusToSubchannelInfo(YAML::Node& md_chanid_to_subchan_node);
+    bool BuildBusNameToChannelAndSubchannelMap(YAML::Node& md_chanid_to_subchan_node);
 
     /*
-    Iterate subchannel info mapped to channelid in tmats_chanid_to_429_subchan_and_name
-    mapping. Build buld tuple and add to busname_to_channel_subchannel_ids_.
+    Called from within BuildBusNameToChannelAndSubchannelMap() to handle a the mapping
+    to a single channel id, as found in the YAML::Node md_chanid_to_subchan_node.
 
     Args:
         chanid_node --> YAML::Node representing single chanid with mapped subchannel
