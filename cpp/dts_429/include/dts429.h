@@ -46,17 +46,17 @@ const std::map<std::string, ICDElementSchema> StringToICDElementSchemaMap = {
 class DTS429
 {
    private:
+   /*
     // Ingest and manipulate ICD data
     ICDData icd_data_;
     ICDData* icd_data_ptr_;
     std::vector<std::string> yaml_lines_;
     std::unordered_map<std::string, std::vector<ICDElement>> word_name_to_elements_map_;
-
+    */
     // Map the top-level DTS1553 yaml file key string to a DTS1553Component
     const std::map<std::string, DTS429Component> yaml_key_to_component_map_ = {
         {"supplemental_bus_map_labels", DTS429Component::SUPPL_BUSMAP_LABELS},
         {"translatable_word_definitions", DTS429Component::TRANSL_WORD_DEFS}};
-
 
     // Fill with supplemental bus map labels data if present in the
     // yaml file. The word key is an integer created by upshifting the 429
@@ -66,11 +66,13 @@ class DTS429
     std::map<std::string, std::set<uint32_t>> suppl_bus_name_to_word_key_map_;
 
    public:
+    DTS429(){}
+    /*
     DTS429() : icd_data_(), icd_data_ptr_(&icd_data_), yaml_lines_() {}
-
     ICDData GetICDData() { return icd_data_; }
     ICDData* ICDDataPtr() { return icd_data_ptr_; }
     const std::vector<std::string>& GetYamlLines() { return yaml_lines_; }
+    */
     std::map<std::string, std::set<uint32_t>> GetSupplBusNameToWordKeyMap()
     {
         return suppl_bus_name_to_word_key_map_;
