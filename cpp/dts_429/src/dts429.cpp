@@ -256,7 +256,6 @@ bool DTS429::ProcessLinesAsYaml(const YAML::Node& root_node,
 //     return true;
 // }
 
-
 // bool DTS429::FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_node,
 //                                           std::map<std::string, std::set<uint32_t>>& output_suppl_busname_to_wrd_key_map)
 // {

@@ -76,24 +76,6 @@ class DTS429
         return suppl_bus_name_to_word_key_map_;
     }
 
-
-    /*
-		OpenYamlFile
-
-		dts_path:	Full path to dts file. File name is used determine file type,
-		            either yaml or text/csv. The input file is opened and all data
-                    is stored individually as new line terminated strings in
-                    yaml_lines_.
-
-        word_elements:       Map of ARINC 429 word name to vector of all elements
-                                associated with it (as ICDElment)
-
-		return:		True if success, false if failure.
-
-	*/
-    bool OpenYamlFile(const ManagedPath& dts_path,
-                      std::unordered_map<std::string, std::vector<ICDElement>> word_elements);
-
     /*
 		IngestLines
 
@@ -127,7 +109,6 @@ class DTS429
                             YAML::Node& transl_wrd_defs_node,
                             YAML::Node& suppl_busmap_labels_node);
 
-
     /*
 		BuildNameToICDElementMap
 
@@ -142,32 +123,6 @@ class DTS429
 	*/
     bool BuildNameToICDElementMap(YAML::Node& transl_wrd_defs_node,
                      std::unordered_map<std::string, std::vector<ICDElement>>& word_elements);
-
-    /*
-
-		FillSupplBusNameToWordKeyMap
-
-		suppl_busmap_labels_node:			    Yaml node containing maps with
-												keys corresponding bus names and
-												values as sequences of integers
-												representing ARINC 429 labels.
-
-		output_suppl_busname_to_wrd_key_map:	Output maps the bus name to a set
-												of 429 word keys, where a word
-												key is an integer representing an
-                                                ARINC label that is associated with
-                                                the bus name.
-
-		return:									True if node is empty or has valid
-												structure (maps of strings to
-												sequences of integer values)
-                                                and false otherwise.
-												Output map is empty if node is empty
-												or return value is false.
-	*/
-    bool FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_node,
-                                     std::map<std::string, std::set<uint32_t>>& output_suppl_busname_to_wrd_key_map);
-
 
     /*
     Perform validation of single word_node, the key:value YAML::Node in which
@@ -214,6 +169,49 @@ class DTS429
                                        const YAML::Node& wrd_data,
                                        const YAML::Node& elem_data,
                                        ICDElement& arinc_param);
+
+    /*
+		OpenYamlFile
+
+		dts_path:	Full path to dts file. File name is used determine file type,
+		            either yaml or text/csv. The input file is opened and all data
+                    is stored individually as new line terminated strings in
+                    yaml_lines_.
+
+        word_elements:       Map of ARINC 429 word name to vector of all elements
+                                associated with it (as ICDElment)
+
+		return:		True if success, false if failure.
+
+	*/
+    // bool OpenYamlFile(const ManagedPath& dts_path,
+    //                   std::unordered_map<std::string, std::vector<ICDElement>> word_elements);
+
+    /*
+
+		FillSupplBusNameToWordKeyMap
+
+		suppl_busmap_labels_node:			    Yaml node containing maps with
+												keys corresponding bus names and
+												values as sequences of integers
+												representing ARINC 429 labels.
+
+		output_suppl_busname_to_wrd_key_map:	Output maps the bus name to a set
+												of 429 word keys, where a word
+												key is an integer representing an
+                                                ARINC label that is associated with
+                                                the bus name.
+
+		return:									True if node is empty or has valid
+												structure (maps of strings to
+												sequences of integer values)
+                                                and false otherwise.
+												Output map is empty if node is empty
+												or return value is false.
+	*/
+    // bool FillSupplBusNameToWordKeyMap(const YAML::Node& suppl_busmap_labels_node,
+    //                                  std::map<std::string, std::set<uint32_t>>& output_suppl_busname_to_wrd_key_map);
+
 };
 
 #endif
