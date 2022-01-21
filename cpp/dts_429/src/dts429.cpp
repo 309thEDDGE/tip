@@ -50,6 +50,9 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
         return false;
     }
 
+    if(!BuildNameToICDElementMap(wrd_defs, word_elements))
+        return false;
+
     // // If the supplemental bus map labels node has a size greater
     // // than zero, fill the private member map.
     // if (!FillSupplBusNameToWordKeyMap(suppl_busmap, suppl_bus_name_to_word_key_map_))
