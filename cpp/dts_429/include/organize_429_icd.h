@@ -3,6 +3,8 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
+#include <tuple>
 #include "icd_element.h"
 #include "yaml-cpp/yaml.h"
 #include "spdlog/spdlog.h"
