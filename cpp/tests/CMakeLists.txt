@@ -64,7 +64,7 @@ add_executable(tests
     src/provenance_data_u.cpp
     src/dts429_u.cpp
     src/parquet_arinc429f0_u.cpp
-    src/organize_icd_u.cpp
+    src/organize_429_icd_u.cpp
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)
