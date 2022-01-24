@@ -17,5 +17,12 @@ bool Organize429ICD::OrganizeICDMap(std::unordered_map<std::string, std::vector<
                     " is null.");
         return false;
     }
+   if(!md_chanid_to_subchan_node.IsMap())
+    {
+        SPDLOG_WARN("Organize429ICD::OrganizeICDMap(): Argument transl_wrd_defs_node"
+                    " doesn't contain a map.");
+        return false;
+    }
+
     return true;
 }

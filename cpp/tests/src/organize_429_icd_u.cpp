@@ -9,7 +9,7 @@ class Organize429ICDTest : public ::testing::Test
    ICDElement expected_element;
 
 
-    std::vector<std::string> md_chan_id_node =
+    std::vector<std::string> md_chan_id_strings =
         {"tmats_chanid_to_429_subchan_and_name:",
         "    34: {1: SET1A, 2: SET1B, 3: SET2A, 4: SET2B}",
         "    35: {1: SET3A}",
@@ -66,7 +66,7 @@ TEST_F(Organize429ICDTest, OrganizeICDMapWordElementsEmpty)
             uint16_t,std::unordered_map<int8_t, std::vector<ICDElement>>>>> organized_output_map;
 
     Organize429ICD icd_org;
-    BuildNode(md_chan_id_node, md_chanid_to_subchan_node);
+    BuildNode(md_chan_id_strings, md_chanid_to_subchan_node);
 
     EXPECT_FALSE(icd_org.OrganizeICDMap(word_elements, md_chanid_to_subchan_node, organized_output_map));
 }
@@ -84,6 +84,27 @@ TEST_F(Organize429ICDTest, OrganizeICDMapYAMLNodeNull)
     SetupElement();
     element_vec.push_back(expected_element);
     word_elements["TestWord"] = element_vec;
+
+    EXPECT_FALSE(icd_org.OrganizeICDMap(word_elements, md_chanid_to_subchan_node, organized_output_map));
+}
+
+TEST_F(Organize429ICDTest, OrganizeICDMapYAMLNodeNotMap)
+{
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
+    YAML::Node md_chanid_to_subchan_node;
+    std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
+            uint16_t,std::unordered_map<int8_t, std::vector<ICDElement>>>>> organized_output_map;
+    std::vector<ICDElement> element_vec;
+
+    SetupElement();
+    element_vec.push_back(expected_element);
+    word_elements["TestWord"] = element_vec;
+    YAML::Node tested_node;
+
+    std::vector<std::string> temp_node_input =
+        {"'Fail'"};
+    Organize429ICD icd_org;
+    BuildNode(temp_node_input, md_chanid_to_subchan_node);
 
     EXPECT_FALSE(icd_org.OrganizeICDMap(word_elements, md_chanid_to_subchan_node, organized_output_map));
 }
