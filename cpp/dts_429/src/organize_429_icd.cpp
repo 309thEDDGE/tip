@@ -11,5 +11,11 @@ bool Organize429ICD::OrganizeICDMap(std::unordered_map<std::string, std::vector<
         SPDLOG_WARN("Organize429ICD::OrganizeICDMap(): Argument word_elements is empty");
         return false;
     }
+    if(md_chanid_to_subchan_node.IsNull())
+    {
+        SPDLOG_WARN("Organize429ICD::OrganizeICDMap(): Argument md_chanid_to_subchan_node"
+                    " is null.");
+        return false;
+    }
     return true;
 }
