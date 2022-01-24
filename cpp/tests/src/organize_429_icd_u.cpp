@@ -13,10 +13,7 @@ class Organize429ICDTest : public ::testing::Test
         {"tmats_chanid_to_429_subchan_and_name:",
         "    34: {1: SET1A, 2: SET1B, 3: SET2A, 4: SET2B}",
         "    35: {1: SET3A}",
-        "    36: {1: SET3B}",
-        "    37: {1: SET4A}",
-        "    38: {1: SET4B}",
-        "    39: {1: ARR-1 Channel}"};
+        "    36: {1: SET3B}"};
 
     // builds yaml node from one of yaml_lines_n above
     void BuildNode( const std::vector<std::string>& lines,
