@@ -6,9 +6,7 @@
 class Organize429ICDTest : public ::testing::Test
 {
    protected:
-   ICDElement expected_element;
-
-
+    ICDElement expected_element;
     std::vector<std::string> md_chan_id_strings =
         {"tmats_chanid_to_429_subchan_and_name:",
         "    34: {1: SET1A, 2: SET1B, 3: SET2A, 4: SET2B}",
