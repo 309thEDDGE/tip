@@ -46,6 +46,23 @@ class Organize429ICD
                         uint16_t,std::unordered_map<int8_t, std::vector<ICDElement>>>>>& organized_output_map);
 
     /*
+    Perform validation of inputs to OrganizeICDMap(). Check that inputs are properly formatted.
+
+    Args:
+        word_elements:              --> unordered_map of ARINC 429 word name to vector of
+                                        all elements associated with it (as ICDElment).
+                                        Produced by DTS429()
+
+        md_chanid_to_subchan_node   --> YAML::Node that is found in the ARINC429 parsing
+                                        metadata otuput under tmats_chanid_to_429_subchan_and_name.
+
+    Return:
+        True if inputs pass; false otherwise
+    */
+    bool ValidateInputs(std::unordered_map<std::string, std::vector<ICDElement>>& word_elements,
+                        YAML::Node& md_chanid_to_subchan_node);
+
+    /*
     Iterate and reorganize tmats_chanid_to_429_subchan_and_name from parsed
     ARINC 429metadata to build busname_to_channel_subchannel_ids_ map.
 
