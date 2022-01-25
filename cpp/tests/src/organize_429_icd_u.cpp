@@ -213,15 +213,54 @@ TEST_F(Organize429ICDTest, AddSubchannelToMapSubchannelNameCollision)
     EXPECT_FALSE(icd_org.AddSubchannelToMap(channelid, subchannelid, subchannel_name));
 }
 
+TEST_F(Organize429ICDTest, BuildBusNameToChannelAndSubchannelMapVarifySubchannelMap)
+{
+    // varify that a chanid maps to a map with subchannel number and name
+    Organize429ICD icd_org;
+    YAML::Node md_chanid_to_subchan_node;
 
-// TEST_F(Organize429ICDTest, BuildBusNameToChannelAndSubchannelMapVarifySubchannelMap)
-// {
-//     // varify that a chanid maps to a map with subchannel number and name
+    std::vector<std::string> temp_node_input =
+        {"tmats_chanid_to_429_subchan_and_name:",
+        "    34: {1: SET1A, 2: SET1B}",
+        "    35: 'fail'"};
 
-// }
+    BuildNode(temp_node_input, md_chanid_to_subchan_node);
+    EXPECT_FALSE(icd_org.BuildBusNameToChannelAndSubchannelMap(md_chanid_to_subchan_node));
 
-// TEST_F(Organize429ICDTest, BuildBusNameToChannelAndSubchannelMapVarifyOutput)
-// {
-//     // varify that a chanid maps to a map with subchannel number and name
+    BuildNode(md_chan_id_strings, md_chanid_to_subchan_node);
+    EXPECT_TRUE(icd_org.BuildBusNameToChannelAndSubchannelMap( md_chanid_to_subchan_node));
 
-// }
+}
+
+TEST_F(Organize429ICDTest, BuildBusNameToChannelAndSubchannelMapMultiBusToChanID)
+{
+    // varify that output is as expectedthat a chanid maps to a map with subchannel number and name
+    // even when there are multiple busses mapped to chan id
+    Organize429ICD icd_org;
+    YAML::Node md_chanid_to_subchan_node;
+    std::vector<std::string> temp_node_input =
+        {"tmats_chanid_to_429_subchan_and_name:",
+        "    34: {1: SET1A, 2: SET1B}",
+        "    35: 'SET2A'"};
+
+    BuildNode(temp_node_input, md_chanid_to_subchan_node);
+    icd_org.BuildBusNameToChannelAndSubchannelMap(md_chanid_to_subchan_node);
+
+    std::unordered_map<std::string, std::tuple<uint16_t, uint16_t>> output_map =
+        icd_org.GetBusNameToChannelSubchannelMap();
+
+    ASSERT_TRUE(icd_org.BuildBusNameToChannelAndSubchannelMap(md_chanid_to_subchan_node));
+    EXPECT_TRUE(output_map.size()==3);
+    EXPECT_TRUE(output_map.count("SET1A")==1);
+    EXPECT_TRUE(output_map.count("SET1B")==1);
+    EXPECT_TRUE(output_map.count("SET2A")==1);
+    std::tuple<uint16_t, uint16_t> set1a_tuple = output_map["ABC1A"];
+    std::tuple<uint16_t, uint16_t> set1b_tuple = output_map["ABC1B"];
+    std::tuple<uint16_t, uint16_t> set2a_tuple = output_map["ABC2A"];
+    EXPECT_TRUE(std::get<0>(set1a_tuple)==34);
+    EXPECT_TRUE(std::get<1>(set1a_tuple)==1);
+    EXPECT_TRUE(std::get<0>(set1b_tuple)==34);
+    EXPECT_TRUE(std::get<1>(set1b_tuple)==2);
+    EXPECT_TRUE(std::get<0>(set2a_tuple)==35);
+    EXPECT_TRUE(std::get<1>(set2a_tuple)==1);
+}
