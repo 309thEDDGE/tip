@@ -77,7 +77,8 @@ class Organize429ICD
 
     /*
     Called from within BuildBusNameToChannelAndSubchannelMap() to handle a the mapping
-    to a single channel id, as found in the YAML::Node md_chanid_to_subchan_node.
+    to a single subchannel associated with a channelid, as found in the
+    YAML::Node md_chanid_to_subchan_node.
 
     Args:
         chanid_node --> YAML::Node representing single chanid with mapped subchannel
@@ -86,7 +87,8 @@ class Organize429ICD
     Return:
         True if tuples successfully constructed and added to map; false otherwise
     */
-    bool AddInfoFromChannelIDToMap(YAML::Node& chanid_node);
+    bool AddSubchannelToMap(uint16_t& channelid, uint16_t& subchan_number,
+                            std::string subchan_name );
 
 };
 
