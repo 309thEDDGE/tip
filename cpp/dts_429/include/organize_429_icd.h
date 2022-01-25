@@ -19,6 +19,11 @@ class Organize429ICD
    public:
     Organize429ICD(){}
 
+    std::unordered_map<std::string, std::tuple<uint16_t, uint16_t>> GetBusNameToSubchannelMap()
+    {
+        return busname_to_channel_subchannel_ids_;
+    }
+
     /*
     Perform organization of nested maps to vector<ICDElement>. Resulting map
     structure will be used to find word information when translating ARINC 429
@@ -88,7 +93,7 @@ class Organize429ICD
         True if tuples successfully constructed and added to map; false otherwise
     */
     bool AddSubchannelToMap(uint16_t& channelid, uint16_t& subchan_number,
-                            std::string subchan_name );
+                            std::string subchan_name);
 
 };
 
