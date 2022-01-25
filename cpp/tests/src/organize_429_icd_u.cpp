@@ -148,3 +148,49 @@ TEST_F(Organize429ICDTest, ValidateInputsYAMLNodeNotMap)
 
     EXPECT_FALSE(icd_org.ValidateInputs(word_elements, md_chanid_to_subchan_node));
 }
+
+TEST_F(Organize429ICDTest, AddSubchannelToMapValidateOutput)
+{
+    Organize429ICD icd_org;
+    uint16_t channelid;
+    uint16_t subchannelid;
+    std::string subchannel_name;
+    std::unordered_map<std::string, std::tuple<uint16_t, uint16_t>> output_map;
+    std::unordered_map<std::string, std::tuple<uint16_t, uint16_t>> expected_map;
+
+
+    channelid = 14;
+    subchannelid = 1;
+    subchannel_name = "ABC1A";
+    icd_org.AddSubchannelToMap(channelid, subchannelid, subchannel_name);
+
+    expected_map.insert({subchannel_name, std::make_tuple(channelid, subchannelid)});
+    output_map = icd_org.GetBusNameToChannelSubchannelMap();
+
+    EXPECT_TRUE(output_map.size()==expected_map.size());
+    EXPECT_TRUE(output_map.size()==1);
+    EXPECT_TRUE(output_map.count("ABC1A")==1);
+    EXPECT_TRUE(expected_map.count("ABC1A")==1);
+    std::tuple<uint16_t, uint16_t> expected_tuple = expected_map["ABC1A"];
+    std::tuple<uint16_t, uint16_t> output_tuple = output_map["ABC1A"];
+    EXPECT_TRUE(expected_tuple==output_tuple);
+    EXPECT_TRUE(std::get<0>(output_tuple)==14);
+    EXPECT_TRUE(std::get<1>(output_tuple)==1);
+}
+
+TEST_F(Organize429ICDTest, AddSubchannelToMapSubchannelNameCollision)
+{
+    Organize429ICD icd_org;
+    uint16_t channelid;
+    uint16_t subchannelid;
+    std::string subchannel_name;
+
+    channelid = 14;
+    subchannelid = 1;
+    subchannel_name = "ABC1A";
+    EXPECT_TRUE(icd_org.AddSubchannelToMap(channelid, channelid, subchannel_name));
+
+    channelid = 15;
+    EXPECT_FALSE(icd_org.AddSubchannelToMap(channelid, subchannelid, subchannel_name));
+}
+
