@@ -19,7 +19,7 @@ class Organize429ICD
    public:
     Organize429ICD(){}
 
-    std::unordered_map<std::string, std::tuple<uint16_t, uint16_t>> GetBusNameToSubchannelMap()
+    std::unordered_map<std::string, std::tuple<uint16_t, uint16_t>> GetBusNameToChannelSubchannelMap()
     {
         return busname_to_channel_subchannel_ids_;
     }
