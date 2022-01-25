@@ -73,7 +73,8 @@ class Organize429ICD
 
     Args:
         md_chanid_to_subchan_node   --> YAML::Node that is found in the ARINC429 parsing
-                                        metadata otuput under tmats_chanid_to_429_subchan_and_name.
+                                        metadata otuput where md_chanid_to_subchan_node.first
+                                        == tmats_chanid_to_429_subchan_and_name.
 
     Return:
         True if map successfully constructed; false otherwise
