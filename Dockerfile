@@ -17,13 +17,14 @@ RUN tar xvf local_channel.tar --strip-components=2 && \
     conda activate singleuser && \
     conda install -c file:///home/jovyan/local_channel/ -c file:///home/jovyan/local-channel tip --offline && \
     pip install --no-cache-dir  s3fs==2021.11.0 \
-      pandas==1.3.5 \
+      pandas==1.4.0 \
       matplotlib==3.5.1 \
       intake==0.6.5 \
       pyarrow==6.0.1 \
       pyyaml==5.4.1 \
       dask==2022.1.0 \
-      intake-parquet==0.2.3
+    intake-parquet==0.2.3 \
+      numpy==1.22.1
 
 RUN rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/badcert.pem && \
     rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/badkey.pem && \
