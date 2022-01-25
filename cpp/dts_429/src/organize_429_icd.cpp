@@ -9,6 +9,9 @@ bool Organize429ICD::OrganizeICDMap(std::unordered_map<std::string, std::vector<
     if(!ValidateInputs(word_elements, md_chanid_to_subchan_node))
         return false;
 
+    if(!BuildBusNameToChannelAndSubchannelMap(md_chanid_to_subchan_node))
+        return false;
+
     return true;
 }
 
@@ -34,3 +37,15 @@ bool Organize429ICD::ValidateInputs(std::unordered_map<std::string, std::vector<
     }
     return true;
 }
+
+bool Organize429ICD::BuildBusNameToChannelAndSubchannelMap(YAML::Node& md_chanid_to_subchan_node)
+{
+    // double loop - loop channel ids and loop subchannel info asscoiated with channel id
+    // iterate chanids in node
+    //      if not map - return false
+    //      iterate maps from chanid
+    //          pass into  AddSubchannelToMap()
+
+    return true;
+}
+
