@@ -148,7 +148,7 @@ bool DTS429::CreateICDElementFromWordNodes(const std::string& msg_name,
     try
     {
         arinc_param.label_=wrd_data["label"].as<uint16_t>();
-        arinc_param.sdi_=(int8_t)wrd_data["sdi"].as<int16_t>();
+        arinc_param.sdi_=static_cast<int8_t>(wrd_data["sdi"].as<int16_t>());
         arinc_param.bus_name_=wrd_data["bus"].as<std::string>();
         arinc_param.msg_name_= msg_name;
         arinc_param.rate_=wrd_data["rate"].as<float>();
@@ -160,10 +160,10 @@ bool DTS429::CreateICDElementFromWordNodes(const std::string& msg_name,
         arinc_param.is_bitlevel_=true;
         arinc_param.bcd_partial_=-1;
         arinc_param.msb_val_=elem_data["msbval"].as<float>();
-        arinc_param.bitlsb_=(uint8_t)elem_data["lsb"].as<uint16_t>();
-        arinc_param.bit_count_=(uint8_t)elem_data["bitcnt"].as<uint16_t>();
+        arinc_param.bitlsb_=static_cast<uint8_t>(elem_data["lsb"].as<uint16_t>());
+        arinc_param.bit_count_=static_cast<uint8_t>(elem_data["bitcnt"].as<uint16_t>());
         arinc_param.uom_=elem_data["uom"].as<std::string>();
-        arinc_param.classification_=(uint8_t)elem_data["class"].as<uint16_t>();
+        arinc_param.classification_=static_cast<uint8_t>(elem_data["class"].as<uint16_t>());
     }
     catch(...)
     {
