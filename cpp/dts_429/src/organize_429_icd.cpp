@@ -49,3 +49,14 @@ bool Organize429ICD::BuildBusNameToChannelAndSubchannelMap(YAML::Node& md_chanid
     return true;
 }
 
+bool Organize429ICD::AddSubchannelToMap(uint16_t& channelid, uint16_t& subchan_number,
+                            std::string subchan_name)
+{
+    if(!busname_to_channel_subchannel_ids_.insert({subchan_name, std::make_tuple(channelid, subchan_number)}).second)
+    {
+        SPDLOG_WARN("Organize429ICD::AddSubchannelToMap(): Error adding the following bus name to map: ",
+        subchan_name);
+        return false;
+    }
+    return true;
+}
