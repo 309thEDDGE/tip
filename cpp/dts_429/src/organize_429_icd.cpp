@@ -35,6 +35,13 @@ bool Organize429ICD::ValidateInputs(std::unordered_map<std::string, std::vector<
                     " doesn't contain a map.");
         return false;
     }
+    if(!md_chanid_to_subchan_node["tmats_chanid_to_429_subchan_and_name"])
+    {
+        SPDLOG_WARN("Organize429ICD::ValidateInputs(): Argument transl_wrd_defs_node"
+                    " doesn't contain \'tmats_chanid_to_429_subchan_and_name\'.");
+        return false;
+    }
+
     return true;
 }
 

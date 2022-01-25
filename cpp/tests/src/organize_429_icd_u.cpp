@@ -94,7 +94,6 @@ TEST_F(Organize429ICDTest, OrganizeICDMapYAMLNodeNotMap)
     SetupElement();
     element_vec.push_back(expected_element);
     word_elements["TestWord"] = element_vec;
-    YAML::Node tested_node;
 
     std::vector<std::string> temp_node_input =
         {"'Fail'"};
@@ -116,7 +115,7 @@ TEST_F(Organize429ICDTest, ValidateInputsWordElementsEmpty)
 }
 
 
-TEST_F(Organize429ICDTest, OValidateInputsYAMLNodeNull)
+TEST_F(Organize429ICDTest, ValidateInputsYAMLNodeNull)
 {
     std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
     YAML::Node md_chanid_to_subchan_node;
@@ -139,7 +138,6 @@ TEST_F(Organize429ICDTest, ValidateInputsYAMLNodeNotMap)
     SetupElement();
     element_vec.push_back(expected_element);
     word_elements["TestWord"] = element_vec;
-    YAML::Node tested_node;
 
     std::vector<std::string> temp_node_input =
         {"'Fail'"};
@@ -147,6 +145,27 @@ TEST_F(Organize429ICDTest, ValidateInputsYAMLNodeNotMap)
     BuildNode(temp_node_input, md_chanid_to_subchan_node);
 
     EXPECT_FALSE(icd_org.ValidateInputs(word_elements, md_chanid_to_subchan_node));
+}
+
+TEST_F(Organize429ICDTest, ValidateInputsYAMLNodeVarifyCorrectRoot)
+{
+    // varify that the root node is tmats_chanid_to_429_subchan_and_name
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
+    YAML::Node md_chanid_to_subchan_node;
+    std::vector<ICDElement> element_vec;
+
+    SetupElement();
+    element_vec.push_back(expected_element);
+    word_elements["TestWord"] = element_vec;
+
+    std::vector<std::string> temp_node_input =
+        {"wrong: {1,'Fail'}"};
+    Organize429ICD icd_org;
+    BuildNode(temp_node_input, md_chanid_to_subchan_node);
+    EXPECT_FALSE(icd_org.ValidateInputs(word_elements, md_chanid_to_subchan_node));
+
+    BuildNode(md_chan_id_strings, md_chanid_to_subchan_node);
+    EXPECT_TRUE(icd_org.ValidateInputs(word_elements, md_chanid_to_subchan_node));
 }
 
 TEST_F(Organize429ICDTest, AddSubchannelToMapValidateOutput)
@@ -194,3 +213,15 @@ TEST_F(Organize429ICDTest, AddSubchannelToMapSubchannelNameCollision)
     EXPECT_FALSE(icd_org.AddSubchannelToMap(channelid, subchannelid, subchannel_name));
 }
 
+
+// TEST_F(Organize429ICDTest, BuildBusNameToChannelAndSubchannelMapVarifySubchannelMap)
+// {
+//     // varify that a chanid maps to a map with subchannel number and name
+
+// }
+
+// TEST_F(Organize429ICDTest, BuildBusNameToChannelAndSubchannelMapVarifyOutput)
+// {
+//     // varify that a chanid maps to a map with subchannel number and name
+
+// }
