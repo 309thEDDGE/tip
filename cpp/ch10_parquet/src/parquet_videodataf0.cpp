@@ -42,11 +42,11 @@ bool ParquetVideoDataF0::Initialize(ManagedPath outfile, uint16_t thread_id)
     SetMemoryLocation<uint8_t>(ET_, "ET");
     SetMemoryLocation<uint8_t>(IPH_, "IPH");
     SetMemoryLocation<uint8_t>(KLV_, "KLV");
-    SetMemoryLocation<uint8_t>(PL_, "PL");
+    SetMemoryLocation<int16_t>(PL_, "PL");
     SetMemoryLocation<uint8_t>(SRS_, "SRS");
-    SetMemoryLocation<video_datum>(video_data_, "data");
-    SetMemoryLocation<uint64_t>(time_, "time");
-    SetMemoryLocation<uint16_t>(channel_id_, "channelid");
+    SetMemoryLocation<int32_t>(video_data_, "data");
+    SetMemoryLocation<int64_t>(time_, "time");
+    SetMemoryLocation<int32_t>(channel_id_, "channelid");
 
     if (!OpenForWrite(outfile.string(), true))
     {
@@ -79,11 +79,11 @@ void ParquetVideoDataF0::Append(
     ET_[append_count_] = vid_flags.ET;
     IPH_[append_count_] = vid_flags.IPH;
     KLV_[append_count_] = vid_flags.KLV;
-    PL_[append_count_] = vid_flags.PL;
+    PL_[append_count_] = static_cast<int16_t>(vid_flags.PL);
     SRS_[append_count_] = vid_flags.SRS;
-    time_[append_count_] = time_stamp;
+    time_[append_count_] = static_cast<int64_t>(time_stamp);
 
-    channel_id_[append_count_] = channel_id;
+    channel_id_[append_count_] = static_cast<int32_t>(channel_id);
 
     std::copy(data, data + TransportStream_DATA_COUNT,
               video_data_.data() + append_count_ * TransportStream_DATA_COUNT);

@@ -98,7 +98,7 @@ bool TranslateTabularContext1553::FillRowGroupVectors()
     int row_count = 0;
 
     // Read relevant columns into vectors.
-    if (!FillRGVector<uint64_t, arrow::NumericArray<arrow::Int64Type>>(time_,
+    if (!FillRGVector<int64_t, arrow::NumericArray<arrow::Int64Type>>(time_,
                                                                        "time", row_count, false))
         return false;
 
@@ -149,7 +149,7 @@ bool TranslateTabularContext1553::CreateTable(const ICDData& icd_data, size_t ta
     std::shared_ptr<TranslatableTableBase>& table_ptr = table_index_to_table_map_[table_index];
     ICDElement icd_elem;
     icd_elem.elem_word_count_ = 1;
-    if (!AppendColumn<uint16_t, uint64_t>(table_ptr, "time", true, icd_elem))
+    if (!AppendColumn<uint16_t, int64_t>(table_ptr, "time", true, icd_elem))
     {
         SPDLOG_WARN("{:02d} Failed to create \"time\" column", thread_index);
         return false;

@@ -73,7 +73,7 @@ Ch10Context::Ch10Context() : absolute_position_(0),
                              packet_abs_time_(0),
                              rtc_(0),
                              rtc(rtc_),
-                             thread_id_(UINT32_MAX),
+                             thread_id_(UINT16_MAX),
                              thread_id(thread_id_),
                              temp_abs_time_(0),
                              tdp_valid_(false),
@@ -518,6 +518,17 @@ void Ch10Context::CloseFileWriters() const
                 {
                     arinc429f0_pq_writer_->Close(thread_id_);
                 }
+                break;
+            case Ch10PacketType::COMPUTER_GENERATED_DATA_F1:
+                // No writer for this type
+                break;
+            case Ch10PacketType::TIME_DATA_F1:
+                // No writer for this type
+                break;
+            case Ch10PacketType::NONE:
+                // Error if this type.
+                SPDLOG_ERROR("Ch10PacketType is {:s}. Not a valid type.",
+                    ch10packettype_to_string_map.at(Ch10PacketType::NONE));
                 break;
         }
     }

@@ -35,10 +35,6 @@ class ParquetReaderTest : public ::testing::Test
         }
     }
 
-    void TearDown()
-    {
-    }
-
     // Generate Parquet file with single value
     // columns
     template <typename T>

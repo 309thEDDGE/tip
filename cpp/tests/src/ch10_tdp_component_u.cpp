@@ -303,7 +303,7 @@ TEST_F(Ch10TDPComponentTest, ParseIRIGTime)
     hdr_fmt.data_size = 3399;
     hdr_fmt.pkt_size = 4399;
     hdr_fmt.rtc1 = 321053;
-    hdr_fmt.rtc2 = 502976;
+    hdr_fmt.rtc2 = 2976;
     uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
     uint8_t tdp_doy = 1;  // 1 for irig time
     hdr_fmt.intrapkt_ts_source = 0;
@@ -346,7 +346,7 @@ TEST_F(Ch10TDPComponentTest, ParseNonIRIGTime)
     hdr_fmt.data_size = 3399;
     hdr_fmt.pkt_size = 4399;
     hdr_fmt.rtc1 = 321053;
-    hdr_fmt.rtc2 = 502976;
+    hdr_fmt.rtc2 = 2976;
     uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
     uint8_t tdp_doy = 0;  // 0 for non-irig time
     hdr_fmt.intrapkt_ts_source = 0;

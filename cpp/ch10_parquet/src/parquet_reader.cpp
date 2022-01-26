@@ -45,9 +45,6 @@ bool ParquetReader::OpenNextParquetFile()
     }
 
     arrow_reader_->set_use_threads(true);
-#ifndef NEWARROW
-    arrow_reader_->set_num_threads(2);
-#endif
 
     std::shared_ptr<arrow::Schema> temp_schema;
     st_ = arrow_reader_->GetSchema(&temp_schema);
@@ -88,7 +85,7 @@ bool ParquetReader::SetPQPath(ManagedPath base_path)
         base_path.ListDirectoryEntries(list_dir_success, pq_paths_list);
         if (!list_dir_success)
         {
-            printf("Invalid directory %s: \n", base_path.c_str());
+            printf("Invalid directory %s: \n", base_path.RawString().c_str());
             return false;
         }
 
@@ -163,9 +160,7 @@ bool ParquetReader::SetPQPath(ManagedPath base_path)
         }
 
         arrow_reader->set_use_threads(true);
-#ifndef NEWARROW
-        arrow_reader->set_num_threads(2);
-#endif
+
         // Get schema from the first parquet file and save
         // for furture use
         std::shared_ptr<arrow::Schema> compare_schema;
@@ -374,7 +369,7 @@ bool ParquetReader::GetNextRGBool(int col, std::vector<uint8_t>& data,
                 // for this reason to ensure comparisons match
                 // later on down the road
                 if (data_array.IsNull(i))
-                    data[i] = NULL;
+                    data[i] = 0;
             }
         }
         else

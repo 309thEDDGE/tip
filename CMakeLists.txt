@@ -11,9 +11,15 @@ endif()
 #see https://gitlab.kitware.com/cmake/cmake/-/issues/19401
 get_property(multiConfig GLOBAL PROPERTY GENERATOR_IS_MULTICONFIG)
 if (NOT multiConfig AND NOT DEFINED CMAKE_BUILD_TYPE)
-    set (CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build.")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build.")
+elseif(NOT DEFINED CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING)
+    message(STATUS "Not defined: Defining cmake_build_type: " ${CMAKE_BUILD_TYPE})
+elseif("${CMAKE_BUILD_TYPE}" STREQUAL "")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING)
+    message(STATUS "Empty string: Defining cmake_build_type: " ${CMAKE_BUILD_TYPE})
 endif()
-
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 project(TIP
         VERSION 0.1
@@ -48,13 +54,7 @@ message(STATUS "Git version string: " "${GIT_VERSION_STRING}")
 
 set(linux false)
 set(container false)
-set(debug 1)
 set(ethernet_data true)
-
-if (DEFINED DEBUG)
-    message(STATUS "DEBUG defined")
-    set(debug ${DEBUG})
-endif()
 
 if(DEFINED CONTAINER)
     message(STATUS "CONTAINER defined")
@@ -64,15 +64,6 @@ endif()
 
 get_filename_component(deps_dir "../deps" ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 message(STATUS "Dependencies dir: " ${deps_dir})
-
-if(NOT DEFINED CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-    message(STATUS "Not defined: Defining cmake_build_type: " ${CMAKE_BUILD_TYPE})
-elseif("${CMAKE_BUILD_TYPE}" STREQUAL "")
-    set(CMAKE_BUILD_TYPE Release)
-    message(STATUS "Empty string: Defining cmake_build_type: " ${CMAKE_BUILD_TYPE})
-endif()
-message(STATUS "using cmake build type: ${CMAKE_BUILD_TYPE}")
 
 #########################################################
 #                      Build Parameters
@@ -125,11 +116,9 @@ elseif("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
 
     message(STATUS "Setting system-specific options: " ${CMAKE_SYSTEM_NAME})
 
-    # Comment out the line below to use the default generator.
-    # Note: this setting is too late in the cmake process. It must go
-    # above somewhere as its not taking effect. However, "cmake -G Ninja .."
-    # does create ninja build files.
-    set(CMAKE_GENERATOR "Ninja")
+    add_compile_definitions(
+        _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
+    )
     file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMake_windows.txt" include_file)
     include("${include_file}")
 

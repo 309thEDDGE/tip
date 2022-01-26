@@ -95,7 +95,7 @@ TEST_F(Ch10TimeTest, ParseBinaryWeightedTime)
     Ch10BinWtTimeStampFmt* binwt_data = (Ch10BinWtTimeStampFmt*)time_data_.data();
     binwt_data->microsec = 134;
     binwt_data->low_order = 53;
-    binwt_data->high_order = 84112;
+    binwt_data->high_order = 4112;
     expected_ns_time_ = uint64_t(binwt_data->microsec) + uint64_t(binwt_data->low_order * 0.01) * uint64_t(1e6) + uint64_t(double(binwt_data->high_order) * 655.36) * uint64_t(1e6);
     // Now from microseconds to nanoseconds.
     expected_ns_time_ *= 1000;

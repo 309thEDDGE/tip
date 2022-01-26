@@ -43,7 +43,7 @@ bool ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread
 
     // Add fields to table.
     AddField(arrow::int64(), "time");
-    AddField(arrow::int16(), "doy");
+    AddField(arrow::boolean(), "doy");
     AddField(arrow::int32(), "channelid");
     AddField(arrow::int8(), "ttb");
     AddField(arrow::boolean(), "WE");
@@ -133,11 +133,11 @@ void ParquetMilStd1553F1::Append(const uint64_t& time_stamp, uint8_t doy,
     FE_[append_count_] = msg->FE;
     RR_[append_count_] = msg->RR;
     ME_[append_count_] = msg->ME;
-    gap1_[append_count_] = msg->gap1;
-    gap2_[append_count_] = msg->gap2;
+    gap1_[append_count_] = static_cast<int16_t>(msg->gap1);
+    gap2_[append_count_] = static_cast<int16_t>(msg->gap2);
     ttb_[append_count_] = chan_spec->ttb;
     doy_[append_count_] = doy;
-    time_stamp_[append_count_] = time_stamp;
+    time_stamp_[append_count_] = static_cast<int64_t>(time_stamp);
 
     // Get full command words. Intepret the MilStd1553MsgCommword pointer
     // as a uint16_t pointer. 48 bits (= 3 * uint16_t) later is the beginning
@@ -149,31 +149,31 @@ void ParquetMilStd1553F1::Append(const uint64_t& time_stamp, uint8_t doy,
     if (msg->RR)
     {
         // RT to RT, [ RX ][ TX ][ TX STAT ][ DATA0 ] ... [ DATAN ][ RX STAT ]
-        comm_word1_[append_count_] = commword_ptr_[1];
-        comm_word2_[append_count_] = commword_ptr_[0];
+        comm_word1_[append_count_] = static_cast<int32_t>(commword_ptr_[1]);
+        comm_word2_[append_count_] = static_cast<int32_t>(commword_ptr_[0]);
 
-        rtaddr1_[append_count_] = msg->remote_addr2;
+        rtaddr1_[append_count_] = static_cast<int8_t>(msg->remote_addr2);
         tr1_[append_count_] = msg->tx2;
-        subaddr1_[append_count_] = msg->sub_addr2;
-        wrdcnt1_[append_count_] = msg->word_count2;
+        subaddr1_[append_count_] = static_cast<int8_t>(msg->sub_addr2);
+        wrdcnt1_[append_count_] = static_cast<int8_t>(msg->word_count2);
 
-        rtaddr2_[append_count_] = msg->remote_addr1;
+        rtaddr2_[append_count_] = static_cast<int8_t>(msg->remote_addr1);
         tr2_[append_count_] = msg->tx1;
-        subaddr2_[append_count_] = msg->sub_addr1;
-        wrdcnt2_[append_count_] = msg->word_count1;
+        subaddr2_[append_count_] = static_cast<int8_t>(msg->sub_addr1);
+        wrdcnt2_[append_count_] = static_cast<int8_t>(msg->word_count1);
     }
     else
     {
         if (msg->tx1)
         {
             // RT to BC, [ TX ][ STAT ][ DATA0 ] ... [ DATAN ]
-            comm_word1_[append_count_] = commword_ptr_[0];
+            comm_word1_[append_count_] = static_cast<int32_t>(commword_ptr_[0]);
             comm_word2_[append_count_] = 0;
 
-            rtaddr1_[append_count_] = msg->remote_addr1;
+            rtaddr1_[append_count_] = static_cast<int8_t>(msg->remote_addr1);
             tr1_[append_count_] = msg->tx1;
-            subaddr1_[append_count_] = msg->sub_addr1;
-            wrdcnt1_[append_count_] = msg->word_count1;
+            subaddr1_[append_count_] = static_cast<int8_t>(msg->sub_addr1);
+            wrdcnt1_[append_count_] = static_cast<int8_t>(msg->word_count1);
 
             rtaddr2_[append_count_] = 0;
             tr2_[append_count_] = 0;
@@ -184,21 +184,21 @@ void ParquetMilStd1553F1::Append(const uint64_t& time_stamp, uint8_t doy,
         {
             // BC to RT, [ RX ][ DATA0 ] ... [ DATAN ][ STAT ]
             comm_word1_[append_count_] = 0;
-            comm_word2_[append_count_] = commword_ptr_[0];
+            comm_word2_[append_count_] = static_cast<int32_t>(commword_ptr_[0]);
 
             rtaddr1_[append_count_] = 0;
             tr1_[append_count_] = 0;
             subaddr1_[append_count_] = 0;
             wrdcnt1_[append_count_] = 0;
 
-            rtaddr2_[append_count_] = msg->remote_addr1;
+            rtaddr2_[append_count_] = static_cast<int8_t>(msg->remote_addr1);
             tr2_[append_count_] = msg->tx1;
-            subaddr2_[append_count_] = msg->sub_addr1;
-            wrdcnt2_[append_count_] = msg->word_count1;
+            subaddr2_[append_count_] = static_cast<int8_t>(msg->sub_addr1);
+            wrdcnt2_[append_count_] = static_cast<int8_t>(msg->word_count1);
         }
     }
 
-    channel_id_[append_count_] = chanid;
+    channel_id_[append_count_] = static_cast<int32_t>(chanid);
     totwrdcnt_[append_count_] = msg->length / 2;
     calcwrdcnt_[append_count_] = calcwrdcnt;
     payload_incomplete_[append_count_] = payload_incomplete;

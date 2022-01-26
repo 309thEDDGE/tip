@@ -5,7 +5,8 @@
 TEST(VersionInfoTest, CheckForVersionArgumentNoArgs)
 {
     const int array_size = 1;
-    char* args[array_size] = {"program"};
+    char a1[] = "program";
+    char* args[array_size] = {a1};
     int argc = array_size;
 
     bool ret = CheckForVersionArgument(argc, args);
@@ -15,7 +16,9 @@ TEST(VersionInfoTest, CheckForVersionArgumentNoArgs)
 TEST(VersionInfoTest, CheckForVersionArgumentNotCorrectString)
 {
     const int array_size = 2;
-    char* args[array_size] = {"program", "-vh"};
+    char a1[] = "program";
+    char a2[] = "-vh";
+    char* args[array_size] = {a1, a2};
     int argc = array_size;
 
     bool ret = CheckForVersionArgument(argc, args);
@@ -25,7 +28,9 @@ TEST(VersionInfoTest, CheckForVersionArgumentNotCorrectString)
 TEST(VersionInfoTest, CheckForVersionArgumentOption1)
 {
     const int array_size = 2;
-    char* args[array_size] = {"program", "-v"};
+    char a1[] = "program";
+    char a2[] = "-v";
+    char* args[array_size] = {a1, a2};
     int argc = array_size;
 
     bool ret = CheckForVersionArgument(argc, args);
@@ -35,7 +40,9 @@ TEST(VersionInfoTest, CheckForVersionArgumentOption1)
 TEST(VersionInfoTest, CheckForVersionArgumentOption2)
 {
     const int array_size = 2;
-    char* args[array_size] = {"program", "--version"};
+    char a1[] = "program";
+    char a2[] = "--version";
+    char* args[array_size] = {a1, a2};
     int argc = array_size;
 
     bool ret = CheckForVersionArgument(argc, args);

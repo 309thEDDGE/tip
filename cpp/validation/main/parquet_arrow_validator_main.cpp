@@ -1,5 +1,6 @@
 #include <ctime>
 #include <chrono>
+#include <cinttypes>
 #include "comparator.h"
 
 typedef std::chrono::high_resolution_clock Clock;
@@ -22,7 +23,7 @@ int main(int argc, char* argv[])
     comp.CompareAll();
 
     auto t2 = Clock::now();
-    printf("\nElapsed Time: %d seconds\n",
+    printf("\nElapsed Time: %" PRId64 " seconds\n",
            std::chrono::duration_cast<std::chrono::seconds>(t2 - t1).count());
 
     return 0;

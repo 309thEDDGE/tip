@@ -42,7 +42,7 @@ class TranslateTabularContext1553 : public TranslateTabularParquet
 
 
     // Vectors into which row group data will be read.
-    std::vector<uint64_t> time_;
+    std::vector<int64_t> time_;
     std::vector<uint16_t> raw_data_;
     std::vector<uint16_t> channelid_;
     std::vector<uint8_t> txrtaddr_;

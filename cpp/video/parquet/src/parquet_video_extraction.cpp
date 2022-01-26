@@ -34,9 +34,6 @@ bool ParquetVideoExtraction::OpenParquetFile(ManagedPath file_path)
     }
 
     arrow_reader_->set_use_threads(true);
-#ifndef NEWARROW
-    arrow_reader_->set_num_threads(4);
-#endif
 
     // Get schema.
     st_ = arrow_reader_->GetSchema(&schema_);

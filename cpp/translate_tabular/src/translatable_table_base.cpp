@@ -163,7 +163,7 @@ bool TranslatableTableBase::ConfigurePqContext(std::shared_ptr<ParquetContext>& 
         return false;
     }
 
-    pq_ctx = std::make_shared<ParquetContext>(rg_count);
+    pq_ctx = std::make_shared<ParquetContext>(static_cast<int>(rg_count));
     for (std::vector<std::shared_ptr<TranslatableColumnBase>>::const_iterator it =
              columns.cbegin();
          it != columns.cend(); ++it)

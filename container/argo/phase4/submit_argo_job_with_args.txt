@@ -1,8 +1,0 @@
-argo submit -n argo run_tip_from_faux_front_end.yml \
--p ext_ch10_mnt_point="/data,/data" \
--p ext_icd_mnt_point="/data,/data" \
--p ch10_file_name="189_60611000_RMMD_1553_dup.ch10,383_0001.ch10" \
--p icd_file_name="T38_10_0_MUX.tip.csv,F16_ICD.txt" \
--p overwrite="false,false" \
--p video="false,false" \
--p kill_switch="false"

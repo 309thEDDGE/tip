@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include <cstdint>
+#include <cinttypes>
 #include "binbuff.h"
 
 class BinBuffTest : public ::testing::Test
@@ -156,7 +157,7 @@ class BinBuffTest : public ::testing::Test
 
         if (seek_file_size_ != write_size_)
         {
-            printf("Seek file size (%llu) not equal to write size (%llu)\n", seek_file_size_,
+            printf("Seek file size (%" PRIu64 ") not equal to write size (%zu)\n", seek_file_size_,
                    write_size_);
             return false;
         }

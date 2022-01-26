@@ -1,20 +1,20 @@
 #include "icd_translate.h"
 
-#define REGISTER_TRANSLATE_TYPE(X) \
-    template <>                    \
-    const char* ICDTranslate::TypeTranslateTraits<X>::name = #X
+// #define REGISTER_TRANSLATE_TYPE(X) \
+//     template <>                    \
+//     const char* ICDTranslate::TypeTranslateTraits<X>::name = #X
 
-REGISTER_TRANSLATE_TYPE(uint8_t);
-REGISTER_TRANSLATE_TYPE(int8_t);
-REGISTER_TRANSLATE_TYPE(uint16_t);
-REGISTER_TRANSLATE_TYPE(int16_t);
-REGISTER_TRANSLATE_TYPE(uint32_t);
-REGISTER_TRANSLATE_TYPE(int32_t);
-REGISTER_TRANSLATE_TYPE(uint64_t);
-REGISTER_TRANSLATE_TYPE(int64_t);
-REGISTER_TRANSLATE_TYPE(float);
-REGISTER_TRANSLATE_TYPE(double);
-REGISTER_TRANSLATE_TYPE(char);
+// REGISTER_TRANSLATE_TYPE(uint8_t);
+// REGISTER_TRANSLATE_TYPE(int8_t);
+// REGISTER_TRANSLATE_TYPE(uint16_t);
+// REGISTER_TRANSLATE_TYPE(int16_t);
+// REGISTER_TRANSLATE_TYPE(uint32_t);
+// REGISTER_TRANSLATE_TYPE(int32_t);
+// REGISTER_TRANSLATE_TYPE(uint64_t);
+// REGISTER_TRANSLATE_TYPE(int64_t);
+// REGISTER_TRANSLATE_TYPE(float);
+// REGISTER_TRANSLATE_TYPE(double);
+// REGISTER_TRANSLATE_TYPE(char);
 
 ICDTranslate::ICDTranslate() : n_translated_values_(0), downshift1_(0), downshift2_(0), mask1_(0), mask1_twos_(0), mask2_(0), mask2_twos_(0), scale_(0.0), scale_twos_(0.0), elem_word_count_(0), should_resize_output_vector_(true), sign_bit_mask_(0), bit_count_(0), bitmsb_(0), bitlsb_(0)
 {
@@ -102,3 +102,5 @@ void ICDTranslate::KeepLS16(const std::vector<uint32_t>& input_words,
         output_words[i] = ui16ptr[i * index_mult];
     }
 }
+
+

@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cinttypes>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "resource_limits.h"
@@ -68,7 +69,7 @@ TEST(ResourceLimitsTest, SetFileDescriptorLimitsSuccess)
     // Increment soft limit and attempt to set a new soft limit.
     // Gitlab runners have soft limit = hard limit, so decrement
     // by ten instead of increment.
-    printf("Initial FD soft/hard limit: %llu/%llu\n", fd_soft_limit, fd_hard_limit);
+    printf("Initial FD soft/hard limit: %" PRIu64 "/%" PRIu64 "\n", fd_soft_limit, fd_hard_limit);
     uint64_t new_fd_soft_limit = fd_soft_limit - 10;
     status = SetFileDescriptorLimits(new_fd_soft_limit);
     EXPECT_TRUE(status);
