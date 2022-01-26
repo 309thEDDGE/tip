@@ -10,18 +10,35 @@
 #include <cmath>
 #include "icd_element.h"
 
+// Stolen from:
+// https://stackoverflow.com/questions/1055452/c-get-name-of-type-in-template
+template <typename T>
+struct TypeTranslateTraits
+{
+    static const char* name;
+};
+
+#define REGISTER_TRANSLATE_TYPE(X) \
+    template <>                    \
+    inline const char* TypeTranslateTraits<X>::name = #X
+
+REGISTER_TRANSLATE_TYPE(uint8_t);
+REGISTER_TRANSLATE_TYPE(int8_t);
+REGISTER_TRANSLATE_TYPE(uint16_t);
+REGISTER_TRANSLATE_TYPE(int16_t);
+REGISTER_TRANSLATE_TYPE(uint32_t);
+REGISTER_TRANSLATE_TYPE(int32_t);
+REGISTER_TRANSLATE_TYPE(uint64_t);
+REGISTER_TRANSLATE_TYPE(int64_t);
+REGISTER_TRANSLATE_TYPE(float);
+REGISTER_TRANSLATE_TYPE(double);
+REGISTER_TRANSLATE_TYPE(char);
+
 const size_t BCDDigitBitCount = 4;
 
 class ICDTranslate
 {
    private:
-    // Stolen from:
-    // https://stackoverflow.com/questions/1055452/c-get-name-of-type-in-template
-    template <typename T>
-    struct TypeTranslateTraits
-    {
-        static const char* name;
-    };
 
     bool should_resize_output_vector_;
     static const uint64_t wide_one_ = 1;
@@ -129,24 +146,31 @@ class ICDTranslate
     template <typename OutType>
     void TranslateSigned32(const std::vector<uint16_t>& input_words,
                            std::vector<OutType>& output_eu);
+
     template <typename OutType>
     void TranslateFloat32GPS(const std::vector<uint16_t>& input_words,
                              std::vector<OutType>& output_eu);
+
     template <typename OutType>
     void TranslateFloat64GPS(const std::vector<uint16_t>& input_words,
                              std::vector<OutType>& output_eu);
+
     template <typename OutType>
     void TranslateCAPS(const std::vector<uint16_t>& input_words,
                        std::vector<OutType>& output_eu);
+
     template <typename OutType>
     void TranslateFloat16(const std::vector<uint16_t>& input_words,
                           std::vector<OutType>& output_eu);
+    
     template <typename OutType>
     void TranslateFloat64IEEE(const std::vector<uint16_t>& input_words,
                               std::vector<OutType>& output_eu);
+    
     template <typename OutType>
     void TranslateFloat321750(const std::vector<uint16_t>& input_words,
                               std::vector<OutType>& output_eu);
+
     template <typename OutType>
     void TranslateFloat32IEEE(const std::vector<uint16_t>& input_words,
                               std::vector<OutType>& output_eu);
@@ -214,7 +238,18 @@ class ICDTranslate
     void KeepLS16(const std::vector<uint32_t>& input_words,
         std::vector<uint16_t>& output_words);
 
+    /*
+    Print not implemented for the function.
+
+    Args:
+        func_name   --> String representing the function name
+    */
+    template<typename T>
+    void PrintNotImpl(const char* func_name);
 };
+
+
+
 
 template <typename OutType>
 bool ICDTranslate::TranslateArrayOfElement(const std::vector<uint16_t>& input_words,
@@ -884,8 +919,7 @@ void ICDTranslate::TranslateUnsigned32(const std::vector<uint16_t>& input_words,
 
 template <typename OutType>
 void ICDTranslate::TranslateSigned32(const std::vector<uint16_t>& input_words,
-                                     std::vector<OutType>& output_eu)
-{
+                                     std::vector<OutType>& output_eu) {
     int32_t data_val = 0;
     uint16_t* ui16ptr = reinterpret_cast<uint16_t*>(&data_val);
     for (size_t i = 0; i < n_translated_values_; i++)
@@ -896,9 +930,25 @@ void ICDTranslate::TranslateSigned32(const std::vector<uint16_t>& input_words,
     }
 }
 
+template<typename T>
+void ICDTranslate::PrintNotImpl(const char* func_name)
+{
+    printf("%s: Not implemented for type \"%s\"", func_name,
+            TypeTranslateTraits<T>::name);
+}
+
+
 template <typename OutType>
 void ICDTranslate::TranslateFloat32GPS(const std::vector<uint16_t>& input_words,
                                        std::vector<OutType>& output_eu)
+{
+    PrintNotImpl<OutType>("TranslateFloat32GPS");
+}
+
+
+template <>
+inline void ICDTranslate::TranslateFloat32GPS<float>(const std::vector<uint16_t>& input_words,
+                                       std::vector<float>& output_eu)
 {
     float fsign = 1.;
     float expon = 0.;
@@ -935,6 +985,13 @@ void ICDTranslate::TranslateFloat32GPS(const std::vector<uint16_t>& input_words,
 template <typename OutType>
 void ICDTranslate::TranslateFloat64GPS(const std::vector<uint16_t>& input_words,
                                        std::vector<OutType>& output_eu)
+{
+    PrintNotImpl<OutType>("TranslateFloat64GPS");
+}
+
+template<>
+inline void ICDTranslate::TranslateFloat64GPS<double>(const std::vector<uint16_t>& input_words,
+                                       std::vector<double>& output_eu)
 {
     double dsign = 1.;
     double expon = 0.;
@@ -977,7 +1034,14 @@ void ICDTranslate::TranslateFloat64GPS(const std::vector<uint16_t>& input_words,
 
 template <typename OutType>
 void ICDTranslate::TranslateCAPS(const std::vector<uint16_t>& input_words,
-                                 std::vector<OutType>& output_eu)
+                                       std::vector<OutType>& output_eu)
+{
+    PrintNotImpl<OutType>("TranslateCAPS");
+}
+
+template<>
+inline void ICDTranslate::TranslateCAPS(const std::vector<uint16_t>& input_words,
+                                 std::vector<double>& output_eu)
 {
     double dsign = 1.;
     double expon = 0.;
@@ -1021,7 +1085,14 @@ void ICDTranslate::TranslateCAPS(const std::vector<uint16_t>& input_words,
 
 template <typename OutType>
 void ICDTranslate::TranslateFloat16(const std::vector<uint16_t>& input_words,
-                                    std::vector<OutType>& output_eu)
+                                       std::vector<OutType>& output_eu)
+{
+    PrintNotImpl<OutType>("TranslateFloat16");
+}
+
+template<>
+inline void ICDTranslate::TranslateFloat16<float>(const std::vector<uint16_t>& input_words,
+                                    std::vector<float>& output_eu)
 {
     double dsign = 1.;
     double expon = 0.;
@@ -1045,7 +1116,14 @@ void ICDTranslate::TranslateFloat16(const std::vector<uint16_t>& input_words,
 
 template <typename OutType>
 void ICDTranslate::TranslateFloat64IEEE(const std::vector<uint16_t>& input_words,
-                                        std::vector<OutType>& output_eu)
+                                       std::vector<OutType>& output_eu)
+{
+    PrintNotImpl<OutType>("TranslateFloat64IEEE");
+}
+
+template<>
+inline void ICDTranslate::TranslateFloat64IEEE<double>(const std::vector<uint16_t>& input_words,
+                                        std::vector<double>& output_eu)
 {
     /*
 	Note about NaNs: During comparison of linux- and windows-generated 
@@ -1100,7 +1178,14 @@ void ICDTranslate::TranslateFloat64IEEE(const std::vector<uint16_t>& input_words
 
 template <typename OutType>
 void ICDTranslate::TranslateFloat321750(const std::vector<uint16_t>& input_words,
-                                        std::vector<OutType>& output_eu)
+                                       std::vector<OutType>& output_eu)
+{
+    PrintNotImpl<OutType>("TranslateFloat321750");
+}
+
+template<>
+inline void ICDTranslate::TranslateFloat321750<float>(const std::vector<uint16_t>& input_words,
+                                        std::vector<float>& output_eu)
 {
     int dsign = 0;
     double expon = 0.;
@@ -1134,7 +1219,14 @@ void ICDTranslate::TranslateFloat321750(const std::vector<uint16_t>& input_words
 
 template <typename OutType>
 void ICDTranslate::TranslateFloat32IEEE(const std::vector<uint16_t>& input_words,
-                                        std::vector<OutType>& output_eu)
+                                       std::vector<OutType>& output_eu)
+{
+    PrintNotImpl<OutType>("TranslateFloat32IEEE");
+}
+
+template<>
+inline void ICDTranslate::TranslateFloat32IEEE<float>(const std::vector<uint16_t>& input_words,
+                                        std::vector<float>& output_eu)
 {
     float data_val = 0.;
     uint16_t* ui16ptr = reinterpret_cast<uint16_t*>(&data_val);
@@ -1147,6 +1239,8 @@ void ICDTranslate::TranslateFloat32IEEE(const std::vector<uint16_t>& input_words
         output_eu[i] = data_val;
     }
 }
+
+
 template <typename OutType>
 bool ICDTranslate::CheckType(const std::vector<std::string>& type_strings, const std::string& elem_name)
 {

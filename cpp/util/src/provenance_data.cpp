@@ -21,11 +21,16 @@ bool GetProvenanceData(const ManagedPath& hash_file_path, size_t hash_byte_count
 std::string GetGMTString(const std::string& strftime_fmt)
 {
     std::string time_str;
-
     time_t rawtime;
-    struct tm* tm_ptr;
+    struct tm* tm_ptr = nullptr;
     time(&rawtime);
+#if defined __WIN64
+    struct tm tm_data;
+    tm_ptr = &tm_data;
+    gmtime_s(tm_ptr, &rawtime);
+#else
     tm_ptr = gmtime(&rawtime);
+#endif
     const size_t bufflen = 100;
     char time_buff[bufflen];
     time_buff[bufflen-1] = '\0';

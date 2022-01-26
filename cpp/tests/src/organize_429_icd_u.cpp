@@ -250,7 +250,6 @@ TEST_F(Organize429ICDTest, BuildBusNameToChannelAndSubchannelMapMultiBusToChanID
     std::unordered_map<std::string, std::tuple<uint16_t, uint16_t>> output_map =
         icd_org.GetBusNameToChannelSubchannelMap();
 
-
     EXPECT_TRUE(output_map.size()==3);
     std::tuple<uint16_t, uint16_t> set1a_tuple = output_map["SET1A"];
     std::tuple<uint16_t, uint16_t> set1b_tuple = output_map["SET1B"];
@@ -258,9 +257,6 @@ TEST_F(Organize429ICDTest, BuildBusNameToChannelAndSubchannelMapMultiBusToChanID
     EXPECT_EQ(output_map.count("SET1A"),1);
     EXPECT_EQ(output_map.count("SET1B"),1);
     EXPECT_EQ(output_map.count("SET2A"),1);
-
-    // uint16_t temp_compare;
-    // temp_compare = std::get<0>(set1a_tuple);
     EXPECT_EQ(std::get<0>(set1a_tuple),34);
     EXPECT_EQ(std::get<1>(set1a_tuple),1);
     EXPECT_EQ(std::get<0>(set1b_tuple),34);

@@ -96,12 +96,6 @@ class ParquetContext
     std::string GetTypeIDFromArrowType(const std::shared_ptr<arrow::DataType> type,
                                        int& byteSize);
 
-    template <typename castToType>
-    void CastTo(const void* const data,
-                const CastFromType castFrom,
-                const int& size,
-                const int& offset);
-
     // Track the count of appended rows.
     size_t appended_row_count_;
 
@@ -211,7 +205,7 @@ class ParquetContext
 	*/
     bool AddField(const std::shared_ptr<arrow::DataType> type,
                   const std::string& fieldName,
-                  const int listSize = NULL);
+                  int listSize = 0);
 
     /*
 		Sets a pointer to the memory location of vectors
@@ -460,10 +454,9 @@ void ParquetContext::Append(const bool& isList,
             A* sub_bldr =
                 static_cast<A*>(bldr->value_builder());
 
-            CastTo<T>(columnData.data_,
-                      columnData.cast_from_,
-                      append_row_count_ * listCount,
-                      offset * listCount);
+            columnData.GetInputData()->CopyToCompatible(
+                reinterpret_cast<T*>(cast_vec_.data()),
+                append_row_count_ * listCount, offset*listCount);
 
             sub_bldr->AppendValues(reinterpret_cast<T*>(cast_vec_.data()),
                                    append_row_count_ * listCount);
@@ -497,10 +490,9 @@ void ParquetContext::Append(const bool& isList,
         {
             if (castRequired)
             {
-                CastTo<T>(columnData.data_,
-                          columnData.cast_from_,
-                          append_row_count_,
-                          offset);
+                columnData.GetInputData()->CopyToCompatible(
+                    reinterpret_cast<T*>(cast_vec_.data()),
+                    append_row_count_, offset);
 
                 bldr->AppendValues(reinterpret_cast<T*>(cast_vec_.data()),
                                    append_row_count_);
@@ -515,10 +507,9 @@ void ParquetContext::Append(const bool& isList,
         {
             if (castRequired)
             {
-                CastTo<T>(columnData.data_,
-                          columnData.cast_from_,
-                          append_row_count_,
-                          offset);
+                columnData.GetInputData()->CopyToCompatible(
+                    reinterpret_cast<T*>(cast_vec_.data()),
+                    append_row_count_, offset);
 
                 bldr->AppendValues(reinterpret_cast<T*>(cast_vec_.data()),
                                    append_row_count_,
@@ -529,64 +520,6 @@ void ParquetContext::Append(const bool& isList,
                                    append_row_count_,
                                    columnData.null_values_->data() + offset);
         }
-    }
-}
-
-template <typename castToType>
-void ParquetContext::CastTo(const void* const data,
-                            const CastFromType castFrom,
-                            const int& size,
-                            const int& offset)
-{
-    switch (castFrom)
-    {
-        case CastFromType::TypeINT8:
-            std::copy(reinterpret_cast<const int8_t* const>(data) + offset,
-                      reinterpret_cast<const int8_t* const>(data) + offset + size,
-                      reinterpret_cast<castToType*>(cast_vec_.data()));
-            break;
-
-        case CastFromType::TypeUINT8:
-            std::copy(reinterpret_cast<const uint8_t* const>(data) + offset,
-                      reinterpret_cast<const uint8_t* const>(data) + offset + size,
-                      reinterpret_cast<castToType*>(cast_vec_.data()));
-            break;
-
-        case CastFromType::TypeINT16:
-            std::copy(reinterpret_cast<const int16_t* const>(data) + offset,
-                      reinterpret_cast<const int16_t* const>(data) + offset + size,
-                      reinterpret_cast<castToType*>(cast_vec_.data()));
-            break;
-
-        case CastFromType::TypeUINT16:
-            std::copy(reinterpret_cast<const uint16_t* const>(data) + offset,
-                      reinterpret_cast<const uint16_t* const>(data) + offset + size,
-                      reinterpret_cast<castToType*>(cast_vec_.data()));
-            break;
-
-        case CastFromType::TypeINT32:
-            std::copy(reinterpret_cast<const int32_t* const>(data) + offset,
-                      reinterpret_cast<const int32_t* const>(data) + offset + size,
-                      reinterpret_cast<castToType*>(cast_vec_.data()));
-            break;
-
-        case CastFromType::TypeUINT32:
-            std::copy(reinterpret_cast<const uint32_t* const>(data) + offset,
-                      reinterpret_cast<const uint32_t* const>(data) + offset + size,
-                      reinterpret_cast<castToType*>(cast_vec_.data()));
-            break;
-
-        case CastFromType::TypeINT64:
-            std::copy(reinterpret_cast<const int64_t* const>(data) + offset,
-                      reinterpret_cast<const int64_t* const>(data) + offset + size,
-                      reinterpret_cast<castToType*>(cast_vec_.data()));
-            break;
-
-        case CastFromType::TypeUINT64:
-            std::copy(reinterpret_cast<const uint64_t* const>(data) + offset,
-                      reinterpret_cast<const uint64_t* const>(data) + offset + size,
-                      reinterpret_cast<castToType*>(cast_vec_.data()));
-            break;
     }
 }
 
@@ -657,6 +590,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
             // If casting is required
             if (typeid(NativeType).name() != it->second.type_ID_)
             {
+                SPDLOG_WARN("Casting is required for field \"{:s}\"", fieldName);
                 // Check if other types are being written
                 // to or from a string or to boolean from
                 // anything but uint8_t
@@ -734,6 +668,10 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
                                          boolField,
                                          data.size());
             }
+
+            std::shared_ptr<InputDataBase> input_data = 
+                std::make_shared<InputData<NativeType>>(data.data());
+            it->second.SetInputData(input_data);
 
             return true;
         }

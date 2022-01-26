@@ -220,9 +220,14 @@ bool ParquetReader::GetNextRG(int col,
         if (data.size() < size)
             data.resize(size);
 
-        std::copy(data_array.raw_values(),
-                  data_array.raw_values() + data_array.length(),
-                  data.data());
+        // std::copy(data_array.raw_values(),
+        //           data_array.raw_values() + data_array.length(),
+        //           data.data());
+
+        // Use this instead of the commented out lines above
+        // to avoid "possible loss of information" warnings. 
+        for(size_t i = 0; i < size; i++)
+            data[i] = static_cast<T>(data_array.Value(i));
     }
     else
     {
@@ -252,14 +257,20 @@ bool ParquetReader::GetNextRG(int col,
                 // for this reason to ensure comparisons match
                 // later on down the road
                 if (data_array.IsNull(i))
-                    data[i] = NULL;
+                    data[i] = 0;
             }
         }
         else
         {
-            std::copy(data_array.raw_values(),
-                      data_array.raw_values() + data_array.length(),
-                      data.data());
+            // std::copy(data_array.raw_values(),
+            //           data_array.raw_values() + data_array.length(),
+            //           data.data());
+
+            // Use this instead of the commented out lines above
+            // to avoid "possible loss of information" warnings. 
+            for(size_t i = 0; i < size; i++)
+                data[i] = static_cast<T>(data_array.Value(i));
+               
         }
     }
 

@@ -12,18 +12,18 @@
 class ParquetEthernetF0 : public ParquetContext
 {
    private:
-    const size_t DEFAULT_ROW_GROUP_COUNT = 10000;
-    const size_t DEFAULT_BUFFER_SIZE_MULTIPLIER = 10;
+    static const size_t DEFAULT_ROW_GROUP_COUNT;
+    static const size_t DEFAULT_BUFFER_SIZE_MULTIPLIER;
     const size_t PAYLOAD_LIST_COUNT;
     const size_t MAX_TEMP_ELEMENT_COUNT;
     uint16_t thread_id_;
-    uint8_t* payload_ptr_;
+    int16_t* payload_ptr_;
 
     // Arrays of data to be written to the Parquet table. See EthernetData for a
     // description of the columns.
-    std::vector<uint64_t> time_stamp_;   // save as int64
-    std::vector<uint16_t> channel_id_;   // save as int32
-    std::vector<uint8_t> payload_;       // save as int16
+    std::vector<int64_t> time_stamp_;   // save as int64
+    std::vector<int32_t> channel_id_;   // save as int32
+    std::vector<int16_t> payload_;       // save as int16
     std::vector<int64_t> payload_size_;  // original type is uint32_t
     std::vector<std::string> dst_mac_addr_;
     std::vector<std::string> src_mac_addr_;

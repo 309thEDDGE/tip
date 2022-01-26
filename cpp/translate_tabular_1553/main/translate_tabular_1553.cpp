@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
     TIPMDDocument parser_md_doc;
     ManagedPath parser_md_path = input_path / "_metadata.yaml";
     if(!GetParsed1553Metadata(parser_md_path, parser_md_doc))
-        return false;
+        return 0;
 
     ProvenanceData prov_data;
     if(!GetProvenanceData(icd_path.absolute(), 0, prov_data))
@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
     std::map<std::string, std::string> msg_name_substitutions;
     std::map<std::string, std::string> elem_name_substitutions;
     if (!IngestICD(dts1553, icd_path, msg_name_substitutions, elem_name_substitutions))
-        return false;
+        return 0;
 
     std::map<uint64_t, std::string> chanid_to_bus_name_map;
     std::set<uint64_t> excluded_channel_ids = std::set<uint64_t>();

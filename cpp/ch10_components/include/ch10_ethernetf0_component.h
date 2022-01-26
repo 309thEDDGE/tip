@@ -45,6 +45,15 @@ class Ch10EthernetF0Component : public Ch10PacketComponent
     // Length of bytes in Ethernet frame payload
     uint32_t data_length_;
 
+    // Object in which to store parsed ethernet frame data.
+    EthernetData eth_data_;
+    EthernetData* eth_data_ptr_;
+
+    // Ethernet parsing class
+    NetworkPacketParser eth_frame_parser_;
+
+   public:
+
     // Ethernet/MAC frame maximum length, including 4-byte
     // CRC. Not sure if "MAC frames" as specified by the ch10
     // spec includes the preamble or start frame delimiter.
@@ -65,14 +74,6 @@ class Ch10EthernetF0Component : public Ch10PacketComponent
     // maximum jumbo frame size.
     const uint32_t mac_frame_max_length_ = 9000;  // 1522;
 
-    // Object in which to store parsed ethernet frame data.
-    EthernetData eth_data_;
-    EthernetData* eth_data_ptr_;
-
-    // Ethernet parsing class
-    NetworkPacketParser eth_frame_parser_;
-
-   public:
     const Ch10PacketElement<EthernetF0CSDW>& ethernetf0_csdw_elem;
     const Ch10PacketElement<EthernetF0FrameIDWord>& ethernetf0_frameid_elem;
 

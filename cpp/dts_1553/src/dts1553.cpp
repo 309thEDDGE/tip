@@ -106,6 +106,9 @@ bool DTS1553::ProcessLinesAsYaml(const std::vector<std::string>& lines,
                 case DTS1553Component::SUPPL_BUSMAP_COMM_WORDS:
                     suppl_busmap_comm_words_node = it->second;
                     break;
+                case DTS1553Component::BAD:
+                    SPDLOG_ERROR("Invalid DTS1553Component::BAD");
+                    return false;
             }
         }
     }

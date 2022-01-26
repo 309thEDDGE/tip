@@ -480,9 +480,6 @@ class ParquetContextTest : public ::testing::Test
         }
 
         arrow_reader_->set_use_threads(true);
-#ifndef NEWARROW
-        arrow_reader_->set_num_threads(2);
-#endif
 
         if (!st_.ok())
         {

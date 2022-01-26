@@ -166,7 +166,7 @@ TEST(Ch10ContextTest, UpdateContextSetVars)
     hdr_fmt.pkt_size = 4320;
     hdr_fmt.data_size = 3399;
     hdr_fmt.rtc1 = 321053;
-    hdr_fmt.rtc2 = 502976;
+    hdr_fmt.rtc2 = 2976;
     hdr_fmt.chanID = 9;
     hdr_fmt.data_type = static_cast<uint8_t>(Ch10PacketType::MILSTD1553_F1);
     uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
@@ -214,7 +214,7 @@ TEST(Ch10ContextTest, UpdateWithTDPDataTDPIsNone)
     hdr_fmt.pkt_size = 4320;
     hdr_fmt.data_size = 3399;
     hdr_fmt.rtc1 = 321053;
-    hdr_fmt.rtc2 = 502976;
+    hdr_fmt.rtc2 = 2976;
     uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
     hdr_fmt.intrapkt_ts_source = 0;
     hdr_fmt.secondary_hdr = 0;
@@ -246,7 +246,7 @@ TEST(Ch10ContextTest, UpdateWithTDPDataVarsUpdated)
     hdr_fmt.pkt_size = 4320;
     hdr_fmt.data_size = 3399;
     hdr_fmt.rtc1 = 321053;
-    hdr_fmt.rtc2 = 502976;
+    hdr_fmt.rtc2 = 2976;
     uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
     hdr_fmt.intrapkt_ts_source = 0;
     hdr_fmt.secondary_hdr = 0;
@@ -279,7 +279,7 @@ TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
     Ch10PacketHeaderFmt hdr_fmt{};
 
     hdr_fmt.rtc1 = 321053;
-    hdr_fmt.rtc2 = 502976;
+    hdr_fmt.rtc2 = 2976;
     uint64_t rtc = ((uint64_t(hdr_fmt.rtc2) << 32) + uint64_t(hdr_fmt.rtc1)) * 100;
     uint64_t abs_pos = 4823829394;
     Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);

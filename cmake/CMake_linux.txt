@@ -1,6 +1,3 @@
-set(CMAKE_GENERATOR "Unix Makefiles")
-set(CMAKE_CXX_COMPILER "/usr/bin/g++")
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 ####################
 message(STATUS "deps_dir: ${deps_dir}")
 
@@ -16,8 +13,6 @@ message(STATUS "deps_dir: ${deps_dir}")
 if(container)
     set(CMAKE_INSTALL_RPATH ${out_lib_dir} "/usr/local/lib")
 endif()
-
-add_compile_options("-m64")
 
 # NEWARROW is used if the new (~0.17+) version of 
 # Arrow is used. Currently, only the most recent

@@ -51,7 +51,7 @@ bool UserInput::GetUnsignedInt(uint64_t& output,
             printf("Must be one of the following options:\n");
             for (int i = 0; i < options_vector_string.size(); i++)
             {
-                printf(options_vector_string[i].c_str());
+                printf("%s", options_vector_string[i].c_str());
                 if (i < (options_vector_string.size() - 1))
                     printf(", ");
             }
@@ -142,7 +142,7 @@ bool UserInput::GetString(std::string& output,
             printf("Must be one of the following options:\n");
             for (int i = 0; i < options_vector_string.size(); i++)
             {
-                printf(options_vector_string[i].c_str());
+                printf("%s", options_vector_string[i].c_str());
                 if (i < (options_vector_string.size() - 1))
                     printf(", ");
             }

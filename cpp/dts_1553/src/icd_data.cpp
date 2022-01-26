@@ -807,7 +807,7 @@ size_t ICDData::FillElementsFromYamlNodes(const std::string& msg_name, const YAM
                 return 0;
             }
 
-            if (!elem_name.compare(perc_enc_elem_name) == 0)
+            if (!(elem_name.compare(perc_enc_elem_name) == 0))
                 elem_name_subs[elem_name] = perc_enc_elem_name;
 
             // Item must be a map and have the correct keys.

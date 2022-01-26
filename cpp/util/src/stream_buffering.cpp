@@ -23,7 +23,7 @@ bool SetStreamBufferAndMode(FILE* stream, char* buffer, int mode, size_t size)
     int ret = setvbuf(stream, buffer, mode, size);
     if (ret != 0)
     {
-        printf("SetStreamBufferAndMode: setvbuf returned {:d}\n", ret);
+        printf("SetStreamBufferAndMode: setvbuf returned %d\n", ret);
         return false;
     }
     return true;

@@ -27,7 +27,7 @@ bool ParquetARINC429F0::Initialize(const ManagedPath& outfile, uint16_t thread_i
 
     // Add fields to table.
     AddField(arrow::int64(), "time");
-    AddField(arrow::int16(), "doy");
+    AddField(arrow::boolean(), "doy");
     AddField(arrow::int32(), "channelid");
     AddField(arrow::int32(), "gaptime");
     AddField(arrow::boolean(), "BS");
@@ -81,25 +81,25 @@ void ParquetARINC429F0::Append(const uint64_t& time_stamp, uint8_t doy,
 {
     // Is the csdw even needed? Don't see how it is for ARINC data.
 
-    time_stamp_[append_count_] = time_stamp;
+    time_stamp_[append_count_] = static_cast<int64_t>(time_stamp);
     doy_[append_count_] = doy;
-    gap_time_[append_count_] = msg->gap;
+    gap_time_[append_count_] = static_cast<int32_t>(msg->gap);
     BS_[append_count_] = msg->BS;
     PE_[append_count_] = msg->PE;
     FE_[append_count_] = msg->FE;
-    bus_[append_count_] = msg->bus;
-    label_[append_count_] = EncodeARINC429Label(msg->label);
-    SDI_[append_count_] = msg->SDI;
-    data_[append_count_] = msg->data;
-    SSM_[append_count_] = msg->SSM;
+    bus_[append_count_] = static_cast<int16_t>(msg->bus);
+    label_[append_count_] = static_cast<int16_t>(msg->label);
+    SDI_[append_count_] = static_cast<int8_t>(msg->SDI);
+    data_[append_count_] = static_cast<int32_t>(msg->data);
+    SSM_[append_count_] = static_cast<int8_t>(msg->SSM);
     parity_[append_count_] = msg->parity;
-    channel_id_[append_count_] = chanid;
+    channel_id_[append_count_] = static_cast<int32_t>(chanid);
 
     // Increment the count variable and write data if row group(s) are filled.
     if (IncrementAndWrite(thread_id_))
     {
         // Reset list buffers.
-        std::fill(data_.begin(), data_.end(), 0);
+        // std::fill(data_.begin(), data_.end(), 0);
     }
 
 }

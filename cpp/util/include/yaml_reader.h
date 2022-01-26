@@ -190,11 +190,21 @@ bool YamlReader::GetSequenceNodeVector(const YAML::Node& node, std::vector<T>& o
 #endif
 
 /*	Examples on how to use the yaml-cpp libraries
-	This example uses the example.yaml file provided in
-	the "misc" folder
+	This example uses the example provided below. 
 
 YAML::Node config =
-YAML::LoadFile("misc\\example.yaml");
+YAML::LoadFile(
+    "platform: name\n"
+    "booleanTest: True\n"
+    "integerTest: 50\n"
+    "integerList: [0, 2, 3, -1]\n"
+    "corrections:\n"
+    "  - [AJunk,A]\n"
+    "  - [BJunk,B]\n"
+    "corrections2:\n"
+    "  AJunk: A\n"
+    "  BJunk: B\n"
+);
 
 if (config["platform"]) {
 	std::string platform = config["platform"].as<std::string>();

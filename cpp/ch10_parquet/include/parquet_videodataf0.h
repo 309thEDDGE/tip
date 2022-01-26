@@ -51,7 +51,7 @@ class ParquetVideoDataF0 : public ParquetContext
 		3		-> H.264 MP@L3
 		4-15	-> reserved
 	*/
-    std::vector<uint8_t> PL_;
+    std::vector<int16_t> PL_;
 
     /*
 		SCR/RTC Sync:
@@ -65,23 +65,24 @@ class ParquetVideoDataF0 : public ParquetContext
 		Video transport stream data
 		There are 188 bytes of transport stream data per row 
 		written out to the parquet file
+
+		Use int32_t to avoid cast from uint16_t.
 	*/
-    std::vector<video_datum> video_data_;
-    std::vector<int8_t>* saved_video_data_;
+    std::vector<int32_t> video_data_;
 
     /*
 		time:
 		Measured in nano seconds from the epoch
 		Depends on "doy" (see above comment)
 	*/
-    std::vector<uint64_t> time_;
+    std::vector<int64_t> time_;
 
     /*
 		channel id:
 		Channel id associated with the video payload
 		Note: One channel ID per video stream
 	*/
-    std::vector<uint16_t> channel_id_;
+    std::vector<int32_t> channel_id_;
 
    public:
     ParquetVideoDataF0();

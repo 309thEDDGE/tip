@@ -43,7 +43,7 @@ TEST(StreamBufferingTest, SetStreamBufferAndModeInvalidSize)
     bool result = SetStreamBufferAndMode(stream, buff, mode, size);
     EXPECT_FALSE(result);
 
-    size = INT_MAX + 1;  // must be <= INT_MAX
+    size = static_cast<size_t>(INT_MAX) + 1;  // must be <= INT_MAX
     result = SetStreamBufferAndMode(stream, buff, mode, size);
     EXPECT_FALSE(result);
 }
