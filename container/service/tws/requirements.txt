@@ -1,8 +1,0 @@
-jsonschema
-flask
-flask-sqlalchemy
-flask-migrate
-
-# Production server
-gunicorn
-

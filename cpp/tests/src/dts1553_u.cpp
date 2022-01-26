@@ -77,38 +77,38 @@ TEST(DTS1553Test, FillSupplBusNameToMsgKeyMapValidateInput)
     EXPECT_TRUE(out_map.size() == 0);
 
     // Root is sequence, fail
-    suppl_busmap_node = YAML::Load({
+    suppl_busmap_node = YAML::Load(
         "- BUSA: [1, 2]\n"
-        "- ABBD: [4211, 8202]\n"});
+        "- ABBD: [4211, 8202]\n");
     EXPECT_FALSE(dts.FillSupplBusNameToMsgKeyMap(suppl_busmap_node, out_map));
 
     // Root is map, not all values are sequences, fail
-    suppl_busmap_node = YAML::Load({
+    suppl_busmap_node = YAML::Load(
         "BUSA:\n"
         "- [1, 2]\n"
         "- [3432, 31223, 6673]\n"
-        "ABBD: {a: b, c: d}\n"});
+        "ABBD: {a: b, c: d}\n");
     EXPECT_FALSE(dts.FillSupplBusNameToMsgKeyMap(suppl_busmap_node, out_map));
 
     // Item in sequence is not itself a sequence.
-    suppl_busmap_node = YAML::Load({
+    suppl_busmap_node = YAML::Load(
         "BUSA:\n"
         "- [1, 2]\n"
         "- [4, 5]\n"
         "ABBD:\n"
         "- 4\n"
-        "- [341, 5321]\n"});
+        "- [341, 5321]\n");
     EXPECT_FALSE(dts.FillSupplBusNameToMsgKeyMap(suppl_busmap_node, out_map));
 
     // Mapped value is sequence, but does not contain a sequence of two items, fail
-    suppl_busmap_node = YAML::Load({
+    suppl_busmap_node = YAML::Load(
         "BUSA:\n"
         "- [1, 2]\n"
         "- [3432, 31223, 6673]\n"
         "ABBD:\n"
         "- [4545, 7212]\n"
         "- [7632, 124]\n"
-        "- [852, 831]\n"});
+        "- [852, 831]\n");
     EXPECT_FALSE(dts.FillSupplBusNameToMsgKeyMap(suppl_busmap_node, out_map));
 }
 
@@ -118,14 +118,14 @@ TEST(DTS1553Test, FillSupplBusNameToMsgKeyMapValidateOutput)
     std::map<std::string, std::set<uint64_t>> out_map;
     std::map<std::string, std::set<uint64_t>> expected_map;
 
-    YAML::Node suppl_busmap_node = YAML::Load({
+    YAML::Node suppl_busmap_node = YAML::Load(
         "BUSA:\n"
         "- [1, 2]\n"
         "- [3432, 31223]\n"
         "ABBD:\n"
         "- [4545, 7212]\n"
         "- [7632, 124]\n"
-        "- [852, 831]\n"});
+        "- [852, 831]\n");
     EXPECT_TRUE(dts.FillSupplBusNameToMsgKeyMap(suppl_busmap_node, out_map));
 
     std::set<uint64_t> temp_msg_key_set;
@@ -134,7 +134,7 @@ TEST(DTS1553Test, FillSupplBusNameToMsgKeyMapValidateOutput)
     for (int i = 0; i < bus_node.size(); i++)
     {
         command_words = bus_node[i].as<std::vector<uint64_t>>();
-        printf("command_words: %llu, %llu\n", command_words[0],
+        printf("command_words: %zu, %zu\n", command_words[0],
                command_words[1]);
         temp_msg_key_set.insert(CreateMsgKey(command_words));
     }
@@ -144,7 +144,7 @@ TEST(DTS1553Test, FillSupplBusNameToMsgKeyMapValidateOutput)
     for (int i = 0; i < suppl_busmap_node["ABBD"].size(); i++)
     {
         command_words = suppl_busmap_node["ABBD"][i].as<std::vector<uint64_t>>();
-        printf("command_words: %llu, %llu\n", command_words[0],
+        printf("command_words: %zu, %zu\n", command_words[0],
                command_words[1]);
         temp_msg_key_set.insert(CreateMsgKey(command_words));
     }

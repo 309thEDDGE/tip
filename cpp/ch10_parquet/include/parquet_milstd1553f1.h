@@ -25,8 +25,8 @@ class ParquetMilStd1553F1 : public ParquetContext
     std::set<std::string> name_set_;
 
     // Arrays of data to be written to the Parquet table.
-    std::vector<uint64_t> time_stamp_;  // save as int64
-    std::vector<uint8_t> doy_;          // save as int16
+    std::vector<int64_t> time_stamp_;  // save as int64
+    std::vector<uint8_t> doy_;          // save as single bit
     std::vector<int8_t> ttb_;           // save as int8
     std::vector<uint8_t> WE_;           // save as single bit
     std::vector<uint8_t> SE_;           // save as single bit
@@ -35,12 +35,12 @@ class ParquetMilStd1553F1 : public ParquetContext
     std::vector<uint8_t> FE_;           // save as single bit
     std::vector<uint8_t> RR_;           // save as single bit
     std::vector<uint8_t> ME_;           // save as single bit
-    std::vector<uint8_t> gap1_;         // save as int16
-    std::vector<uint8_t> gap2_;         // save as int16
+    std::vector<int16_t> gap1_;         // save as int16
+    std::vector<int16_t> gap2_;         // save as int16
     std::vector<uint8_t> mode_code_;    // save as single bit
-    std::vector<uint16_t> data_;        // for all data payloads, save as int16
-    std::vector<uint16_t> comm_word1_;
-    std::vector<uint16_t> comm_word2_;
+    std::vector<int32_t> data_;        // for all data payloads, save as int16
+    std::vector<int32_t> comm_word1_;
+    std::vector<int32_t> comm_word2_;
     std::vector<int8_t> rtaddr1_;
     std::vector<uint8_t> tr1_;  // save as single bit
     std::vector<int8_t> subaddr1_;
@@ -49,7 +49,7 @@ class ParquetMilStd1553F1 : public ParquetContext
     std::vector<uint8_t> tr2_;  // save as single bit
     std::vector<int8_t> subaddr2_;
     std::vector<int8_t> wrdcnt2_;
-    std::vector<uint16_t> channel_id_;
+    std::vector<int32_t> channel_id_;
     std::vector<int8_t> totwrdcnt_;
     std::vector<int8_t> calcwrdcnt_;
     std::vector<uint8_t> payload_incomplete_;

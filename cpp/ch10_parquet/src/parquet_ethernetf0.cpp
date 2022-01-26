@@ -8,6 +8,9 @@ ParquetEthernetF0::ParquetEthernetF0() : ParquetContext(DEFAULT_ROW_GROUP_COUNT)
 {
 }
 
+const size_t ParquetEthernetF0::DEFAULT_ROW_GROUP_COUNT = 10000;
+const size_t ParquetEthernetF0::DEFAULT_BUFFER_SIZE_MULTIPLIER = 10;
+
 bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_id)
 {
     thread_id_ = thread_id;
@@ -102,24 +105,24 @@ void ParquetEthernetF0::Append(const uint64_t& time_stamp, const uint32_t& chani
                                const EthernetData* eth_data)
 {
     //printf("append_count_ is %zu\n", append_count_);
-    time_stamp_[append_count_] = time_stamp;
-    channel_id_[append_count_] = chanid;
-    payload_size_[append_count_] = eth_data->payload_size_;
+    time_stamp_[append_count_] = static_cast<int64_t>(time_stamp);
+    channel_id_[append_count_] = static_cast<int32_t>(chanid);
+    payload_size_[append_count_] = static_cast<int64_t>(eth_data->payload_size_);
     dst_mac_addr_[append_count_] = eth_data->dst_mac_addr_;
     src_mac_addr_[append_count_] = eth_data->src_mac_addr_;
-    ethertype_[append_count_] = eth_data->ethertype_;
-    frame_format_[append_count_] = eth_data->frame_format_;
-    dsap_[append_count_] = eth_data->dsap_;
-    ssap_[append_count_] = eth_data->ssap_;
-    snd_seq_number_[append_count_] = eth_data->snd_seq_number_;
-    rcv_seq_number_[append_count_] = eth_data->rcv_seq_number_;
+    ethertype_[append_count_] = static_cast<int32_t>(eth_data->ethertype_);
+    frame_format_[append_count_] = static_cast<int16_t>(eth_data->frame_format_);
+    dsap_[append_count_] = static_cast<int16_t>(eth_data->dsap_);
+    ssap_[append_count_] = static_cast<int16_t>(eth_data->ssap_);
+    snd_seq_number_[append_count_] = static_cast<int16_t>(eth_data->snd_seq_number_);
+    rcv_seq_number_[append_count_] = static_cast<int16_t>(eth_data->rcv_seq_number_);
     dst_ip_addr_[append_count_] = eth_data->dst_ip_addr_;
     src_ip_addr_[append_count_] = eth_data->src_ip_addr_;
-    id_[append_count_] = eth_data->id_;
-    protocol_[append_count_] = eth_data->protocol_;
-    offset_[append_count_] = eth_data->offset_;
-    dst_port_[append_count_] = eth_data->dst_port_;
-    src_port_[append_count_] = eth_data->src_port_;
+    id_[append_count_] = static_cast<int32_t>(eth_data->id_);
+    protocol_[append_count_] = static_cast<int16_t>(eth_data->protocol_);
+    offset_[append_count_] = static_cast<int32_t>(eth_data->offset_);
+    dst_port_[append_count_] = static_cast<int32_t>(eth_data->dst_port_);
+    src_port_[append_count_] = static_cast<int32_t>(eth_data->src_port_);
 
     // Copy payload
     std::copy(eth_data->payload_ptr_, eth_data->payload_ptr_ + eth_data->payload_size_,

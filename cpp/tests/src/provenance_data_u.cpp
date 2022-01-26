@@ -5,11 +5,16 @@
 TEST(ProvenanceDataTest, GetGMTString)
 {
     time_t rawtime;
-    struct tm* tm_ptr;
+    struct tm* tm_ptr = nullptr;
     time(&rawtime);
+#if defined __WIN64
+    struct tm tm_data;
+    tm_ptr = &tm_data;
+    gmtime_s(tm_ptr, &rawtime);
+#else
     tm_ptr = gmtime(&rawtime);
+#endif
     std::string strftime_fmt("%F");
-
     std::stringstream ss;
     ss.width(4);
     ss.fill('0');

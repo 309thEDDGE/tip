@@ -33,7 +33,7 @@ class ICDTranslateTest : public ::testing::Test
     {
         printf(
             "n_values %zu, dshift1 %hu, dshift2 %hu, mask1 %hu, mask2 %hu, mask1_twos %hu, "
-            "mask2_twos %hu, scale %llf, scale_twos %llf, sign_bit_mask %hu\n",
+            "mask2_twos %hu, scale %f, scale_twos %f, sign_bit_mask %hu\n",
             n_values, dshift1, dshift2, mask1,
             mask2, mask1_twos, mask2_twos, scale, scale_twos, sign_bit_mask);
     }

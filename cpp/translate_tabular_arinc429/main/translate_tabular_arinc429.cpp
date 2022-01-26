@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
     TIPMDDocument parser_md_doc;
     ManagedPath parser_md_path = input_path / "_metadata.yaml";
     if(!GetParsedMetadata(parser_md_path, parser_md_doc))
-        return false;
+        return 0;
 
     ProvenanceData prov_data;
     if(!GetProvenanceData(icd_path.absolute(), 0, prov_data))

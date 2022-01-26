@@ -240,7 +240,7 @@ TEST_F(Ch10EthernetF0ComponentTest, ParseFramesFrameLengthExceedsMax)
     std::vector<uint8_t> dummy_buffer(intrapkt_hdr_size, 0);
     data_ptr_ = dummy_buffer.data();
     EthernetF0FrameIDWord* frame_id_word = (EthernetF0FrameIDWord*)(data_ptr_ + 8);
-    frame_id_word->data_length = 60000;  // > mac_frame_max_length_
+    frame_id_word->data_length = eth_.mac_frame_max_length_ + 1;  // > mac_frame_max_length_
 
     EXPECT_CALL(mock_ch10_time_, ParseIPTS(data_ptr_,
                                            _, ctx_.intrapkt_ts_src, ctx_.time_format))

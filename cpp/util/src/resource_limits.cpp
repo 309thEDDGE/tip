@@ -59,9 +59,9 @@ bool SetFileDescriptorLimits(const uint64_t& new_fd_soft_limit)
         // which is not useful and may be misleading.
         printf(
             "SetFileDescriptorLimits(): Failed to set limit "
-            "to %llu\n",
+            "to %lu\n",
             new_fd_soft_limit);
-        printf("Current hard limit = %llu\n", fd_hard_limit);
+        printf("Current hard limit = %lu\n", fd_hard_limit);
         return false;
     }
 #elif defined __WIN64

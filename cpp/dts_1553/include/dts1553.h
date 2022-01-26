@@ -6,6 +6,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <cstdint>
 #include "spdlog/spdlog.h"
 #include "yaml-cpp/yaml.h"
 #include "icd_data.h"

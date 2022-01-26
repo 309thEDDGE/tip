@@ -23,19 +23,19 @@ class ParquetARINC429F0 : public ParquetContext
     std::set<std::string> name_set_;
 
     // Arrays of data to be written to the Parquet table.
-    std::vector<uint64_t> time_stamp_;  // save as int64
+    std::vector<int64_t> time_stamp_;  // save as int64
     std::vector<uint8_t> doy_;          // save as int16
     std::vector<int32_t> gap_time_;     // save as int32
     std::vector<uint8_t> BS_;           // save as single bit
     std::vector<uint8_t> PE_;           // save as single bit
     std::vector<uint8_t> FE_;           // save as single bit
-    std::vector<uint8_t> bus_;          // save as int16
-    std::vector<uint8_t> label_;        // save as int16
-    std::vector<uint8_t> SDI_;          // save as int8
-    std::vector<uint32_t> data_;        // save as int32
-    std::vector<uint8_t> SSM_;          // save as int8
+    std::vector<int16_t> bus_;          // save as int16
+    std::vector<int16_t> label_;        // save as int16
+    std::vector<int8_t> SDI_;          // save as int8
+    std::vector<int32_t> data_;        // save as int32
+    std::vector<int8_t> SSM_;          // save as int8
     std::vector<uint8_t> parity_;       // save as single bit
-    std::vector<uint16_t> channel_id_;
+    std::vector<int32_t> channel_id_;
 
    public:
     ParquetARINC429F0();

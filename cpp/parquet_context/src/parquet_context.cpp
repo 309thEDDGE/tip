@@ -394,7 +394,11 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
     if (columnData.cast_from_ == CastFromType::TypeNONE)
         castRequired = false;
     else
+    {
+        SPDLOG_WARN("Cast required for column \"{:s}\"", 
+            columnData.field_name_);
         castRequired = true;
+    }
 
     int listCount = 0;
 
@@ -618,11 +622,11 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
 
 bool ParquetContext::AddField(const std::shared_ptr<arrow::DataType> type,
                               const std::string& fieldName,
-                              const int listSize)
+                              int listSize)
 {
     //printf("Add field %s\n", fieldName.c_str());
     bool isList;
-    if (listSize == NULL)
+    if (listSize == 0)
         isList = false;
     else
         isList = true;
@@ -885,7 +889,7 @@ bool ParquetContext::SetupRowCountTracking(size_t row_group_count,
     // Do not allow unreasonable values.
     if (row_group_count < 1 || row_group_count_multiplier < 1)
     {
-        SPDLOG_ERROR("row_grou_count ({:d}) < 1 || row_group_count_multiplier ({:d}) < 1",
+        SPDLOG_ERROR("row_group_count ({:d}) < 1 || row_group_count_multiplier ({:d}) < 1",
                      row_group_count, row_group_count_multiplier);
         ready_for_automatic_tracking_ = false;
         parquet_stop_ = true;

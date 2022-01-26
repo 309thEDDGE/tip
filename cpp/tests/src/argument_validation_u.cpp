@@ -322,7 +322,10 @@ TEST_F(ArgumentValidationTest, ParseArgsInsufficientArgCount)
 {
     const int arg_count = 3;
     int argc = arg_count;
-    char* argv[arg_count] = {"a", "b", "see"};
+    char a1[] = "a";
+    char a2[] = "b";
+    char a3[] = "see";
+    char* argv[arg_count] = {a1, a2, a3};
 
     std::map<int, std::string> def_args = {
         {1, "A"},
@@ -338,7 +341,11 @@ TEST_F(ArgumentValidationTest, ParseArgs)
 {
     const int arg_count = 4;
     int argc = arg_count;
-    char* argv[arg_count] = {"a", "b", "see", "dee"};
+    char a1[] = "a";
+    char a2[] = "b";
+    char a3[] = "see";
+    char a4[] = "dee";
+    char* argv[arg_count] = {a1, a2, a3, a4};
 
     std::map<int, std::string> def_args = {
         {1, "A"},
@@ -357,7 +364,10 @@ TEST_F(ArgumentValidationTest, ParseArgsInsufficientArgCountAllowFewer)
 {
     const int arg_count = 3;
     int argc = arg_count;
-    char* argv[arg_count] = {"a", "b", "see"};
+    char a1[] = "a";
+    char a2[] = "b";
+    char a3[] = "see";
+    char* argv[arg_count] = {a1, a2, a3};
 
     std::map<int, std::string> def_args = {
         {1, "A"},

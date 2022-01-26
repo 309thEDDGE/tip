@@ -605,28 +605,28 @@ class ICDDataIngestYamlTest : public ::testing::Test
     void FillYamlMsgBodyNodes()
     {
         // correct msg body
-        icd_node_ = YAML::Load({
+        icd_node_ = YAML::Load(
             "    msg_data: {}\n"
             "    word_elem: []\n"
-            "    bit_elem: []\n"});
+            "    bit_elem: []\n");
 
         // incorrect, repeat msg_data entry
-        bad_icd_node1_ = YAML::Load({
+        bad_icd_node1_ = YAML::Load(
             "    msg_data: {}\n"
             "    word_elem: []\n"
             "    bit_elem: []\n"
-            "    msg_data: {}\n"});
+            "    msg_data: {}\n");
 
         // incorrect, missing bit_elem
-        bad_icd_node2_ = YAML::Load({
+        bad_icd_node2_ = YAML::Load(
             "    msg_data: {}\n"
-            "    word_elem: []\n"});
+            "    word_elem: []\n");
 
         // incorrect, not map
-        bad_icd_node3_ = YAML::Load({
+        bad_icd_node3_ = YAML::Load(
             "    - msg_data: {}\n"
             "    - word_elem: []\n"
-            "    - bit_elem: []\n"});
+            "    - bit_elem: []\n");
     }
 
     void FillYamlElementsNodes()
@@ -709,13 +709,13 @@ class ICDDataIngestYamlTest : public ::testing::Test
     void FillSequenceNodes()
     {
         // sequence, 3 elements
-        icd_node_ = YAML::Load({"[a, b, c]\n"});
+        icd_node_ = YAML::Load("[a, b, c]\n");
 
         // sequence, 2 elements
-        good_icd_node1_ = YAML::Load({"[a, b]\n"});
+        good_icd_node1_ = YAML::Load("[a, b]\n");
 
         // not sequence
-        bad_icd_node1_ = YAML::Load({"key: [a, b]\n"});
+        bad_icd_node1_ = YAML::Load("key: [a, b]\n");
     }
 };
 

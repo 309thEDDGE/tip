@@ -65,7 +65,7 @@ TEST_F(ParseWorkerTest, ConfigureContextSetPacketTypeGoodPaths)
 
 TEST_F(ParseWorkerTest, ConfigureContextCheckConfigurationGood)
 {
-    ManagedPath path1553({"temp_1553"});
+    ManagedPath path1553{"temp_1553"};
     worker_cfg_.output_file_paths_[Ch10PacketType::MILSTD1553_F1] = path1553;
     result_ = pw_.ConfigureContext(ctx_, worker_cfg_.ch10_packet_type_map_,
                                    worker_cfg_.output_file_paths_);
@@ -88,7 +88,7 @@ TEST_F(ParseWorkerTest, ConfigureContextCheckConfigurationBad)
 
 TEST_F(ParseWorkerTest, ConfigureContextInitWriters)
 {
-    ManagedPath path1553({"temp_1553"});
+    ManagedPath path1553{"temp_1553"};
     worker_cfg_.output_file_paths_[Ch10PacketType::MILSTD1553_F1] = path1553;
     // Writers are initially nullptrs
     EXPECT_EQ(ctx_.milstd1553f1_pq_writer, nullptr);
@@ -105,7 +105,7 @@ TEST_F(ParseWorkerTest, ConfigureContextInitWriters)
 
 TEST_F(ParseWorkerTest, ConfigureContextNotIfAlreadyConfigured)
 {
-    ManagedPath path1553({"temp_1553"});
+    ManagedPath path1553{"temp_1553"};
     worker_cfg_.output_file_paths_[Ch10PacketType::MILSTD1553_F1] = path1553;
 
     result_ = pw_.ConfigureContext(ctx_, worker_cfg_.ch10_packet_type_map_,
