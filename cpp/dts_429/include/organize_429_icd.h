@@ -94,7 +94,7 @@ class Organize429ICD
         True if tuples successfully constructed and added to map; false otherwise
     */
     bool AddSubchannelToMap(uint16_t& channelid, uint16_t& subchan_number,
-                            std::string subchan_name);
+                            std::string& subchan_name);
 
 };
 

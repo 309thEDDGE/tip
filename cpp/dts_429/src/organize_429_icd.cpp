@@ -47,17 +47,37 @@ bool Organize429ICD::ValidateInputs(std::unordered_map<std::string, std::vector<
 
 bool Organize429ICD::BuildBusNameToChannelAndSubchannelMap(YAML::Node& md_chanid_to_subchan_node)
 {
-    // double loop - loop channel ids and loop subchannel info asscoiated with channel id
-    // iterate chanids in node
-    //      if not map - return false
-    //      iterate maps from chanid
-    //          pass into  AddSubchannelToMap()
 
+    uint16_t channelid;
+    uint16_t subchan_number;
+    std::string subchan_name;
+
+    YAML::Node channel_map = md_chanid_to_subchan_node["tmats_chanid_to_429_subchan_and_name"];
+
+        for(YAML::const_iterator it = channel_map.begin();
+                it != channel_map.end(); ++it)
+    {
+        channelid = it->first.as<uint16_t>();
+
+        if(!it->second.IsMap()){
+            SPDLOG_WARN("Organize429ICD::BuildBusNameToChannelAndSubchannelMap(): chanid doesn't map to a map!");
+            return false;
+        }
+
+        YAML::Node subchan_map = it->second;
+        for(YAML::const_iterator it2 = subchan_map.begin(); it2 != subchan_map.end(); ++it2)
+        {
+            subchan_number = it2->first.as<uint16_t>();
+            subchan_name = it2->second.as<std::string>();
+            if(!AddSubchannelToMap(channelid, subchan_number, subchan_name))
+                return false;
+        }
+    }
     return true;
 }
 
 bool Organize429ICD::AddSubchannelToMap(uint16_t& channelid, uint16_t& subchan_number,
-                            std::string subchan_name)
+                            std::string& subchan_name)
 {
     if(!busname_to_channel_subchannel_ids_.insert({subchan_name, std::make_tuple(channelid, subchan_number)}).second)
     {
