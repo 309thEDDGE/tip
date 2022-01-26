@@ -25,7 +25,8 @@ RUN tar xvf local_channel.tar --strip-components=2 && \
       dask==2022.1.0 \
       intake-parquet==0.2.3 \
       numpy==1.22.1 \
-      click==8.0.3
+      click==8.0.3 \
+      msgpack==1.0.3
 
 RUN rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/badcert.pem && \
     rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/badkey.pem && \
