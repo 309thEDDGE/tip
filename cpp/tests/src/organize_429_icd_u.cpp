@@ -221,7 +221,7 @@ TEST_F(Organize429ICDTest, BuildBusNameToChannelAndSubchannelMapVarifySubchannel
 
     std::vector<std::string> temp_node_input =
         {"tmats_chanid_to_429_subchan_and_name:",
-        "    34: {1: 'SET1A', 2: 'SET1B'}",
+        "    34: {1: 'ABC', 2: 'DEF'}",
         "    35: 'fail'"};
 
     BuildNode(temp_node_input, md_chanid_to_subchan_node);
