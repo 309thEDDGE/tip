@@ -29,7 +29,7 @@ main() {
     conda run -n tip-dev \
         cmake .. -GNinja \
         -DCONDA_PREFIX=$CONDA_PREFIX \
-        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_BUILD_TYPE=Profile \
         -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX \
         -DCMAKE_INSTALL_LIBDIR=lib \
         -DCI_COMMIT_TAG=$CI_COMMIT_TAG \
@@ -41,10 +41,9 @@ main() {
 
     UNITTEST_REPORT_DIR=$BUILD_DIR/reports
     mkdir -p $UNITTEST_REPORT_DIR
-    conda run -n tip-dev gcovr -j --verbose \
+    conda run -n tip-dev gcovr -r $BASE_DIR $BUILD_DIR -j 2 --verbose \
 	      --exclude-unreachable-branches \
 	      --exclude-throw-branches \
-	      --object-directory="$BUILD_DIR/cpp" \
 	      --xml ${UNITTEST_REPORT_DIR}/overall-coverage.xml \
 	      --html ${UNITTEST_REPORT_DIR}/overall-coverage.html \
 	      --sonarqube ${UNITTEST_REPORT_DIR}/overall-coverage-sonar.xml

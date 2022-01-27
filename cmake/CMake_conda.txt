@@ -1,6 +1,7 @@
-if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-  SET(CMAKE_CXX_FLAGS_DEBUG "-fprofile-arcs -ftest-coverage -fprofile-abs-path -O0")
-  SET(CMAKE_C_FLAGS_DEBUG "-fprofile-arcs -ftest-coverage -fprofile-abs-path -O0")
+if("${CMAKE_BUILD_TYPE}" MATCHES "Profile")
+    set(CMAKE_C_FLAGS_PROFILE --coverage)
+    set(CMAKE_CXX_FLAGS_PROFILE --coverage)
+    add_link_options("--coverage")
 elseif("${CMAKE_BUILD_TYPE}" MATCHES "Release")
 endif()
 
