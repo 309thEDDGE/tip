@@ -117,22 +117,52 @@ bool DTS429::ValidateWordNode(const YAML::Node& word_node)
 {
     if(!word_node.IsMap())
     {
-        SPDLOG_WARN("word_node is not a map");
+        SPDLOG_WARN("DTS429::ValidateWordNode():"
+                    " word_node is not a map");
         return false;
     }
 
     if(!word_node["wrd_data"])
     {
-        SPDLOG_WARN("word_node is missing \"wrd_data\" key");
+        SPDLOG_WARN("DTS429::ValidateWordNode(): "
+                    "word_node is missing \"wrd_data\" key");
         return false;
     }
 
     if(!word_node["elem"])
     {
-        SPDLOG_WARN("word_node is missing \"elem\" key");
+        SPDLOG_WARN("DTS429::ValidateWordNode(): "
+                    "word_node is missing \"elem\" key");
         return false;
     }
 
+    // wrd_data and elem are maps
+    if(!word_node["elem"].IsMap())
+    {
+        SPDLOG_WARN("DTS429::ValidateWordNode(): "
+                    "word_node \"elem\" key isn't a map");
+        return false;
+    }
+    if(!word_node["wrd_data"].IsMap())
+    {
+        SPDLOG_WARN("DTS429::ValidateWordNode(): word_node "
+                    "\"wrd_data\" key isn't a map");
+        return false;
+    }
+
+    // wrd_data and elem maps aren't empty maps
+    if(word_node["elem"].size() == 0)
+    {
+        SPDLOG_WARN("DTS429::ValidateWordNode(): "
+                    "word_node \"elem\" key's map is empty");
+        return false;
+    }
+    if(word_node["wrd_data"].size() == 0)
+    {
+        SPDLOG_WARN("DTS429::ValidateWordNode(): word_node "
+                    "\"wrd_data\" map is empty");
+        return false;
+    }
     return true;
 }
 

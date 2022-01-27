@@ -221,7 +221,7 @@ TEST_F(DTS429Test, ValidateWordNodeMissingRequiredKey)
 TEST_F(DTS429Test, ValidateWordNodeKeyWrdDataFeatures)
 {
     YAML::Node word_node = YAML::Load(
-        "wrd_data\n"
+        "'wrd_data'\n"
         "elem:\n"
         "  107_alt:\n"
         "    schema: UNSIGNEDBITS\n"
