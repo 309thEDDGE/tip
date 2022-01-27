@@ -28,18 +28,27 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
     // Root node must have entry for translatable_word_definitions and supplemental_bus_map_labels.
     if (root_node.size() < 2)
     {
-        SPDLOG_WARN("DTS429::IngestLines(): Root note has size 0\n");
+        SPDLOG_WARN("DTS429::IngestLines(): translatable_word_definitions"
+        " or supplemental_bus_map_labels likely missing from file\n");
         return false;
     }
 
     // Root node must be a map because all root-level items are maps.
-    if (!root_node["translatable_word_definitions"].IsMap() ||
-        !root_node["supplemental_bus_map_labels"].IsMap())
+    if (!root_node["translatable_word_definitions"].IsMap())
     {
-        SPDLOG_WARN("DTS429::IngestLines(): Root node is not a map\n");
+        SPDLOG_WARN("DTS429::IngestLines(): translatable_word_definitions is not a map\n");
         return false;
     }
-
+    if ((root_node["translatable_word_definitions"]).size() < 1)
+    {
+        SPDLOG_WARN("DTS429::IngestLines(): translatable_word_definitions is an empty map\n");
+        return false;
+    }
+    if(!root_node["supplemental_bus_map_labels"].IsMap())
+    {
+        SPDLOG_WARN("DTS429::IngestLines(): supplemental_bus_map_labels is not a map\n");
+        return false;
+    }
 
     // Obtain each DTS429 component as a yaml node.
     YAML::Node wrd_defs;
