@@ -2,7 +2,7 @@ FROM registry1.dso.mil/ironbank/opensource/metrostar/tip-dependencies:0.0.3 AS t
 FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:0.0.1 AS singleuser
 
 USER root
-RUN yum install mesa-libGL -y
+RUN yum install mesa-libGL -y && yum clean all
 USER jovyan
 
 COPY --from=tipdependencies /local_channel /home/jovyan/local_channel
