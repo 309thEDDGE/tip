@@ -243,7 +243,7 @@ TEST_F(DTS429Test, CreateICDElementFromWordNodesTestOutput)
     expected_element.uom_="FT";
     expected_element.classification_=0;  // 8-bit
 
-    dts.CreateICDElementFromWordNodes("TestWord","107_alt",wrd_data_node, elem_node, output_element);
+    ASSERT_TRUE(dts.CreateICDElementFromWordNodes("TestWord","107_alt",wrd_data_node, elem_node, output_element));
 
     EXPECT_EQ(expected_element.label_, output_element.label_);
     EXPECT_EQ(expected_element.sdi_, output_element.sdi_);
