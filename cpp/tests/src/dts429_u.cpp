@@ -3,8 +3,15 @@
 #include "dts429.h"
 
 
-class Dts429Test
+class DTS429Test : public ::testing::Test
 {
+   protected:
+    DTS429 dts;
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
+    YAML::Node root_node;
+    YAML::Node transl_wrd_defs;
+    YAML::Node suppl_busmap_node;
+
    public:
     std::vector<std::string> yaml_lines_0{"translatable_word_definitions:",
                                 " TestWord:",
@@ -105,62 +112,43 @@ class Dts429Test
 
 };
 
-TEST(DTS429Test, IngestLinesNoStringsInVector)
+TEST_F(DTS429Test, IngestLinesNoStringsInVector)
 {
-    DTS429 dts;
-    Dts429Test input;
-    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
-
-    EXPECT_FALSE(dts.IngestLines(input.yaml_lines_2, word_elements));
+    EXPECT_FALSE(dts.IngestLines(yaml_lines_2, word_elements));
 }
 
 // root node must have entry for translateable_word_defintions and supplemental_bus_maps
-TEST(DTS429Test, IngestLinesTwoMapsInRootNode)
+TEST_F(DTS429Test, IngestLinesTwoMapsInRootNode)
 {
-    DTS429 dts;
-    Dts429Test input;
-    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
-
-    EXPECT_FALSE(dts.IngestLines(input.yaml_lines_4, word_elements));
+    EXPECT_FALSE(dts.IngestLines(yaml_lines_4, word_elements));
 }
 
 // Root Node's translateable_word_defintions and supplemental_bus_maps are Maps
-TEST(DTS429Test, IngestLinesElementsAreMaps)
+TEST_F(DTS429Test, IngestLinesElementsAreMaps)
 {
-    DTS429 dts;
-    Dts429Test input;
-    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
+    EXPECT_TRUE(dts.IngestLines(yaml_lines_3, word_elements));
 
-    EXPECT_TRUE(dts.IngestLines(input.yaml_lines_3, word_elements));
-
-    EXPECT_FALSE(dts.IngestLines(input.yaml_lines_5, word_elements));
+    EXPECT_FALSE(dts.IngestLines(yaml_lines_5, word_elements));
 }
 
-TEST(DTS429Test, ProcessLinesAsYamlValidateOutput)
+TEST_F(DTS429Test, ProcessLinesAsYamlValidateOutput)
 {
     // Ensure that SupplementalBusMapLabels are stored in the correct
     // map, and the translateable_word_defs are stored in correct map
-    YAML::Node wrd_defs_node;
-    YAML::Node suppl_busmap_node;
-    YAML::Node root_node;
-    Dts429Test input;
-    DTS429 dts;
+    build_node(yaml_lines_0, root_node);
 
-    input.build_node(input.yaml_lines_0, root_node);
-
-    EXPECT_TRUE(dts.ProcessLinesAsYaml(root_node, wrd_defs_node, suppl_busmap_node));
-    EXPECT_TRUE(wrd_defs_node["TestWord"]);
+    EXPECT_TRUE(dts.ProcessLinesAsYaml(root_node, transl_wrd_defs, suppl_busmap_node));
+    EXPECT_TRUE(transl_wrd_defs["TestWord"]);
     EXPECT_TRUE(suppl_busmap_node["A429BusAlpha"]);
 }
 
-TEST(DTS429Test, ValidateWordNodeNotAMap)
+TEST_F(DTS429Test, ValidateWordNodeNotAMap)
 {
     YAML::Node word_node(YAML::NodeType::Scalar);
-    DTS429 dts;
     ASSERT_FALSE(dts.ValidateWordNode(word_node));
 }
 
-TEST(DTS429Test, ValidateWordNodeMissingRequiredKey)
+TEST_F(DTS429Test, ValidateWordNodeMissingRequiredKey)
 {
     // Ought to have "elem" as key
     YAML::Node word_node = YAML::Load(
@@ -168,7 +156,6 @@ TEST(DTS429Test, ValidateWordNodeMissingRequiredKey)
         "element: \n"
     );
 
-    DTS429 dts;
     ASSERT_FALSE(dts.ValidateWordNode(word_node));
 
     // Ought to have "wrd_data" as key
@@ -179,15 +166,11 @@ TEST(DTS429Test, ValidateWordNodeMissingRequiredKey)
 }
 
 
-TEST(DTS429Test, CreateICDElementFromWordNodesTestOutput)
+TEST_F(DTS429Test, CreateICDElementFromWordNodesTestOutput)
 {
-    Dts429Test input;
-    DTS429 dts;
-
-    YAML::Node root_node;
-    input.build_node(input.yaml_lines_0, root_node);
-    YAML::Node transl_wrd_defs_node = root_node["translatable_word_definitions"];
-    YAML::Node word_name_node = transl_wrd_defs_node["TestWord"];
+    build_node(yaml_lines_0, root_node);
+    transl_wrd_defs = root_node["translatable_word_definitions"];
+    YAML::Node word_name_node = transl_wrd_defs["TestWord"];
 
     // build nodes to build a specific element
     YAML::Node wrd_data_node = word_name_node["wrd_data"];
@@ -234,39 +217,23 @@ TEST(DTS429Test, CreateICDElementFromWordNodesTestOutput)
 
 }
 
-TEST(DTS429Test, BuildNameToICDElementMapTestNullNode)
+TEST_F(DTS429Test, BuildNameToICDElementMapTestNullNode)
 {
-    DTS429 dts;
-    YAML::Node root_node;
-    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
-
     EXPECT_FALSE(dts.BuildNameToICDElementMap(root_node, word_elements));
 }
 
-TEST(DTS429Test, BuildNameToICDElementMapValidateYamlNodeIsMap)
+TEST_F(DTS429Test, BuildNameToICDElementMapValidateYamlNodeIsMap)
 {
     // Ensure that the input maps to a map
-    YAML::Node root_node;
-    YAML::Node transl_wrd_defs;
-    Dts429Test input;
-    DTS429 dts;
-    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
-
-    input.build_node(input.yaml_lines_5, root_node);
+    build_node(yaml_lines_5, root_node);
     transl_wrd_defs = root_node["translatable_word_definitions"];
 
     EXPECT_FALSE(dts.BuildNameToICDElementMap(transl_wrd_defs, word_elements));
 }
 
-TEST(DTS429Test, BuildNameToICDElementMapValidateOutputVectorSize)
+TEST_F(DTS429Test, BuildNameToICDElementMapValidateOutputVectorSize)
 {
-    YAML::Node root_node;
-    YAML::Node transl_wrd_defs;
-    Dts429Test input;
-    DTS429 dts;
-    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
-
-    input.build_node(input.yaml_lines_0, root_node);
+    build_node(yaml_lines_0, root_node);
     transl_wrd_defs = root_node["translatable_word_definitions"];
 
     dts.BuildNameToICDElementMap(transl_wrd_defs, word_elements);
@@ -275,58 +242,12 @@ TEST(DTS429Test, BuildNameToICDElementMapValidateOutputVectorSize)
     EXPECT_EQ(2,output_elements.size());
 }
 
-TEST(DTS429Test, BuildNameToICDElementMapValidateOutputMapFeatures)
+TEST_F(DTS429Test, BuildNameToICDElementMapValidateOutputMapFeatures)
 {
-    YAML::Node root_node;
-    YAML::Node transl_wrd_defs;
-    Dts429Test input;
-    DTS429 dts;
-    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
-
-    input.build_node(input.yaml_lines_0, root_node);
+    build_node(yaml_lines_0, root_node);
     transl_wrd_defs = root_node["translatable_word_definitions"];
 
     dts.BuildNameToICDElementMap(transl_wrd_defs, word_elements);
 
     EXPECT_TRUE(word_elements.count("TestWord"));
 }
-
-// TEST(DTS429Test, FillSupplBusNameToWordKeyMapValidateInput)
-// {
-//     // NOTE: Not spending too much effort on input validation
-//     DTS429 dts;
-
-//     // if the size == zero, the private map should not be filled
-//     YAML::Node suppl_busmap_node;
-//     std::map<std::string, std::set<uint32_t>> out_map;
-
-//     // If empty return true and leave output map empty.
-//     EXPECT_TRUE(dts.FillSupplBusNameToWordKeyMap(suppl_busmap_node, out_map));
-//     EXPECT_TRUE(out_map.size() == 0);
-// }
-
-// TEST(DTS429Test, FillSupplBusNameToWordKeyMapValidateOutput)
-// {
-//     DTS429 dts;
-//     Dts429Test input;
-
-//     // Tests to ensure output validity
-//     std::map<std::string, std::set<uint32_t>> out_map;
-//     std::map<std::string, std::set<uint32_t>> expected_map;
-//     YAML::Node suppl_busmap_node = YAML::Load(
-//         "supplemental_bus_map_labels:\n  {A429BusAlpha:\n    - [ 7, 4, 12, 124] }");
-
-//     std::set<uint32_t> alpha = {7, 4, 12, 124};
-//     expected_map["A429BusAlpha"] = alpha;
-
-//     // fill output map
-//     dts.FillSupplBusNameToWordKeyMap(suppl_busmap_node, out_map);
-
-//     // expect fillSuppleBusNametoWrdKeyMap True
-//     bool map_equality = expected_map.size() == out_map.size()
-//         && std::equal(expected_map.begin(), expected_map.end(),
-//                       out_map.begin());
-
-//     EXPECT_TRUE(map_equality);
-// }
-
