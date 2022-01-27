@@ -94,6 +94,13 @@ TEST(ManagedPathTest, StringConstructorRemovesDotSlash)
     EXPECT_EQ(mp.RawString(), expected_path.RawString());
 }
 
+TEST(ManagedPathTest, CharConstructorRemovesDotSlash)
+{
+    ManagedPath expected_path(std::string("data.txt"));
+    ManagedPath mp("./data.txt");
+    EXPECT_EQ(mp.RawString(), expected_path.RawString());
+}
+
 TEST(ManagedPathTest, StringConstructorRemovesTrailingSlash)
 {
     std::string p = "/my/path/data.txt/";
@@ -413,7 +420,7 @@ TEST(ManagedPathTest, CreateDirectoryLongPath)
     EXPECT_TRUE(fs::remove_all(root_path));
 }
 
-TEST(ManagedPathTest, AppendOperator)
+TEST(ManagedPathTest, ConcatenateInPlaceOperator)
 {
     // /=
     std::string s1 = "data";
@@ -441,9 +448,9 @@ TEST(ManagedPathTest, ConcatenateOperator)
     EXPECT_EQ(mp.RawString(), p.string());
 }
 
-TEST(ManagedPathTest, AppendNoSeparator)
+TEST(ManagedPathTest, AppendManagedPath)
 {
-    // /
+    // +=
     std::string s1 = "data";
     std::string s2 = "path";
     ManagedPath mp1(s1);
@@ -451,6 +458,19 @@ TEST(ManagedPathTest, AppendNoSeparator)
     std::filesystem::path p1(s1);
     std::filesystem::path p2(s2);
     mp1 += mp2;
+    p1 += p2;
+    EXPECT_EQ(mp1.RawString(), p1.string());
+}
+
+TEST(ManagedPathTest, AppendString)
+{
+    // +=
+    std::string s1 = "data";
+    std::string s2 = "path";
+    ManagedPath mp1(s1);
+    std::filesystem::path p1(s1);
+    std::filesystem::path p2(s2);
+    mp1 += s2;
     p1 += p2;
     EXPECT_EQ(mp1.RawString(), p1.string());
 }

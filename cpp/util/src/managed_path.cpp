@@ -96,7 +96,7 @@ ManagedPath& ManagedPath::operator+=(const std::string& rhs)
 ManagedPath& ManagedPath::operator+=(const ManagedPath& rhs)
 {
     fs::path temp_path(this->fs::path::string());
-    temp_path += fs::path(rhs.fs::path::string());
+    temp_path += fs::path(rhs.string());
     this->assign(temp_path.string());
     return *this;
 }
