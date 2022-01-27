@@ -199,19 +199,67 @@ TEST_F(DTS429Test, ValidateWordNodeMissingRequiredKey)
 {
     // Ought to have "elem" as key
     YAML::Node word_node = YAML::Load(
-        "wrd_data: \n"
-        "element: \n"
-    );
+        "wrd_data:\n"
+        "  label: 107\n"
+        "  bus: 'bus5'\n"
+        "element:\n"
+        "  107_alt:\n"
+        "    schema: UNSIGNEDBITS\n"
+        "    msbval: 1.0\n"
+        );
 
     ASSERT_FALSE(dts.ValidateWordNode(word_node));
 
     // Ought to have "wrd_data" as key
     YAML::Node word_node2 = YAML::Load(
-        "elem: \n"
-    );
+        "elem:\n"
+        "  107_alt:\n"
+        "    schema: UNSIGNEDBITS\n");
     ASSERT_FALSE(dts.ValidateWordNode(word_node));
 }
 
+TEST_F(DTS429Test, ValidateWordNodeKeyWrdDataFeatures)
+{
+    YAML::Node word_node = YAML::Load(
+        "wrd_data\n"
+        "elem:\n"
+        "  107_alt:\n"
+        "    schema: UNSIGNEDBITS\n"
+        );
+
+    // wrd_data fails if not a map
+    ASSERT_FALSE(dts.ValidateWordNode(word_node));
+
+    YAML::Node word_node2 = YAML::Load(
+        "wrd_data: {}\n"
+        "elem:\n"
+        "  107_alt:\n"
+        "    schema: UNSIGNEDBITS\n");
+
+    // wrd_data map fails if empty
+    ASSERT_FALSE(dts.ValidateWordNode(word_node2));
+}
+
+TEST_F(DTS429Test, ValidateWordNodeKeyElemFeatures)
+{
+    YAML::Node word_node = YAML::Load(
+        "wrd_data:\n"
+        "  label: 107\n"
+        "  bus: 'bus5'\n"
+        "elem\n");
+
+    // elem fails if not a map
+    ASSERT_FALSE(dts.ValidateWordNode(word_node));
+
+    YAML::Node word_node2 = YAML::Load(
+        "wrd_data:\n"
+        "  label: 107\n"
+        "  bus: 'bus5'\n"
+        "elem: {}\n");
+
+    // elem map fails if empty
+    ASSERT_FALSE(dts.ValidateWordNode(word_node2));
+}
 
 TEST_F(DTS429Test, CreateICDElementFromWordNodesTestOutput)
 {
