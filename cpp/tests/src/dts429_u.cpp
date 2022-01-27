@@ -94,6 +94,32 @@ class DTS429Test : public ::testing::Test
                                 "  A429BusAlpha:",
                                 "    - [ 7, 4, 12, 124]"
     };
+    // properly structured "TestWord", empty suppl_busmap map
+    std::vector<std::string> yaml_lines_7{"translatable_word_definitions:",
+                                " TestWord:",
+                                "    wrd_data:",
+                                "      label: 107",
+                                "      bus: 'bus5'",
+                                "      sdi: 2",
+                                "      rate: 1.1",
+                                "      desc: 'Test'",
+                                "      lru_name: 'LRU921'",
+                                "    elem:",
+                                "      107_alt:",
+                                "        schema: UNSIGNEDBITS",
+                                "        msbval: 1.0",
+                                "        lsb: 11",
+                                "        bitcnt: 8",
+                                "        desc: 'Altitude'",
+                                "        uom: 'FT'",
+                                "        class: 0",
+                                "supplemental_bus_map_labels: {}"
+    };
+
+    std::vector<std::string> yaml_lines_8{"translatable_word_definitions:",
+                                " TestWord: 'wrd_data'",
+                                "supplemental_bus_map_labels: 'empty'"
+    };
 
     // builds yaml root node from one of yaml_lines_n above
     void build_node( const std::vector<std::string>& lines,
@@ -123,15 +149,26 @@ TEST_F(DTS429Test, IngestLinesTwoMapsInRootNode)
     EXPECT_FALSE(dts.IngestLines(yaml_lines_4, word_elements));
 }
 
-// Root Node's translateable_word_defintions and supplemental_bus_maps are Maps
+// Root Node's translateable_word_defintions and supplemental_bus_maps map to maps
 TEST_F(DTS429Test, IngestLinesElementsAreMaps)
 {
-    EXPECT_TRUE(dts.IngestLines(yaml_lines_3, word_elements));
-
     EXPECT_FALSE(dts.IngestLines(yaml_lines_5, word_elements));
+    EXPECT_FALSE(dts.IngestLines(yaml_lines_8, word_elements));
 }
 
-TEST_F(DTS429Test, ProcessLinesAsYamlValidateOutput)
+// NBD if supplemental_bus_maps is empty
+TEST_F(DTS429Test, IngestLinesSupplBusmapMapEmpty)
+{
+    EXPECT_TRUE(dts.IngestLines(yaml_lines_7, word_elements));
+}
+
+// Expect translateable_word_defintions map not empty
+TEST_F(DTS429Test, IngestLinesTranslatableWordDefsMapEmpty)
+{
+    EXPECT_FALSE(dts.IngestLines(yaml_lines_3, word_elements));
+}
+
+TEST_F(DTS429Test, ProcessLinesAsYamlValidateOutputIdealConditions)
 {
     // Ensure that SupplementalBusMapLabels are stored in the correct
     // map, and the translateable_word_defs are stored in correct map
@@ -140,6 +177,16 @@ TEST_F(DTS429Test, ProcessLinesAsYamlValidateOutput)
     EXPECT_TRUE(dts.ProcessLinesAsYaml(root_node, transl_wrd_defs, suppl_busmap_node));
     EXPECT_TRUE(transl_wrd_defs["TestWord"]);
     EXPECT_TRUE(suppl_busmap_node["A429BusAlpha"]);
+}
+
+TEST_F(DTS429Test, ProcessLinesAsYamlValidateOutputEmptySupplBusmap)
+{
+    // Test results when supple busmap node empty
+    build_node(yaml_lines_7, root_node);
+
+    EXPECT_TRUE(dts.ProcessLinesAsYaml(root_node, transl_wrd_defs, suppl_busmap_node));
+    EXPECT_TRUE(transl_wrd_defs["TestWord"]);
+    EXPECT_EQ(suppl_busmap_node.size(), 0);
 }
 
 TEST_F(DTS429Test, ValidateWordNodeNotAMap)
