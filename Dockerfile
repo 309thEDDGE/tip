@@ -1,6 +1,10 @@
 FROM registry1.dso.mil/ironbank/opensource/metrostar/tip-dependencies:0.0.3 AS tipdependencies
 FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:0.0.1 AS singleuser
 
+USER root
+RUN yum install mesa-libGL -y
+USER jovyan
+
 COPY --from=tipdependencies /local_channel /home/jovyan/local_channel
 
 ENV ARTIFACT_DIR=".ci_artifacts/build-metadata/build-artifacts"
