@@ -311,7 +311,7 @@ TEST_F(DTS429Test, CreateICDElementFromWordNodesTestOutput)
     EXPECT_EQ(expected_element.classification_, output_element.classification_);
 }
 
-TEST_F(DTS429Test, CreateICDElementFromWordNodesTestInputIsMap)
+TEST_F(DTS429Test, CreateICDElementFromWordNodesTestElemInputIsMap)
 {
     build_node(yaml_lines_0, root_node);
     transl_wrd_defs = root_node["translatable_word_definitions"];
@@ -326,7 +326,21 @@ TEST_F(DTS429Test, CreateICDElementFromWordNodesTestInputIsMap)
 
 }
 
-TEST_F(DTS429Test, CreateICDElementFromWordNodesTestInputMapEmpty)
+TEST_F(DTS429Test, CreateICDElementFromWordNodesTestWordInputIsMap)
+{
+    build_node(yaml_lines_0, root_node);
+    transl_wrd_defs = root_node["translatable_word_definitions"];
+    YAML::Node word_name_node = transl_wrd_defs["TestWord"];
+
+    // build nodes to build a specific element
+    YAML::Node wrd_data_node(YAML::NodeType::Scalar);
+    YAML::Node elem_node = word_name_node["elem"]["107_alt"];;
+    ICDElement output_element;
+
+    ASSERT_FALSE(dts.CreateICDElementFromWordNodes("TestWord","107_alt",wrd_data_node, elem_node, output_element));
+}
+
+TEST_F(DTS429Test, CreateICDElementFromWordNodesTestElemInputMapEmpty)
 {
     std::vector<std::string> test_lines{"translatable_word_definitions:",
                                 "  TestWord:",
@@ -352,7 +366,34 @@ TEST_F(DTS429Test, CreateICDElementFromWordNodesTestInputMapEmpty)
     ICDElement output_element;
 
     ASSERT_FALSE(dts.CreateICDElementFromWordNodes("TestWord","107_alt",wrd_data_node, elem_node, output_element));
+}
 
+TEST_F(DTS429Test, CreateICDElementFromWordNodesTestWordInputMapEmpty)
+{
+    std::vector<std::string> test_lines{"translatable_word_definitions:",
+                                "  TestWord:",
+                                "    wrd_data: {}",
+                                "    elem:",
+                                "      107_alt: ",
+                                "        schema: UNSIGNEDBITS",
+                                "        msbval: 1.0",
+                                "        lsb: 11",
+                                "        bitcnt: 8",
+                                "        desc: 'Altitude'",
+                                "        uom: 'FT'",
+                                "        class: 0",
+                                "supplemental_bus_map_labels:{}"
+    };
+    build_node(test_lines, root_node);
+    transl_wrd_defs = root_node["translatable_word_definitions"];
+    YAML::Node word_name_node = transl_wrd_defs["TestWord"];
+
+    // build nodes to build a specific element
+    YAML::Node wrd_data_node = word_name_node["wrd_data"];
+    YAML::Node elem_node = word_name_node["elem"]["107_alt"];
+    ICDElement output_element;
+
+    ASSERT_FALSE(dts.CreateICDElementFromWordNodes("TestWord","107_alt",wrd_data_node, elem_node, output_element));
 }
 
 TEST_F(DTS429Test, BuildNameToICDElementMapTestNullNode)
