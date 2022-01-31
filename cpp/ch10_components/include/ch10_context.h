@@ -348,6 +348,7 @@ class Ch10Context
     void UpdateARINC429Maps(const uint32_t& chanid,
                                          const ARINC429F0MsgFmt* data_header);
 
+
     /*
 	Check if the configurations for packet type and output paths are consistent.
 	Return false if an enabled packet type does not have an output file specified.

@@ -44,6 +44,24 @@ class ParquetARINC429F0 : public ParquetContext
     void Append(const uint64_t& time_stamp, uint8_t doy,
                 const ARINC429F0CSDWFmt* const chan_spec,
                 const ARINC429F0MsgFmt* msg, const uint16_t& chanid);
+
+   /*
+	Take the raw uint8_t ARINC 429 label value parsed directly from the
+    429 word in the chapter 10 source. Convert the value to octal label format.
+
+    Args:
+        raw_label   --> uint8_t taken directly from the ARINC 429 label field
+
+    Return:
+        uint8_t storing value equal to the ARINC 429 label if it were in it's
+        octal form.
+
+    Example:
+    Parsed label == 83(dec) == 01010011(bin)  ===> 11001010(bin)  ==  312(oct)
+    Return uint8_t with value = 312. This will allow the parsed parquet label
+    output to equal 312.
+	*/
+   uint32_t EncodeARINC429Label(uint32_t raw_label);
 };
 
 #endif

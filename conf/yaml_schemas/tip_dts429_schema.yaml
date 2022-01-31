@@ -17,14 +17,14 @@ translatable_word_definitions:              # (R)
     wrd_data:                               # (R)
       label: INT                            # (R)
       bus: STR                              # (R)
-      sdiusd: BOOL                          # (R)
       sdi: INT                              # (R)
       rate: OPTFLT                            # (O)
       desc: OPTSTR                            # (O)
       lru_name: OPTSTR                        # (O)
     elem:                                   # (R)
       _NOT_DEFINED_:                        # (WR), alias: elem_name = bit/multiple bit element
-        schema: STR-->{UNSIGNEDBITS,SIGNEDBITS,ASCII}  # (R)
+        schema: STR-->{UNSIGNEDBITS,
+            SIGNEDBITS,ASCII,BCD,SIGNMAG}   # (R)
         msbval: FLT                         # (R)
         lsb: INT                            # (R)
         bitcnt: INT                         # (R)
@@ -127,9 +127,8 @@ supplemental_bus_map_labels:                # (R)
 #
 # Required, structure included exactly once in the current map
 #
-# Key maps to a single decimal value that is eqeal to the octal
-# label of the ARINC 429 word. e.g. 302(oct) = 131(dec) => the
-# value for this label would be 131.
+# Key maps to a single octal value that is eqeal to the represents
+# the label of the ARINC 429 word.
 #
 
 #
@@ -137,19 +136,11 @@ supplemental_bus_map_labels:                # (R)
 #
 # Required, structure included exactly once in the current map
 #
-# Key maps to an integer which is the number of the bus on which the
-# relevant message occurs. This bus is associated with an ARINC 429
-# word through 'bus' field in the IPDH.
+# String which provides the name of the bus. This string will provide
+# a name in the format as would be used by TMATS' ARINC 429 subchannel
+# name (R-x\ANM-n-m).
 #
-
-#
-# sdiusd
-#
-# Required, structure included exactly once in the current map
-#
-# Default value = false. This would be true if a bus has multiple
-# word formats associated with a single 429 label, and those formats
-# are differentiated by the value of the SDI bits.
+# Example: EEC1 EEC2B
 #
 
 #
@@ -163,7 +154,9 @@ supplemental_bus_map_labels:                # (R)
 #
 # Example: To define that the bits [10,9] are of the value [1,0]
 # you would set 'sdi' = 2. To define bits [10,9] as having the
-# value [1,1] you would set 'sdi' = 3.
+# value [1,1] you would set 'sdi' = 3. There are cases where the
+# sdi bits should be ignored. If the SDI bits are irrelevant and
+# should be ignored, use the value -1 for sdi.
 #
 
 #
@@ -172,7 +165,10 @@ supplemental_bus_map_labels:                # (R)
 # Optional, structure included exactly once in the current map
 #
 # Key maps to a float value which gives the message transmission
-# rate with Hz unit.
+# rate. The rate matches the defintion of the IPDH's bus speed
+# field, as found in IRIG106 Chapter 11.
+# Low-speed ARINC-429 bus (12.5 kHz)
+# High-speed ARINC-429 bus (100 kHz)
 #
 
 #
