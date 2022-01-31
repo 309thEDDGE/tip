@@ -309,6 +309,49 @@ TEST_F(DTS429Test, CreateICDElementFromWordNodesTestOutput)
     EXPECT_EQ(expected_element.bit_count_, output_element.bit_count_);
     EXPECT_EQ(expected_element.uom_, output_element.uom_);
     EXPECT_EQ(expected_element.classification_, output_element.classification_);
+}
+
+TEST_F(DTS429Test, CreateICDElementFromWordNodesTestInputIsMap)
+{
+    build_node(yaml_lines_0, root_node);
+    transl_wrd_defs = root_node["translatable_word_definitions"];
+    YAML::Node word_name_node = transl_wrd_defs["TestWord"];
+
+    // build nodes to build a specific element
+    YAML::Node wrd_data_node = word_name_node["wrd_data"];
+    YAML::Node elem_node(YAML::NodeType::Scalar);
+    ICDElement output_element;
+
+    ASSERT_FALSE(dts.CreateICDElementFromWordNodes("TestWord","107_alt",wrd_data_node, elem_node, output_element));
+
+}
+
+TEST_F(DTS429Test, CreateICDElementFromWordNodesTestInputMapEmpty)
+{
+    std::vector<std::string> test_lines{"translatable_word_definitions:",
+                                "  TestWord:",
+                                "    wrd_data:",
+                                "      label: 107",
+                                "      bus: 'bus5'",
+                                "      sdi: 2",
+                                "      rate: 1.1",
+                                "      desc: 'Test'",
+                                "      lru_name: 'LRU921'",
+                                "    elem:",
+                                "      107_alt: {}",
+                                "      107_speed: {}",
+                                "supplemental_bus_map_labels:{}"
+    };
+    build_node(test_lines, root_node);
+    transl_wrd_defs = root_node["translatable_word_definitions"];
+    YAML::Node word_name_node = transl_wrd_defs["TestWord"];
+
+    // build nodes to build a specific element
+    YAML::Node wrd_data_node = word_name_node["wrd_data"];
+    YAML::Node elem_node = word_name_node["elem"]["107_alt"];
+    ICDElement output_element;
+
+    ASSERT_FALSE(dts.CreateICDElementFromWordNodes("TestWord","107_alt",wrd_data_node, elem_node, output_element));
 
 }
 
