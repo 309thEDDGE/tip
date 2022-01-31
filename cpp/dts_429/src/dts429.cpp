@@ -182,11 +182,17 @@ bool DTS429::CreateICDElementFromWordNodes(const std::string& msg_name,
         return false;
     }
 
-    // wrd_data and elem maps aren't empty maps
     if(elem_data.size() == 0)
     {
         SPDLOG_WARN("DTS429::CreateICDElementFromWordNodes(): "
                     "elem_data map is empty");
+        return false;
+    }
+
+    if(!wrd_data.IsMap() || wrd_data.size()==0)
+    {
+        SPDLOG_WARN("DTS429::CreateICDElementFromWordNodes(): "
+                    "wrd_data input format is incorrect");
         return false;
     }
 
