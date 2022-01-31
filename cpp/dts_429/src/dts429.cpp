@@ -89,11 +89,10 @@ bool DTS429::BuildNameToICDElementMap(YAML::Node& transl_wrd_defs_node,
     YAML::Node elem_data;
     for (YAML::const_iterator it = transl_wrd_defs_node.begin(); it != transl_wrd_defs_node.end(); ++it)
     {
-        word_name = it->first.as<std::string>();
-
         if(!ValidateWordNode(it->second))
             return false;
 
+        word_name = it->first.as<std::string>();
         word_data = (it->second)["wrd_data"];
         elem_data = (it->second)["elem"];
 
@@ -176,6 +175,21 @@ bool DTS429::CreateICDElementFromWordNodes(const std::string& msg_name,
     // because it was found that accessing directly as 8 bit
     // caused the value at key to be stored as the ASCII binary
     // value rather than integer's value
+    if(!elem_data.IsMap())
+    {
+        SPDLOG_WARN("DTS429::CreateICDElementFromWordNodes(): "
+                    "elem_data isn't a map");
+        return false;
+    }
+
+    // wrd_data and elem maps aren't empty maps
+    if(elem_data.size() == 0)
+    {
+        SPDLOG_WARN("DTS429::CreateICDElementFromWordNodes(): "
+                    "elem_data map is empty");
+        return false;
+    }
+
     try
     {
         arinc_param.label_=wrd_data["label"].as<uint16_t>();
