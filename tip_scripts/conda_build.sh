@@ -16,6 +16,7 @@ main() {
     mv ${HOME}/tmp-channel/linux-64/*tip*tar* $CONDA_CHANNEL_DIR/linux-64/
     conda index $CONDA_CHANNEL_DIR -s linux-64 -s noarch
 
+    
     cd $DIRECTORY_WHEN_EXECUTED
 }
 
