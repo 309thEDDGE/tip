@@ -1,5 +1,5 @@
 {% set name = "tip" %}
-{% set version = "1.0.2" %}
+{% set version = "1.0.3" %}
 
 package:
   name: {{ name|lower }}
@@ -27,7 +27,7 @@ requirements:
 
   host:
     - libpcap==1.10.1
-    - arrow-cpp==5.0.0
+    - arrow-cpp==6.0.1
     - spdlog==1.8.5
     - yaml-cpp==0.6.3
     - gmock==1.10.0
@@ -37,7 +37,7 @@ requirements:
   run:
     - yaml-cpp==0.6.3
     - libpcap==1.10.1
-    - arrow-cpp==5.0.0
+    - arrow-cpp==6.0.1
     - spdlog==1.8.5
     - libtins==4.2
 
