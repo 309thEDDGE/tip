@@ -225,6 +225,7 @@ add_library(${dts429_lib_name} STATIC
         ${dts1553_src_dir}/icd_element.cpp                    ${dts1553_inc_dir}/icd_element.h
         ${dts1553_src_dir}/icd_translate.cpp                  ${dts1553_inc_dir}/icd_translate.h
         ${dts429_src_dir}/dts429.cpp                          ${dts429_inc_dir}/dts429.h
+        ${dts429_src_dir}/organize_429_icd.cpp                ${dts429_inc_dir}/organize_429_icd.h
     )
 
 target_include_directories(${dts429_lib_name} PUBLIC ${dts429_inc_dir} ${dts1553_inc_dir}
@@ -307,12 +308,12 @@ message(STATUS "Building lib: " "${transtab429_lib_name}")
 set(transtab429_main_dir ${transtab429_lib_name}/${main_dir_name})
 set(transtab429_inc_dir ${transtab429_lib_name}/${include_dir_name})
 set(transtab429_src_dir ${transtab429_lib_name}/${source_dir_name})
-add_library(${transtab429_lib_name} 
+add_library(${transtab429_lib_name}
         ${common_inc_dir}/ch10_packet_type.h
-        ${transtab429_inc_dir}/translate_tabular_context_arinc429.h ${transtab429_src_dir}/translate_tabular_context_arinc429.cpp 
-        ${transtab429_inc_dir}/helper_funcs.h ${transtab429_src_dir}/helper_funcs.cpp 
+        ${transtab429_inc_dir}/translate_tabular_context_arinc429.h ${transtab429_src_dir}/translate_tabular_context_arinc429.cpp
+        ${transtab429_inc_dir}/helper_funcs.h ${transtab429_src_dir}/helper_funcs.cpp
 )
-target_include_directories(${transtab429_lib_name} PUBLIC 
+target_include_directories(${transtab429_lib_name} PUBLIC
                         ${common_inc_dir}
                         ${transtab429_inc_dir}
                         ${util_inc_dir}
@@ -494,7 +495,7 @@ message(STATUS "Building exe: " "${transtab429_exe_name}")
 add_executable(${transtab429_exe_name} ${transtab429_main_dir}/translate_tabular_arinc429.cpp)
 target_include_directories(${transtab429_exe_name} PUBLIC ${transtab429_inc_dir})
 target_link_libraries(${transtab429_exe_name} ${transtab429_lib_name}
-                      ${transtab_lib_name}) 
+                      ${transtab_lib_name})
 
 
 #########################################################
@@ -567,7 +568,8 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/md_document_u.cpp
                 ${test_src_dir}/yaml_md_document_u.cpp
                 ${test_src_dir}/tip_md_document_u.cpp
-                ${test_src_dir}/provenance_data_u.cpp)
+                ${test_src_dir}/provenance_data_u.cpp
+                ${test_src_dir}/organize_429_icd_u.cpp)
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs}
                             ${common_inc_dir} ${util_inc_dir} ${dts429_inc_dir}
