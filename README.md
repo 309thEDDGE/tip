@@ -116,6 +116,7 @@ gcovr -j --verbose --exclude-unreachable-branches --exclude-throw-branches --obj
 * Options given with `-D<option>=<value>`, multiple options with `-D<option1>=<val1> -D<option2>=<val2> ...`:
 	- Container mode (`-DCONTAINER=ON`) - use shared libs in Linux-standard lib directories, default OFF
 		- linux standard builds outside of a container are in progress
+	-  If git isn't installed or if tip isn't tracked by git you can manually specify the version at configure time using `-DCI_COMMIT_TAG=<CI_COMMIT_TAG>` or `-DCI_COMMIT_SHORT_SHA=<CI_COMMIT_SHORT_SHA>`
 	
 * build according to platform (see "Platform-Specific" below)
 * Executables are placed in `tip/bin`
