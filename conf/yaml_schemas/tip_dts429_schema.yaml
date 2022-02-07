@@ -138,7 +138,7 @@ supplemental_bus_map_labels:                # (R)
 #
 # String which provides the name of the bus. This string will provide
 # a name in the format as would be used by TMATS' ARINC 429 subchannel
-# name (R-x\ANM-n-m).
+# name (R-x\ANM-n-m). All alphabetical characters should be upper-case.
 #
 # Example: EEC1 EEC2B
 #

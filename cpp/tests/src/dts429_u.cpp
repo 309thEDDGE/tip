@@ -276,7 +276,7 @@ TEST_F(DTS429Test, CreateICDElementFromWordNodesTestOutput)
     ICDElement expected_element;
     expected_element.label_= 107;
     expected_element.sdi_= 2;            // 8-bit
-    expected_element.bus_name_="bus5";
+    expected_element.bus_name_="BUS5";  // upper to test case sensitivity
     expected_element.msg_name_="TestWord";
     expected_element.rate_=1.1;
     expected_element.description_="Altitude";

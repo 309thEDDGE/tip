@@ -215,6 +215,10 @@ bool DTS429::CreateICDElementFromWordNodes(const std::string& msg_name,
         arinc_param.bit_count_=static_cast<uint8_t>(elem_data["bitcnt"].as<uint16_t>());
         arinc_param.uom_=elem_data["uom"].as<std::string>();
         arinc_param.classification_=static_cast<uint8_t>(elem_data["class"].as<uint16_t>());
+
+        // handle all 429 bus names as Uppercase to eliminate case sensitivity
+        std::transform(arinc_param.bus_name_.begin(), arinc_param.bus_name_.end(),
+                arinc_param.bus_name_.begin(), ::toupper);
     }
     catch(...)
     {

@@ -16,12 +16,21 @@ class Organize429ICD
    // be in the order (channelid, subchannelid)
     std::unordered_map<std::string, std::tuple<uint16_t, uint16_t>> busname_to_channel_subchannel_ids_;
 
+    // storage for subchannel names not found in
+    // busname_to_channel_subchannel_ids_ lookup.
+    std::vector<std::string> subchannel_name_lookup_misses_;
+
    public:
     Organize429ICD(){}
 
     std::unordered_map<std::string, std::tuple<uint16_t, uint16_t>> GetBusNameToChannelSubchannelMap()
     {
         return busname_to_channel_subchannel_ids_;
+    }
+
+    std::vector<std::string> GetSubchannelNameLookupMisses()
+    {
+        return subchannel_name_lookup_misses_;
     }
 
     /*
@@ -37,18 +46,28 @@ class Organize429ICD
         md_chanid_to_subchan_node   --> YAML::Node that is found in the ARINC429 parsing
                                         metadata otuput under tmats_chanid_to_429_subchan_and_name.
 
-        organized_output_map        --> unordered_map - nested maps to the ICDElement vector.
+        organized_lookup_map        --> unordered_map - nested maps to size_t which provides
+                                        the index of a vector of ICDElement vectors in
+                                        element_table. These vectors of ICDElements have
+                                        all of the ICDElements associated with words which
+                                        have common features: chanid, subchan_id, label, sdi.
                                         The output map will be structured such that the
-                                        ICDElement vector can be reached using the following:
+                                        size_t index can be reached using the following:
                                         organized_output_map[chanid][subchan_id][label][sdi]
+
+        element_table               --> At the index provided by ourganized_lookup_map a
+                                        vector<vector<ICDElement>> is returned bearing all
+                                        the ICDElements of the 429 words associated with
+                                        a given combination of chanid, subchan_id, label, sdi.
 
     Return:
         True if map successfully constructed; false otherwise
     */
-    bool OrganizeICDMap(std::unordered_map<std::string, std::vector<ICDElement>>& word_elements,
+    bool OrganizeICDMap(std::unordered_map<std::string, std::vector<ICDElement>>& word_elements_map,
                         YAML::Node& md_chanid_to_subchan_node,
                         std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
-                        uint16_t,std::unordered_map<int8_t, std::vector<ICDElement>>>>>& organized_output_map);
+                        uint16_t,std::unordered_map<int8_t, size_t>>>>& organized_lookup_map,
+                        std::vector<std::vector<std::vector<ICDElement>>>& element_table);
 
     /*
     Perform validation of inputs to OrganizeICDMap(). Check that inputs are properly formatted.
@@ -64,7 +83,7 @@ class Organize429ICD
     Return:
         True if inputs pass; false otherwise
     */
-    bool ValidateInputs(std::unordered_map<std::string, std::vector<ICDElement>>& word_elements,
+    bool ValidateInputs(std::unordered_map<std::string, std::vector<ICDElement>>& word_elements_map,
                         YAML::Node& md_chanid_to_subchan_node);
 
     /*
@@ -87,8 +106,16 @@ class Organize429ICD
     YAML::Node md_chanid_to_subchan_node.
 
     Args:
-        chanid_node --> YAML::Node representing single chanid with mapped subchannel
-                        info from tmats_chanid_to_429_subchan_and_name in metadata.
+        channelid       --> YAML::Node representing single chanid with mapped subchannel
+                            info from tmats_chanid_to_429_subchan_and_name in metadata.
+
+        subchan_number  --> uint16_t value which is the number used to map an ARINC
+                            429 subchannel ('bus' in ARINC 429 spec) to a channelid in
+                            the chapter 10 recorder.
+
+        subchan_name    --> string name of the subchannel, which is the name of an
+                            ARINC429 bus. This name should match the 'bus' discription
+                            as seen in the 429 DTS schema
 
     Return:
         True if tuples successfully constructed and added to map; false otherwise
@@ -96,6 +123,144 @@ class Organize429ICD
     bool AddSubchannelToMap(uint16_t& channelid, uint16_t& subchan_number,
                             std::string& subchan_name);
 
+
+    /*
+    Input a string subchannel name from an ICDElment and find the associated channelid
+    and subchannel_number from busname_to_channel_subchannel_ids_. If the subchan_name
+    is not found in map, the name will be stored in subchannel_name_lookup_misses_
+
+    Args:
+        subchan_name    --> string name of the subchannel, which is the name of an
+                            ARINC429 bus. This name should match the 'bus' discription
+                            as seen in the 429 DTS schema
+
+        channelid       --> YAML::Node representing single chanid with mapped subchannel
+                            info from tmats_chanid_to_429_subchan_and_name in metadata.
+
+        subchan_number  --> uint16_t value which is the number used to map an ARINC
+                            429 subchannel ('bus' in ARINC 429 spec) to a channelid in
+                            the chapter 10 recorder.
+
+        bus_to_ids_mapm --> Expected input is the private variable,
+                            busname_to_channel_subchannel_ids_
+
+    Return:
+        True if subchan_name found; otherwise false and subchan_name added
+        to subchannel_name_lookup_misses_
+    */
+    bool GetChannelSubchannelIDsFromMap(std::string& subchan_name,
+                    uint16_t& channelid, uint16_t& subchan_number,
+                    std::unordered_map<std::string, std::tuple<uint16_t,
+                    uint16_t>> bus_to_ids_map);
+
+    /*
+    Input a vector of ICDElements from word_elements map. Use the first ICDElement
+    in the vector to obtain label, bus_name, and sdi.
+
+    Args:
+        elements    --> Vector of ICD elements all of which were mapped to a
+                        single ARINC 429 word name (in word_elements map)
+
+        label       --> std::string for storing the ARINC 429 word's label
+
+        bus_name    --> string name of the subchannel, which is the name of an
+                        ARINC429 bus. This name should match the 'bus' discription
+                        as seen in the 429 DTS schema
+
+        sdi         --> ARINC 429 word's sdi value, as defined in 429 dts schema
+
+    Return:
+        True label, bus_name, and sdi are found and assigned; false otherwise.
+    */
+    bool GetICDElementComponents(std::vector<ICDElement>& elements,
+                                 uint16_t& label, std::string& bus_name,
+                                 int8_t& sdi);
+
+    /*
+    Search organized_lookup_map to see if there is a table_index stored
+    using the lookups chan_id, subchan_id, label, and sdi. If found in
+    map, assigns table_index and returns true. Else, return false.
+
+    Args:
+        chan_id     --> uint16_t id of channel in ch10 recording.
+
+        subchan_id  --> uint16_t ARINC 429 bus subchannel id.
+
+        label       --> std::string for storing the ARINC 429 word's label
+
+        sdi         --> int8_t ARINC 429 word's sdi value, as defined in
+                        429 dts schema
+
+        table_index --> size_t value providing the index where a vector
+                        of vector<ICDElement> is stored in element_table,
+                        found in OrganizeICDMap().
+
+        organized_lookup_map    --> map storing a table_index using the
+                                    keys: chan_id, subchan_id, label, and
+                                    sdi.
+
+    Return:
+        True if index is found in map and assigned to table_index; false otherwise.
+    */
+    bool IsIndexInLookupMap(uint16_t& chan_id, uint16_t& subchan_id,
+                          uint16_t& label,int8_t& sdi, size_t& table_index,
+                          std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
+                                uint16_t,std::unordered_map<int8_t, size_t>>>>& organized_lookup_map);
+
+    /*
+    Add table_index to organized_lookup_map using the arguments chan_id,
+    subchan_id, label, and sdi.
+
+    Args:
+        chan_id     --> uint16_t id of channel in ch10 recording.
+
+        subchan_id  --> uint16_t ARINC 429 bus subchannel id.
+
+        label       --> std::string for storing the ARINC 429 word's label
+
+        sdi         --> int8_t ARINC 429 word's sdi value, as defined in
+                        429 dts schema
+
+        table_index --> size_t value providing the index where a vector
+                        of vector<ICDElement> is stored in element_table,
+                        found in OrganizeICDMap().
+
+        organized_lookup_map    --> map storing a table_index using the
+                                    keys: chan_id, subchan_id, label, and
+                                    sdi.
+
+    Return:
+        True if table_index successfully added; false otherwise.
+    */
+    bool AddIndexToLookupMap(uint16_t& chan_id, uint16_t& subchan_id,
+                          uint16_t& label,int8_t& sdi, size_t& table_index,
+                          std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
+                                uint16_t,std::unordered_map<int8_t, size_t>>>>& organized_lookup_map);
+
+    /*
+    Determins if a vector already exists at table_index, or if a new
+    new vector needs to be created and added to the back of element_table.
+    Inserts vector<ICDElement> to existing or new vector at position
+    table_index.
+
+    Args:
+        table_index     --> size_t value providing the index where a vector
+                            of vector<ICDElement> is stored in element_table,
+                            found in OrganizeICDMap().
+
+        word_elements   --> A vector of ICDElement that are all associated with
+                            a single ARINC 429 word defintion.
+
+        element_table   --> At the index provided by ourganized_lookup_map a
+                            vector<vector<ICDElement>> is returned bearing all
+                            the ICDElements of the 429 words associated with
+                            a given combination of chanid, subchan_id, label, sdi.
+
+    Return:
+        True if vector<ICDElement> successfully added to element_table; false otherwise.
+    */
+    bool AddToElementTable(size_t& table_index, std::vector<ICDElement>& word_elements,
+                          std::vector<std::vector<std::vector<ICDElement>>>& element_table);
 };
 
 #endif
