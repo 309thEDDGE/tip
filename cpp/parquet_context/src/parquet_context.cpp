@@ -22,7 +22,8 @@ ParquetContext::ParquetContext() : ROW_GROUP_COUNT_(10000),
                                    print_msg_(""),
                                    did_write_columns_(false),
                                    empty_file_deletion_enabled_(false),
-                                   row_group_count(ROW_GROUP_COUNT_)
+                                   row_group_count(ROW_GROUP_COUNT_),
+                                   parquet_stop(parquet_stop_)
 {
 }
 
@@ -48,7 +49,8 @@ ParquetContext::ParquetContext(int rgSize) : ROW_GROUP_COUNT_(rgSize),
                                              print_msg_(""),
                                              did_write_columns_(false),
                                              empty_file_deletion_enabled_(false),
-                                             row_group_count(ROW_GROUP_COUNT_)
+                                             row_group_count(ROW_GROUP_COUNT_),
+                                             parquet_stop(parquet_stop_)
 {
 }
 
@@ -975,4 +977,81 @@ void ParquetContext::EnableEmptyFileDeletion(const std::string& path)
 {
     path_ = path;
     empty_file_deletion_enabled_ = true;
+}
+
+bool ParquetContext::GetColumnDataByField(const std::string& field, 
+    std::map<std::string, ColumnData>& col_data_map, ColumnData*& col_data)
+{
+    for (std::map<std::string, ColumnData>::iterator it = col_data_map.begin();
+         it != col_data_map.end(); ++it)
+    {
+        if (it->first == field)
+        {
+            col_data = &(it->second);
+            return true;
+        }
+    }
+    SPDLOG_CRITICAL("Field name doesn't exist: {:s}", field);
+    parquet_stop_ = true;
+    return false;
+}
+
+bool ParquetContext::SetMemLocI64(std::vector<int64_t>& data, const std::string& fieldName,
+                        std::vector<uint8_t>* boolField)
+{
+    ColumnData* col_data = nullptr; 
+    if(!GetColumnDataByField(fieldName, column_data_map_, col_data))
+        return false;
+
+    return SetColumnMemoryLocation(data, col_data, boolField);
+}
+
+bool ParquetContext::SetMemLocI32(std::vector<int32_t>& data, const std::string& fieldName,
+                        std::vector<uint8_t>* boolField)
+{
+    ColumnData* col_data = nullptr; 
+    if(!GetColumnDataByField(fieldName, column_data_map_, col_data))
+        return false;
+
+    return SetColumnMemoryLocation(data, col_data, boolField);
+}
+
+bool ParquetContext::SetMemLocI16(std::vector<int16_t>& data, const std::string& fieldName,
+                        std::vector<uint8_t>* boolField)
+{
+    ColumnData* col_data = nullptr; 
+    if(!GetColumnDataByField(fieldName, column_data_map_, col_data))
+        return false;
+
+    return SetColumnMemoryLocation(data, col_data, boolField);
+}
+
+bool ParquetContext::SetMemLocI8(std::vector<int8_t>& data, const std::string& fieldName,
+                        std::vector<uint8_t>* boolField)
+{
+    ColumnData* col_data = nullptr; 
+    if(!GetColumnDataByField(fieldName, column_data_map_, col_data))
+        return false;
+
+    return SetColumnMemoryLocation(data, col_data, boolField);
+}
+
+bool ParquetContext::SetMemLocString(std::vector<std::string>& data, const std::string& fieldName,
+                        std::vector<uint8_t>* boolField)
+{
+    ColumnData* col_data = nullptr; 
+    if(!GetColumnDataByField(fieldName, column_data_map_, col_data))
+        return false;
+
+    return SetColumnMemoryLocation(data, col_data, boolField);
+}
+
+bool ParquetContext::SetMemLocUI8(std::vector<uint8_t>& data, const std::string& fieldName,
+                        std::vector<uint8_t>* boolField)
+{
+    ColumnData* col_data = nullptr; 
+    if(!GetColumnDataByField(fieldName, column_data_map_, col_data))
+        return false;
+
+    return SetColumnMemoryLocation(data, col_data, boolField);
 }

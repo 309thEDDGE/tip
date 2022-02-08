@@ -12,6 +12,6 @@ cmake ${CMAKE_ARGS} .. \
     -DCI_COMMIT_TAG=$CI_COMMIT_TAG \
     -DCI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA
 
-cmake --build . --target install -j 4
+cmake --build . --target install -j 6
 
 ctest

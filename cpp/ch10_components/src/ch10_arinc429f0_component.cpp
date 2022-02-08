@@ -55,8 +55,8 @@ Ch10Status Ch10429F0Component::ParseMessages(const uint32_t& msg_count, const ui
         abs_time_ = ctx_->Calculate429WordAbsTime(total_gap_time);
 
         // Append parsed data to the file.
-        ctx_->arinc429f0_pq_writer->Append(abs_time_, ctx_->tdp_doy, *arinc429f0_csdw_elem_.element,
-                                                   arinc429f0_msg_fmt_ptr_, ctx_->channel_id);
+        ctx_->arinc429f0_pq_writer->Append(abs_time_, ctx_->tdp_doy, 
+                                            arinc429f0_msg_fmt_ptr_, ctx_->channel_id);
 
     }
 

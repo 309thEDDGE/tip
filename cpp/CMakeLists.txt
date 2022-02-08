@@ -569,7 +569,11 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/yaml_md_document_u.cpp
                 ${test_src_dir}/tip_md_document_u.cpp
                 ${test_src_dir}/provenance_data_u.cpp
-                ${test_src_dir}/organize_429_icd_u.cpp)
+                ${test_src_dir}/parquet_arinc429f0_u.cpp
+                ${test_src_dir}/organize_429_icd_u.cpp
+                ${test_src_dir}/parquet_milstd1553f1_u.cpp
+                ${test_src_dir}/parquet_videodataf0_u.cpp
+                ${test_src_dir}/parquet_ethernetf0_u.cpp)
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs}
                             ${common_inc_dir} ${util_inc_dir} ${dts429_inc_dir}

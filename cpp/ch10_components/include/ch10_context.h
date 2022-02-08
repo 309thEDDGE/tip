@@ -6,6 +6,7 @@
 // headers prior to others which include spdlog.h.
 // There is a redefinition error with
 // some of the types defined in Arrow.
+#include "parquet_context.h"
 #include "parquet_milstd1553f1.h"
 #include "parquet_videodataf0.h"
 #include "parquet_ethernetf0.h"
@@ -133,9 +134,13 @@ class Ch10Context
     //
     // File writers are owned by Ch10Context to maintain state
     //
+    std::unique_ptr<ParquetContext> milstd1553f1_pq_ctx_;
     std::unique_ptr<ParquetMilStd1553F1> milstd1553f1_pq_writer_;
+    std::unique_ptr<ParquetContext> videof0_pq_ctx_;
     std::unique_ptr<ParquetVideoDataF0> videof0_pq_writer_;
+    std::unique_ptr<ParquetContext> ethernetf0_pq_ctx_;
     std::unique_ptr<ParquetEthernetF0> ethernetf0_pq_writer_;
+    std::unique_ptr<ParquetContext> arinc429f0_pq_ctx_;
     std::unique_ptr<ParquetARINC429F0> arinc429f0_pq_writer_;
 
    public:

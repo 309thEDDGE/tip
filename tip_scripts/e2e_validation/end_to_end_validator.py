@@ -162,8 +162,12 @@ class E2EValidator(object):
                 print(msg)
                 continue
 
-            call_list = ['python', script_path, ch10_full_path,
-                         icd_full_path, '-o', test_dir]
+            if config.exe_path is not None:
+                call_list = ['python', script_path, ch10_full_path,
+                             icd_full_path, '-o', test_dir, '--exe-path', config.exe_path]
+            else:
+                call_list = ['python', script_path, ch10_full_path,
+                             icd_full_path, '-o', test_dir]
             call_string = ' '.join(call_list)
             print(call_string)
             e = Exec()

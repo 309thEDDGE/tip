@@ -166,6 +166,8 @@ if __name__ == '__main__':
 
     aparse.add_argument('--dry-run', action='store_true', 
                         help='Test input arguments. Do not parse or translate.')
+    aparse.add_argument('--exe-path', type=str, default=None, 
+                        help='Set path of tip executables')
 
     # aparse.add_argument('--legacy-mode', action='store_true', 
                         # help='Parse and translate in non-RMCOMET mode. '
@@ -185,6 +187,12 @@ if __name__ == '__main__':
     
 
     args = aparse.parse_args()
+
+    if args.exe_path is not None:
+        exe_dir = args.exe_path
+        conf_dir = str(Path(exe_dir).parent.absolute() / 'conf')
+        print('User exe_dir {:s}'.format(exe_dir))
+        print('conf_dir {:s}'.format(conf_dir))
 
     # Copy configuration files from the default directory
     # to the working configuration file directory.

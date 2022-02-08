@@ -1,14 +1,18 @@
 #include "parquet_arinc429f0.h"
 
-ParquetARINC429F0::ParquetARINC429F0() : max_temp_element_count_(ARINC429_ROW_GROUP_COUNT * ARINC429_BUFFER_SIZE_MULTIPLIER),
-                                             ParquetContext(ARINC429_ROW_GROUP_COUNT),
-                                             thread_id_(UINT16_MAX)
+const int ParquetARINC429F0::ARINC429_ROW_GROUP_COUNT = 10000;
+const int ParquetARINC429F0::ARINC429_BUFFER_SIZE_MULTIPLIER = 10;
+
+ParquetARINC429F0::ParquetARINC429F0(ParquetContext* pq_ctx) : pq_ctx_(pq_ctx),
+                                            max_temp_element_count_(ARINC429_ROW_GROUP_COUNT * ARINC429_BUFFER_SIZE_MULTIPLIER),
+                                            thread_id_(UINT16_MAX) 
 {
 }
 
 bool ParquetARINC429F0::Initialize(const ManagedPath& outfile, uint16_t thread_id)
 {
     thread_id_ = thread_id;
+    outfile_ = outfile.string();
 
     // Allocate vector memory.
     time_stamp_.resize(max_temp_element_count_);
@@ -26,44 +30,44 @@ bool ParquetARINC429F0::Initialize(const ManagedPath& outfile, uint16_t thread_i
     channel_id_.resize(max_temp_element_count_);
 
     // Add fields to table.
-    AddField(arrow::int64(), "time");
-    AddField(arrow::boolean(), "doy");
-    AddField(arrow::int32(), "channelid");
-    AddField(arrow::int32(), "gaptime");
-    AddField(arrow::boolean(), "BS");
-    AddField(arrow::boolean(), "PE");
-    AddField(arrow::boolean(), "FE");
-    AddField(arrow::int16(), "bus");
-    AddField(arrow::int16(), "label");
-    AddField(arrow::int8(), "SDI");
-    AddField(arrow::int32(), "data");
-    AddField(arrow::int8(), "SSM");
-    AddField(arrow::boolean(), "parity");
+    pq_ctx_->AddField(arrow::int64(), "time");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "doy");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::int32(), "channelid");  // LCOV_EXCL_LINE
+    pq_ctx_->AddField(arrow::int32(), "gaptime");  // GCOV_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "BS");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "PE");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "FE");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::int16(), "bus");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::int16(), "label");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::int8(), "SDI");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::int32(), "data");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::int8(), "SSM");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "parity");  // GCOVR_EXCL_LINE
 
     // Set memory locations.
-    SetMemoryLocation(time_stamp_, "time");
-    SetMemoryLocation(doy_, "doy");
-    SetMemoryLocation(gap_time_, "gaptime");
-    SetMemoryLocation(BS_, "BS");
-    SetMemoryLocation(PE_, "PE");
-    SetMemoryLocation(FE_, "FE");
-    SetMemoryLocation(bus_, "bus");
-    SetMemoryLocation(label_, "label");
-    SetMemoryLocation(SDI_, "SDI");
-    SetMemoryLocation(data_, "data");
-    SetMemoryLocation(SSM_, "SSM");
-    SetMemoryLocation(parity_, "parity");
-    SetMemoryLocation(channel_id_, "channelid");
+    pq_ctx_->SetMemoryLocation(time_stamp_, "time");
+    pq_ctx_->SetMemoryLocation(doy_, "doy");
+    pq_ctx_->SetMemoryLocation(gap_time_, "gaptime");
+    pq_ctx_->SetMemoryLocation(BS_, "BS");
+    pq_ctx_->SetMemoryLocation(PE_, "PE");
+    pq_ctx_->SetMemoryLocation(FE_, "FE");
+    pq_ctx_->SetMemoryLocation(bus_, "bus");
+    pq_ctx_->SetMemoryLocation(label_, "label");
+    pq_ctx_->SetMemoryLocation(SDI_, "SDI");
+    pq_ctx_->SetMemoryLocation(data_, "data");
+    pq_ctx_->SetMemoryLocation(SSM_, "SSM");
+    pq_ctx_->SetMemoryLocation(parity_, "parity");
+    pq_ctx_->SetMemoryLocation(channel_id_, "channelid");
 
-    if(!OpenForWrite(outfile.string(), true))// set correct field from here down
+    if(!pq_ctx_->OpenForWrite(outfile_, true))
     {
         SPDLOG_ERROR("({:03d}) OpenForWrite failed for file {:s}", thread_id_,
-                     outfile.string());
+                     outfile_);
         return false;
     }
 
     // Setup automatic tracking of appended data.
-    if (!SetupRowCountTracking(ARINC429_ROW_GROUP_COUNT,
+    if (!pq_ctx_->SetupRowCountTracking(ARINC429_ROW_GROUP_COUNT,
                                ARINC429_BUFFER_SIZE_MULTIPLIER, true, "ARINC429F0"))
     {
         SPDLOG_ERROR("({:03d}) SetupRowCountTracking not configured correctly",
@@ -71,35 +75,30 @@ bool ParquetARINC429F0::Initialize(const ManagedPath& outfile, uint16_t thread_i
         return false;
     }
 
-    EnableEmptyFileDeletion(outfile.string());
+    pq_ctx_->EnableEmptyFileDeletion(outfile_);
     return true;
 }
 
 void ParquetARINC429F0::Append(const uint64_t& time_stamp, uint8_t doy,
-                const ARINC429F0CSDWFmt* const chan_spec,
                 const ARINC429F0MsgFmt* msg, const uint16_t& chanid)
 {
-    // Is the csdw even needed? Don't see how it is for ARINC data.
-
-    time_stamp_[append_count_] = static_cast<int64_t>(time_stamp);
-    doy_[append_count_] = doy;
-    gap_time_[append_count_] = static_cast<int32_t>(msg->gap);
-    BS_[append_count_] = msg->BS;
-    PE_[append_count_] = msg->PE;
-    FE_[append_count_] = msg->FE;
-    bus_[append_count_] = static_cast<int16_t>(msg->bus);
-    label_[append_count_] = static_cast<int16_t>(msg->label);
-    SDI_[append_count_] = static_cast<int8_t>(msg->SDI);
-    data_[append_count_] = static_cast<int32_t>(msg->data);
-    SSM_[append_count_] = static_cast<int8_t>(msg->SSM);
-    parity_[append_count_] = msg->parity;
-    channel_id_[append_count_] = static_cast<int32_t>(chanid);
+    time_stamp_[pq_ctx_->append_count_] = static_cast<int64_t>(time_stamp);
+    doy_[pq_ctx_->append_count_] = doy;
+    gap_time_[pq_ctx_->append_count_] = static_cast<int32_t>(msg->gap);
+    BS_[pq_ctx_->append_count_] = msg->BS;
+    PE_[pq_ctx_->append_count_] = msg->PE;
+    FE_[pq_ctx_->append_count_] = msg->FE;
+    bus_[pq_ctx_->append_count_] = static_cast<int16_t>(msg->bus);
+    label_[pq_ctx_->append_count_] = static_cast<int16_t>(msg->label);
+    SDI_[pq_ctx_->append_count_] = static_cast<int8_t>(msg->SDI);
+    data_[pq_ctx_->append_count_] = static_cast<int32_t>(msg->data);
+    SSM_[pq_ctx_->append_count_] = static_cast<int8_t>(msg->SSM);
+    parity_[pq_ctx_->append_count_] = msg->parity;
+    channel_id_[pq_ctx_->append_count_] = static_cast<int32_t>(chanid);
 
     // Increment the count variable and write data if row group(s) are filled.
-    if (IncrementAndWrite(thread_id_))
+    if (pq_ctx_->IncrementAndWrite(thread_id_))
     {
-        // Reset list buffers.
-        // std::fill(data_.begin(), data_.end(), 0);
     }
 
 }

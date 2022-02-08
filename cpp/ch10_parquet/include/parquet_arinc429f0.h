@@ -10,17 +10,17 @@
 #include "ch10_arinc429f0_msg_hdr_format.h"
 #include "spdlog/spdlog.h"
 
-const int ARINC429_ROW_GROUP_COUNT = 10000;
-const int ARINC429_BUFFER_SIZE_MULTIPLIER = 10;
 
-class ParquetARINC429F0 : public ParquetContext
+class ParquetARINC429F0
 {
    private:
     int max_temp_element_count_;
-    uint16_t thread_id_;
+    ParquetContext* pq_ctx_;
 
-    // Set of msg names.
-    std::set<std::string> name_set_;
+   public:
+    static const int ARINC429_ROW_GROUP_COUNT;
+    static const int ARINC429_BUFFER_SIZE_MULTIPLIER;
+    uint16_t thread_id_;
 
     // Arrays of data to be written to the Parquet table.
     std::vector<int64_t> time_stamp_;  // save as int64
@@ -37,12 +37,11 @@ class ParquetARINC429F0 : public ParquetContext
     std::vector<uint8_t> parity_;       // save as single bit
     std::vector<int32_t> channel_id_;
 
-   public:
-    ParquetARINC429F0();
-    //ParquetMilStd1553F1(ManagedPath outfile, uint16_t ID, bool truncate);
+    std::string outfile_;
+
+    ParquetARINC429F0(ParquetContext* pq_ctx);
     bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
     void Append(const uint64_t& time_stamp, uint8_t doy,
-                const ARINC429F0CSDWFmt* const chan_spec,
                 const ARINC429F0MsgFmt* msg, const uint16_t& chanid);
 
    /*

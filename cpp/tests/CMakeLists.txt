@@ -65,6 +65,9 @@ add_executable(tests
     src/dts429_u.cpp
     src/parquet_arinc429f0_u.cpp
     src/organize_429_icd_u.cpp
+    src/parquet_milstd1553f1_u.cpp
+    src/parquet_videodataf0_u.cpp 
+    src/parquet_ethernetf0_u.cpp 
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)

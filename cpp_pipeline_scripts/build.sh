@@ -48,7 +48,7 @@ main() {
 
     UNITTEST_REPORT_DIR=$BUILD_DIR/reports
     mkdir -p $UNITTEST_REPORT_DIR
-    conda run -n tip-dev gcovr -r $BASE_DIR $BUILD_DIR -j 2 --verbose \
+    conda run -n tip-dev gcovr -r $BASE_DIR $BUILD_DIR -j 4 --verbose \
 	      --exclude-unreachable-branches \
 	      --exclude-throw-branches \
 	      --xml ${UNITTEST_REPORT_DIR}/overall-coverage.xml \
