@@ -9,15 +9,19 @@
 #include "managed_path.h"
 #include "spdlog/spdlog.h"
 
-class ParquetEthernetF0 : public ParquetContext
+class ParquetEthernetF0
 {
    private:
+      ParquetContext* pq_ctx_;
+
+   public:
     static const size_t DEFAULT_ROW_GROUP_COUNT;
     static const size_t DEFAULT_BUFFER_SIZE_MULTIPLIER;
-    const size_t PAYLOAD_LIST_COUNT;
-    const size_t MAX_TEMP_ELEMENT_COUNT;
+    static const size_t PAYLOAD_LIST_COUNT;
+    static const size_t MAX_TEMP_ELEMENT_COUNT;
     uint16_t thread_id_;
     int16_t* payload_ptr_;
+    std::string outfile_;
 
     // Arrays of data to be written to the Parquet table. See EthernetData for a
     // description of the columns.
@@ -41,8 +45,7 @@ class ParquetEthernetF0 : public ParquetContext
     std::vector<int32_t> dst_port_;  // original type is uint16_t
     std::vector<int32_t> src_port_;  // original type is uint16_t
 
-   public:
-    ParquetEthernetF0();
+    ParquetEthernetF0(ParquetContext* pq_ctx);
     bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
     void Append(const uint64_t& time_stamp, const uint32_t& chanid,
                 const EthernetData* eth_data);

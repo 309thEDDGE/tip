@@ -29,6 +29,7 @@ if __name__ == '__main__':
                         help='Provide a string to be inserted into the log name')
     aparse.add_argument('--no-yaml', action='store_true', default=False, 
                         help='Turn off Yaml dependency import (deepdiff) and do not compare yaml files')
+    aparse.add_argument('--exe-path', type=str, default=None, help='Manually specify path to executables')
 
     args = aparse.parse_args()
     log_desc = ''
@@ -37,8 +38,11 @@ if __name__ == '__main__':
 
     # Define the COMPARE_YAML global config prior to importing E2EValidator
     config.COMPARE_YAML = True
+    config.exe_path = None
     if args.no_yaml:
         config.COMPARE_YAML = False
+    if args.exe_path:
+        config.exe_path = args.exe_path
 
     from tip_scripts.e2e_validation.end_to_end_validator import E2EValidator
     e = E2EValidator(args.truth_dir, args.test_dir, args.log_dir, log_desc=log_desc)

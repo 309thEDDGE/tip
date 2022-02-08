@@ -173,7 +173,7 @@ class ColumnData
     int byte_size_;
     CastFromType cast_from_;
 
-    ColumnData() : type_(nullptr), pointer_set_(false), ready_for_write_(false), cast_from_(CastFromType::TypeNONE), builder_(), list_builder_(), initial_max_row_size_(0), input_data_(nullptr) {}
+    ColumnData() : type_(nullptr), pointer_set_(false), ready_for_write_(false), cast_from_(CastFromType::TypeNONE), builder_(), list_builder_(), initial_max_row_size_(0), input_data_(nullptr), field_name_("") {}
 
     ColumnData(std::shared_ptr<arrow::DataType> type, std::string fieldName, std::string typeID,
                int byteSize, int listSize = 0) : field_name_(fieldName), type_ID_(typeID), byte_size_(byteSize), type_(type), pointer_set_(false), ready_for_write_(false), cast_from_(CastFromType::TypeNONE), builder_(), list_builder_(), initial_max_row_size_(0), input_data_(nullptr)

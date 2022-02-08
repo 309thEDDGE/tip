@@ -8,13 +8,17 @@
 #include "ch10_videof0_header_format.h"
 #include "spdlog/spdlog.h"
 
-const int DEFAULT_ROW_GROUP_COUNT_VIDEO = 10000;
-const int DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO = 10;
-
-class ParquetVideoDataF0 : public ParquetContext
+class ParquetVideoDataF0
 {
    private:
     int max_temp_element_count_;
+	ParquetContext* pq_ctx_;
+
+   public:
+    std::string outfile_;
+	static const int DEFAULT_ROW_GROUP_COUNT_VIDEO;
+	static const int DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO;
+
     uint16_t thread_id_;
 
     // Note: refer to the IRIG106 ch10 spec for additional information on many of these
@@ -84,8 +88,7 @@ class ParquetVideoDataF0 : public ParquetContext
 	*/
     std::vector<int32_t> channel_id_;
 
-   public:
-    ParquetVideoDataF0();
+    ParquetVideoDataF0(ParquetContext* parquet_context);
     bool Initialize(ManagedPath outfile, uint16_t thread_id);
 
     /*

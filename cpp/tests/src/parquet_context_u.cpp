@@ -2379,6 +2379,38 @@ TEST(ParquetContextSimpleTest, SetupRowCountTrackingInvalidParams)
     ASSERT_TRUE(pc.SetupRowCountTracking(row_group_count, row_group_count_multiplier, doprint));
 }
 
+TEST(ParquetContextSimpleTest, GetColumnDataByFieldNotPresent)
+{
+    ParquetContext pc;
+    std::map<std::string, ColumnData> col_data_map;
+    ColumnData col_data1(arrow::int8(), "col_data1", "int8", 1);
+    ColumnData col_data2(arrow::int8(), "col_data2", "int8", 1);
+    col_data_map["col_data1"] = col_data1;
+    col_data_map["col_data2"] = col_data2;
+
+    ColumnData* output = nullptr;
+    ASSERT_FALSE(pc.parquet_stop);
+    ASSERT_FALSE(pc.GetColumnDataByField("coldata", col_data_map, output));
+    EXPECT_EQ(nullptr, output);
+    EXPECT_TRUE(pc.parquet_stop);
+}
+
+TEST(ParquetContextSimpleTest, GetColumnDataByFieldPresent)
+{
+    ParquetContext pc;
+    std::map<std::string, ColumnData> col_data_map;
+    ColumnData col_data1(arrow::int8(), "col_data1", "int8", 1);
+    ColumnData col_data2(arrow::int8(), "col_data2", "int8", 1);
+    col_data_map["col_data1"] = col_data1;
+    col_data_map["col_data2"] = col_data2;
+
+    ColumnData* output = nullptr;
+    ASSERT_FALSE(pc.parquet_stop);
+    ASSERT_TRUE(pc.GetColumnDataByField("col_data2", col_data_map, output));
+    EXPECT_EQ("col_data2", output->field_name_);
+    EXPECT_FALSE(pc.parquet_stop);
+}
+
 class ParquetContextRowCountTrackingTest : public ::testing::Test
 {
    protected:

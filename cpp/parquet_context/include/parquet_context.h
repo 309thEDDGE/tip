@@ -108,6 +108,7 @@ class ParquetContext
     std::string print_msg_;
 
    public:
+    const bool& parquet_stop;
     // User-available variable to access the current
     // count of rows appended to buffers.
     const size_t& append_count_ = appended_row_count_;
@@ -203,7 +204,7 @@ class ParquetContext
 								(unsigned output currently not supported)
 
 	*/
-    bool AddField(const std::shared_ptr<arrow::DataType> type,
+    virtual bool AddField(const std::shared_ptr<arrow::DataType> type,
                   const std::string& fieldName,
                   int listSize = 0);
 
@@ -256,6 +257,34 @@ class ParquetContext
     bool SetMemoryLocation(std::vector<NativeType>& data,
                            const std::string& fieldName,
                            std::vector<uint8_t>* boolField = nullptr);
+    /*
+    Helper function to decompose original SetMemoryLocation function.
+    
+    Difference in args:
+        col_data    --> Pointer to ColumnData object which is maatched
+                        by the field name
+    */
+    template <typename NativeType>
+    bool SetColumnMemoryLocation(std::vector<NativeType>& data,
+                           ColumnData* col_data,
+                           std::vector<uint8_t>* boolField);
+   
+    /*
+    Virtual functions to call based on SetMemoryLocation specializations.
+    Facilitate mocking.
+    */
+    virtual bool SetMemLocI64(std::vector<int64_t>& data, const std::string& fieldName,
+                           std::vector<uint8_t>* boolField);
+    virtual bool SetMemLocI32(std::vector<int32_t>& data, const std::string& fieldName,
+                           std::vector<uint8_t>* boolField);
+    virtual bool SetMemLocI16(std::vector<int16_t>& data, const std::string& fieldName,
+                           std::vector<uint8_t>* boolField);
+    virtual bool SetMemLocI8(std::vector<int8_t>& data, const std::string& fieldName,
+                           std::vector<uint8_t>* boolField);
+    virtual bool SetMemLocString(std::vector<std::string>& data, const std::string& fieldName,
+                           std::vector<uint8_t>* boolField);
+    virtual bool SetMemLocUI8(std::vector<uint8_t>& data, const std::string& fieldName,
+                           std::vector<uint8_t>* boolField);
 
     /*
 		Creates the parquet file with an initial schema
@@ -276,7 +305,7 @@ class ParquetContext
 							subsequent SetMemoryLocation call, or if no AddField
 							calls are made.
 	*/
-    bool OpenForWrite(const std::string path,
+    virtual bool OpenForWrite(const std::string path,
                       const bool truncate = true);
 
     /*
@@ -356,7 +385,7 @@ class ParquetContext
 							false otherwise.
 	
 	*/
-    bool SetupRowCountTracking(size_t row_group_count,
+    virtual bool SetupRowCountTracking(size_t row_group_count,
                                size_t row_group_count_multiplier, bool print_activity,
                                std::string print_msg = "");
 
@@ -370,7 +399,7 @@ class ParquetContext
         Inputs: output_path     -> std::string output file path. Same as input 
                                    to OpenForWrite
     */
-    void EnableEmptyFileDeletion(const std::string& path);
+    virtual void EnableEmptyFileDeletion(const std::string& path);
 
     /*
 	
@@ -405,7 +434,7 @@ class ParquetContext
 						this function will only return true every 1000th call.
 
 	*/
-    bool IncrementAndWrite(const uint16_t& thread_id = 0);
+    virtual bool IncrementAndWrite(const uint16_t& thread_id = 0);
 
     /*
 	
@@ -421,6 +450,24 @@ class ParquetContext
 
 	*/
     void Finalize(const uint16_t& thread_id = 0);
+
+
+
+    /*
+    Return a ColumnData object for the given input field, if it exists.
+
+    Args:
+        field       --> field name
+        col_data_map--> Map of string to ColumnData object from which 
+                        col_data shall be retrieved
+        col_data    --> ColumnData pointer to be assigned if found
+
+    Return:
+        True if field is in col_data_map; false if not present
+        or other error occurs.
+    */
+    bool GetColumnDataByField(const std::string& field, 
+        std::map<std::string, ColumnData>& col_data_map, ColumnData*& col_data);
 };
 
 template <typename T, typename A>
@@ -521,6 +568,54 @@ void ParquetContext::Append(const bool& isList,
                                    columnData.null_values_->data() + offset);
         }
     }
+}
+
+template <>
+inline bool ParquetContext::SetMemoryLocation(std::vector<int64_t>& data,
+                                       const std::string& fieldName,
+                                       std::vector<uint8_t>* boolField)
+{
+    return SetMemLocI64(data, fieldName, boolField);
+}
+
+template <>
+inline bool ParquetContext::SetMemoryLocation(std::vector<int32_t>& data,
+                                       const std::string& fieldName,
+                                       std::vector<uint8_t>* boolField)
+{
+    return SetMemLocI32(data, fieldName, boolField);
+}
+
+template <>
+inline bool ParquetContext::SetMemoryLocation(std::vector<int16_t>& data,
+                                       const std::string& fieldName,
+                                       std::vector<uint8_t>* boolField)
+{
+    return SetMemLocI16(data, fieldName, boolField);
+}
+
+template <>
+inline bool ParquetContext::SetMemoryLocation(std::vector<int8_t>& data,
+                                       const std::string& fieldName,
+                                       std::vector<uint8_t>* boolField)
+{
+    return SetMemLocI8(data, fieldName, boolField);
+}
+
+template <>
+inline bool ParquetContext::SetMemoryLocation(std::vector<std::string>& data,
+                                       const std::string& fieldName,
+                                       std::vector<uint8_t>* boolField)
+{
+    return SetMemLocString(data, fieldName, boolField);
+}
+
+template <>
+inline bool ParquetContext::SetMemoryLocation(std::vector<uint8_t>& data,
+                                       const std::string& fieldName,
+                                       std::vector<uint8_t>* boolField)
+{
+    return SetMemLocUI8(data, fieldName, boolField);
 }
 
 template <typename NativeType>
@@ -682,78 +777,257 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
     return false;
 }
 
-// Specialization for string data.
-template <>
-inline bool ParquetContext::SetMemoryLocation<std::string>(std::vector<std::string>& data,
-                                                           const std::string& fieldName,
-                                                           std::vector<uint8_t>* boolField)
+template <typename NativeType>
+bool ParquetContext::SetColumnMemoryLocation(std::vector<NativeType>& data,
+                           ColumnData* col_data,
+                           std::vector<uint8_t>* boolField)
 {
-    for (std::map<std::string, ColumnData>::iterator
-             it = column_data_map_.begin();
-         it != column_data_map_.end();
-         ++it)
+    NativeType a;
+    // If it is a list and boolField is defined
+    // make sure to reset boolField to null since
+    // null lists aren't available
+    if (col_data->is_list_)
     {
-        if (it->first == fieldName)
+        // Check that the list size is a multiple of the
+        // vector size provided
+        if (data.size() % col_data->list_size_ != 0)
         {
-            if (typeid(std::string).name() != it->second.type_ID_)
-            {
-                SPDLOG_CRITICAL("can't cast from string to other types: {:s}",
-                                fieldName);
-                parquet_stop_ = true;
-                return false;
-            }
-            else if (it->second.pointer_set_)
-            {
-                SPDLOG_WARN("ptr is already set for: {:s}", fieldName);
-            }
-            if (it->second.is_list_)
-            {
-                if (data.size() % it->second.list_size_ != 0)
-                {
-                    SPDLOG_CRITICAL(
-                        "list size specified ({:d})"
-                        " is not a multiple of total data length ({:d}) "
-                        "for column: {:s}",
-                        it->second.list_size_,
-                        data.size(),
-                        fieldName);
-                    parquet_stop_ = true;
-                    return false;
-                }
+            SPDLOG_CRITICAL("list size specified {:d} is not a multiple of "
+                "total data length {:d} for column: {:s}", col_data->list_size_,
+                data.size(), col_data->field_name_);
+            parquet_stop_ = true;
+            return false;
+        }
 
-                if (boolField != nullptr)
-                {
-                    SPDLOG_WARN(
-                        "Null fields for lists "
-                        "are currently unavailable: {:s}",
-                        fieldName);
-                    boolField = nullptr;
-                }
-            }
-
-            // The null field vector must be the same size as the
-            // data vector
-            if (boolField != nullptr)
-            {
-                if (boolField->size() != data.size())
-                {
-                    SPDLOG_CRITICAL(
-                        "null field vector must be the "
-                        "same size as data vector: {:s}",
-                        fieldName);
-                    parquet_stop_ = true;
-                    return false;
-                }
-            }
-            SPDLOG_DEBUG("setting field info for {:s}", fieldName);
-            it->second.SetColumnData(data, fieldName, boolField);
-
-            return true;
+        if (boolField != nullptr)
+        {
+            SPDLOG_WARN("Null fields for lists are currently unavailable: {:s}", col_data->field_name_);
+            boolField = nullptr;
         }
     }
-    SPDLOG_CRITICAL("Field name doesn't exist: {:s}", fieldName);
-    parquet_stop_ = true;
-    return false;
+
+    // The null field vector must be the same size as the
+    // data vector
+    if (boolField != nullptr)
+    {
+        if (boolField->size() != data.size())
+        {
+            SPDLOG_CRITICAL("null field vector must be the same size as data vector: {:s}",
+                col_data->field_name_);
+            parquet_stop_ = true;
+            return false;
+        }
+    }
+
+    // Check if ptr is already set
+    if (col_data->pointer_set_)
+        SPDLOG_WARN("ptr is already set for: {:s}", col_data->field_name_);
+
+    // If casting is required
+    if (typeid(NativeType).name() != col_data->type_ID_)
+    {
+        SPDLOG_WARN("Casting is required for field \"{:s}\"", col_data->field_name_);
+        // Check if other types are being written
+        // to or from a string or to boolean from
+        // anything but uint8_t
+        // NativeType is they type being cast FROM and second.type_->id()
+        // is the type being cast TO which is the original arrow type passed
+        // to AddField
+        // Note: It is impossible to stop boolean from being cast
+        // up to a larger type, since NativeType for boolean is uint8_t.
+        // The only way to stop boolean from being cast
+        // up would be to stop all uint8_t from being cast up.
+        // Also note that col_data->type_ID_ is originally retrieved from
+        // ParquetContext::GetTypeIDFromArrowType and every type is as
+        // expected except boolean. Boolean arrow types will result in
+        // uint8_t being assigned to col_data->type_ID_
+        if (col_data->type_->id() == arrow::StringType::type_id ||
+            typeid(std::string).name() == typeid(NativeType).name() ||
+            col_data->type_->id() == arrow::BooleanType::type_id)
+        {
+            SPDLOG_CRITICAL("can't cast from other data type to string or bool for: {:s}",
+                col_data->field_name_);
+            parquet_stop_ = true;
+            return false;
+        }
+
+        // Cast to larger datatype check
+        if (col_data->byte_size_ < sizeof(a))
+        {
+            SPDLOG_CRITICAL("Intended datatype to be cast is smaller than the given "
+                "datatype for: {:s}", col_data->field_name_);
+            parquet_stop_ = true;
+            return false;
+        }
+
+        // Check if floating point casting is happening
+        if (col_data->type_ID_ == typeid(float).name() ||
+            col_data->type_ID_ == typeid(double).name() ||
+            typeid(NativeType).name() == typeid(float).name() ||
+            typeid(NativeType).name() == typeid(double).name())
+        {
+            SPDLOG_CRITICAL("Can't cast floating point data types: {:s}", col_data->field_name_);
+            parquet_stop_ = true;
+            return false;
+        }
+
+        // Equal size datatypes check
+        if (col_data->byte_size_ == sizeof(a))
+        {
+            SPDLOG_DEBUG("Intended datatype to be cast is equal to the casting type for: {:s}",
+                col_data->field_name_);
+        }
+
+        col_data->SetColumnData(data.data(), col_data->field_name_, typeid(NativeType).name(),
+                                    boolField, data.size());
+
+        SPDLOG_DEBUG("Cast from {:s} planned for: {:s}", typeid(NativeType).name(), col_data->field_name_);
+    }
+    // Data types are the same and no casting required
+    else
+        col_data->SetColumnData(data.data(), col_data->field_name_, "", boolField, data.size());
+
+    std::shared_ptr<InputDataBase> input_data = 
+        std::make_shared<InputData<NativeType>>(data.data());
+    col_data->SetInputData(input_data);
+
+    return true;
 }
+
+// Specialization for string data.
+template <>
+inline bool ParquetContext::SetColumnMemoryLocation(std::vector<std::string>& data,
+                           ColumnData* col_data,
+                           std::vector<uint8_t>* boolField)
+{
+    if (typeid(std::string).name() != col_data->type_ID_)
+    {
+        SPDLOG_CRITICAL("can't cast from string to other types: {:s}", col_data->field_name_);
+        parquet_stop_ = true;
+        return false;
+    }
+    else if (col_data->pointer_set_)
+    {
+        SPDLOG_WARN("ptr is already set for: {:s}", col_data->field_name_);
+    }
+    if (col_data->is_list_)
+    {
+        if (data.size() % col_data->list_size_ != 0)
+        {
+            SPDLOG_CRITICAL(
+                "list size specified ({:d})"
+                " is not a multiple of total data length ({:d}) "
+                "for column: {:s}",
+                col_data->list_size_,
+                data.size(),
+                col_data->field_name_);
+            parquet_stop_ = true;
+            return false;
+        }
+
+        if (boolField != nullptr)
+        {
+            SPDLOG_WARN(
+                "Null fields for lists "
+                "are currently unavailable: {:s}",
+                col_data->field_name_);
+            boolField = nullptr;
+        }
+    }
+
+    // The null field vector must be the same size as the
+    // data vector
+    if (boolField != nullptr)
+    {
+        if (boolField->size() != data.size())
+        {
+            SPDLOG_CRITICAL(
+                "null field vector must be the "
+                "same size as data vector: {:s}",
+                col_data->field_name_);
+            parquet_stop_ = true;
+            return false;
+        }
+    }
+    SPDLOG_DEBUG("setting field info for {:s}", col_data->field_name_);
+    col_data->SetColumnData(data, col_data->field_name_, boolField);
+
+    return true;
+}
+
+
+// Specialization for string data.
+// template <>
+// inline bool ParquetContext::SetMemoryLocation<std::string>(std::vector<std::string>& data,
+//                                                            const std::string& fieldName,
+//                                                            std::vector<uint8_t>* boolField)
+// {
+//     for (std::map<std::string, ColumnData>::iterator
+//              it = column_data_map_.begin();
+//          it != column_data_map_.end();
+//          ++it)
+//     {
+//         if (it->first == fieldName)
+//         {
+//             if (typeid(std::string).name() != it->second.type_ID_)
+//             {
+//                 SPDLOG_CRITICAL("can't cast from string to other types: {:s}",
+//                                 fieldName);
+//                 parquet_stop_ = true;
+//                 return false;
+//             }
+//             else if (it->second.pointer_set_)
+//             {
+//                 SPDLOG_WARN("ptr is already set for: {:s}", fieldName);
+//             }
+//             if (it->second.is_list_)
+//             {
+//                 if (data.size() % it->second.list_size_ != 0)
+//                 {
+//                     SPDLOG_CRITICAL(
+//                         "list size specified ({:d})"
+//                         " is not a multiple of total data length ({:d}) "
+//                         "for column: {:s}",
+//                         it->second.list_size_,
+//                         data.size(),
+//                         fieldName);
+//                     parquet_stop_ = true;
+//                     return false;
+//                 }
+
+//                 if (boolField != nullptr)
+//                 {
+//                     SPDLOG_WARN(
+//                         "Null fields for lists "
+//                         "are currently unavailable: {:s}",
+//                         fieldName);
+//                     boolField = nullptr;
+//                 }
+//             }
+
+//             // The null field vector must be the same size as the
+//             // data vector
+//             if (boolField != nullptr)
+//             {
+//                 if (boolField->size() != data.size())
+//                 {
+//                     SPDLOG_CRITICAL(
+//                         "null field vector must be the "
+//                         "same size as data vector: {:s}",
+//                         fieldName);
+//                     parquet_stop_ = true;
+//                     return false;
+//                 }
+//             }
+//             SPDLOG_DEBUG("setting field info for {:s}", fieldName);
+//             it->second.SetColumnData(data, fieldName, boolField);
+
+//             return true;
+//         }
+//     }
+//     SPDLOG_CRITICAL("Field name doesn't exist: {:s}", fieldName);
+//     parquet_stop_ = true;
+//     return false;
+// }
 
 #endif
