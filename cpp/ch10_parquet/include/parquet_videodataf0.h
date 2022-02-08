@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <vector>
+#include <string>
 #include "parquet_context.h"
 #include "managed_path.h"
 #include "ch10_videof0_header_format.h"
