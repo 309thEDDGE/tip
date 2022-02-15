@@ -19,6 +19,10 @@ class ParserConfigParams
     int worker_offset_wait_ms_;
     int worker_shift_wait_ms_;
 
+    ParserConfigParams() : parse_chunk_bytes_(0), parse_thread_count_(0), 
+        max_chunk_read_count_(0), worker_offset_wait_ms_(0), worker_shift_wait_ms_(0)
+    {}
+
     /*
 	Attempt to read the required parameters from the 
 	yaml object. This function is tested though the

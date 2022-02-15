@@ -106,7 +106,7 @@ class ManagedPath : public fs::path
 
 	Returns: true if is regular file, false otherwise
 	*/
-    bool is_regular_file() const;
+    virtual bool is_regular_file() const;
 
     /*
 	Check whether the current object is a directory.

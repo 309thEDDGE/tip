@@ -40,8 +40,8 @@ bool YamlSV::ValidateDocument(const ManagedPath& doc, const ManagedPath& schema,
 {
     ArgumentValidation av;
 
-    if(!(av.CheckExtension(doc.RawString(), "yaml", "yml") && 
-        av.CheckExtension(schema.RawString(), "yaml", "yml")))
+    if(!(av.CheckExtension(doc.RawString(), {"yaml", "yml"}) && 
+        av.CheckExtension(schema.RawString(), {"yaml", "yml"})))
         return false;
 
     if(!(av.ValidateDocument(doc, doc_string) && av.ValidateDocument(schema, schema_string))) 

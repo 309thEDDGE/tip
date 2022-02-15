@@ -19,6 +19,7 @@ class ArgumentValidation
 
    public:
     ArgumentValidation() {}
+	virtual ~ArgumentValidation() {}
 
 
 	/*
@@ -95,7 +96,7 @@ class ArgumentValidation
 		True if the path is validated, i.e., conforms to utf-8 and the file exists,
 		otherwise false.
 	*/
-    bool ValidateInputFilePath(std::string input_path, ManagedPath& mp_input_path);
+    virtual bool ValidateInputFilePath(std::string input_path, ManagedPath& mp_input_path) const;
 
 
 
@@ -123,9 +124,9 @@ class ArgumentValidation
 		True if the path is validated utf8 and confirmed to exist, false otherwise
 
 	*/
-    bool ValidateDefaultInputFilePath(const ManagedPath& default_base_path,
+    virtual bool ValidateDefaultInputFilePath(const ManagedPath& default_base_path,
                                       const std::string& user_base_path, std::string file_name,
-                                      ManagedPath& full_path);
+                                      ManagedPath& full_path) const;
 
     /*
 	Create an output directory object if the user output directory is an 
@@ -150,9 +151,9 @@ class ArgumentValidation
 		True if the directory is confirmed to exist or created successfully if 
 		create_dir is set to true, false otherwise.
 	*/
-    bool ValidateDefaultOutputDirectory(const ManagedPath& default_output_dir,
+    virtual bool ValidateDefaultOutputDirectory(const ManagedPath& default_output_dir,
                                         const std::string& user_output_dir, ManagedPath& final_output_dir,
-                                        bool create_dir);
+                                        bool create_dir) const;
 
     /*
 	Read a file into a string object and test for UTF-8 conformity.
@@ -167,7 +168,7 @@ class ArgumentValidation
 		True if the document can be read and tested to conform with UTF-8, 
 		otherwise false.
 	*/
-    bool ValidateDocument(const ManagedPath& doc_path, std::string& doc_string);
+    virtual bool ValidateDocument(const ManagedPath& doc_path, std::string& doc_string);
 
     /*
 	Validate a potential directory by checking that the path string conforms
@@ -183,7 +184,7 @@ class ArgumentValidation
 		True if the path is validated, i.e., conforms to utf-8 and the dir exists,
 		otherwise false.
 	*/
-    bool ValidateDirectoryPath(std::string dir, ManagedPath& mp_dir);
+    virtual bool ValidateDirectoryPath(std::string dir, ManagedPath& mp_dir) const;
 
     /*
 	Check that a string has one of the n extensions passed as arguments.
@@ -200,46 +201,8 @@ class ArgumentValidation
 		True if the extension found on the input_path is equal to one of 
 		the extensions supplied as arguments, otherwise false.
 	*/
-    template <typename... T>
-    bool CheckExtension(const std::string& input_path, T... exts);
+    virtual bool CheckExtension(const std::string& input_path, std::vector<std::string> exts) const;
 };
 
-template <typename... T>
-bool ArgumentValidation::CheckExtension(const std::string& input_path, T... exts)
-{
-    ManagedPath temp_path(input_path);
-    if (temp_path.extension().RawString() == "")
-    {
-        printf("CheckExtension: Input file %s does not have an extension\n",
-               input_path.c_str());
-        return false;
-    }
-
-    // Get lower case extension from input string with the '.' removed.
-    std::string path_ext = parse_text_.ToLower(
-        temp_path.extension().RawString().substr(1));
-
-    // Iterate over argument pack and compare.
-    std::string lower_opt_ext;
-    for (auto opt_ext : {exts...})
-    {
-        lower_opt_ext = parse_text_.ToLower(opt_ext);
-        if (path_ext == lower_opt_ext)
-            return true;
-    }
-
-    std::string ext_list = "";
-    for (auto opt_ext : {exts...})
-    {
-        ext_list += opt_ext;
-        ext_list += " ";
-    }
-    printf(
-        "CheckExtension: Input file %s does not have one of the "
-        "(case-insensitive) extensions: %s\n",
-        input_path.c_str(), ext_list.c_str());
-
-    return false;
-}
 
 #endif

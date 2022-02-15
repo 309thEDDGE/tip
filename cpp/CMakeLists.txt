@@ -272,7 +272,7 @@ set(transtab1553_inc_dir ${transtab1553_lib_name}/${include_dir_name})
 set(transtab1553_src_dir ${transtab1553_lib_name}/${source_dir_name})
 add_library(${transtab1553_lib_name}
                 ${common_inc_dir}/ch10_packet_type.h
-                ${transtab1553_inc_dir}/helper_funcs.h ${transtab1553_src_dir}/helper_funcs.cpp
+                ${transtab1553_inc_dir}/translate_tabular_1553_main.h ${transtab1553_src_dir}/translate_tabular_1553_main.cpp
                 ${transtab1553_inc_dir}/translate_tabular_context_1553.h ${transtab1553_src_dir}/translate_tabular_context_1553.cpp
 )
 target_include_directories(${transtab1553_lib_name} PUBLIC
@@ -311,7 +311,7 @@ set(transtab429_src_dir ${transtab429_lib_name}/${source_dir_name})
 add_library(${transtab429_lib_name}
         ${common_inc_dir}/ch10_packet_type.h
         ${transtab429_inc_dir}/translate_tabular_context_arinc429.h ${transtab429_src_dir}/translate_tabular_context_arinc429.cpp
-        ${transtab429_inc_dir}/helper_funcs.h ${transtab429_src_dir}/helper_funcs.cpp
+        ${transtab429_inc_dir}/translate_tabular_arinc429_main.h ${transtab429_src_dir}/translate_tabular_arinc429_main.cpp
 )
 target_include_directories(${transtab429_lib_name} PUBLIC
                         ${common_inc_dir}
@@ -409,7 +409,7 @@ add_library(${parsech10_lib_name} STATIC
     ${parsech10_inc_dir}/worker_config.h
     ${parsech10_inc_dir}/parse_manager.h ${parsech10_src_dir}/parse_manager.cpp
     ${parsech10_inc_dir}/parse_worker.h ${parsech10_src_dir}/parse_worker.cpp
-    ${parsech10_src_dir}/parser_helper_funcs.cpp ${parsech10_inc_dir}/parser_helper_funcs.h
+    ${parsech10_src_dir}/ch10_parse_main.cpp ${parsech10_inc_dir}/ch10_parse_main.h
     ${parsech10_src_dir}/tmats_parser.cpp ${parsech10_inc_dir}/tmats_parser.h
     ${parsech10_src_dir}/tmats_data.cpp ${parsech10_inc_dir}/tmats_data.h
     )
@@ -573,7 +573,9 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/organize_429_icd_u.cpp
                 ${test_src_dir}/parquet_milstd1553f1_u.cpp
                 ${test_src_dir}/parquet_videodataf0_u.cpp
-                ${test_src_dir}/parquet_ethernetf0_u.cpp)
+                ${test_src_dir}/parquet_ethernetf0_u.cpp
+                ${test_src_dir}/ch10_parse_main_u.cpp
+                ${test_src_dir}/translate_tabular_1553_main_u.cpp)
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs}
                             ${common_inc_dir} ${util_inc_dir} ${dts429_inc_dir}
