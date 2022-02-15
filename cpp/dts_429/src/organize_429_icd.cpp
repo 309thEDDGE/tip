@@ -48,8 +48,8 @@ bool Organize429ICD::OrganizeICDMap(std::unordered_map<std::string, std::vector<
             table_index = element_table.size();
             if(!AddToElementTable(table_index,it->second,element_table))
                 return false;
-            if(!AddIndexToLookupMap(chan_id,subchan_id,label,sdi,table_index,organized_lookup_map))
-                return false;
+
+            organized_lookup_map[chan_id][subchan_id][label].insert({sdi,table_index});
         }
         it++;
     }
@@ -157,18 +157,10 @@ bool Organize429ICD::GetChannelSubchannelIDsFromMap(std::string& subchan_name,
         subchannel_name_lookup_misses_.push_back(subchan_name);
         return false;
     }
-    try
-    {
-        // std::tuple<uint16_t,uint16_t> temp_tuple =
-        channelid = std::get<0>(bus_to_ids_map[subchan_name]);
-        subchan_number = std::get<1>(bus_to_ids_map[subchan_name]);
-    }
-    catch(...)
-    {
-        SPDLOG_WARN("Organize429ICD::GetChannelSubchannelIDsFromMap(): Error "
-                "getting values from tuple in map \'bus_to_ids_map\'");
-        return false;
-    }
+
+    channelid = std::get<0>(bus_to_ids_map[subchan_name]);
+    subchan_number = std::get<1>(bus_to_ids_map[subchan_name]);
+
     return true;
 }
 
@@ -198,17 +190,9 @@ bool Organize429ICD::GetICDElementComponents(std::vector<ICDElement>& elements,
         return false;
     }
 
-    try
-    {
-        label = elements[0].label_;
-        sdi = elements[0].sdi_;
-        bus_name = elements[0].bus_name_;
-    }
-    catch(...)
-    {
-        SPDLOG_WARN("Organize429ICD::GetICDElementComponents(): Error assigning componant values");
-        return false;
-    }
+    label = elements[0].label_;
+    sdi = elements[0].sdi_;
+    bus_name = elements[0].bus_name_;
 
     return true;
 }
@@ -244,16 +228,7 @@ bool Organize429ICD::IsIndexInLookupMap(uint16_t& chan_id, uint16_t& subchan_id,
         return false;
     }
 
-    try
-    {
-        table_index = organized_lookup_map[chan_id][subchan_id][label][sdi];
-    }
-    catch(const std::exception& e)
-    {
-        SPDLOG_WARN("Organize429ICD::IsIndexInLookupMap():"
-            " Error assigning table_index value");
-        return false;
-    }
+    table_index = organized_lookup_map[chan_id][subchan_id][label][sdi];
 
     return true;
 }
@@ -286,19 +261,5 @@ bool Organize429ICD::AddToElementTable(size_t& table_index, std::vector<ICDEleme
         element_table[table_index].push_back(word_elements);
     }
 
-    return true;
-}
-
-bool Organize429ICD::AddIndexToLookupMap(uint16_t& chan_id, uint16_t& subchan_id,
-                          uint16_t& label,int8_t& sdi, size_t& table_index,
-                          std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
-                                uint16_t,std::unordered_map<int8_t, size_t>>>>& organized_lookup_map)
-{
-    if(!organized_lookup_map[chan_id][subchan_id][label].insert({sdi,table_index}).second)
-    {
-        SPDLOG_WARN("Organize429ICD::AddIndexToLookupMap(): "
-            "error adding \'table_index\' to organized_lookup_map.");
-        return false;
-    }
     return true;
 }

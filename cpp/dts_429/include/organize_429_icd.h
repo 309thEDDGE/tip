@@ -207,35 +207,6 @@ class Organize429ICD
                           std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
                                 uint16_t,std::unordered_map<int8_t, size_t>>>>& organized_lookup_map);
 
-    /*
-    Add table_index to organized_lookup_map using the arguments chan_id,
-    subchan_id, label, and sdi.
-
-    Args:
-        chan_id     --> uint16_t id of channel in ch10 recording.
-
-        subchan_id  --> uint16_t ARINC 429 bus subchannel id.
-
-        label       --> std::string for storing the ARINC 429 word's label
-
-        sdi         --> int8_t ARINC 429 word's sdi value, as defined in
-                        429 dts schema
-
-        table_index --> size_t value providing the index where a vector
-                        of vector<ICDElement> is stored in element_table,
-                        found in OrganizeICDMap().
-
-        organized_lookup_map    --> map storing a table_index using the
-                                    keys: chan_id, subchan_id, label, and
-                                    sdi.
-
-    Return:
-        True if table_index successfully added; false otherwise.
-    */
-    bool AddIndexToLookupMap(uint16_t& chan_id, uint16_t& subchan_id,
-                          uint16_t& label,int8_t& sdi, size_t& table_index,
-                          std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
-                                uint16_t,std::unordered_map<int8_t, size_t>>>>& organized_lookup_map);
 
     /*
     Determins if a vector already exists at table_index, or if a new

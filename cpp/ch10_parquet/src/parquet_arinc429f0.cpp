@@ -5,7 +5,7 @@ const int ParquetARINC429F0::ARINC429_BUFFER_SIZE_MULTIPLIER = 10;
 
 ParquetARINC429F0::ParquetARINC429F0(ParquetContext* pq_ctx) : pq_ctx_(pq_ctx),
                                             max_temp_element_count_(ARINC429_ROW_GROUP_COUNT * ARINC429_BUFFER_SIZE_MULTIPLIER),
-                                            thread_id_(UINT16_MAX) 
+                                            thread_id_(UINT16_MAX)
 {
 }
 

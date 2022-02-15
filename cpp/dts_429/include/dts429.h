@@ -114,6 +114,19 @@ class DTS429
     bool ValidateWordNode(const YAML::Node& word_node);
 
     /*
+    Perform validation of the root yaml node, which maps to
+    'translatable_word_definitions' and 'supplemental_bus_map_labels'
+
+    Args:
+        root_node       --> YAML::Node to which word defs and supplemental
+                            bus map labels maps.
+
+    Return:
+        True if root_node passes validation; false otherwise
+    */
+    bool ValidateRootNode(const YAML::Node& root_node);
+
+    /*
     Create a new ICDElement from wrd_data and an elem as defined in
     tip_dts429_schema.yaml
 

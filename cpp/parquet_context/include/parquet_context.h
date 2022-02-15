@@ -126,7 +126,7 @@ class ParquetContext
 
 		Note: row group sizes are either set by the default
 		row group size when calling WriteColumns() or by
-		rows when calling 
+		rows when calling
 		WriteColumns(const int& rows, const int offset=0)
 	*/
     ParquetContext(int rgSize);
@@ -143,10 +143,10 @@ class ParquetContext
 
     /*
     Get the count of columns by returning the count of the
-    fields in the schema. 
+    fields in the schema.
 
     Return:
-        Count of columns/fields in the schema. 
+        Count of columns/fields in the schema.
     */
     size_t GetColumnCount()
     {
@@ -154,16 +154,16 @@ class ParquetContext
     }
 
     /*
-		Adds a column to a parquet file. Used in conjunction with 
+		Adds a column to a parquet file. Used in conjunction with
 		SetMemoryLocation. Also includes automatic casting.
-		Must be called before the correlated call to 
+		Must be called before the correlated call to
 		SetMemoryLocation.
 
 		Inputs:	type		-> desired datatype for the column.
 								If casting is done, this is the
-								data type that the data source 
-								will be cast TO. The cast FROM 
-								data type is specified by the 
+								data type that the data source
+								will be cast TO. The cast FROM
+								data type is specified by the
 								data type used in SetMemoryLocation.
 								Casting is generally used to cast
 								from unsigned data types to signed.
@@ -212,12 +212,12 @@ class ParquetContext
 		Sets a pointer to the memory location of vectors
 		where data will be written from. These vectors
 		are to be initialized and managed outsize of parquet
-		context. Parquet context only stores a pointer to 
-		each vector for each column. SetMemoryLocation 
+		context. Parquet context only stores a pointer to
+		each vector for each column. SetMemoryLocation
 		should be called once for each column added with
-		AddField. It should be called after AddField. 
-		The vectors should be at least as large as the maximum 
-		intended row group size. They should also exceed the 
+		AddField. It should be called after AddField.
+		The vectors should be at least as large as the maximum
+		intended row group size. They should also exceed the
 		amount of rows needed for the maximum intented row
 		size called when using
 		WriteColumns(const int& rows, const int offset = 0).
@@ -228,15 +228,15 @@ class ParquetContext
 		on casting restrictions.
 
 		Inputs:	 data		-> vectors to be written to the parquet
-								file. Memory is managed outside 
+								file. Memory is managed outside
 								parquet context. Only a pointer is
-								stored in parquet context. Vectors 
-								for lists should be of size (max 
-								intented row group size * list size). 
-								Vectors for normal columns should be 
+								stored in parquet context. Vectors
+								for lists should be of size (max
+								intented row group size * list size).
+								Vectors for normal columns should be
 								of size (max intended row group size).
 
-				fieldName	-> Name of the column. Must match the 
+				fieldName	-> Name of the column. Must match the
 								fieldName for the associated AddField
 								call.
 
@@ -250,7 +250,7 @@ class ParquetContext
 										 parquetColumn	= {NULL,2,3,NULL}
 
 		Returns:				True if successful
-								False if fieldName was not added previously with 
+								False if fieldName was not added previously with
 								AddField or casting isn't possible
 	*/
     template <typename NativeType>
@@ -259,7 +259,7 @@ class ParquetContext
                            std::vector<uint8_t>* boolField = nullptr);
     /*
     Helper function to decompose original SetMemoryLocation function.
-    
+
     Difference in args:
         col_data    --> Pointer to ColumnData object which is maatched
                         by the field name
@@ -268,7 +268,7 @@ class ParquetContext
     bool SetColumnMemoryLocation(std::vector<NativeType>& data,
                            ColumnData* col_data,
                            std::vector<uint8_t>* boolField);
-   
+
     /*
     Virtual functions to call based on SetMemoryLocation specializations.
     Facilitate mocking.
@@ -288,8 +288,8 @@ class ParquetContext
 
     /*
 		Creates the parquet file with an initial schema
-		specified by AddField calls. 
-		Note!!!!! OpenForWrite should be called after 
+		specified by AddField calls.
+		Note!!!!! OpenForWrite should be called after
 		all SetMemoryLocation and AddField function calls.
 
 		Inputs:	path	 -> full path of paruqet file
@@ -301,7 +301,7 @@ class ParquetContext
 							for consistent implementation.
 
 		Returns:			True if the parquet file was created successfully
-							False if any AddField calls aren't initialized with a 
+							False if any AddField calls aren't initialized with a
 							subsequent SetMemoryLocation call, or if no AddField
 							calls are made.
 	*/
@@ -309,11 +309,11 @@ class ParquetContext
                       const bool truncate = true);
 
     /*
-		Writes all columns using vectors passed to SetMemoryLocation. 
+		Writes all columns using vectors passed to SetMemoryLocation.
 		Can be called multiple times to append to the existing parquet file.
 
-		Inputs:	rows	-> the number of rows to be written 
-							from the data vectors provided to 
+		Inputs:	rows	-> the number of rows to be written
+							from the data vectors provided to
 							parquet context from SetMemoryLocation.
 							Rows will specify the row group size for
 							each write.
@@ -324,32 +324,32 @@ class ParquetContext
 							If the column is a list, the actual starting
 							location in the vector will be (offset * listSize).
 
-		Returns:		   True if all columns were written successfully, 
+		Returns:		   True if all columns were written successfully,
 							False otherwise
-						   Note: If rows + offset exceeds the amount of 
-						   data in the original vectors passed to 
+						   Note: If rows + offset exceeds the amount of
+						   data in the original vectors passed to
 						   SetMemoryLocation, False will be returned.
 	*/
     bool WriteColumns(const int& rows, const int offset = 0);
 
     /*
-		Writes all data vectors to all columns in the parquet file. 
+		Writes all data vectors to all columns in the parquet file.
 		Can be called multiple times to append to the existing parquet file.
-		Writes the number of rows specified by rgSize passed to the 
+		Writes the number of rows specified by rgSize passed to the
 		constructor. 10,000 rows are written if the default constructor was used.
 
 		Returns:		   True if all columns were written successfully,
 							False otherwise
 						   Note: If the default row group size
-						   exceeds the amount of data in the original 
+						   exceeds the amount of data in the original
 						   vectors passed to SetMemoryLocation,
 						   False will be returned.
 	*/
     bool WriteColumns();
 
     /*
-		Set the parameters used for automatic accounting of rows and 
-		writing row groups when necessary. Also handles the 
+		Set the parameters used for automatic accounting of rows and
+		writing row groups when necessary. Also handles the
 		writing of remaining rows if the appended row count has not reached
 		the critical count required to trigger a write.
 
@@ -367,23 +367,23 @@ class ParquetContext
 
 		Inputs: row_group_count            -> The count of rows in a Parquet row group.
 											  If the row count has been set via the constructor,
-											  this input will override that value. 
+											  this input will override that value.
 
 				row_group_count_multiplier -> The count of row groups buffered prior to writing.
 											  If the row_group_count is 100 and this value is 10
-											  then 1000 elements shall have been allocated in the 
+											  then 1000 elements shall have been allocated in the
 											  buffer (a std::vector). Use value 1 if a row group
 											  shall be written each time it's buffer if filled.
 
 				print_activity             -> Boolean to turn on (true) and off (false) print statements
-											  when writing to parquet file is carried out. 
+											  when writing to parquet file is carried out.
 
 				print_msg                  -> Message to included in the print statement when data
 											  are written to Parquet file. Default is an empty string.
 
 		Returns:			True if row_group_count and row_group_count_multiplier are valid and
 							false otherwise.
-	
+
 	*/
     virtual bool SetupRowCountTracking(size_t row_group_count,
                                size_t row_group_count_multiplier, bool print_activity,
@@ -393,25 +393,25 @@ class ParquetContext
         Enable automatic deletion of an output parquet file if the file has been built
         using SetupRowCountTracking, IncrementAndWrite, and Finalize if zero row groups
         were added by the time Finalize is called. If this
-        function is not called sometime after SetupRowCountTracking during file 
+        function is not called sometime after SetupRowCountTracking during file
         setup the default behavior is to allow a zero-row-group file to remain.
 
-        Inputs: output_path     -> std::string output file path. Same as input 
+        Inputs: output_path     -> std::string output file path. Same as input
                                    to OpenForWrite
     */
     virtual void EnableEmptyFileDeletion(const std::string& path);
 
     /*
-	
+
 		Function to be called after the buffers are filled for the current row.
 		Use the protected member variable append_count_ as the index in the buffer. It is
-		incremented by this function and data are recorded if the parameters configured 
-		via SetupRowCountTracking are met. 
+		incremented by this function and data are recorded if the parameters configured
+		via SetupRowCountTracking are met.
 
 		Ex: Simple Parquet file with time and data columns, with data buffered in time
 		and data vectors. After the vector size is allocated and AddField and SetMemoryLocation
 		are called for each, rows are appended via the following algorithm:
-		
+
 		AddData()
 		{
 			time[append_count_] = new time data
@@ -428,7 +428,7 @@ class ParquetContext
 		Inputs: thread_id		--> Optional index of current thread
 
 		Returns:
-			
+
 						True if the data row group(s) were written and false otherwise. Note
 						that for the example of 100 count row groups and a multiplier of 10,
 						this function will only return true every 1000th call.
@@ -437,9 +437,9 @@ class ParquetContext
     virtual bool IncrementAndWrite(const uint16_t& thread_id = 0);
 
     /*
-	
+
 		Write the data remaining in the buffers to disk. Generally used prior to closing
-		the file. This function is called automatically by the destructor if automatic 
+		the file. This function is called automatically by the destructor if automatic
 		accounting of row group appending has been initiated via the SetupRowCountTracking
 		function. Nevertheless, it is a best practice to call Finalize() intentionally prior
 		to exiting the program. In that case, when it's called by the destructor, it will not
@@ -458,7 +458,7 @@ class ParquetContext
 
     Args:
         field       --> field name
-        col_data_map--> Map of string to ColumnData object from which 
+        col_data_map--> Map of string to ColumnData object from which
                         col_data shall be retrieved
         col_data    --> ColumnData pointer to be assigned if found
 
@@ -466,7 +466,7 @@ class ParquetContext
         True if field is in col_data_map; false if not present
         or other error occurs.
     */
-    bool GetColumnDataByField(const std::string& field, 
+    bool GetColumnDataByField(const std::string& field,
         std::map<std::string, ColumnData>& col_data_map, ColumnData*& col_data);
 };
 
@@ -764,7 +764,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
                                          data.size());
             }
 
-            std::shared_ptr<InputDataBase> input_data = 
+            std::shared_ptr<InputDataBase> input_data =
                 std::make_shared<InputData<NativeType>>(data.data());
             it->second.SetInputData(input_data);
 
@@ -887,7 +887,7 @@ bool ParquetContext::SetColumnMemoryLocation(std::vector<NativeType>& data,
     else
         col_data->SetColumnData(data.data(), col_data->field_name_, "", boolField, data.size());
 
-    std::shared_ptr<InputDataBase> input_data = 
+    std::shared_ptr<InputDataBase> input_data =
         std::make_shared<InputData<NativeType>>(data.data());
     col_data->SetInputData(input_data);
 

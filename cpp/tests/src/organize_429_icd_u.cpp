@@ -621,66 +621,66 @@ TEST_F(Organize429ICDTest, AddToElementTableValidateOutputAddToExistingIndex)
     EXPECT_EQ(element_table[0].size(), 3);
 }
 
-// ensure that element added to empty map
-TEST_F(Organize429ICDTest, AddIndexToLookupMapInsertToEmptyMap)
-{
-    // value 0 stored at [1][2][3][4]
-    uint16_t chan_id = 1;
-    uint16_t subchan_id = 2;
-    uint16_t label = 3;
-    int8_t sdi = 4;
-    size_t table_index = 0;
-    std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
-        uint16_t,std::unordered_map<int8_t, size_t>>>> organized_lookup_map;
+// // ensure that element added to empty map
+// TEST_F(Organize429ICDTest, AddIndexToLookupMapInsertToEmptyMap)
+// {
+//     // value 0 stored at [1][2][3][4]
+//     uint16_t chan_id = 1;
+//     uint16_t subchan_id = 2;
+//     uint16_t label = 3;
+//     int8_t sdi = 4;
+//     size_t table_index = 0;
+//     std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
+//         uint16_t,std::unordered_map<int8_t, size_t>>>> organized_lookup_map;
 
-    ASSERT_TRUE(org.AddIndexToLookupMap(chan_id,subchan_id,label,sdi,table_index,organized_lookup_map));
+//     ASSERT_TRUE(org.AddIndexToLookupMap(chan_id,subchan_id,label,sdi,table_index,organized_lookup_map));
 
-    EXPECT_TRUE(organized_lookup_map.find(chan_id)!=organized_lookup_map.end());
-    EXPECT_TRUE(organized_lookup_map[chan_id].find(subchan_id)
-        !=organized_lookup_map[chan_id].end());
-    EXPECT_TRUE(organized_lookup_map[chan_id][subchan_id].find(label)
-        !=organized_lookup_map[chan_id][subchan_id].end());
-    EXPECT_TRUE(organized_lookup_map[chan_id][subchan_id][label].find(sdi)
-        !=organized_lookup_map[chan_id][subchan_id][label].end());
+//     EXPECT_TRUE(organized_lookup_map.find(chan_id)!=organized_lookup_map.end());
+//     EXPECT_TRUE(organized_lookup_map[chan_id].find(subchan_id)
+//         !=organized_lookup_map[chan_id].end());
+//     EXPECT_TRUE(organized_lookup_map[chan_id][subchan_id].find(label)
+//         !=organized_lookup_map[chan_id][subchan_id].end());
+//     EXPECT_TRUE(organized_lookup_map[chan_id][subchan_id][label].find(sdi)
+//         !=organized_lookup_map[chan_id][subchan_id][label].end());
 
-    EXPECT_EQ(organized_lookup_map[chan_id].size(),1);
-    EXPECT_EQ(organized_lookup_map[chan_id][subchan_id].size(),1);
-    EXPECT_EQ(organized_lookup_map[chan_id][subchan_id][label].size(),1);
-    EXPECT_EQ(organized_lookup_map[chan_id][subchan_id][label][sdi],0);
-}
+//     EXPECT_EQ(organized_lookup_map[chan_id].size(),1);
+//     EXPECT_EQ(organized_lookup_map[chan_id][subchan_id].size(),1);
+//     EXPECT_EQ(organized_lookup_map[chan_id][subchan_id][label].size(),1);
+//     EXPECT_EQ(organized_lookup_map[chan_id][subchan_id][label][sdi],0);
+// }
 
-// ensure that element added to fully built map
-TEST_F(Organize429ICDTest, AddIndexToLookupMapInsertToExistingMap)
-{
-    // value 0 stored at [1][2][3][4]
-    // value 1 stored at [1][2][3][5]
-    uint16_t chan_id = 1;
-    uint16_t subchan_id = 2;
-    uint16_t label = 3;
-    int8_t sdi = 4;
-    size_t table_index = 0;
-    std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
-        uint16_t,std::unordered_map<int8_t, size_t>>>> organized_lookup_map;
+// // ensure that element added to fully built map
+// TEST_F(Organize429ICDTest, AddIndexToLookupMapInsertToExistingMap)
+// {
+//     // value 0 stored at [1][2][3][4]
+//     // value 1 stored at [1][2][3][5]
+//     uint16_t chan_id = 1;
+//     uint16_t subchan_id = 2;
+//     uint16_t label = 3;
+//     int8_t sdi = 4;
+//     size_t table_index = 0;
+//     std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
+//         uint16_t,std::unordered_map<int8_t, size_t>>>> organized_lookup_map;
 
-    ASSERT_TRUE(org.AddIndexToLookupMap(chan_id,subchan_id,label,sdi,table_index,organized_lookup_map));
-    sdi++;
-    table_index++;
-    ASSERT_TRUE(org.AddIndexToLookupMap(chan_id,subchan_id,label,sdi,table_index,organized_lookup_map));
+//     ASSERT_TRUE(org.AddIndexToLookupMap(chan_id,subchan_id,label,sdi,table_index,organized_lookup_map));
+//     sdi++;
+//     table_index++;
+//     ASSERT_TRUE(org.AddIndexToLookupMap(chan_id,subchan_id,label,sdi,table_index,organized_lookup_map));
 
-    EXPECT_TRUE(organized_lookup_map.find(chan_id)!=organized_lookup_map.end());
-    EXPECT_TRUE(organized_lookup_map[chan_id].find(subchan_id)
-        !=organized_lookup_map[chan_id].end());
-    EXPECT_TRUE(organized_lookup_map[chan_id][subchan_id].find(label)
-        !=organized_lookup_map[chan_id][subchan_id].end());
-    EXPECT_TRUE(organized_lookup_map[chan_id][subchan_id][label].find(sdi)
-        !=organized_lookup_map[chan_id][subchan_id][label].end());
+//     EXPECT_TRUE(organized_lookup_map.find(chan_id)!=organized_lookup_map.end());
+//     EXPECT_TRUE(organized_lookup_map[chan_id].find(subchan_id)
+//         !=organized_lookup_map[chan_id].end());
+//     EXPECT_TRUE(organized_lookup_map[chan_id][subchan_id].find(label)
+//         !=organized_lookup_map[chan_id][subchan_id].end());
+//     EXPECT_TRUE(organized_lookup_map[chan_id][subchan_id][label].find(sdi)
+//         !=organized_lookup_map[chan_id][subchan_id][label].end());
 
-    EXPECT_EQ(organized_lookup_map[chan_id].size(),1);
-    EXPECT_EQ(organized_lookup_map[chan_id][subchan_id].size(),1);
-    EXPECT_EQ(organized_lookup_map[chan_id][subchan_id][label].size(),2);
-    EXPECT_EQ(organized_lookup_map[chan_id][subchan_id][label][sdi],1);
-    EXPECT_EQ(organized_lookup_map[chan_id][subchan_id][label][4],0);
-}
+//     EXPECT_EQ(organized_lookup_map[chan_id].size(),1);
+//     EXPECT_EQ(organized_lookup_map[chan_id][subchan_id].size(),1);
+//     EXPECT_EQ(organized_lookup_map[chan_id][subchan_id][label].size(),2);
+//     EXPECT_EQ(organized_lookup_map[chan_id][subchan_id][label][sdi],1);
+//     EXPECT_EQ(organized_lookup_map[chan_id][subchan_id][label][4],0);
+// }
 
 TEST_F(Organize429ICDTest, OrganizeICDMapWordValidateOutputEndToEnd)
 {
@@ -753,4 +753,83 @@ TEST_F(Organize429ICDTest, OrganizeICDMapWordValidateOutputEndToEnd)
     std::vector<std::string> miss_names = org.GetSubchannelNameLookupMisses();
     EXPECT_EQ(miss_names.size(),1);
     EXPECT_EQ(miss_names[0],"MISS1");
+}
+
+TEST_F(Organize429ICDTest, OrganizeICDMapWordValidateOutputEndToEndBadElement)
+{
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
+    YAML::Node md_chanid_to_subchan_node;
+    std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
+            uint16_t,std::unordered_map<int8_t, size_t>>>> organized_lookup_map;
+    std::vector<std::vector<std::vector<ICDElement>>> element_table;
+
+    // set up word_elements
+    SetupElement();
+    std::vector<ICDElement> element_vec;
+    element_vec.clear();
+
+
+    // set up md_chanid_to_subchan_node
+    BuildNode(md_chan_id_strings, md_chanid_to_subchan_node);
+
+    // build icd_element that will have invalid sdi
+    ICDElement input_element;
+    input_element.label_= 107;
+    input_element.sdi_= 5;            // 8-bit
+    input_element.bus_name_="MISS1";
+    input_element.msg_name_="MissWord";
+    input_element.rate_=1.1;
+    input_element.description_="Altitude";
+    input_element.xmit_lru_name_="LRU921";
+    input_element.elem_name_="107_alt";
+    input_element.schema_=ICDElementSchema::UNSIGNEDBITS;
+    input_element.is_bitlevel_=true;
+    input_element.bcd_partial_=-1;
+    input_element.msb_val_=1.0;
+    input_element.bitlsb_= 11;        // 8-bit
+    input_element.bit_count_= 8;      // 8-bit
+    input_element.uom_="FT";
+    input_element.classification_=0;  // 8-bit
+
+    element_vec.push_back(input_element);
+    word_elements["TestWord"] = element_vec;
+
+    ASSERT_TRUE(org.OrganizeICDMap(word_elements, md_chanid_to_subchan_node, organized_lookup_map, element_table));
+
+    // check element_table has no item stored because
+    // GetICDElementComponents was false and hit continue
+    // OrganizeICDMap
+    EXPECT_EQ(element_table.size(),0);
+
+}
+
+TEST_F(Organize429ICDTest, OrganizeICDMapWordValidateOutputEndToEndBadSubchannelMap)
+{
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
+    YAML::Node md_chanid_to_subchan_node;
+    std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
+            uint16_t,std::unordered_map<int8_t, size_t>>>> organized_lookup_map;
+    std::vector<std::vector<std::vector<ICDElement>>> element_table;
+
+    // set up word_elements
+    SetupElement();
+    std::vector<ICDElement> element_vec;
+    element_vec.push_back(expected_element);
+    word_elements["TestWord"] = element_vec;
+    element_vec.clear();
+
+    std::vector<std::string> bad_chanid_md_strings =
+        {"tmats_chanid_to_429_subchan_and_name:",
+        "    34: \'FaultyBus\' "};
+
+    // set up md_chanid_to_subchan_node
+    BuildNode(bad_chanid_md_strings, md_chanid_to_subchan_node);
+
+    ASSERT_FALSE(org.OrganizeICDMap(word_elements, md_chanid_to_subchan_node, organized_lookup_map, element_table));
+
+    // check element_table has no item stored because
+    // GetICDElementComponents was false and hit continue
+    // OrganizeICDMap
+    EXPECT_EQ(element_table.size(),0);
+
 }
