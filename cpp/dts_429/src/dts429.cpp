@@ -25,31 +25,6 @@ bool DTS429::IngestLines(const std::vector<std::string>& lines,
 
     YAML::Node root_node = YAML::Load(all_lines.c_str());
 
-    // Root node must have entry for translatable_word_definitions and supplemental_bus_map_labels.
-    if (root_node.size() < 2)
-    {
-        SPDLOG_WARN("DTS429::IngestLines(): translatable_word_definitions"
-        " or supplemental_bus_map_labels likely missing from file\n");
-        return false;
-    }
-
-    // Root node must be a map because all root-level items are maps.
-    if (!root_node["translatable_word_definitions"].IsMap())
-    {
-        SPDLOG_WARN("DTS429::IngestLines(): translatable_word_definitions is not a map\n");
-        return false;
-    }
-    if ((root_node["translatable_word_definitions"]).size() < 1)
-    {
-        SPDLOG_WARN("DTS429::IngestLines(): translatable_word_definitions is an empty map\n");
-        return false;
-    }
-    if(!root_node["supplemental_bus_map_labels"].IsMap())
-    {
-        SPDLOG_WARN("DTS429::IngestLines(): supplemental_bus_map_labels is not a map\n");
-        return false;
-    }
-
     // Obtain each DTS429 component as a yaml node.
     YAML::Node wrd_defs;
     YAML::Node suppl_busmap;
@@ -233,10 +208,10 @@ bool DTS429::ProcessLinesAsYaml(const YAML::Node& root_node,
                                 YAML::Node& transl_wrd_defs_node,
                                 YAML::Node& suppl_busmap_labels_node)
 {
+    if(!ValidateRootNode(root_node)) return false;
 
     // The word definitions map MUST be present.
     std::string key_name = "";
-    bool word_definitions_exist = false;
     for (YAML::const_iterator it = root_node.begin(); it != root_node.end(); ++it)
     {
         key_name = it->first.as<std::string>();
@@ -245,7 +220,6 @@ bool DTS429::ProcessLinesAsYaml(const YAML::Node& root_node,
             switch (yaml_key_to_component_map_.at(key_name))
             {
                 case DTS429Component::TRANSL_WORD_DEFS:
-                    word_definitions_exist = true;
                     transl_wrd_defs_node = it->second;
                     break;
                 case DTS429Component::SUPPL_BUSMAP_LABELS:
@@ -255,12 +229,35 @@ bool DTS429::ProcessLinesAsYaml(const YAML::Node& root_node,
         }
     }
 
-    if (!word_definitions_exist)
+    return true;
+}
+
+bool DTS429::ValidateRootNode(const YAML::Node& root_node)
+
+{
+    // Root node must have entry for translatable_word_definitions and supplemental_bus_map_labels.
+    if (root_node.size() < 2)
     {
-        SPDLOG_WARN("DTS429::ProcessLinesAsYaml(): Word definitions "
-            "node not present!\n");
+        SPDLOG_WARN("DTS429::ValidateRootNode(): translatable_word_definitions"
+        " or supplemental_bus_map_labels likely missing from file\n");
         return false;
     }
 
+    // Root node must be a map because all root-level items are maps.
+    if (!root_node["translatable_word_definitions"].IsMap())
+    {
+        SPDLOG_WARN("DTS429::ValidateRootNode(): translatable_word_definitions is not a map\n");
+        return false;
+    }
+    if ((root_node["translatable_word_definitions"]).size() < 1)
+    {
+        SPDLOG_WARN("DTS429::ValidateRootNode(): translatable_word_definitions is an empty map\n");
+        return false;
+    }
+    if(!root_node["supplemental_bus_map_labels"].IsMap())
+    {
+        SPDLOG_WARN("DTS429::ValidateRootNode(): supplemental_bus_map_labels is not a map\n");
+        return false;
+    }
     return true;
 }

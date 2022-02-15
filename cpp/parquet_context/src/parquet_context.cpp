@@ -397,7 +397,7 @@ bool ParquetContext::AppendColumn(ColumnData& columnData,
         castRequired = false;
     else
     {
-        SPDLOG_WARN("Cast required for column \"{:s}\"", 
+        SPDLOG_WARN("Cast required for column \"{:s}\"",
             columnData.field_name_);
         castRequired = true;
     }
@@ -979,7 +979,7 @@ void ParquetContext::EnableEmptyFileDeletion(const std::string& path)
     empty_file_deletion_enabled_ = true;
 }
 
-bool ParquetContext::GetColumnDataByField(const std::string& field, 
+bool ParquetContext::GetColumnDataByField(const std::string& field,
     std::map<std::string, ColumnData>& col_data_map, ColumnData*& col_data)
 {
     for (std::map<std::string, ColumnData>::iterator it = col_data_map.begin();
@@ -999,7 +999,7 @@ bool ParquetContext::GetColumnDataByField(const std::string& field,
 bool ParquetContext::SetMemLocI64(std::vector<int64_t>& data, const std::string& fieldName,
                         std::vector<uint8_t>* boolField)
 {
-    ColumnData* col_data = nullptr; 
+    ColumnData* col_data = nullptr;
     if(!GetColumnDataByField(fieldName, column_data_map_, col_data))
         return false;
 
@@ -1009,7 +1009,7 @@ bool ParquetContext::SetMemLocI64(std::vector<int64_t>& data, const std::string&
 bool ParquetContext::SetMemLocI32(std::vector<int32_t>& data, const std::string& fieldName,
                         std::vector<uint8_t>* boolField)
 {
-    ColumnData* col_data = nullptr; 
+    ColumnData* col_data = nullptr;
     if(!GetColumnDataByField(fieldName, column_data_map_, col_data))
         return false;
 
@@ -1019,7 +1019,7 @@ bool ParquetContext::SetMemLocI32(std::vector<int32_t>& data, const std::string&
 bool ParquetContext::SetMemLocI16(std::vector<int16_t>& data, const std::string& fieldName,
                         std::vector<uint8_t>* boolField)
 {
-    ColumnData* col_data = nullptr; 
+    ColumnData* col_data = nullptr;
     if(!GetColumnDataByField(fieldName, column_data_map_, col_data))
         return false;
 
@@ -1029,7 +1029,7 @@ bool ParquetContext::SetMemLocI16(std::vector<int16_t>& data, const std::string&
 bool ParquetContext::SetMemLocI8(std::vector<int8_t>& data, const std::string& fieldName,
                         std::vector<uint8_t>* boolField)
 {
-    ColumnData* col_data = nullptr; 
+    ColumnData* col_data = nullptr;
     if(!GetColumnDataByField(fieldName, column_data_map_, col_data))
         return false;
 
@@ -1039,7 +1039,7 @@ bool ParquetContext::SetMemLocI8(std::vector<int8_t>& data, const std::string& f
 bool ParquetContext::SetMemLocString(std::vector<std::string>& data, const std::string& fieldName,
                         std::vector<uint8_t>* boolField)
 {
-    ColumnData* col_data = nullptr; 
+    ColumnData* col_data = nullptr;
     if(!GetColumnDataByField(fieldName, column_data_map_, col_data))
         return false;
 
@@ -1049,7 +1049,7 @@ bool ParquetContext::SetMemLocString(std::vector<std::string>& data, const std::
 bool ParquetContext::SetMemLocUI8(std::vector<uint8_t>& data, const std::string& fieldName,
                         std::vector<uint8_t>* boolField)
 {
-    ColumnData* col_data = nullptr; 
+    ColumnData* col_data = nullptr;
     if(!GetColumnDataByField(fieldName, column_data_map_, col_data))
         return false;
 

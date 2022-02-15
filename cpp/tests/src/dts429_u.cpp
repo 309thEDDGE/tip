@@ -162,6 +162,39 @@ TEST_F(DTS429Test, IngestLinesSupplBusmapMapEmpty)
     EXPECT_TRUE(dts.IngestLines(yaml_lines_7, word_elements));
 }
 
+TEST_F(DTS429Test, IngestLinesNoWordDataMap)
+{
+    // Empty wrd_data map should cause
+    // !BuildNameToICDElementMap(wrd_defs, word_elements)
+    std::vector<std::string> input_lines{
+        "translatable_word_definitions:",
+        "  TestWord:",
+        "    wrd_data: {}",
+        "    elem:",
+        "      107_alt:",
+        "        schema: UNSIGNEDBITS",
+        "        msbval: 1.0",
+        "        lsb: 11",
+        "        bitcnt: 8",
+        "        desc: 'Altitude'",
+        "        uom: 'FT'",
+        "        class: 0",
+        "      107_speed:",
+        "        schema: UNSIGNEDBITS",
+        "        msbval: 1.0",
+        "        lsb: 11",
+        "        bitcnt: 8",
+        "        desc: 'Airspeed'",
+        "        uom: 'FT/Sec'",
+        "        class: 0",
+        "supplemental_bus_map_labels:",
+        "  A429BusAlpha:",
+        "    - [ 7, 4, 12, 124]"
+    };
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
+    EXPECT_FALSE(dts.IngestLines(input_lines, word_elements));
+}
+
 // Expect translateable_word_defintions map not empty
 TEST_F(DTS429Test, IngestLinesTranslatableWordDefsMapEmpty)
 {
@@ -177,6 +210,19 @@ TEST_F(DTS429Test, ProcessLinesAsYamlValidateOutputIdealConditions)
     EXPECT_TRUE(dts.ProcessLinesAsYaml(root_node, transl_wrd_defs, suppl_busmap_node));
     EXPECT_TRUE(transl_wrd_defs["TestWord"]);
     EXPECT_TRUE(suppl_busmap_node["A429BusAlpha"]);
+}
+
+TEST_F(DTS429Test, ProcessLinesAsYamlNoWordDefs)
+{
+    // Ensure that return is false when there is no
+    //translatable_word_defs node
+    std::vector<std::string> input_lines{"supplemental_bus_map_labels:",
+                                "  A429BusAlpha:",
+                                "    - [ 7, 4, 12, 124]"
+    };
+    build_node(input_lines, root_node);
+
+    EXPECT_FALSE(dts.ProcessLinesAsYaml(root_node, transl_wrd_defs, suppl_busmap_node));
 }
 
 TEST_F(DTS429Test, ProcessLinesAsYamlValidateOutputEmptySupplBusmap)
@@ -215,7 +261,18 @@ TEST_F(DTS429Test, ValidateWordNodeMissingRequiredKey)
         "elem:\n"
         "  107_alt:\n"
         "    schema: UNSIGNEDBITS\n");
-    ASSERT_FALSE(dts.ValidateWordNode(word_node));
+    ASSERT_FALSE(dts.ValidateWordNode(word_node2));
+}
+
+TEST_F(DTS429Test, ValidateWordNodeMissingRequiredMap)
+{
+    // Ought to have "wrd_data" as key
+    YAML::Node word_node2 = YAML::Load(
+        "\'wrd_data\':\n"
+        "elem:\n"
+        "  107_alt:\n"
+        "    schema: UNSIGNEDBITS\n");
+    ASSERT_FALSE(dts.ValidateWordNode(word_node2));
 }
 
 TEST_F(DTS429Test, ValidateWordNodeKeyWrdDataFeatures)
