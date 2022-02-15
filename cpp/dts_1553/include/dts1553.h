@@ -57,6 +57,7 @@ class DTS1553
 
    public:
     DTS1553() : icd_data_(), icd_data_ptr_(&icd_data_) {}
+    virtual ~DTS1553() {}
 
     ICDData GetICDData() { return icd_data_; }
     ICDData* ICDDataPtr() { return icd_data_ptr_; }
@@ -81,7 +82,7 @@ class DTS1553
 		return:		True if success, false if failure.
 	
 	*/
-    bool IngestLines(const ManagedPath& dts_path, const std::vector<std::string>& lines,
+    virtual bool IngestLines(const ManagedPath& dts_path, const std::vector<std::string>& lines,
                      std::map<std::string, std::string>& msg_name_substitutions,
                      std::map<std::string, std::string>& elem_name_substitutions);
 

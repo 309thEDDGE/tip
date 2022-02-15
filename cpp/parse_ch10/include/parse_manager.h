@@ -89,7 +89,7 @@ class ParseManager
     const std::vector<WorkerConfig>& worker_config_vec;
 
     ParseManager();
-    ~ParseManager();
+    virtual ~ParseManager();
 
     /*
 	** High-level function which coordinates lower-level functions. Intended
@@ -109,7 +109,7 @@ class ParseManager
 		True if no errors, false if errors occur and
 		execution ought to stop.
 	*/
-    bool Configure(ManagedPath input_ch10_file_path, ManagedPath output_dir,
+    virtual bool Configure(ManagedPath input_ch10_file_path, ManagedPath output_dir,
                    const ParserConfigParams& user_config);
 
     /*
@@ -127,7 +127,7 @@ class ParseManager
 		True if no errors, false if errors occur and
 		execution ought to stop.
 	*/
-    bool Parse(const ParserConfigParams& user_config);
+   	virtual bool Parse(const ParserConfigParams& user_config);
 
     /*
 	**High-level function which coordinates lower-level functions. Intended
@@ -147,7 +147,7 @@ class ParseManager
 		True if no errors, false if errors occur and
 		execution ought to stop.
 	*/
-    bool RecordMetadata(ManagedPath input_ch10_file_path,
+    virtual bool RecordMetadata(ManagedPath input_ch10_file_path,
                         const ParserConfigParams& user_config,
 						const ProvenanceData& prov_data);
 

@@ -43,7 +43,7 @@ main() {
         -DCI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA
 
     conda run -n tip-dev cmake --build . --target install
-    conda run -n tip-dev ctest --rerun-failed --output-on-failure
+    conda run -n tip-dev tests
     popd
 
     UNITTEST_REPORT_DIR=$BUILD_DIR/reports

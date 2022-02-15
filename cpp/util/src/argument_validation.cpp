@@ -62,7 +62,7 @@ bool ArgumentValidation::TestOptionalArgCount(int argc,
 
 bool ArgumentValidation::ValidateDefaultInputFilePath(
     const ManagedPath& default_base_path,
-    const std::string& user_base_path, std::string file_name, ManagedPath& full_path)
+    const std::string& user_base_path, std::string file_name, ManagedPath& full_path) const
 {
     full_path = ManagedPath(std::string(""));
     ManagedPath temp_path;
@@ -106,7 +106,7 @@ bool ArgumentValidation::ValidateDefaultInputFilePath(
 
 bool ArgumentValidation::ValidateDefaultOutputDirectory(const ManagedPath& default_output_dir,
                                                         const std::string& user_output_dir, ManagedPath& final_output_dir,
-                                                        bool create_dir)
+                                                        bool create_dir) const
 {
     final_output_dir = ManagedPath(std::string(""));
 
@@ -178,7 +178,7 @@ bool ArgumentValidation::ValidateDefaultOutputDirectory(const ManagedPath& defau
     return true;
 }
 
-bool ArgumentValidation::ValidateInputFilePath(std::string input_path, ManagedPath& mp_input_path)
+bool ArgumentValidation::ValidateInputFilePath(std::string input_path, ManagedPath& mp_input_path) const
 {
     mp_input_path = ManagedPath(std::string(""));
 
@@ -229,7 +229,7 @@ bool ArgumentValidation::ValidateDocument(const ManagedPath& doc_path, std::stri
 }
 
 bool ArgumentValidation::ValidateDirectoryPath(std::string dir,
-                                               ManagedPath& mp_dir)
+                                               ManagedPath& mp_dir) const
 {
     mp_dir = ManagedPath(std::string(""));
     if (!parse_text_.IsUTF8(dir))
@@ -254,4 +254,41 @@ bool ArgumentValidation::ValidateDirectoryPath(std::string dir,
 
     mp_dir = temp_dir;
     return true;
+}
+
+bool ArgumentValidation::CheckExtension(const std::string& input_path, std::vector<std::string> exts) const
+{
+    ManagedPath temp_path(input_path);
+    if (temp_path.extension().RawString() == "")
+    {
+        printf("CheckExtension: Input file %s does not have an extension\n",
+               input_path.c_str());
+        return false;
+    }
+
+    // Get lower case extension from input string with the '.' removed.
+    std::string path_ext = parse_text_.ToLower(
+        temp_path.extension().RawString().substr(1));
+
+    // Iterate over argument pack and compare.
+    std::string lower_opt_ext;
+    for (auto opt_ext : exts)
+    {
+        lower_opt_ext = parse_text_.ToLower(opt_ext);
+        if (path_ext == lower_opt_ext)
+            return true;
+    }
+
+    std::string ext_list = "";
+    for (auto opt_ext : exts)
+    {
+        ext_list += opt_ext;
+        ext_list += " ";
+    }
+    printf(
+        "CheckExtension: Input file %s does not have one of the "
+        "(case-insensitive) extensions: %s\n",
+        input_path.c_str(), ext_list.c_str());
+
+    return false;
 }

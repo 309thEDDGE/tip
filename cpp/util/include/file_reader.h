@@ -14,9 +14,10 @@ class FileReader
 
    public:
     FileReader() {}
+    virtual ~FileReader() {}
 
-    std::vector<std::string> GetLines() { return lines; }
-    int ReadFile(std::string);
+    virtual std::vector<std::string> GetLines() { return lines; }
+    virtual int ReadFile(std::string file_name);
 
     /*
 	Get a string containing the entire document as if it 
@@ -27,7 +28,7 @@ class FileReader
 	Return: String representation of the file read in ReadFile
 	containing new line character at the end of each line.
 	*/
-    std::string GetDocumentAsString();
+    virtual std::string GetDocumentAsString();
 };
 
 #endif

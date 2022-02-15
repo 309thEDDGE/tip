@@ -1,5 +1,12 @@
 set(headers
     include/logger_setup.h
+    include/parquet_context_mock.h 
+    include/argument_validation_mock.h
+    include/parse_manager_mock.h 
+    include/file_reader_mock.h 
+    include/dts1553_mock.h
+    include/managed_path_mock.h 
+    include/tip_md_document_mock.h
 )
 
 add_executable(tests
@@ -68,6 +75,8 @@ add_executable(tests
     src/parquet_milstd1553f1_u.cpp
     src/parquet_videodataf0_u.cpp 
     src/parquet_ethernetf0_u.cpp 
+    src/ch10_parse_main_u.cpp
+    src/translate_tabular_1553_main_u.cpp
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)

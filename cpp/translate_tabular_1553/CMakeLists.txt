@@ -1,10 +1,10 @@
 set(headers
-    include/helper_funcs.h
+    include/translate_tabular_1553_main.h
     include/translate_tabular_context_1553.h
 )
 
 add_library(translate_tabular_1553
-            src/helper_funcs.cpp
+            src/translate_tabular_1553_main.cpp
             src/translate_tabular_context_1553.cpp
 )
 

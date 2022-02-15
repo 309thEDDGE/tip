@@ -46,7 +46,7 @@ class ParseText
 	Args:
 		test_str	--> Input string to be checked
 	*/
-    bool IsASCII(const std::string& test_str);
+    bool IsASCII(const std::string& test_str) const;
 
     /*
 	Return true if input string satisfies utf-8 encoding characteristics, and
@@ -57,7 +57,7 @@ class ParseText
 	Args:
 		test_str	--> Input string to be checked
 	*/
-    bool IsUTF8(const std::string& test_str);
+    bool IsUTF8(const std::string& test_str) const;
 
     /*
 	Convert an input string to the lower-case representation of itself.
@@ -70,7 +70,7 @@ class ParseText
 		have been replaced by the lower-case representation. Does not affect
 		non-alphabetical characters.
 	*/
-    std::string ToLower(const std::string& input_str);
+    std::string ToLower(const std::string& input_str) const;
 };
 
 #endif

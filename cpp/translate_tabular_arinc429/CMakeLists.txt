@@ -1,10 +1,10 @@
 set(headers
-    include/helper_funcs.h
+    include/translate_tabular_arinc429_main.h
     include/translate_tabular_context_arinc429.h
 )
 
 add_library(translate_tabular_arinc429
-            src/helper_funcs.cpp
+            src/translate_tabular_arinc429_main.cpp
             src/translate_tabular_context_arinc429.cpp
 )
 

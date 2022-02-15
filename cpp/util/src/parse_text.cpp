@@ -321,7 +321,7 @@ bool ParseText::TextIsFloat(const std::string& input_string)
     return true;
 }
 
-bool ParseText::IsASCII(const std::string& test_str)
+bool ParseText::IsASCII(const std::string& test_str) const
 {
     // Return false for empty strings.
     if (test_str.length() == 0)
@@ -336,7 +336,7 @@ bool ParseText::IsASCII(const std::string& test_str)
     return true;
 }
 
-bool ParseText::IsUTF8(const std::string& test_str)
+bool ParseText::IsUTF8(const std::string& test_str) const
 {
     // See table 3-7, "Well-Formed UTF-8 Byte Sequences"
     // in http://www.unicode.org/versions/Unicode6.2.0/ch03.pdf
@@ -398,7 +398,7 @@ bool ParseText::IsUTF8(const std::string& test_str)
     return true;
 }
 
-std::string ParseText::ToLower(const std::string& input_str)
+std::string ParseText::ToLower(const std::string& input_str) const
 {
     std::string lower_str = input_str;
     for (size_t i = 0; i < lower_str.length(); i++)
