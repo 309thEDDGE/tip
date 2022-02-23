@@ -9,6 +9,8 @@ ENV ARTIFACT_DIR=".ci_artifacts/build-metadata/build-artifacts"
 
 WORKDIR /home/jovyan
 
+CMD []
+
 COPY --chown=jovyan:jovyan $ARTIFACT_DIR/local_channel.tar .
 COPY --chown=jovyan:jovyan ./conf /home/jovyan/
 
