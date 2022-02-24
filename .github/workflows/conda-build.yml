@@ -25,12 +25,14 @@ jobs:
         env: 
           CI_COMMIT_TAG: ${{github.ref_name}}
           CI_COMMIT_SHORT_SHA: ${{github.sha}}
-          BUILD_DIR: $PWD/build-profile
+          BUILD_DIR: ${GITHUB_WORKSPACE}/build-profile
           CONDA_RECIPES_DIR: tip_scripts/conda-recipes
         run: |
           mkdir $BUILD_DIR
           cd $CONDA_RECIPES_DIR
           conda build tip -c conda-forge --croot $BUILD_DIR
-          tests
           cd $BUILD_DIR 
           tree
+      - name: Run tests
+        shell: bash -l {0}
+        run: tests
