@@ -13,7 +13,7 @@ jobs:
       - name: pwd debug
         run: pwd && ls
       - name: Create build dir
-        run: mkdir ${GITHUB_WORKSPACE}/$BUILD_DIR 
+        run: mkdir "${GITHUB_WORKSPACE}/${{ env.BUILD_DIR }}"
       - name: Setup miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
@@ -34,7 +34,7 @@ jobs:
             #mkdir $BUILD_DIR
           cd $CONDA_RECIPES_DIR
           conda build tip -c conda-forge --croot $BUILD_DIR
-          cd ${GITHUB_WORKSPACE}/$BUILD_DIR 
+          cd "${GITHUB_WORKSPACE}/${{ env.BUILD_DIR }}"
           tree
       - name: Run tests
         shell: bash -l {0}
