@@ -6,10 +6,14 @@ on:
 jobs:
   prepare-conda-env:
     runs-on: ubuntu-20.04
+    env: 
+      BUILD_DIR: build-profile
     steps: 
       - uses: actions/checkout@v2
       - name: pwd debug
         run: pwd && ls
+      - name: Create build dir
+        run: mkdir ${GITHUB_WORKSPACE}/$BUILD_DIR 
       - name: Setup miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
@@ -25,13 +29,12 @@ jobs:
         env: 
           CI_COMMIT_TAG: ${{github.ref_name}}
           CI_COMMIT_SHORT_SHA: ${{github.sha}}
-          BUILD_DIR: ${GITHUB_WORKSPACE}/build-profile
           CONDA_RECIPES_DIR: tip_scripts/conda-recipes
         run: |
-          mkdir $BUILD_DIR
+            #mkdir $BUILD_DIR
           cd $CONDA_RECIPES_DIR
           conda build tip -c conda-forge --croot $BUILD_DIR
-          cd $BUILD_DIR 
+          cd ${GITHUB_WORKSPACE}/$BUILD_DIR 
           tree
       - name: Run tests
         shell: bash -l {0}
