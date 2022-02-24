@@ -13,8 +13,8 @@ jobs:
       - name: Setup miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
-            #activate-environment: tip-dev 
-            #environment-file: environment.yaml
+          activate-environment: tip-build 
+          environment-file: ci_environment.yaml
           auto-activate-base: false
           python-version: 3.9
       - name: Conda info debug 
@@ -25,7 +25,12 @@ jobs:
         env: 
           CI_COMMIT_TAG: ${{github.ref_name}}
           CI_COMMIT_SHORT_SHA: ${{github.sha}}
+          BUILD_DIR: $PWD/build-profile
+          CONDA_RECIPES_DIR: tip_scripts/conda-recipes
         run: |
-          pushd tip_scripts
-          bash ./conda_build.sh    
-          popd
+          mkdir $BUILD_DIR
+          cd $CONDA_RECIPES_DIR
+          conda build tip -c conda-forge --croot $BUILD_DIR
+          tests
+          cd $BUILD_DIR 
+          tree
