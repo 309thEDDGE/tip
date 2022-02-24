@@ -21,9 +21,9 @@ jobs:
           environment-file: ci_environment.yaml
           auto-activate-base: false
           python-version: 3.9
-      - name: Conda info debug
-        shell: bash -l {0}
-        run: conda info
+          #- name: Conda info debug
+          #shell: bash -l {0}
+          #run: conda info
       - name: Conda build
         shell: bash -l {0}
         env: 
@@ -31,7 +31,6 @@ jobs:
           CI_COMMIT_SHORT_SHA: ${{github.sha}}
           CONDA_RECIPES_DIR: tip_scripts/conda-recipes
         run: |
-            #mkdir $BUILD_DIR
           cd $CONDA_RECIPES_DIR
           conda build tip -c conda-forge --croot $BUILD_DIR
           cd '${GITHUB_WORKSPACE}/${{ env.BUILD_DIR }}'
