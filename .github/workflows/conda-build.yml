@@ -9,7 +9,7 @@ jobs:
     steps: 
       - uses: actions/checkout@v2
       - name: pwd debug
-        shell: pwd && ls
+        run: pwd && ls
       - name: Setup miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
