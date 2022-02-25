@@ -7,7 +7,7 @@ jobs:
   build-job:
     runs-on: ubuntu-20.04
     env: 
-      BUILD_DIR: ${{ github.workspace }}/build-profile
+      BUILD_DIR: $HOME/build-profile
     steps: 
       - uses: actions/checkout@v2
       - name: pwd debug
