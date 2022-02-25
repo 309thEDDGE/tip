@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cmake ${CMAKE_ARGS} .. \
+cmake ${CMAKE_ARGS} . \
     -G Ninja \
     -DCONDA_PREFIX=$BUILD_PREFIX \
     -DCMAKE_BUILD_TYPE=Profile \
