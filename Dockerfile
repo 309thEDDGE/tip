@@ -25,7 +25,6 @@ RUN mkdir /home/jovyan/tip_channel \
     && conda env create -f /home/jovyan/singleuser_env.yaml \
     && rm -rf /home/jovyan/tip_deps_channel /home/jovyan/local-channel
 
-
 # # Sed replaces the "  - local-channel" entry in the conda env file and replaces it with the three local channels: tip_channel, tip_deps_channel, and local-channel
 # RUN mkdir /home/jovyan/tip_channel \
 #     && tar xvf local_channel.tar --strip-components=3 --directory=/home/jovyan/tip_channel \
@@ -33,6 +32,11 @@ RUN mkdir /home/jovyan/tip_channel \
 #     && printf "\n  - tip" >> /home/jovyan/singleuser_env.yaml \
 #     && conda env create -f /home/jovyan/singleuser_env.yaml \
 #     && rm -rf /home/jovyan/tip_deps_channel /home/jovyan/local-channel
+
+ENV PATH="/opt/conda/envs/singleuser/bin:$PATH"
+
+RUN source /opt/conda/bin/activate \
+    && conda activate singleuser
 
 RUN rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/badcert.pem \
     && rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/badkey.pem \
