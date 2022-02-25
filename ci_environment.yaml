@@ -1,6 +1,5 @@
 name: tip-build
 channels:
   - anaconda
-  - conda-forge
 dependencies:
-  - conda-build
+  - conda-build=3.21.7
