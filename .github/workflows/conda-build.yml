@@ -1,7 +1,7 @@
 name: conda-build
 on:
   push:
-    branches-ignore:
+    branches:
       - master
 jobs:
   build-job:
@@ -32,9 +32,9 @@ jobs:
           CONDA_RECIPES_DIR: tip_scripts/conda-recipes
         run: |
           cd $CONDA_RECIPES_DIR
-          conda build tip -c conda-forge --croot $HOME/${{env.BUILD_DIR}}
+          conda build tip --use-local --croot $HOME/${{env.BUILD_DIR}}
           cd $HOME/${{env.BUILD_DIR}}
           tree
       - name: Run tests
         shell: bash -l {0}
-        run: tests
+        run: conda info && $PREFIX/bin/tests
