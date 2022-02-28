@@ -2,16 +2,20 @@ name: tip-dev
 channels:
  - file:///local_channel
 dependencies:
- - cxx-compiler
- - make
- - cmake
- - ninja
- - pkgconfig
- - libpcap
- - arrow-cpp
- - spdlog
- - yaml-cpp
- - gmock
- - gtest
- - libtins
- - gcovr
+  - python==3.9.10
+  - cxx-compiler==1.0.0
+  - make==4.3
+  - cmake==3.21.3
+  - ninja==1.10.2
+  - libpcap==1.10.1
+  - spdlog==1.8.5
+  - yaml-cpp==0.6.3
+  - gmock==1.10.0
+  - gtest==1.10.0
+  - libtins==4.2
+  - libgcc-ng==11.2.0
+  - libstdcxx-ng==11.2.0
+  - arrow-cpp==6.0.1
+  - gcovr==5.0
+  - pkgconfig==1.5.5
+  - gxx_linux-64==11.2.0
