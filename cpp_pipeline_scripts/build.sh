@@ -24,11 +24,11 @@ main() {
     conda env create -f environment.yaml --offline
 
     #fix gcov link
-    # local tip_env_bin="${CONDA_PREFIX}/envs/tip-dev/bin"
-    # if [[ -e "${tip_env_bin}/x86_64-conda-linux-gnu-gcov" ]] ; then
-    # 	    ln -frs "${tip_env_bin}/x86_64-conda-linux-gnu-gcov" \
-    # 		    "${tip_env_bin}/gcov"
-    # fi
+    local tip_env_bin="${CONDA_PREFIX}/envs/tip-dev/bin"
+    if [[ -e "${tip_env_bin}/x86_64-conda-linux-gnu-gcov" ]] ; then
+	    ln -frs "${tip_env_bin}/x86_64-conda-linux-gnu-gcov" \
+		    "${tip_env_bin}/gcov"
+    fi
 
     echo "Running CMake"
     mkdir -p $BUILD_DIR
