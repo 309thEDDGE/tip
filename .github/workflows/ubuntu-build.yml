@@ -28,13 +28,14 @@ jobs:
       - name: Checkout  
         uses: actions/checkout@v2
         with:
+          # Necessary to obtain all timestamp info
           fetch-depth: '0'
       - name: Make python link
         run: |
             ln -fs /usr/bin/python3 /usr/bin/python
             chmod a+x /usr/bin/python
-            #- name: Restore timestamps
-            #uses: chetan/git-restore-mtime-action@v1.1
+      - name: Restore timestamps
+        uses: chetan/git-restore-mtime-action@v1.1
       - name: home debug
         run: pwd && ls $HOME
       - name: Check mod times
@@ -71,13 +72,13 @@ jobs:
             --exclude-throw-branches \
             --xml ./$CODE_COV_FNAME
             ls $BUILD_DIR
-            #- uses: codecov/codecov-action@v2
-            #with:
-            #token: ${{ secrets.CODECOV_IO_TOKEN }}
-            #files: ./${{ env.CODE_COV_FNAME }}
-            #flags: unittests
-            #fail_ci_if_error: true
-            #verbose: true
+      - uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_IO_TOKEN }}
+          files: ./${{ env.CODE_COV_FNAME }}
+          flags: unittests
+          fail_ci_if_error: true
+          verbose: true
             #- uses: slavcodev/coverage-monitor-action@v1 
             #with:
             #github_token: ${{ secrets.GITHUB_TOKEN }}
