@@ -20,12 +20,21 @@ jobs:
       options: --cpus 2
     steps: 
       - uses: actions/checkout@v2
-      - name: Create build dir and link to deps
-        run: |
-            mkdir $BUILD_DIR 
-            ln -fs $DEPS_DIR ./deps
+        # Github will clear cache that hasn't been accessed in 
+        # 7 days, so previously cached and now merged or old
+        # branches will be automatically removed.
+      - name: Cache native build artifacts
+        id: cache-build-artifacts
+        uses: actions/cache@v2
+        with: 
+          path: $BUILD_DIR
+          key: ${{ runner.os }}-${{ github.ref_name }}-build-cache
+      - name: Link deps
+        run: ln -fs $DEPS_DIR ./deps
       - name: Configure CMake
+        if: steps.cache-build-artifacts.outputs.cache-hit != 'true'
         run: |
+          mkdir $BUILD_DIR
           cd $BUILD_DIR
           cmake .. -GNinja -DCMAKE_BUILD_TYPE=Profile \
             -DCI_COMMIT_TAG=$CI_COMMIT_TAG \
