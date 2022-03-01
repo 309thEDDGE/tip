@@ -33,6 +33,8 @@ jobs:
           #uses: chetan/git-restore-mtime-action@v1.1
       - name: home debug
         run: pwd && ls $HOME
+      - name: Check mod times
+        run: stat cpp
         # Github will clear cache that hasn't been accessed in 
         # 7 days, so previously cached and now merged or old
         # branches will be automatically removed.
