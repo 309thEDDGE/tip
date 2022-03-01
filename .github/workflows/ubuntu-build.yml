@@ -6,17 +6,23 @@ on:
 jobs:
   build-job:
     runs-on: ubuntu-20.04
+    env:
+      DEPS_DIR: /home/tip/deps 
+      BUILD_DIR: build-profile
+      CI_COMMIT_TAG: ${{github.ref_name}}
+      CI_COMMIT_SHORT_SHA: ${{github.sha}}
+      CODE_COV_FNAME: overall-coverage.xml
     container:
       image: registry.il2.dso.mil/skicamp/project-opal/tip/dev:tip-ghbuild-0.2
       credentials:
         username: ${{ secrets.TIP_REGISTRY_USER }}
         password: ${{ secrets.TIP_REGISTRY_PASS }}
       env:
-        DEPS_DIR: /home/tip/deps 
-        BUILD_DIR: build-profile
-        CI_COMMIT_TAG: ${{github.ref_name}}
-        CI_COMMIT_SHORT_SHA: ${{github.sha}}
-        CODE_COV_FNAME: overall-coverage.xml
+        DEPS_DIR: ${{ env.DEPS_DIR }}
+        BUILD_DIR: ${{ env.BUILD_DIR }}
+        CI_COMMIT_TAG: ${{ github.ref_name }}
+        CI_COMMIT_SHORT_SHA: ${{ github.sha }}
+        CODE_COV_FNAME: ${{ env.CODE_COV_FNAME }}
       options: --cpus 2
     steps: 
       - uses: actions/checkout@v2
