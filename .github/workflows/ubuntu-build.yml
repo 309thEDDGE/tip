@@ -60,13 +60,13 @@ jobs:
             --exclude-throw-branches \
             --xml ./$CODE_COV_FNAME
             ls $BUILD_DIR
-      - uses: codecov/codecov-action@v2
-        with:
-          token: ${{ secrets.CODECOV_IO_TOKEN }}
-          files: ./${{ env.CODE_COV_FNAME }}
-          flags: unittests
-          fail_ci_if_error: true
-          verbose: true
+            #- uses: codecov/codecov-action@v2
+            #with:
+            #token: ${{ secrets.CODECOV_IO_TOKEN }}
+            #files: ./${{ env.CODE_COV_FNAME }}
+            #flags: unittests
+            #fail_ci_if_error: true
+            #verbose: true
             #- uses: slavcodev/coverage-monitor-action@v1 
             #with:
             #github_token: ${{ secrets.GITHUB_TOKEN }}
