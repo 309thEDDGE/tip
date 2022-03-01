@@ -16,23 +16,37 @@ jobs:
         BUILD_DIR: build-profile
         CI_COMMIT_TAG: ${{github.ref_name}}
         CI_COMMIT_SHORT_SHA: ${{github.sha}}
+        CODE_COV_FNAME: overall-coverage.xml
+      options: --cpus 4
     steps: 
-      - name: pwd debug
-        run: pwd && ls
       - uses: actions/checkout@v2
-      - name: Create build dir
-        run: mkdir $BUILD_DIR && ls
-      - name: Link to deps
-        run: ln -fs $DEPS_DIR ./deps
+      - name: Create build dir and link to deps
+        run: |
+            mkdir $BUILD_DIR 
+            ln -fs $DEPS_DIR ./deps
       - name: Configure CMake
         run: |
           cd $BUILD_DIR
-          cmake .. -GNinja -DCI_COMMIT_TAG=$CI_COMMIT_TAG -DCI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA
-          #- name: ls in build dir
-          #run: pwd && ls
+          cmake .. -GNinja -DCMAKE_BUILD_TYPE=Profile \
+            -DCI_COMMIT_TAG=$CI_COMMIT_TAG \
+            -DCI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA
       - name: Build tip binaries
         run: |
             cd $BUILD_DIR
             ninja install
       - name: Run tests
         run: ./bin/tests
+      - name: Run gcov
+        run: |
+            gcovr -r . $BUILD_DIR/ -j 4 \
+            --exclude-unreachable-branches \
+            --exclude-throw-branches \
+            --xml ./$CODE_COV_FNAME
+            ls
+      - uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_IO_TOKEN }}
+          files: ./$CODE_COV_FNAME
+          flags: unittests
+          fail_ci_if_error: true
+          verbose: true
