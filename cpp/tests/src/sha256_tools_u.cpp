@@ -107,7 +107,7 @@ TEST(SHA256ToolsTest, ComputeSHA256FailOnBadBits)
     std::string hash;
     std::string null_hash("null");
     bool status = ComputeSHA256(ss, hash);
-#EXPECT_FALSE(status);
+//EXPECT_FALSE(status);
     EXPECT_TRUE(status);
     EXPECT_EQ(null_hash, hash);
 
