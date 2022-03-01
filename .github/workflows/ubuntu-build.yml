@@ -25,7 +25,12 @@ jobs:
         CODE_COV_FNAME: ${{ env.CODE_COV_FNAME }}
       options: --cpus 2
     steps: 
-      - uses: actions/checkout@v2
+      - name: Checkout  
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          #- name: Restore timestamps
+          #uses: chetan/git-restore-mtime-action@v1.1
       - name: home debug
         run: pwd && ls $HOME
         # Github will clear cache that hasn't been accessed in 
@@ -36,7 +41,7 @@ jobs:
         uses: actions/cache@v2
         with: 
           path: ./${{ env.BUILD_DIR }}
-          key: ${{ runner.os }}-${{ github.ref_name }}-build-cache
+          key: ${{ runner.os }}-${{ github.ref_name }}-build-cache-1
       - name: Link deps
         run: ln -fs $DEPS_DIR ./deps
       - name: Configure CMake
@@ -67,10 +72,8 @@ jobs:
             #flags: unittests
             #fail_ci_if_error: true
             #verbose: true
-      - uses: slavcodev/coverage-monitor-action@v1 
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          coverage_path: ./${{ env.CODE_COV_FNAME }}
-          threshold_warning: 90
-          threshold_alert: 80
-          threshold_metric: 'Lines'
+            #- uses: slavcodev/coverage-monitor-action@v1 
+            #with:
+            #github_token: ${{ secrets.GITHUB_TOKEN }}
+            #coverage_path: ./${{ env.CODE_COV_FNAME }}
+
