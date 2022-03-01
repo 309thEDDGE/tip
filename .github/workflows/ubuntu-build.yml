@@ -28,9 +28,11 @@ jobs:
         run: |
           cd $BUILD_DIR
           cmake .. -GNinja -DCI_COMMIT_TAG=$CI_COMMIT_TAG -DCI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA
-      - name: ls in build dir
-        run: pwd && ls
+          #- name: ls in build dir
+          #run: pwd && ls
       - name: Build tip binaries
-        run: ninja install
+        run: |
+            cd $BUILD_DIR
+            ninja install
       - name: Run tests
-        run: ../bin/tests
+        run: ./bin/tests
