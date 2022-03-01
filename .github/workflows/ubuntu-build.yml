@@ -54,10 +54,10 @@ jobs:
             --exclude-throw-branches \
             --xml ./$CODE_COV_FNAME
             ls
-      - uses: codecov/codecov-action@v2
-        with:
-          token: ${{ secrets.CODECOV_IO_TOKEN }}
-          files: ./$CODE_COV_FNAME
-          flags: unittests
-          fail_ci_if_error: true
-          verbose: true
+            #- uses: codecov/codecov-action@v2
+            #with:
+            #token: ${{ secrets.CODECOV_IO_TOKEN }}
+            #files: ./$CODE_COV_FNAME
+            #flags: unittests
+            #fail_ci_if_error: true
+            #verbose: true
