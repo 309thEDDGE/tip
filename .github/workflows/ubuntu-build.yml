@@ -13,7 +13,7 @@ jobs:
       CI_COMMIT_SHORT_SHA: ${{github.sha}}
       CODE_COV_FNAME: overall-coverage.xml
     container:
-      image: registry.il2.dso.mil/skicamp/project-opal/tip/dev:tip-ghbuild-0.2
+      image: registry.il2.dso.mil/skicamp/project-opal/tip/dev:tip-ghbuild-0.3
       credentials:
         username: ${{ secrets.TIP_REGISTRY_USER }}
         password: ${{ secrets.TIP_REGISTRY_PASS }}
@@ -29,14 +29,12 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: '0'
-      - name: Install git
-        run: apt install -y git
-      - name: Make python link
-        run: |
-            ln -fs /usr/bin/python3 /usr/bin/python
-            chmod a+x /usr/bin/python
-      - name: Restore timestamps
-        uses: chetan/git-restore-mtime-action@v1.1
+          #- name: Make python link
+          #run: |
+          #ln -fs /usr/bin/python3 /usr/bin/python
+          #chmod a+x /usr/bin/python
+          #- name: Restore timestamps
+          #uses: chetan/git-restore-mtime-action@v1.1
       - name: home debug
         run: pwd && ls $HOME
       - name: Check mod times
@@ -49,7 +47,7 @@ jobs:
         uses: actions/cache@v2
         with: 
           path: ./${{ env.BUILD_DIR }}
-          key: ${{ runner.os }}-${{ github.ref_name }}-build-cache-1
+          key: ${{ runner.os }}-${{ github.ref_name }}-build-cache-2
       - name: Link deps
         run: ln -fs $DEPS_DIR ./deps
       - name: Configure CMake
