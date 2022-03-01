@@ -29,7 +29,7 @@ jobs:
         id: cache-build-artifacts
         uses: actions/cache@v2
         with: 
-          path: ./$BUILD_DIR
+          path: ./${{ env.BUILD_DIR }}
           key: ${{ runner.os }}-${{ github.ref_name }}-build-cache
       - name: Link deps
         run: ln -fs $DEPS_DIR ./deps
@@ -54,10 +54,15 @@ jobs:
             --exclude-throw-branches \
             --xml ./$CODE_COV_FNAME
             ls $BUILD_DIR
-            #- uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_IO_TOKEN }}
+          files: ./${{ env.CODE_COV_FNAME }}
+          flags: unittests
+          fail_ci_if_error: true
+          verbose: true
+            #- uses: slavcodev/coverage-monitor-action@v1 
             #with:
-            #token: ${{ secrets.CODECOV_IO_TOKEN }}
-            #files: ./$CODE_COV_FNAME
-            #flags: unittests
-            #fail_ci_if_error: true
-            #verbose: true
+            #github_token: ${{ secrets.GITHUB_TOKEN }}
+            #coverage_path: ./${{ env.CODE_COV_FNAME }}
+
