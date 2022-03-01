@@ -67,8 +67,10 @@ jobs:
             #flags: unittests
             #fail_ci_if_error: true
             #verbose: true
-            #- uses: slavcodev/coverage-monitor-action@v1 
-            #with:
-            #github_token: ${{ secrets.GITHUB_TOKEN }}
-            #coverage_path: ./${{ env.CODE_COV_FNAME }}
-
+      - uses: slavcodev/coverage-monitor-action@v1 
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          coverage_path: ./${{ env.CODE_COV_FNAME }}
+          threshold_warning: 90
+          threshold_alert: 80
+          threshold_metric: 'Lines'
