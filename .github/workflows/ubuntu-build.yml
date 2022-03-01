@@ -14,6 +14,8 @@ jobs:
       env:
         DEPS_DIR: /home/tip/deps 
         BUILD_DIR: build-profile
+        CI_COMMIT_TAG: ${{github.ref_name}}
+        CI_COMMIT_SHORT_SHA: ${{github.sha}}
     steps: 
       - name: pwd debug
         run: pwd && ls
@@ -25,7 +27,9 @@ jobs:
       - name: Configure CMake
         run: |
           cd $BUILD_DIR
-          cmake .. -GNinja
+          cmake .. -GNinja -DCI_COMMIT_TAG=$CI_COMMIT_TAG -DCI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA
+      - name: ls in build dir
+        run: pwd && ls
       - name: Build tip binaries
         run: ninja install
       - name: Run tests
