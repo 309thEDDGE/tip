@@ -20,6 +20,8 @@ jobs:
       options: --cpus 2
     steps: 
       - uses: actions/checkout@v2
+      - name: home debug
+        run: pwd && ls $HOME
         # Github will clear cache that hasn't been accessed in 
         # 7 days, so previously cached and now merged or old
         # branches will be automatically removed.
