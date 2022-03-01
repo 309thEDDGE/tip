@@ -33,8 +33,8 @@ jobs:
         run: |
             ln -fs /usr/bin/python3 /usr/bin/python
             chmod a+x /usr/bin/python
-      - name: Restore timestamps
-        uses: chetan/git-restore-mtime-action@v1.1
+            #- name: Restore timestamps
+            #uses: chetan/git-restore-mtime-action@v1.1
       - name: home debug
         run: pwd && ls $HOME
       - name: Check mod times
