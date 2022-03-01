@@ -21,7 +21,7 @@ jobs:
       - name: Create build dir
         run: mkdir $BUILD_DIR && ls
       - name: Link to deps
-        run: link -fs $DEPS_DIR ./deps
+        run: ln -fs $DEPS_DIR ./deps
       - name: Configure CMake
         run: |
           cd $BUILD_DIR
