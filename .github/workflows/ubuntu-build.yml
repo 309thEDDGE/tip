@@ -68,9 +68,20 @@ jobs:
             gcovr -r . $BUILD_DIR/ -j 4 \
             --exclude-unreachable-branches \
             --exclude-throw-branches \
-            --xml ./$CODE_COV_FNAME
+            --xml ./$CODE_COV_FNAME \
+            --print-summary \
+            --exclude cpp/tests/
             ls -lh .
             ls -lh $BUILD_DIR
+      # Metric:
+      # "hit" indicates that the source code was executed by the test suite.
+      #
+      # "partial" indicates that the source code was not fully executed by the test suite; 
+      # there are remaining branches that were not executed.
+      #
+      # "miss" indicates that the source code was not executed by the test suite.
+      #
+      # Coverage is the ratio of hits / (sum of hit + partial + miss
       - uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_IO_TOKEN }}
