@@ -71,7 +71,8 @@ jobs:
             --exclude-unreachable-branches \
             --exclude-throw-branches \
             --xml ./$CODE_COV_FNAME
-            ls $BUILD_DIR
+            ls -lh .
+            ls -lh $BUILD_DIR
       - uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_IO_TOKEN }}
