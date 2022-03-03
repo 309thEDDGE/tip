@@ -56,7 +56,7 @@ jobs:
         uses: actions/cache@v2
         with: 
           path: ./${{ env.BUILD_DIR }}
-          key: ${{ runner.os }}-native-build-cache-${{ hashFiles(${{ env.RANDOM_CACHE_FNAME }}) }}
+          key: ${{ runner.os }}-native-build-cache-${{ hashFiles(env.RANDOM_CACHE_FNAME) }}
           restore-keys: ${{ runner.os }}-native-build-cache-
       - name: Link deps
         run: ln -fs $DEPS_DIR ./deps
