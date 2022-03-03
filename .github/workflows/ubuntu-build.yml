@@ -63,7 +63,7 @@ jobs:
       - name: Configure CMake
         #if: steps.cache-build-artifacts.outputs.cache-hit != 'true'
         run: |
-          mkdir $BUILD_DIR
+          mkdir -p $BUILD_DIR
           cd $BUILD_DIR
           cmake .. -GNinja -DCMAKE_BUILD_TYPE=Profile \
             -DCI_COMMIT_TAG=$CI_COMMIT_TAG \
