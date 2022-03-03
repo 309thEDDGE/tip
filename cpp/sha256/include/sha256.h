@@ -4,6 +4,7 @@
 #include <string>
 #include <algorithm>
 
+
 class SHA256
 {
    protected:
