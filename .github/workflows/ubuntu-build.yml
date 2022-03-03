@@ -61,7 +61,7 @@ jobs:
       - name: Link deps
         run: ln -fs $DEPS_DIR ./deps
       - name: Configure CMake
-        if: steps.cache-build-artifacts.outputs.cache-hit != 'true'
+        #if: steps.cache-build-artifacts.outputs.cache-hit != 'true'
         run: |
           mkdir $BUILD_DIR
           cd $BUILD_DIR
