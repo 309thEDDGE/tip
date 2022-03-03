@@ -12,6 +12,7 @@ jobs:
       CI_COMMIT_TAG: ${{github.ref_name}}
       CI_COMMIT_SHORT_SHA: ${{github.sha}}
       CODE_COV_FNAME: overall-coverage.xml
+      RANDOM_CACHE_FNAME: random-cache-key
     container:
       image: registry.il2.dso.mil/skicamp/project-opal/tip/dev:tip-ghbuild-0.3
       credentials:
@@ -38,15 +39,25 @@ jobs:
         uses: chetan/git-restore-mtime-action@v1.1
       - name: home debug
         run: pwd && ls $HOME
+      - name: Generate random cache key
+        run: head /dev/random -c 32 > $RANDOM_CACHE_FNAME
         # Github will clear cache that hasn't been accessed in 
         # 7 days, so previously cached and now merged or old
         # branches will be automatically removed.
+        #
+        # See https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key. The prefix in restore-keys will match if there
+        # is no direct hit, which is guaranteed by the random 
+        # hash. Further, the most recent cache is pulled if there
+        # is a match from the restore-keys, so each CI run will 
+        # pull the most recent cache and upload a new cache at 
+        # the end of the run.
       - name: Cache native build artifacts
         id: cache-build-artifacts
         uses: actions/cache@v2
         with: 
           path: ./${{ env.BUILD_DIR }}
-          key: ${{ runner.os }}-${{ github.ref_name }}-build-cache-2
+          key: ${{ runner.os }}-native-build-cache-${{ hashFiles(${{ env.RANDOM_CACHE_FNAME }}) }}
+          restore-keys: ${{ runner.os }}-native-build-cache-
       - name: Link deps
         run: ln -fs $DEPS_DIR ./deps
       - name: Configure CMake
@@ -89,8 +100,4 @@ jobs:
           flags: unittests
           fail_ci_if_error: true
           verbose: true
-            #- uses: slavcodev/coverage-monitor-action@v1 
-            #with:
-            #github_token: ${{ secrets.GITHUB_TOKEN }}
-            #coverage_path: ./${{ env.CODE_COV_FNAME }}
 
