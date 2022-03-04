@@ -8,7 +8,7 @@ coverage:
   status:
     project:
       default:
-        target: auto
+        target: 80
         threshold: 0%
         branches:
           - master
@@ -17,7 +17,7 @@ coverage:
     patch:
       default:
         target: auto
-        threshold: 0%
+        threshold: 80 
         branches:
           - master
           - dev
