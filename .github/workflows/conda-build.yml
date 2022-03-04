@@ -7,14 +7,14 @@ jobs:
   build-job:
     runs-on: ubuntu-20.04
     env: 
-      BUILD_DIR: /build-profile
+      BUILD_DIR: build-profile
       CODE_COV_FNAME: overall-coverage.xml
       TIP_PKG_NAME: tip-1.0.2-2.tar.bz2
     steps: 
       - name: Make time stamp
         run: echo "VERSION_TAG=$(date +"%Y.%m.%d")" >> $GITHUB_ENV
       - name: Create build dir
-        run: mkdir $BUILD_DIR 
+        run: mkdir ~$BUILD_DIR 
       - uses: actions/checkout@v2
       - name: Setup miniconda
         uses: conda-incubator/setup-miniconda@v2
@@ -34,22 +34,22 @@ jobs:
           CONDA_RECIPES_DIR: tip_scripts/conda-recipes
         run: |
           cd $CONDA_RECIPES_DIR
-          conda build tip -c conda-forge --croot $BUILD_DIR
-          cd $BUILD_DIR
+          conda build tip -c conda-forge --croot ~/$BUILD_DIR
+          cd ~/$BUILD_DIR
           tree
       - name: Run tests
         shell: bash -l {0}
         run: conda info && $PREFIX/bin/tests
       - name: Run gcov
         run: |
-            gcovr -r . $BUILD_DIR/ -j 4 \
+            gcovr -r . ~/$BUILD_DIR/ -j 4 \
             --exclude-unreachable-branches \
             --exclude-throw-branches \
             --xml ./$CODE_COV_FNAME \
             --print-summary \
             --exclude cpp/tests/
             ls -lh .
-            ls -lh $BUILD_DIR
+            ls -lh ~/$BUILD_DIR
       - uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_IO_TOKEN }}
@@ -60,6 +60,6 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: tip-${{ env.VERSION_TAG }}.tar.bz2
-          path: ${{ env.BUILD_DIR }}/linux-64/${{ env.TIP_PKG_NAME }} 
+          path: ~/${{ env.BUILD_DIR }}/linux-64/${{ env.TIP_PKG_NAME }} 
 
 
