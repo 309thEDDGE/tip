@@ -9,8 +9,6 @@ jobs:
     env: 
       BUILD_DIR: build-profile
     steps: 
-      - name: pwd debug
-        run: pwd && ls
       - name: Create build dir
         run: mkdir $HOME/${{env.BUILD_DIR}} && ls $HOME
       - uses: actions/checkout@v2

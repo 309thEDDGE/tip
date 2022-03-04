@@ -1,4 +1,4 @@
-name: conda-build
+name: native-build
 on:
   push:
     branches-ignore:

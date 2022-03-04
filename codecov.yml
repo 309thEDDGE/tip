@@ -1,0 +1,20 @@
+codecov:
+  require_ci_to_pass: yes
+  max_report_age: no
+coverage:
+  precision: 2
+  round: down
+  range: "80...100"
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 0%
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: yes
+      macro: no
+   

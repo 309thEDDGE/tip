@@ -67,7 +67,7 @@ tip_scripts/__pycache__
 !environment*.yaml
 !ci_environment.yaml
 *.vscode
-
+!codecov.yml
 # nix
 result*
 default.nix
