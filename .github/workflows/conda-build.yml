@@ -12,7 +12,7 @@ jobs:
       TIP_PKG_NAME: tip-1.0.2-2.tar.bz2
     steps: 
       - name: Make time stamp
-        run: echo "::set-env VERSION_TAG::$(date +"%Y.%m.%d")"
+        run: echo "VERSION_TAG=$(date +"%Y.%m.%d")" >> $GITHUB_ENV
       - name: Create build dir
         run: mkdir $BUILD_DIR 
       - uses: actions/checkout@v2
