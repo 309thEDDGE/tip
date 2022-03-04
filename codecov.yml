@@ -8,20 +8,24 @@ coverage:
   status:
     project:
       default:
-        target: 80
+        # Minimum coverage, percent
+        target: 60
+        # Allow to drop x% and still pass checks
         threshold: 0%
         branches:
           - master
           - dev
           - staging
+        if_ci_failed: error
     patch:
       default:
         target: auto
-        threshold: 80 
+        threshold: 60 
         branches:
           - master
           - dev
           - staging
+        if_ci_failed: error
 parsers:
   gcov:
     branch_detection:

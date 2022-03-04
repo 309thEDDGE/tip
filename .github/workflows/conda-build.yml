@@ -7,16 +7,20 @@ jobs:
   build-job:
     runs-on: ubuntu-20.04
     env: 
-      BUILD_DIR: build-profile
+      BUILD_DIR: /build-profile
+      CODE_COV_FNAME: overall-coverage.xml
+      TIP_PKG_NAME: tip-1.0.2-2.tar.bz2
     steps: 
+      - name: Make time stamp
+        run: echo "::set-env VERSION_TAG::$(date +"%Y.%m.%d")"
       - name: Create build dir
-        run: mkdir $HOME/${{env.BUILD_DIR}} && ls $HOME
+        run: mkdir $BUILD_DIR 
       - uses: actions/checkout@v2
       - name: Setup miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: tip-build 
-          environment-file: ci_environment.yaml
+          environment-file: ci_environment_pinned.yaml
           auto-activate-base: false
           python-version: 3.9
       - name: Conda info debug
@@ -30,9 +34,32 @@ jobs:
           CONDA_RECIPES_DIR: tip_scripts/conda-recipes
         run: |
           cd $CONDA_RECIPES_DIR
-          conda build tip --use-local --croot $HOME/${{env.BUILD_DIR}}
-          cd $HOME/${{env.BUILD_DIR}}
+          conda build tip -c conda-forge --croot $BUILD_DIR
+          cd $BUILD_DIR
           tree
       - name: Run tests
         shell: bash -l {0}
         run: conda info && $PREFIX/bin/tests
+      - name: Run gcov
+        run: |
+            gcovr -r . $BUILD_DIR/ -j 4 \
+            --exclude-unreachable-branches \
+            --exclude-throw-branches \
+            --xml ./$CODE_COV_FNAME \
+            --print-summary \
+            --exclude cpp/tests/
+            ls -lh .
+            ls -lh $BUILD_DIR
+      - uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_IO_TOKEN }}
+          files: ./${{ env.CODE_COV_FNAME }}
+          fail_ci_if_error: true
+          verbose: true
+      - name: Upload TIP package
+        uses: actions/upload-artifact@v3
+        with:
+          name: tip-${{ env.VERSION_TAG }}.tar.bz2
+          path: ${{ env.BUILD_DIR }}/linux-64/${{ env.TIP_PKG_NAME }} 
+
+
