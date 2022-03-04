@@ -2,7 +2,7 @@ codecov:
   require_ci_to_pass: yes
   max_report_age: no
 coverage:
-  precision: 2
+  precision: 1
   round: down
   range: "80...100"
   status:
@@ -10,6 +10,10 @@ coverage:
       default:
         target: auto
         threshold: 0%
+        branches:
+          - master
+          - dev
+          - staging
 parsers:
   gcov:
     branch_detection:
