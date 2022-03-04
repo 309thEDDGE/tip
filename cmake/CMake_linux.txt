@@ -1,4 +1,9 @@
-####################
+if("${CMAKE_BUILD_TYPE}" MATCHES "Profile")
+    set(CMAKE_C_FLAGS_PROFILE "--coverage -O1")
+    set(CMAKE_CXX_FLAGS_PROFILE "--coverage -O1")
+    add_link_options("--coverage")
+endif()
+
 message(STATUS "deps_dir: ${deps_dir}")
 
 # If this is a container build, then the libs
@@ -194,8 +199,10 @@ else()
     set(tins_dir_name "tins")
     set(tins_path "${deps_dir}/${tins_dir_name}")
     set(tins_inc_dir ${tins_path}/include)
+    #set(tins_inc_dir "${deps_dir}/tins_alpine/libtins/include")
     set(tins_lib_dir ${tins_path}/lib)
     set(tins_lib_name ${tins_lib_dir}/libtins.a)
+    #set(tins_lib_name "${deps_dir}/tins_alpine/libtins/build/lib/libtins.a")
 endif()
 
 # pcap necessary to link for libtins
@@ -207,7 +214,9 @@ else()
     set(pcap_dir_name "pcap")
     set(pcap_path ${deps_dir}/${pcap_dir_name})
     set(pcap_inc_dir ${pcap_path}/include)
+    #set(pcap_inc_dir /usr/include/pcap) 
     set(pcap_lib_dir ${pcap_path}/lib)
+    #set(pcap_lib_name /usr/lib/libpcap.a) 
     set(pcap_lib_name ${pcap_lib_dir}/libpcap.a)
 endif()
 

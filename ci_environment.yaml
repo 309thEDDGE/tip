@@ -1,0 +1,5 @@
+name: tip-build
+channels:
+  - anaconda
+dependencies:
+  - conda-build=3.21.7
