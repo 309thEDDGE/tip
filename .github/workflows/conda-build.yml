@@ -40,10 +40,7 @@ jobs:
           tree
       - name: Run tests
         shell: bash -l {0}
-        run: |
-            conda info
-            which tests
-            /usr/share/miniconda/envs/${{ env.ENV_NAME }}/bin/tests
+        run: /usr/share/miniconda/envs/${{ env.ENV_NAME }}/bin/tests
       - name: Run gcov
         run: |
             gcovr -r . ~/$BUILD_DIR/ -j 4 \
