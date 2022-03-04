@@ -10,6 +10,7 @@ jobs:
       BUILD_DIR: build-profile
       CODE_COV_FNAME: overall-coverage.xml
       TIP_PKG_NAME: tip-1.0.2-2.tar.bz2
+      ENV_NAME: tip-build
     steps: 
       - name: Make time stamp
         run: echo "VERSION_TAG=$(date +"%Y.%m.%d")" >> $GITHUB_ENV
@@ -29,8 +30,8 @@ jobs:
       - name: Conda build
         shell: bash -l {0}
         env: 
-          CI_COMMIT_TAG: ${{github.ref_name}}
-          CI_COMMIT_SHORT_SHA: ${{github.sha}}
+          CI_COMMIT_TAG: ${{ env.VERSION_TAG }}
+          CI_COMMIT_SHORT_SHA: ${{ github.sha }}
           CONDA_RECIPES_DIR: tip_scripts/conda-recipes
         run: |
           cd $CONDA_RECIPES_DIR
@@ -39,7 +40,10 @@ jobs:
           tree
       - name: Run tests
         shell: bash -l {0}
-        run: conda info && $PREFIX/bin/tests
+        run: |
+            conda info
+            which tests
+            /usr/share/miniconda/envs/${{ env.ENV_NAME }}/bin/tests
       - name: Run gcov
         run: |
             gcovr -r . ~/$BUILD_DIR/ -j 4 \
