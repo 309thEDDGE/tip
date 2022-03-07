@@ -114,7 +114,7 @@ class Ch101553F1Component : public Ch10PacketComponent
     {
     }
 
-    Ch10Status Parse(const uint8_t*& data) override;
+    virtual Ch10Status Parse(const uint8_t*& data);
 
     /*
 	Parse all of the messages in the body of the 1553 packet that

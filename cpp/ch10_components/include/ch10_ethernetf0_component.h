@@ -112,7 +112,7 @@ class Ch10EthernetF0Component : public Ch10PacketComponent
 	Return:
 		Ch10Status::OK if no problems, otherwise a different Ch10Status code.
 	*/
-    Ch10Status Parse(const uint8_t*& data) override;
+    virtual Ch10Status Parse(const uint8_t*& data);
 
     /*
 	Parse all ethernet frames in the ch10 packet, including the 

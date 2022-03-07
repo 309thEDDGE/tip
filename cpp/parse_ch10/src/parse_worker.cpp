@@ -88,8 +88,25 @@ bool ParseWorker::ConfigureContext(Ch10Context& ctx,
 void ParseWorker::ParseBufferData(Ch10Context* ctx, BinBuff* bb,
                                   std::vector<std::string>& tmats_vec)
 {
+    Ch10PacketHeaderComponent header(ctx);
+    Ch10TMATSComponent tmats(ctx);
+    Ch10TDPComponent tdp(ctx);
+    Ch101553F1Component milstd1553(ctx);
+    Ch10VideoF0Component vid(ctx);
+    Ch10EthernetF0Component eth(ctx);
+    Ch10429F0Component arinc429(ctx);
+    Ch10Time ch10time;
+
+    // Enable Pcap output if Ethernet data packet parsing is enabled.
+    if (ctx->pkt_type_config_map.at(Ch10PacketType::ETHERNET_DATA_F0))
+    {
+        eth.EnablePcapOutput(
+            ctx->pkt_type_paths_map.at(Ch10PacketType::ETHERNET_DATA_F0));
+    }
+
     // Instantiate Ch10Packet object
-    Ch10Packet packet(bb, ctx, tmats_vec);
+    Ch10Packet packet(bb, ctx, &ch10time, tmats_vec);
+    packet.SetCh10ComponentParsers(&header, &tmats, &tdp, &milstd1553, &vid, &eth, &arinc429);
 
     // Parse packets until error or end of buffer.
     bool continue_parsing = true;

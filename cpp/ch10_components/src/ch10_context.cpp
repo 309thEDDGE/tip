@@ -112,6 +112,14 @@ Ch10Context::Ch10Context() : absolute_position_(0),
     CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
 
+
+bool Ch10Context::IsPacketTypeEnabled(const Ch10PacketType& pkt_type)
+{
+    if(pkt_type_config_map_.count(pkt_type) != 0)
+        return pkt_type_config_map_.at(pkt_type);
+    return false;
+}
+
 void Ch10Context::Initialize(const uint64_t& abs_pos, uint16_t id)
 {
     absolute_position_ = abs_pos;

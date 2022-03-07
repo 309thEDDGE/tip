@@ -43,7 +43,7 @@ class Ch10TMATSComponent : public Ch10PacketComponent
     Ch10TMATSComponent(Ch10Context* const ch10ctx) : Ch10PacketComponent(ch10ctx),
                                                      tmats_elems_vec_{dynamic_cast<Ch10PacketElementBase*>(&tmats_csdw_elem_)},
                                                      tmats_csdw_elem(tmats_csdw_elem_) {}
-    Ch10Status Parse(const uint8_t*& data,
+    virtual Ch10Status Parse(const uint8_t*& data,
                      std::vector<std::string>& tmats_vec);
 };
 
