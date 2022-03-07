@@ -186,7 +186,18 @@ class Ch10Context
     bool IsConfigured();
 
     void SetSearchingForTDP(bool should_search);
-    Ch10Status ContinueWithPacketType(uint8_t data_type);
+    virtual Ch10Status ContinueWithPacketType(uint8_t data_type);
+
+    /*
+    Check if input packet type is enabled.
+
+    Args:
+        pkt_type    --> Ch10PacketType to be checked
+
+    Return:
+        True if enabled; false otherwise.
+    */
+    virtual bool IsPacketTypeEnabled(const Ch10PacketType& pkt_type);
 
     /*
 	Advance the absolute position by advance_bytes.
@@ -195,7 +206,7 @@ class Ch10Context
 		advance_bytes	--> Count of bytes by which to advance/increase
 							the absolute_position_
 	*/
-    void AdvanceAbsPos(uint64_t advance_bytes);
+    virtual void AdvanceAbsPos(uint64_t advance_bytes);
 
     /*
 	Update the members that are of primary importance for conveyance
@@ -216,7 +227,7 @@ class Ch10Context
 		Ch10Status value
 
 	*/
-    Ch10Status UpdateContext(const uint64_t& abs_pos,
+    virtual Ch10Status UpdateContext(const uint64_t& abs_pos,
                              const Ch10PacketHeaderFmt* const hdr_fmt_ptr_, const uint64_t& rtc_time);
 
     void CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketType, bool>& input);
@@ -415,7 +426,7 @@ class Ch10Context
 		ts		--> Video timestamp in nanosecond unit, counting from the
 					unix epoch
 	*/
-    void RecordMinVideoTimeStamp(const uint64_t& ts);
+    virtual void RecordMinVideoTimeStamp(const uint64_t& ts);
 
     /*
 	Set the current packet secondary header time, which is
@@ -424,7 +435,7 @@ class Ch10Context
 	Args:
 		time_ns		--> Secondary header time, nanosecond unit
 	*/
-    void UpdateWithSecondaryHeaderTime(const uint64_t& time_ns);
+    virtual void UpdateWithSecondaryHeaderTime(const uint64_t& time_ns);
 };
 
 #endif

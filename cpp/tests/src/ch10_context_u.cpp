@@ -563,8 +563,40 @@ TEST(Ch10ContextTest, CheckConfigurationPathsRequired)
     EXPECT_EQ(enabled_paths.count(Ch10PacketType::MILSTD1553_F1), 1);
 }
 
-// Test InitializeFileWriters, this function and the other code it impacts
-// probably needs re-factoring prior.
+TEST(Ch10ContextTest, InitializeAndCloseFileWriters)
+{
+    Ch10Context ctx(0);
+    std::map<Ch10PacketType, ManagedPath> enabled_paths{
+        {Ch10PacketType::MILSTD1553_F1, ManagedPath{"..", "parsed1553_test.parquet"}},
+        {Ch10PacketType::VIDEO_DATA_F0, ManagedPath{"..", "parsedvideo_test.parquet"}},
+        {Ch10PacketType::ETHERNET_DATA_F0, ManagedPath{"..", "parsedeth_test.parquet"}},
+        {Ch10PacketType::ARINC429_F0, ManagedPath{"..", "parsed429_test.parquet"}},
+    };
+    ASSERT_TRUE(ctx.InitializeFileWriters(enabled_paths));
+
+    ctx.CloseFileWriters();
+}
+
+TEST(Ch10ContextTest, InitializeFileWriters1553Fail)
+{
+    Ch10Context ctx(0);
+
+    // Empty path ought to fail at pq_ctx_->OpenForWrite()
+    std::map<Ch10PacketType, ManagedPath> enabled_paths{
+        {Ch10PacketType::MILSTD1553_F1, ManagedPath("")},
+    };
+    ASSERT_FALSE(ctx.InitializeFileWriters(enabled_paths));
+}
+
+TEST(Ch10ContextTest, InitializeFileWritersDefault)
+{
+    Ch10Context ctx(0);
+
+    std::map<Ch10PacketType, ManagedPath> enabled_paths{
+        {Ch10PacketType::NONE, ManagedPath("")},
+    };
+    ASSERT_TRUE(ctx.InitializeFileWriters(enabled_paths));
+}
 
 TEST(Ch10ContextTest, RecordMinVideoTimeStampChannelIDNotPresent)
 {
@@ -755,4 +787,42 @@ TEST(Ch10ContextTest, UpdateARINC429Maps)
     EXPECT_EQ(ctx.chanid_labels_map.at(hdr_fmt.chanID).size(), 2);
     EXPECT_THAT(ctx.chanid_labels_map.at(hdr_fmt.chanID),
                 ::testing::UnorderedElementsAre(202, 194));
+}
+
+TEST(Ch10ContextTest, IsPacketTypeEnabledNotInMap)
+{
+    Ch10Context ctx(0);
+
+    // None not in default map
+    EXPECT_FALSE(ctx.IsPacketTypeEnabled(Ch10PacketType::NONE));
+}
+
+TEST(Ch10ContextTest, IsPacketTypeEnabledTrue)
+{
+    Ch10Context ctx(0);
+    std::map<Ch10PacketType, bool> pkt_type_conf;
+    pkt_type_conf[Ch10PacketType::MILSTD1553_F1] = true;
+    std::unordered_map<Ch10PacketType, bool> default_pkt_type_conf = {
+        {Ch10PacketType::MILSTD1553_F1, true}};
+
+    // Set the configuration.
+    bool status = ctx.SetPacketTypeConfig(pkt_type_conf, default_pkt_type_conf);
+    ASSERT_TRUE(status);
+
+    EXPECT_TRUE(ctx.IsPacketTypeEnabled(Ch10PacketType::MILSTD1553_F1));
+}
+
+TEST(Ch10ContextTest, IsPacketTypeEnabledFalse)
+{
+    Ch10Context ctx(0);
+    std::map<Ch10PacketType, bool> pkt_type_conf;
+    pkt_type_conf[Ch10PacketType::MILSTD1553_F1] = false;
+    std::unordered_map<Ch10PacketType, bool> default_pkt_type_conf = {
+        {Ch10PacketType::MILSTD1553_F1, true}};
+
+    // Set the configuration.
+    bool status = ctx.SetPacketTypeConfig(pkt_type_conf, default_pkt_type_conf);
+    ASSERT_TRUE(status);
+
+    EXPECT_FALSE(ctx.IsPacketTypeEnabled(Ch10PacketType::MILSTD1553_F1));
 }

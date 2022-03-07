@@ -7,6 +7,16 @@ set(headers
     include/dts1553_mock.h
     include/managed_path_mock.h
     include/tip_md_document_mock.h
+    include/binbuff_mock.h 
+    include/ch10_context_mock.h 
+    include/ch10_packet_header_component_mock.h
+    include/ch10_time_mock.h
+    include/ch10_tmats_component_mock.h
+    include/ch10_tdp_component_mock.h
+    include/ch10_1553f1_component_mock.h
+    include/ch10_videof0_component_mock.h 
+    include/ch10_ethernetf0_component_mock.h 
+    include/ch10_arinc429f0_component_mock.h
 )
 
 add_executable(tests

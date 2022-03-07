@@ -21,8 +21,6 @@ class Ch10Packet
    private:
     const uint8_t* data_ptr_;
 
-    Ch10PacketHeaderComponent header_;
-
     // Hold pointers to BinBuff and Ch10Context to avoid
     // the need to pass them into the Parse function each time
     // a packet is parsed. Focus on performance.
@@ -48,31 +46,43 @@ class Ch10Packet
     uint64_t secondary_hdr_time_ns_;
 
     // Various packet parser instances.
-    Ch10TMATSComponent tmats_;
+    Ch10PacketHeaderComponent* header_;
+    Ch10TMATSComponent* tmats_;
     std::vector<std::string>& tmats_vec_;
-    Ch10TDPComponent tdp_component_;
-    Ch101553F1Component milstd1553f1_component_;
-    Ch10VideoF0Component videof0_component_;
-    Ch10EthernetF0Component ethernetf0_component_;
-    Ch10429F0Component arinc429f0_component_;
-    Ch10Time ch10_time_;
+    Ch10TDPComponent* tdp_component_;
+    Ch101553F1Component* milstd1553f1_component_;
+    Ch10VideoF0Component* videof0_component_;
+    Ch10EthernetF0Component* ethernetf0_component_;
+    Ch10429F0Component* arinc429f0_component_;
+    Ch10Time* const ch10_time_;
 
    public:
     const Ch10PacketType& current_pkt_type;
-    Ch10Packet(BinBuff* binbuff, Ch10Context* context, std::vector<std::string>& tmats_vec)
-        : tmats_vec_(tmats_vec), ch10_time_(), secondary_hdr_time_ns_(0), bb_(binbuff), ctx_(context), data_ptr_(nullptr), bb_response_(0), status_(Ch10Status::OK), temp_pkt_size_(0), pkt_type_(Ch10PacketType::NONE), current_pkt_type(pkt_type_), header_(context), tmats_(context), tdp_component_(context), milstd1553f1_component_(context), arinc429f0_component_(context), videof0_component_(context), ethernetf0_component_(context)
-    {
-        // Comment to disable pcap output.
-        if (ctx_->IsConfigured())
-        {
-            // Enable Pcap output if Ethernet data packet parsing is enabled.
-            if (context->pkt_type_config_map.at(Ch10PacketType::ETHERNET_DATA_F0))
-            {
-                ethernetf0_component_.EnablePcapOutput(
-                    context->pkt_type_paths_map.at(Ch10PacketType::ETHERNET_DATA_F0));
-            }
-        }
-    }
+    Ch10Packet(BinBuff* const binbuff, Ch10Context* const context, 
+        Ch10Time* const ch10time, std::vector<std::string>& tmats_vec) : 
+        tmats_vec_(tmats_vec), ch10_time_(ch10time), secondary_hdr_time_ns_(0), bb_(binbuff), ctx_(context), data_ptr_(nullptr), bb_response_(0), status_(Ch10Status::OK), temp_pkt_size_(0), pkt_type_(Ch10PacketType::NONE), current_pkt_type(pkt_type_), header_(nullptr), tmats_(nullptr), tdp_component_(nullptr), milstd1553f1_component_(nullptr), arinc429f0_component_(nullptr), videof0_component_(nullptr), ethernetf0_component_(nullptr)
+    {    }
+
+
+
+    /*
+    Set the Ch10 component parser pointers
+
+    Args:
+        header_comp     --> Pointer to Ch10PacketHeaderComponent
+        tmats_comp      --> Pointer to Ch10TMATSComponent
+        tdp_comp        --> Pointer to Ch10TDPComponent
+        milstd1553_comp --> Pointer to Ch101553F1Component
+        video_comp      --> Pointer to Ch10VideoF0Component
+        eth_comp        --> Pointer to Ch10EthernetF0Component
+        arinc429_comp   --> Pointer to Ch10429F0Component
+    */
+    void SetCh10ComponentParsers(Ch10PacketHeaderComponent* header_comp, Ch10TMATSComponent* tmats_comp, 
+        Ch10TDPComponent* tdp_comp, Ch101553F1Component* milstd1553_comp,
+        Ch10VideoF0Component* video_comp, Ch10EthernetF0Component* eth_comp,
+        Ch10429F0Component* arinc429_comp);
+
+
 
     /*
     Parse the ch10 header at the current location of the buffer.
@@ -80,6 +90,8 @@ class Ch10Packet
     Advances the buffer to the next potentially viable position.
     */
     Ch10Status ParseHeader();
+
+
 
     /*
     Maintain the logic for Ch10PacketHeaderComponent::Parse status. Header
@@ -102,6 +114,8 @@ class Ch10Packet
             to the calling function.
     */
     Ch10Status ManageHeaderParseStatus(const Ch10Status& status, const uint64_t& pkt_size);
+
+
 
     /*
     Maintain the logic for Ch10PacketHeaderComponent::ParseSecondaryHeader
@@ -127,6 +141,9 @@ class Ch10Packet
     Ch10Status ManageSecondaryHeaderParseStatus(const Ch10Status& status,
                                                 const uint64_t& pkt_size);
 
+
+
+
     /*
     Move position of buffer and absolute position index by amount indicated.
     Check for error response from BinBuff object.
@@ -142,6 +159,8 @@ class Ch10Packet
                        avoid casting during the vast majority of calls.
     */
     Ch10Status AdvanceBuffer(const uint64_t& byte_count);
+
+
 
     /*
     The primary purpose of this function is to call the correct parser

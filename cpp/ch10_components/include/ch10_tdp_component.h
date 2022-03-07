@@ -90,7 +90,7 @@ class Ch10TDPComponent : public Ch10PacketComponent
                                                    tdp_csdw_elem(tdp_csdw_elem_),
                                                    tdp_irig_elem(tdp_irig_elem_),
                                                    tdp_nonirig_elem(tdp_nonirig_elem_) {}
-    Ch10Status Parse(const uint8_t*& data) override;
+    virtual Ch10Status Parse(const uint8_t*& data);
 
     /*
 	Compute absolute time with the assumption that the year is 1970 using 
