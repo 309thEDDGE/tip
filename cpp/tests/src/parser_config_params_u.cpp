@@ -44,6 +44,7 @@ TEST_F(ParserConfigParamsTest, InitializeValidEntries)
     file << "max_chunk_read_count : 5\n";
     file << "worker_offset_wait_ms : 200\n";
     file << "worker_shift_wait_ms : 300\n";
+    file << "stdout_log_level: info\n";
     file.close();
 
     bool status = config.Initialize(filepath);
@@ -54,6 +55,7 @@ TEST_F(ParserConfigParamsTest, InitializeValidEntries)
     ASSERT_EQ(config.max_chunk_read_count_, 5);
     ASSERT_EQ(config.worker_offset_wait_ms_, 200);
     ASSERT_EQ(config.worker_shift_wait_ms_, 300);
+    ASSERT_EQ(config.stdout_log_level_, "info");
 }
 
 TEST_F(ParserConfigParamsTest, InitializeWithConfigStringValidEntries)
@@ -66,7 +68,8 @@ TEST_F(ParserConfigParamsTest, InitializeWithConfigStringValidEntries)
         "parse_thread_count: 2\n"
         "max_chunk_read_count: 5\n"
         "worker_offset_wait_ms: 200\n"
-        "worker_shift_wait_ms: 300\n"};
+        "worker_shift_wait_ms: 300\n"
+        "stdout_log_level: debug\n"};
 
     bool status = config.InitializeWithConfigString(yaml_matter);
 
@@ -76,6 +79,7 @@ TEST_F(ParserConfigParamsTest, InitializeWithConfigStringValidEntries)
     ASSERT_EQ(config.max_chunk_read_count_, 5);
     ASSERT_EQ(config.worker_offset_wait_ms_, 200);
     ASSERT_EQ(config.worker_shift_wait_ms_, 300);
+    ASSERT_EQ(config.stdout_log_level_, "debug");
 }
 
 TEST_F(ParserConfigParamsTest, InitializeWithConfigStringInValidEntries)
@@ -88,7 +92,8 @@ TEST_F(ParserConfigParamsTest, InitializeWithConfigStringInValidEntries)
         "parse_thread_count: 2\n"
         "max_chunk_read_count: 5\n"
         "worker_offset_wait_ms: two hundred\n"  // can't be casted to int
-        "worker_shift_wait_ms: 300\n"};
+        "worker_shift_wait_ms: 300\n"
+        "stdout_log_level: error\n"};
 
     bool status = config.InitializeWithConfigString(yaml_matter);
     EXPECT_FALSE(status);

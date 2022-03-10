@@ -2,7 +2,7 @@
 
 #include "parse_manager.h"
 
-ParseManager::ParseManager() : worker_count_(0), worker_count(worker_count_), worker_chunk_size_bytes_(0), worker_chunk_size_bytes(worker_chunk_size_bytes_), workers_vec(workers_vec_), threads_vec(threads_vec_), worker_config_vec(worker_config_vec_), ch10_input_stream_(), append_chunk_size_bytes_(100000000), it_()
+ParseManager::ParseManager() : worker_count_(0), worker_count(worker_count_), worker_chunk_size_bytes_(0), worker_chunk_size_bytes(worker_chunk_size_bytes_), workers_vec(workers_vec_), threads_vec(threads_vec_), worker_config_vec(worker_config_vec_), ch10_input_stream_(), append_chunk_size_bytes_(100000000), it_(), tmats_output_path_("")
 {
 }
 
@@ -20,6 +20,10 @@ bool ParseManager::Configure(ManagedPath input_ch10_file_path, ManagedPath outpu
     std::map<Ch10PacketType, bool> packet_type_config_map;
     if (!ConvertCh10PacketTypeMap(user_config.ch10_packet_type_map_, packet_type_config_map))
         return false;
+
+    tmats_output_path_ = output_dir.CreatePathObject(input_ch10_file_path,
+        "_TMATS.txt");
+    spdlog::get("pm_logger")->info("TMATS output path: {:s}", tmats_output_path_.RawString());
 
     // Hard-code packet type directory extensions now. Later, import from
     // config yaml.
@@ -187,12 +191,13 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
     if (!ConvertCh10PacketTypeMap(user_config.ch10_packet_type_map_, packet_type_config_map))
         return false;
 
-    // Create the output path for TMATs
-    ManagedPath tmats_path = output_dir_map_[Ch10PacketType::MILSTD1553_F1] / "_TMATS.txt";
+    // Create a set of all the parsed packet types
+    std::set<Ch10PacketType> parsed_packet_types;
+    AssembleParsedPacketTypesSet(parsed_packet_types);
 
     // Process TMATs matter and record
     TMATSData tmats_data;
-    ProcessTMATS(tmats_body_vec_, tmats_path, tmats_data);
+    ProcessTMATS(tmats_body_vec_, tmats_output_path_, tmats_data, parsed_packet_types);
     spdlog::get("pm_logger")->debug("RecordMetadata: begin record metadata");
 
     std::string md_filename("_metadata.yaml");
@@ -205,36 +210,50 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
             switch (it->first)
             {
                 case Ch10PacketType::MILSTD1553_F1:
-                    if (!RecordMilStd1553F1Metadata(input_ch10_file_path, 
-                        user_config, prov_data, tmats_data,
-                        ch10packettype_to_string_map.at(Ch10PacketType::MILSTD1553_F1),
-                        output_dir_map_[Ch10PacketType::MILSTD1553_F1] / md_filename))
-                        return false;
+                    if (parsed_packet_types.count(Ch10PacketType::MILSTD1553_F1) == 1)
+                    {
+                        if (!RecordMilStd1553F1Metadata(input_ch10_file_path, 
+                            user_config, prov_data, tmats_data,
+                            ch10packettype_to_string_map.at(Ch10PacketType::MILSTD1553_F1),
+                            output_dir_map_[Ch10PacketType::MILSTD1553_F1] / md_filename))
+                            return false;
+                    }
                     break;
                 case Ch10PacketType::VIDEO_DATA_F0:
-                    if (!RecordVideoDataF0Metadata(input_ch10_file_path, 
-                        user_config, prov_data, tmats_data,
-                        ch10packettype_to_string_map.at(Ch10PacketType::VIDEO_DATA_F0),
-                        output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] / md_filename))
-                        return false;
+                    if (parsed_packet_types.count(Ch10PacketType::VIDEO_DATA_F0) == 1)
+                    {
+                        if (!RecordVideoDataF0Metadata(input_ch10_file_path, 
+                            user_config, prov_data, tmats_data,
+                            ch10packettype_to_string_map.at(Ch10PacketType::VIDEO_DATA_F0),
+                            output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] / md_filename))
+                            return false;
+                    }
                     break;
                 case Ch10PacketType::ARINC429_F0:
-                    if (!RecordARINC429F0Metadata(input_ch10_file_path, 
-                        user_config, prov_data, tmats_data,
-                        ch10packettype_to_string_map.at(Ch10PacketType::ARINC429_F0),
-                        output_dir_map_[Ch10PacketType::ARINC429_F0] / md_filename))
-                        return false;
+                    if (parsed_packet_types.count(Ch10PacketType::ARINC429_F0) == 1)
+                    {
+                        if (!RecordARINC429F0Metadata(input_ch10_file_path, 
+                            user_config, prov_data, tmats_data,
+                            ch10packettype_to_string_map.at(Ch10PacketType::ARINC429_F0),
+                            output_dir_map_[Ch10PacketType::ARINC429_F0] / md_filename))
+                            return false;
+                    }
                     break;
                 default:
-                    spdlog::get("pm_logger")->warn(
-                        "RecordMetadata: No metadata output "
-                        "function for packet type \"{:s}\"",
-                        ch10packettype_to_string_map.at(it->first));
+                    if (parsed_packet_types.count(it->first) == 1)
+                    {
+                        spdlog::get("pm_logger")->warn(
+                            "RecordMetadata: No metadata output "
+                            "function for packet type \"{:s}\"",
+                            ch10packettype_to_string_map.at(it->first));
+                    }
                     break;
             }  // end switch
         }      // end if(it->second)
     }          // end for loop
     spdlog::get("pm_logger")->debug("RecordMetadata: complete record metadata");
+
+    RemoveCh10PacketOutputDirs(output_dir_map_, parsed_packet_types);
     return true;
 }
 
@@ -272,6 +291,8 @@ void ParseManager::RecordUserConfigData(std::shared_ptr<MDCategoryMap> config_ca
         user_config.worker_offset_wait_ms_);
     config_category->SetArbitraryMappedValue("worker_shift_wait_ms",
         user_config.worker_shift_wait_ms_);
+    config_category->SetArbitraryMappedValue("stdout_log_level",
+        user_config.stdout_log_level_);
 }
 
 bool ParseManager::ProcessTMATSForType(const TMATSData& tmats_data, TIPMDDocument& md,
@@ -282,7 +303,7 @@ bool ParseManager::ProcessTMATSForType(const TMATSData& tmats_data, TIPMDDocumen
     if(!tmats_data.FilterTMATSType(tmats_data.chanid_to_type_map, 
         pkt_type, tmats_chanid_to_type_filtered))
     {
-        SPDLOG_ERROR("Failed to filter TMATS for type \"{:s}\"", 
+        spdlog::get("pm_logger")->error("Failed to filter TMATS for type \"{:s}\"", 
             ch10packettype_to_string_map.at(pkt_type));
         return false;
     }
@@ -794,7 +815,8 @@ ParseManager::~ParseManager()
 
 void ParseManager::ProcessTMATS(const std::vector<std::string>& tmats_vec,
                                 const ManagedPath& tmats_file_path,
-                                TMATSData& tmats_data)
+                                TMATSData& tmats_data,
+                                const std::set<Ch10PacketType>& parsed_pkt_types)
 {
     // if tmats doesn't exist return
     if (tmats_vec.size() == 0)
@@ -821,7 +843,7 @@ void ParseManager::ProcessTMATS(const std::vector<std::string>& tmats_vec,
 
     // Gather TMATs attributes of interest
     // for metadata
-    if(!tmats_data.Parse(full_TMATS_string))
+    if(!tmats_data.Parse(full_TMATS_string, parsed_pkt_types))
     {
         spdlog::get("pm_logger")->info("ProcessTMATS:: Failed to parse TMATS");
     }
@@ -901,8 +923,9 @@ void ParseManager::LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt
     for (std::vector<std::string>::const_iterator it = splitstr.cbegin();
          it != splitstr.cend(); ++it)
     {
-        spdlog::get("pm_logger")->info(*it);
+        spdlog::get("pm_logger")->info("{:s}", *it);
     }
+    spdlog::get("pm_logger")->flush();
 }
 
 bool ParseManager::CreateCh10PacketOutputDirs(const ManagedPath& output_dir,
@@ -944,6 +967,39 @@ bool ParseManager::CreateCh10PacketOutputDirs(const ManagedPath& output_dir,
 
     return true;
 }
+
+bool ParseManager::RemoveCh10PacketOutputDirs(const std::map<Ch10PacketType, ManagedPath>& output_dir_map,
+    const std::set<Ch10PacketType>& parsed_packet_types)
+{
+    std::string packet_type_name = "";
+    bool retval = true;
+    for (std::map<Ch10PacketType, ManagedPath>::const_iterator it = output_dir_map.cbegin();
+        it != output_dir_map.cend(); ++it)
+    {
+        packet_type_name = ch10packettype_to_string_map.at(it->first);
+        if (it->second.is_directory())
+        {
+            if(parsed_packet_types.count(it->first) == 0)
+            {
+                spdlog::get("pm_logger")->info("Removing unused {:s} dir: {:s}", 
+                    packet_type_name, it->second.RawString());
+                if(!it->second.remove())
+                {
+                    spdlog::get("pm_logger")->warn("Failed to remove {:s} dir: {:s}",
+                        packet_type_name, it->second.RawString());
+                    retval = false;
+                }
+            }
+        }
+        else
+        {
+            spdlog::get("pm_logger")->warn("Expected output {:s} dir does not exist: {:s}", 
+                packet_type_name, it->second.RawString());
+        }
+    }
+    return retval;
+}
+
 
 void ParseManager::CreateCh10PacketWorkerFileNames(const uint16_t& total_worker_count,
                                                    const std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map,
@@ -1104,4 +1160,24 @@ bool ParseManager::CombineChannelIDToBusNumbersMetadata(
     output_chanid_busnumbers_map = chanid_busnumbers_map;
 
     return true;
+}
+
+void ParseManager::AssembleParsedPacketTypesSet(std::set<Ch10PacketType>& parsed_packet_types)
+{
+    std::set<Ch10PacketType> temp_parsed_packet_types;
+    for (std::vector<std::unique_ptr<ParseWorker>>::const_iterator it = workers_vec_.cbegin();
+        it != workers_vec_.cend(); ++it)
+    {
+        temp_parsed_packet_types = (*it)->ch10_context_.parsed_packet_types;
+        parsed_packet_types.insert(temp_parsed_packet_types.cbegin(), temp_parsed_packet_types.cend());
+    }
+
+    // Log the parsed packet types
+    spdlog::get("pm_logger")->info("Parsed packet types:");
+    for (std::set<Ch10PacketType>::const_iterator it = parsed_packet_types.cbegin(); 
+        it != parsed_packet_types.cend(); ++it)
+    {
+        spdlog::get("pm_logger")->info(" - {:s}", ch10packettype_to_string_map.at(*it));
+    }
+    spdlog::get("pm_logger")->flush();
 }

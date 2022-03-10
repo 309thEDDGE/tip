@@ -810,6 +810,7 @@ TEST(Ch10ContextTest, IsPacketTypeEnabledTrue)
     ASSERT_TRUE(status);
 
     EXPECT_TRUE(ctx.IsPacketTypeEnabled(Ch10PacketType::MILSTD1553_F1));
+    EXPECT_TRUE(ctx.parsed_packet_types.count(Ch10PacketType::MILSTD1553_F1) == 1);
 }
 
 TEST(Ch10ContextTest, IsPacketTypeEnabledFalse)
@@ -825,4 +826,20 @@ TEST(Ch10ContextTest, IsPacketTypeEnabledFalse)
     ASSERT_TRUE(status);
 
     EXPECT_FALSE(ctx.IsPacketTypeEnabled(Ch10PacketType::MILSTD1553_F1));
+    EXPECT_TRUE(ctx.parsed_packet_types.count(Ch10PacketType::MILSTD1553_F1) == 0);
+}
+
+TEST(Ch10ContextTest, RegisterUnhandledPacketType)
+{
+    Ch10Context ctx(0);
+    Ch10PacketType anaf1 = Ch10PacketType::ANALOG_F1;
+    Ch10PacketType pcmf0 = Ch10PacketType::PCM_F0;
+    Ch10PacketType pcmf1 = Ch10PacketType::PCM_F1;
+
+    EXPECT_TRUE(ctx.RegisterUnhandledPacketType(anaf1));
+    EXPECT_TRUE(ctx.RegisterUnhandledPacketType(pcmf0));
+    EXPECT_FALSE(ctx.RegisterUnhandledPacketType(anaf1));
+    EXPECT_TRUE(ctx.RegisterUnhandledPacketType(pcmf1));
+    EXPECT_FALSE(ctx.RegisterUnhandledPacketType(pcmf0));
+    EXPECT_FALSE(ctx.RegisterUnhandledPacketType(pcmf1));
 }

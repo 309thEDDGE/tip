@@ -16,6 +16,7 @@ class MockCh10Context: public Ch10Context
     MOCK_METHOD1(AdvanceAbsPos, void(uint64_t advance_bytes));
     MOCK_METHOD1(IsPacketTypeEnabled, bool(const Ch10PacketType& pkt_type));
     MOCK_METHOD1(RecordMinVideoTimeStamp, void(const uint64_t& ts));
+    MOCK_METHOD1(RegisterUnhandledPacketType, bool(const Ch10PacketType& pkt_type));
 };
 
 

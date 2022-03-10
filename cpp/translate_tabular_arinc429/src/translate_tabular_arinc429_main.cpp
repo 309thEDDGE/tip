@@ -42,7 +42,18 @@ int TranslateTabularARINC429Main(int argc, char** argv)
                        icd_schema_file_path, log_dir))
         return 0;
 
-    if (!transtab429::SetupLogging(log_dir))
+    YamlSV ysv;
+    std::string icd_string, icd_schema_string, conf_string, conf_schema_string;
+    if(!ysv.ValidateDocument(conf_file_path, conf_schema_file_path, conf_string, conf_schema_string))
+        return 0;
+    if(!ysv.ValidateDocument(icd_path, icd_schema_file_path, icd_string, icd_schema_string))
+        return 0;
+
+    TranslationConfigParams config_params;
+    if (!config_params.InitializeWithConfigString(conf_string))
+        return 0;
+
+    if (!transtab429::SetupLogging(log_dir, spdlog::level::from_str(config_params.stdout_log_level_)))
         return 0;
 
     TIPMDDocument parser_md_doc;
@@ -54,16 +65,6 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     if(!GetProvenanceData(icd_path.absolute(), 0, prov_data))
         return 0;
 
-    YamlSV ysv;
-    std::string icd_string, icd_schema_string, conf_string, conf_schema_string;
-    if(!ysv.ValidateDocument(conf_file_path, conf_schema_file_path, conf_string, conf_schema_string))
-        return 0;
-    if(!ysv.ValidateDocument(icd_path, icd_schema_file_path, icd_string, icd_schema_string))
-        return 0;
-
-    TranslationConfigParams config_params;
-    if (!config_params.InitializeWithConfigString(conf_string))
-        return 0;
 
     // Use logger to print and record these values after logging
     // is implemented.
@@ -188,7 +189,7 @@ namespace transtab429
         return true;
     }
 
-    bool SetupLogging(const ManagedPath& log_dir)  // GCOVR_EXCL_LINE
+    bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_log_level)  // GCOVR_EXCL_LINE
     {
         // Use the chart on this page for logging level reference:
         // https://www.tutorialspoint.com/log4j/log4j_logging_levels.htm
@@ -211,7 +212,7 @@ namespace transtab429
             ManagedPath trans_log_path = log_dir / (TRANSLATE_429_EXE_NAME ".log");  // GCOVR_EXCL_LINE
             auto trans_log_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(trans_log_path.string(),  // GCOVR_EXCL_LINE
                                                                                         max_size, max_files);  // GCOVR_EXCL_LINE
-            trans_log_sink->set_level(spdlog::level::trace);  // GCOVR_EXCL_LINE
+            trans_log_sink->set_level(stdout_log_level);  // GCOVR_EXCL_LINE
             trans_log_sink->set_pattern("[%D %T %L] [%@] %v");  // GCOVR_EXCL_LINE
 
             // List of sinks for translator

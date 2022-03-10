@@ -542,14 +542,14 @@ TEST_F(Ch10PacketTest, ParseBodyDefault)
     Ch10PacketHeaderFmt hdr_fmt;
     hdr_fmt.data_type = static_cast<uint32_t>(Ch10PacketType::NONE);
     EXPECT_CALL(mock_hdr_, GetHeader()).WillRepeatedly(Return(&hdr_fmt));
-    EXPECT_CALL(mock_ctx_, IsPacketTypeEnabled(Ch10PacketType::NONE))
+    EXPECT_CALL(mock_ctx_, RegisterUnhandledPacketType(Ch10PacketType::NONE))
         .WillOnce(Return(false));
 
     p_.ParseBody();
     EXPECT_EQ(Ch10PacketType::NONE, p_.current_pkt_type);
 
     EXPECT_CALL(mock_hdr_, GetHeader()).WillRepeatedly(Return(&hdr_fmt));
-    EXPECT_CALL(mock_ctx_, IsPacketTypeEnabled(Ch10PacketType::NONE))
+    EXPECT_CALL(mock_ctx_, RegisterUnhandledPacketType(Ch10PacketType::NONE))
         .WillOnce(Return(true));
 
     p_.ParseBody();

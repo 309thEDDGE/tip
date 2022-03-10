@@ -40,7 +40,7 @@ namespace transtab429
                     ManagedPath& output_dir, ManagedPath& conf_file_path, ManagedPath& conf_schema_file_path,
                     ManagedPath& icd_schema_file_path, ManagedPath& log_dir);
 
-    bool SetupLogging(const ManagedPath& log_dir);
+    bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_log_level);
 
     bool GetParsedMetadata(const ManagedPath& input_md_path, 
         TIPMDDocument& parser_md_doc);
