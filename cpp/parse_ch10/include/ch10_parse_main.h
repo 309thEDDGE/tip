@@ -29,6 +29,6 @@ bool StartParse(ManagedPath input_path, ManagedPath output_path,
                 const ParserConfigParams& config, double& duration, 
                 const ProvenanceData& prov_data, ParseManager* pm);
 
-bool SetupLogging(const ManagedPath& log_dir);  // GCOVR_EXCL_LINE
+bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level);  // GCOVR_EXCL_LINE
 
 #endif  // CH10_PARSE_MAIN_H_

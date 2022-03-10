@@ -52,7 +52,8 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
                                                                  chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_),
                                                                  pkt_type_paths_map(pkt_type_paths_enabled_map_),
                                                                  milstd1553f1_pq_ctx_(nullptr),
-                                                                 videof0_pq_ctx_(nullptr)
+                                                                 videof0_pq_ctx_(nullptr),
+                                                                 parsed_packet_types(parsed_packet_types_)
 {
     CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
@@ -107,7 +108,8 @@ Ch10Context::Ch10Context() : absolute_position_(0),
                              arinc429f0_pq_writer_(nullptr),
                              arinc429f0_pq_writer(nullptr),
                              chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_),
-                             pkt_type_paths_map(pkt_type_paths_enabled_map_)
+                             pkt_type_paths_map(pkt_type_paths_enabled_map_),
+                             parsed_packet_types(parsed_packet_types_)
 {
     CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
@@ -116,7 +118,13 @@ Ch10Context::Ch10Context() : absolute_position_(0),
 bool Ch10Context::IsPacketTypeEnabled(const Ch10PacketType& pkt_type)
 {
     if(pkt_type_config_map_.count(pkt_type) != 0)
-        return pkt_type_config_map_.at(pkt_type);
+    {
+        if(pkt_type_config_map_.at(pkt_type))
+        {
+            parsed_packet_types_.insert(pkt_type);
+            return true;
+        }
+    }
     return false;
 }
 
@@ -551,4 +559,15 @@ void Ch10Context::RecordMinVideoTimeStamp(const uint64_t& ts)
         if (ts < chanid_minvideotimestamp_map_.at(channel_id_))
             chanid_minvideotimestamp_map_[channel_id_] = ts;
     }
+}
+
+bool Ch10Context::RegisterUnhandledPacketType(const Ch10PacketType& pkt_type)
+{
+    if (registered_unhandled_packet_types_.count(pkt_type) == 0)
+    {
+        registered_unhandled_packet_types_.insert(pkt_type);
+        return true;
+    }
+
+    return false;
 }

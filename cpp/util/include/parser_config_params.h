@@ -18,9 +18,11 @@ class ParserConfigParams
     int max_chunk_read_count_;
     int worker_offset_wait_ms_;
     int worker_shift_wait_ms_;
+    std::string stdout_log_level_;
 
     ParserConfigParams() : parse_chunk_bytes_(0), parse_thread_count_(0), 
-        max_chunk_read_count_(0), worker_offset_wait_ms_(0), worker_shift_wait_ms_(0)
+        max_chunk_read_count_(0), worker_offset_wait_ms_(0), worker_shift_wait_ms_(0),
+        stdout_log_level_("")
     {}
 
     /*
@@ -49,6 +51,7 @@ class ParserConfigParams
         success.insert(yr.GetParams("max_chunk_read_count", max_chunk_read_count_, 1, INT_MAX, true));
         success.insert(yr.GetParams("worker_offset_wait_ms", worker_offset_wait_ms_, 1, INT_MAX, true));
         success.insert(yr.GetParams("worker_shift_wait_ms", worker_shift_wait_ms_, 1, INT_MAX, true));
+        success.insert(yr.GetParams("stdout_log_level", stdout_log_level_, true));
 
         // If one config option was not read correctly return false
         if (success.find(false) != success.end())

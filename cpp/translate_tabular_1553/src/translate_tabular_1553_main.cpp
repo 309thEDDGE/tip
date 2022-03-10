@@ -40,20 +40,7 @@ int TranslateTabular1553Main(int argc, char** argv)
                        output_dir, conf_file_path, conf_schema_file_path,
                        icd_schema_file_path, log_dir, &av))
         return 0;
-
-    if (!transtab1553::SetupLogging(log_dir))
-        return 0;
-
-    TIPMDDocument parser_md_doc;
-    ManagedPath parser_md_path = input_path / "_metadata.yaml";
-    FileReader fr;
-    if(!transtab1553::GetParsed1553Metadata(&parser_md_path, &parser_md_doc, &fr))
-        return 0;
-
-    ProvenanceData prov_data;
-    if(!GetProvenanceData(icd_path.absolute(), 0, prov_data))
-        return 0;
-
+    
     YamlSV ysv;
     std::string icd_string, icd_schema_string, conf_string, conf_schema_string;
     if(!ysv.ValidateDocument(conf_file_path, conf_schema_file_path, conf_string, conf_schema_string))
@@ -66,6 +53,19 @@ int TranslateTabular1553Main(int argc, char** argv)
 
     TranslationConfigParams config_params;
     if (!config_params.InitializeWithConfigString(conf_string))
+        return 0;
+
+    if (!transtab1553::SetupLogging(log_dir, spdlog::level::from_str(config_params.stdout_log_level_)))
+        return 0;
+
+    TIPMDDocument parser_md_doc;
+    ManagedPath parser_md_path = input_path / "_metadata.yaml";
+    FileReader fr;
+    if(!transtab1553::GetParsed1553Metadata(&parser_md_path, &parser_md_doc, &fr))
+        return 0;
+
+    ProvenanceData prov_data;
+    if(!GetProvenanceData(icd_path.absolute(), 0, prov_data))
         return 0;
 
     // Use logger to print and record these values after logging
@@ -85,10 +85,9 @@ int TranslateTabular1553Main(int argc, char** argv)
         elem_name_substitutions, &fr))
         return 0;
 
-    std::map<uint64_t, std::string> chanid_to_bus_name_map;
-    std::set<uint64_t> excluded_channel_ids = std::set<uint64_t>();
+    BusMap bm;
     if (!transtab1553::PrepareBusMap(input_path, dts1553, parser_md_doc, config_params,
-        chanid_to_bus_name_map, excluded_channel_ids))
+        &bm))
     {
         return 0;
     }
@@ -123,10 +122,9 @@ int TranslateTabular1553Main(int argc, char** argv)
     double duration = secs.count();
     SPDLOG_INFO("Duration: {:.3f} sec", duration);
 
-    if(!transtab1553::RecordMetadata(config_params, transl_output_dir, icd_path, chanid_to_bus_name_map,
-                   excluded_channel_ids, input_path, translated_msg_names,
-                   msg_name_substitutions, elem_name_substitutions, prov_data, 
-                   parser_md_doc))
+    if(!transtab1553::RecordMetadata(config_params, transl_output_dir, icd_path, 
+                    input_path, translated_msg_names, msg_name_substitutions, 
+                    elem_name_substitutions, prov_data, parser_md_doc, &bm))
     {
         SPDLOG_ERROR("RecordMetadata failure");
     }
@@ -208,7 +206,7 @@ namespace transtab1553
         return true;
     }
 
-    bool SetupLogging(const ManagedPath& log_dir)  // GCOVR_EXCL_LINE
+    bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level)  // GCOVR_EXCL_LINE
     {
         // Use the chart on this page for logging level reference:
         // https://www.tutorialspoint.com/log4j/log4j_logging_levels.htm
@@ -224,7 +222,7 @@ namespace transtab1553
 
             // Console sink
             auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();  // GCOVR_EXCL_LINE
-            console_sink->set_level(spdlog::level::info);  // GCOVR_EXCL_LINE
+            console_sink->set_level(stdout_level);  // GCOVR_EXCL_LINE
             console_sink->set_pattern("%^[%T %L] %v%$");  // GCOVR_EXCL_LINE
 
             // file sink
@@ -281,16 +279,14 @@ namespace transtab1553
     bool PrepareBusMap(const ManagedPath& input_path, DTS1553& dts1553, 
                     const TIPMDDocument& parser_md_doc, 
                     const TranslationConfigParams& config_params,
-                    std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-                    std::set<uint64_t>& excluded_channel_ids)
+                    BusMap* bus_map)
     {
         SPDLOG_INFO("Starting Bus Map");
         auto bus_map_start_time = std::chrono::high_resolution_clock::now();
 
         // Generate the bus map from metadata and possibly user
         // input.
-        if (!SynthesizeBusMap(dts1553, parser_md_doc, config_params, 
-            chanid_to_bus_name_map, excluded_channel_ids))
+        if (!SynthesizeBusMap(dts1553, parser_md_doc, config_params, bus_map))
         {
             return false;
         }
@@ -311,8 +307,7 @@ namespace transtab1553
 
     bool SynthesizeBusMap(DTS1553& dts1553, const TIPMDDocument& parser_md_doc,
                         const TranslationConfigParams& config_params,
-                        std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-                        std::set<uint64_t>& excluded_channel_ids)
+                        BusMap* bus_map)
     {
         std::unordered_map<uint64_t, std::set<std::string>> message_key_to_busnames_map;
 
@@ -351,13 +346,11 @@ namespace transtab1553
         YamlReader::GetMapNodeParameter(parser_md_doc.runtime_category_->node, 
             "tmats_chanid_to_type", tmats_chanid_to_type_map);
 
-        // Initialize the maps necessary to synthesize the channel ID to bus name map.
-        BusMap bm;
-
         // convert vector to set
         IterableTools it;
         std::set<std::string> bus_exclusions_set = it.VecToSet(config_params.bus_name_exclusions_);
 
+        // Initialize the maps necessary to synthesize the channel ID to bus name map.
         // The mask will mask out word count/mode code from the transmit and
         // recieve command word portion of the key.
         // The last 16 bits of the key represent the recieve command word
@@ -368,7 +361,7 @@ namespace transtab1553
         // bits of the command word are the mode code bits and no longer match
         // the command words found in the input icd file unless they are masked to zero.
         uint64_t mask = 0b1111111111111111111111111111111111111111111000001111111111100000;
-        bm.InitializeMaps(&message_key_to_busnames_map,
+        bus_map->InitializeMaps(&message_key_to_busnames_map,
                         chanid_set,
                         mask,
                         config_params.vote_threshold_,
@@ -388,12 +381,13 @@ namespace transtab1553
             {
                 if (it->second[i].size() == 2)
                 {
-                    bm.SubmitMessage(it->second[i][0], it->second[i][1], it->first);
+                    bus_map->SubmitMessage(it->second[i][0], it->second[i][1], it->first);
                 }
             }
         }
 
-        if (!bm.Finalize(chanid_to_bus_name_map, config_params.use_tmats_busmap_,
+        std::map<uint64_t, std::string> chanid_to_bus_name_map;
+        if (!bus_map->Finalize(chanid_to_bus_name_map, config_params.use_tmats_busmap_,
                         config_params.prompt_user_))
         {
             SPDLOG_ERROR("Bus mapping failed!");
@@ -414,11 +408,11 @@ namespace transtab1553
         // If a channel ID from chanid_set is not in
         // chanid_to_bus_name_map add it as an excluded channel
         // id and save to metadata later
-        for (auto channel_id : chanid_set)
-        {
-            if (chanid_to_bus_name_map.count(channel_id) == 0)
-                excluded_channel_ids.insert(channel_id);
-        }
+        // for (auto channel_id : chanid_set)
+        // {
+        //     if (chanid_to_bus_name_map.count(channel_id) == 0)
+        //         excluded_channel_ids.insert(channel_id);
+        // }
 
         // Reverse the map that is populated in the previous step.
         std::map<std::string, std::set<uint64_t>> bus_name_to_chanid_map =
@@ -549,13 +543,12 @@ namespace transtab1553
     bool RecordMetadata(const TranslationConfigParams& config, 
                         const ManagedPath& translated_data_dir,
                         const ManagedPath& dts_path, 
-                        std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-                        const std::set<uint64_t>& excluded_channel_ids, 
                         const ManagedPath& input_path,
                         const std::set<std::string>& translated_messages,
                         const std::map<std::string, std::string>& msg_name_substitutions,
                         const std::map<std::string, std::string>& elem_name_substitutions,
-                        const ProvenanceData& prov_data, const TIPMDDocument& parser_md_doc)
+                        const ProvenanceData& prov_data, const TIPMDDocument& parser_md_doc,
+                        const BusMap* bus_map)
 
     {
         TIPMDDocument md;
@@ -606,14 +599,41 @@ namespace transtab1553
                 config.exit_after_table_creation_);
         md.config_category_->SetArbitraryMappedValue("auto_sys_limits",
                 config.auto_sys_limits_);
+        md.config_category_->SetArbitraryMappedValue("stdout_log_level",
+                config.stdout_log_level_);
+
+        std::map<uint64_t, std::string> chanid_to_name;
+        std::map<uint64_t, std::string> chanid_to_source;
+        bus_map->GetFinalMaps(bus_map->GetFinalBusMap_withSource(), chanid_to_name, chanid_to_source);
 
         // The final bus map used during translation
-        md.runtime_category_->SetArbitraryMappedValue("chanid_to_bus_name_map",
-            chanid_to_bus_name_map);
+        md.runtime_category_->SetArbitraryMappedValue("chanid_to_bus_name",
+            chanid_to_name);
+        md.runtime_category_->SetArbitraryMappedValue("chanid_to_bus_map_source",
+            chanid_to_source);
 
         // Record the busmap status.
-        md.runtime_category_->SetArbitraryMappedValue("excluded_channel_ids",
-            excluded_channel_ids);
+        md.runtime_category_->SetArbitraryMappedValue("excluded_channel_id_reasons",
+            bus_map->GetExcludedChannelIDs());
+
+        // Convert vote_map to similar container using standard maps instead of 
+        // unordered maps for use with MDCategoryMap
+        std::map<uint64_t, std::map<std::string, uint64_t>> votes;
+        std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>> vote_map =
+            bus_map->GetVoteMap();
+        for (std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>>::const_iterator
+             it = vote_map.cbegin(); it != vote_map.cend(); ++it)
+        {
+            std::map<std::string, uint64_t> temp_map;
+            for (std::unordered_map<std::string, uint64_t>::const_iterator it2 = it->second.begin();
+                it2 != it->second.end(); ++it2)
+            {
+                temp_map[it2->first] = it2->second;
+            }
+            votes[it->first] = temp_map;
+        }
+        // Record bus map vote data
+        md.runtime_category_->SetArbitraryMappedValue("channel_id_votes", votes);
 
         // Record translated messages.
         md.runtime_category_->SetArbitraryMappedValue("translated_messages",

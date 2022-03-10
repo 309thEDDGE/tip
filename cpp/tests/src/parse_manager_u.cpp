@@ -90,7 +90,8 @@ class ParseManagerTest : public ::testing::Test
             "parse_thread_count: 1\n"
             "max_chunk_read_count: 1000\n"
             "worker_offset_wait_ms: 200\n"
-            "worker_shift_wait_ms: 200\n"};
+            "worker_shift_wait_ms: 200\n"
+            "stdout_log_level: info\n"};
 
         return config.InitializeWithConfigString(config_yaml);
     }
@@ -113,7 +114,8 @@ TEST_F(ParseManagerTest, NoTMATSPresent)
 {
     std::vector<std::string> tmats;
     TMATSData tmats_data;
-    pm.ProcessTMATS(tmats, tmats_path_, tmats_data);
+    std::set<Ch10PacketType> parsed_pkt_types;
+    pm.ProcessTMATS(tmats, tmats_path_, tmats_data, parsed_pkt_types);
     file.open(tmats_filename_);
     // file shouldn't exist if tmats did
     // not exist
@@ -125,7 +127,8 @@ TEST_F(ParseManagerTest, TMATSWritten)
 {
     std::vector<std::string> tmats = {"line1\nline2\n", "line3\nline4\n"};
     TMATSData tmats_data;
-    pm.ProcessTMATS(tmats, tmats_path_, tmats_data);
+    std::set<Ch10PacketType> parsed_pkt_types;
+    pm.ProcessTMATS(tmats, tmats_path_, tmats_data, parsed_pkt_types);
     file.open(tmats_filename_);
     ASSERT_TRUE(file.good());
     std::ostringstream ss;
@@ -155,7 +158,8 @@ TEST_F(ParseManagerTest, TMATSParsed)
         "Junk-1\\Junk1-1;\n\n",
     };
     TMATSData tmats_data;
-    pm.ProcessTMATS(tmats, tmats_path_, tmats_data);
+    std::set<Ch10PacketType> parsed_pkt_types;
+    pm.ProcessTMATS(tmats, tmats_path_, tmats_data, parsed_pkt_types);
 
     std::map<std::string, std::string> source_map_truth =
         {{"1", "Bus1"}, {"2", "Bus2"}, {"3", "Bus3"}};

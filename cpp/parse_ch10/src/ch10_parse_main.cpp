@@ -39,24 +39,24 @@ int Ch10ParseMain(int argc, char** argv)
                        input_path, output_path, conf_file_path, schema_file_path, log_dir, &av))
         return 0;
 
-    if (!SetupLogging(log_dir))
-        return 0;
-
     ProvenanceData prov_data;
     if(!GetProvenanceData(input_path.absolute(), static_cast<size_t>(150e6), prov_data)) 
         return 0;
 
-    ParserConfigParams config;
     YamlSV ysv;
     std::string config_string;
     std::string schema_string;
     if(!ysv.ValidateDocument(conf_file_path, schema_file_path, config_string, schema_string))
         return 0;
 
+    ParserConfigParams config;
     if(!config.InitializeWithConfigString(config_string))
         return 0;
 
-    spdlog::get("pm_logger")->info(CH10_PARSE_EXE_NAME " {:s} version: {:s}", GetVersionString());
+    if (!SetupLogging(log_dir, spdlog::level::from_str(config.stdout_log_level_)))
+        return 0;
+
+    spdlog::get("pm_logger")->info(CH10_PARSE_EXE_NAME " version: {:s}", GetVersionString());
     spdlog::get("pm_logger")->info("Ch10 file path: {:s}", input_path.absolute().RawString());
     spdlog::get("pm_logger")->info("Ch10 hash: {:s}", prov_data.hash);
     spdlog::get("pm_logger")->info("Output path: {:s}", output_path.absolute().RawString());
@@ -64,7 +64,7 @@ int Ch10ParseMain(int argc, char** argv)
     spdlog::get("pm_logger")->info("Configuration schema path: {:s}", schema_file_path.absolute().RawString());
     spdlog::get("pm_logger")->info("Log directory: {:s}", log_dir.absolute().RawString());
 
-    double duration;
+    double duration = 0.0;
     ParseManager pm;
     StartParse(input_path, output_path, config, duration, prov_data, &pm);
     spdlog::get("pm_logger")->info("Duration: {:.3f} sec", duration);
@@ -176,7 +176,7 @@ bool StartParse(ManagedPath input_path, ManagedPath output_path,
     return true;
 }
 
-bool SetupLogging(const ManagedPath& log_dir)  // GCOVR_EXCL_LINE
+bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level)  // GCOVR_EXCL_LINE
 {
     // Use the chart on this page for logging level reference:
     // https://www.tutorialspoint.com/log4j/log4j_logging_levels.htm
@@ -195,7 +195,7 @@ bool SetupLogging(const ManagedPath& log_dir)  // GCOVR_EXCL_LINE
 
         // Console sink
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();  // GCOVR_EXCL_LINE
-        console_sink->set_level(spdlog::level::info);  // GCOVR_EXCL_LINE
+        console_sink->set_level(stdout_level);  // GCOVR_EXCL_LINE
         //console_sink->set_level(spdlog::level::debug);  // GCOVR_EXCL_LINE
         console_sink->set_pattern("%^[%T %L] %v%$");  // GCOVR_EXCL_LINE
 

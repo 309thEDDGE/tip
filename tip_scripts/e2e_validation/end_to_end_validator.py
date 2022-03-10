@@ -54,6 +54,7 @@ import json
 # network access or software restrictions, set the config option below
 # to False.
 from tip_scripts.e2e_validation import config
+from tip_scripts.e2e_validation.txttxt_validation import TxtTxtValidation
 #config.COMPARE_YAML = False
 ######################################################################
 
@@ -127,7 +128,8 @@ class E2EValidator(object):
                                                       'raw1553': basename + '_1553.parquet',
                                                       'transl1553': basename + '_1553_translated',
                                                       'rawvideo': basename + '_video.parquet',
-                                                      'parsedarinc429f0': basename + '_arinc429.parquet'}
+                                                      'parsedarinc429f0': basename + '_arinc429.parquet',
+                                                      'tmats': basename + '_TMATS.txt'}
             self.all_validation_obj[ch10name] = {}
             self.validation_results_dict[ch10name] = {}
             self.duration_data[ch10name] = {'raw1553': None, 'transl1553': None,
@@ -247,6 +249,7 @@ class E2EValidator(object):
         self._create_transl1553_validation_objects()
         self._create_rawvideo_validation_objects()
         self._create_rawarinc429f0_validation_objects()
+        self._create_tmats_validation_objects()
 
         # Validate all objects
         self._validate_objects()
@@ -279,6 +282,10 @@ class E2EValidator(object):
             ########### arinc429f0 #########
             self.all_validation_obj[ch10name]['parsedarinc429f0'].print_results(self.print)
 
+            ########### TMATS ##########
+            print()
+            self.all_validation_obj[ch10name]['tmats'].print_result(self.print)
+
             ########### super set ##########
             msg = '\nTotal Ch10 result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['ch10']))
             print(msg)
@@ -299,6 +306,11 @@ class E2EValidator(object):
         msg = 'Total parsed ARINC429F0 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_parsedarinc429f0_pass']))
         print(msg)
         self.print(msg)
+
+        msg = 'Total TMATS data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_tmats_pass']))
+        print(msg)
+        self.print(msg)
+
 
         msg = 'All validation set result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_ch10']))
         print(msg)
@@ -379,13 +391,14 @@ class E2EValidator(object):
         single_ch10_raw1553_pass = True
         single_ch10_video_pass = True
         single_ch10_parsedarinc429f0_pass = True
+        single_ch10_tmats_pass = True
         total_stats = {'raw1553': [], 'transl1553': [], 'ch10': [],
-            'parsedarinc429f0': []}
+            'parsedarinc429f0': [], 'tmats': []}
         for ch10name in self.files_under_test.keys():
 
             self.validation_results_dict[ch10name] = {'ch10': None, 'raw1553': None,
                                                       'translated1553': None,
-                                                      'parsedarinc429f0': None}
+                                                      'parsedarinc429f0': None, 'tmats': None}
 
             ########## 1553 ############
             single_ch10_raw1553_pass = self.all_validation_obj[ch10name]['raw1553'].get_test_result()
@@ -405,13 +418,19 @@ class E2EValidator(object):
             ########### video ###########
             single_ch10_video_pass = self.all_validation_obj[ch10name]['rawvideo'].get_test_result()
 
+            ########### tmats ###########
+            single_ch10_tmats_pass = self.all_validation_obj[ch10name]['tmats'].get_test_result() 
+            total_stats['tmats'].append(single_ch10_tmats_pass)
+
             ########### super set ##########
 
             if (single_ch10_raw1553_pass == True and single_ch10_bulk_transl1553_pass == True
-                and single_ch10_video_pass == True and single_ch10_parsedarinc429f0_pass == True):
+                and single_ch10_video_pass == True and single_ch10_parsedarinc429f0_pass == True
+                and single_ch10_tmats_pass == True):
                 single_ch10_pass = True
             elif (single_ch10_raw1553_pass is None or single_ch10_bulk_transl1553_pass is None
-                  or single_ch10_video_pass is None or single_ch10_parsedarinc429f0_pass is None):
+                  or single_ch10_video_pass is None or single_ch10_parsedarinc429f0_pass is None
+                  or single_ch10_tmats_pass is None):
                 single_ch10_pass = None
             else:
                 single_ch10_pass = False
@@ -423,6 +442,7 @@ class E2EValidator(object):
         self.validation_results_dict['all_raw1553_pass'] = self._get_pass_fail_null(total_stats['raw1553'])
         self.validation_results_dict['all_transl1553_pass'] = self._get_pass_fail_null(total_stats['transl1553'])
         self.validation_results_dict['all_parsedarinc429f0_pass'] = self._get_pass_fail_null(total_stats['parsedarinc429f0'])
+        self.validation_results_dict['all_tmats_pass'] = self._get_pass_fail_null(total_stats['tmats'])
 
 
     def _validate_objects(self):
@@ -445,6 +465,11 @@ class E2EValidator(object):
             transl1553_validation_obj = self.all_validation_obj[ch10name]['transl1553']
             self.print('\n-- Translation 1553F1 Comparison --\n')
             transl1553_validation_obj.validate_dir(self.print)
+
+            ############ TMATS ################
+            tmats_validation_obj = self.all_validation_obj[ch10name]['tmats']
+            self.print('\n-- TMATS Comparison --\n')
+            tmats_validation_obj.validate(self.print)
 
             ################################
             #            video
@@ -505,6 +530,16 @@ class E2EValidator(object):
                 os.path.join(self.truth_set_dir, videoname),
                 os.path.join(self.test_set_dir, videoname),
                 self.pqcompare_exec_path, self.bincompare_exec_path)
+
+    def _create_tmats_validation_objects(self):
+        print("\n-- Create TMATS validation objects --\n")
+        for ch10name,d in self.files_under_test.items():
+            tmatsname = d['tmats']
+            self.all_validation_obj[ch10name]['tmats'] = TxtTxtValidation(
+                os.path.join(self.truth_set_dir, tmatsname),
+                os.path.join(self.test_set_dir, tmatsname),
+                self.bincompare_exec_path)
+
 
     def __del__(self):
         if self.log_handle is not None:

@@ -8,8 +8,14 @@ class TxtTxtValidation(FileValidation):
         self.ready_to_validate = self.set_file_paths(truth_path, test_path)
         self.exec_path = exec_path
 
-    def validate(self):
-        return self.do_file_validation(self.exec_path, output_success_string='PASS')
+    def validate(self, print_obj):
+        result = self.do_file_validation(self.exec_path, output_success_string='PASS')
+        info = '\n' + str(self)
+        print_obj(info)
+        print(info)
+        msg = 'Validated: {}'.format(self.get_test_result_string())
+        print_obj(msg)    
+        print(msg)
 
     def print_results(self, print_obj):
 

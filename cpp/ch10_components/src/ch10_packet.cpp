@@ -263,12 +263,11 @@ void Ch10Packet::ParseBody()
             // alert the user.
             Ch10PacketType pkt_type = static_cast<Ch10PacketType>(
                 header_->GetHeader()->data_type);
-            if (ctx_->IsPacketTypeEnabled(pkt_type))
+            if (ctx_->RegisterUnhandledPacketType(pkt_type))
             {
                 SPDLOG_WARN("({:02d}) No parser exists for {:s}", ctx_->thread_id,
                             ch10packettype_to_string_map.at(pkt_type));
             }
             break;
     }
-    // Return status?
 }

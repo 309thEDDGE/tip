@@ -128,9 +128,6 @@ class Ch10Context
     // and its return value was true.
     bool is_configured_;
 
-    // Calculate relative and absolute time.
-    //Ch10TimeComponent ch10_time_;
-
     //
     // File writers are owned by Ch10Context to maintain state
     //
@@ -142,6 +139,16 @@ class Ch10Context
     std::unique_ptr<ParquetEthernetF0> ethernetf0_pq_writer_;
     std::unique_ptr<ParquetContext> arinc429f0_pq_ctx_;
     std::unique_ptr<ParquetARINC429F0> arinc429f0_pq_writer_;
+
+    // Internal state to be used in RegisterUnhandledPacketType()
+    std::set<Ch10PacketType> registered_unhandled_packet_types_;
+
+    // Set of packet types which are in the pkt_type_config_map_
+    // and enabled and which are queried for config
+    // status in IsPacketTypeEnabled(). This set is used to 
+    // identify the packet types which were parsed by the worker
+    // associated with this Ch10Context instance.
+    std::set<Ch10PacketType> parsed_packet_types_;
 
    public:
     const uint16_t& thread_id;
@@ -171,6 +178,7 @@ class Ch10Context
     ParquetEthernetF0* ethernetf0_pq_writer;
     ParquetARINC429F0* arinc429f0_pq_writer;
     const uint32_t intrapacket_ts_size_ = sizeof(uint64_t);
+    const std::set<Ch10PacketType>& parsed_packet_types;
 
     Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
     Ch10Context();
@@ -191,6 +199,11 @@ class Ch10Context
     /*
     Check if input packet type is enabled.
 
+    This function also curates a set of Ch10PacketType, 
+    parsed_packet_types_, to which a type is inserted if
+    the input to the function is in the pkt_type_config_map_ and
+    the is configured to true, i.e., to be parsed.
+
     Args:
         pkt_type    --> Ch10PacketType to be checked
 
@@ -198,6 +211,24 @@ class Ch10Context
         True if enabled; false otherwise.
     */
     virtual bool IsPacketTypeEnabled(const Ch10PacketType& pkt_type);
+
+
+
+    /*
+    Mark the input un-handled Ch10PacketType as being found in the data.
+    Used to prevent many log entries indicating that a given packet type
+    is not handled. Unhandled packets ought to call this function
+    and print to log only if it returns true.
+    Args:
+        pkt_type    --> Ch10PacketType to be registered
+
+    Return:
+        True if input pkt_type has not been found and 
+        registered via this function; false otherwise. 
+    */
+    virtual bool RegisterUnhandledPacketType(const Ch10PacketType& pkt_type);
+
+
 
     /*
 	Advance the absolute position by advance_bytes.

@@ -31,7 +31,7 @@ class PqPqRaw1553DirValidation(DirectoryValidation):
         # Add metadata objects.
         if self.truth_dir_exists == True:
 
-            extension_list = ['.txt', '.yml', '.yaml']
+            extension_list = ['.yml', '.yaml']
             # Search list of files for those with extension matching
             # an entry in the extension_list, which includes the leading '.'
             # (ex: ['.txt', '.yml']).
@@ -50,8 +50,8 @@ class PqPqRaw1553DirValidation(DirectoryValidation):
                                 str(truth_dir / truth_md_path),
                                 str(test_dir / truth_md_path),
                                 exclude_func=exclude_funcs.parsed_1553f1))
-                    elif truth_md_path.suffix in ['.txt']:
-                        self.validation_objects.append(TxtTxtValidation(
-                            str(truth_dir / truth_md_path),
-                            str(test_dir / truth_md_path),
-                            self.bincompare_exec_path))
+                    # elif truth_md_path.suffix in ['.txt']:
+                    #     self.validation_objects.append(TxtTxtValidation(
+                    #         str(truth_dir / truth_md_path),
+                    #         str(test_dir / truth_md_path),
+                    #         self.bincompare_exec_path))

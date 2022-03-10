@@ -10,4 +10,5 @@ bus_name_exclusions: [OPTSTR]
 select_specific_messages: [OPTSTR]
 exit_after_table_creation: BOOL
 auto_sys_limits: BOOL
+stdout_log_level: STR-->{trace,debug,info,warn,error,critical,off}
 ...

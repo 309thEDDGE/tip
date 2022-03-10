@@ -76,6 +76,9 @@ class ParseManager
     // Base output directory per Ch10PacketType
     std::map<Ch10PacketType, ManagedPath> output_dir_map_;
 
+	// TMATS output path
+	ManagedPath tmats_output_path_;
+
     // Configured file paths. The worker at index x in workers_vec_ shall
     // create output files according to the paths in the map at index x
     // in this vector.
@@ -698,11 +701,14 @@ class ParseManager
 	tmats_file_path				--> Complete path including the output file name
 									to which TMATS matter is recorded
 	tmats_data					--> TMATSData object
+	parsed_pkt_types			--> Set of Ch10PacketType that contains only the
+									present and parsed types
 
 	*/
     void ProcessTMATS(const std::vector<std::string>& tmats_vec,
                       const ManagedPath& tmats_file_path,
-					  TMATSData& tmats_data);
+					  TMATSData& tmats_data, 
+					  const std::set<Ch10PacketType>& parsed_pkt_types);
 
 
 	
@@ -722,6 +728,36 @@ class ParseManager
 	*/
 	bool ProcessTMATSForType(const TMATSData& tmats_data, TIPMDDocument& md,
 		Ch10PacketType pkt_type);
+
+
+	
+	/*
+	Assemble the set of all parsed packet types from the workers and
+	log the information.
+
+	Args:
+		parsed_packet_types 	--> Set of Ch10PacketType to be filled
+	*/
+	void AssembleParsedPacketTypesSet(std::set<Ch10PacketType>& parsed_packet_types);
+
+
+
+	/*
+	Remove output dirs which represent packets types that were not parsed and
+	which do not contain any output data.
+
+	Args:
+		output_dir_map		--> Map of Ch10PacketType to created output dirs
+		parsed_packet_types --> Set of Ch10PacketType to be filled
+
+	Return:
+		True if all dirs that exist in output_dir_map which do not associate
+		with a type that is in parsed_packet_types are deleted. Only dirs that
+		exist will attempt to be deleted and therefore a false return value is 
+		only possible for dirs which exist and can't be deleted. 
+	*/
+	bool RemoveCh10PacketOutputDirs(const std::map<Ch10PacketType, ManagedPath>& output_dir_map,
+		const std::set<Ch10PacketType>& parsed_packet_types);
 };
 
 #endif

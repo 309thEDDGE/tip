@@ -14,7 +14,8 @@ const std::map<Ch10PacketType, std::string> TMATSData::TMATS_channel_data_type_m
     {Ch10PacketType::ETHERNET_DATA_F0, "ETHIN"}
 };
 
-bool TMATSData::Parse(const std::string& tmats_data)
+bool TMATSData::Parse(const std::string& tmats_data, 
+    const std::set<Ch10PacketType>& parsed_pkt_types)
 {
     TMATSParser parser(tmats_data);
 
@@ -23,17 +24,19 @@ bool TMATSData::Parse(const std::string& tmats_data)
     RETFAIL(parser.MapAttrs("R-x\\TK1-n", "R-x\\CDT-n", chanid_to_type_map_), "chanid_to_type");
 
     // ARINC 429
-    RETFAIL(parser.MapAttrs("R-x\\TK1-n", "R-x\\ABTF-n", chanid_to_429_format_), "chanid_to_429_format");
-    RETFAIL(parser.MapAttrs("R-x\\TK1-n", "R-x\\ASN-n-m", chanid_to_429_subchans_), "chanid_to_429_subchans");
+    if(parsed_pkt_types.count(Ch10PacketType::ARINC429_F0) == 1)
+    {
+        RETFAIL(parser.MapAttrs("R-x\\TK1-n", "R-x\\ABTF-n", chanid_to_429_format_), "chanid_to_429_format");
+        RETFAIL(parser.MapAttrs("R-x\\TK1-n", "R-x\\ASN-n-m", chanid_to_429_subchans_), "chanid_to_429_subchans");
 
-    cmapmap chanid_to_429index_and_subchan;
-    cmapmap chanid_to_429index_and_name;
-    RETFAIL(parser.MapAttrs("R-x\\TK1-n", "R-x\\ASN-n-m", chanid_to_429index_and_subchan), "chanid_to_429index_and_subchan");
-    RETFAIL(parser.MapAttrs("R-x\\TK1-n", "R-x\\ANM-n-m", chanid_to_429index_and_name), "chanid_to_429index_and_name");
- 
-    CombineMaps(chanid_to_429index_and_subchan, chanid_to_429index_and_name,
-        chanid_to_429_subchan_and_name_);
-
+        cmapmap chanid_to_429index_and_subchan;
+        cmapmap chanid_to_429index_and_name;
+        RETFAIL(parser.MapAttrs("R-x\\TK1-n", "R-x\\ASN-n-m", chanid_to_429index_and_subchan), "chanid_to_429index_and_subchan");
+        RETFAIL(parser.MapAttrs("R-x\\TK1-n", "R-x\\ANM-n-m", chanid_to_429index_and_name), "chanid_to_429index_and_name");
+    
+        CombineMaps(chanid_to_429index_and_subchan, chanid_to_429index_and_name,
+            chanid_to_429_subchan_and_name_);
+    }
     return true;
 }
 
