@@ -17,6 +17,7 @@ set(headers
     include/ch10_videof0_component_mock.h 
     include/ch10_ethernetf0_component_mock.h 
     include/ch10_arinc429f0_component_mock.h
+    include/parquet_tdpf1_mock.h
 )
 
 add_executable(tests
@@ -87,6 +88,7 @@ add_executable(tests
     src/parquet_ethernetf0_u.cpp
     src/ch10_parse_main_u.cpp
     src/translate_tabular_1553_main_u.cpp
+    src/parquet_tdpf1_u.cpp
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)

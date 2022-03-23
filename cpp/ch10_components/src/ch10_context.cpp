@@ -53,7 +53,9 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
                                                                  pkt_type_paths_map(pkt_type_paths_enabled_map_),
                                                                  milstd1553f1_pq_ctx_(nullptr),
                                                                  videof0_pq_ctx_(nullptr),
-                                                                 parsed_packet_types(parsed_packet_types_)
+                                                                 parsed_packet_types(parsed_packet_types_),
+                                                                 tdf1csdw_vec(tdf1csdw_vec_),
+                                                                 tdp_abs_time_vec(tdp_abs_time_vec_)
 {
     CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
@@ -109,7 +111,9 @@ Ch10Context::Ch10Context() : absolute_position_(0),
                              arinc429f0_pq_writer(nullptr),
                              chanid_minvideotimestamp_map(chanid_minvideotimestamp_map_),
                              pkt_type_paths_map(pkt_type_paths_enabled_map_),
-                             parsed_packet_types(parsed_packet_types_)
+                             parsed_packet_types(parsed_packet_types_),
+                             tdf1csdw_vec(tdf1csdw_vec_),
+                             tdp_abs_time_vec(tdp_abs_time_vec_)
 {
     CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
@@ -278,7 +282,7 @@ bool Ch10Context::SetPacketTypeConfig(const std::map<Ch10PacketType, bool>& user
 }
 
 void Ch10Context::UpdateWithTDPData(const uint64_t& tdp_abs_time, uint8_t tdp_doy,
-                                    bool tdp_valid)
+                                    bool tdp_valid, const TDF1CSDWFmt& tdf1csdw)
 {
     tdp_valid_ = tdp_valid;
 
@@ -300,6 +304,9 @@ void Ch10Context::UpdateWithTDPData(const uint64_t& tdp_abs_time, uint8_t tdp_do
         // Indicate that the TDP has been found.
         found_tdp_ = true;
     }
+
+    tdf1csdw_vec_.push_back(tdf1csdw);
+    tdp_abs_time_vec_.push_back(tdp_abs_time);
 }
 
 uint64_t& Ch10Context::CalculateAbsTimeFromRTCFormat(const uint64_t& current_rtc)

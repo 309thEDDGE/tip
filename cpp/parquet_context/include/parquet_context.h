@@ -139,7 +139,7 @@ class ParquetContext
 
 		Inputs: thread_id		--> Optional index of current thread
 	*/
-    void Close(const uint16_t& thread_id = 0);
+    virtual void Close(const uint16_t& thread_id = 0);
 
     /*
     Get the count of columns by returning the count of the

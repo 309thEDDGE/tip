@@ -175,6 +175,7 @@ add_library(${ch10pq_lib_name} STATIC
             ${ch10pq_src_dir}/parquet_videodataf0.cpp  ${ch10pq_inc_dir}/parquet_videodataf0.h
             ${ch10pq_src_dir}/parquet_ethernetf0.cpp ${ch10pq_inc_dir}/parquet_ethernetf0.h
             ${ch10pq_src_dir}/parquet_arinc429f0.cpp ${ch10pq_inc_dir}/parquet_arinc429f0.h
+            ${ch10pq_src_dir}/parquet_tdpf1.cpp ${ch10pq_inc_dir}/parquet_tdpf1.h
     )
 
 target_include_directories(${ch10pq_lib_name} PUBLIC
@@ -385,6 +386,7 @@ add_library(${ch10comp_lib_name} STATIC
             ${ch10comp_inc_dir}/ch10_context.h ${ch10comp_src_dir}/ch10_context.cpp
             ${ch10comp_inc_dir}/ch10_tmats_component.h ${ch10comp_src_dir}/ch10_tmats_component.cpp
             ${ch10comp_inc_dir}/ch10_tdp_component.h ${ch10comp_src_dir}/ch10_tdp_component.cpp
+            ${ch10comp_inc_dir}/ch10_tdpf1_hdr_format.h
             ${ch10comp_inc_dir}/ch10_1553f1_component.h ${ch10comp_src_dir}/ch10_1553f1_component.cpp
             ${ch10comp_inc_dir}/ch10_videof0_component.h ${ch10comp_src_dir}/ch10_videof0_component.cpp
             ${ch10comp_inc_dir}/ch10_ethernetf0_component.h ${ch10comp_src_dir}/ch10_ethernetf0_component.cpp
@@ -575,7 +577,8 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/parquet_videodataf0_u.cpp
                 ${test_src_dir}/parquet_ethernetf0_u.cpp
                 ${test_src_dir}/ch10_parse_main_u.cpp
-                ${test_src_dir}/translate_tabular_1553_main_u.cpp)
+                ${test_src_dir}/translate_tabular_1553_main_u.cpp
+                ${test_src_dir}/parquet_tdpf1_u.cpp)
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs}
                             ${common_inc_dir} ${util_inc_dir} ${dts429_inc_dir}

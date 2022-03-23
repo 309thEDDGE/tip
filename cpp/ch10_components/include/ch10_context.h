@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <map>
+#include <vector>
 #include <unordered_map>
 #include <set>
 #include <cmath>
@@ -26,11 +27,15 @@
 #include "ch10_1553f1_msg_hdr_format.h"
 #include "ch10_videof0_header_format.h"
 #include "ch10_arinc429f0_msg_hdr_format.h"
+#include "ch10_tdpf1_hdr_format.h"
 #include "spdlog/spdlog.h"
+
+#include <fstream>
 
 class Ch10Context
 {
    private:
+
     // ID to control or generate thread-specific log output.
     uint16_t thread_id_;
 
@@ -150,6 +155,11 @@ class Ch10Context
     // associated with this Ch10Context instance.
     std::set<Ch10PacketType> parsed_packet_types_;
 
+    // Record of each parsed TDP packet with generated
+    // absolute time.
+    std::vector<TDF1CSDWFmt> tdf1csdw_vec_;
+    std::vector<uint64_t> tdp_abs_time_vec_;
+
    public:
     const uint16_t& thread_id;
     const uint64_t& absolute_position;
@@ -179,6 +189,8 @@ class Ch10Context
     ParquetARINC429F0* arinc429f0_pq_writer;
     const uint32_t intrapacket_ts_size_ = sizeof(uint64_t);
     const std::set<Ch10PacketType>& parsed_packet_types;
+    const std::vector<TDF1CSDWFmt>& tdf1csdw_vec;
+    const std::vector<uint64_t>& tdp_abs_time_vec;
 
     Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
     Ch10Context();
@@ -303,10 +315,12 @@ class Ch10Context
 							0 = year-mth-day time
 		tdp_valid		--> true if tdp csdw time_fmt or src are none,
 							false otherwise. Set to false if tdp data is invalid.
+        tdf1csdw        --> Instance of TDF1CSDWFmt to append to internal
+                            record
 
 	*/
     void UpdateWithTDPData(const uint64_t& tdp_abs_time, uint8_t tdp_doy,
-                           bool tdp_valid);
+                           bool tdp_valid, const TDF1CSDWFmt& tdf1csdw);
 
     /*
 	Calculate absolute time from RTC time format. This context
@@ -467,6 +481,7 @@ class Ch10Context
 		time_ns		--> Secondary header time, nanosecond unit
 	*/
     virtual void UpdateWithSecondaryHeaderTime(const uint64_t& time_ns);
+
 };
 
 #endif

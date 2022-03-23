@@ -64,6 +64,7 @@ from tip_scripts.e2e_validation.pqpq_raw1553_dir_validation import PqPqRaw1553Di
 from tip_scripts.e2e_validation.pqpq_translated1553_dir_validation import PqPqTranslated1553DirValidation
 from tip_scripts.e2e_validation.pqpq_video_dir_validation import PqPqVideoDirValidation
 from tip_scripts.e2e_validation.pqpq_rawARINC429_dir_validation import PqPqRawARINC429DirValidation
+from tip_scripts.e2e_validation.pqpq_time_data_validation import PqPqTimeDataValidation
 from tip_scripts.exec import Exec
 
 class E2EValidator(object):
@@ -129,7 +130,8 @@ class E2EValidator(object):
                                                       'transl1553': basename + '_1553_translated',
                                                       'rawvideo': basename + '_video.parquet',
                                                       'parsedarinc429f0': basename + '_arinc429.parquet',
-                                                      'tmats': basename + '_TMATS.txt'}
+                                                      'tmats': basename + '_TMATS.txt',
+                                                      'time': basename + '_time_data.parquet'}
             self.all_validation_obj[ch10name] = {}
             self.validation_results_dict[ch10name] = {}
             self.duration_data[ch10name] = {'raw1553': None, 'transl1553': None,
@@ -250,6 +252,7 @@ class E2EValidator(object):
         self._create_rawvideo_validation_objects()
         self._create_rawarinc429f0_validation_objects()
         self._create_tmats_validation_objects()
+        self._create_time_data_validation_objects()
 
         # Validate all objects
         self._validate_objects()
@@ -286,6 +289,10 @@ class E2EValidator(object):
             print()
             self.all_validation_obj[ch10name]['tmats'].print_result(self.print)
 
+            ########### time ##########
+            print()
+            self.all_validation_obj[ch10name]['time'].print_result(self.print)
+
             ########### super set ##########
             msg = '\nTotal Ch10 result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict[ch10name]['ch10']))
             print(msg)
@@ -311,6 +318,9 @@ class E2EValidator(object):
         print(msg)
         self.print(msg)
 
+        msg = 'Total time data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_time_pass']))
+        print(msg)
+        self.print(msg)
 
         msg = 'All validation set result: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_ch10']))
         print(msg)
@@ -392,13 +402,15 @@ class E2EValidator(object):
         single_ch10_video_pass = True
         single_ch10_parsedarinc429f0_pass = True
         single_ch10_tmats_pass = True
+        single_ch10_time_pass = True
         total_stats = {'raw1553': [], 'transl1553': [], 'ch10': [],
-            'parsedarinc429f0': [], 'tmats': []}
+            'parsedarinc429f0': [], 'tmats': [], 'time': []}
         for ch10name in self.files_under_test.keys():
 
             self.validation_results_dict[ch10name] = {'ch10': None, 'raw1553': None,
                                                       'translated1553': None,
-                                                      'parsedarinc429f0': None, 'tmats': None}
+                                                      'parsedarinc429f0': None, 'tmats': None,
+                                                      'time': None}
 
             ########## 1553 ############
             single_ch10_raw1553_pass = self.all_validation_obj[ch10name]['raw1553'].get_test_result()
@@ -422,15 +434,20 @@ class E2EValidator(object):
             single_ch10_tmats_pass = self.all_validation_obj[ch10name]['tmats'].get_test_result() 
             total_stats['tmats'].append(single_ch10_tmats_pass)
 
+            ########### time ###########
+            single_ch10_time_pass = self.all_validation_obj[ch10name]['time'].get_test_result() 
+            total_stats['time'].append(single_ch10_time_pass)
+
+
             ########### super set ##########
 
             if (single_ch10_raw1553_pass == True and single_ch10_bulk_transl1553_pass == True
                 and single_ch10_video_pass == True and single_ch10_parsedarinc429f0_pass == True
-                and single_ch10_tmats_pass == True):
+                and single_ch10_tmats_pass == True and single_ch10_time_pass == True):
                 single_ch10_pass = True
             elif (single_ch10_raw1553_pass is None or single_ch10_bulk_transl1553_pass is None
                   or single_ch10_video_pass is None or single_ch10_parsedarinc429f0_pass is None
-                  or single_ch10_tmats_pass is None):
+                  or single_ch10_tmats_pass is None or single_ch10_time_pass is None):
                 single_ch10_pass = None
             else:
                 single_ch10_pass = False
@@ -443,6 +460,7 @@ class E2EValidator(object):
         self.validation_results_dict['all_transl1553_pass'] = self._get_pass_fail_null(total_stats['transl1553'])
         self.validation_results_dict['all_parsedarinc429f0_pass'] = self._get_pass_fail_null(total_stats['parsedarinc429f0'])
         self.validation_results_dict['all_tmats_pass'] = self._get_pass_fail_null(total_stats['tmats'])
+        self.validation_results_dict['all_time_pass'] = self._get_pass_fail_null(total_stats['time'])
 
 
     def _validate_objects(self):
@@ -470,6 +488,11 @@ class E2EValidator(object):
             tmats_validation_obj = self.all_validation_obj[ch10name]['tmats']
             self.print('\n-- TMATS Comparison --\n')
             tmats_validation_obj.validate(self.print)
+
+            ############ time ################
+            time_validation_obj = self.all_validation_obj[ch10name]['time']
+            self.print('\n-- Time Data Comparison --\n')
+            time_validation_obj.validate(self.print)
 
             ################################
             #            video
@@ -539,6 +562,16 @@ class E2EValidator(object):
                 os.path.join(self.truth_set_dir, tmatsname),
                 os.path.join(self.test_set_dir, tmatsname),
                 self.bincompare_exec_path)
+
+    def _create_time_data_validation_objects(self):
+        print("\n-- Create Time Data validation objects --\n")
+        for ch10name,d in self.files_under_test.items():
+            timename = d['time']
+            self.all_validation_obj[ch10name]['time'] = PqPqTimeDataValidation(
+                os.path.join(self.truth_set_dir, timename),
+                os.path.join(self.test_set_dir, timename),
+                self.pqcompare_exec_path)
+
 
 
     def __del__(self):

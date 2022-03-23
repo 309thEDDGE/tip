@@ -270,7 +270,7 @@ bool TranslatableColumnTemplate<RawType, TranslatedType>::Translate(
 
     raw_data_append_count_ = 0;
 
-    if (!icd_translate.TranslateArray<RawType, TranslatedType>(raw_data_,
+    if (!icd_translate.TranslateArray(raw_data_,
                                                                translated_data_, icd_elem_))
     {
         SPDLOG_WARN("{:02d} Failed to translate column \"{:s}\"",

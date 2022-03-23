@@ -1,12 +1,12 @@
 // parse_worker.cpp
 #include "parse_worker.h"
 
-ParseWorker::ParseWorker() : complete_(false), ch10_context_(ctx_), ctx_()
+ParseWorker::ParseWorker() : complete_(false) 
 {
 }
 
 void ParseWorker::operator()(WorkerConfig& worker_config,
-                             std::vector<std::string>& tmats_body_vec)
+                             std::vector<std::string>& tmats_body_vec, Ch10Context* ctx)
 {
     // Reset completion status.
     complete_ = false;
@@ -23,26 +23,26 @@ void ParseWorker::operator()(WorkerConfig& worker_config,
     // created in the ParseWorker constructor is persistent until the
     // ParseWorker instance is garbage-collected to maintain/retain file
     // writer state.
-    ctx_.Initialize(worker_config.start_position_, worker_config.worker_index_);
-    ctx_.SetSearchingForTDP(!worker_config.append_mode_);
+    ctx->Initialize(worker_config.start_position_, worker_config.worker_index_);
+    ctx->SetSearchingForTDP(!worker_config.append_mode_);
 
-    if (!ConfigureContext(ctx_, worker_config.ch10_packet_type_map_, worker_config.output_file_paths_))
+    if (!ConfigureContext(ctx, worker_config.ch10_packet_type_map_, worker_config.output_file_paths_))
     {
         complete_ = true;
         return;
     }
 
-    ParseBufferData(&ctx_, &worker_config.bb_, tmats_body_vec);
+    ParseBufferData(ctx, &worker_config.bb_, tmats_body_vec);
 
     // Update last_position_;
-    worker_config.last_position_ = ctx_.absolute_position;
+    worker_config.last_position_ = ctx->absolute_position;
 
     // Close all file writers if append_mode is true or
     // this is the final worker which has no append mode.
     if (worker_config.append_mode_ || worker_config.final_worker_)
     {
         SPDLOG_DEBUG("({:02d}) Closing file writers", worker_config.worker_index_);
-        ctx_.CloseFileWriters();
+        ctx->CloseFileWriters();
     }
 
     SPDLOG_INFO("({:02d}) End of worker's shift", worker_config.worker_index_);
@@ -56,20 +56,20 @@ std::atomic<bool>& ParseWorker::CompletionStatus()
     return complete_;
 }
 
-bool ParseWorker::ConfigureContext(Ch10Context& ctx,
+bool ParseWorker::ConfigureContext(Ch10Context* ctx,
                                    const std::map<Ch10PacketType, bool>& ch10_packet_type_map,
                                    const std::map<Ch10PacketType, ManagedPath>& output_file_paths_map)
 {
-    if (!ctx.IsConfigured())
+    if (!ctx->IsConfigured())
     {
         // Configure packet parsing.
-        if (!ctx.SetPacketTypeConfig(ch10_packet_type_map, ctx.pkt_type_config_map))
+        if (!ctx->SetPacketTypeConfig(ch10_packet_type_map, ctx->pkt_type_config_map))
             return false;
 
         // Check configuration. Are the packet parse and output paths configs
         // consistent?
         std::map<Ch10PacketType, ManagedPath> enabled_paths;
-        bool config_ok = ctx.CheckConfiguration(ctx.pkt_type_config_map,
+        bool config_ok = ctx->CheckConfiguration(ctx->pkt_type_config_map,
                                                 output_file_paths_map, enabled_paths);
         if (!config_ok)
             return false;
@@ -79,7 +79,7 @@ bool ParseWorker::ConfigureContext(Ch10Context& ctx,
         // state between regular and append mode calls to this worker's operator().
         // Pass a pointer to the file writer to the relevant parser for use in
         // writing data to disk.
-        if (!ctx.InitializeFileWriters(enabled_paths))
+        if (!ctx->InitializeFileWriters(enabled_paths))
             return false;
     }
     return true;

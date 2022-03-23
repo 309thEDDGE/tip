@@ -2,7 +2,7 @@
 
 #include "parse_manager.h"
 
-ParseManager::ParseManager() : worker_count_(0), worker_count(worker_count_), worker_chunk_size_bytes_(0), worker_chunk_size_bytes(worker_chunk_size_bytes_), workers_vec(workers_vec_), threads_vec(threads_vec_), worker_config_vec(worker_config_vec_), ch10_input_stream_(), append_chunk_size_bytes_(100000000), it_(), tmats_output_path_("")
+ParseManager::ParseManager() : worker_count_(0), worker_count(worker_count_), worker_chunk_size_bytes_(0), worker_chunk_size_bytes(worker_chunk_size_bytes_), workers_vec(workers_vec_), threads_vec(threads_vec_), worker_config_vec(worker_config_vec_), ch10_input_stream_(), append_chunk_size_bytes_(100000000), it_(), tmats_output_path_(""), tdp_output_path_("")
 {
 }
 
@@ -23,7 +23,10 @@ bool ParseManager::Configure(ManagedPath input_ch10_file_path, ManagedPath outpu
 
     tmats_output_path_ = output_dir.CreatePathObject(input_ch10_file_path,
         "_TMATS.txt");
+    tdp_output_path_ = output_dir.CreatePathObject(input_ch10_file_path,
+        "_time_data.parquet");
     spdlog::get("pm_logger")->info("TMATS output path: {:s}", tmats_output_path_.RawString());
+    spdlog::get("pm_logger")->info("Time data output path: {:s}", tdp_output_path_.RawString());
 
     // Hard-code packet type directory extensions now. Later, import from
     // config yaml.
@@ -98,6 +101,7 @@ bool ParseManager::AllocateResources(const ParserConfigParams& user_config,
     for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
     {
         workers_vec_.push_back(std::make_unique<ParseWorker>());
+        context_vec_.push_back(std::make_unique<Ch10Context>());
     }
 
     return true;
@@ -254,6 +258,16 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
     spdlog::get("pm_logger")->debug("RecordMetadata: complete record metadata");
 
     RemoveCh10PacketOutputDirs(output_dir_map_, parsed_packet_types);
+
+    spdlog::get("pm_logger")->debug("Record Time Data");
+    ParquetContext pq_ctx;
+    ParquetTDPF1 pq_tdp(&pq_ctx);
+    std::vector<const Ch10Context*> ctx_vec;
+    for(std::vector<std::unique_ptr<Ch10Context>>::iterator it = context_vec_.begin();
+        it != context_vec_.end(); ++it)
+    { ctx_vec.push_back((*it).get()); }
+    WriteTDPData(ctx_vec, &pq_tdp, tdp_output_path_);
+
     return true;
 }
 
@@ -344,10 +358,8 @@ bool ParseManager::RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
     std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_lruaddr2_maps;
     for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
     {
-        chanid_lruaddr1_maps.push_back(
-            workers_vec_[worker_ind]->ch10_context_.chanid_remoteaddr1_map);
-        chanid_lruaddr2_maps.push_back(
-            workers_vec_[worker_ind]->ch10_context_.chanid_remoteaddr2_map);
+        chanid_lruaddr1_maps.push_back(context_vec_[worker_ind]->chanid_remoteaddr1_map);
+        chanid_lruaddr2_maps.push_back(context_vec_[worker_ind]->chanid_remoteaddr2_map);
     }
     std::map<uint32_t, std::set<uint16_t>> output_chanid_remoteaddr_map;
     if (!CombineChannelIDToLRUAddressesMetadata(output_chanid_remoteaddr_map,
@@ -359,8 +371,7 @@ bool ParseManager::RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
     // Obtain the channel ID to command words set map.
     std::vector<std::map<uint32_t, std::set<uint32_t>>> chanid_commwords_maps;
     for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
-        chanid_commwords_maps.push_back(
-            workers_vec_[worker_ind]->ch10_context_.chanid_commwords_map);
+        chanid_commwords_maps.push_back(context_vec_[worker_ind]->chanid_commwords_map);
 
     std::map<uint32_t, std::vector<std::vector<uint32_t>>> output_chanid_commwords_map;
     if (!CombineChannelIDToCommandWordsMetadata(output_chanid_commwords_map,
@@ -400,8 +411,7 @@ bool ParseManager::RecordVideoDataF0Metadata(ManagedPath input_ch10_file_path,
     std::vector<std::map<uint16_t, uint64_t>> worker_chanid_to_mintimestamps_maps;
     for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
     {
-        worker_chanid_to_mintimestamps_maps.push_back(
-            workers_vec_[worker_ind]->ch10_context_.chanid_minvideotimestamp_map);
+        worker_chanid_to_mintimestamps_maps.push_back(context_vec_[worker_ind]->chanid_minvideotimestamp_map);
     }
     std::map<uint16_t, uint64_t> output_min_timestamp_map;
     CreateChannelIDToMinVideoTimestampsMetadata(output_min_timestamp_map,
@@ -440,8 +450,7 @@ bool ParseManager::RecordARINC429F0Metadata(ManagedPath input_ch10_file_path,
     // Obtain the channel ID to 429 label set map.
     std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_label_maps;
     for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
-        chanid_label_maps.push_back(
-            workers_vec_[worker_ind]->ch10_context_.chanid_labels_map);
+        chanid_label_maps.push_back(context_vec_[worker_ind]->chanid_labels_map);
 
     std::map<uint32_t, std::set<uint16_t>> output_chanid_label_map;
     if (!CombineChannelIDToLabelsMetadata(output_chanid_label_map,
@@ -453,8 +462,7 @@ bool ParseManager::RecordARINC429F0Metadata(ManagedPath input_ch10_file_path,
     // Obtain the channel ID to ARINC message header bus number set map.
     std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_busnumber_maps;
     for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
-        chanid_busnumber_maps.push_back(
-            workers_vec_[worker_ind]->ch10_context_.chanid_busnumbers_map);
+        chanid_busnumber_maps.push_back(context_vec_[worker_ind]->chanid_busnumbers_map);
 
     std::map<uint32_t, std::set<uint16_t>> output_chanid_busnumber_map;
     if (!CombineChannelIDToBusNumbersMetadata(output_chanid_busnumber_map,
@@ -597,7 +605,7 @@ bool ParseManager::ActivateWorker(bool append_mode, std::unique_ptr<ParseWorker>
                                   std::ifstream& ch10_input_stream, std::streamsize& actual_read_size,
                                   const std::map<Ch10PacketType, ManagedPath>& output_file_path_map,
                                   const std::map<Ch10PacketType, bool>& packet_type_config_map,
-                                  std::vector<std::string>& tmats_vec)
+                                  std::vector<std::string>& tmats_vec, std::unique_ptr<Ch10Context>& ctx)
 {
     if (append_mode)
     {
@@ -626,7 +634,7 @@ bool ParseManager::ActivateWorker(bool append_mode, std::unique_ptr<ParseWorker>
     }
 
     worker_thread = std::thread(std::ref(*parse_worker_ptr),
-                                std::ref(worker_config), std::ref(tmats_vec));
+                                std::ref(worker_config), std::ref(tmats_vec), ctx.get());
 
     return true;
 }
@@ -672,7 +680,7 @@ bool ParseManager::WorkerQueue(bool append_mode, std::ifstream& ch10_input_strea
                                     worker_config_vec[worker_ind], worker_ind, worker_count, total_read_pos,
                                     read_size, append_read_size, total_size, &worker_config_vec[worker_ind].bb_,
                                     ch10_input_stream, actual_read_size, output_file_path_vec[worker_ind],
-                                    packet_type_config_map, tmats_vec))
+                                    packet_type_config_map, tmats_vec, context_vec_[worker_ind]))
                     return false;
 
                 // Put worker in active workers list.
@@ -728,7 +736,7 @@ bool ParseManager::WorkerQueue(bool append_mode, std::ifstream& ch10_input_strea
                                             worker_config_vec[worker_ind], worker_ind, worker_count, total_read_pos,
                                             read_size, append_read_size, total_size, &worker_config_vec[worker_ind].bb_,
                                             ch10_input_stream, actual_read_size, output_file_path_vec[worker_ind],
-                                            packet_type_config_map, tmats_vec))
+                                            packet_type_config_map, tmats_vec, context_vec_[worker_ind]))
                             return false;
 
                         // Place new worker among active workers.
@@ -1165,10 +1173,10 @@ bool ParseManager::CombineChannelIDToBusNumbersMetadata(
 void ParseManager::AssembleParsedPacketTypesSet(std::set<Ch10PacketType>& parsed_packet_types)
 {
     std::set<Ch10PacketType> temp_parsed_packet_types;
-    for (std::vector<std::unique_ptr<ParseWorker>>::const_iterator it = workers_vec_.cbegin();
-        it != workers_vec_.cend(); ++it)
+    for (std::vector<std::unique_ptr<Ch10Context>>::const_iterator it = context_vec_.cbegin();
+        it != context_vec_.cend(); ++it)
     {
-        temp_parsed_packet_types = (*it)->ch10_context_.parsed_packet_types;
+        temp_parsed_packet_types = (*it)->parsed_packet_types;
         parsed_packet_types.insert(temp_parsed_packet_types.cbegin(), temp_parsed_packet_types.cend());
     }
 
@@ -1180,4 +1188,30 @@ void ParseManager::AssembleParsedPacketTypesSet(std::set<Ch10PacketType>& parsed
         spdlog::get("pm_logger")->info(" - {:s}", ch10packettype_to_string_map.at(*it));
     }
     spdlog::get("pm_logger")->flush();
+}
+
+bool ParseManager::WriteTDPData(const std::vector<const Ch10Context*>& ctx_vec,
+    ParquetTDPF1* pqtdp, const ManagedPath& file_path)
+{
+    if(!pqtdp->Initialize(file_path, 0))
+    {
+        spdlog::get("pm_logger")->error("Failed to initialize writer for time data, format 1 for "
+            "output file: {:s}", file_path.RawString());
+        return false;
+    }
+
+    for(std::vector<const Ch10Context*>::const_iterator it = ctx_vec.cbegin(); 
+        it != ctx_vec.cend(); ++it)
+    {
+        const std::vector<TDF1CSDWFmt>& tdcsdw_vec = (*it)->tdf1csdw_vec;
+        const std::vector<uint64_t>& time_vec = (*it)->tdp_abs_time_vec;
+        for(size_t i = 0; i < time_vec.size(); i++)
+        {
+            pqtdp->Append(time_vec.at(i), tdcsdw_vec.at(i));
+        }
+    }
+    uint16_t thread_id = 0;
+    pqtdp->Close(thread_id);
+
+    return true;
 }

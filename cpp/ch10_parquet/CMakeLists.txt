@@ -4,6 +4,7 @@ set(headers
     include/parquet_reader.h
     include/parquet_videodataf0.h
     include/parquet_arinc429f0.h
+    include/parquet_tdpf1.h
 )
 
 add_library(ch10_parquet
@@ -13,6 +14,7 @@ add_library(ch10_parquet
     src/parquet_reader.cpp
     src/parquet_videodataf0.cpp
     src/parquet_arinc429f0.cpp
+    src/parquet_tdpf1.cpp
 )
 
 target_compile_features(ch10_parquet PUBLIC cxx_std_17)
