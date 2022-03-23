@@ -31,8 +31,8 @@
 #include "worker_config.h"
 #include "spdlog/spdlog.h"
 #include "ch10_packet_type.h"
-
-
+#include "ch10_context.h"
+#include "parquet_tdpf1.h"
 
 class ParseManager
 {
@@ -59,6 +59,9 @@ class ParseManager
     // file size.
     uint16_t worker_count_;
 
+	// Context instances are paired with each ParseWorker
+	std::vector<std::unique_ptr<Ch10Context>> context_vec_;
+
     // Workers necessary to parse the ch10 based on user
     // configuration. Use unique_ptr to avoid creating a copy
     // assignment operator for ParseWorker and Ch10Context.
@@ -78,6 +81,9 @@ class ParseManager
 
 	// TMATS output path
 	ManagedPath tmats_output_path_;
+
+	// Time data ("Time Data Packet, Format 1") output path
+	ManagedPath tdp_output_path_;
 
     // Configured file paths. The worker at index x in workers_vec_ shall
     // create output files according to the paths in the map at index x
@@ -369,6 +375,8 @@ class ParseManager
 								  False = disabled.
 		tmats_vec			--> Vector of strings into which workers will push
 								TMATS matter
+		ctx					--> Ch10Context pointer, specific to the worker being
+								activated
 
 	Return:
 		True if no errors, false if errors occur and
@@ -381,7 +389,7 @@ class ParseManager
                         std::ifstream& ch10_input_stream, std::streamsize& actual_read_size,
                         const std::map<Ch10PacketType, ManagedPath>& output_file_path_map,
                         const std::map<Ch10PacketType, bool>& packet_type_config_map,
-                        std::vector<std::string>& tmats_vec);
+                        std::vector<std::string>& tmats_vec, std::unique_ptr<Ch10Context>& ctx);
 
     /*
 	Start workers in a queue in quantity up to the user-configured thread
@@ -758,6 +766,25 @@ class ParseManager
 	*/
 	bool RemoveCh10PacketOutputDirs(const std::map<Ch10PacketType, ManagedPath>& output_dir_map,
 		const std::set<Ch10PacketType>& parsed_packet_types);
+
+	
+
+	/*
+	Record time data ("Time Data, Format 1") which is stored in Ch10Context
+	instances to Parquet format.
+
+	Args:
+		ctx_vec			--> Vector of Ch10Contexts from which time data
+							will be gathered
+		pqtdp			--> Instance of ParquetTDPF1 which will be used
+							to write the time data to Parquet
+		file_path		--> Complete output file path
+
+	Return:
+		False if any steps fail; true otherwise.
+	*/
+	bool WriteTDPData(const std::vector<const Ch10Context*>& ctx_vec,
+		ParquetTDPF1* pqtdp, const ManagedPath& file_path);
 };
 
 #endif

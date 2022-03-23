@@ -12,6 +12,10 @@
 #include "parser_config_params.h"
 #include "ch10_header_format.h"
 #include "ch10_1553f1_msg_hdr_format.h"
+#include "parquet_tdpf1_mock.h"
+#include "ch10_tdpf1_hdr_format.h"
+
+using ::testing::Return;
 
 // Mock BinBuff
 class MockBinBuffParseManager : public BinBuff
@@ -819,4 +823,59 @@ TEST_F(ParseManagerTest, CombineChannelIDToBusNumbersMetadata)
                                                   chanid_busnumbers_maps);
     EXPECT_TRUE(result_);
     EXPECT_EQ(expected, output);
+}
+
+TEST_F(ParseManagerTest, WriteTDPDataInitializeFail)
+{
+    ManagedPath out_path({"test.parquet"});
+    
+    // ParquetTDPF1 INitialized
+    ParquetContext ctx;
+    MockParquetTDPF1 pqtdp(&ctx);
+    EXPECT_CALL(pqtdp, Initialize(out_path, 0)).WillOnce(Return(false));
+
+    Ch10Context ctx1(13344545, 0);
+    Ch10Context ctx2(848348, 1);
+    std::vector<const Ch10Context*> ctx_vec{&ctx1, &ctx2};
+
+    EXPECT_FALSE(pm.WriteTDPData(ctx_vec, &pqtdp, out_path));
+}
+
+TEST_F(ParseManagerTest, WriteTDPData)
+{
+    ManagedPath out_path({"test.parquet"});
+    
+    // ParquetTDPF1 INitialized
+    ParquetContext ctx;
+    MockParquetTDPF1 pqtdp(&ctx);
+    EXPECT_CALL(pqtdp, Initialize(out_path, 0)).WillOnce(Return(true));
+
+    Ch10Context ctx1(13344545, 0);
+    Ch10Context ctx2(848348, 1);
+
+    TDF1CSDWFmt tdcsdw1{};
+    uint64_t abs_time1 = 483882;
+    uint8_t tdp_doy = 0;
+    ctx1.UpdateWithTDPData(abs_time1, tdp_doy, true, tdcsdw1);
+
+    uint64_t abs_time2 = 88112311102;
+    TDF1CSDWFmt tdcsdw2{};
+    tdcsdw2.date_fmt = 1;
+    tdcsdw2.time_fmt = 3;
+    ctx1.UpdateWithTDPData(abs_time2, tdp_doy, false, tdcsdw2);
+
+    uint64_t abs_time3 = 123481201;
+    TDF1CSDWFmt tdcsdw3{};
+    tdcsdw3.date_fmt = 0;
+    tdcsdw3.time_fmt = 2;
+    ctx2.UpdateWithTDPData(abs_time3, tdp_doy, true, tdcsdw3);
+    std::vector<const Ch10Context*> ctx_vec{&ctx1, &ctx2};
+
+    EXPECT_CALL(pqtdp, Append(abs_time1, tdcsdw1));
+    EXPECT_CALL(pqtdp, Append(abs_time2, tdcsdw2));
+    EXPECT_CALL(pqtdp, Append(abs_time3, tdcsdw3));
+
+    EXPECT_CALL(pqtdp, Close(0));
+
+    EXPECT_TRUE(pm.WriteTDPData(ctx_vec, &pqtdp, out_path));
 }

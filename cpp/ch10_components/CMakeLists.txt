@@ -12,6 +12,7 @@ set(headers
     include/ch10_packet_header_component.h
     include/ch10_status.h
     include/ch10_tdp_component.h
+    include/ch10_tdpf1_hdr_format.h
     include/ch10_time.h
     include/ch10_tmats_component.h
     include/ch10_videof0_component.h

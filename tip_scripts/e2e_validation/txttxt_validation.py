@@ -9,10 +9,10 @@ class TxtTxtValidation(FileValidation):
         self.exec_path = exec_path
 
     def validate(self, print_obj):
-        result = self.do_file_validation(self.exec_path, output_success_string='PASS')
         info = '\n' + str(self)
         print_obj(info)
-        print(info)
+        print(info) 
+        result = self.do_file_validation(self.exec_path, output_success_string='PASS')
         msg = 'Validated: {}'.format(self.get_test_result_string())
         print_obj(msg)    
         print(msg)

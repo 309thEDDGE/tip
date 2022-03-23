@@ -227,7 +227,8 @@ TEST(Ch10ContextTest, UpdateWithTDPDataTDPIsNone)
 
     // Update with TDP, but set tdp_valid bool to false = invalid.
     bool tdp_valid = false;
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     EXPECT_EQ(ctx.tdp_valid, tdp_valid);
 
@@ -259,7 +260,8 @@ TEST(Ch10ContextTest, UpdateWithTDPDataVarsUpdated)
 
     // Update with TDP valid
     bool tdp_valid = true;
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     EXPECT_EQ(ctx.tdp_valid, tdp_valid);
 
@@ -269,6 +271,33 @@ TEST(Ch10ContextTest, UpdateWithTDPDataVarsUpdated)
     EXPECT_EQ(ctx.tdp_rtc, rtc);
     EXPECT_EQ(ctx.tdp_doy, tdp_doy);
     EXPECT_EQ(ctx.found_tdp, true);
+}
+
+TEST(Ch10ContextTest, UpdateWithTDPCSDWVectorUpdated)
+{
+    Ch10Context ctx(0);
+    uint64_t tdp_abs_time = 344199919;
+    uint8_t tdp_doy = 1;
+    bool tdp_valid = true;
+    TDF1CSDWFmt tdcsdw{};
+    tdcsdw.date_fmt = 1;
+
+    ASSERT_EQ(ctx.tdf1csdw_vec.size(), 0);
+
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
+    ASSERT_EQ(ctx.tdf1csdw_vec.size(), 1);
+    ASSERT_EQ(ctx.tdp_abs_time_vec.size(), 1);
+    EXPECT_EQ(ctx.tdf1csdw_vec.at(0).date_fmt, 1);
+    EXPECT_EQ(ctx.tdp_abs_time_vec.at(0), tdp_abs_time);
+
+    tdcsdw.time_fmt = 3;
+    tdp_valid = false;
+    tdp_abs_time = 53288110;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
+    ASSERT_EQ(ctx.tdf1csdw_vec.size(), 2);
+    ASSERT_EQ(ctx.tdp_abs_time_vec.size(), 2);
+    EXPECT_EQ(ctx.tdf1csdw_vec.at(1).time_fmt, 3);
+    EXPECT_EQ(ctx.tdp_abs_time_vec.at(1), tdp_abs_time);
 }
 
 TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
@@ -290,7 +319,8 @@ TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
     uint64_t tdp_abs_time = 344199919;
     uint8_t tdp_doy = 0;
     uint8_t tdp_valid = true;
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     uint64_t current_rtc1 = 321200;
     uint64_t current_rtc2 = 502999;
@@ -322,7 +352,8 @@ TEST(Ch10ContextTest, GetPacketAbsoluteTimeFromHeaderRTC)
     bool tdp_valid = true;
     Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
     EXPECT_EQ(status, Ch10Status::OK);
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     // Update context as if with a following non-TDP packet
     hdr_fmt.rtc1 += 20;
@@ -355,7 +386,8 @@ TEST(Ch10ContextTest, CalculateIPTSAbsTimeRTCSource)
     bool tdp_valid = true;
     Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
     EXPECT_EQ(status, Ch10Status::OK);
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     // Update context as if with a following non-TDP packet
     hdr_fmt.rtc1 += 20;
@@ -684,7 +716,8 @@ TEST(Ch10ContextTest, Calculate429WordAbsTimeRTCSource)
     bool tdp_valid = true;
     Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
     EXPECT_EQ(status, Ch10Status::OK);
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     // Update context as if with a following non-TDP packet
     hdr_fmt.rtc1 += 20;
@@ -720,7 +753,8 @@ TEST(Ch10ContextTest, Calculate429AbsTimeSecondaryHeaderSource)
     bool tdp_valid = true;
     Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
     EXPECT_EQ(status, Ch10Status::OK);
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     // Update context as if with a following non-TDP packet
     hdr_fmt.rtc1 += 20;

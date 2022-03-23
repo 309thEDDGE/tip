@@ -28,13 +28,7 @@ class ParseWorker
     // True if worker has completed parsing, false otherwise
     std::atomic<bool> complete_;
 
-    // Track Ch10 state and manipulate metadata
-    Ch10Context ctx_;
-
    public:
-    // Used to obtain public data from this worker's Ch10Context instance
-    const Ch10Context& ch10_context_;
-
     ParseWorker();
 
     /*
@@ -61,9 +55,10 @@ class ParseWorker
 							state and binary data to be parsed
 		tmats_body_vec	--> Vector to which any TMATs matter found in the binary 
 							data are appended
+		ctx				--> Ch10 state associated with the specific worker
 	*/
     void operator()(WorkerConfig& worker_config,
-                    std::vector<std::string>& tmats_body_vec);
+                    std::vector<std::string>& tmats_body_vec, Ch10Context* ctx);
 
     /*
 	Helper function for aesthetics. Configure instance of Ch10Context by calling the
@@ -80,7 +75,7 @@ class ParseWorker
 	Return:
 		True if configuration was successful; false otherwise.
 	*/
-    bool ConfigureContext(Ch10Context& ctx,
+    bool ConfigureContext(Ch10Context* ctx,
                           const std::map<Ch10PacketType, bool>& ch10_packet_type_map,
                           const std::map<Ch10PacketType, ManagedPath>& output_file_paths_map);
 

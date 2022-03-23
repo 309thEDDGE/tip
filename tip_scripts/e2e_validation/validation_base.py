@@ -12,6 +12,7 @@ class ValidationBase(object):
         self.regex_raw_1553_dir = re.compile(".+_1553.parquet")
         self.regex_raw_video_dir = re.compile(".+_video.parquet")
         self.regex_parsed_arinc429_dir = re.compile(".+_arinc429.parquet")
+        self.regex_parsed_timef1_file = re.compile(".+_time_data.parquet")
         self.ready_to_validate = False
         self.prefix = prefix
         self.truth_dir_exists = None
@@ -144,6 +145,18 @@ class ValidationBase(object):
                 return False
             self.test_dir_exists = True
 
+        elif type_str == 'timef1':
+            if not self._is_timef1_file(self.truth_path):
+                print('{:s} - {:s} is not a time data file!'.format(self.prefix, self.truth_path))
+                self.truth_dir_exists = False
+                return False
+            self.truth_dir_exists = True
+            if not self._is_timef1_file(self.test_path):
+                print('{:s} - {:s} is not a time data file!'.format(self.prefix, self.test_path))
+                self.test_dir_exists = False
+                return False
+            self.test_dir_exists = True
+
         else:
             print('ValidationBase.set_type_paths(): type_str = {:s} not defined!'.format(type_str))
             return False
@@ -179,6 +192,15 @@ class ValidationBase(object):
             return False
 
         if bool(re.match(self.regex_parsed_arinc429_dir, input_path)):
+            return True
+
+        return False
+
+    def _is_timef1_file(self, input_path):
+        if not os.path.isfile(input_path):
+            return False
+        
+        if bool(re.match(self.regex_parsed_timef1_file, input_path)):
             return True
 
         return False

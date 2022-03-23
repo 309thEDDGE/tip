@@ -48,7 +48,8 @@ class Ch10VideoF0ComponentTest : public ::testing::Test
         packet_header_.intrapkt_ts_source = 0;
         context_.UpdateContext(0, &packet_header_,
                                ch10_time_.CalculateRTCTimeFromComponents(packet_header_.rtc1, packet_header_.rtc2));
-        context_.UpdateWithTDPData(TDP_ABSOLUTE_TIME, TDP_DAY_OF_YEAR, true);
+        TDF1CSDWFmt tdcsdw;
+        context_.UpdateWithTDPData(TDP_ABSOLUTE_TIME, TDP_DAY_OF_YEAR, true, tdcsdw);
 
         // Now update context as if with a new non-TDP packet
         packet_header_.rtc1 = TDP_RTC1 + 100;

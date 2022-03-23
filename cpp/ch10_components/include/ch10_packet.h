@@ -57,12 +57,13 @@ class Ch10Packet
     Ch10Time* const ch10_time_;
 
    public:
+
+
     const Ch10PacketType& current_pkt_type;
     Ch10Packet(BinBuff* const binbuff, Ch10Context* const context, 
         Ch10Time* const ch10time, std::vector<std::string>& tmats_vec) : 
         tmats_vec_(tmats_vec), ch10_time_(ch10time), secondary_hdr_time_ns_(0), bb_(binbuff), ctx_(context), data_ptr_(nullptr), bb_response_(0), status_(Ch10Status::OK), temp_pkt_size_(0), pkt_type_(Ch10PacketType::NONE), current_pkt_type(pkt_type_), header_(nullptr), tmats_(nullptr), tdp_component_(nullptr), milstd1553f1_component_(nullptr), arinc429f0_component_(nullptr), videof0_component_(nullptr), ethernetf0_component_(nullptr)
     {    }
-
 
 
     /*
