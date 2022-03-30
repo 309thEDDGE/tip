@@ -1,9 +1,9 @@
 FROM registry1.dso.mil/ironbank/opensource/metrostar/tip-dependencies:0.0.5 AS tipdependencies
-# FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:torch_1.10.0_v4 AS pytorch
+FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:torch_1.10.0_v4 AS pytorch
 FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:singleuser_v10 AS singleuser
 
 COPY --chown=jovyan:jovyan --from=tipdependencies /local_channel /home/jovyan/tip_deps_channel
-# COPY --chown=jovyan:jovyan --from=pytorch /home/jovyan/local-channel /home/jovyan/pytorch_channel
+COPY --chown=jovyan:jovyan --from=pytorch /home/jovyan/local-channel /home/jovyan/pytorch_channel
 
 ENV ARTIFACT_DIR=".ci_artifacts/build-metadata/build-artifacts"
 
@@ -12,10 +12,10 @@ WORKDIR /home/jovyan
 COPY --chown=jovyan:jovyan $ARTIFACT_DIR/local_channel.tar .
 COPY --chown=jovyan:jovyan ./conf/ /home/jovyan/conf
 
-# # Sed replaces the "  - ./local-channel" entry in the conda env file and replaces it with the three local channels: tip_channel, tip_deps_channel, and local-channel
-# RUN sed '/local-channel/s/.*/  - .\/pytorch_channel\n/' /home/jovyan/pytorch_channel/local_channel_env.yaml > /home/jovyan/pytorch_env.yaml \
-#     && conda env create -f /home/jovyan/pytorch_env.yaml \
-#     && rm -rf /home/jovyan/pytorch_channel
+# Sed replaces the "  - ./local-channel" entry in the conda env file and replaces it with the three local channels: tip_channel, tip_deps_channel, and local-channel
+RUN sed '/local-channel/s/.*/  - .\/pytorch_channel\n/' /home/jovyan/pytorch_channel/local_channel_env.yaml > /home/jovyan/pytorch_env.yaml \
+    && conda env create -f /home/jovyan/pytorch_env.yaml \
+    && rm -rf /home/jovyan/pytorch_channel
 
 RUN mkdir /home/jovyan/tip_channel \
     && tar xvf local_channel.tar --strip-components=3 --directory=/home/jovyan/tip_channel \
