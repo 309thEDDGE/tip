@@ -32,7 +32,7 @@ RUN source /opt/conda/bin/activate \
     && printf "https://gitlab-ci-user:" > /home/jovyan/.git-credentials \
     && printf "$CI_JOB_TOKEN" >> /home/jovyan/.git-credentials \
     && printf "@code.il2.dso.mil" >> /home/jovyan/.git-credentials \
-    && git clone https://gitlab-ci-token:$CI_JOB_TOKEN@code.il2.dso.mil/skicamp/project-opal/opal.git \
+    && git clone https://code.il2.dso.mil/skicamp/project-opal/opal.git \
     && rm /home/jovyan/.git-credentials
 
 
