@@ -28,10 +28,11 @@ ENV PATH="/opt/conda/envs/singleuser/bin:$PATH"
 
 RUN source /opt/conda/bin/activate \
     && conda activate singleuser \
-    && CLONE_URL="https://test:" \
-    && CLONE_URL2="$CLONE_URL$CI_JOB_TOKEN" \
-    && CLONE_URL3="$CLONE_URL2@code.il2.dso.mil/skicamp/project-opal/opal.git" \
-    && git clone $CLONE_URL3 \
+    && printf "https://gitlab-ci-user:" > /home/jovyan/.git-credentials \
+    && printf "$CI_JOB_TOKEN" >> /home/jovyan/.git-credentials \
+    && printf "@code.il2.dso.mil" >> /home/jovyan/.git-credentials \
+    && git config --global user.name "gitlab-ci-user" \
+    && git clone https://code.il2.dso.mil/skicamp/project-opal/opal.git \
     && rm /home/jovyan/.git-credentials
 
 
