@@ -15,25 +15,23 @@ COPY --chown=jovyan:jovyan ./conf/ /home/jovyan/conf
 
 # # Sed replaces the "  - ./local-channel" entry in the conda env file and replaces it with the three local channels: tip_channel, tip_deps_channel, and local-channel
 # RUN sed '/local-channel/s/.*/  - .\/pytorch_channel\n/' /home/jovyan/pytorch_channel/local_channel_env.yaml > /home/jovyan/pytorch_env.yaml \
-#     && conda env create -f /home/jovyan/pytorch_env.yaml \
+#     && conda env create -f /home/jovyan/pytorch_env.yaml --offline \
 #     && rm -rf /home/jovyan/pytorch_channel
 
 RUN mkdir /home/jovyan/tip_channel \
     && tar xvf local_channel.tar --strip-components=3 --directory=/home/jovyan/tip_channel \
     && sed '/local-channel/s/.*/  - .\/tip_channel\n  - .\/tip_deps_channel\n  - .\/local-channel/' /home/jovyan/local-channel/local_channel_env.yaml > /home/jovyan/singleuser_env.yaml \
-    && conda env create -f /home/jovyan/singleuser_env.yaml \
+    && conda env create -f /home/jovyan/singleuser_env.yaml --offline \
     && rm -rf /home/jovyan/tip_deps_channel /home/jovyan/local-channel
 
 ENV PATH="/opt/conda/envs/singleuser/bin:$PATH"
 
 RUN source /opt/conda/bin/activate \
     && conda activate singleuser \
-    && printf "https://gitlab-ci-user:" > /home/jovyan/.git-credentials \
-    && printf "$CI_JOB_TOKEN" >> /home/jovyan/.git-credentials \
-    && printf "@code.il2.dso.mil" >> /home/jovyan/.git-credentials \
-    && git config --global user.name "gitlab-ci-user" \
-    && git clone https://code.il2.dso.mil/skicamp/project-opal/opal.git \
-    && rm /home/jovyan/.git-credentials
+    && CLONE_PREFIX="https://oauth2:" \
+    && WITH_TOKEN="$CLONE_PREFIX$CI_JOB_TOKEN" \
+    && CLONE_URL="$WITH_TOKEN@code.il2.dso.mil/skicamp/project-opal/opal.git" \
+    && git clone $CLONE_URL
 
 
 RUN rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/badcert.pem \
