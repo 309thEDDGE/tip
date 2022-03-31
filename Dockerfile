@@ -30,7 +30,7 @@ RUN source /opt/conda/bin/activate \
     && conda activate singleuser \
     && CLONE_URL="https://test:" \
     && CLONE_URL2="$CLONE_URL$CI_JOB_TOKEN" \
-    && CLONE_URL3="$CLONEURL2@code.il2.dso.mil/skicamp/project-opal/opal.git"
+    && CLONE_URL3="$CLONEURL2@code.il2.dso.mil/skicamp/project-opal/opal.git" \
     && git clone $CLONE_URL3 \
     && rm /home/jovyan/.git-credentials
 
