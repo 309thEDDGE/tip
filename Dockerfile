@@ -21,7 +21,6 @@ COPY --chown=jovyan:jovyan ./conf/ /home/jovyan/conf
 RUN mkdir /home/jovyan/tip_channel \
     && tar xvf local_channel.tar --strip-components=3 --directory=/home/jovyan/tip_channel \
     && sed '/local-channel/s/.*/  - .\/tip_channel\n  - .\/tip_deps_channel\n  - .\/local-channel/' /home/jovyan/local-channel/local_channel_env.yaml > /home/jovyan/singleuser_env.yaml \
-    && printf "\n  - tip" >> /home/jovyan/singleuser_env.yaml \
     && conda env create -f /home/jovyan/singleuser_env.yaml \
     && rm -rf /home/jovyan/tip_deps_channel /home/jovyan/local-channel
 
@@ -29,10 +28,10 @@ ENV PATH="/opt/conda/envs/singleuser/bin:$PATH"
 
 RUN source /opt/conda/bin/activate \
     && conda activate singleuser \
-    && printf "https://gitlab-ci-user:" > /home/jovyan/.git-credentials \
-    && printf "$CI_JOB_TOKEN" >> /home/jovyan/.git-credentials \
-    && printf "@code.il2.dso.mil" >> /home/jovyan/.git-credentials \
-    && git clone https://code.il2.dso.mil/skicamp/project-opal/opal.git \
+    && CLONE_URL="https://test:" \
+    && CLONE_URL2="$CLONE_URL$CI_JOB_TOKEN" \
+    && CLONE_URL3="$CLONEURL2@code.il2.dso.mil/skicamp/project-opal/opal.git"
+    && git clone $CLONE_URL3 \
     && rm /home/jovyan/.git-credentials
 
 
