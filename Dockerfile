@@ -29,7 +29,11 @@ ENV PATH="/opt/conda/envs/singleuser/bin:$PATH"
 
 RUN source /opt/conda/bin/activate \
     && conda activate singleuser \
-    && git clone https://gitlab-ci-token:$CI_JOB_TOKEN@code.il2.dso.mil/skicamp/project-opal/opal.git 
+    && printf "https://gitlab-ci-user:" > /home/jovyan/.git-credentials \
+    && printf "$CI_JOB_TOKEN" >> /home/jovyan/.git-credentials \
+    && printf "@code.il2.dso.mil" >> /home/jovyan/.git-credentials \
+    && git clone https://gitlab-ci-token:$CI_JOB_TOKEN@code.il2.dso.mil/skicamp/project-opal/opal.git \
+    && rm /home/jovyan/.git-credentials
 
 
 RUN rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/badcert.pem \
