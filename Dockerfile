@@ -5,6 +5,8 @@ FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:singleuser_v10 A
 COPY --chown=jovyan:jovyan --from=tipdependencies /local_channel /home/jovyan/tip_deps_channel
 # COPY --chown=jovyan:jovyan --from=pytorch /home/jovyan/local-channel /home/jovyan/pytorch_channel
 
+COPY --chown=jovyan:jovyan ./opal-scripts /home/jovyan/opal
+
 ENV ARTIFACT_DIR=".ci_artifacts/build-metadata/build-artifacts"
 ENV CI_JOB_TOKEN="$CI_JOB_TOKEN"
 
@@ -27,12 +29,7 @@ RUN mkdir /home/jovyan/tip_channel \
 ENV PATH="/opt/conda/envs/singleuser/bin:$PATH"
 
 RUN source /opt/conda/bin/activate \
-    && conda activate singleuser \
-    && CLONE_PREFIX="https://oauth2:" \
-    && WITH_TOKEN="$CLONE_PREFIX$CI_JOB_TOKEN" \
-    && CLONE_URL="$WITH_TOKEN@code.il2.dso.mil/skicamp/project-opal/opal.git" \
-    && git clone $CLONE_URL
-
+    && conda activate singleuser 
 
 RUN rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/badcert.pem \
     && rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packages/future/backports/test/badkey.pem \
