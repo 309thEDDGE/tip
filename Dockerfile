@@ -4,8 +4,8 @@ FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:singleuser_v10 A
 
 COPY --chown=jovyan:jovyan --from=tipdependencies /local_channel /home/jovyan/tip_deps_channel
 COPY --chown=jovyan:jovyan --from=pytorch /home/jovyan/local-channel /home/jovyan/pytorch_channel
-
-COPY --chown=jovyan:jovyan ./opal-scripts /home/jovyan/opal
+COPY --chown=jovyan:jovyan ./opal-scripts /opt/data/opal
+COPY --chown=jovyan:jovyan ./conf/ /opt/data/conf/
 
 ENV ARTIFACT_DIR=".ci_artifacts/build-metadata/build-artifacts"
 ENV CI_JOB_TOKEN="$CI_JOB_TOKEN"
@@ -13,7 +13,7 @@ ENV CI_JOB_TOKEN="$CI_JOB_TOKEN"
 WORKDIR /home/jovyan
 
 COPY --chown=jovyan:jovyan $ARTIFACT_DIR/local_channel.tar .
-COPY --chown=jovyan:jovyan ./conf/ /home/jovyan/conf
+
 
 # Sed replaces the "  - ./local-channel" entry in the conda env file and replaces it with the three local channels: tip_channel, tip_deps_channel, and local-channel
 RUN sed '/local-channel/s/.*/  - .\/pytorch_channel\n/' /home/jovyan/pytorch_channel/local_channel_env.yaml > /home/jovyan/pytorch_env.yaml \
