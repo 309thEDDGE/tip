@@ -47,7 +47,8 @@ RUN rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packa
     && rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/keycert2.pem \
     && rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/ssl_key.passwd.pem \
     && rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/future/backports/test/ssl_key.pem \
-    && rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/tornado/test/test.key
+    && rm -rf /opt/conda/envs/torch/lib/python3.9/site-packages/tornado/test/test.key \
+    && rm -rf /home/jovyan/conf
 
 
 ENTRYPOINT ["tini", "-g", "--"]
