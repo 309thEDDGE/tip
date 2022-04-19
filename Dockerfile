@@ -14,7 +14,6 @@ WORKDIR /home/jovyan
 
 COPY --chown=jovyan:jovyan $ARTIFACT_DIR/local_channel.tar .
 
-
 # Sed replaces the "  - ./local-channel" entry in the conda env file and replaces it with the three local channels: tip_channel, tip_deps_channel, and local-channel
 RUN sed '/local-channel/s/.*/  - .\/pytorch_channel\n/' /home/jovyan/pytorch_channel/local_channel_env.yaml > /home/jovyan/pytorch_env.yaml \
     && conda env create -f /home/jovyan/pytorch_env.yaml --offline \
