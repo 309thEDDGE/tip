@@ -4,6 +4,8 @@ FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:singleuser_v10 A
 
 COPY --chown=jovyan:jovyan --from=tipdependencies /local_channel /home/jovyan/tip_deps_channel
 COPY --chown=jovyan:jovyan --from=pytorch /home/jovyan/local-channel /home/jovyan/pytorch_channel
+
+RUN rm -rf /opt/data/opal
 COPY --chown=jovyan:jovyan ./opal-scripts /opt/data/opal
 COPY --chown=jovyan:jovyan ./conf/ /opt/data/conf/
 
