@@ -6,7 +6,7 @@ COPY --chown=jovyan:jovyan --from=tipdependencies /local_channel /home/jovyan/ti
 COPY --chown=jovyan:jovyan --from=pytorch /home/jovyan/local-channel /home/jovyan/pytorch_channel
 
 # Update to pull new opal repo
-COPY --chown=jovyan:jovyan ./opal-scripts /opt/data/opal
+COPY --chown=jovyan:jovyan ./opal-scripts/opal /opt/data/opal
 COPY --chown=jovyan:jovyan ./conf/ /opt/data/conf/
 
 ENV ARTIFACT_DIR=".ci_artifacts/build-metadata/build-artifacts"
@@ -24,7 +24,13 @@ RUN sed '/local-channel/s/.*/  - .\/pytorch_channel\n/' /home/jovyan/pytorch_cha
 RUN mkdir /home/jovyan/tip_channel \
     && tar xvf local_channel.tar --strip-components=3 --directory=/home/jovyan/tip_channel \
     && sed '/local-channel/s/.*/  - .\/tip_channel\n  - .\/tip_deps_channel\n  - .\/local-channel/' /home/jovyan/local-channel/local_channel_env.yaml > /home/jovyan/singleuser_env.yaml \
-    && printf "\n  - tip" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n  - pip:" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/batch_ingest" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/dts_utils" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/etl_utils" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/kinds" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/publish" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/search" >> /home/jovyan/singleuser_env.yaml \
     && conda env create -f /home/jovyan/singleuser_env.yaml --offline \
     && rm -rf /home/jovyan/tip_deps_channel /home/jovyan/local-channel
 
