@@ -18,6 +18,13 @@ COPY --chown=jovyan:jovyan $ARTIFACT_DIR/local_channel.tar .
 
 # Sed replaces the "  - ./local-channel" entry in the conda env file and replaces it with the three local channels: tip_channel, tip_deps_channel, and local-channel
 RUN sed '/local-channel/s/.*/  - .\/pytorch_channel\n/' /home/jovyan/pytorch_channel/local_channel_env.yaml > /home/jovyan/pytorch_env.yaml \
+    && printf "\n  - pip:" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/batch_ingest" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/dts_utils" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/etl_utils" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/kinds" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/publish" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/search" >> /home/jovyan/singleuser_env.yaml \
     && conda env create -f /home/jovyan/pytorch_env.yaml --offline \
     && rm -rf /home/jovyan/pytorch_channel
 
