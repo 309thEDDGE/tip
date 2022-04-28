@@ -31,6 +31,7 @@ RUN sed '/local-channel/s/.*/  - .\/pytorch_channel\n/' /home/jovyan/pytorch_cha
 RUN mkdir /home/jovyan/tip_channel \
     && tar xvf local_channel.tar --strip-components=3 --directory=/home/jovyan/tip_channel \
     && sed '/local-channel/s/.*/  - .\/tip_channel\n  - .\/tip_deps_channel\n  - .\/local-channel/' /home/jovyan/local-channel/local_channel_env.yaml > /home/jovyan/singleuser_env.yaml \
+    && printf "\n  - tip" >> /home/jovyan/singleuser_env.yaml \
     && printf "\n  - pip:" >> /home/jovyan/singleuser_env.yaml \
     && printf "\n    - /opt/data/opal/opal-packages/batch_ingest" >> /home/jovyan/singleuser_env.yaml \
     && printf "\n    - /opt/data/opal/opal-packages/dts_utils" >> /home/jovyan/singleuser_env.yaml \
