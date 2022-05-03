@@ -50,7 +50,7 @@ class TranslateTabularContextBase
         - Configure has been called with non-empty string and non-zero
           word size
         - SetColumnNames has been called and data_col_names has size > 0.
-          ridealong_col_names is not required and is therefore not checked. 
+          ridealong_col_names is not required and is therefore not checked.
 
     Return:
         True if configured as expected, false otherwise.
@@ -63,7 +63,7 @@ class TranslateTabularContextBase
 
     Args:
         ridealong_col_names --> names of columns which shall be created
-                                as ridealong columns in the final 
+                                as ridealong columns in the final
                                 translated data table
         data_col_names      --> names of all columns which shall be used
                                 during identification of message/type,
@@ -116,7 +116,7 @@ class TranslateTabularContextBase
     }
 
     /*
-    Ingest a single input file. 
+    Ingest a single input file.
 
     Args:
         thread_index--> Index of the thread in which the context is
@@ -141,7 +141,7 @@ class TranslateTabularContextBase
                         processed, counting from zero for the first
                         thread and incrementing for each additional
                         thread.
- 
+
     Return:
         Status indicating explicitly if translation for loop should
         'continue', proceed, or fail.
@@ -189,9 +189,9 @@ class TranslateTabularContextBase
                             processed, counting from zero for the first
                             thread and incrementing for each additional
                             thread.
-       
+
     Return:
-        True if no problems occur; false otherwise. 
+        True if no problems occur; false otherwise.
     */
     virtual bool CreateTranslatableTable(const std::string& name, size_t row_group_size,
                                          size_t index,
@@ -199,13 +199,13 @@ class TranslateTabularContextBase
                                          const ManagedPath& output_path, const size_t& thread_index);
 
     /*
-    Append a column to a table. 
+    Append a column to a table.
 
     Args:
         table_ptr       --> Pointer to table to which a column should be appended
         col_name        --> name of column
         ridealong       --> True if column is ridealong column type
-        icd_elem        --> Contains information about payload source words and 
+        icd_elem        --> Contains information about payload source words and
                             bit configuration schema
 
     Return:
@@ -217,12 +217,12 @@ class TranslateTabularContextBase
 
     /*
     Append a column whose translated data shall be stored in a uint8_t vector
-    and written to a an arrow::boolean() column. 
+    and written to a an arrow::boolean() column.
     AppendColumn<RawType, bool> can't be used because both the data
     are read as bit values, not boolean, and std::vector<bool> does not
     implement the data() member function which is used by ParquetContext.
 
-    The TranslatedType found in AppendColumn is implicitly defined to 
+    The TranslatedType found in AppendColumn is implicitly defined to
     be uint8_t. This function is otherwise a mirror of AppendColumn.
     */
     template <typename RawType>

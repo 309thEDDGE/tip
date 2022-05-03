@@ -1,8 +1,8 @@
 #include "ch10_packet.h"
 
 void Ch10Packet::SetCh10ComponentParsers(Ch10PacketHeaderComponent* header_comp,
-        Ch10TMATSComponent* tmats_comp, Ch10TDPComponent* tdp_comp, 
-        Ch101553F1Component* milstd1553_comp, Ch10VideoF0Component* video_comp, 
+        Ch10TMATSComponent* tmats_comp, Ch10TDPComponent* tdp_comp,
+        Ch101553F1Component* milstd1553_comp, Ch10VideoF0Component* video_comp,
         Ch10EthernetF0Component* eth_comp, Ch10429F0Component* arinc429_comp)
 {
     header_ = header_comp;
@@ -11,9 +11,68 @@ void Ch10Packet::SetCh10ComponentParsers(Ch10PacketHeaderComponent* header_comp,
     milstd1553f1_component_ = milstd1553_comp;
     videof0_component_ = video_comp;
     ethernetf0_component_ = eth_comp;
-    arinc429f0_component_ = arinc429_comp; 
+    arinc429f0_component_ = arinc429_comp;
 }
 
+bool Ch10Packet::IsConfigured()
+{
+
+    // Pointers set by constructor
+    if(bb_ == nullptr)
+    {
+        SPDLOG_CRITICAL("BinBuff pointer is nullptr");
+        return false;
+    }
+    if(ctx_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10Context pointer is nullptr");
+        return false;
+    }
+    if(ch10_time_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10Time pointer is nullptr");
+        return false;
+    }
+
+    // Pointers set by SetCh10ComponentParsers
+    if(header_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10PacketHeaderComponent pointer is nullptr");
+        return false;
+    }
+    if(tmats_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10TMATSComponent pointer is nullptr");
+        return false;
+    }
+    if(tdp_component_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10TDPComponent pointer is nullptr");
+        return false;
+    }
+    if(milstd1553f1_component_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch101553F1Component pointer is nullptr");
+        return false;
+    }
+    if(videof0_component_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10VideoF0Component pointer is nullptr");
+        return false;
+    }
+    if(ethernetf0_component_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10EthernetF0Component pointer is nullptr");
+        return false;
+    }
+    if(arinc429f0_component_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10429F0Component pointer is nullptr");
+        return false;
+    }
+
+    return true;
+}
 
 Ch10Status Ch10Packet::AdvanceBuffer(const uint64_t& byte_count)
 {

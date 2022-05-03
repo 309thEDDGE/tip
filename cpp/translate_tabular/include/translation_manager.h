@@ -54,9 +54,9 @@ class TranslationManager
     void operator()();
 
     /*
-    Assign the TranslateTabularContextBase-derived object which defines 
-    the standard set of functions calls executed by TranslationManager to 
-    carry out translation. 
+    Assign the TranslateTabularContextBase-derived object which defines
+    the standard set of functions calls executed by TranslationManager to
+    carry out translation.
 
     Args:
         context     --> Pointer to TranslateTabularContextBase which points

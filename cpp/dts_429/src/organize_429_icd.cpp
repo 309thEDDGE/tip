@@ -19,6 +19,7 @@ bool Organize429ICD::OrganizeICDMap(std::unordered_map<std::string, std::vector<
     uint16_t label;
     int8_t sdi;
     size_t table_index;
+    valid_arinc_word_count_ = 0;
 
     std::unordered_map<std::string, std::vector<ICDElement>>::
             iterator it = word_elements_map.begin();
@@ -42,12 +43,20 @@ bool Organize429ICD::OrganizeICDMap(std::unordered_map<std::string, std::vector<
         {
             if(!AddToElementTable(table_index,it->second,element_table))
                 return false;
+
+            valid_arinc_word_count_ = valid_arinc_word_count_ + 1;
         }
         else
         {
             table_index = element_table.size();
             if(!AddToElementTable(table_index,it->second,element_table))
                 return false;
+
+            valid_arinc_word_count_ = valid_arinc_word_count_ + 1;
+
+            // build arinc_word_names_ map to match name of word with to same
+            //table_index and vector index as word's data vector in element_table
+            arinc_word_names_[table_index].push_back(it->first);
 
             organized_lookup_map[chan_id][subchan_id][label].insert({sdi,table_index});
         }
@@ -204,8 +213,8 @@ bool Organize429ICD::IsIndexInLookupMap(uint16_t& chan_id, uint16_t& subchan_id,
 {
     if(organized_lookup_map.size()<1)
     {
-        SPDLOG_WARN("Organize429ICD::IsIndexInLookupMap(): "
-            "Empty input map \'organized_lookup_map\'");
+        // SPDLOG_WARN("Organize429ICD::IsIndexInLookupMap(): "
+        //     "Empty input map \'organized_lookup_map\'");
         return false;
     }
     if (organized_lookup_map.find(chan_id) == organized_lookup_map.end())

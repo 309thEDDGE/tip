@@ -9,7 +9,7 @@ class MockCh10Context: public Ch10Context
 {
    public:
     MockCh10Context() : Ch10Context() {}
-    MOCK_METHOD3(UpdateContext, Ch10Status(const uint64_t& abs_pos, 
+    MOCK_METHOD3(UpdateContext, Ch10Status(const uint64_t& abs_pos,
         const Ch10PacketHeaderFmt* const hdr_fmt_ptr_, const uint64_t& rtc_time));
     MOCK_METHOD1(UpdateWithSecondaryHeaderTime, void(const uint64_t& time_ns));
     MOCK_METHOD1(ContinueWithPacketType, Ch10Status(uint8_t data_type));

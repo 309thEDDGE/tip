@@ -20,18 +20,34 @@ class Organize429ICD
     // busname_to_channel_subchannel_ids_ lookup.
     std::vector<std::string> subchannel_name_lookup_misses_;
 
+    // map providing the arinc word name at a given table_index and vector index matching the
+    // arinc word data vector, vector<vector<ICDElement>>, found in element_table created by
+    // Organize429ICD
+    std::unordered_map<size_t,std::vector<std::string>> arinc_word_names_;
+
+    // count of valid 429 words in ICD added to lookup map
+    size_t valid_arinc_word_count_;
+
    public:
     Organize429ICD(){}
+    virtual ~Organize429ICD(){}
 
-    std::unordered_map<std::string, std::tuple<uint16_t, uint16_t>> GetBusNameToChannelSubchannelMap()
+    virtual std::unordered_map<std::string, std::tuple<uint16_t, uint16_t>> GetBusNameToChannelSubchannelMap()
     {
         return busname_to_channel_subchannel_ids_;
     }
 
-    std::vector<std::string> GetSubchannelNameLookupMisses()
+    virtual std::vector<std::string> GetSubchannelNameLookupMisses()
     {
         return subchannel_name_lookup_misses_;
     }
+
+    virtual std::unordered_map<size_t,std::vector<std::string>> GetArincWordNames()
+    {
+        return arinc_word_names_;
+    }
+
+    virtual size_t GetValidArincWordCount() {return valid_arinc_word_count_;}
 
     /*
     Perform organization of nested maps to vector<ICDElement>. Resulting map
@@ -63,7 +79,7 @@ class Organize429ICD
     Return:
         True if map successfully constructed; false otherwise
     */
-    bool OrganizeICDMap(std::unordered_map<std::string, std::vector<ICDElement>>& word_elements_map,
+    virtual bool OrganizeICDMap(std::unordered_map<std::string, std::vector<ICDElement>>& word_elements_map,
                         YAML::Node& md_chanid_to_subchan_node,
                         std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
                         uint16_t,std::unordered_map<int8_t, size_t>>>>& organized_lookup_map,

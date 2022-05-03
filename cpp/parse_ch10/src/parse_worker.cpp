@@ -107,6 +107,8 @@ void ParseWorker::ParseBufferData(Ch10Context* ctx, BinBuff* bb,
     // Instantiate Ch10Packet object
     Ch10Packet packet(bb, ctx, &ch10time, tmats_vec);
     packet.SetCh10ComponentParsers(&header, &tmats, &tdp, &milstd1553, &vid, &eth, &arinc429);
+    if(!packet.IsConfigured())
+        return;
 
     // Parse packets until error or end of buffer.
     bool continue_parsing = true;
