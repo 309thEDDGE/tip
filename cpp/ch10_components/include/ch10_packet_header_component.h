@@ -129,13 +129,13 @@ class Ch10PacketHeaderComponent : public Ch10PacketComponent
 
     /*
     Parse a block of raw binary data beginning at the 'data' pointer
-    according to the Ch10PacketHeaderFmt::intrapkt_ts_source and 
-    Ch10PacketHeaderFmt::time_format. 
+    according to the Ch10PacketHeaderFmt::intrapkt_ts_source and
+    Ch10PacketHeaderFmt::time_format.
 
     Args:
         data	--> pointer to a position in the binary data which is currently
 					expected to contain IPTS data
-        time_ns --> 
+        time_ns -->
     */
     void ParseTimeStampNS(const uint8_t*& data, uint64_t& time_ns);
 };

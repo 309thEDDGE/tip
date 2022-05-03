@@ -1,11 +1,13 @@
 set(headers
     include/dts429.h
     include/organize_429_icd.h
+    include/arinc429_data.h
 )
 
 add_library(dts_429
     src/dts429.cpp
     src/organize_429_icd.cpp
+    src/arinc429_data.cpp
 )
 
 target_compile_features(dts_429 PUBLIC cxx_std_17)

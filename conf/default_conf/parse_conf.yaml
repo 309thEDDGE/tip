@@ -8,7 +8,7 @@
 #
 # ch10_packet_type
 #
-# Enable ch10 packets by setting the mapped value to 'true'. 
+# Enable ch10 packets by setting the mapped value to 'true'.
 # Set to 'false' to disable.
 #
 ch10_packet_type:
@@ -20,8 +20,8 @@ ch10_packet_type:
 #
 # parse_chunk_bytes
 #
-# Quantity of bytes, in units of millions, ingested for parsing by each worker thread. Must be 
-# in range [135, 1000]. 
+# Quantity of bytes, in units of millions, ingested for parsing by each worker thread. Must be
+# in range [135, 1000].
 #
 parse_chunk_bytes: 200
 
@@ -46,16 +46,16 @@ max_chunk_read_count: 1000
 #
 # worker_offset_wait_ms
 #
-# Duration in millisecond to wait after each worker starts, only for the initial set of parse_thread_count 
+# Duration in millisecond to wait after each worker starts, only for the initial set of parse_thread_count
 # workers. Staggered start time distributes IO load. Normally in range [500, 10000].
-# 
+#
 worker_offset_wait_ms: 200
 
 #
 # worker_shift_wait_ms
 #
 # Duration in millisecond to wait before checking workers' states. Normally in range [20, 500].
-# 
+#
 worker_shift_wait_ms: 200
 
 #

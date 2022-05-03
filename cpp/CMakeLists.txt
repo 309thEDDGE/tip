@@ -221,12 +221,9 @@ message(STATUS "Building lib: " "${dts429_lib_name}")
 set(dts429_src_dir ${dts429_lib_name}/${source_dir_name})
 set(dts429_inc_dir ${dts429_lib_name}/${include_dir_name})
 add_library(${dts429_lib_name} STATIC
-        ${dts1553_src_dir}/bus_map.cpp                        ${dts1553_inc_dir}/bus_map.h
-        ${dts1553_src_dir}/icd_data.cpp                       ${dts1553_inc_dir}/icd_data.h
-        ${dts1553_src_dir}/icd_element.cpp                    ${dts1553_inc_dir}/icd_element.h
-        ${dts1553_src_dir}/icd_translate.cpp                  ${dts1553_inc_dir}/icd_translate.h
         ${dts429_src_dir}/dts429.cpp                          ${dts429_inc_dir}/dts429.h
         ${dts429_src_dir}/organize_429_icd.cpp                ${dts429_inc_dir}/organize_429_icd.h
+        ${dts429_src_dir}/arinc429_data.cpp                ${dts429_inc_dir}/arinc429_data.h
     )
 
 target_include_directories(${dts429_lib_name} PUBLIC ${dts429_inc_dir} ${dts1553_inc_dir}
@@ -313,10 +310,13 @@ add_library(${transtab429_lib_name}
         ${common_inc_dir}/ch10_packet_type.h
         ${transtab429_inc_dir}/translate_tabular_context_arinc429.h ${transtab429_src_dir}/translate_tabular_context_arinc429.cpp
         ${transtab429_inc_dir}/translate_tabular_arinc429_main.h ${transtab429_src_dir}/translate_tabular_arinc429_main.cpp
+        ${transtab429_inc_dir}/translatable_explicit_sign_column_template.h
+        ${transtab429_inc_dir}/translatable_arinc429_table.h ${transtab429_src_dir}/translatable_arinc429_table.cpp
 )
 target_include_directories(${transtab429_lib_name} PUBLIC
                         ${common_inc_dir}
                         ${transtab429_inc_dir}
+                        ${dts429_inc_dir}
                         ${util_inc_dir}
                         ${ch10pq_inc_dir}
                         ${yamlsv_inc_dir}
@@ -331,6 +331,7 @@ target_link_libraries(${transtab429_lib_name} ${transtab_lib_name}
                     ${spdlog_lib_name}
                     ${md_lib_name}
                     ${linux_libs}
+                    ${dts429_lib_name}
                     )
 target_compile_features(${transtab429_lib_name} PUBLIC cxx_std_17)
 
@@ -578,6 +579,8 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/parquet_ethernetf0_u.cpp
                 ${test_src_dir}/ch10_parse_main_u.cpp
                 ${test_src_dir}/translate_tabular_1553_main_u.cpp
+                ${test_src_dir}/translate_tabular_arinc429_main_u.cpp
+                ${test_src_dir}/arinc429_data_u.cpp
                 ${test_src_dir}/parquet_tdpf1_u.cpp)
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs}
@@ -603,6 +606,7 @@ target_link_libraries(${test_exe_name}
                         ${yamlsv_lib_name}
                         ${transtab_lib_name}
                         ${transtab1553_lib_name}
+                        ${transtab429_lib_name}
                         ${linux_libs}
                         ${md_lib_name})
 

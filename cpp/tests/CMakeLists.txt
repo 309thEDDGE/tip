@@ -7,15 +7,18 @@ set(headers
     include/dts1553_mock.h
     include/managed_path_mock.h
     include/tip_md_document_mock.h
-    include/binbuff_mock.h 
-    include/ch10_context_mock.h 
+    include/binbuff_mock.h
+    include/ch10_context_mock.h
     include/ch10_packet_header_component_mock.h
+    include/dts_429_mock.h
+    include/organize_429_icd_mock.h
+    include/arinc429_data_mock.h
     include/ch10_time_mock.h
     include/ch10_tmats_component_mock.h
     include/ch10_tdp_component_mock.h
     include/ch10_1553f1_component_mock.h
-    include/ch10_videof0_component_mock.h 
-    include/ch10_ethernetf0_component_mock.h 
+    include/ch10_videof0_component_mock.h
+    include/ch10_ethernetf0_component_mock.h
     include/ch10_arinc429f0_component_mock.h
     include/parquet_tdpf1_mock.h
 )
@@ -88,6 +91,8 @@ add_executable(tests
     src/parquet_ethernetf0_u.cpp
     src/ch10_parse_main_u.cpp
     src/translate_tabular_1553_main_u.cpp
+    src/arinc429_data_u.cpp
+    src/translate_tabular_arinc429_main_u.cpp
     src/parquet_tdpf1_u.cpp
 )
 
@@ -101,7 +106,7 @@ target_link_libraries(tests
     PUBLIC common parsech10_lib ch10_parquet ch10ethernet parquet_context ch10comp
     dts_1553 dts_429 tiputil parquet_compare pq_vid_extract yamlsv
     arrow_shared parquet spdlog::spdlog translate_tabular translate_tabular_1553
-    metadata
+    metadata translate_tabular_arinc429
     PRIVATE ${GTEST_LIBRARIES}
 )
 

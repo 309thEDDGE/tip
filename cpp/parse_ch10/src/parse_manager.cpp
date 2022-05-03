@@ -216,7 +216,7 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
                 case Ch10PacketType::MILSTD1553_F1:
                     if (parsed_packet_types.count(Ch10PacketType::MILSTD1553_F1) == 1)
                     {
-                        if (!RecordMilStd1553F1Metadata(input_ch10_file_path, 
+                        if (!RecordMilStd1553F1Metadata(input_ch10_file_path,
                             user_config, prov_data, tmats_data,
                             ch10packettype_to_string_map.at(Ch10PacketType::MILSTD1553_F1),
                             output_dir_map_[Ch10PacketType::MILSTD1553_F1] / md_filename))
@@ -226,7 +226,7 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
                 case Ch10PacketType::VIDEO_DATA_F0:
                     if (parsed_packet_types.count(Ch10PacketType::VIDEO_DATA_F0) == 1)
                     {
-                        if (!RecordVideoDataF0Metadata(input_ch10_file_path, 
+                        if (!RecordVideoDataF0Metadata(input_ch10_file_path,
                             user_config, prov_data, tmats_data,
                             ch10packettype_to_string_map.at(Ch10PacketType::VIDEO_DATA_F0),
                             output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] / md_filename))
@@ -236,7 +236,7 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
                 case Ch10PacketType::ARINC429_F0:
                     if (parsed_packet_types.count(Ch10PacketType::ARINC429_F0) == 1)
                     {
-                        if (!RecordARINC429F0Metadata(input_ch10_file_path, 
+                        if (!RecordARINC429F0Metadata(input_ch10_file_path,
                             user_config, prov_data, tmats_data,
                             ch10packettype_to_string_map.at(Ch10PacketType::ARINC429_F0),
                             output_dir_map_[Ch10PacketType::ARINC429_F0] / md_filename))
@@ -271,18 +271,18 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
     return true;
 }
 
-bool ParseManager::RecordProvenanceData(TIPMDDocument& md, 
+bool ParseManager::RecordProvenanceData(TIPMDDocument& md,
     const ManagedPath& input_ch10_file_path, const std::string& packet_type_label,
     const ProvenanceData& prov_data)
 {
     md.type_category_->SetScalarValue("parsed_" + packet_type_label);
 
     std::string ch10_hash = prov_data.hash;
-    std::string uid = Sha256(ch10_hash + prov_data.time + 
+    std::string uid = Sha256(ch10_hash + prov_data.time +
         prov_data.tip_version + packet_type_label);
     md.uid_category_->SetScalarValue(uid);
     md.AddResource("CH10", input_ch10_file_path.RawString(), ch10_hash);
-    
+
     if(!md.prov_category_->SetMappedValue("time", prov_data.time))
         return false;
     if(!md.prov_category_->SetMappedValue("version", prov_data.tip_version))
@@ -290,7 +290,7 @@ bool ParseManager::RecordProvenanceData(TIPMDDocument& md,
     return true;
 }
 
-void ParseManager::RecordUserConfigData(std::shared_ptr<MDCategoryMap> config_category, 
+void ParseManager::RecordUserConfigData(std::shared_ptr<MDCategoryMap> config_category,
     const ParserConfigParams& user_config)
 {
     config_category->SetArbitraryMappedValue("ch10_packet_type",
@@ -314,10 +314,10 @@ bool ParseManager::ProcessTMATSForType(const TMATSData& tmats_data, TIPMDDocumen
 {
     // Filter TMATS maps
     std::map<std::string, std::string> tmats_chanid_to_type_filtered;
-    if(!tmats_data.FilterTMATSType(tmats_data.chanid_to_type_map, 
+    if(!tmats_data.FilterTMATSType(tmats_data.chanid_to_type_map,
         pkt_type, tmats_chanid_to_type_filtered))
     {
-        spdlog::get("pm_logger")->error("Failed to filter TMATS for type \"{:s}\"", 
+        spdlog::get("pm_logger")->error("Failed to filter TMATS for type \"{:s}\"",
             ch10packettype_to_string_map.at(pkt_type));
         return false;
     }
@@ -343,11 +343,11 @@ bool ParseManager::RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
                                               const std::string& packet_type_label,
                                               const ManagedPath& md_file_path)
 {
-    spdlog::get("pm_logger")->debug("RecordMetadata: recording {:s} metadata", 
+    spdlog::get("pm_logger")->debug("RecordMetadata: recording {:s} metadata",
         packet_type_label);
 
     TIPMDDocument md;
-    if(!RecordProvenanceData(md, input_ch10_file_path, packet_type_label, prov_data)) 
+    if(!RecordProvenanceData(md, input_ch10_file_path, packet_type_label, prov_data))
         return false;
     RecordUserConfigData(md.config_category_, user_config);
 
@@ -365,7 +365,7 @@ bool ParseManager::RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
     if (!CombineChannelIDToLRUAddressesMetadata(output_chanid_remoteaddr_map,
                                                 chanid_lruaddr1_maps, chanid_lruaddr2_maps))
         return false;
-    md.runtime_category_->SetArbitraryMappedValue("chanid_to_lru_addrs", 
+    md.runtime_category_->SetArbitraryMappedValue("chanid_to_lru_addrs",
         output_chanid_remoteaddr_map);
 
     // Obtain the channel ID to command words set map.
@@ -443,7 +443,7 @@ bool ParseManager::RecordARINC429F0Metadata(ManagedPath input_ch10_file_path,
     spdlog::get("pm_logger")->debug("RecordMetadata: recording {:s} metadata", ch10packettype_to_string_map.at(Ch10PacketType::ARINC429_F0));
 
     TIPMDDocument md;
-    if(!RecordProvenanceData(md, input_ch10_file_path, packet_type_label, prov_data)) 
+    if(!RecordProvenanceData(md, input_ch10_file_path, packet_type_label, prov_data))
         return false;
     RecordUserConfigData(md.config_category_, user_config);
 
@@ -989,7 +989,7 @@ bool ParseManager::RemoveCh10PacketOutputDirs(const std::map<Ch10PacketType, Man
         {
             if(parsed_packet_types.count(it->first) == 0)
             {
-                spdlog::get("pm_logger")->info("Removing unused {:s} dir: {:s}", 
+                spdlog::get("pm_logger")->info("Removing unused {:s} dir: {:s}",
                     packet_type_name, it->second.RawString());
                 if(!it->second.remove())
                 {
@@ -1001,7 +1001,7 @@ bool ParseManager::RemoveCh10PacketOutputDirs(const std::map<Ch10PacketType, Man
         }
         else
         {
-            spdlog::get("pm_logger")->warn("Expected output {:s} dir does not exist: {:s}", 
+            spdlog::get("pm_logger")->warn("Expected output {:s} dir does not exist: {:s}",
                 packet_type_name, it->second.RawString());
         }
     }
@@ -1182,7 +1182,7 @@ void ParseManager::AssembleParsedPacketTypesSet(std::set<Ch10PacketType>& parsed
 
     // Log the parsed packet types
     spdlog::get("pm_logger")->info("Parsed packet types:");
-    for (std::set<Ch10PacketType>::const_iterator it = parsed_packet_types.cbegin(); 
+    for (std::set<Ch10PacketType>::const_iterator it = parsed_packet_types.cbegin();
         it != parsed_packet_types.cend(); ++it)
     {
         spdlog::get("pm_logger")->info(" - {:s}", ch10packettype_to_string_map.at(*it));

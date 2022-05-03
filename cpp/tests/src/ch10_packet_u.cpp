@@ -40,16 +40,16 @@ class Ch10PacketTest : public ::testing::Test
     std::vector<std::string> tmats_vec_;
     Ch10Packet p_;
 
-    Ch10PacketTest() : status_(Ch10Status::NONE), mock_bb_(), mock_ctx_(), mock_ch10_time_(), 
-        tmats_vec_{}, p_(&mock_bb_, &mock_ctx_, &mock_ch10_time_, tmats_vec_), 
-        mock_tmats_(&mock_ctx_), mock_tdp_(&mock_ctx_), mock_milstd1553_(&mock_ctx_), mock_vid_(&mock_ctx_), 
-        mock_eth_(&mock_ctx_), mock_arinc429_(&mock_ctx_), mock_hdr_(&mock_ctx_) 
+    Ch10PacketTest() : status_(Ch10Status::NONE), mock_bb_(), mock_ctx_(), mock_ch10_time_(),
+        tmats_vec_{}, p_(&mock_bb_, &mock_ctx_, &mock_ch10_time_, tmats_vec_),
+        mock_tmats_(&mock_ctx_), mock_tdp_(&mock_ctx_), mock_milstd1553_(&mock_ctx_), mock_vid_(&mock_ctx_),
+        mock_eth_(&mock_ctx_), mock_arinc429_(&mock_ctx_), mock_hdr_(&mock_ctx_)
     {
     }
 
     virtual void SetUp()
     {
-        p_.SetCh10ComponentParsers(&mock_hdr_, &mock_tmats_, &mock_tdp_, &mock_milstd1553_, 
+        p_.SetCh10ComponentParsers(&mock_hdr_, &mock_tmats_, &mock_tdp_, &mock_milstd1553_,
             &mock_vid_, &mock_eth_, &mock_arinc429_);
     }
 };
@@ -200,7 +200,7 @@ TEST_F(Ch10PacketTest, ParseHeaderManageHeaderParseStatusFail)
     const uint8_t* data_ptr = static_cast<const uint8_t*>(&some_data);
     EXPECT_CALL(mock_bb_, Data()).InSequence(seq).WillOnce(Return(data_ptr));
     EXPECT_CALL(mock_hdr_, Parse(data_ptr)).InSequence(seq).WillOnce(Return(Ch10Status::BAD_SYNC));
-    
+
     Ch10PacketHeaderFmt hdr_fmt;
     hdr_fmt.pkt_size = 10;
     EXPECT_CALL(mock_hdr_, GetHeader()).InSequence(seq).WillOnce(Return(&hdr_fmt));
@@ -219,7 +219,7 @@ TEST_F(Ch10PacketTest, ParseHeaderAllPacketBytesAvailableFail)
     const uint8_t* data_ptr = static_cast<const uint8_t*>(&some_data);
     EXPECT_CALL(mock_bb_, Data()).InSequence(seq).WillOnce(Return(data_ptr));
     EXPECT_CALL(mock_hdr_, Parse(data_ptr)).InSequence(seq).WillOnce(Return(Ch10Status::OK));
-    
+
     Ch10PacketHeaderFmt hdr_fmt;
     hdr_fmt.pkt_size = 10;
     EXPECT_CALL(mock_hdr_, GetHeader()).InSequence(seq).WillOnce(Return(&hdr_fmt));
@@ -239,7 +239,7 @@ TEST_F(Ch10PacketTest, ParseHeaderAdvanceBufferFail)
     const uint8_t* data_ptr = static_cast<const uint8_t*>(&some_data);
     EXPECT_CALL(mock_bb_, Data()).InSequence(seq).WillOnce(Return(data_ptr));
     EXPECT_CALL(mock_hdr_, Parse(data_ptr)).InSequence(seq).WillOnce(Return(Ch10Status::OK));
-    
+
     Ch10PacketHeaderFmt hdr_fmt;
     hdr_fmt.pkt_size = 10;
     EXPECT_CALL(mock_hdr_, GetHeader()).InSequence(seq).WillOnce(Return(&hdr_fmt));
@@ -260,7 +260,7 @@ TEST_F(Ch10PacketTest, ParseHeaderUpdateContextFail)
     const uint8_t* data_ptr = static_cast<const uint8_t*>(&some_data);
     EXPECT_CALL(mock_bb_, Data()).InSequence(seq).WillOnce(Return(data_ptr));
     EXPECT_CALL(mock_hdr_, Parse(data_ptr)).InSequence(seq).WillOnce(Return(Ch10Status::OK));
-    
+
     Ch10PacketHeaderFmt hdr_fmt;
     hdr_fmt.pkt_size = 10;
     hdr_fmt.rtc1 = 29439;
@@ -288,7 +288,7 @@ TEST_F(Ch10PacketTest, ParseHeaderVerifyDataChecksumFail)
     const uint8_t* data_ptr = static_cast<const uint8_t*>(&some_data);
     EXPECT_CALL(mock_bb_, Data()).InSequence(seq).WillOnce(Return(data_ptr));
     EXPECT_CALL(mock_hdr_, Parse(data_ptr)).InSequence(seq).WillOnce(Return(Ch10Status::OK));
-    
+
     Ch10PacketHeaderFmt hdr_fmt;
     hdr_fmt.pkt_size = 10;
     hdr_fmt.rtc1 = 29439;
@@ -301,7 +301,7 @@ TEST_F(Ch10PacketTest, ParseHeaderVerifyDataChecksumFail)
     EXPECT_CALL(mock_ch10_time_, CalculateRTCTimeFromComponents(hdr_fmt.rtc1, hdr_fmt.rtc2))
         .InSequence(seq).WillOnce(::testing::ReturnRef(temp_time));
     EXPECT_CALL(mock_ctx_, UpdateContext(_, &hdr_fmt, _)).
-        InSequence(seq).WillOnce(Return(Ch10Status::OK)); 
+        InSequence(seq).WillOnce(Return(Ch10Status::OK));
     EXPECT_CALL(mock_hdr_, VerifyDataChecksum(_, hdr_fmt.checksum_existence, hdr_fmt.pkt_size,
         hdr_fmt.secondary_hdr)).InSequence(seq).WillOnce(Return(Ch10Status::CHECKSUM_FALSE));
 
@@ -318,7 +318,7 @@ TEST_F(Ch10PacketTest, ParseHeaderSecondaryHeaderFail)
     const uint8_t* data_ptr = static_cast<const uint8_t*>(&some_data);
     EXPECT_CALL(mock_bb_, Data()).InSequence(seq).WillOnce(Return(data_ptr));
     EXPECT_CALL(mock_hdr_, Parse(data_ptr)).InSequence(seq).WillOnce(Return(Ch10Status::OK));
-    
+
     Ch10PacketHeaderFmt hdr_fmt;
     hdr_fmt.pkt_size = 10;
     hdr_fmt.rtc1 = 29439;
@@ -331,13 +331,13 @@ TEST_F(Ch10PacketTest, ParseHeaderSecondaryHeaderFail)
     EXPECT_CALL(mock_ch10_time_, CalculateRTCTimeFromComponents(hdr_fmt.rtc1, hdr_fmt.rtc2))
         .InSequence(seq).WillOnce(::testing::ReturnRef(temp_time));
     EXPECT_CALL(mock_ctx_, UpdateContext(_, &hdr_fmt, _)).
-        InSequence(seq).WillOnce(Return(Ch10Status::OK)); 
+        InSequence(seq).WillOnce(Return(Ch10Status::OK));
     EXPECT_CALL(mock_hdr_, VerifyDataChecksum(_, hdr_fmt.checksum_existence, hdr_fmt.pkt_size,
         hdr_fmt.secondary_hdr)).InSequence(seq).WillOnce(Return(Ch10Status::OK));
     EXPECT_CALL(mock_hdr_, ParseSecondaryHeader(_, _)).InSequence(seq)
         .WillOnce(Return(Ch10Status::CHECKSUM_FALSE));
     EXPECT_CALL(mock_bb_, AdvanceReadPos(hdr_fmt.pkt_size)).InSequence(seq).WillOnce(Return(0));
-    EXPECT_CALL(mock_ctx_, AdvanceAbsPos(hdr_fmt.pkt_size)).InSequence(seq).WillOnce(Return()); 
+    EXPECT_CALL(mock_ctx_, AdvanceAbsPos(hdr_fmt.pkt_size)).InSequence(seq).WillOnce(Return());
 
     ASSERT_EQ(Ch10Status::PKT_TYPE_NO, p_.ParseHeader());
 }
@@ -352,7 +352,7 @@ TEST_F(Ch10PacketTest, ParseHeaderNoUpdateSecondaryHeaderTime)
     const uint8_t* data_ptr = static_cast<const uint8_t*>(&some_data);
     EXPECT_CALL(mock_bb_, Data()).InSequence(seq).WillOnce(Return(data_ptr));
     EXPECT_CALL(mock_hdr_, Parse(data_ptr)).InSequence(seq).WillOnce(Return(Ch10Status::OK));
-    
+
     Ch10PacketHeaderFmt hdr_fmt;
     hdr_fmt.pkt_size = 10;
     hdr_fmt.rtc1 = 29439;
@@ -365,12 +365,12 @@ TEST_F(Ch10PacketTest, ParseHeaderNoUpdateSecondaryHeaderTime)
     EXPECT_CALL(mock_ch10_time_, CalculateRTCTimeFromComponents(hdr_fmt.rtc1, hdr_fmt.rtc2))
         .InSequence(seq).WillOnce(::testing::ReturnRef(temp_time));
     EXPECT_CALL(mock_ctx_, UpdateContext(_, &hdr_fmt, _)).
-        InSequence(seq).WillOnce(Return(Ch10Status::OK)); 
+        InSequence(seq).WillOnce(Return(Ch10Status::OK));
     EXPECT_CALL(mock_hdr_, VerifyDataChecksum(_, hdr_fmt.checksum_existence, hdr_fmt.pkt_size,
         hdr_fmt.secondary_hdr)).InSequence(seq).WillOnce(Return(Ch10Status::OK));
     uint64_t sec_hdr_time_ns = 0;
     EXPECT_CALL(mock_hdr_, ParseSecondaryHeader(_, _)).InSequence(seq)
-        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(sec_hdr_time_ns), 
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(sec_hdr_time_ns),
         Return(Ch10Status::OK)));
     EXPECT_CALL(mock_ctx_, ContinueWithPacketType(hdr_fmt.data_type)).InSequence(seq)
         .WillOnce(Return(Ch10Status::PKT_TYPE_YES));
@@ -388,7 +388,7 @@ TEST_F(Ch10PacketTest, ParseHeaderUpdateSecondaryHeaderTime)
     const uint8_t* data_ptr = static_cast<const uint8_t*>(&some_data);
     EXPECT_CALL(mock_bb_, Data()).InSequence(seq).WillOnce(Return(data_ptr));
     EXPECT_CALL(mock_hdr_, Parse(data_ptr)).InSequence(seq).WillOnce(Return(Ch10Status::OK));
-    
+
     Ch10PacketHeaderFmt hdr_fmt;
     hdr_fmt.pkt_size = 10;
     hdr_fmt.rtc1 = 29439;
@@ -401,12 +401,12 @@ TEST_F(Ch10PacketTest, ParseHeaderUpdateSecondaryHeaderTime)
     EXPECT_CALL(mock_ch10_time_, CalculateRTCTimeFromComponents(hdr_fmt.rtc1, hdr_fmt.rtc2))
         .InSequence(seq).WillOnce(::testing::ReturnRef(temp_time));
     EXPECT_CALL(mock_ctx_, UpdateContext(_, &hdr_fmt, _)).
-        InSequence(seq).WillOnce(Return(Ch10Status::OK)); 
+        InSequence(seq).WillOnce(Return(Ch10Status::OK));
     EXPECT_CALL(mock_hdr_, VerifyDataChecksum(_, hdr_fmt.checksum_existence, hdr_fmt.pkt_size,
         hdr_fmt.secondary_hdr)).InSequence(seq).WillOnce(Return(Ch10Status::OK));
     uint64_t sec_hdr_time_ns = 8482010; // non-zero
     EXPECT_CALL(mock_hdr_, ParseSecondaryHeader(_, _)).InSequence(seq)
-        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(sec_hdr_time_ns), 
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(sec_hdr_time_ns),
         Return(Ch10Status::OK)));
     EXPECT_CALL(mock_ctx_, UpdateWithSecondaryHeaderTime(sec_hdr_time_ns)).InSequence(seq)
         .WillOnce(Return());

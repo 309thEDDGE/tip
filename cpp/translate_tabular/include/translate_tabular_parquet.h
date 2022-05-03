@@ -191,7 +191,7 @@ public:
         is to avoid termination if a single table is marked as invalid so
         there is no use for returning false. 
     */
-    bool AppendTimeAndRawDataToTable(const size_t& thread_index, 
+    virtual bool AppendTimeAndRawDataToTable(const size_t& thread_index, 
         std::shared_ptr<TranslatableTableBase> table, const uint8_t* time_data,
         const uint8_t* raw_data, const size_t& raw_data_count, 
         const std::string& table_name); 

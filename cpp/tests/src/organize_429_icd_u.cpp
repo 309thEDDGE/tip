@@ -2,6 +2,9 @@
 #include "gmock/gmock.h"
 #include "organize_429_icd.h"
 #include "icd_element.h"
+#include <unordered_map>
+#include <vector>
+#include <string>
 
 class Organize429ICDTest : public ::testing::Test
 {
@@ -831,5 +834,115 @@ TEST_F(Organize429ICDTest, OrganizeICDMapWordValidateOutputEndToEndBadSubchannel
     // GetICDElementComponents was false and hit continue
     // OrganizeICDMap
     EXPECT_EQ(element_table.size(),0);
+
+}
+
+TEST_F(Organize429ICDTest, OrganizeICDMapWordValidateOutputArincWordNames)
+{
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
+    YAML::Node md_chanid_to_subchan_node;
+    std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
+            uint16_t,std::unordered_map<int8_t, size_t>>>> organized_lookup_map;
+    std::vector<std::vector<std::vector<ICDElement>>> element_table;
+    std::unordered_map<size_t,std::vector<std::string>> arinc_word_names;
+
+    // set up word_elements
+    SetupElement();
+    std::vector<ICDElement> element_vec;
+    element_vec.push_back(expected_element);
+    word_elements["TestWord"] = element_vec;
+    element_vec.clear();
+
+
+    // set up md_chanid_to_subchan_node
+    BuildNode(md_chan_id_strings, md_chanid_to_subchan_node);
+
+    // build icd_element that will be the "missed subchannel name" below
+    ICDElement input_element;
+    input_element.label_= 107;
+    input_element.sdi_= 1;            // 8-bit
+    input_element.bus_name_="MISS1";
+    input_element.msg_name_="MissWord";
+    input_element.rate_=1.1;
+    input_element.description_="Altitude";
+    input_element.xmit_lru_name_="LRU921";
+    input_element.elem_name_="107_alt";
+    input_element.schema_=ICDElementSchema::UNSIGNEDBITS;
+    input_element.is_bitlevel_=true;
+    input_element.bcd_partial_=-1;
+    input_element.msb_val_=1.0;
+    input_element.bitlsb_= 11;        // 8-bit
+    input_element.bit_count_= 8;      // 8-bit
+    input_element.uom_="FT";
+    input_element.classification_=0;  // 8-bit
+
+    element_vec.push_back(input_element);
+    word_elements["MissWord"] = element_vec;
+
+    ASSERT_TRUE(org.OrganizeICDMap(word_elements, md_chanid_to_subchan_node, organized_lookup_map, element_table));
+
+    // check element_table has correct item stored
+    EXPECT_EQ(element_table.size(),1);
+    EXPECT_EQ(element_table[0].size(),1);
+    EXPECT_EQ(element_table[0][0].size(),1);
+    EXPECT_EQ(element_table[0][0][0].bus_name_, "SET1B");
+
+    // check for ARINC 429 word name in
+    arinc_word_names = org.GetArincWordNames();
+    EXPECT_EQ(arinc_word_names.size(),1);
+    EXPECT_EQ(arinc_word_names[0].size(),1);
+    EXPECT_EQ(arinc_word_names[0][0],"TestWord");
+
+}
+
+TEST_F(Organize429ICDTest, OrganizeICDMapIndexInLookupMap)
+{
+    std::unordered_map<std::string, std::vector<ICDElement>> word_elements;
+    YAML::Node md_chanid_to_subchan_node;
+    std::unordered_map<uint16_t,std::unordered_map<uint16_t, std::unordered_map<
+            uint16_t,std::unordered_map<int8_t, size_t>>>> organized_lookup_map;
+    std::vector<std::vector<std::vector<ICDElement>>> element_table;
+    std::unordered_map<size_t,std::vector<std::string>> arinc_word_names;
+
+    // set up word_elements
+    SetupElement();
+    std::vector<ICDElement> element_vec;
+    element_vec.push_back(expected_element);
+    word_elements["TestWord"] = element_vec;
+    element_vec.clear();
+
+
+    // set up md_chanid_to_subchan_node
+    BuildNode(md_chan_id_strings, md_chanid_to_subchan_node);
+
+    // build icd_element that will be the "missed subchannel name" below
+    ICDElement input_element;
+    input_element.label_= 107;
+    input_element.sdi_= 2;            // 8-bit
+    input_element.bus_name_="SET1B";
+    input_element.msg_name_="IndexInMapWord";
+    input_element.rate_=1.1;
+    input_element.description_="Altitude";
+    input_element.xmit_lru_name_="LRU921";
+    input_element.elem_name_="107_alt";
+    input_element.schema_=ICDElementSchema::UNSIGNEDBITS;
+    input_element.is_bitlevel_=true;
+    input_element.bcd_partial_=-1;
+    input_element.msb_val_=1.0;
+    input_element.bitlsb_= 11;        // 8-bit
+    input_element.bit_count_= 8;      // 8-bit
+    input_element.uom_="FT";
+    input_element.classification_=0;  // 8-bit
+
+    element_vec.push_back(input_element);
+
+    word_elements["OtherTestWord"] = element_vec;
+    // word_elements["MissWord"] = element_vec;
+
+    ASSERT_TRUE(org.OrganizeICDMap(word_elements, md_chanid_to_subchan_node, organized_lookup_map, element_table));
+
+    // check element_table correct number of elements
+    size_t valid_arinc_word_count = org.GetValidArincWordCount();
+    EXPECT_EQ(valid_arinc_word_count, 2);
 
 }

@@ -653,8 +653,6 @@ TEST_F(ICDTranslateTest, TranslateSignedBitsTwoWord)
     EXPECT_TRUE(res);
     EXPECT_THAT(output_eu_double_, ::testing::ElementsAre(-442, 345));
 }
-// No test for SIGNEDBITS, multiple words, though these values are
-// not found in ICD.
 
 TEST_F(ICDTranslateTest, TranslateBCDSingleWordAll16)
 {
@@ -996,6 +994,89 @@ TEST_F(ICDTranslateTest, TranslateBCDMultWordIncompleteDigitPartialMS)
     // double
     ASSERT_TRUE(icdt_.TranslateArrayOfElement(input_words_, output_eu_double_, icde_));
     EXPECT_EQ(LimitSigFigs(static_cast<double>(bcd)), LimitSigFigs(output_eu_double_.at(0)));
+}
+
+TEST_F(ICDTranslateTest, TranslateBCDExplicitSignNotEnoughElems)
+{
+    icde_.msg_name_ = "A";
+    icde_.elem_name_ = "A-1";
+    icde_.is_bitlevel_ = true;
+    icde_.schema_ = ICDElementSchema::BCD;
+    icde_.bitlsb_ = 10;
+    icde_.bitmsb_ = 12;
+    icde_.bit_count_ = 15;
+    icde_.elem_word_count_ = 2;
+    icde_.bcd_partial_ = -1;
+    // MSB is not relevant for BCD
+    icde_.msb_val_ = double(1 << (icde_.bitmsb_ - 1));
+
+    // Setup input words.
+    // bits            1         12  15     
+    // bcd                        4  4 
+    uint16_t bits1 = 0b1001100000110001;
+    // bits            1 3   7  10    16     
+    // bcd               9   8    
+    uint16_t bits2 = 0b0010011000000010;
+    int32_t bcd = 4498;
+    input_words_.push_back(bits1); 
+    input_words_.push_back(bits2); 
+
+    // Add twice so there are two identical words
+    input_words_.push_back(bits1); 
+    input_words_.push_back(bits2); 
+
+    // Only 1 value, not two which are necessary for the two values in input_words_.
+    std::vector<int8_t> explicit_sign{-1}; 
+
+    std::vector<int32_t> output_words;
+    ASSERT_TRUE(icdt_.TranslateArrayOfElement(input_words_, output_words, icde_, explicit_sign));
+    ASSERT_EQ(output_words.size(), 2);
+
+    // both not negative, because sign not applied
+    EXPECT_EQ(bcd, output_words.at(0));
+    EXPECT_EQ(bcd, output_words.at(1));
+}
+
+TEST_F(ICDTranslateTest, TranslateBCDExplicitSign)
+{
+    icde_.msg_name_ = "A";
+    icde_.elem_name_ = "A-1";
+    icde_.is_bitlevel_ = true;
+    icde_.schema_ = ICDElementSchema::BCD;
+    icde_.bitlsb_ = 10;
+    icde_.bitmsb_ = 12;
+    icde_.bit_count_ = 15;
+    icde_.elem_word_count_ = 2;
+    icde_.bcd_partial_ = -1;
+    // MSB is not relevant for BCD
+    icde_.msb_val_ = double(1 << (icde_.bitmsb_ - 1));
+
+    // Setup input words.
+    // bits            1         12  15     
+    // bcd                        4  4 
+    uint16_t bits1 = 0b1001100000110001;
+    // bits            1 3   7  10    16     
+    // bcd               9   8    
+    uint16_t bits2 = 0b0010011000000010;
+    int32_t bcd = 4498;
+    input_words_.push_back(bits1); 
+    input_words_.push_back(bits2); 
+
+    // Add three times so there are three identical words
+    input_words_.push_back(bits1); 
+    input_words_.push_back(bits2); 
+    input_words_.push_back(bits1); 
+    input_words_.push_back(bits2); 
+
+    // Negative, pos, neg
+    std::vector<int8_t> explicit_sign{-1, 1, -1}; 
+    std::vector<int32_t> output_words;
+    ASSERT_TRUE(icdt_.TranslateArrayOfElement(input_words_, output_words, icde_, explicit_sign));
+    ASSERT_EQ(output_words.size(), 3);
+
+    EXPECT_EQ(-bcd, output_words.at(0));
+    EXPECT_EQ(bcd, output_words.at(1));
+    EXPECT_EQ(-bcd, output_words.at(2));
 }
 
 TEST_F(ICDTranslateTest, TranslateSignMagSingleWordAll16)
@@ -1995,6 +2076,43 @@ TEST_F(ICDTranslateTest, TranslateArrayRawTypeU32SignedBitsSingleWordAll32)
     output_eu_double_.resize(0);
     ASSERT_TRUE(icdt_.TranslateArray(input_words32, output_eu_double_, icde_));
     EXPECT_EQ(LimitSigFigs(output_eu_double_[0]), LimitSigFigs(expected));
+}
+
+TEST_F(ICDTranslateTest, TranslateArrayRawTypeU32SignedBitsSingleWord19Bits)
+{
+    icde_.msg_name_ = "A";
+    icde_.elem_name_ = "A-1";
+    icde_.is_bitlevel_ = true;
+    icde_.schema_ = ICDElementSchema::SIGNEDBITS;
+    icde_.bitlsb_ = 32;
+    icde_.bitmsb_ = 14;
+    icde_.bit_count_ = 19;
+    icde_.elem_word_count_ = 1;
+    icde_.msb_val_ = double(1 << 17);
+    
+    // high bits 0b100 = 4, actual bits 0b1000000000000000000
+    uint32_t raw = (1 << 18);
+    int32_t val = -262144;
+    double expected = static_cast<double>(val);
+    std::vector<uint32_t> input_words32{raw};
+
+    // float
+    output_eu_float_.resize(0);
+    ASSERT_TRUE(icdt_.TranslateArray(input_words32, output_eu_float_, icde_));
+    EXPECT_EQ(output_eu_float_[0], expected);
+
+    // double
+    ASSERT_TRUE(icdt_.TranslateArray(input_words32, output_eu_double_, icde_));
+    EXPECT_EQ(output_eu_double_[0], expected);
+
+    // positive
+    raw = (1 << 17);
+    val = 131072;
+    expected = static_cast<double>(val);
+    input_words32[0] = raw;
+    output_eu_double_.resize(0);
+    ASSERT_TRUE(icdt_.TranslateArray(input_words32, output_eu_double_, icde_));
+    EXPECT_EQ(output_eu_double_[0], expected);
 }
 
 TEST_F(ICDTranslateTest, TranslateArrayRawTypeU32UnsignedBitsSingleWordAll32)

@@ -54,14 +54,16 @@ class Ch10Packet
     Ch10VideoF0Component* videof0_component_;
     Ch10EthernetF0Component* ethernetf0_component_;
     Ch10429F0Component* arinc429f0_component_;
+
+    // Ch10 time calculation and manipulation
     Ch10Time* const ch10_time_;
 
    public:
 
 
     const Ch10PacketType& current_pkt_type;
-    Ch10Packet(BinBuff* const binbuff, Ch10Context* const context, 
-        Ch10Time* const ch10time, std::vector<std::string>& tmats_vec) : 
+    Ch10Packet(BinBuff* const binbuff, Ch10Context* const context,
+        Ch10Time* const ch10time, std::vector<std::string>& tmats_vec) :
         tmats_vec_(tmats_vec), ch10_time_(ch10time), secondary_hdr_time_ns_(0), bb_(binbuff), ctx_(context), data_ptr_(nullptr), bb_response_(0), status_(Ch10Status::OK), temp_pkt_size_(0), pkt_type_(Ch10PacketType::NONE), current_pkt_type(pkt_type_), header_(nullptr), tmats_(nullptr), tdp_component_(nullptr), milstd1553f1_component_(nullptr), arinc429f0_component_(nullptr), videof0_component_(nullptr), ethernetf0_component_(nullptr)
     {    }
 
@@ -78,10 +80,26 @@ class Ch10Packet
         eth_comp        --> Pointer to Ch10EthernetF0Component
         arinc429_comp   --> Pointer to Ch10429F0Component
     */
-    void SetCh10ComponentParsers(Ch10PacketHeaderComponent* header_comp, Ch10TMATSComponent* tmats_comp, 
+    void SetCh10ComponentParsers(Ch10PacketHeaderComponent* header_comp, Ch10TMATSComponent* tmats_comp,
         Ch10TDPComponent* tdp_comp, Ch101553F1Component* milstd1553_comp,
         Ch10VideoF0Component* video_comp, Ch10EthernetF0Component* eth_comp,
         Ch10429F0Component* arinc429_comp);
+
+
+
+    /*
+    Check if object has been properly configured. Currently this includes
+    confirming that all pointers have been set and are no longer null pointers.
+
+    Additional checks may be necessary in the future.
+
+    For testing, use in conjunction with the constructor and
+    SetCh10ComponentParsers.
+
+    Return:
+        True if configured properly, false otherwise.
+    */
+    bool IsConfigured();
 
 
 

@@ -23,11 +23,11 @@ int TranslateTabular1553Main(int argc, char** argv)
             "an output log directory must also be specified"}
     };
     std::map<std::string, std::string> args;
-    if(!av.TestOptionalArgCount(argc, options)) 
+    if(!av.TestOptionalArgCount(argc, options))
         return 0;
     if(!av.ParseArgs(argc, argv, def_args, args, true))
         return 0;
-    
+
     ManagedPath input_path;
     ManagedPath icd_path;
     ManagedPath output_dir;
@@ -35,12 +35,12 @@ int TranslateTabular1553Main(int argc, char** argv)
     ManagedPath conf_file_path;
     ManagedPath conf_schema_file_path;
     ManagedPath icd_schema_file_path;
-    if (!transtab1553::ValidatePaths(args.at("input_path"), args.at("icd_path"), args.at("output_dir"), 
-                       args.at("conf_dir"), args.at("log_dir"), input_path, icd_path, 
+    if (!transtab1553::ValidatePaths(args.at("input_path"), args.at("icd_path"), args.at("output_dir"),
+                       args.at("conf_dir"), args.at("log_dir"), input_path, icd_path,
                        output_dir, conf_file_path, conf_schema_file_path,
                        icd_schema_file_path, log_dir, &av))
         return 0;
-    
+
     YamlSV ysv;
     std::string icd_string, icd_schema_string, conf_string, conf_schema_string;
     if(!ysv.ValidateDocument(conf_file_path, conf_schema_file_path, conf_string, conf_schema_string))
@@ -81,7 +81,7 @@ int TranslateTabular1553Main(int argc, char** argv)
     DTS1553 dts1553;
     std::map<std::string, std::string> msg_name_substitutions;
     std::map<std::string, std::string> elem_name_substitutions;
-    if (!transtab1553::IngestICD(&dts1553, icd_path, msg_name_substitutions, 
+    if (!transtab1553::IngestICD(&dts1553, icd_path, msg_name_substitutions,
         elem_name_substitutions, &fr))
         return 0;
 
@@ -122,8 +122,8 @@ int TranslateTabular1553Main(int argc, char** argv)
     double duration = secs.count();
     SPDLOG_INFO("Duration: {:.3f} sec", duration);
 
-    if(!transtab1553::RecordMetadata(config_params, transl_output_dir, icd_path, 
-                    input_path, translated_msg_names, msg_name_substitutions, 
+    if(!transtab1553::RecordMetadata(config_params, transl_output_dir, icd_path,
+                    input_path, translated_msg_names, msg_name_substitutions,
                     elem_name_substitutions, prov_data, parser_md_doc, &bm))
     {
         SPDLOG_ERROR("RecordMetadata failure");
@@ -195,7 +195,7 @@ namespace transtab1553
             return false;
 
         ManagedPath icd_schema_path = conf_file_path.parent_path() / schema_dir / icd_schema_name;
-        if(!av->ValidateInputFilePath(icd_schema_path.RawString(), icd_schema_file_path)) 
+        if(!av->ValidateInputFilePath(icd_schema_path.RawString(), icd_schema_file_path))
             return false;
 
         ManagedPath default_log_dir({"..", "logs"});
@@ -276,8 +276,8 @@ namespace transtab1553
         return true;
     }
 
-    bool PrepareBusMap(const ManagedPath& input_path, DTS1553& dts1553, 
-                    const TIPMDDocument& parser_md_doc, 
+    bool PrepareBusMap(const ManagedPath& input_path, DTS1553& dts1553,
+                    const TIPMDDocument& parser_md_doc,
                     const TranslationConfigParams& config_params,
                     BusMap* bus_map)
     {
@@ -291,7 +291,7 @@ namespace transtab1553
             return false;
         }
         auto bus_map_end_time = std::chrono::high_resolution_clock::now();
-        SPDLOG_INFO("Bus Map Duration: {:d} sec", 
+        SPDLOG_INFO("Bus Map Duration: {:d} sec",
             std::chrono::duration_cast<std::chrono::seconds>(
                 bus_map_end_time - bus_map_start_time).count());
 
@@ -319,7 +319,7 @@ namespace transtab1553
         // and then get channel IDs from the map keys
         std::set<uint64_t> chanid_set;
         std::map<uint64_t, std::vector<std::vector<uint16_t>>> chanid_to_comm_words_map;
-        if(!YamlReader::GetMapNodeParameter(parser_md_doc.runtime_category_->node, 
+        if(!YamlReader::GetMapNodeParameter(parser_md_doc.runtime_category_->node,
             "chanid_to_comm_words", chanid_to_comm_words_map))
         {
             SPDLOG_ERROR(
@@ -338,12 +338,12 @@ namespace transtab1553
 
         // Get the map of TMATS channel ID to source -- NOT REQUIRED.
         std::map<uint64_t, std::string> tmats_chanid_to_source_map;
-        YamlReader::GetMapNodeParameter(parser_md_doc.runtime_category_->node, 
+        YamlReader::GetMapNodeParameter(parser_md_doc.runtime_category_->node,
             "tmats_chanid_to_source", tmats_chanid_to_source_map);
 
         // Get the map of TMATS channel ID to type -- NOT REQUIRED.
         std::map<uint64_t, std::string> tmats_chanid_to_type_map;
-        YamlReader::GetMapNodeParameter(parser_md_doc.runtime_category_->node, 
+        YamlReader::GetMapNodeParameter(parser_md_doc.runtime_category_->node,
             "tmats_chanid_to_type", tmats_chanid_to_type_map);
 
         // convert vector to set
@@ -504,12 +504,12 @@ namespace transtab1553
         return true;
     }
 
-    bool GetParsed1553Metadata(const ManagedPath* input_md_path, 
+    bool GetParsed1553Metadata(const ManagedPath* input_md_path,
         TIPMDDocument* parser_md_doc, FileReader* fr)
     {
         if(!input_md_path->is_regular_file())
         {
-            SPDLOG_ERROR("Input metadata path not present: {:s}", 
+            SPDLOG_ERROR("Input metadata path not present: {:s}",
                 input_md_path->RawString());
             return false;
         }
@@ -520,7 +520,7 @@ namespace transtab1553
                 input_md_path->RawString());
             return false;
         }
-        
+
         if(!parser_md_doc->ReadDocument(fr->GetDocumentAsString()))
         {
             SPDLOG_ERROR("Failed to interpret input metadata as TIPMDDocument: {:s}",
@@ -540,9 +540,9 @@ namespace transtab1553
     }
 
 
-    bool RecordMetadata(const TranslationConfigParams& config, 
+    bool RecordMetadata(const TranslationConfigParams& config,
                         const ManagedPath& translated_data_dir,
-                        const ManagedPath& dts_path, 
+                        const ManagedPath& dts_path,
                         const ManagedPath& input_path,
                         const std::set<std::string>& translated_messages,
                         const std::map<std::string, std::string>& msg_name_substitutions,
@@ -558,8 +558,8 @@ namespace transtab1553
         std::string label = ch10packettype_to_string_map.at(Ch10PacketType::MILSTD1553_F1);
         std::string dts1553hash = prov_data.hash;
         std::string parsed1553uuid = parser_md_doc.uid_category_->node.as<std::string>();
-        std::string uid = Sha256(dts1553hash + prov_data.time + 
-            prov_data.tip_version + parsed1553uuid); 
+        std::string uid = Sha256(dts1553hash + prov_data.time +
+            prov_data.tip_version + parsed1553uuid);
 
         md.type_category_->SetScalarValue("translated_" + label);
         md.uid_category_->SetScalarValue(uid);
@@ -616,7 +616,7 @@ namespace transtab1553
         md.runtime_category_->SetArbitraryMappedValue("excluded_channel_id_reasons",
             bus_map->GetExcludedChannelIDs());
 
-        // Convert vote_map to similar container using standard maps instead of 
+        // Convert vote_map to similar container using standard maps instead of
         // unordered maps for use with MDCategoryMap
         std::map<uint64_t, std::map<std::string, uint64_t>> votes;
         std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>> vote_map =

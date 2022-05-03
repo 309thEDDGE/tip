@@ -64,6 +64,7 @@ from tip_scripts.e2e_validation.pqpq_raw1553_dir_validation import PqPqRaw1553Di
 from tip_scripts.e2e_validation.pqpq_translated1553_dir_validation import PqPqTranslated1553DirValidation
 from tip_scripts.e2e_validation.pqpq_video_dir_validation import PqPqVideoDirValidation
 from tip_scripts.e2e_validation.pqpq_rawARINC429_dir_validation import PqPqRawARINC429DirValidation
+from tip_scripts.e2e_validation.pqpq_translatedARINC429_dir_validation import PqPqTranslatedARINC429DirValidation
 from tip_scripts.e2e_validation.pqpq_time_data_validation import PqPqTimeDataValidation
 from tip_scripts.exec import Exec
 
@@ -130,12 +131,14 @@ class E2EValidator(object):
                                                       'transl1553': basename + '_1553_translated',
                                                       'rawvideo': basename + '_video.parquet',
                                                       'parsedarinc429f0': basename + '_arinc429.parquet',
+                                                      'transl429': basename + '_arinc429_translated',
+                                                      'tmats': basename + '_TMATS.txt',
                                                       'tmats': basename + '_TMATS.txt',
                                                       'time': basename + '_time_data.parquet'}
             self.all_validation_obj[ch10name] = {}
             self.validation_results_dict[ch10name] = {}
             self.duration_data[ch10name] = {'raw1553': None, 'transl1553': None,
-                'parsedarinc429f0': None, }
+                'parsedarinc429f0': None, 'transl429': None, }
 
         #print(self.files_under_test)
 
@@ -251,6 +254,7 @@ class E2EValidator(object):
         self._create_transl1553_validation_objects()
         self._create_rawvideo_validation_objects()
         self._create_rawarinc429f0_validation_objects()
+        self._create_transl429_validation_objects()
         self._create_tmats_validation_objects()
         self._create_time_data_validation_objects()
 
@@ -284,6 +288,8 @@ class E2EValidator(object):
 
             ########### arinc429f0 #########
             self.all_validation_obj[ch10name]['parsedarinc429f0'].print_results(self.print)
+            print("print")
+            self.all_validation_obj[ch10name]['transl429'].print_results(self.print)
 
             ########### TMATS ##########
             print()
@@ -311,6 +317,10 @@ class E2EValidator(object):
         self.print(msg)
 
         msg = 'Total parsed ARINC429F0 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_parsedarinc429f0_pass']))
+        print(msg)
+        self.print(msg)
+
+        msg = 'Total translated ARINC429F0 data: {:s}'.format(self.get_validation_result_string(self.validation_results_dict['all_translarinc429_pass']))
         print(msg)
         self.print(msg)
 
@@ -401,14 +411,18 @@ class E2EValidator(object):
         single_ch10_raw1553_pass = True
         single_ch10_video_pass = True
         single_ch10_parsedarinc429f0_pass = True
+        single_ch10_bulk_transl429f0_pass = True
         single_ch10_tmats_pass = True
         single_ch10_time_pass = True
         total_stats = {'raw1553': [], 'transl1553': [], 'ch10': [],
+            'parsedarinc429f0': [], 'transl429': [],'tmats': [],
             'parsedarinc429f0': [], 'tmats': [], 'time': []}
         for ch10name in self.files_under_test.keys():
 
             self.validation_results_dict[ch10name] = {'ch10': None, 'raw1553': None,
                                                       'translated1553': None,
+                                                      'parsedarinc429f0': None, 'translatedarinc429f0': None,
+                                                      'tmats': None,
                                                       'parsedarinc429f0': None, 'tmats': None,
                                                       'time': None}
 
@@ -424,14 +438,19 @@ class E2EValidator(object):
 
             ########### ARINC429F0 ###########
             single_ch10_parsedarinc429f0_pass = self.all_validation_obj[ch10name]['parsedarinc429f0'].get_test_result()
+            single_ch10_bulk_transl429f0_pass = self.all_validation_obj[ch10name]['transl429'].get_test_result()
+
             self.validation_results_dict[ch10name]['parsedarinc429f0'] = single_ch10_parsedarinc429f0_pass
+            self.validation_results_dict[ch10name]['translatedarinc429f0'] = single_ch10_bulk_transl429f0_pass
+
             total_stats['parsedarinc429f0'].append(single_ch10_parsedarinc429f0_pass)
+            total_stats['transl429'].append(single_ch10_bulk_transl429f0_pass)
 
             ########### video ###########
             single_ch10_video_pass = self.all_validation_obj[ch10name]['rawvideo'].get_test_result()
 
             ########### tmats ###########
-            single_ch10_tmats_pass = self.all_validation_obj[ch10name]['tmats'].get_test_result() 
+            single_ch10_tmats_pass = self.all_validation_obj[ch10name]['tmats'].get_test_result()
             total_stats['tmats'].append(single_ch10_tmats_pass)
 
             ########### time ###########
@@ -443,7 +462,8 @@ class E2EValidator(object):
 
             if (single_ch10_raw1553_pass == True and single_ch10_bulk_transl1553_pass == True
                 and single_ch10_video_pass == True and single_ch10_parsedarinc429f0_pass == True
-                and single_ch10_tmats_pass == True and single_ch10_time_pass == True):
+                and single_ch10_bulk_transl429f0_pass == True and single_ch10_tmats_pass == True
+                and single_ch10_time_pass == True):
                 single_ch10_pass = True
             elif (single_ch10_raw1553_pass is None or single_ch10_bulk_transl1553_pass is None
                   or single_ch10_video_pass is None or single_ch10_parsedarinc429f0_pass is None
@@ -459,6 +479,7 @@ class E2EValidator(object):
         self.validation_results_dict['all_raw1553_pass'] = self._get_pass_fail_null(total_stats['raw1553'])
         self.validation_results_dict['all_transl1553_pass'] = self._get_pass_fail_null(total_stats['transl1553'])
         self.validation_results_dict['all_parsedarinc429f0_pass'] = self._get_pass_fail_null(total_stats['parsedarinc429f0'])
+        self.validation_results_dict['all_translarinc429_pass'] = self._get_pass_fail_null(total_stats['transl429'])
         self.validation_results_dict['all_tmats_pass'] = self._get_pass_fail_null(total_stats['tmats'])
         self.validation_results_dict['all_time_pass'] = self._get_pass_fail_null(total_stats['time'])
 
@@ -511,9 +532,9 @@ class E2EValidator(object):
             parsedarinc429f0_validation_obj.validate_dir(self.print)
 
             ############# Translated ##############
-            # translarinc429f0_validation_obj = self.all_validation_obj[ch10name]['translarinc429f0']
-            # self.print('\n-- Translation ARINC429F0 Comparison --\n')
-            # translarinc429f0_validation_obj.validate_dir(self.print)
+            translarinc429f0_validation_obj = self.all_validation_obj[ch10name]['transl429']
+            self.print('\n-- Translation ARINC429F0 Comparison --\n')
+            translarinc429f0_validation_obj.validate_dir(self.print)
 
 
 
@@ -541,6 +562,15 @@ class E2EValidator(object):
         for ch10name,d in self.files_under_test.items():
             translname = d['transl1553']
             self.all_validation_obj[ch10name]['transl1553'] = PqPqTranslated1553DirValidation(
+                os.path.join(self.truth_set_dir, translname),
+                os.path.join(self.test_set_dir, translname),
+                self.pqcompare_exec_path, self.bincompare_exec_path)
+
+    def _create_transl429_validation_objects(self):
+        print("\n-- Create translated ARINC429F0 validation objects --\n")
+        for ch10name,d in self.files_under_test.items():
+            translname = d['transl429']
+            self.all_validation_obj[ch10name]['transl429'] = PqPqTranslatedARINC429DirValidation(
                 os.path.join(self.truth_set_dir, translname),
                 os.path.join(self.test_set_dir, translname),
                 self.pqcompare_exec_path, self.bincompare_exec_path)
