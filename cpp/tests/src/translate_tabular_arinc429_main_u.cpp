@@ -86,9 +86,8 @@ TEST_F(TranslateTabularARINC429MainTest, ValidatePathsCheckExtensionParsedDataFa
     std::vector<std::string> exts{"parquet"};
     EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, exts)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, str_conf_path_,
-        str_log_path_, input_path_, icd_path_, out_path_, conf_path_, conf_schema_path_,
-        icd_schema_path_, log_path_, &mock_av_));
+    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+        str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
 TEST_F(TranslateTabularARINC429MainTest, ValidatePathsValidateDirectoryPathFail)
@@ -98,9 +97,8 @@ TEST_F(TranslateTabularARINC429MainTest, ValidatePathsValidateDirectoryPathFail)
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_input_path_, input_path_)).
         WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, str_conf_path_,
-        str_log_path_, input_path_, icd_path_, out_path_, conf_path_, conf_schema_path_,
-        icd_schema_path_, log_path_, &mock_av_));
+    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+        str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
 TEST_F(TranslateTabularARINC429MainTest, ValidatePathsCheckExtensionICDFail)
@@ -113,9 +111,8 @@ TEST_F(TranslateTabularARINC429MainTest, ValidatePathsCheckExtensionICDFail)
     std::vector<std::string> icd_exts{"txt", "csv", "yaml", "yml"};
     EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, str_conf_path_,
-        str_log_path_, input_path_, icd_path_, out_path_, conf_path_, conf_schema_path_,
-        icd_schema_path_, log_path_, &mock_av_));
+    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+        str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
 TEST_F(TranslateTabularARINC429MainTest, ValidatePathsValidateInputFilePathICDFail)
@@ -129,9 +126,8 @@ TEST_F(TranslateTabularARINC429MainTest, ValidatePathsValidateInputFilePathICDFa
     EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).WillOnce(Return(true));
     EXPECT_CALL(mock_av_, ValidateInputFilePath(str_icd_path_, icd_path_)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, str_conf_path_,
-        str_log_path_, input_path_, icd_path_, out_path_, conf_path_, conf_schema_path_,
-        icd_schema_path_, log_path_, &mock_av_));
+    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+        str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
 TEST_F(TranslateTabularARINC429MainTest, ValidatePathsValidateDefaultOutputDirectoryFail)
@@ -145,183 +141,58 @@ TEST_F(TranslateTabularARINC429MainTest, ValidatePathsValidateDefaultOutputDirec
     EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).WillOnce(Return(true));
     EXPECT_CALL(mock_av_, ValidateInputFilePath(str_icd_path_, icd_path_)).WillOnce(Return(true));
 
-    ManagedPath default_output_dir = input_path_.parent_path();
-    EXPECT_CALL(mock_av_, ValidateDefaultOutputDirectory(default_output_dir, str_out_path_,
-        out_path_, true)).WillOnce(Return(false));
+    EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_out_path_, out_path_)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, str_conf_path_,
-        str_log_path_, input_path_, icd_path_, out_path_, conf_path_, conf_schema_path_,
-        icd_schema_path_, log_path_, &mock_av_));
+    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+        str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
 TEST_F(TranslateTabularARINC429MainTest, ValidatePathsValidateDefaultInputFilePathConfFail)
 {
+    ::testing::Sequence seq;
     std::vector<std::string> exts{"parquet"};
-    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, exts)).WillOnce(Return(true));
+    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, exts)).
+        InSequence(seq).WillOnce(Return(true));
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_input_path_, input_path_)).
-        WillOnce(Return(true));
+        InSequence(seq).WillOnce(Return(true));
 
     std::vector<std::string> icd_exts{"txt", "csv", "yaml", "yml"};
-    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).WillOnce(Return(true));
-    EXPECT_CALL(mock_av_, ValidateInputFilePath(str_icd_path_, icd_path_)).WillOnce(Return(true));
+    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).
+        InSequence(seq).WillOnce(Return(true));
+    EXPECT_CALL(mock_av_, ValidateInputFilePath(str_icd_path_, icd_path_)).
+        InSequence(seq).WillOnce(Return(true));
 
-    ManagedPath default_output_dir = input_path_.parent_path();
-    EXPECT_CALL(mock_av_, ValidateDefaultOutputDirectory(default_output_dir, str_out_path_,
-        out_path_, true)).WillOnce(Return(true));
+    EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_out_path_, out_path_)).
+        InSequence(seq).WillOnce(Return(true));
+    EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_log_path_, log_path_)).
+        InSequence(seq).WillOnce(Return(false));
 
-    ManagedPath default_conf_dir({"..", "conf"});
-    std::string translate_conf_name = "translate_conf.yaml";
-    EXPECT_CALL(mock_av_, ValidateDefaultInputFilePath(default_conf_dir, str_conf_path_,
-        translate_conf_name, conf_path_)).WillOnce(Return(false));
-
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, str_conf_path_,
-        str_log_path_, input_path_, icd_path_, out_path_, conf_path_, conf_schema_path_,
-        icd_schema_path_, log_path_, &mock_av_));
-}
-
-TEST_F(TranslateTabularARINC429MainTest, ValidatePathsValidateConfSchemaPathFail)
-{
-    std::vector<std::string> exts{"parquet"};
-    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, exts)).WillOnce(Return(true));
-    EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_input_path_, input_path_)).
-        WillOnce(Return(true));
-
-    std::vector<std::string> icd_exts{"txt", "csv", "yaml", "yml"};
-    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).WillOnce(Return(true));
-    EXPECT_CALL(mock_av_, ValidateInputFilePath(str_icd_path_, icd_path_)).WillOnce(Return(true));
-
-    ManagedPath default_output_dir = input_path_.parent_path();
-    EXPECT_CALL(mock_av_, ValidateDefaultOutputDirectory(default_output_dir, str_out_path_,
-        out_path_, true)).WillOnce(Return(true));
-
-    ManagedPath default_conf_dir({"..", "conf"});
-    std::string translate_conf_name = "translate_conf.yaml";
-    EXPECT_CALL(mock_av_, ValidateDefaultInputFilePath(default_conf_dir, str_conf_path_,
-        translate_conf_name, conf_path_)).WillOnce(Return(true));
-
-    std::string conf_schema_name = "tip_translate_conf_schema.yaml";
-    std::string icd_schema_name = "tip_dts429_schema.yaml";
-    std::string schema_dir = "yaml_schemas";
-    ManagedPath conf_schema_file_path = conf_path_.parent_path() / schema_dir / conf_schema_name;
-    EXPECT_CALL(mock_av_, ValidateInputFilePath(conf_schema_file_path.RawString(),
-        conf_schema_path_)).WillOnce(Return(false));
-
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, str_conf_path_,
-        str_log_path_, input_path_, icd_path_, out_path_, conf_path_, conf_schema_path_,
-        icd_schema_path_, log_path_, &mock_av_));
-}
-
-TEST_F(TranslateTabularARINC429MainTest, ValidatePathsValidateICDSchemaPathFail)
-{
-    std::vector<std::string> exts{"parquet"};
-    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, exts)).WillOnce(Return(true));
-    EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_input_path_, input_path_)).
-        WillOnce(Return(true));
-
-    std::vector<std::string> icd_exts{"txt", "csv", "yaml", "yml"};
-    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).WillOnce(Return(true));
-    EXPECT_CALL(mock_av_, ValidateInputFilePath(str_icd_path_, icd_path_)).WillOnce(Return(true));
-
-    ManagedPath default_output_dir = input_path_.parent_path();
-    EXPECT_CALL(mock_av_, ValidateDefaultOutputDirectory(default_output_dir, str_out_path_,
-        out_path_, true)).WillOnce(Return(true));
-
-    ManagedPath default_conf_dir({"..", "conf"});
-    std::string translate_conf_name = "translate_conf.yaml";
-    EXPECT_CALL(mock_av_, ValidateDefaultInputFilePath(default_conf_dir, str_conf_path_,
-        translate_conf_name, conf_path_)).WillOnce(Return(true));
-
-    std::string conf_schema_name = "tip_translate_conf_schema.yaml";
-    std::string icd_schema_name = "tip_dts429_schema.yaml";
-    std::string schema_dir = "yaml_schemas";
-    ManagedPath conf_schema_file_path = conf_path_.parent_path() / schema_dir / conf_schema_name;
-    EXPECT_CALL(mock_av_, ValidateInputFilePath(conf_schema_file_path.RawString(),
-        conf_schema_path_)).WillOnce(Return(true));
-    ManagedPath icd_schema_file_path = conf_path_.parent_path() / schema_dir / icd_schema_name;
-    EXPECT_CALL(mock_av_, ValidateInputFilePath(icd_schema_file_path.RawString(),
-        icd_schema_path_)).WillOnce(Return(false));
-
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, str_conf_path_,
-        str_log_path_, input_path_, icd_path_, out_path_, conf_path_, conf_schema_path_,
-        icd_schema_path_, log_path_, &mock_av_));
-}
-
-TEST_F(TranslateTabularARINC429MainTest, ValidatePathsLogPathFail)
-{
-    std::vector<std::string> exts{"parquet"};
-    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, exts)).WillOnce(Return(true));
-    EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_input_path_, input_path_)).
-        WillOnce(Return(true));
-
-    std::vector<std::string> icd_exts{"txt", "csv", "yaml", "yml"};
-    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).WillOnce(Return(true));
-    EXPECT_CALL(mock_av_, ValidateInputFilePath(str_icd_path_, icd_path_)).WillOnce(Return(true));
-
-    ManagedPath default_output_dir = input_path_.parent_path();
-    EXPECT_CALL(mock_av_, ValidateDefaultOutputDirectory(default_output_dir, str_out_path_,
-        out_path_, true)).WillOnce(Return(true));
-
-    ManagedPath default_conf_dir({"..", "conf"});
-    std::string translate_conf_name = "translate_conf.yaml";
-    EXPECT_CALL(mock_av_, ValidateDefaultInputFilePath(default_conf_dir, str_conf_path_,
-        translate_conf_name, conf_path_)).WillOnce(Return(true));
-
-    std::string conf_schema_name = "tip_translate_conf_schema.yaml";
-    std::string icd_schema_name = "tip_dts429_schema.yaml";
-    std::string schema_dir = "yaml_schemas";
-    ManagedPath conf_schema_file_path = conf_path_.parent_path() / schema_dir / conf_schema_name;
-    EXPECT_CALL(mock_av_, ValidateInputFilePath(conf_schema_file_path.RawString(),
-        conf_schema_path_)).WillOnce(Return(true));
-    ManagedPath icd_schema_file_path = conf_path_.parent_path() / schema_dir / icd_schema_name;
-    EXPECT_CALL(mock_av_, ValidateInputFilePath(icd_schema_file_path.RawString(),
-        icd_schema_path_)).WillOnce(Return(true));
-
-    ManagedPath default_log_dir({"..", "logs"});
-    EXPECT_CALL(mock_av_, ValidateDefaultOutputDirectory(default_log_dir, str_log_path_,
-        log_path_, true)).WillOnce(Return(false));
-
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, str_conf_path_,
-        str_log_path_, input_path_, icd_path_, out_path_, conf_path_, conf_schema_path_,
-        icd_schema_path_, log_path_, &mock_av_));
+    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+        str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
 TEST_F(TranslateTabularARINC429MainTest, ValidatePathsSucceed)
 {
+    ::testing::Sequence seq;
     std::vector<std::string> exts{"parquet"};
-    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, exts)).WillOnce(Return(true));
+    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, exts)).
+        InSequence(seq).WillOnce(Return(true));
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_input_path_, input_path_)).
-        WillOnce(Return(true));
+        InSequence(seq).WillOnce(Return(true));
 
     std::vector<std::string> icd_exts{"txt", "csv", "yaml", "yml"};
-    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).WillOnce(Return(true));
-    EXPECT_CALL(mock_av_, ValidateInputFilePath(str_icd_path_, icd_path_)).WillOnce(Return(true));
+    EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).
+        InSequence(seq).WillOnce(Return(true));
+    EXPECT_CALL(mock_av_, ValidateInputFilePath(str_icd_path_, icd_path_)).
+        InSequence(seq).WillOnce(Return(true));
 
-    ManagedPath default_output_dir = input_path_.parent_path();
-    EXPECT_CALL(mock_av_, ValidateDefaultOutputDirectory(default_output_dir, str_out_path_,
-        out_path_, true)).WillOnce(Return(true));
+    EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_out_path_, out_path_)).
+        InSequence(seq).WillOnce(Return(true));
+    EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_log_path_, log_path_)).
+        InSequence(seq).WillOnce(Return(true));
 
-    ManagedPath default_conf_dir({"..", "conf"});
-    std::string translate_conf_name = "translate_conf.yaml";
-    EXPECT_CALL(mock_av_, ValidateDefaultInputFilePath(default_conf_dir, str_conf_path_,
-        translate_conf_name, conf_path_)).WillOnce(Return(true));
-
-    std::string conf_schema_name = "tip_translate_conf_schema.yaml";
-    std::string icd_schema_name = "tip_dts429_schema.yaml";
-    std::string schema_dir = "yaml_schemas";
-    ManagedPath conf_schema_file_path = conf_path_.parent_path() / schema_dir / conf_schema_name;
-    EXPECT_CALL(mock_av_, ValidateInputFilePath(conf_schema_file_path.RawString(),
-        conf_schema_path_)).WillOnce(Return(true));
-    ManagedPath icd_schema_file_path = conf_path_.parent_path() / schema_dir / icd_schema_name;
-    EXPECT_CALL(mock_av_, ValidateInputFilePath(icd_schema_file_path.RawString(),
-        icd_schema_path_)).WillOnce(Return(true));
-
-    ManagedPath default_log_dir({"..", "logs"});
-    EXPECT_CALL(mock_av_, ValidateDefaultOutputDirectory(default_log_dir, str_log_path_,
-        log_path_, true)).WillOnce(Return(true));
-
-    ASSERT_TRUE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, str_conf_path_,
-        str_log_path_, input_path_, icd_path_, out_path_, conf_path_, conf_schema_path_,
-        icd_schema_path_, log_path_, &mock_av_));
+    ASSERT_TRUE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+        str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
 TEST_F(TranslateTabularARINC429MainTest, IngestICDIngestLinesFail)

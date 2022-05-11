@@ -1,4 +1,7 @@
 #include "translate_tabular_1553_main.h"
+#include "yaml_schema_validation.h"
+#include "yamlsv_log_item.h"
+#include "dts_1553_schema.h"
 
 
 int TranslateTabular1553Main(int argc, char** argv)
@@ -6,56 +9,72 @@ int TranslateTabular1553Main(int argc, char** argv)
     if (!SetLineBuffering(stdout))
         return 0;
 
-    if (CheckForVersionArgument(argc, argv))
+    CLIGroup cli_group;
+    TranslationConfigParams config;
+    bool help_requested = false;
+    bool show_version = false;
+    bool show_dts_info = false;
+    std::string high_level_description("Translate parsed 1553 data in Parquet format to "
+        "engineering units, grouped into message-specific Parquet tables.");
+    if(!ConfigureTranslatorCLI(cli_group, config, help_requested, show_version, 
+        show_dts_info, high_level_description))
     {
-        printf("%s version %s\n", TRANSLATE_1553_EXE_NAME, GetVersionString().c_str());
+        printf("ConfigureTranslatorCLI failed\n");
+        return 0;
+    }
+
+    std::string nickname = "";
+    std::shared_ptr<CLIGroupMember> cli;
+    if (!cli_group.Parse(argc, argv, nickname, cli))
+        return 0;
+
+    if (help_requested && nickname == "clihelp")
+    {
+        printf("%s", cli_group.MakeHelpString().c_str());
+        return 0;
+    }
+
+    if (show_version && nickname == "cliversion")
+    {
+        printf(TRANSLATE_1553_EXE_NAME " version %s\n", GetVersionString().c_str());
+        return 0;
+    }
+
+    if(show_dts_info && nickname == "clidts")
+    {
+        printf("Raw DTS1553 schema (yaml-formatted):\n%s\n\n", dts_1553_schema.c_str());
+        printf("%s\n\n%s\n\n%s\n\n", dts_1553_commword_explanation.c_str(), 
+            dts_1553_parameter_defs.c_str(), dts_1553_suppl_commwords.c_str());
         return 0;
     }
 
     ArgumentValidation av;
-    std::map<int, std::string> def_args = {
-        {1, "input_path"}, {2, "icd_path"}, {3, "output_dir"}, {4, "conf_dir"}, {5, "log_dir"}
-    };
-    std::map<int, std::string> options = {
-        {2, "Usage: " TRANSLATE_1553_EXE_NAME " <1553 Parquet path> <DTS1553 path> [output dir] "
-            "[config dir path] [log dir]\nNeeds ch10 and DTS (ICD) input paths."},
-        {5, "If a configuration directory is specified by the user then "
-            "an output log directory must also be specified"}
-    };
-    std::map<std::string, std::string> args;
-    if(!av.TestOptionalArgCount(argc, options))
-        return 0;
-    if(!av.ParseArgs(argc, argv, def_args, args, true))
-        return 0;
-
     ManagedPath input_path;
     ManagedPath icd_path;
     ManagedPath output_dir;
     ManagedPath log_dir;
-    ManagedPath conf_file_path;
-    ManagedPath conf_schema_file_path;
-    ManagedPath icd_schema_file_path;
-    if (!transtab1553::ValidatePaths(args.at("input_path"), args.at("icd_path"), args.at("output_dir"),
-                       args.at("conf_dir"), args.at("log_dir"), input_path, icd_path,
-                       output_dir, conf_file_path, conf_schema_file_path,
-                       icd_schema_file_path, log_dir, &av))
+    if (!transtab1553::ValidatePaths(config.input_data_path_str_, config.input_dts_path_str_, 
+                       config.output_path_str_, config.log_path_str_, input_path, icd_path,
+                       output_dir, log_dir, &av))
         return 0;
 
-    YamlSV ysv;
-    std::string icd_string, icd_schema_string, conf_string, conf_schema_string;
-    if(!ysv.ValidateDocument(conf_file_path, conf_schema_file_path, conf_string, conf_schema_string))
-        return 0;
     if(av.CheckExtension(icd_path.RawString(), {"yaml", "yml"}))
     {
-        if(!ysv.ValidateDocument(icd_path, icd_schema_file_path, icd_string, icd_schema_string))
+        YamlSV ysv;
+        std::string icd_string; 
+        if(!av.ValidateDocument(icd_path, icd_string))
             return 0;
+        std::vector<LogItem> log_items;
+        if(!ysv.Validate(icd_string, dts_1553_schema, log_items))
+        {
+            printf("Schema validation failed for %s\n", icd_path.RawString().c_str());
+            int print_count = 20;
+            YamlSV::PrintLogItems(log_items, print_count, std::cout);
+            return 0;
+        }
     }
 
-    TranslationConfigParams config_params;
-    if (!config_params.InitializeWithConfigString(conf_string))
-        return 0;
-
-    if (!transtab1553::SetupLogging(log_dir, spdlog::level::from_str(config_params.stdout_log_level_)))
+    if (!transtab1553::SetupLogging(log_dir, spdlog::level::from_str(config.stdout_log_level_)))
         return 0;
 
     TIPMDDocument parser_md_doc;
@@ -73,9 +92,10 @@ int TranslateTabular1553Main(int argc, char** argv)
     SPDLOG_INFO("{:s} version: {:s}", TRANSLATE_1553_EXE_NAME, prov_data.tip_version);
     SPDLOG_INFO("Input: {:s}", input_path.RawString());
     SPDLOG_INFO("Output dir: {:s}", output_dir.RawString());
+    SPDLOG_INFO("Log dir: {:s}", log_dir.RawString());
     SPDLOG_INFO("DTS1553 path: {:s}", icd_path.RawString());
     SPDLOG_INFO("DTS1553 hash: {:s}", prov_data.hash);
-    size_t thread_count = config_params.translate_thread_count_;
+    size_t thread_count = config.translate_thread_count_;
     SPDLOG_INFO("Thread count: {:d}", thread_count);
 
     DTS1553 dts1553;
@@ -86,17 +106,19 @@ int TranslateTabular1553Main(int argc, char** argv)
         return 0;
 
     BusMap bm;
-    if (!transtab1553::PrepareBusMap(input_path, dts1553, parser_md_doc, config_params,
+    if (!transtab1553::PrepareBusMap(input_path, dts1553, parser_md_doc, config,
         &bm))
     {
         return 0;
     }
 
-    if (config_params.auto_sys_limits_)
+    if (config.auto_sys_limits_)
     {
         if (!transtab1553::SetSystemLimits(thread_count, dts1553.ICDDataPtr()->valid_message_count))
             return 0;
     }
+    else
+        SPDLOG_WARN("Automatic system limits (file handle allocation) disabled");
 
     auto start_time = std::chrono::high_resolution_clock::now();
     ManagedPath transl_output_dir = output_dir.CreatePathObject(input_path, "_translated");
@@ -107,7 +129,7 @@ int TranslateTabular1553Main(int argc, char** argv)
     SPDLOG_INFO("Translated data output dir: {:s}", transl_output_dir.RawString());
 
     if (!transtab1553::Translate(thread_count, input_path, output_dir, dts1553.GetICDData(),
-                   transl_output_dir, output_base_name, config_params.select_specific_messages_,
+                   transl_output_dir, output_base_name, config.select_specific_messages_,
                    translated_msg_names))
     {
         SPDLOG_WARN(
@@ -122,7 +144,7 @@ int TranslateTabular1553Main(int argc, char** argv)
     double duration = secs.count();
     SPDLOG_INFO("Duration: {:.3f} sec", duration);
 
-    if(!transtab1553::RecordMetadata(config_params, transl_output_dir, icd_path,
+    if(!transtab1553::RecordMetadata(config, transl_output_dir, icd_path,
                     input_path, translated_msg_names, msg_name_substitutions,
                     elem_name_substitutions, prov_data, parser_md_doc, &bm))
     {
@@ -139,10 +161,9 @@ int TranslateTabular1553Main(int argc, char** argv)
 namespace transtab1553
 {
     bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
-                    const std::string& str_output_dir, const std::string& str_conf_dir,
-                    const std::string& str_log_dir, ManagedPath& input_path, ManagedPath& icd_path,
-                    ManagedPath& output_dir, ManagedPath& conf_file_path, ManagedPath& conf_schema_file_path,
-                    ManagedPath& icd_schema_file_path, ManagedPath& log_dir, ArgumentValidation* av)
+                    const std::string& str_output_dir, const std::string& str_log_dir, 
+                    ManagedPath& input_path, ManagedPath& icd_path, ManagedPath& output_dir, 
+                    ManagedPath& log_dir, ArgumentValidation* av)
     {
         if (!av->CheckExtension(str_input_path, {"parquet"}))
         {
@@ -170,37 +191,10 @@ namespace transtab1553
             return false;
         }
 
-        ManagedPath default_output_dir = input_path.parent_path();
-        if (!av->ValidateDefaultOutputDirectory(default_output_dir, str_output_dir,
-                                            output_dir, true))
+        if (!av->ValidateDirectoryPath(str_output_dir, output_dir))
             return false;
 
-        ManagedPath default_conf_dir({"..", "conf"});
-        std::string translate_conf_name = "translate_conf.yaml";
-        if (!av->ValidateDefaultInputFilePath(default_conf_dir, str_conf_dir,
-                                            translate_conf_name, conf_file_path))
-        {
-            printf(
-                "The constructed path may be the default path, relative to CWD "
-                "(\"../conf\"). Specify an explicit output directory, conf path, and log "
-                "directory to remedy.\n");
-            return false;
-        }
-
-        std::string conf_schema_name = "tip_translate_conf_schema.yaml";
-        std::string icd_schema_name = "tip_dts1553_schema.yaml";
-        std::string schema_dir = "yaml_schemas";
-        ManagedPath conf_schema_path = conf_file_path.parent_path() / schema_dir / conf_schema_name;
-        if(!av->ValidateInputFilePath(conf_schema_path.RawString(), conf_schema_file_path))
-            return false;
-
-        ManagedPath icd_schema_path = conf_file_path.parent_path() / schema_dir / icd_schema_name;
-        if(!av->ValidateInputFilePath(icd_schema_path.RawString(), icd_schema_file_path))
-            return false;
-
-        ManagedPath default_log_dir({"..", "logs"});
-        if (!av->ValidateDefaultOutputDirectory(default_log_dir, str_log_dir,
-                                            log_dir, true))
+        if (!av->ValidateDirectoryPath(str_log_dir, log_dir))
             return false;
 
         return true;

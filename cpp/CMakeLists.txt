@@ -46,6 +46,7 @@ add_library(${sha256_lib_name} STATIC
 target_include_directories(${sha256_lib_name} PUBLIC ${sha256_inc_dir})
 target_compile_features(${sha256_lib_name} PUBLIC cxx_std_17)
 
+
 #########################################################
 #              Build/link parquet_context lib
 #########################################################
@@ -124,6 +125,32 @@ target_compile_features(${util_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${util_lib_name} PUBLIC ${yaml_lib_name}
                       ${linux_libs} ${sha256_lib_name} ${spdlog_lib_name}
                       )
+
+
+#########################################################
+#              Build/link cli lib
+#########################################################
+set(cli_lib_name "cli")
+message(STATUS "Building lib: ${cli_lib_name}")
+set(cli_inc_dir ${cli_lib_name}/${include_dir_name})
+set(cli_src_dir ${cli_lib_name}/${source_dir_name})
+add_library(${cli_lib_name} STATIC
+            ${cli_inc_dir}/cli_arg.h ${cli_src_dir}/cli_arg.cpp
+            ${cli_inc_dir}/cli_positional_arg.h 
+            ${cli_inc_dir}/cli_optional_arg.h 
+            ${cli_inc_dir}/cli_flag.h ${cli_src_dir}/cli_flag.cpp
+            ${cli_inc_dir}/cli.h ${cli_src_dir}/cli.cpp
+            ${cli_inc_dir}/cli_group.h ${cli_src_dir}/cli_group.cpp
+            ${cli_inc_dir}/arg_special_config.h
+            ${cli_inc_dir}/default_special_config.h 
+            ${cli_inc_dir}/validate_special_config.h
+            ${cli_inc_dir}/container_arg.h 
+)
+target_include_directories(${cli_lib_name} PUBLIC ${cli_inc_dir}
+        ${util_inc_dir})
+target_compile_features(${cli_lib_name} PUBLIC cxx_std_17)
+target_link_libraries(${cli_lib_name} PUBLIC ${util_lib_name})
+
 
 #########################################################
 #                   Build/link yamlsv lib
@@ -253,9 +280,10 @@ add_library(${transtab_lib_name} STATIC
 )
 target_include_directories(${transtab_lib_name} PUBLIC ${transtab_inc_dir}
                            ${common_inc_dir} ${util_inc_dir} ${ch10pq_inc_dir} ${dts1553_inc_dir}
+                           ${cli_inc_dir}
 )
 target_link_libraries(${transtab_lib_name} PUBLIC
-                       ${util_lib_name} ${ch10pq_lib_name} ${dts1553_lib_name}
+                       ${util_lib_name} ${ch10pq_lib_name} ${dts1553_lib_name} ${cli_lib_name}
 )
 target_compile_features(${transtab_lib_name} PUBLIC cxx_std_17)
 
@@ -272,6 +300,9 @@ add_library(${transtab1553_lib_name}
                 ${common_inc_dir}/ch10_packet_type.h
                 ${transtab1553_inc_dir}/translate_tabular_1553_main.h ${transtab1553_src_dir}/translate_tabular_1553_main.cpp
                 ${transtab1553_inc_dir}/translate_tabular_context_1553.h ${transtab1553_src_dir}/translate_tabular_context_1553.cpp
+                ${transtab1553_inc_dir}/dts_1553_schema.h
+                ${transtab1553_inc_dir}/translator_cli_help_strings_1553.h 
+                ${transtab1553_inc_dir}/translator_cli_1553.h
 )
 target_include_directories(${transtab1553_lib_name} PUBLIC
                         ${common_inc_dir}
@@ -284,6 +315,7 @@ target_include_directories(${transtab1553_lib_name} PUBLIC
                         ${spdlog_inc_dir}
                         # ${config_inc_dir}
                         ${md_inc_dir}
+                        ${cli_inc_dir}
                         )
 target_link_libraries(${transtab1553_lib_name} ${transtab_lib_name}
                     ${util_lib_name}
@@ -294,6 +326,7 @@ target_link_libraries(${transtab1553_lib_name} ${transtab_lib_name}
                 #     ${config_lib_name}
                     ${md_lib_name}
                     ${linux_libs}
+                    ${cli_lib_name}
                     )
 target_compile_features(${transtab1553_lib_name} PUBLIC cxx_std_17)
 
@@ -312,6 +345,9 @@ add_library(${transtab429_lib_name}
         ${transtab429_inc_dir}/translate_tabular_arinc429_main.h ${transtab429_src_dir}/translate_tabular_arinc429_main.cpp
         ${transtab429_inc_dir}/translatable_explicit_sign_column_template.h
         ${transtab429_inc_dir}/translatable_arinc429_table.h ${transtab429_src_dir}/translatable_arinc429_table.cpp
+        ${transtab429_inc_dir}/translator_cli_help_strings_429.h 
+        ${transtab429_inc_dir}/translator_cli_429.h
+        ${transtab429_inc_dir}/dts_arinc429_schema.h
 )
 target_include_directories(${transtab429_lib_name} PUBLIC
                         ${common_inc_dir}
@@ -323,6 +359,7 @@ target_include_directories(${transtab429_lib_name} PUBLIC
                         ${transtab_inc_dir}
                         ${spdlog_inc_dir}
                         ${md_inc_dir}
+                        ${cli_inc_dir}
                         )
 target_link_libraries(${transtab429_lib_name} ${transtab_lib_name}
                     ${util_lib_name}
@@ -332,6 +369,7 @@ target_link_libraries(${transtab429_lib_name} ${transtab_lib_name}
                     ${md_lib_name}
                     ${linux_libs}
                     ${dts429_lib_name}
+                    ${cli_lib_name}
                     )
 target_compile_features(${transtab429_lib_name} PUBLIC cxx_std_17)
 
@@ -415,12 +453,14 @@ add_library(${parsech10_lib_name} STATIC
     ${parsech10_src_dir}/ch10_parse_main.cpp ${parsech10_inc_dir}/ch10_parse_main.h
     ${parsech10_src_dir}/tmats_parser.cpp ${parsech10_inc_dir}/tmats_parser.h
     ${parsech10_src_dir}/tmats_data.cpp ${parsech10_inc_dir}/tmats_data.h
+    ${parsech10_inc_dir}/parser_cli_help_strings.h
+    ${parsech10_inc_dir}/parser_cli.h
     )
 target_include_directories(${parsech10_lib_name} PUBLIC ${common_inc_dir} ${parsech10_inc_dir}
                             ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs}
                             ${ch10comp_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir}
-                            ${md_inc_dir})
+                            ${md_inc_dir} ${cli_inc_dir})
 
 target_compile_features(${parsech10_lib_name} PUBLIC cxx_std_17)
 target_link_libraries(${parsech10_lib_name} PUBLIC
@@ -431,6 +471,7 @@ target_link_libraries(${parsech10_lib_name} PUBLIC
                       ${spdlog_lib_name}
                       ${yamlsv_lib_name}
                       ${md_lib_name}
+                      ${cli_lib_name}
     )
 
 #########################################################
@@ -454,6 +495,7 @@ install(TARGETS
                 ${transtab1553_lib_name}
                 ${transtab429_lib_name}
                 ${md_lib_name}
+                ${cli_lib_name}
         DESTINATION ${out_lib_dir}
 )
 
@@ -579,6 +621,14 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/parquet_ethernetf0_u.cpp
                 ${test_src_dir}/ch10_parse_main_u.cpp
                 ${test_src_dir}/translate_tabular_1553_main_u.cpp
+                ${test_src_dir}/parquet_tdpf1_u.cpp
+                ${test_src_dir}/cli_arg_u.cpp
+                ${test_src_dir}/cli_positional_arg_u.cpp
+                ${test_src_dir}/cli_optional_arg_u.cpp
+                ${test_src_dir}/cli_flag_u.cpp
+                ${test_src_dir}/cli_u.cpp
+                ${test_src_dir}/cli_group_u.cpp
+                ${test_src_dir}/container_arg_u.cpp
                 ${test_src_dir}/translate_tabular_arinc429_main_u.cpp
                 ${test_src_dir}/arinc429_data_u.cpp
                 ${test_src_dir}/parquet_tdpf1_u.cpp)
@@ -588,7 +638,7 @@ target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_
                             ${parquet_inc_dirs} ${dts1553_inc_dir} ${comp_inc_dir} ${pqctx_inc_dir}
                             ${tmats_inc_dir} ${parsech10_inc_dir} ${eth_inc_dir}
                             ${ch10comp_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir} ${transtab_inc_dir}
-                            ${transtab1553_inc_dir} ${md_inc_dir} )
+                            ${transtab1553_inc_dir} ${md_inc_dir} ${cli_inc_dir})
 
 target_compile_features(${test_exe_name} PUBLIC cxx_std_17)
 target_link_libraries(${test_exe_name}
@@ -608,7 +658,8 @@ target_link_libraries(${test_exe_name}
                         ${transtab1553_lib_name}
                         ${transtab429_lib_name}
                         ${linux_libs}
-                        ${md_lib_name})
+                        ${md_lib_name}
+                        ${cli_lib_name})
 
 # For Ctest
 #include(CTest)

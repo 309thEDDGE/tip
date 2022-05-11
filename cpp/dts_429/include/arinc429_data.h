@@ -79,8 +79,7 @@ class ARINC429Data
         const std::unordered_map<size_t, std::vector<std::string>>& word_names,
         std::unordered_map<std::string, size_t>& word_name_to_unique_index_map)
     {
-
-        if (word_names.begin()==arinc_word_names_.end())
+        if(word_names.size() == 0)
             return false;
 
         size_t unique_index = 0;

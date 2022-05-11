@@ -57,6 +57,7 @@ endif()
 # Packages
 ###########################################
 add_subdirectory(cpp/common)
+add_subdirectory(cpp/cli)
 add_subdirectory(cpp/sha256)
 add_subdirectory(cpp/metadata)
 add_subdirectory(cpp/parquet_context)

@@ -104,6 +104,63 @@ std::vector<std::string> ParseText::Split(std::string input_string, const char& 
     return return_vec;
 }
 
+
+std::vector<std::string> ParseText::Split(std::string input_string, const std::string& delim)
+{
+    std::vector<std::string> split;
+    if(input_string.size() == 0)
+        return split;
+
+    size_t pos = 0; 
+    size_t start_pos = 0;
+    std::string keep_delim = delim.substr(0, delim.size()-1);
+    std::string found = "";
+    while((pos = input_string.find(delim, start_pos)) != std::string::npos)
+    {
+        found = input_string.substr(start_pos, pos-start_pos);
+        split.push_back(found + keep_delim);
+        start_pos = pos + delim.size();
+    }
+    if(start_pos < input_string.size())
+        split.push_back(input_string.substr(start_pos, input_string.size() - start_pos));
+
+    return split;
+}
+
+std::vector<std::string> ParseText::Split(std::string input_string)
+{
+    std::vector<std::string> split;
+    std::regex rgx("(^|[^ ]+)[ ]+");
+    std::smatch match;
+    std::string input = input_string;
+    std::string matched_substr = "";
+    while(std::regex_search(input, match, rgx))
+    {
+        matched_substr = match[1].str();
+        if(matched_substr.size() > 0)
+            split.push_back(matched_substr);
+
+        input = match.suffix().str();
+    }
+
+    if(input.size() > 0)
+        split.push_back(input);
+
+    return split;
+}
+
+std::string ParseText::Join(const std::vector<std::string>& input_vec)
+{
+    std::string join = "";
+    if(input_vec.size() > 0)
+    {
+        join = input_vec.at(0);
+        for (size_t i = 1; i < input_vec.size(); i++)
+            join += (" " + input_vec.at(i));
+    }
+    return join;
+}
+
 bool ParseText::ExtractQuotedSections(const std::string& input_string,
                                       std::map<int, std::string>& quoted_sections,
                                       std::map<int, std::string>& unquoted_sections)
@@ -407,4 +464,31 @@ std::string ParseText::ToLower(const std::string& input_str) const
             lower_str[i] = std::tolower(lower_str[i]);
     }
     return lower_str;
+}
+
+std::string ParseText::ToUpper(const std::string& input_str) const
+{
+    std::string upper_str = input_str;
+    for (size_t i = 0; i < upper_str.length(); i++)
+    {
+        if (!std::isupper(upper_str[i]))
+            upper_str[i] = std::toupper(upper_str[i]);
+    }
+
+    return upper_str;
+}
+
+std::string ParseText::Replace(std::string input_string, std::string find_string,
+    std::string replace_string)
+{
+    std::string mod = input_string;
+    size_t pos = 0;
+    size_t find_str_len = find_string.size();
+    size_t repl_str_len = replace_string.size();
+    while((pos = mod.find(find_string, pos)) != std::string::npos)
+    {
+        mod = mod.replace(pos, find_str_len, replace_string);
+        pos += repl_str_len;
+    }
+    return mod;
 }
