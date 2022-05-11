@@ -36,6 +36,8 @@ with re-definitions by spdlog headers of arrow defs.
 #include "translation_config_params.h"
 #include "yaml_schema_validation.h"
 #include "sha256_tools.h"
+#include "translator_cli_429.h"
+#include "dts_arinc429_schema.h"
 
 
 int TranslateTabularARINC429Main(int argc, char** argv);
@@ -43,10 +45,9 @@ int TranslateTabularARINC429Main(int argc, char** argv);
 namespace transtab429
 {
     bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
-                    const std::string& str_output_dir, const std::string& str_conf_dir,
-                    const std::string& str_log_dir, ManagedPath& input_path, ManagedPath& icd_path,
-                    ManagedPath& output_dir, ManagedPath& conf_file_path, ManagedPath& conf_schema_file_path,
-                    ManagedPath& icd_schema_file_path, ManagedPath& log_dir, ArgumentValidation* av);
+                    const std::string& str_output_dir, const std::string& str_log_dir, 
+                    ManagedPath& input_path, ManagedPath& icd_path,
+                    ManagedPath& output_dir, ManagedPath& log_dir, ArgumentValidation* av);
 
     bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_log_level);
 

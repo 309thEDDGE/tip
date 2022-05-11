@@ -94,6 +94,13 @@ add_executable(tests
     src/arinc429_data_u.cpp
     src/translate_tabular_arinc429_main_u.cpp
     src/parquet_tdpf1_u.cpp
+    src/cli_arg_u.cpp 
+    src/cli_positional_arg_u.cpp 
+    src/cli_optional_arg_u.cpp
+    src/cli_flag_u.cpp
+    src/cli_u.cpp
+    src/cli_group_u.cpp
+    src/container_arg_u.cpp
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)
@@ -106,7 +113,7 @@ target_link_libraries(tests
     PUBLIC common parsech10_lib ch10_parquet ch10ethernet parquet_context ch10comp
     dts_1553 dts_429 tiputil parquet_compare pq_vid_extract yamlsv
     arrow_shared parquet spdlog::spdlog translate_tabular translate_tabular_1553
-    metadata translate_tabular_arinc429
+    metadata cli translate_tabular_arinc429
     PRIVATE ${GTEST_LIBRARIES}
 )
 

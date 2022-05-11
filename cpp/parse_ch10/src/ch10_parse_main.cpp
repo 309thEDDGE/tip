@@ -6,51 +6,44 @@ int Ch10ParseMain(int argc, char** argv)
     if (!SetLineBuffering(stdout))
         return 0;
 
-    if (CheckForVersionArgument(argc, argv))
+    CLIGroup cli_group;
+    ParserConfigParams config;
+    bool help_requested = false;
+    bool show_version = false;
+    if(!ConfigureParserCLI(cli_group, config, help_requested, show_version))
+    {
+        printf("ConfigureParserCLI failed\n");
+        return 0;
+    }
+
+    std::string nickname = "";
+    std::shared_ptr<CLIGroupMember> cli;
+    if (!cli_group.Parse(argc, argv, nickname, cli))
+        return 0;
+
+    if (help_requested && nickname == "clihelp")
+    {
+        printf("%s", cli_group.MakeHelpString().c_str());
+        return 0;
+    }
+
+    if (show_version && nickname == "cliversion")
     {
         printf(CH10_PARSE_EXE_NAME " version %s\n", GetVersionString().c_str());
         return 0;
     }
-
-    std::map<int, std::string> def_args = {
-        {1, "input_path"}, {2, "output_path"}, {3, "conf_dir"}, {4, "log_dir"}
-    };
-    std::map<int, std::string> options = {
-        {1, "Usage: " CH10_PARSE_EXE_NAME " <ch10 path> [output path] [config dir] [log dir]\n"
-            "Needs ch10 input path."},
-        {2, ""},
-        {4, "If a configuration directory is specified by the user then "
-            "an output log directory must also be specified"}
-    };
-    std::map<std::string, std::string> args;
-    ArgumentValidation av;
-    if(!av.TestOptionalArgCount(argc, options)) 
-        return 0;
-    if(!av.ParseArgs(argc, argv, def_args, args, true))
-        return 0;
+    config.MakeCh10PacketEnabledMap();
 
     ManagedPath input_path;
     ManagedPath output_path;
-    ManagedPath conf_file_path;
-    ManagedPath schema_file_path;
     ManagedPath log_dir;
-    if (!ValidatePaths(args.at("input_path"), args.at("output_path"), 
-                       args.at("conf_dir"), args.at("log_dir"),
-                       input_path, output_path, conf_file_path, schema_file_path, log_dir, &av))
+    ArgumentValidation av;
+    if (!ValidatePaths(config.input_path_str_, config.output_path_str_, 
+                       config.log_path_str_, input_path, output_path, log_dir, &av))
         return 0;
 
     ProvenanceData prov_data;
     if(!GetProvenanceData(input_path.absolute(), static_cast<size_t>(150e6), prov_data)) 
-        return 0;
-
-    YamlSV ysv;
-    std::string config_string;
-    std::string schema_string;
-    if(!ysv.ValidateDocument(conf_file_path, schema_file_path, config_string, schema_string))
-        return 0;
-
-    ParserConfigParams config;
-    if(!config.InitializeWithConfigString(config_string))
         return 0;
 
     if (!SetupLogging(log_dir, spdlog::level::from_str(config.stdout_log_level_)))
@@ -60,8 +53,6 @@ int Ch10ParseMain(int argc, char** argv)
     spdlog::get("pm_logger")->info("Ch10 file path: {:s}", input_path.absolute().RawString());
     spdlog::get("pm_logger")->info("Ch10 hash: {:s}", prov_data.hash);
     spdlog::get("pm_logger")->info("Output path: {:s}", output_path.absolute().RawString());
-    spdlog::get("pm_logger")->info("Configuration file path: {:s}", conf_file_path.absolute().RawString());
-    spdlog::get("pm_logger")->info("Configuration schema path: {:s}", schema_file_path.absolute().RawString());
     spdlog::get("pm_logger")->info("Log directory: {:s}", log_dir.absolute().RawString());
 
     double duration = 0.0;
@@ -78,12 +69,9 @@ int Ch10ParseMain(int argc, char** argv)
 }
 
 bool ValidatePaths(const std::string& str_input_path, const std::string& str_output_path,
-                   const std::string& str_conf_dir, const std::string& str_log_dir,
-                   ManagedPath& input_path, ManagedPath& output_path,
-                   ManagedPath& conf_file_path, ManagedPath& schema_file_path, 
-                   ManagedPath& log_dir, const ArgumentValidation* av)
+                   const std::string& str_log_dir, ManagedPath& input_path, 
+                   ManagedPath& output_path, ManagedPath& log_dir, const ArgumentValidation* av)
 {
-    // std::vector<std::string> ch10_exts{"ch10", "c10"};
     if (!av->CheckExtension(str_input_path, {"ch10", "c10"}))
     {
         printf(
@@ -109,41 +97,17 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_out
         // Check if the path conforms to utf-8 and exists
         if (!av->ValidateDirectoryPath(str_output_path, output_path))
         {
-            printf("User-defined output path is not a directory: %s\n",
+            printf("Output path is not a directory: %s\n",
                    str_output_path.c_str());
             return false;
         }
     }
 
-    // Create parse configuration path from base conf path
-    std::string conf_file_name = "parse_conf.yaml";
-    ManagedPath default_conf_base_path({"..", "conf"});
-    if (!av->ValidateDefaultInputFilePath(default_conf_base_path.absolute(),
-                                         str_conf_dir, conf_file_name, conf_file_path))
+    if (!av->ValidateDirectoryPath(str_log_dir, log_dir))
     {
-        printf(
-            "The constructed path may be the default path, relative to CWD "
-            "(\"../conf\"). Specify an explicit conf path to remedy.\n");
+        printf("Log path is not a directory: %s\n", str_log_dir.c_str());
         return false;
     }
-
-    // Construct the schema path. The user schema path is constructed from
-    // the user conf path only if the user conf path is not an empty string.
-    std::string schema_file_name = "tip_parse_conf_schema.yaml";
-    ManagedPath default_schema_path({"..", "conf", "yaml_schemas"});
-    ManagedPath user_schema_path(std::string(""));
-    if (str_conf_dir != "")
-        user_schema_path = ManagedPath({str_conf_dir, "yaml_schemas"});
-    if (!av->ValidateDefaultInputFilePath(default_schema_path, user_schema_path.RawString(),
-                                         schema_file_name, schema_file_path))
-    {
-        printf("Failed to create yaml schema file path\n");
-        return false;
-    }
-
-    ManagedPath default_log_dir({"..", "logs"});
-    if (!av->ValidateDefaultOutputDirectory(default_log_dir, str_log_dir, log_dir, true))
-        return false;
 
     return true;
 }

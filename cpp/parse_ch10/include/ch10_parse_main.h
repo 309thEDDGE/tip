@@ -6,6 +6,7 @@
 #include <iostream>
 #include "parse_manager.h"
 #include "parser_config_params.h"
+#include "parser_cli.h"
 #include "managed_path.h"
 #include "argument_validation.h"
 #include "provenance_data.h"
@@ -20,10 +21,8 @@
 int Ch10ParseMain(int argc, char** argv);
 
 bool ValidatePaths(const std::string& str_input_path, const std::string& str_output_path,
-                   const std::string& str_conf_dir, const std::string& str_log_dir,
-                   ManagedPath& input_path, ManagedPath& output_path,
-                   ManagedPath& conf_file_path, ManagedPath& schema_file_path,
-                   ManagedPath& log_dir, const ArgumentValidation* av);
+                   const std::string& str_log_dir, ManagedPath& input_path, 
+                   ManagedPath& output_path, ManagedPath& log_dir, const ArgumentValidation* av);
 
 bool StartParse(ManagedPath input_path, ManagedPath output_path,
                 const ParserConfigParams& config, double& duration, 

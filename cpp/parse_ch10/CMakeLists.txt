@@ -5,6 +5,8 @@ set(headers
     include/worker_config.h
     include/tmats_parser.h
     include/tmats_data.h
+    include/parser_cli_help_strings.h
+    include/parser_cli.h
 )
 
 add_library(parsech10_lib
@@ -26,7 +28,7 @@ set_target_properties(parsech10_lib
 )
 
 target_link_libraries(parsech10_lib
-    PUBLIC tiputil ch10comp yamlsv spdlog::spdlog metadata
+    PUBLIC tiputil ch10comp yamlsv spdlog::spdlog metadata cli
 )
 
 add_executable("${CH10_PARSE_EXE_NAME}" main/ch10parse.cpp)

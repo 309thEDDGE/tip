@@ -25,7 +25,7 @@ target_include_directories(translate_tabular PUBLIC include)
 set_target_properties(translate_tabular PROPERTIES PUBLIC_HEADER "${headers}")
 
 target_link_libraries(translate_tabular
-    PUBLIC tiputil ch10_parquet dts_1553 spdlog::spdlog
+    PUBLIC tiputil ch10_parquet dts_1553 spdlog::spdlog cli
 )
 
 install(

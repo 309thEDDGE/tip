@@ -34,16 +34,16 @@ with re-definitions by spdlog headers of arrow defs.
 #include "version_info.h"
 #include "stream_buffering.h"
 #include "yaml_schema_validation.h"
+#include "translator_cli_1553.h"
 
 int TranslateTabular1553Main(int argc, char** argv);
 
 namespace transtab1553
 {
     bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
-                    const std::string& str_output_dir, const std::string& str_conf_dir,
-                    const std::string& str_log_dir, ManagedPath& input_path, ManagedPath& icd_path,
-                    ManagedPath& output_dir, ManagedPath& conf_file_path, ManagedPath& conf_schema_file_path,
-                    ManagedPath& icd_schema_file_path, ManagedPath& log_dir, ArgumentValidation* av);
+                    const std::string& str_output_dir, const std::string& str_log_dir, 
+                    ManagedPath& input_path, ManagedPath& icd_path, ManagedPath& output_dir, 
+                    ManagedPath& log_dir, ArgumentValidation* av);
 
     bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level);
 

@@ -18,8 +18,13 @@ bool ParseManager::Configure(ManagedPath input_ch10_file_path, ManagedPath outpu
     // Convert ch10_packet_type configuration map from string --> string to
     // Ch10PacketType --> bool
     std::map<Ch10PacketType, bool> packet_type_config_map;
-    if (!ConvertCh10PacketTypeMap(user_config.ch10_packet_type_map_, packet_type_config_map))
-        return false;
+    if(user_config.ch10_packet_enabled_map_.size() == 0)
+    {
+        if (!ConvertCh10PacketTypeMap(user_config.ch10_packet_type_map_, packet_type_config_map))
+            return false;
+    }
+    else
+        packet_type_config_map = user_config.ch10_packet_enabled_map_;
 
     tmats_output_path_ = output_dir.CreatePathObject(input_ch10_file_path,
         "_TMATS.txt");
@@ -112,8 +117,13 @@ bool ParseManager::Parse(const ParserConfigParams& user_config)
     // Convert ch10_packet_type configuration map from string --> string to
     // Ch10PacketType --> bool
     std::map<Ch10PacketType, bool> packet_type_config_map;
-    if (!ConvertCh10PacketTypeMap(user_config.ch10_packet_type_map_, packet_type_config_map))
-        return false;
+    if(user_config.ch10_packet_enabled_map_.size() == 0)
+    {
+        if (!ConvertCh10PacketTypeMap(user_config.ch10_packet_type_map_, packet_type_config_map))
+            return false;
+    }
+    else
+        packet_type_config_map = user_config.ch10_packet_enabled_map_;
 
     // Start queue to activate all workers, limiting the quantity of
     // concurrent threads to n_threads.
@@ -192,8 +202,13 @@ bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
     // Convert ch10_packet_type configuration map from string --> string to
     // Ch10PacketType --> bool
     std::map<Ch10PacketType, bool> packet_type_config_map;
-    if (!ConvertCh10PacketTypeMap(user_config.ch10_packet_type_map_, packet_type_config_map))
-        return false;
+    if(user_config.ch10_packet_enabled_map_.size() == 0)
+    {
+        if (!ConvertCh10PacketTypeMap(user_config.ch10_packet_type_map_, packet_type_config_map))
+            return false;
+    }
+    else
+        packet_type_config_map = user_config.ch10_packet_enabled_map_;
 
     // Create a set of all the parsed packet types
     std::set<Ch10PacketType> parsed_packet_types;
@@ -863,7 +878,10 @@ bool ParseManager::ConvertCh10PacketTypeMap(const std::map<std::string, std::str
     // The ch10 can't be parsed if there is no packet type configuration.
     // If the input_map is empty, return false.
     if (input_map.size() == 0)
+    {
+        spdlog::get("pm_logger")->info("ConvertCh10PacketTypeMap: input_map is empty");
         return false;
+    }
 
     // Define string to Ch10PacketType map
     std::map<std::string, Ch10PacketType> conversion_map = {
