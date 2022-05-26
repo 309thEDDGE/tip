@@ -82,44 +82,44 @@ const std::string vote_threshold_help =
 
 const std::string vote_method_checks_tmats_help =
     R"(Only used when --use_tmats_busmap is not given. 
-       Once the voting process is carried out, the results will be compared 
-       with TMATS. If a bus name associated with a given channel ID is a substring 
-       of the TMATS bus name for that given channel ID, it will allow the channel 
-       ID to be mapped. If a TMATS match is not made, it will not map the channel 
-       ID that doesn't have a TMATS bus name match
+Once the voting process is carried out, the results will be compared 
+with TMATS. If a bus name associated with a given channel ID is a substring 
+of the TMATS bus name for that given channel ID, it will allow the channel 
+ID to be mapped. If a TMATS match is not made, it will not map the channel 
+ID that doesn't have a TMATS bus name match.**||
+       
+Example 1:
+voting method results--
+channel ID = 1,  bus name = "BUS1"
+--
+tmats--
+channel ID = 1, bus name = "BUS1" or "BUS1MUX" or "*ANYTHING*BUS1*ANYTHING*"
+-- 
+final bus map (channel ID = 1 -> "BUS1")
 
-       Example 1:
-       voting method results--
-       channel ID = 1,  bus name = "BUS1"
-       --
-       tmats--
-       channel ID = 1, bus name = "BUS1" or "BUS1MUX" or "*ANYTHING*BUS1*ANYTHING*"
-       -- 
-       final bus map (channel ID = 1 -> "BUS1")
-
-       Example 2:
-       voting method results--
-       channel ID = 1,  bus name = "BUS1"
-       --
-       tmats results--
-       channel ID = 1, bus name = "BUS2" or missing from TMATS
-       -- 
-       final bus map (channel ID 1 will be left unmapped))";
+Example 2:
+voting method results--
+channel ID = 1,  bus name = "BUS1"
+--
+tmats results--
+channel ID = 1, bus name = "BUS2" or missing from TMATS
+-- 
+final bus map (channel ID 1 will be left unmapped)**|| )";
 
 const std::string bus_name_exclusions_help =
     R"(If a bus name exists in the final bus map that also
-       exists in the bus_name_exclusions list. It will be removed 
-       from the final bus map. Removals include the case when 
-       a bus from the bus_name_exclusions list is a substring of the full bus name
-       found in either the DTS file or TMATS. 
-       Example: TMATs/DTS = "BUSAMUX",  
-       "--busname_exclusion BUSA", will result in removal
-       of BUSAMUX from the final bus map 
+exists in the bus_name_exclusions list. It will be removed 
+from the final bus map. Removals include the case when 
+a bus from the bus_name_exclusions list is a substring of the full bus name
+found in either the DTS file or TMATS.**|| 
+Example: TMATs/DTS = "BUSAMUX",  
+"--busname_exclusion BUSA", will result in removal
+of BUSAMUX from the final bus map 
 
-       Removals are also not case sensitive 
-       Example: TMATs/DTS -> "BusA",  
-       "--busname_exclusion BUSA", will result in removal
-       of BusA from the final bus map )";
+Removals are also not case sensitive 
+Example: TMATs/DTS -> "BusA",  
+"--busname_exclusion BUSA", will result in removal
+of BusA from the final bus map.**|| )";
 
 const std::string select_specific_messages_help =
     R"(If values are provided, only messages which match provided values will be translated.
@@ -142,8 +142,8 @@ const std::string auto_sys_limits_help =
 const std::string stdout_log_level_help = 
     R"(Set log level of sink to minimum log level. All log entries
 with level value greater or equal to minimum level value will
-be printed to stdout. 
-
+be printed to stdout.
+**||
 Log level and value:
 - trace     = 0
 - debug     = 1
@@ -153,7 +153,7 @@ Log level and value:
 - critical  = 5
 - off       = 6
 
-Accept values in the set {trace, debug, info, warn, error, critical, off}.)";
+**||Accept values in the set {trace, debug, info, warn, error, critical, off}.)";
 
 
 #endif  // TRANSLATOR_CLI_HELP_STRINGS_1553_H_

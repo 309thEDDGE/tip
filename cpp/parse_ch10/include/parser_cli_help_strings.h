@@ -59,8 +59,8 @@ const std::string worker_shift_wait_help =
 const std::string stdout_log_level_help = 
     R"(Set log level of sink to minimum log level. All log entries
 with level value greater or equal to minimum level value will
-be printed to stdout. 
-
+be printed to stdout.
+**||
 Log level and value:
 - trace     = 0
 - debug     = 1
@@ -70,6 +70,7 @@ Log level and value:
 - critical  = 5
 - off       = 6
 
+**||
 Accept values in the set {trace, debug, info, warn, error, critical, off}.)";
 
 #endif  // PARSER_CLI_HELP_H_

@@ -86,7 +86,8 @@ TEST_F(CLIArgTest, FormatStringWSIndentMultLines)
     temp_help_str_ = "this is a simple\n single line help message which should span two lines";   // 69
     expected_help_str_ = (
     "                         this is a simple single line help\n"
-    "                         message which should span two lines"
+    "                         message which should span two\n"
+    "                         lines"
     );
     size_t indent = 25;
     ASSERT_TRUE(cli_arg_.FormatString(temp_help_str_, temp_char_width_, 
@@ -105,10 +106,10 @@ TEST_F(CLIArgTest, FormatStringNonCharSeparator)
         " [--max_read_count | -m <value>] [--worker_offset <value>] [--worker_wait <value>]"
     );
     expected_help_str_ = (
-        "               INPUT_PATH [--output_path | -o <value>] [--log_path | -l <value>]\n"
-        "               [--chunk_size | -c <value>] [--thread_count | -t <value>]\n"
-        "               [--max_read_count | -m <value>] [--worker_offset <value>]\n"
-        "               [--worker_wait <value>]"
+        "               INPUT_PATH [--output_path | -o <value>]\n"
+        "               [--log_path | -l <value>] [--chunk_size | -c <value>]\n"
+        "               [--thread_count | -t <value>] [--max_read_count | -m <value>]\n"
+        "               [--worker_offset <value>] [--worker_wait <value>]"
     );
 
     ASSERT_TRUE(cli_arg_.FormatString(temp_help_str_, temp_char_width_, 
@@ -127,10 +128,10 @@ TEST_F(CLIArgTest, FormatStringNonCharMultipleWS)
         " [--max_read_count | -m <value>] [--worker_offset <value>]  [--worker_wait <value>]"
     );
     expected_help_str_ = (
-        "               INPUT_PATH [--output_path | -o <value>] [--log_path | -l <value>]\n"
-        "               [--chunk_size | -c <value>] [--thread_count | -t <value>]\n"
-        "               [--max_read_count | -m <value>] [--worker_offset <value>]\n"
-        "               [--worker_wait <value>]"
+        "               INPUT_PATH [--output_path | -o <value>]\n"
+        "               [--log_path | -l <value>] [--chunk_size | -c <value>]\n"
+        "               [--thread_count | -t <value>] [--max_read_count | -m <value>]\n"
+        "               [--worker_offset <value>] [--worker_wait <value>]"
     );
 
     ASSERT_TRUE(cli_arg_.FormatString(temp_help_str_, temp_char_width_, 
@@ -156,6 +157,28 @@ with a new line here!)";
           with a new line here!)";
     size_t indent = 10;
     ASSERT_TRUE(cli_arg_.FormatString(temp_help_str_, indent, fmt_str_));
+    EXPECT_EQ(expected_help_str_, fmt_str_);
+}
+
+TEST_F(CLIArgTest, FormatStringIndentOnlyWithQuotes)
+{
+    temp_help_str_ = R"(this is a simple "single line" help
+with a new line and quotes!)";
+
+    expected_help_str_ = R"(          this is a simple "single line" help
+          with a new line and quotes!)";
+    size_t indent = 10;
+    ASSERT_TRUE(cli_arg_.FormatString(temp_help_str_, indent, fmt_str_));
+    EXPECT_EQ(expected_help_str_, fmt_str_);
+}
+
+TEST_F(CLIArgTest, FormatStringNewlineAtMaxWidth)
+{
+    temp_help_str_ = R"(this is a simple "single line" help without a new line and with quotes!)";
+    expected_help_str_ = R"(this is a simple "single line" help
+without a new line and with quotes!)";
+    size_t indent = 0;
+    ASSERT_TRUE(cli_arg_.FormatString(temp_help_str_, 43, indent, fmt_str_, " "));
     EXPECT_EQ(expected_help_str_, fmt_str_);
 }
 
@@ -360,5 +383,111 @@ TEST_F(CLIArgTest, CheckShortLabel)
 
     temp_label_ = "-_";  
     ASSERT_FALSE(cli_arg_.CheckShortLabel(temp_label_));
+}
+
+TEST_F(CLIArgTest, FindEscapedComponentsNoEscapeChars)
+{
+    temp_help_str_ = "lorem ipsum dolor sit amet, eu dicunt animal tamquam vis.";
+    std::map<int, std::string> nonescaped;
+    std::map<int, std::string> escaped;
+    ASSERT_FALSE(cli_arg_.FindEscapedComponents(temp_help_str_, nonescaped, escaped));
+    ASSERT_EQ(0, nonescaped.size());
+    ASSERT_EQ(0, escaped.size());
+}
+
+TEST_F(CLIArgTest, FindEscapedComponentsNotInPairs)
+{
+    // three sets of escape sequence, NOT 4
+    temp_help_str_ = "lorem **||ipsum dolor sit amet,**|| eu dicunt animal **||tamquam vis.**|*";
+    std::map<int, std::string> nonescaped;
+    std::map<int, std::string> escaped;
+    ASSERT_FALSE(cli_arg_.FindEscapedComponents(temp_help_str_, nonescaped, escaped));
+    ASSERT_EQ(0, nonescaped.size());
+    ASSERT_EQ(0, escaped.size());
+}
+
+TEST_F(CLIArgTest, FindEscapedComponentsBeginsWith)
+{
+    temp_help_str_ = "**||lorem **||ipsum dolor sit amet,**|| eu dicunt animal **||tamquam vis.";
+    std::map<int, std::string> nonescaped;
+    std::map<int, std::string> escaped;
+    ASSERT_TRUE(cli_arg_.FindEscapedComponents(temp_help_str_, nonescaped, escaped));
+    ASSERT_EQ(2, nonescaped.size());
+    ASSERT_EQ(2, escaped.size());
+
+    std::map<int, std::string> expected_nonescaped{
+        {1, "ipsum dolor sit amet,"},
+        {3, "tamquam vis."}
+    };
+    std::map<int, std::string> expected_escaped{
+        {0, "lorem "},
+        {2, " eu dicunt animal "}
+    };
+    EXPECT_THAT(expected_nonescaped, ::testing::ContainerEq(nonescaped));
+    EXPECT_THAT(expected_escaped, ::testing::ContainerEq(escaped));
+}
+
+TEST_F(CLIArgTest, FindEscapedComponentsEndsWith)
+{
+    temp_help_str_ = "lorem **||ipsum dolor sit amet,**|| eu dicunt animal **||tamquam vis.**||";
+    std::map<int, std::string> nonescaped;
+    std::map<int, std::string> escaped;
+    ASSERT_TRUE(cli_arg_.FindEscapedComponents(temp_help_str_, nonescaped, escaped));
+    ASSERT_EQ(2, nonescaped.size());
+    ASSERT_EQ(2, escaped.size());
+
+    std::map<int, std::string> expected_nonescaped{
+        {0, "lorem "},
+        {2, " eu dicunt animal "}
+    };
+    std::map<int, std::string> expected_escaped{
+        {1, "ipsum dolor sit amet,"},
+        {3, "tamquam vis."}
+    };
+    EXPECT_THAT(expected_nonescaped, ::testing::ContainerEq(nonescaped));
+    EXPECT_THAT(expected_escaped, ::testing::ContainerEq(escaped));
+}
+
+TEST_F(CLIArgTest, FindEscapedComponentsBeginsAndEndsWith)
+{
+    temp_help_str_ = "**||lorem **||ipsum **||dolor sit amet,**|| eu dicunt animal **||tamquam vis.**||";
+    std::map<int, std::string> nonescaped;
+    std::map<int, std::string> escaped;
+    ASSERT_TRUE(cli_arg_.FindEscapedComponents(temp_help_str_, nonescaped, escaped));
+    ASSERT_EQ(2, nonescaped.size());
+    ASSERT_EQ(3, escaped.size());
+
+    std::map<int, std::string> expected_nonescaped{
+        {1, "ipsum "},
+        {3, " eu dicunt animal "}
+    };
+    std::map<int, std::string> expected_escaped{
+        {0, "lorem "},
+        {2, "dolor sit amet,"},
+        {4, "tamquam vis."}
+    };
+    EXPECT_THAT(expected_nonescaped, ::testing::ContainerEq(nonescaped));
+    EXPECT_THAT(expected_escaped, ::testing::ContainerEq(escaped));
+}
+
+TEST_F(CLIArgTest, GetHelpStringSpecialEscapeChars)
+{
+    temp_char_width_ = 50;
+    temp_help_str_ = R"(lorem ipsum dolor sit amet, eu dicunt animal tamquam vis.
+et saperet sensibus mea, ei dicam praesent pro.**|| Veri sonet dicant quo ei, tamquam numquam salutandi
+ea vim.**|| Possim definitionem quo no. Idque aperiam mea id.)";
+    expected_help_str_ = (
+        "          lorem ipsum dolor sit amet, eu dicunt\n"
+        "          animal tamquam vis. et saperet sensibus\n"
+        "          mea, ei dicam praesent pro.\n"
+        "           Veri sonet dicant quo ei, tamquam numquam salutandi\n"
+        "          ea vim.\n"
+        "          Possim definitionem quo no. Idque\n"
+        "          aperiam mea id."
+    );
+    size_t indent = 10;
+    CLIArg cliarg(temp_label_, temp_help_str_, default_);
+    ASSERT_TRUE(cliarg.GetHelpString(temp_char_width_, indent, fmt_str_));
+    EXPECT_EQ(expected_help_str_, fmt_str_);
 }
 

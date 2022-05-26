@@ -111,6 +111,18 @@ class ParserConfigParams
         ch10_packet_enabled_map_[Ch10PacketType::VIDEO_DATA_F0] = !disable_videof0_;
         ch10_packet_enabled_map_[Ch10PacketType::ETHERNET_DATA_F0] = !disable_eth0_;
         ch10_packet_enabled_map_[Ch10PacketType::ARINC429_F0] = !disable_arinc0_;
+
+        for(std::map<Ch10PacketType, bool>::const_iterator it = ch10_packet_enabled_map_.cbegin();
+            it != ch10_packet_enabled_map_.cend(); ++it)
+        {
+            if(ch10packettype_to_string_map.count(it->first) == 1)
+            {
+                if(it->second)
+                    ch10_packet_type_map_[ch10packettype_to_string_map.at(it->first)] = "true";
+                else
+                    ch10_packet_type_map_[ch10packettype_to_string_map.at(it->first)] = "false";
+            }
+        }
     }
 };
 

@@ -13,6 +13,7 @@
 #include "cli_positional_arg.h"
 #include "cli_optional_arg.h"
 #include "cli_flag.h"
+#include "terminal.h"
 
 /*
 Notes:
@@ -53,9 +54,13 @@ class CLI
         // by SortArgs
         size_t pos_arg_count_;
 
+        // Terminal/console (stdout) width in character unit
+        size_t max_width_;
+
     public:
 
         CLI(const std::string& prog_name, const std::string& description);
+        CLI(const std::string& prog_name, const std::string& description, size_t max_width);
         std::string GetProgramName() { return program_name_; }
         size_t GetArgCount() { return args_.size(); }
         const CLIArg* GetArg(int index)
@@ -415,6 +420,21 @@ class CLI
         */
         static std::string MakeArgHelpString(const std::shared_ptr<CLIArg>& arg,
             const size_t& max_width, const size_t& indent);
+
+        
+
+        /*
+        Make a formatted program description, accounting for terminal width.
+        
+        Args:
+            description     --> Description string.
+            max_width       --> mac character width
+
+        Return:
+            Formatted description with newlines placed to account for
+            terminal width.
+        */
+        // static std::string FormatDescriptionString
 };
 
 template <typename ArgDataType>

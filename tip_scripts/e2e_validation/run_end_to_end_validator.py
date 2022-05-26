@@ -30,6 +30,7 @@ if __name__ == '__main__':
     aparse.add_argument('--no-yaml', action='store_true', default=False,
                         help='Turn off Yaml dependency import (deepdiff) and do not compare yaml files')
     aparse.add_argument('--exe-path', type=str, default=None, help='Manually specify path to executables')
+    aparse.add_argument('--no-overwrite', default=False, action='store_true')
 
     args = aparse.parse_args()
     log_desc = ''
@@ -45,5 +46,5 @@ if __name__ == '__main__':
         config.exe_path = args.exe_path
 
     from tip_scripts.e2e_validation.end_to_end_validator import E2EValidator
-    e = E2EValidator(args.truth_dir, args.test_dir, args.log_dir, log_desc=log_desc)
+    e = E2EValidator(args.truth_dir, args.test_dir, args.log_dir, args.no_overwrite, log_desc=log_desc)
     e.validate()

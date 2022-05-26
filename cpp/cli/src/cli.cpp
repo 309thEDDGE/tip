@@ -3,7 +3,18 @@
 
 CLI::CLI(const std::string& prog_name, const std::string& description) : program_name_(prog_name),
     description_(description), pos_arg_count_(0)
+{
+    size_t col_count, row_count; 
+    if(!GetTerminalSize(row_count, col_count))
+        max_width_ = 100;
+    else
+        max_width_ = col_count;
+}
+
+CLI::CLI(const std::string& prog_name, const std::string& description, size_t max_width) : 
+    program_name_(prog_name), description_(description), pos_arg_count_(0), max_width_(max_width)
 {}
+
 
 bool CLI::Parse(int argc, char* argv[])
 {
@@ -227,13 +238,12 @@ bool CLI::ParseFlags(const std::string& user_args, const ArgsVec& sorted_args)
 std::string CLI::MakeHelpString()
 {
     // printf("sorted_args size: %zu\n", args_.size());
-    size_t max_width = 100;
     size_t usage_len = 0;
     std::string general_usage = MakeGeneralUsageString(program_name_, usage_len);
     general_usage += "\n";
 
     std::string arg_specific_usage = MakeArgSpecificUsageString(program_name_,
-        max_width, usage_len, args_);
+        max_width_, usage_len, args_);
     // printf("Arg spec usage string:\n%s\n", arg_specific_usage.c_str());
     arg_specific_usage += "\n\n";
 
@@ -248,10 +258,13 @@ std::string CLI::MakeHelpString()
     std::string arg_descriptions("");
     for(ArgsVec::const_iterator it = args_.cbegin(); it != args_.cend(); ++it)
     {
-        arg_descriptions += (MakeArgHelpString(*it, max_width, max_arg_print_name_width+1) + "\n\n");
+        arg_descriptions += (MakeArgHelpString(*it, max_width_, max_arg_print_name_width+1) + "\n\n");
     }
 
-    return general_usage + arg_specific_usage + description_ + "\n\n" + arg_descriptions;
+    std::string formatted_desc = "";
+    CLIArg::FormatString(description_, max_width_, 0, formatted_desc, " ");
+
+    return general_usage + arg_specific_usage + formatted_desc + "\n\n" + arg_descriptions;
 }
 
 std::string CLI::MakeGeneralUsageString(const std::string& prog_name, size_t& indent)
@@ -284,8 +297,6 @@ std::string CLI::MakeArgHelpString(const std::shared_ptr<CLIArg>& arg,
 {
     std::string arg_label   = (arg)->GetPrintName() + " ";
 
-    // std::string arg_help    =  (arg)->GetHelpString();
-    // CLIArg::FormatString(arg_help, max_width, indent, arg_help, " ");
     std::string arg_help = "";
     arg->GetHelpString(max_width, indent, arg_help);
 

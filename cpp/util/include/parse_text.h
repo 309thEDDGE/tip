@@ -22,33 +22,43 @@ class ParseText
     Args:
         input_string    --> String to be split
         delim           --> char on which to split
+        keep_quotes     --> Keep quotes on quoted text
 
     Return:
         Vector of substrings from input_string which are separated by delim
     */
-    std::vector<std::string> Split(std::string input_string, const char& delim);
+    std::vector<std::string> Split(std::string input_string, const char& delim,
+        bool keep_quotes = false);
 
 
 
     /*
-    Split on string instead of char. 
+    Split on string instead of char. Ignores quotes completely.
 
-    If delim = "] " (right bracket, whitespace), split on all whitespace
-    chars preceded by "]". 
+    If keep_delim == true: Example delim = "] " (right bracket, whitespace), 
+    split on all whitespace chars preceded by "]". 
+
+    If keep_delim == false: Example delim = "] ", 
+    split on all instances of "] ", removing two chars (right bracket, whitespace),
+    as in "blah blah] today" --> ["blah blah", "today"] 
 
     Args:
         input_string    --> String to be split
         delim           --> string on which to split
+        keep_delim      --> Set to true if characters prior to final delim
+                            sequence (string) are to be kept
 
     Return:
         Vector of substrings from input_string which are separated by delim
     */
-    std::vector<std::string> Split(std::string input_string, const std::string& delim);
+    std::vector<std::string> Split(std::string input_string, const std::string& delim,
+        bool keep_delim = false);
 
 
 
     /*
-    Split on one or more whitespace, removing additional whitespace.
+    Split on one or more whitespace, removing additional whitespace. Ignore quotes
+    completely.
 
     Transform "hello, this    is   a line with various       whitespace  characters."
         --> vector<string>{"hello,", "this", "is", "a", "line", "with", "various", 

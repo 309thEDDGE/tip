@@ -26,7 +26,7 @@ bool CLIArg::FormatString(const std::string& help_str, int max_char_width,
     std::string cleaned = help_str;
     if(pt.CheckForExisitingChar(help_str, '\n'))
     {
-        components = pt.Split(help_str, '\n');
+        components = pt.Split(help_str, '\n', true);
         cleaned = pt.Join(components);
     }
     components = pt.Split(cleaned);
@@ -53,16 +53,16 @@ bool CLIArg::FormatString(const std::string& help_str, int max_char_width,
         if (sep.size() == 1)
         {
             char sep_char = sep.at(0);
-            components = pt.Split(cleaned, sep_char);
+            components = pt.Split(cleaned, sep_char, true);
         }
         else
-            components = pt.Split(cleaned, sep);
+            components = pt.Split(cleaned, sep, true);
 
         std::string curr_line = (indent_str + components.at(0));
         for (size_t i = 1; i < components.size(); i++)
         {
             // printf("curr_line: \"%s\"\n", curr_line.c_str());
-            if((curr_line.size() + 1 + components.at(i).size()) <= max_char_width)
+            if((curr_line.size() + 1 + components.at(i).size()) < max_char_width)
                 curr_line += (" " + components.at(i));
             else
             {
@@ -92,7 +92,7 @@ bool CLIArg::FormatString(const std::string& help_str, const size_t& indent,
     std::vector<std::string> components;
     if(pt.CheckForExisitingChar(help_str, '\n'))
     {
-        components = pt.Split(help_str, '\n');
+        components = pt.Split(help_str, '\n', true);
     }
     else
     {
@@ -114,6 +114,36 @@ bool CLIArg::FormatString(const std::string& help_str, const size_t& indent,
 bool CLIArg::GetHelpString(int max_char_width, const size_t& indent, 
     std::string& fmt_str)
 {
+    std::map<int, std::string> nonescaped;
+    std::map<int, std::string> escaped;
+    if(FindEscapedComponents(help_str_, nonescaped, escaped))
+    {
+        size_t component_count = nonescaped.size() + escaped.size();
+        std::string temp = "";
+        std::string formatted = "";
+        for(size_t i = 0; i < component_count; i++)
+        {
+            if(escaped.count(i) == 1)
+            {
+                if(!FormatString(escaped.at(i), indent, temp))
+                    return false;
+            }
+            else
+            {
+                if(!FormatString(nonescaped.at(i), max_char_width, indent, temp, " "))
+                    return false;
+            }
+
+            if(i > 0)
+                formatted += ("\n" + temp);
+            else
+                formatted += temp;
+        }
+        
+        fmt_str = formatted;
+        return true;
+    }
+
     if(use_simple_format_)
         return FormatString(help_str_, indent, fmt_str);
     else
@@ -257,5 +287,48 @@ bool CLIArg::ComputeValidateSpecialConfig(const std::string& fail_msg)
         if(!(*it)->Validate(fail_msg))
             return false;
     }
+    return true;
+}
+
+bool CLIArg::FindEscapedComponents(const std::string& input_str, 
+    std::map<int, std::string>& nonescaped, std::map<int, std::string>& escaped)
+{
+    std::string escape_seq = "**||";
+    if(input_str.find(escape_seq) == std::string::npos) 
+        return false;
+
+    size_t pos = 0;
+    size_t escape_seq_len = escape_seq.size();
+    std::vector<size_t> escape_pos;
+    while((pos = input_str.find(escape_seq, pos)) != std::string::npos)
+    {
+        escape_pos.push_back(pos);
+        pos += escape_seq_len;
+    }
+    if((escape_pos.size() % 2) != 0)
+        return false;
+
+    std::vector<std::string> components = pt_.Split(input_str, escape_seq);
+    if(escape_pos.at(0) == 0)
+    {
+        for(size_t i = 0; i < components.size(); i++)
+        {
+            if(i % 2 == 0)
+                escaped[i] = components.at(i);
+            else
+                nonescaped[i] = components.at(i);
+        }
+    }
+    else
+    {
+        for(size_t i = 0; i < components.size(); i++)
+        {
+            if(i % 2 == 0)
+                nonescaped[i] = components.at(i);
+            else
+                escaped[i] = components.at(i);
+        }
+    }
+
     return true;
 }

@@ -7,6 +7,7 @@
 #include <regex>
 #include <memory>
 #include <vector>
+#include <map>
 #include <set>
 #include "parse_text.h"
 #include "arg_special_config.h"
@@ -467,6 +468,39 @@ class CLIArg : public std::enable_shared_from_this<CLIArg>
             function is called; true otherwise.
         */
         bool ComputeValidateSpecialConfig(const std::string& fail_msg);
+
+
+
+        /*
+        Obtain specially-escaped and un-escaped sections from an input string,
+        retaining ordering of sections. 
+
+        Used to allow user input of help strings which have highly formatted
+        sections which are not modified by the typical GetHelpString use,
+        indicated by special escape sequence, 
+        in addition to non-escaped sections which are formatted to indent
+        and terminal width. 
+
+        This function is ought to be called by GetHelpString() and is not
+        to be used independently. 
+
+        Args:
+            input_str       --> Input string to be decomposed by escape
+                                sequence
+            nonescaped      --> map<int, std::string> which maps order of 
+                                nonescaped string section in original 
+                                string to section value
+            escaped         --> map<int, std::string> which maps order of 
+                                escaped string section in original 
+                                string to section value
+
+        Return:
+            True if escape chars are present and occur in pairs and
+            output params nonescaped and escaped are populated correctly;
+            false otherwise.
+        */
+        bool FindEscapedComponents(const std::string& input_str, 
+            std::map<int, std::string>& nonescaped, std::map<int, std::string>& escaped);
 
 };
 
