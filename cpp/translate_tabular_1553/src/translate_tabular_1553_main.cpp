@@ -42,7 +42,8 @@ int TranslateTabular1553Main(int argc, char** argv)
 
     if(show_dts_info && nickname == "clidts")
     {
-        printf("Raw DTS1553 schema (yaml-formatted):\n%s\n\n", dts_1553_schema.c_str());
+        // size_t term_width = cli_group.GetTerminalWidth();
+        printf("\nRaw DTS1553 schema (yaml-formatted):\n%s\n\n", dts_1553_schema.c_str());
         printf("%s\n\n%s\n\n%s\n\n", dts_1553_commword_explanation.c_str(), 
             dts_1553_parameter_defs.c_str(), dts_1553_suppl_commwords.c_str());
         return 0;

@@ -40,8 +40,6 @@ class Exec:
                                           os.path.basename(self.command_list[0]) + ' OUTPUT', 
                                           symbol_count * '='))
 
-        rawstdout = ''
-        rawstderr = ''
         decodestdout = ''
         while True:
             # Note: do not read from stderr because it blocks
@@ -65,6 +63,9 @@ class Exec:
         self.stderr = stderr
 
         return proc.poll()
+
+    def get_exec_time(self):
+        return self.exec_time
 
     def get_output(self):
         return self.stdout, self.stderr

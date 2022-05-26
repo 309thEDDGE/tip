@@ -8,6 +8,7 @@
 #include <cstdio>
 #include "cli_arg.h"
 #include "cli.h"
+#include "terminal.h"
 
 class GroupIndicator
 {
@@ -34,9 +35,10 @@ class CLIGroupMember : public CLI
         std::map<std::string, GroupIndicator> arg_to_indicator_map_;
 
     public:
-        CLIGroupMember(const std::string& prog_name, const std::string& description) :
-            CLI(prog_name, description)
+        CLIGroupMember(const std::string& prog_name, const std::string& description,
+            size_t terminal_width) : CLI(prog_name, description, terminal_width)
         {}
+
         bool IsGroupIndicator(const std::string& label) 
         {
             if(arg_to_indicator_map_.count(label) != 0)
@@ -102,11 +104,14 @@ class CLIGroup
 
         bool is_configured_;
 
+        // Terminal/console (stdout) width in character unit
+        size_t max_width_;
+
     public:
-        CLIGroup() : is_configured_(false)
-        {}
-        // const GroupLabelsVec& GetGroupLabels() { return arg_group_labels_; }
+        CLIGroup();
+
         const GroupMap& GetGroupMap() { return arg_group_; }
+        size_t GetTerminalWidth() const { return max_width_; } 
 
         /*
         Add argument CLI in order of precedence. Return a CLIGroupMember, which

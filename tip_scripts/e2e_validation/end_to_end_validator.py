@@ -70,7 +70,7 @@ from tip_scripts.exec import Exec
 
 class E2EValidator(object):
 
-    def __init__(self, truth_set_dir, test_set_dir, log_file_path, log_desc=''):
+    def __init__(self, truth_set_dir, test_set_dir, log_file_path, no_overwrite, log_desc=''):
 
         self.run_tip = False
         self.truth_set_dir = truth_set_dir
@@ -80,6 +80,7 @@ class E2EValidator(object):
         self.all_validation_obj = {}
         self.duration_data = {}
         self.validation_results_dict = {}
+        self.no_overwrite = no_overwrite
         self.print = print
 
         self.csv_path = os.path.join(truth_set_dir,'ch10list.csv')
@@ -148,7 +149,7 @@ class E2EValidator(object):
 
         #Duration: 87 sec
 
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../parse_and_translate.py'))
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../parse_and_translate_cli.py'))
 
         truth_dir = self.truth_set_dir # Directory in which ch10 files and ICDs reside
         test_dir = self.test_set_dir # Directory into which generated raw/translated data are placed
@@ -175,6 +176,10 @@ class E2EValidator(object):
             else:
                 call_list = ['python', script_path, ch10_full_path,
                              icd_full_path, '-o', test_dir]
+
+            if self.no_overwrite:
+                call_list.append('--no-overwrite')
+
             call_string = ' '.join(call_list)
             print(call_string)
             e = Exec()

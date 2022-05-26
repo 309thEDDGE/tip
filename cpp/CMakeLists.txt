@@ -114,6 +114,7 @@ add_library(${util_lib_name} STATIC
             ${util_src_dir}/stream_buffering.cpp     ${util_inc_dir}/stream_buffering.h
             ${util_src_dir}/sha256_tools.cpp         ${util_inc_dir}/sha256_tools.h
             ${util_src_dir}/provenance_data.cpp      ${util_inc_dir}/provenance_data.h
+            ${util_src_dir}/terminal.cpp             ${util_inc_dir}/terminal.h
  )
 
 target_include_directories(${util_lib_name} PUBLIC ${util_inc_dir}

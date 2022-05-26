@@ -83,7 +83,7 @@ inline bool ConfigureTranslatorCLI(CLIGroup& cli_group, TranslationConfigParams&
     std::set<std::string> permitted_log_levels{"trace", "debug", "info", "warn", "error", 
         "critical", "off"};
     cli->AddOption<std::string>("--log_level", "-L", stdout_log_level_help, "info", 
-        config.stdout_log_level_)->ValidatePermittedValuesAre(permitted_log_levels)->SetSimpleHelpFormat();
+        config.stdout_log_level_)->ValidatePermittedValuesAre(permitted_log_levels);
 
     // Flags
     cli->AddOption("--tmats", "", use_tmats_busmap_help, false, config.use_tmats_busmap_);
@@ -92,8 +92,8 @@ inline bool ConfigureTranslatorCLI(CLIGroup& cli_group, TranslationConfigParams&
         config.stop_after_bus_map_);
     cli->AddOption("--check_tmats", "", vote_method_checks_tmats_help, false, 
         config.vote_method_checks_tmats_);
-    cli->AddOption("--halt", "", halt_after_table_creation_help, false, 
-        config.exit_after_table_creation_);
+    // cli->AddOption("--halt", "", halt_after_table_creation_help, false, 
+    //     config.exit_after_table_creation_);
     cli->AddOption("--disable_sys_limits", "", auto_sys_limits_help, true, config.auto_sys_limits_);
 
     if(!cli_group.CheckConfiguration())

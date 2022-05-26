@@ -16,6 +16,7 @@ set(headers
     include/stream_buffering.h
     include/sha256_tools.h
     include/provenance_data.h
+    include/terminal.h
 )
 
 add_library(tiputil STATIC
@@ -34,6 +35,7 @@ add_library(tiputil STATIC
             src/stream_buffering.cpp
             src/sha256_tools.cpp
             src/provenance_data.cpp
+            src/terminal.cpp
 )
 
 target_compile_features(tiputil PUBLIC cxx_std_17)

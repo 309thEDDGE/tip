@@ -1,9 +1,26 @@
 #include "cli_group.h"
 
+
+CLIGroup::CLIGroup() : is_configured_(false), max_width_(0)
+{
+    size_t rows, cols;
+    if(!GetTerminalSize(rows, cols))
+    {
+        printf("CLIGroup(): Failed to get terminal size\n");
+        max_width_ = 100;
+    }
+    else
+    {
+        max_width_ = cols;
+        // printf("CLIGroup(): Terminal width = %zu\n", max_width_);
+    }
+}
+
 std::shared_ptr<CLIGroupMember> CLIGroup::AddCLI(const std::string& prog_name, const std::string& description,
     std::string nickname)
 {
-    std::shared_ptr<CLIGroupMember> clig = std::make_shared<CLIGroupMember>(prog_name, description);
+    std::shared_ptr<CLIGroupMember> clig = std::make_shared<CLIGroupMember>(prog_name, 
+        description, max_width_);
     arg_group_[nickname] = clig;
     arg_group_labels_.push_back(nickname);
     return clig;
@@ -11,6 +28,7 @@ std::shared_ptr<CLIGroupMember> CLIGroup::AddCLI(const std::string& prog_name, c
 
 bool CLIGroup::CheckConfiguration()
 {
+
     for(GroupMap::iterator it = arg_group_.begin(); it != arg_group_.end(); ++it)
     {
         if(it->second->GetArgCount() == 0)
@@ -128,7 +146,6 @@ std::string CLIGroup::MakeHelpString()
     if(!is_configured_)
         return help;
 
-    size_t max_width = 100;
     size_t indent = 0;
     bool first_iteration = true;
     std::string usage = "";
@@ -145,7 +162,7 @@ std::string CLIGroup::MakeHelpString()
             description = member->GetDescription();
         }
 
-        fmt_usage = CLI::MakeArgSpecificUsageString(member->GetProgramName(), max_width, 
+        fmt_usage = CLI::MakeArgSpecificUsageString(member->GetProgramName(), max_width_, 
             indent, member->GetCLIArgs());
         usage += (fmt_usage + "\n"); 
         first_iteration = false;
@@ -173,10 +190,13 @@ std::string CLIGroup::MakeHelpString()
         const ArgsVec& args = member->GetCLIArgs();
         for (ArgsVec::const_iterator arg_it = args.cbegin(); arg_it != args.cend(); ++arg_it)
         {
-            arg_help += (CLI::MakeArgHelpString(*arg_it, max_width, max_arg_width+1) + "\n\n");
+            arg_help += (CLI::MakeArgHelpString(*arg_it, max_width_, max_arg_width+1) + "\n\n");
         }
     }
 
-    help = usage + description + "\n\n" + arg_help;
+    std::string formatted_description = "";
+    CLIArg::FormatString(description, max_width_, 0, formatted_description, " ");
+
+    help = usage + formatted_description + "\n\n" + arg_help;
     return help;
 }
