@@ -119,14 +119,15 @@ class E2EValidator(object):
         self.files_under_test = {}
 
         # read in chapter ten names and associated ICDs from a provided csv
-        f = open(self.csv_path, "r")
-        lines = f.readlines()
+        with open(self.csv_path, "r") as f:
+            lines = f.readlines()
 
         for line in lines:
             temp = line.split(',')
             basename = temp[0].rstrip('CHch10')[:-1]
             ch10name = temp[0].strip()
-            self.files_under_test[ch10name] = {'icd': temp[1].strip(),
+            self.files_under_test[ch10name] = {'dts1553': temp[1].strip(),
+                                                      'dts429': temp[2].strip(),
                                                       'basename': basename,
                                                       'raw1553': basename + '_1553.parquet',
                                                       'transl1553': basename + '_1553_translated',
@@ -157,7 +158,8 @@ class E2EValidator(object):
         for ch10,testdict in self.files_under_test.items():
 
             ch10_full_path = os.path.join(truth_dir, ch10)
-            icd_full_path = os.path.join(truth_dir, testdict['icd'])
+            dts1553_full_path = os.path.join(truth_dir, testdict['dts1553'])
+            dts429_full_path = os.path.join(truth_dir, testdict['dts429'])
 
             # If either the icd or ch10 file do not exist in the truth
             # directory, then skip the call to parse_and_translate.py.
@@ -165,17 +167,19 @@ class E2EValidator(object):
                 msg = 'Truth ch10 file does not exist, not generating test data: {:s}\n!'.format(ch10_full_path)
                 print(msg)
                 continue
-            if not os.path.isfile(icd_full_path):
-                msg = '\nTruth icd file does not exist, not generating test data: {:s}\n!'.format(icd_full_path)
+            if not os.path.isfile(dts1553_full_path):
+                msg = '\nTruth icd file does not exist, not generating test data: {:s}\n!'.format(dts1553_full_path)
                 print(msg)
                 continue
 
             if config.exe_path is not None:
                 call_list = ['python', script_path, ch10_full_path,
-                             icd_full_path, '-o', test_dir, '--exe-path', config.exe_path]
+                             '--dts1553_path', dts1553_full_path, '--dts429_path', dts429_full_path, 
+                             '-o', test_dir, '--exe-path', config.exe_path]
             else:
                 call_list = ['python', script_path, ch10_full_path,
-                             icd_full_path, '-o', test_dir]
+                             '--dts1553_path', dts1553_full_path, '--dts429_path', dts429_full_path, 
+                             '-o', test_dir]
 
             if self.no_overwrite:
                 call_list.append('--no-overwrite')
@@ -293,7 +297,6 @@ class E2EValidator(object):
 
             ########### arinc429f0 #########
             self.all_validation_obj[ch10name]['parsedarinc429f0'].print_results(self.print)
-            print("print")
             self.all_validation_obj[ch10name]['transl429'].print_results(self.print)
 
             ########### TMATS ##########

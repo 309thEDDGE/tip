@@ -54,17 +54,14 @@ if __name__ == '__main__':
 
     if active_plat == 'windows':
         parser_exe_name = 'tip_parse.exe'
-        translator_exe_name = 'tip_translate_1553.exe'
+        translator1553_exe_name = 'tip_translate_1553.exe'
+        translator429_exe_name = 'tip_translate_arinc429.exe'
         video_extr_exe_name = 'parquet_video_extractor.exe'
     elif active_plat == 'linux':
         parser_exe_name = 'tip_parse'
-        translator_exe_name = 'tip_translate_1553'
+        translator1553_exe_name = 'tip_translate_1553'
+        translator429_exe_name = 'tip_translate_arinc429'
         video_extr_exe_name = 'parquet_video_extractor'
-     
-    use_parser_exe = ''
-    use_translator_exe = ''
-    raw_1553_pq_dir = ''
-    exec_duration = {}
 
     #
     # Setup command line arguments
@@ -74,8 +71,13 @@ if __name__ == '__main__':
     aparse.add_argument('ch10_path', metavar='<Ch10 Path>', type=str, 
                         help='Full path to Ch10 file or directory of Ch10 files')
 
-    aparse.add_argument('icd_path', metavar='<ICD Path>', type=str, 
-                        help='Full path to 1553 ICD text or yaml file')
+    aparse.add_argument('--dts1553_path', metavar='<1553 ICD Path>', type=str, 
+                        help='Full path to 1553 ICD text or yaml file', default=None,
+                        required=False)
+
+    aparse.add_argument('--dts429_path', metavar='<ARINC429 ICD Path>', type=str, 
+                        help='Full path to ARINC429 ICD text or yaml file', default=None,
+                        required=False)
 
     aparse.add_argument('-o', '--out-path', type=str, default=None, 
                         help='Output path for parsed and translated Ch10 Parquet file. '
@@ -119,13 +121,12 @@ if __name__ == '__main__':
         print("Ch10 path \'{:s}\' does not exist".format(args.ch10_path))
         sys.exit(0)
 
-    use_parser_exe = parser_exe_name
-    use_translator_exe = translator_exe_name
+    exec_duration = {}
     did_run = False
 
     for ch10path in ch10_file_paths:
 
-        exec_duration[ch10path] = {'raw1553': None, 'transl1553': None}
+        exec_duration[ch10path] = {'raw1553': None, 'transl1553': None, 'transl429': None}
         did_run = False
 
         # Create raw 1553 output dir.
@@ -136,26 +137,31 @@ if __name__ == '__main__':
         if args.out_path is not None:
             raw_1553_pq_dir = str(Path(args.out_path) / Path(raw_1553_pq_dir.with_name(raw_1553_pq_dir.stem + '_1553.parquet').name))
             raw_video_pq_dir = str(Path(args.out_path) / Path(Path(ch10path).stem + '_video.parquet'))
+            raw_429_pq_dir = str(Path(args.out_path) / Path(Path(ch10path).stem + '_arinc429.parquet'))
             TS_path = str(Path(args.out_path) / Path(Path(ch10path).stem + '_video_TS'))
             log_path = str(Path(args.out_path) / Path('logs'))
         else:
             raw_1553_pq_dir = str(raw_1553_pq_dir.with_name(raw_1553_pq_dir.stem + '_1553.parquet'))
             raw_video_pq_dir = str(Path(ch10path).with_name(Path(ch10path).stem + '_video.parquet'))
+            raw_429_pq_dir = str(Path(ch10path).with_name(Path(ch10path).stem + '_arinc429.parquet'))
             TS_path = str(Path(ch10path).with_name(Path(ch10path).stem + '_video_TS'))
             log_path = str(Path(ch10path).parent / Path('logs'))
 
         if not create_log_dir(log_path):
             sys.exit(0)
 
-        # Create translated data output dir.
-        trans_1553_dir = Path(raw_1553_pq_dir)
-        trans_1553_dir = str(trans_1553_dir.with_name(trans_1553_dir.stem + '_translated'))
+        # Create translated data output dirs.
+        trans_1553_dir = str(Path(raw_1553_pq_dir).with_name(Path(raw_1553_pq_dir).stem + '_translated'))
+        trans_429_dir = str(Path(raw_429_pq_dir).with_name(Path(raw_429_pq_dir).stem + '_translated'))
 
+        #
+        # Parse
+        #
         if args.no_overwrite and os.path.isdir(raw_1553_pq_dir):
             skip_message(raw_1553_pq_dir)
             exec_duration[ch10path]['raw1553'] = None
         else:
-            parser_exe_path = os.path.join(exe_dir, use_parser_exe)
+            parser_exe_path = os.path.join(exe_dir, parser_exe_name)
             print("parser exe: {:s}".format(parser_exe_path))
                 
             # Set stdout confirmation text.
@@ -176,30 +182,54 @@ if __name__ == '__main__':
             exec_duration[ch10path]['raw1553'] = e.get_exec_time()
 
         #
-        # Set up Translator call.
+        # Translate 1553
         #
+        if os.path.isdir(raw_1553_pq_dir) and args.dts1553_path is not None:
 
-        # Skip if icd_path is null.*
-        if Path(args.icd_path).stem == 'null':
-            skip_null_message(translator_exe_name)
-        elif args.no_overwrite and os.path.isdir(trans_1553_dir):
-            skip_message(trans_1553_dir)
-            exec_duration[ch10path]['transl1553'] = None
-        else:
-            # Set executable path.
-            translate_exe_path = os.path.join(exe_dir, use_translator_exe)
+            if Path(args.dts1553_path).stem == 'null':
+                skip_null_message(translator1553_exe_name)
+            elif args.no_overwrite and os.path.isdir(trans_1553_dir):
+                skip_message(trans_1553_dir)
+                exec_duration[ch10path]['transl1553'] = None
+            else:
+                # Set executable path.
+                translate_exe_path = os.path.join(exe_dir, translator1553_exe_name)
 
-            # Execute translator.
-            translator_command = [translate_exe_path, raw_1553_pq_dir, args.icd_path, 
-                '-t', str(args.t), '-l', log_path]
-            exec_trans = Exec()
-            retval = exec_trans.exec_list(translator_command)
-            if retval != 0:
-                print(f"Translator command failed: \"{' '.join(translator_command)}\"")
-                sys.exit(0)
+                # Execute translator.
+                translator_command = [translate_exe_path, raw_1553_pq_dir, args.dts1553_path, 
+                    '-t', str(args.t), '-l', log_path]
+                exec_trans = Exec()
+                retval = exec_trans.exec_list(translator_command)
+                if retval != 0:
+                    print(f"Translator command failed: \"{' '.join(translator_command)}\"")
+                    sys.exit(0)
 
-            exec_duration[ch10path]['transl1553'] = exec_trans.get_exec_time()
+                exec_duration[ch10path]['transl1553'] = exec_trans.get_exec_time()
 
+        #
+        # Translate ARINC429
+        #
+        if os.path.isdir(raw_429_pq_dir) and args.dts429_path is not None:
+
+            if Path(args.dts429_path).stem == 'null':
+                skip_null_message(translator429_exe_name)
+            elif args.no_overwrite and os.path.isdir(trans_429_dir):
+                skip_message(trans_429_dir)
+                exec_duration[ch10path]['transl429'] = None
+            else:
+                # Set executable path.
+                translate_exe_path = os.path.join(exe_dir, translator429_exe_name)
+
+                # Execute translator.
+                translator_command = [translate_exe_path, raw_429_pq_dir, args.dts429_path, 
+                    '-t', str(args.t), '-l', log_path]
+                exec_trans = Exec()
+                retval = exec_trans.exec_list(translator_command)
+                if retval != 0:
+                    print(f"Translator command failed: \"{' '.join(translator_command)}\"")
+                    sys.exit(0)
+
+                exec_duration[ch10path]['transl429'] = exec_trans.get_exec_time()
 
         #
         # Set up TS extractor call (if --video)
