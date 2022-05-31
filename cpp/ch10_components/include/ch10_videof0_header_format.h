@@ -11,19 +11,16 @@ const uint32_t TransportStream_UNIT_SIZE = 188;
 // Max ch10 packet byte size = 524,288 bytes. 
 // packet header = 24 bytes
 // video header = 4 bytes
+// transport stream packet size = 188 bytes
 // intra-packet time stamp, if present = 8 bytes
+//
 // max TS units (no IPTS) = floor((524288 - 24 - 4) / 188) = 2788
 // max TS units (with IPTS) = floor(524288 - 24 - 4) / (188 + 8)) = 2674
-//
-// TODO(Isaac Myers)
-// Implement max values (above) in packet-dependent way for 
-// MAX_TransportStream_UNITS.
-// 
-const uint32_t MAX_TransportStream_UNITS = 600;
-const uint32_t MAX_SIZE = TransportStream_UNIT_SIZE * MAX_TransportStream_UNITS;
+const uint32_t MAX_TransportStream_UNITS = 2788;
+const uint32_t MAX_TransportStream_UNITS_IPH = 2674;
+
 typedef uint16_t video_datum;  // sizeof this value must be equal to RECORDED_DATA_SIZE
 const uint32_t RECORDED_DATA_SIZE = uint32_t(sizeof(video_datum));
-const uint32_t MAX_DATA_COUNT = MAX_SIZE / RECORDED_DATA_SIZE;
 const uint32_t TransportStream_DATA_COUNT = TransportStream_UNIT_SIZE / RECORDED_DATA_SIZE;
 
 class Ch10VideoF0HeaderFormat
