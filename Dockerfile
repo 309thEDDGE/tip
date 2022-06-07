@@ -3,7 +3,7 @@ FROM registry1.dso.mil/ironbank/opensource/metrostar/pytorch:1.11.0 AS pytorch
 FROM registry1.dso.mil/ironbank/opensource/metrostar/singleuser:singleuser_v11 AS singleuser
 
 COPY --chown=jovyan:jovyan --from=tipdependencies /local_channel /home/jovyan/tip_deps_channel
-COPY --chown=jovyan:jovyan --from=pytorch /home/jovyan/local-channel /home/jovyan/pytorch_channel
+# COPY --chown=jovyan:jovyan --from=pytorch /home/jovyan/local-channel /home/jovyan/pytorch_channel
 
 # Update to pull new opal repo
 COPY --chown=jovyan:jovyan ./opal-scripts /opt/data/opal
@@ -17,16 +17,16 @@ WORKDIR /home/jovyan
 COPY --chown=jovyan:jovyan $ARTIFACT_DIR/local_channel.tar .
 
 # Sed replaces the "  - ./local-channel" entry in the conda env file and replaces it with the three local channels: tip_channel, tip_deps_channel, and local-channel
-RUN sed '/local-channel/s/.*/  - .\/pytorch_channel\n/' /home/jovyan/pytorch_channel/local_channel_env.yaml > /home/jovyan/pytorch_env.yaml \
-    && printf "\n  - pip:" >> /home/jovyan/pytorch_env.yaml \
-    && printf "\n    - /opt/data/opal/opal-packages/batch_ingest" >> /home/jovyan/pytorch_env.yaml \
-    && printf "\n    - /opt/data/opal/opal-packages/dts_utils" >> /home/jovyan/pytorch_env.yaml \
-    && printf "\n    - /opt/data/opal/opal-packages/etl_utils" >> /home/jovyan/pytorch_env.yaml \
-    && printf "\n    - /opt/data/opal/opal-packages/kinds" >> /home/jovyan/pytorch_env.yaml \
-    && printf "\n    - /opt/data/opal/opal-packages/publish" >> /home/jovyan/pytorch_env.yaml \
-    && printf "\n    - /opt/data/opal/opal-packages/search" >> /home/jovyan/pytorch_env.yaml \
-    && conda env create -f /home/jovyan/pytorch_env.yaml --offline \
-    && rm -rf /home/jovyan/pytorch_channel
+# RUN sed '/local-channel/s/.*/  - .\/pytorch_channel\n/' /home/jovyan/pytorch_channel/local_channel_env.yaml > /home/jovyan/pytorch_env.yaml \
+#     && printf "\n  - pip:" >> /home/jovyan/pytorch_env.yaml \
+#     && printf "\n    - /opt/data/opal/opal-packages/batch_ingest" >> /home/jovyan/pytorch_env.yaml \
+#     && printf "\n    - /opt/data/opal/opal-packages/dts_utils" >> /home/jovyan/pytorch_env.yaml \
+#     && printf "\n    - /opt/data/opal/opal-packages/etl_utils" >> /home/jovyan/pytorch_env.yaml \
+#     && printf "\n    - /opt/data/opal/opal-packages/kinds" >> /home/jovyan/pytorch_env.yaml \
+#     && printf "\n    - /opt/data/opal/opal-packages/publish" >> /home/jovyan/pytorch_env.yaml \
+#     && printf "\n    - /opt/data/opal/opal-packages/search" >> /home/jovyan/pytorch_env.yaml \
+#     && conda env create -f /home/jovyan/pytorch_env.yaml --offline \
+#     && rm -rf /home/jovyan/pytorch_channel
 
 RUN mkdir /home/jovyan/tip_channel \
     && tar xvf local_channel.tar --strip-components=3 --directory=/home/jovyan/tip_channel \
