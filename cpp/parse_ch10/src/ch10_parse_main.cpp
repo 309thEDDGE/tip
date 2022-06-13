@@ -42,22 +42,18 @@ int Ch10ParseMain(int argc, char** argv)
                        config.log_path_str_, input_path, output_path, log_dir, &av))
         return 0;
 
-    ProvenanceData prov_data;
-    if(!GetProvenanceData(input_path.absolute(), static_cast<size_t>(150e6), prov_data)) 
-        return 0;
-
     if (!SetupLogging(log_dir, spdlog::level::from_str(config.stdout_log_level_)))
         return 0;
 
     spdlog::get("pm_logger")->info(CH10_PARSE_EXE_NAME " version: {:s}", GetVersionString());
     spdlog::get("pm_logger")->info("Ch10 file path: {:s}", input_path.absolute().RawString());
-    spdlog::get("pm_logger")->info("Ch10 hash: {:s}", prov_data.hash);
     spdlog::get("pm_logger")->info("Output path: {:s}", output_path.absolute().RawString());
     spdlog::get("pm_logger")->info("Log directory: {:s}", log_dir.absolute().RawString());
 
+
     double duration = 0.0;
     ParseManager pm;
-    StartParse(input_path, output_path, config, duration, prov_data, &pm);
+    StartParse(input_path, output_path, config, duration, &pm);
     spdlog::get("pm_logger")->info("Duration: {:.3f} sec", duration);
 
     // Avoid deadlock in windows, see
@@ -114,7 +110,7 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_out
 
 bool StartParse(ManagedPath input_path, ManagedPath output_path,
                 const ParserConfigParams& config, double& duration, 
-                const ProvenanceData& prov_data, ParseManager* pm)
+                ParseManager* pm)
 {
     // Get start time.
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -130,7 +126,7 @@ bool StartParse(ManagedPath input_path, ManagedPath output_path,
         return false;
 
     // Record metadata
-    if (!pm->RecordMetadata(input_path, config, prov_data))
+    if (!pm->RecordMetadata(input_path, config))
         return false;
 
     // Get stop time and print duration.

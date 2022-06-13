@@ -196,6 +196,19 @@ class Ch10Context
     Ch10Context();
     void Initialize(const uint64_t& abs_pos, uint16_t id);
     virtual ~Ch10Context();
+    virtual std::map<uint32_t, std::set<uint16_t>> GetChannelIDToRemoteAddr1Map() const
+    { return chanid_remoteaddr1_map_; } 
+    virtual std::map<uint32_t, std::set<uint16_t>> GetChannelIDToRemoteAddr2Map() const
+    { return chanid_remoteaddr2_map_; } 
+    virtual std::map<uint32_t, std::set<uint32_t>> GetChannelIDToCommWordsMap() const
+    { return chanid_commwords_map_; } 
+    virtual std::map<uint16_t, uint64_t> GetChannelIDToMinVideoTimestampMap() const
+    { return chanid_minvideotimestamp_map_; } 
+    virtual std::map<uint32_t, std::set<uint16_t>> GetChannelIDToLabelsMap() const
+    { return chanid_labels_map_; } 
+    virtual std::map<uint32_t, std::set<uint16_t>> GetChannelIDToBusNumbersMap() const
+    { return chanid_busnumbers_map_; } 
+
 
     /*
 	Return is_configured_. This value is set during call to CheckConfiguration.

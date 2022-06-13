@@ -2,59 +2,33 @@
 
 #include "parse_manager.h"
 
-ParseManager::ParseManager() : worker_count_(0), worker_count(worker_count_), worker_chunk_size_bytes_(0), worker_chunk_size_bytes(worker_chunk_size_bytes_), workers_vec(workers_vec_), threads_vec(threads_vec_), worker_config_vec(worker_config_vec_), ch10_input_stream_(), append_chunk_size_bytes_(100000000), it_(), tmats_output_path_(""), tdp_output_path_("")
+ParseManager::ParseManager() : worker_count_(0), worker_count(worker_count_), worker_chunk_size_bytes_(0), worker_chunk_size_bytes(worker_chunk_size_bytes_), workers_vec(workers_vec_), threads_vec(threads_vec_), worker_config_vec(worker_config_vec_), ch10_input_stream_(), append_chunk_size_bytes_(100000000), parser_paths_(), parser_metadata_()
 {
 }
+
+const std::string ParseManager::metadata_filename_ = "_metadata.yaml";
 
 bool ParseManager::Configure(ManagedPath input_ch10_file_path, ManagedPath output_dir,
                              const ParserConfigParams& user_config)
 {
+    if(!parser_metadata_.Initialize(input_ch10_file_path))
+        return false;
+
     bool success = false;
     input_ch10_file_path.GetFileSize(success, ch10_file_size_);
     if (!success)
         return false;
     spdlog::get("pm_logger")->info("Ch10 file size: {:f} MB", ch10_file_size_ / (1000.0 * 1000.0));
 
-    // Convert ch10_packet_type configuration map from string --> string to
-    // Ch10PacketType --> bool
-    std::map<Ch10PacketType, bool> packet_type_config_map;
-    if(user_config.ch10_packet_enabled_map_.size() == 0)
-    {
-        if (!ConvertCh10PacketTypeMap(user_config.ch10_packet_type_map_, packet_type_config_map))
-            return false;
-    }
-    else
-        packet_type_config_map = user_config.ch10_packet_enabled_map_;
-
-    tmats_output_path_ = output_dir.CreatePathObject(input_ch10_file_path,
-        "_TMATS.txt");
-    tdp_output_path_ = output_dir.CreatePathObject(input_ch10_file_path,
-        "_time_data.parquet");
-    spdlog::get("pm_logger")->info("TMATS output path: {:s}", tmats_output_path_.RawString());
-    spdlog::get("pm_logger")->info("Time data output path: {:s}", tdp_output_path_.RawString());
-
-    // Hard-code packet type directory extensions now. Later, import from
-    // config yaml.
-    std::map<Ch10PacketType, std::string> append_str_map = {
-        {Ch10PacketType::MILSTD1553_F1, "_1553.parquet"},
-        {Ch10PacketType::VIDEO_DATA_F0, "_video.parquet"},
-        {Ch10PacketType::ETHERNET_DATA_F0, "_ethernet.parquet"},
-        {Ch10PacketType::ARINC429_F0, "_arinc429.parquet"}};
-
-    if (!CreateCh10PacketOutputDirs(output_dir, input_ch10_file_path,
-                                    packet_type_config_map, append_str_map, output_dir_map_, true))
-        return false;
-
     if (!AllocateResources(user_config, ch10_file_size_))
         return false;
 
-    // Create output file names. A map of Ch10PacketType to
-    // ManagedPath will be created for each worker.
-    CreateCh10PacketWorkerFileNames(worker_count_, output_dir_map_, output_file_path_vec_,
-                                    "parquet");
+    if(!parser_paths_.CreateOutputPaths(input_ch10_file_path, output_dir, 
+        user_config.ch10_packet_enabled_map_, worker_count_))
+        return false;
 
     // Record the packet type config map in metadata and logs.
-    LogPacketTypeConfig(packet_type_config_map);
+    LogPacketTypeConfig(user_config.ch10_packet_enabled_map_);
 
     // Open the input file stream
     spdlog::get("pm_logger")->debug("Opening ch10 file path: {:s}", input_ch10_file_path.string());
@@ -73,7 +47,7 @@ bool ParseManager::AllocateResources(const ParserConfigParams& user_config,
                                      const uint64_t& ch10_file_size)
 {
     /*
-	Note that ParserConfigParams has limits applied to the parameters so there
+	Note that the CLI has limits applied to the parameters so there
 	is no need to check range, etc.
 	*/
 
@@ -114,17 +88,6 @@ bool ParseManager::AllocateResources(const ParserConfigParams& user_config,
 
 bool ParseManager::Parse(const ParserConfigParams& user_config)
 {
-    // Convert ch10_packet_type configuration map from string --> string to
-    // Ch10PacketType --> bool
-    std::map<Ch10PacketType, bool> packet_type_config_map;
-    if(user_config.ch10_packet_enabled_map_.size() == 0)
-    {
-        if (!ConvertCh10PacketTypeMap(user_config.ch10_packet_type_map_, packet_type_config_map))
-            return false;
-    }
-    else
-        packet_type_config_map = user_config.ch10_packet_enabled_map_;
-
     // Start queue to activate all workers, limiting the quantity of
     // concurrent threads to n_threads.
     bool append = false;
@@ -133,8 +96,9 @@ bool ParseManager::Parse(const ParserConfigParams& user_config)
     spdlog::get("pm_logger")->debug("Parse: begin parsing with workers");
     if (!WorkerQueue(append, ch10_input_stream_, workers_vec_, active_workers_vec,
                      worker_config_vec_, effective_worker_count, worker_chunk_size_bytes_,
-                     append_chunk_size_bytes_, ch10_file_size_, output_file_path_vec_,
-                     packet_type_config_map, threads_vec_, tmats_body_vec_, user_config))
+                     append_chunk_size_bytes_, ch10_file_size_, parser_paths_.GetWorkerPathVec(),
+                     parser_paths_.GetCh10PacketTypeEnabledMap(), threads_vec_, 
+                     tmats_body_vec_, user_config))
     {
         spdlog::get("pm_logger")->warn("Parse: Returning after first WorkerQueue");
         return false;
@@ -177,8 +141,9 @@ bool ParseManager::Parse(const ParserConfigParams& user_config)
 
     if (!WorkerQueue(append, ch10_input_stream_, workers_vec_, active_workers_vec,
                      worker_config_vec_, effective_worker_count, worker_chunk_size_bytes_,
-                     append_chunk_size_bytes_, ch10_file_size_, output_file_path_vec_,
-                     packet_type_config_map, threads_vec_, tmats_body_vec_, user_config))
+                     append_chunk_size_bytes_, ch10_file_size_, parser_paths_.GetWorkerPathVec(),
+                     parser_paths_.GetCh10PacketTypeEnabledMap(), threads_vec_, 
+                     tmats_body_vec_, user_config))
     {
         spdlog::get("pm_logger")->warn("Parse: Returning after append mode WorkerQueue");
         return false;
@@ -196,313 +161,29 @@ bool ParseManager::Parse(const ParserConfigParams& user_config)
 }
 
 bool ParseManager::RecordMetadata(ManagedPath input_ch10_file_path,
-                                  const ParserConfigParams& user_config,
-                                  const ProvenanceData& prov_data)
+                                  const ParserConfigParams& user_config)
 {
-    // Convert ch10_packet_type configuration map from string --> string to
-    // Ch10PacketType --> bool
-    std::map<Ch10PacketType, bool> packet_type_config_map;
-    if(user_config.ch10_packet_enabled_map_.size() == 0)
-    {
-        if (!ConvertCh10PacketTypeMap(user_config.ch10_packet_type_map_, packet_type_config_map))
-            return false;
-    }
-    else
-        packet_type_config_map = user_config.ch10_packet_enabled_map_;
-
     // Create a set of all the parsed packet types
     std::set<Ch10PacketType> parsed_packet_types;
     AssembleParsedPacketTypesSet(parsed_packet_types);
 
-    // Process TMATs matter and record
-    TMATSData tmats_data;
-    ProcessTMATS(tmats_body_vec_, tmats_output_path_, tmats_data, parsed_packet_types);
-    spdlog::get("pm_logger")->debug("RecordMetadata: begin record metadata");
-
-    std::string md_filename("_metadata.yaml");
-
-    for (std::map<Ch10PacketType, bool>::const_iterator it = packet_type_config_map.cbegin();
-         it != packet_type_config_map.cend(); ++it)
-    {
-        if (it->second)
-        {
-            switch (it->first)
-            {
-                case Ch10PacketType::MILSTD1553_F1:
-                    if (parsed_packet_types.count(Ch10PacketType::MILSTD1553_F1) == 1)
-                    {
-                        if (!RecordMilStd1553F1Metadata(input_ch10_file_path,
-                            user_config, prov_data, tmats_data,
-                            ch10packettype_to_string_map.at(Ch10PacketType::MILSTD1553_F1),
-                            output_dir_map_[Ch10PacketType::MILSTD1553_F1] / md_filename))
-                            return false;
-                    }
-                    break;
-                case Ch10PacketType::VIDEO_DATA_F0:
-                    if (parsed_packet_types.count(Ch10PacketType::VIDEO_DATA_F0) == 1)
-                    {
-                        if (!RecordVideoDataF0Metadata(input_ch10_file_path,
-                            user_config, prov_data, tmats_data,
-                            ch10packettype_to_string_map.at(Ch10PacketType::VIDEO_DATA_F0),
-                            output_dir_map_[Ch10PacketType::VIDEO_DATA_F0] / md_filename))
-                            return false;
-                    }
-                    break;
-                case Ch10PacketType::ARINC429_F0:
-                    if (parsed_packet_types.count(Ch10PacketType::ARINC429_F0) == 1)
-                    {
-                        if (!RecordARINC429F0Metadata(input_ch10_file_path,
-                            user_config, prov_data, tmats_data,
-                            ch10packettype_to_string_map.at(Ch10PacketType::ARINC429_F0),
-                            output_dir_map_[Ch10PacketType::ARINC429_F0] / md_filename))
-                            return false;
-                    }
-                    break;
-                default:
-                    if (parsed_packet_types.count(it->first) == 1)
-                    {
-                        spdlog::get("pm_logger")->warn(
-                            "RecordMetadata: No metadata output "
-                            "function for packet type \"{:s}\"",
-                            ch10packettype_to_string_map.at(it->first));
-                    }
-                    break;
-            }  // end switch
-        }      // end if(it->second)
-    }          // end for loop
-    spdlog::get("pm_logger")->debug("RecordMetadata: complete record metadata");
-
-    RemoveCh10PacketOutputDirs(output_dir_map_, parsed_packet_types);
-
-    spdlog::get("pm_logger")->debug("Record Time Data");
-    ParquetContext pq_ctx;
-    ParquetTDPF1 pq_tdp(&pq_ctx);
     std::vector<const Ch10Context*> ctx_vec;
     for(std::vector<std::unique_ptr<Ch10Context>>::iterator it = context_vec_.begin();
         it != context_vec_.end(); ++it)
     { ctx_vec.push_back((*it).get()); }
-    WriteTDPData(ctx_vec, &pq_tdp, tdp_output_path_);
 
-    return true;
-}
-
-bool ParseManager::RecordProvenanceData(TIPMDDocument& md,
-    const ManagedPath& input_ch10_file_path, const std::string& packet_type_label,
-    const ProvenanceData& prov_data)
-{
-    md.type_category_->SetScalarValue("parsed_" + packet_type_label);
-
-    std::string ch10_hash = prov_data.hash;
-    std::string uid = Sha256(ch10_hash + prov_data.time +
-        prov_data.tip_version + packet_type_label);
-    md.uid_category_->SetScalarValue(uid);
-    md.AddResource("CH10", input_ch10_file_path.RawString(), ch10_hash);
-
-    if(!md.prov_category_->SetMappedValue("time", prov_data.time))
-        return false;
-    if(!md.prov_category_->SetMappedValue("version", prov_data.tip_version))
-        return false;
-    return true;
-}
-
-void ParseManager::RecordUserConfigData(std::shared_ptr<MDCategoryMap> config_category,
-    const ParserConfigParams& user_config)
-{
-    config_category->SetArbitraryMappedValue("ch10_packet_type",
-        user_config.ch10_packet_type_map_);
-    config_category->SetArbitraryMappedValue("parse_chunk_bytes",
-        user_config.parse_chunk_bytes_);
-    config_category->SetArbitraryMappedValue("parse_thread_count",
-        user_config.parse_thread_count_);
-    config_category->SetArbitraryMappedValue("max_chunk_read_count",
-        user_config.max_chunk_read_count_);
-    config_category->SetArbitraryMappedValue("worker_offset_wait_ms",
-        user_config.worker_offset_wait_ms_);
-    config_category->SetArbitraryMappedValue("worker_shift_wait_ms",
-        user_config.worker_shift_wait_ms_);
-    config_category->SetArbitraryMappedValue("stdout_log_level",
-        user_config.stdout_log_level_);
-}
-
-bool ParseManager::ProcessTMATSForType(const TMATSData& tmats_data, TIPMDDocument& md,
-		Ch10PacketType pkt_type)
-{
-    // Filter TMATS maps
-    std::map<std::string, std::string> tmats_chanid_to_type_filtered;
-    if(!tmats_data.FilterTMATSType(tmats_data.chanid_to_type_map,
-        pkt_type, tmats_chanid_to_type_filtered))
-    {
-        spdlog::get("pm_logger")->error("Failed to filter TMATS for type \"{:s}\"",
-            ch10packettype_to_string_map.at(pkt_type));
-        return false;
-    }
-    std::map<std::string, std::string> tmats_chanid_to_source_filtered;
-    tmats_chanid_to_source_filtered = tmats_data.FilterByChannelIDToType(
-        tmats_chanid_to_type_filtered, tmats_data.chanid_to_source_map);
-
-    // Record the TMATS channel ID to source map.
-    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_source",
-        tmats_chanid_to_source_filtered);
-
-    // Record the TMATS channel ID to type map.
-    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_type",
-        tmats_chanid_to_type_filtered);
-
-    return true;
-}
-
-bool ParseManager::RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
-                                              const ParserConfigParams& user_config,
-                                              const ProvenanceData& prov_data,
-                                              const TMATSData& tmats_data,
-                                              const std::string& packet_type_label,
-                                              const ManagedPath& md_file_path)
-{
-    spdlog::get("pm_logger")->debug("RecordMetadata: recording {:s} metadata",
-        packet_type_label);
-
-    TIPMDDocument md;
-    if(!RecordProvenanceData(md, input_ch10_file_path, packet_type_label, prov_data))
-        return false;
-    RecordUserConfigData(md.config_category_, user_config);
-
-    // Obtain the tx and rx combined channel ID to LRU address map and
-    // record it to the Yaml writer. First compile all the channel ID to
-    // LRU address maps from the workers.
-    std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_lruaddr1_maps;
-    std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_lruaddr2_maps;
-    for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
-    {
-        chanid_lruaddr1_maps.push_back(context_vec_[worker_ind]->chanid_remoteaddr1_map);
-        chanid_lruaddr2_maps.push_back(context_vec_[worker_ind]->chanid_remoteaddr2_map);
-    }
-    std::map<uint32_t, std::set<uint16_t>> output_chanid_remoteaddr_map;
-    if (!CombineChannelIDToLRUAddressesMetadata(output_chanid_remoteaddr_map,
-                                                chanid_lruaddr1_maps, chanid_lruaddr2_maps))
-        return false;
-    md.runtime_category_->SetArbitraryMappedValue("chanid_to_lru_addrs",
-        output_chanid_remoteaddr_map);
-
-    // Obtain the channel ID to command words set map.
-    std::vector<std::map<uint32_t, std::set<uint32_t>>> chanid_commwords_maps;
-    for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
-        chanid_commwords_maps.push_back(context_vec_[worker_ind]->chanid_commwords_map);
-
-    std::map<uint32_t, std::vector<std::vector<uint32_t>>> output_chanid_commwords_map;
-    if (!CombineChannelIDToCommandWordsMetadata(output_chanid_commwords_map,
-                                                chanid_commwords_maps))
-        return false;
-    md.runtime_category_->SetArbitraryMappedValue("chanid_to_comm_words",
-        output_chanid_commwords_map);
-
-    if(!ProcessTMATSForType(tmats_data, md, Ch10PacketType::MILSTD1553_F1))
+    ManagedPath md_filename(metadata_filename_);
+    if(!parser_metadata_.RecordMetadata(md_filename, &parser_paths_, parsed_packet_types,
+        user_config, tmats_body_vec_, ctx_vec))
         return false;
 
-    // Write the complete Yaml record to the metadata file.
-    md.CreateDocument();
-    std::ofstream stream_1553_metadata(md_file_path.string(),
-                                       std::ofstream::out | std::ofstream::trunc);
-    stream_1553_metadata << md.GetMetadataString();
-    stream_1553_metadata.close();
-    return true;
-}
+    parser_paths_.RemoveCh10PacketOutputDirs(parsed_packet_types);
 
-bool ParseManager::RecordVideoDataF0Metadata(ManagedPath input_ch10_file_path,
-                                             const ParserConfigParams& user_config,
-                                             const ProvenanceData& prov_data,
-                                             const TMATSData& tmats_data,
-                                             const std::string& packet_type_label,
-                                             const ManagedPath& md_file_path)
+    spdlog::get("pm_logger")->debug("Recording Time Data");
+    ParquetContext pq_ctx;
+    ParquetTDPF1 pq_tdp(&pq_ctx);
+    WriteTDPData(ctx_vec, &pq_tdp, parser_paths_.GetTDPOutputPath());
 
-{
-    spdlog::get("pm_logger")->debug("RecordMetadata: recording {:s} metadata", ch10packettype_to_string_map.at(Ch10PacketType::VIDEO_DATA_F0));
-
-    TIPMDDocument md;
-    if(!RecordProvenanceData(md, input_ch10_file_path, packet_type_label, prov_data))
-        return false;
-    RecordUserConfigData(md.config_category_, user_config);
-
-    // Get the channel ID to minimum time stamp map.
-    std::vector<std::map<uint16_t, uint64_t>> worker_chanid_to_mintimestamps_maps;
-    for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
-    {
-        worker_chanid_to_mintimestamps_maps.push_back(context_vec_[worker_ind]->chanid_minvideotimestamp_map);
-    }
-    std::map<uint16_t, uint64_t> output_min_timestamp_map;
-    CreateChannelIDToMinVideoTimestampsMetadata(output_min_timestamp_map,
-                                                worker_chanid_to_mintimestamps_maps);
-
-    // Record the map in the Yaml writer and write the
-    // total yaml text to file.
-    md.runtime_category_->SetArbitraryMappedValue("chanid_to_first_timestamp",
-        output_min_timestamp_map);
-
-    if(!ProcessTMATSForType(tmats_data, md, Ch10PacketType::VIDEO_DATA_F0))
-        return false;
-
-    md.CreateDocument();
-    std::ofstream stream_video_metadata(md_file_path.string(),
-                                        std::ofstream::out | std::ofstream::trunc);
-    stream_video_metadata << md.GetMetadataString();
-    stream_video_metadata.close();
-    return true;
-}
-
-bool ParseManager::RecordARINC429F0Metadata(ManagedPath input_ch10_file_path,
-                                   const ParserConfigParams& user_config,
-								   const ProvenanceData& prov_data,
-                                   const TMATSData& tmats_data,
-								   const std::string& packet_type_label,
-								   const ManagedPath& md_file_path)
-{
-    spdlog::get("pm_logger")->debug("RecordMetadata: recording {:s} metadata", ch10packettype_to_string_map.at(Ch10PacketType::ARINC429_F0));
-
-    TIPMDDocument md;
-    if(!RecordProvenanceData(md, input_ch10_file_path, packet_type_label, prov_data))
-        return false;
-    RecordUserConfigData(md.config_category_, user_config);
-
-    // Obtain the channel ID to 429 label set map.
-    std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_label_maps;
-    for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
-        chanid_label_maps.push_back(context_vec_[worker_ind]->chanid_labels_map);
-
-    std::map<uint32_t, std::set<uint16_t>> output_chanid_label_map;
-    if (!CombineChannelIDToLabelsMetadata(output_chanid_label_map,
-                                                chanid_label_maps))
-        return false;
-    md.runtime_category_->SetArbitraryMappedValue("chanid_to_labels",
-        output_chanid_label_map);
-
-    // Obtain the channel ID to ARINC message header bus number set map.
-    std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_busnumber_maps;
-    for (uint16_t worker_ind = 0; worker_ind < worker_count_; worker_ind++)
-        chanid_busnumber_maps.push_back(context_vec_[worker_ind]->chanid_busnumbers_map);
-
-    std::map<uint32_t, std::set<uint16_t>> output_chanid_busnumber_map;
-    if (!CombineChannelIDToBusNumbersMetadata(output_chanid_busnumber_map,
-                                                chanid_busnumber_maps))
-        return false;
-    md.runtime_category_->SetArbitraryMappedValue("chanid_to_bus_numbers",
-        output_chanid_busnumber_map);
-
-    if(!ProcessTMATSForType(tmats_data, md, Ch10PacketType::ARINC429_F0))
-        return false;
-
-    // Record ARINC429-specific TMATS data
-    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_429_format",
-        tmats_data.chanid_to_429_format);
-    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_429_subchans",
-        tmats_data.chanid_to_429_subchans);
-    md.runtime_category_->SetArbitraryMappedValue("tmats_chanid_to_429_subchan_and_name",
-        tmats_data.chanid_to_429_subchan_and_name);
-
-    // Write the complete Yaml record to the metadata file.
-    std::ofstream stream_429_metadata(md_file_path.string(),
-                                       std::ofstream::out | std::ofstream::trunc);
-    md.CreateDocument();
-    stream_429_metadata << md.GetMetadataString();
-    stream_429_metadata.close();
     return true;
 }
 
@@ -836,97 +517,6 @@ ParseManager::~ParseManager()
     ch10_input_stream_.close();
 }
 
-void ParseManager::ProcessTMATS(const std::vector<std::string>& tmats_vec,
-                                const ManagedPath& tmats_file_path,
-                                TMATSData& tmats_data,
-                                const std::set<Ch10PacketType>& parsed_pkt_types)
-{
-    // if tmats doesn't exist return
-    if (tmats_vec.size() == 0)
-    {
-        spdlog::get("pm_logger")->warn("ProcessTMATS: no TMATS Present");
-        return;
-    }
-
-    std::string full_TMATS_string;
-    for (int i = 0; i < tmats_vec.size(); i++)
-    {
-        full_TMATS_string += tmats_vec[i];
-    }
-
-    std::ofstream tmats;
-    tmats.open(tmats_file_path.string(), std::ios::trunc | std::ios::binary);
-    if (tmats.good())
-    {
-        spdlog::get("pm_logger")->info("ProcessTMATS: writing TMATS to {:s}", tmats_file_path.RawString());
-        tmats << full_TMATS_string;
-    }
-
-    tmats.close();
-
-    // Gather TMATs attributes of interest
-    // for metadata
-    if(!tmats_data.Parse(full_TMATS_string, parsed_pkt_types))
-    {
-        spdlog::get("pm_logger")->info("ProcessTMATS:: Failed to parse TMATS");
-    }
-}
-
-bool ParseManager::ConvertCh10PacketTypeMap(const std::map<std::string, std::string>& input_map,
-                                            std::map<Ch10PacketType, bool>& output_map)
-{
-    // The ch10 can't be parsed if there is no packet type configuration.
-    // If the input_map is empty, return false.
-    if (input_map.size() == 0)
-    {
-        spdlog::get("pm_logger")->info("ConvertCh10PacketTypeMap: input_map is empty");
-        return false;
-    }
-
-    // Define string to Ch10PacketType map
-    std::map<std::string, Ch10PacketType> conversion_map = {
-        {"MILSTD1553_FORMAT1", Ch10PacketType::MILSTD1553_F1},
-        {"VIDEO_FORMAT0", Ch10PacketType::VIDEO_DATA_F0},
-        {"ETHERNET_DATA0", Ch10PacketType::ETHERNET_DATA_F0},
-        {"ARINC429_FORMAT0", Ch10PacketType::ARINC429_F0}};
-
-    ParseText pt;
-    std::string bool_string;
-    for (std::map<std::string, std::string>::const_iterator it = input_map.cbegin();
-         it != input_map.cend(); ++it)
-    {
-        // If the name of the packet type from the conversion map is not present,
-        // clear the output map and return false.
-        if (conversion_map.count(it->first) == 0)
-        {
-            output_map.clear();
-            spdlog::get("pm_logger")->warn(
-                "ConvertCh10PacketTypeMap: ch10_packet_type "
-                "configuration key \"{:s}\" not in conversion_map",
-                it->first);
-            return false;
-        }
-
-        // Check for valid boolean string
-        bool_string = pt.ToLower(it->second);
-        if (bool_string == "true")
-            output_map[conversion_map.at(it->first)] = true;
-        else if (bool_string == "false")
-            output_map[conversion_map.at(it->first)] = false;
-        else
-        {
-            output_map.clear();
-            spdlog::get("pm_logger")->warn(
-                "ch10_packet_type configuration boolean "
-                "string {:s} not valid, must spell \"true\" or \"false\", upper or "
-                "lower chars",
-                it->second);
-            return false;
-        }
-    }
-    return true;
-}
-
 void ParseManager::LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map)
 {
     // Convert the Ch10PacketType to bool --> string to bool
@@ -952,240 +542,6 @@ void ParseManager::LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt
         spdlog::get("pm_logger")->info("{:s}", *it);
     }
     spdlog::get("pm_logger")->flush();
-}
-
-bool ParseManager::CreateCh10PacketOutputDirs(const ManagedPath& output_dir,
-                                              const ManagedPath& base_file_name,
-                                              const std::map<Ch10PacketType, bool>& packet_enabled_map,
-                                              const std::map<Ch10PacketType, std::string>& append_str_map,
-                                              std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map, bool create_dir)
-{
-    // Check for present of append_str_map entry for each packet_enabled_map
-    // entry which maps to true.
-    std::map<Ch10PacketType, bool>::const_iterator it;
-    bool result = false;
-    ManagedPath pkt_type_output_dir;
-    for (it = packet_enabled_map.cbegin(); it != packet_enabled_map.cend(); ++it)
-    {
-        if (it->second)
-        {
-            if (append_str_map.count(it->first) == 0)
-            {
-                spdlog::get("pm_logger")->warn(
-                    "CreateCh10PacketOutputDirs: No append "
-                    "string map entry for {:s}",
-                    ch10packettype_to_string_map.at(it->first));
-                return false;
-            }
-
-            // Fill pkt_type_output_dir_map for each packet type in packet_enabled_map.
-            result = ManagedPath::CreateDirectoryFromComponents(output_dir, base_file_name,
-                                                                append_str_map.at(it->first), pkt_type_output_dir, create_dir);
-            if (!result)
-            {
-                pkt_type_output_dir_map.clear();
-                return false;
-            }
-            spdlog::get("pm_logger")->info("Create {:s} output dir: {:s}", ch10packettype_to_string_map.at(it->first), pkt_type_output_dir.RawString());
-            pkt_type_output_dir_map[it->first] = pkt_type_output_dir;
-        }
-    }
-
-    return true;
-}
-
-bool ParseManager::RemoveCh10PacketOutputDirs(const std::map<Ch10PacketType, ManagedPath>& output_dir_map,
-    const std::set<Ch10PacketType>& parsed_packet_types)
-{
-    std::string packet_type_name = "";
-    bool retval = true;
-    for (std::map<Ch10PacketType, ManagedPath>::const_iterator it = output_dir_map.cbegin();
-        it != output_dir_map.cend(); ++it)
-    {
-        packet_type_name = ch10packettype_to_string_map.at(it->first);
-        if (it->second.is_directory())
-        {
-            if(parsed_packet_types.count(it->first) == 0)
-            {
-                spdlog::get("pm_logger")->info("Removing unused {:s} dir: {:s}",
-                    packet_type_name, it->second.RawString());
-                if(!it->second.remove())
-                {
-                    spdlog::get("pm_logger")->warn("Failed to remove {:s} dir: {:s}",
-                        packet_type_name, it->second.RawString());
-                    retval = false;
-                }
-            }
-        }
-        else
-        {
-            spdlog::get("pm_logger")->warn("Expected output {:s} dir does not exist: {:s}",
-                packet_type_name, it->second.RawString());
-        }
-    }
-    return retval;
-}
-
-
-void ParseManager::CreateCh10PacketWorkerFileNames(const uint16_t& total_worker_count,
-                                                   const std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map,
-                                                   std::vector<std::map<Ch10PacketType, ManagedPath>>& output_vec_mapped_paths,
-                                                   std::string file_extension)
-{
-    std::string replacement_ext = "";
-    std::map<Ch10PacketType, ManagedPath>::const_iterator it;
-
-    for (uint16_t worker_index = 0; worker_index < total_worker_count; worker_index++)
-    {
-        // Create the replacement extension for the current index.
-        std::stringstream ss;
-        ss << std::setfill('0') << std::setw(3) << worker_index;
-        if (file_extension != "")
-        {
-            ss << "." << file_extension;
-        }
-        replacement_ext = ss.str();
-
-        // Create a temporary map to hold all of the output file paths for the
-        // current index.
-        std::map<Ch10PacketType, ManagedPath> temp_output_file_map;
-
-        // Add an output file path for each Ch10PacketType and output dir
-        // in pkt_type_output_dir_map.
-        for (it = pkt_type_output_dir_map.cbegin(); it != pkt_type_output_dir_map.cend(); ++it)
-        {
-            //temp_output_file_map[it->first] = it->second.CreatePathObject(
-            //    it->second, replacement_ext);
-            temp_output_file_map[it->first] = it->second / replacement_ext;
-        }
-
-        // Add the temp map to the vector maps if the temp map has items.
-        if (temp_output_file_map.size() > 0)
-            output_vec_mapped_paths.push_back(temp_output_file_map);
-    }
-}
-
-void ParseManager::CreateChannelIDToMinVideoTimestampsMetadata(
-    std::map<uint16_t, uint64_t>& output_chanid_to_mintimestamp_map,
-    const std::vector<std::map<uint16_t, uint64_t>>& chanid_mintimestamp_maps)
-{
-    // Gather the maps from each worker and combine them into one,
-    //keeping only the lowest time stamps for each channel ID.
-    for (size_t i = 0; i < chanid_mintimestamp_maps.size(); i++)
-    {
-        std::map<uint16_t, uint64_t> temp_map = chanid_mintimestamp_maps.at(i);
-        for (std::map<uint16_t, uint64_t>::const_iterator it = temp_map.begin();
-             it != temp_map.end(); ++it)
-        {
-            if (output_chanid_to_mintimestamp_map.count(it->first) == 0)
-                output_chanid_to_mintimestamp_map[it->first] = it->second;
-            else if (it->second < output_chanid_to_mintimestamp_map[it->first])
-                output_chanid_to_mintimestamp_map[it->first] = it->second;
-        }
-    }
-}
-
-bool ParseManager::CombineChannelIDToLRUAddressesMetadata(
-    std::map<uint32_t, std::set<uint16_t>>& output_chanid_lruaddr_map,
-    const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_lruaddr1_maps,
-    const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_lruaddr2_maps)
-{
-    // Input vectors must have the same length.
-    if (chanid_lruaddr1_maps.size() != chanid_lruaddr2_maps.size())
-    {
-        spdlog::get("pm_logger")->warn(
-            "CombineChannelIDToLRUAddressesMetadata: "
-            "Input vectors are not the same size, chanid_lruaddr1_maps ({:d}) "
-            "chanid_lruaddr2_maps ({:d})",
-            chanid_lruaddr1_maps.size(), chanid_lruaddr2_maps.size());
-        return false;
-    }
-
-    // Collect and combine the channel ID to LRU address maps
-    // assembled by each worker.
-    std::map<uint32_t, std::set<uint16_t>> chanid_remoteaddr_map1;
-    std::map<uint32_t, std::set<uint16_t>> chanid_remoteaddr_map2;
-    for (size_t i = 0; i < chanid_lruaddr1_maps.size(); i++)
-    {
-        //workers[read_ind].append_chanid_remoteaddr_maps(chanid_remoteaddr_map1, chanid_remoteaddr_map2);
-        chanid_remoteaddr_map1 = it_.CombineCompoundMapsToSet(
-            chanid_remoteaddr_map1, chanid_lruaddr1_maps.at(i));
-        chanid_remoteaddr_map2 = it_.CombineCompoundMapsToSet(
-            chanid_remoteaddr_map2, chanid_lruaddr2_maps.at(i));
-    }
-
-    // Combine the tx and rx maps into a single map.
-    output_chanid_lruaddr_map = it_.CombineCompoundMapsToSet(
-        chanid_remoteaddr_map1, chanid_remoteaddr_map2);
-
-    return true;
-}
-
-bool ParseManager::CombineChannelIDToCommandWordsMetadata(
-    std::map<uint32_t, std::vector<std::vector<uint32_t>>>& output_chanid_commwords_map,
-    const std::vector<std::map<uint32_t, std::set<uint32_t>>>& chanid_commwords_maps)
-{
-    // Collect maps into one.
-    std::map<uint32_t, std::set<uint32_t>> chanid_commwords_map;
-    for (size_t i = 0; i < chanid_commwords_maps.size(); i++)
-    {
-        chanid_commwords_map = it_.CombineCompoundMapsToSet(chanid_commwords_map,
-                                                            chanid_commwords_maps.at(i));
-    }
-
-    // Break compound command words each into a set of two command words,
-    // a transmit and receive value.
-    uint32_t mask_val = (1 << 16) - 1;
-    for (std::map<uint32_t, std::set<uint32_t>>::const_iterator it = chanid_commwords_map.cbegin();
-         it != chanid_commwords_map.cend(); ++it)
-    {
-        std::vector<std::vector<uint32_t>> temp_vec_of_vec;
-        for (std::set<uint32_t>::const_iterator it2 = it->second.cbegin();
-             it2 != it->second.cend(); ++it2)
-        {
-            // Vector needed here to retain order.
-            std::vector<uint32_t> pair_vec = {*it2 >> 16, *it2 & mask_val};
-            temp_vec_of_vec.push_back(pair_vec);
-        }
-        output_chanid_commwords_map[it->first] = temp_vec_of_vec;
-    }
-    return true;
-}
-
-bool ParseManager::CombineChannelIDToLabelsMetadata(
-    std::map<uint32_t, std::set<uint16_t>>& output_chanid_labels_map,
-        const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_labels_maps)
-{
-    // Collect maps into one.
-    std::map<uint32_t, std::set<uint16_t>> chanid_labels_map;
-    for (size_t i = 0; i < chanid_labels_maps.size(); i++)
-    {
-        chanid_labels_map = it_.CombineCompoundMapsToSet(chanid_labels_map,
-                                                            chanid_labels_maps.at(i));
-    }
-
-    // iterate chanid_labels_map and add to output_chanid_labels_map
-    output_chanid_labels_map = chanid_labels_map;
-
-    return true;
-}
-
-bool ParseManager::CombineChannelIDToBusNumbersMetadata(
-    std::map<uint32_t, std::set<uint16_t>>&  output_chanid_busnumbers_map,
-        const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_busnumbers_maps)
-{
-    // Collect maps into one.
-    std::map<uint32_t, std::set<uint16_t>> chanid_busnumbers_map;
-    for (size_t i = 0; i < chanid_busnumbers_maps.size(); i++)
-    {
-        chanid_busnumbers_map = it_.CombineCompoundMapsToSet(chanid_busnumbers_map,
-                                                            chanid_busnumbers_maps.at(i));
-    }
-
-    // iterate chanid_busnumbers_map and add to output_chanid_busnumbers_map
-    output_chanid_busnumbers_map = chanid_busnumbers_map;
-
-    return true;
 }
 
 void ParseManager::AssembleParsedPacketTypesSet(std::set<Ch10PacketType>& parsed_packet_types)

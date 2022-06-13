@@ -19,20 +19,18 @@
 #include <memory>
 #include <map>
 #include <set>
-#include "iterable_tools.h"
+
 #include "parse_text.h"
 #include "parse_worker.h"
 #include "parser_config_params.h"
-#include "tmats_data.h"
+#include "parser_paths.h"
 #include "managed_path.h"
-#include "provenance_data.h"
-#include "tip_md_document.h"
-#include "sha256_tools.h"
 #include "worker_config.h"
 #include "spdlog/spdlog.h"
 #include "ch10_packet_type.h"
 #include "ch10_context.h"
 #include "parquet_tdpf1.h"
+#include "parser_metadata.h"
 
 class ParseManager
 {
@@ -42,9 +40,6 @@ class ParseManager
 
     // TMATS raw data
     std::vector<std::string> tmats_body_vec_;
-
-    // Metadata manipulation
-    IterableTools it_;
 
     // Count of bytes of raw ch10 data to be parsed by each
     // worker
@@ -76,21 +71,14 @@ class ParseManager
     // Read ch10 binary data
     std::ifstream ch10_input_stream_;
 
-    // Base output directory per Ch10PacketType
-    std::map<Ch10PacketType, ManagedPath> output_dir_map_;
+	// Create and manage paths relevant to the parser
+	ParserPaths parser_paths_;
 
-	// TMATS output path
-	ManagedPath tmats_output_path_;
-
-	// Time data ("Time Data Packet, Format 1") output path
-	ManagedPath tdp_output_path_;
-
-    // Configured file paths. The worker at index x in workers_vec_ shall
-    // create output files according to the paths in the map at index x
-    // in this vector.
-    std::vector<std::map<Ch10PacketType, ManagedPath>> output_file_path_vec_;
+	// Handle all parse metadata related activities
+	ParserMetadata parser_metadata_;
 
    public:
+	static const std::string metadata_filename_;
     const uint64_t& worker_chunk_size_bytes;
     const uint16_t& worker_count;
     const std::vector<std::unique_ptr<ParseWorker>>& workers_vec;
@@ -149,132 +137,19 @@ class ParseManager
 		config					--> ParserConfigParams object which has
 									been pre-configured with data from
 									the parser_conf.yaml file
-		prov_data				--> Object of ProvenanceData that contains
-									pre-filled provenance data
 
 	Return:
 		True if no errors, false if errors occur and
 		execution ought to stop.
 	*/
     virtual bool RecordMetadata(ManagedPath input_ch10_file_path,
-                        const ParserConfigParams& user_config,
-						const ProvenanceData& prov_data);
+                        const ParserConfigParams& user_config);
 
     //////////////////////////////////////////////////////////////////////////////
     // Functions below are considered to be internal functions. They
     // are made public to facilitate testing.
     //////////////////////////////////////////////////////////////////////////////
 
-    /*
-	Record metadata specific to MilStd 1553 Format 1
-
-	Args:
-		input_ch10_file_path	--> Ch10 file that was parsed
-		config					--> ParserConfigParams object which has
-									been pre-configured with data from
-									the parser_conf.yaml file
-		prov_data				--> Object of ProvenanceData that contains
-									pre-filled provenance data
-		tmats_data				--> TMATSData object which has parsed and stored data
-		packet_type_label		--> See ch10_packet_type.h
-		md_file_path			--> Output directory and file name for metadata
-
-	Return:
-		True if no errors, false if errors occur and
-		execution ought to stop.
-	*/
-    bool RecordMilStd1553F1Metadata(ManagedPath input_ch10_file_path,
-                                    const ParserConfigParams& user_config,
-									const ProvenanceData& prov_data,
-									const TMATSData& tmats_data,
-									const std::string& packet_type_label,
-									const ManagedPath& md_file_path);
-
-    /*
-	Record metadata specific to Video data format 0
-
-	Args:
-		input_ch10_file_path	--> Ch10 file that was parsed
-		config					--> ParserConfigParams object which has
-									been pre-configured with data from
-									the parser_conf.yaml file
-		prov_data				--> Object of ProvenanceData that contains
-									pre-filled provenance data
-		tmats_data				--> TMATSData object which has parsed and stored data
-		packet_type_label		--> See ch10_packet_type.h
-		md_file_path			--> Output directory and file name for metadata
-
-	Return:
-		True if no errors, false if errors occur and
-		execution ought to stop.
-	*/
-    bool RecordVideoDataF0Metadata(ManagedPath input_ch10_file_path,
-                                   const ParserConfigParams& user_config,
-								   const ProvenanceData& prov_data,
-								   const TMATSData& tmats_data,
-								   const std::string& packet_type_label,
-								   const ManagedPath& md_file_path);
-
-	
-
-	/*
-	Add provenance data to metadata output.
-
-	Args:
-		md						--> TIPMDDocument object to which metadata 
-									will be added
-		input_ch10_file_path	--> Path to ch10 file which was parsed
-		packet_type_label		--> See ch10_packet_type.h
-		prov_data				--> Object of ProvenanceData that contains
-									pre-filled provenance data
-							
-	Return:
-		True if no problems occur; false otherwise.
-	*/
-	bool RecordProvenanceData(TIPMDDocument& md, const ManagedPath& input_ch10_file_path,
-		const std::string& packet_type_label, const ProvenanceData& prov_data);
-
-
-
-	/*
-	Add user configuration data to metadata output.
-
-	Args:
-		config_category			--> MDCategoryMap to which User configuration
-									metadata will be added  
-		user_config				--> ParserConfigParams object which has
-									been configured with data from the
-									user config file
-	*/
-	void RecordUserConfigData(std::shared_ptr<MDCategoryMap> config_category, 
-		const ParserConfigParams& user_config);
-
-
-
-    /*
-	Record metadata specific to ARINC 429 format 0
-
-	Args:
-		input_ch10_file_path	--> Ch10 file that was parsed
-		config					--> ParserConfigParams object which has
-									been pre-configured with data from
-									the parser_conf.yaml file
-		prov_data				--> Object of ProvenanceData that contains
-									pre-filled provenance data
-		tmats_data				--> TMATSData object which has parsed and stored data
-		packet_type_label		--> See ch10_packet_type.h
-		md_file_path			--> Output directory and file name for metadata
-
-	Return:
-		True if no errors, false if errors occur and
-		execution ought to stop.
-	*/
-    bool RecordARINC429F0Metadata(ManagedPath input_ch10_file_path,
-                                   const ParserConfigParams& user_config,
-								   const ProvenanceData& prov_data,
-								   const TMATSData& tmats_data,
-								   const std::string& packet_type_label,
-								   const ManagedPath& md_file_path);
 
 
     /*
@@ -475,21 +350,6 @@ class ParseManager
                            int worker_shift_wait);
 
     /*
-	Convert the ch10_packet_type configuration map that is read from the
-	parse_conf.yaml as a map<std::string, std::string> to a map<Ch10PacketType, bool>.
-
-	Args:
-		input_map	--> map<string, string> of the raw ch10_packet_type data
-						structure found in the parse_conf.yaml file
-		output_map	--> map<Ch10PacketType, bool> passed by reference
-
-	Return:
-		True if the conversion is successful, false otherwise.
-	*/
-    bool ConvertCh10PacketTypeMap(const std::map<std::string, std::string>& input_map,
-                                  std::map<Ch10PacketType, bool>& output_map);
-
-    /*
 	Log the ch10_packet_type_map_. This is a convenience function to clean up
 	the clutter that this code introduces.
 
@@ -499,65 +359,6 @@ class ParseManager
 	*/
     void LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map);
 
-    /*
-	Create and verify output directories for enabled ch10 packet types.
-
-	Args:
-		output_dir			--> ManagedPath object giving the output directory into
-								which packet type-specific dirs will be created
-		base_file_name		--> ManagedPath object with the base file name on which
-								to build the output directory name. May be a complete
-								path to a file, in which case the parent path will be
-								stripped and only the file name used, or a file name
-								only.
-		packet_enabled_map	--> Map of Ch10PacketType to boolean. True = enabled,
-								False = disabled
-		append_str_map		--> Map of Ch10PacketType to string. The mapped string is
-								appended to the base_file_name prior and ought to
-								include an extension if necessary, such as ".parquet"
-								in the case of Parquet files. Map must contain at
-								least all of the keys in the packet_enabled_map which
-								are also mapped to true.
-		pkt_type_output_dir_map --> Map of Ch10PacketType to specific output directory,
-									the product of this function
-		create_dir				--> True if the directory ought to be created, false
-									otherwise
-
-	Return:
-		True if successful and all output directories were created; false otherwise.
-	*/
-    bool CreateCh10PacketOutputDirs(const ManagedPath& output_dir,
-                                    const ManagedPath& base_file_name,
-                                    const std::map<Ch10PacketType, bool>& packet_enabled_map,
-                                    const std::map<Ch10PacketType, std::string>& append_str_map,
-                                    std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map, bool create_dir);
-
-    /*
-	Generate a vector of maps of Ch10PacketType to ManagedPath. The path object
-	is a file path to which data for the given Ch10PacketType
-	ought to be written by the worker associated with the index of the vector
-	from which the map was retrieved.
-
-	Args:
-		total_worker_count			--> Count of workers expected to be
-										created to parse according to
-										configuration settings
-		pkt_type_output_dir_map		--> Map of Ch10PacketType to base output
-										directory to which files associated
-										with the packet type ought to be written.
-										This is the pkt_type_output_dir_map from
-										CreateCh10PacketOutputDirs.
-		output_vec_mapped_paths		--> Vector of maps in which the index in
-										the vector is the same as the worker which
-										ought to utilize the mapped output file
-										paths.
-		file_extension				--> String not including the '.'.
-										Ex: file_extension = 'txt'
-	*/
-    void CreateCh10PacketWorkerFileNames(const uint16_t& total_worker_count,
-                                         const std::map<Ch10PacketType, ManagedPath>& pkt_type_output_dir_map,
-                                         std::vector<std::map<Ch10PacketType, ManagedPath>>& output_vec_mapped_paths,
-                                         std::string file_extension);
 
     /*
 	Calculate paramaters from user configuration and do initial
@@ -576,127 +377,7 @@ class ParseManager
     bool AllocateResources(const ParserConfigParams& user_config,
                            const uint64_t& ch10_file_size);
 
-    /*
-	Combine channel ID to LRU address maps from vector of maps,
-	where each map in the vector corresponds to a map retrieved from
-	a worker. The output map is used in another function where it is
-	recorded to metadata.
 
-	Args:
-		output_chanid_lruaddr_map	--> Output map, ch10 channel ID to set of
-										all LRU addresses observed on the bus
-										identifed by the given channel ID
-		chanid_lruaddr1_maps		--> Vector of maps of channel ID to set of
-										LRU addresses associated with the channel
-										ID for the TX/RX command word
-		chanid_lruaddr2_maps		--> Vector of maps of channel ID to set of
-										LRU addresses associated with the channel
-										ID for the RX command word for RT to RT
-										messages. Must have size() equal to
-										chanid_lruaddr1_maps.
-
-	Return:
-		True if no errors, false if errors occur and
-		execution ought to stop.
-	*/
-    bool CombineChannelIDToLRUAddressesMetadata(
-        std::map<uint32_t, std::set<uint16_t>>& output_chanid_lruaddr_map,
-        const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_lruaddr1_maps,
-        const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_lruaddr2_maps);
-
-    /*
-	Combine channel ID to command words maps from a vector of maps,
-	where each map in the vector corresponds to a map of observed channel ID
-	to command words retrieved from a worker. The output map is used in
-	another function where it is recorded to metadata.
-
-	Args:
-	output_chanid_commwords_map	--> Output map, ch10 channel ID to a vector
-									of vectors. Each final vector must have size()
-									equal to 2, where the first entry is TX/RX
-									command word and second entry is the RX
-									command word in the case of RT to RT type
-									messages. So each channel ID is mapped to a
-									vector of command words that were observed
-									on the bus during parsing. The bus is not
-									known at this time, only the channel ID
-									which represents a specific bus.
-	chanid_commwords_maps		--> Vector of maps of channel ID to set of
-									uint32_t value which is: commword1 << 16
-									+ commword2, where commword1 will be placed
-									in the first position of the size-2 vector
-									mentioned in the argument above, and
-									commword2 will be placed in the second
-									position.
-
-	Return:
-		True if no errors, false if errors occur and
-		execution ought to stop.
-	*/
-    bool CombineChannelIDToCommandWordsMetadata(
-        std::map<uint32_t, std::vector<std::vector<uint32_t>>>& output_chanid_commwords_map,
-        const std::vector<std::map<uint32_t, std::set<uint32_t>>>& chanid_commwords_maps);
-
-    /*
-	Combine channel ID to 429 labels maps from a vector of maps,
-	where each map in the vector corresponds to a map of observed channel ID
-	to 429 labels retrieved from a worker. The output map is used in
-	another function where it is recorded to metadata.
-
-	Args:
-	output_chanid_labels_map	--> Output map, ch10 channel ID to set of
-									all 429 Labels observed on the bus
-									identifed by the given channel ID.
-	chanid_labels_maps  		--> Vector of maps of channel ID to set of ARINC
-									429 labels associated with the channel ID.
-
-	Return:
-		True if no errors, false if errors occur and
-		execution ought to stop.
-	*/
-    bool CombineChannelIDToLabelsMetadata(
-        std::map<uint32_t, std::set<uint16_t>>& output_chanid_labels_map,
-        const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_labels_maps);
-
-    /*
-	Combine channel ID to 429 IPDH Bus Numbers maps from a vector of maps,
-	where each map in the vector corresponds to a map of observed channel ID
-	to 429 IPDH Bus Numbers retrieved from a worker. The output map is used in
-	another function where it is recorded to metadata.
-
-	Args:
-	output_chanid_busnumbers_map	--> Output map,ch10 channel ID to set of
-									all IPDH Bus Numbers observed on the bus
-									identifed by the given channel ID.
-	chanid_busnumbers_maps		--> Vector of maps of channel ID to set of ARINC
-									429 IPDH Bus Numbers associated with the channel
-									ID.
-
-	Return:
-		True if no errors, false if errors occur and
-		execution ought to stop.
-	*/
-    bool CombineChannelIDToBusNumbersMetadata(
-        std::map<uint32_t, std::set<uint16_t>>&  output_chanid_busnumbers_map,
-        const std::vector<std::map<uint32_t, std::set<uint16_t>>>& chanid_busnumbers_maps);
-
-    /*
-	Combine the channel ID to minimum timestamps map from each worker, already
-	compiled as a vector maps, into the channel ID to absolute minimum timestamps
-	map.
-
-	output_chanid_to_mintimestamp_map	--> Output map, channel ID to minimum
-											video packet timestamp for the channel
-											ID. Timestamps in units of nanoseconds
-											since the epoch (Unit time).
-	chanid_mintimestamp_maps			--> Vector of maps of channel ID to minimum
-											video packet time as observed by each
-											worker.
-
-	*/
-    void CreateChannelIDToMinVideoTimestampsMetadata(
-        std::map<uint16_t, uint64_t>& output_chanid_to_mintimestamp_map,
-        const std::vector<std::map<uint16_t, uint64_t>>& chanid_mintimestamp_maps);
 
     /*
 	Collect raw TMATS strings into a single string and write to disk.
@@ -718,26 +399,7 @@ class ParseManager
 					  TMATSData& tmats_data, 
 					  const std::set<Ch10PacketType>& parsed_pkt_types);
 
-
 	
-	/*
-	Filter TMATS data based on packet type and add filtered
-	maps to metadata.
-
-	Args:
-
-		tmats_data				--> TMATSData object
-		md						--> TIPMDDocument object to which metadata 
-									will be added
-		pkt_type				--> Ch10PacketType
-
-	Return:
-		False if errors occur; true otherwise
-	*/
-	bool ProcessTMATSForType(const TMATSData& tmats_data, TIPMDDocument& md,
-		Ch10PacketType pkt_type);
-
-
 	
 	/*
 	Assemble the set of all parsed packet types from the workers and
@@ -749,25 +411,6 @@ class ParseManager
 	void AssembleParsedPacketTypesSet(std::set<Ch10PacketType>& parsed_packet_types);
 
 
-
-	/*
-	Remove output dirs which represent packets types that were not parsed and
-	which do not contain any output data.
-
-	Args:
-		output_dir_map		--> Map of Ch10PacketType to created output dirs
-		parsed_packet_types --> Set of Ch10PacketType to be filled
-
-	Return:
-		True if all dirs that exist in output_dir_map which do not associate
-		with a type that is in parsed_packet_types are deleted. Only dirs that
-		exist will attempt to be deleted and therefore a false return value is 
-		only possible for dirs which exist and can't be deleted. 
-	*/
-	bool RemoveCh10PacketOutputDirs(const std::map<Ch10PacketType, ManagedPath>& output_dir_map,
-		const std::set<Ch10PacketType>& parsed_packet_types);
-
-	
 
 	/*
 	Record time data ("Time Data, Format 1") which is stored in Ch10Context

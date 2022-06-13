@@ -129,14 +129,13 @@ class E2EValidator(object):
             self.files_under_test[ch10name] = {'dts1553': temp[1].strip(),
                                                       'dts429': temp[2].strip(),
                                                       'basename': basename,
-                                                      'raw1553': basename + '_1553.parquet',
-                                                      'transl1553': basename + '_1553_translated',
-                                                      'rawvideo': basename + '_video.parquet',
-                                                      'parsedarinc429f0': basename + '_arinc429.parquet',
-                                                      'transl429': basename + '_arinc429_translated',
-                                                      'tmats': basename + '_TMATS.txt',
-                                                      'tmats': basename + '_TMATS.txt',
-                                                      'time': basename + '_time_data.parquet'}
+                                                      'raw1553': basename + '_MILSTD1553_F1.parquet',
+                                                      'transl1553': basename + '_MILSTD1553_F1_translated',
+                                                      'rawvideo': basename + '_VIDEO_DATA_F0.parquet',
+                                                      'parsedarinc429f0': basename + '_ARINC429_F0.parquet',
+                                                      'transl429': basename + '_ARINC429_F0_translated',
+                                                      'tmats': basename + '_COMPUTER_GENERATED_DATA_F1.txt',
+                                                      'time': basename + '_TIME_DATA_F1.parquet'}
             self.all_validation_obj[ch10name] = {}
             self.validation_results_dict[ch10name] = {}
             self.duration_data[ch10name] = {'raw1553': None, 'transl1553': None,
