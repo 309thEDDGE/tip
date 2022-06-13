@@ -36,6 +36,11 @@ public:
     TMATSData();
     virtual ~TMATSData() {}
 
+    virtual const cmap& GetChannelIDToTypeMap() const { return chanid_to_type_map_; } 
+    virtual const cmap& GetChannelIDToSourceMap() const { return chanid_to_source_map_; }
+    virtual const cmap& GetChannelIDTo429Format() const { return chanid_to_429_format_; }
+    virtual const cmapvec& GetChannelIDTo429Subchans() const { return chanid_to_429_subchans_; }
+    virtual const cmapmap& GetChannelIDTo429SubchanAndName() const { return chanid_to_429_subchan_and_name_; }
 
 
     /*
@@ -89,7 +94,7 @@ public:
     Return:
         True if no errors occur; false otherwise 
     */
-    bool FilterTMATSType(const cmap& type_map, Ch10PacketType type_enum,
+    virtual bool FilterTMATSType(const cmap& type_map, Ch10PacketType type_enum,
         cmap& filtered_map) const;
 
 
@@ -118,7 +123,7 @@ public:
     Return:
         Filtered input_map
     */
-    cmap FilterByChannelIDToType(const cmap& type_map, const cmap& input_map) const;
+    virtual cmap FilterByChannelIDToType(const cmap& type_map, const cmap& input_map) const;
 };
 
 

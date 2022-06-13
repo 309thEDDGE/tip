@@ -21,6 +21,10 @@ set(headers
     include/ch10_ethernetf0_component_mock.h
     include/ch10_arinc429f0_component_mock.h
     include/parquet_tdpf1_mock.h
+    include/tmats_data_mock.h
+    include/parser_metadata_mock.h
+    include/ch10_packet_type_specific_metadata_mock.h
+    include/parser_paths_mock.h
 )
 
 add_executable(tests
@@ -101,6 +105,9 @@ add_executable(tests
     src/cli_u.cpp
     src/cli_group_u.cpp
     src/container_arg_u.cpp
+    src/parser_paths_u.cpp
+    src/parser_metadata_u.cpp
+    src/ch10_packet_type_specific_metadata_u.cpp
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)

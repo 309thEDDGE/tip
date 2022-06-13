@@ -17,6 +17,8 @@ public:
 
     ProvenanceData() : tip_version(""), hash(""), time("")
     {}
+
+    bool operator==(const ProvenanceData& rhs) const;
 };
 
 

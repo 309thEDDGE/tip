@@ -39,3 +39,9 @@ std::string GetGMTString(const std::string& strftime_fmt)
     time_str = std::string(time_buff, copied_len);
     return time_str;
 }
+
+bool ProvenanceData::operator==(const ProvenanceData& rhs) const
+{
+    return ((this->hash == rhs.hash) && (this->time == rhs.time)
+        && (this->tip_version == rhs.tip_version));
+}

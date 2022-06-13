@@ -36,6 +36,25 @@ class ParserConfigParams
         disable_videof0_(false), disable_eth0_(false), disable_arinc0_(false)
     {}
 
+    bool operator==(const ParserConfigParams& rhs) const
+    {
+        return ((this->input_path_str_ == rhs.input_path_str_) &&
+            (this->output_path_str_ == rhs.output_path_str_) &&
+            (this->log_path_str_ == rhs.log_path_str_) &&
+            (this->disable_1553f1_ == rhs.disable_1553f1_) &&
+            (this->disable_videof0_ == rhs.disable_videof0_) &&
+            (this->disable_arinc0_ == rhs.disable_arinc0_) &&
+            (this->disable_eth0_ == rhs.disable_eth0_) &&
+            (this->ch10_packet_enabled_map_ == rhs.ch10_packet_enabled_map_) &&
+            (this->ch10_packet_type_map_ == rhs.ch10_packet_type_map_) &&
+            (this->parse_chunk_bytes_ == rhs.parse_chunk_bytes_) &&
+            (this->parse_thread_count_ == rhs.parse_thread_count_) &&
+            (this->max_chunk_read_count_ == rhs.max_chunk_read_count_) &&
+            (this->worker_offset_wait_ms_ == rhs.worker_offset_wait_ms_) &&
+            (this->worker_shift_wait_ms_ == rhs.worker_shift_wait_ms_) &&
+            (this->stdout_log_level_ == rhs.stdout_log_level_));
+    }
+
     /*
 	Attempt to read the required parameters from the 
 	yaml object. This function is tested though the

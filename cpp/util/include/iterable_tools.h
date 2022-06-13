@@ -216,7 +216,7 @@ class IterableTools
     template <typename Key, typename Val>
     std::map<Key, std::set<Val>> CombineCompoundMapsToSet(
         const std::map<Key, std::set<Val>>& input_map,
-        const std::map<Key, std::set<Val>>& update_map);
+        const std::map<Key, std::set<Val>>& update_map) const;
 
     // Converts a vector to a set
     //
@@ -1318,7 +1318,7 @@ void IterableTools::EmitSequenceOfVectors(YAML::Emitter& e,
 template <typename Key, typename Val>
 std::map<Key, std::set<Val>> IterableTools::CombineCompoundMapsToSet(
     const std::map<Key, std::set<Val>>& input_map,
-    const std::map<Key, std::set<Val>>& update_map)
+    const std::map<Key, std::set<Val>>& update_map) const
 {
     // Initialize the output map with the key/value pairs of
     // the input map.

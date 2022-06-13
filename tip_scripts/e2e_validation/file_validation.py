@@ -10,8 +10,6 @@ class FileValidation(ValidationBase):
         ValidationBase.__init__(self, prefix)
         self.dry_run = False
         self.cl_process = RunCLProcess(debug=0)
-        self.regex_translated_1553_msg_dir = re.compile(".+_1553_translated.+parquet")
-        self.regex_raw_1553_dir = re.compile(".+_1553.parquet")
 
     def validate(self):
         print('FileValidation.validate(): Not overridden!')

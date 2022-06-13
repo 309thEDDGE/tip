@@ -456,11 +456,14 @@ add_library(${parsech10_lib_name} STATIC
     ${parsech10_src_dir}/tmats_data.cpp ${parsech10_inc_dir}/tmats_data.h
     ${parsech10_inc_dir}/parser_cli_help_strings.h
     ${parsech10_inc_dir}/parser_cli.h
+    ${parsech10_inc_dir}/parser_paths.h ${parsech10_src_dir}/parser_paths.cpp
+    ${parsech10_inc_dir}/parser_metadata.h ${parsech10_src_dir}/parser_metadata.cpp
+    ${parsech10_inc_dir}/ch10_packet_type_specific_metadata.h ${parsech10_src_dir}/ch10_packet_type_specific_metadata.cpp
     )
 target_include_directories(${parsech10_lib_name} PUBLIC ${common_inc_dir} ${parsech10_inc_dir}
-                            ${yaml_inc_dir} ${util_inc_dir}
+                            ${yamlsv_inc_dir} ${yaml_inc_dir} ${util_inc_dir}
                             ${pqctx_inc_dir} ${ch10pq_inc_dir} ${parquet_inc_dirs}
-                            ${ch10comp_inc_dir} ${spdlog_inc_dir} ${yamlsv_inc_dir}
+                            ${ch10comp_inc_dir} ${spdlog_inc_dir} 
                             ${md_inc_dir} ${cli_inc_dir})
 
 target_compile_features(${parsech10_lib_name} PUBLIC cxx_std_17)
@@ -632,7 +635,11 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/container_arg_u.cpp
                 ${test_src_dir}/translate_tabular_arinc429_main_u.cpp
                 ${test_src_dir}/arinc429_data_u.cpp
-                ${test_src_dir}/parquet_tdpf1_u.cpp)
+                ${test_src_dir}/parquet_tdpf1_u.cpp
+                ${test_src_dir}/parser_paths_u.cpp
+                ${test_src_dir}/parser_metadata_u.cpp
+                ${test_src_dir}/ch10_packet_type_specific_metadata_u.cpp
+                )
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs}
                             ${common_inc_dir} ${util_inc_dir} ${dts429_inc_dir}

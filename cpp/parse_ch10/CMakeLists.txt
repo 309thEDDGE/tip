@@ -7,6 +7,9 @@ set(headers
     include/tmats_data.h
     include/parser_cli_help_strings.h
     include/parser_cli.h
+    include/parser_paths.h
+    include/parser_metadata.h
+    include/ch10_packet_type_specific_metadata.h
 )
 
 add_library(parsech10_lib
@@ -15,6 +18,9 @@ add_library(parsech10_lib
     src/parse_worker.cpp
     src/tmats_parser.cpp 
     src/tmats_data.cpp
+    src/parser_paths.cpp
+    src/parser_metadata.cpp
+    src/ch10_packet_type_specific_metadata.cpp
 )
 
 target_compile_features(parsech10_lib PUBLIC cxx_std_17)

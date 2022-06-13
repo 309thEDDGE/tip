@@ -124,6 +124,10 @@ if __name__ == '__main__':
     exec_duration = {}
     did_run = False
 
+    video_ext = 'VIDEO_DATA_F0'
+    arinc_ext = 'ARINC429_F0'
+    mil1553_ext = 'MILSTD1553_F1'
+
     for ch10path in ch10_file_paths:
 
         exec_duration[ch10path] = {'raw1553': None, 'transl1553': None, 'transl429': None}
@@ -135,15 +139,15 @@ if __name__ == '__main__':
         TS_path = ''
         log_path = ''
         if args.out_path is not None:
-            raw_1553_pq_dir = str(Path(args.out_path) / Path(raw_1553_pq_dir.with_name(raw_1553_pq_dir.stem + '_1553.parquet').name))
-            raw_video_pq_dir = str(Path(args.out_path) / Path(Path(ch10path).stem + '_video.parquet'))
-            raw_429_pq_dir = str(Path(args.out_path) / Path(Path(ch10path).stem + '_arinc429.parquet'))
+            raw_1553_pq_dir = str(Path(args.out_path) / Path(raw_1553_pq_dir.with_name(raw_1553_pq_dir.stem + '_' + mil1553_ext + '.parquet').name))
+            raw_video_pq_dir = str(Path(args.out_path) / Path(Path(ch10path).stem + '_' + video_ext + '.parquet'))
+            raw_429_pq_dir = str(Path(args.out_path) / Path(Path(ch10path).stem + '_' + arinc_ext + '.parquet'))
             TS_path = str(Path(args.out_path) / Path(Path(ch10path).stem + '_video_TS'))
             log_path = str(Path(args.out_path) / Path('logs'))
         else:
-            raw_1553_pq_dir = str(raw_1553_pq_dir.with_name(raw_1553_pq_dir.stem + '_1553.parquet'))
-            raw_video_pq_dir = str(Path(ch10path).with_name(Path(ch10path).stem + '_video.parquet'))
-            raw_429_pq_dir = str(Path(ch10path).with_name(Path(ch10path).stem + '_arinc429.parquet'))
+            raw_1553_pq_dir = str(raw_1553_pq_dir.with_name(raw_1553_pq_dir.stem + '_' + mil1553_ext + '.parquet'))
+            raw_video_pq_dir = str(Path(ch10path).with_name(Path(ch10path).stem + '_' + video_ext + '.parquet'))
+            raw_429_pq_dir = str(Path(ch10path).with_name(Path(ch10path).stem + '_' + arinc_ext + '.parquet'))
             TS_path = str(Path(ch10path).with_name(Path(ch10path).stem + '_video_TS'))
             log_path = str(Path(ch10path).parent / Path('logs'))
 

@@ -98,3 +98,29 @@ TEST_F(ParserConfigParamsTest, InitializeWithConfigStringInValidEntries)
     bool status = config.InitializeWithConfigString(yaml_matter);
     EXPECT_FALSE(status);
 }
+
+TEST_F(ParserConfigParamsTest, EqualityOperatorFalse)
+{
+    ParserConfigParams conf;
+    conf.ch10_packet_enabled_map_[Ch10PacketType::ANALOG_F1] = true;
+    conf.ch10_packet_type_map_["blah"] = "tadah";
+
+    ParserConfigParams conf_test;
+    conf_test.ch10_packet_enabled_map_ = conf.ch10_packet_enabled_map_;
+    conf_test.ch10_packet_type_map_["blah"] = "not correct";
+
+    ASSERT_FALSE(conf==conf_test);
+}
+
+TEST_F(ParserConfigParamsTest, EqualityOperatorTrue)
+{
+    ParserConfigParams conf;
+    conf.ch10_packet_enabled_map_[Ch10PacketType::ANALOG_F1] = true;
+    conf.ch10_packet_type_map_["blah"] = "tadah";
+
+    ParserConfigParams conf_test;
+    conf_test.ch10_packet_enabled_map_ = conf.ch10_packet_enabled_map_;
+    conf_test.ch10_packet_type_map_ = conf.ch10_packet_type_map_;
+
+    ASSERT_TRUE(conf==conf_test);
+}
