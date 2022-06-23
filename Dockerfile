@@ -34,11 +34,8 @@ RUN mkdir /home/jovyan/tip_channel \
     && sed '/local-channel/s/.*/  - .\/tip_channel\n  - .\/tip_deps_channel\n  - .\/local-channel/' /home/jovyan/local-channel/local_channel_env.yaml > /home/jovyan/singleuser_env.yaml \
     && printf "\n  - tip" >> /home/jovyan/singleuser_env.yaml \
     && printf "\n  - pip:" >> /home/jovyan/singleuser_env.yaml \
-    && printf "\n    - /opt/data/opal/opal-packages/batch_ingest" >> /home/jovyan/singleuser_env.yaml \
-    && printf "\n    - /opt/data/opal/opal-packages/dts_utils" >> /home/jovyan/singleuser_env.yaml \
-    && printf "\n    - /opt/data/opal/opal-packages/etl_utils" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/core" >> /home/jovyan/singleuser_env.yaml \
     && printf "\n    - /opt/data/opal/opal-packages/kinds" >> /home/jovyan/singleuser_env.yaml \
-    && printf "\n    - /opt/data/opal/opal-packages/publish" >> /home/jovyan/singleuser_env.yaml \
     && printf "\n    - /opt/data/opal/opal-packages/search" >> /home/jovyan/singleuser_env.yaml \
     && conda env create -f /home/jovyan/singleuser_env.yaml --offline \
     && rm -rf /home/jovyan/tip_deps_channel /home/jovyan/local-channel
