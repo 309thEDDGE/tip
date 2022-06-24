@@ -59,7 +59,7 @@ int TranslateTabular1553Main(int argc, char** argv)
                        output_dir, log_dir, &av))
         return 0;
 
-    if(av.CheckExtension(icd_path.RawString(), {"yaml", "yml"}))
+    if(av.CheckExtension(icd_path.RawString(), {"yaml", "yml"}) && !config.disable_dts_schema_validation_)
     {
         YamlSV ysv;
         std::string icd_string; 

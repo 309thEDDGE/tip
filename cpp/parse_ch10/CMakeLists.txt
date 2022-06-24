@@ -16,6 +16,7 @@ add_library(parsech10_lib
     src/parse_manager.cpp
     src/ch10_parse_main.cpp
     src/parse_worker.cpp
+    src/worker_config.cpp
     src/tmats_parser.cpp 
     src/tmats_data.cpp
     src/parser_paths.cpp

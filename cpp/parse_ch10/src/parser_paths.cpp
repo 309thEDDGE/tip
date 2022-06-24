@@ -110,13 +110,13 @@ void ParserPaths::CreateCh10PacketWorkerFileNames(const uint16_t& total_worker_c
 }
 
 
-bool ParserPaths::RemoveCh10PacketOutputDirs(const std::set<Ch10PacketType>& parsed_packet_types)
+bool ParserPaths::RemoveCh10PacketOutputDirs(const std::set<Ch10PacketType>& parsed_packet_types) const
 {
     return RemoveCh10PacketOutputDirs(pkt_type_output_dir_map_, parsed_packet_types);
 }
 
 bool ParserPaths::RemoveCh10PacketOutputDirs(const std::map<Ch10PacketType, ManagedPath>& output_dir_map,
-    const std::set<Ch10PacketType>& parsed_packet_types)
+    const std::set<Ch10PacketType>& parsed_packet_types) const
 {
     std::string packet_type_name = "";
     bool retval = true;

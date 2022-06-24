@@ -268,7 +268,7 @@ void Ch10Packet::ParseBody()
             if (ctx_->IsPacketTypeEnabled(Ch10PacketType::COMPUTER_GENERATED_DATA_F1))
             {
                 pkt_type_ = Ch10PacketType::COMPUTER_GENERATED_DATA_F1;
-                tmats_->Parse(data_ptr_, tmats_vec_);
+                tmats_->Parse(data_ptr_);
             }
             break;
         case static_cast<uint8_t>(Ch10PacketType::TIME_DATA_F1):

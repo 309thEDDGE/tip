@@ -26,8 +26,7 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_out
                    ManagedPath& output_path, ManagedPath& log_dir, const ArgumentValidation* av);
 
 bool StartParse(ManagedPath input_path, ManagedPath output_path,
-                const ParserConfigParams& config, double& duration, 
-                ParseManager* pm);
+                const ParserConfigParams& config, double& duration);
 
 bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level);  // GCOVR_EXCL_LINE
 

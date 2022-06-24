@@ -35,14 +35,14 @@ class ParserPaths
         ParserPaths();
         ~ParserPaths() {}
         virtual const ManagedPath& GetCh10Path() const { return ch10_input_path_; }
-        const ManagedPath& GetOutputDir() const { return output_dir_; }
-        const std::map<Ch10PacketType, bool>& GetCh10PacketTypeEnabledMap() const
+        virtual const ManagedPath& GetOutputDir() const { return output_dir_; }
+        virtual const std::map<Ch10PacketType, bool>& GetCh10PacketTypeEnabledMap() const
         { return pkt_type_enabled_map_; }
-        const ManagedPath& GetTMATSOutputPath() const { return tmats_output_path_; }
-        const ManagedPath& GetTDPOutputPath() const { return tdp_output_path_; }
+        virtual const ManagedPath& GetTMATSOutputPath() const { return tmats_output_path_; }
+        virtual const ManagedPath& GetTDPOutputPath() const { return tdp_output_path_; }
         virtual const std::map<Ch10PacketType, ManagedPath>& GetCh10PacketTypeOutputDirMap() const
         { return pkt_type_output_dir_map_; }
-        const std::vector<std::map<Ch10PacketType, ManagedPath>>& GetWorkerPathVec() const
+        virtual const std::vector<std::map<Ch10PacketType, ManagedPath>>& GetWorkerPathVec() const
         { return worker_path_vec_; }
 
         /*
@@ -68,12 +68,12 @@ class ParserPaths
         Return:
             False if an error occurs, true otherwise.
         */
-        bool CreateOutputPaths(const ManagedPath& ch10_input_path,
+        virtual bool CreateOutputPaths(const ManagedPath& ch10_input_path,
             const ManagedPath& output_dir, const std::map<Ch10PacketType, bool>& packet_enabled_map,
             uint16_t total_worker_count);
 
         // External call to similar function defined below.
-        bool RemoveCh10PacketOutputDirs(const std::set<Ch10PacketType>& parsed_packet_types);
+        bool RemoveCh10PacketOutputDirs(const std::set<Ch10PacketType>& parsed_packet_types) const;
 
 
 
@@ -155,7 +155,7 @@ class ParserPaths
             only possible for dirs which exist and can't be deleted. 
         */
         bool RemoveCh10PacketOutputDirs(const std::map<Ch10PacketType, ManagedPath>& output_dir_map,
-            const std::set<Ch10PacketType>& parsed_packet_types);
+            const std::set<Ch10PacketType>& parsed_packet_types) const;
 
 };
 

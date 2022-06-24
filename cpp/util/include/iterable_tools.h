@@ -30,39 +30,39 @@ class IterableTools
     // "
     template <typename T>
     std::string GetIterablePrintString(const T& input_iterable, std::string title,
-                                       std::string format_spec, std::string delim);
+                                       std::string format_spec, std::string delim) const;
 
     // Sort in ascending order.
     // Input iterable must have .begin() and .end() methods to iterators.
     // Note that there is no reason to pass a set because sets are sorted
     // by defintion.
     template <typename T>
-    std::vector<T> Sort(const std::vector<T>& input_iterable);
+    std::vector<T> Sort(const std::vector<T>& input_iterable) const;
 
     // Requires that input object has .begin() and .end() methods to obtain
     // iterators. Does not require that set objects be used, although those
     // are accepted as well.
     template <typename T>
     std::vector<T> Intersection(const std::vector<T>& input_iterable1,
-                                const std::vector<T>& input_iterable2);
+                                const std::vector<T>& input_iterable2) const;
     template <typename T>
     std::set<T> Intersection(const std::set<T>& input_iterable1,
-                             const std::set<T>& input_iterable2);
+                             const std::set<T>& input_iterable2) const;
 
     // Find the union of two vectors or sets.
     template <typename T>
     std::vector<T> Union(const std::vector<T>& input_iterable1,
-                         const std::vector<T>& input_iterable2);
+                         const std::vector<T>& input_iterable2) const;
     template <typename T>
     std::set<T> Union(const std::set<T>& input_iterable1,
-                      const std::set<T>& input_iterable2);
+                      const std::set<T>& input_iterable2) const;
 
     // If the first input iterable is a subset of the second input iterable,
     // return true, otherwise return false.
     template <typename T>
-    bool IsSubset(const std::vector<T>& input1, const std::vector<T>& input2);
+    bool IsSubset(const std::vector<T>& input1, const std::vector<T>& input2) const;
     template <typename T>
-    bool IsSubset(const std::set<T>& input1, const std::set<T>& input2);
+    bool IsSubset(const std::set<T>& input1, const std::set<T>& input2) const;
 
     // Pass by value to avoid copying the vector explictly in
     // the function so the original order is not modified by
@@ -71,36 +71,36 @@ class IterableTools
     // the vector move function will be called on return to prevent copying
     // the whole thing again.
     template <typename T>
-    std::vector<T> UniqueElements(std::vector<T> input);
+    std::vector<T> UniqueElements(std::vector<T> input) const;
 
     // Get a vector of the field values of each element in input.
     template <class C, typename F>
-    std::vector<F> VectorOfMember(const std::vector<C>& input, const F(C::*field));
+    std::vector<F> VectorOfMember(const std::vector<C>& input, const F(C::*field)) const;
 
     // Return a vector of the indices of elements in the input vector
     // that sorts the value of the given indices in ascending order.
     // the ArgSort functions are only relevant for vectors of types
     // which can be compared via the '<' operator.
     template <typename T>
-    std::vector<size_t> ArgSortAscending(const std::vector<T>& input);
+    std::vector<size_t> ArgSortAscending(const std::vector<T>& input) const;
 
     template <typename T>
-    std::vector<size_t> ArgSortDescending(const std::vector<T>& input);
+    std::vector<size_t> ArgSortDescending(const std::vector<T>& input) const;
 
     // Get a vector of the keys of the map that sort the associated
     // values in ascending order of their length/count.
     // The mapped values must be iterables with a .size() member function.
     template <typename Key, typename Val>
-    std::vector<Key> SortMapToIterableByValueSize(const std::map<Key, Val>& input_map);
+    std::vector<Key> SortMapToIterableByValueSize(const std::map<Key, Val>& input_map) const; 
     template <typename Key, typename Val>
-    std::vector<Key> SortMapToIterableByValueSize(const std::unordered_map<Key, Val>& input_map);
+    std::vector<Key> SortMapToIterableByValueSize(const std::unordered_map<Key, Val>& input_map) const; 
 
     // Find the indices of matching elements. Not efficient for determining
     // if a value is present (Use IndexOf . . . (TODO)). Use to locate
     // indices of matching elements when it is already known or expected to
     // contain the matching value.
     template <typename T>
-    std::vector<size_t> IndicesOfMatching(const std::vector<T>& input, const T& match);
+    std::vector<size_t> IndicesOfMatching(const std::vector<T>& input, const T& match) const; 
 
     // Swap the map key-value pairs. For each key-value pair, use the initial
     // value as the new key and the initial key as the new value.
@@ -110,22 +110,22 @@ class IterableTools
     // If this occurs, lost_entries will be set to true, otherwise it is
     // set to false.
     template <typename Key, typename Val>
-    std::map<Val, Key> ReverseMap(const std::map<Key, Val>& input_map, bool& lost_entries);
+    std::map<Val, Key> ReverseMap(const std::map<Key, Val>& input_map, bool& lost_entries) const;
     template <typename Key, typename Val>
     std::unordered_map<Val, Key> ReverseMap(const std::unordered_map<Key, Val>& input_map,
-                                            bool& lost_entries);
+                                            bool& lost_entries) const;
 
     // Return true if the key is in the map, false if not.
     template <typename Key, typename Val>
-    bool IsKeyInMap(const std::map<Key, Val>& input_map, const Key& input_key);
+    bool IsKeyInMap(const std::map<Key, Val>& input_map, const Key& input_key) const;
     template <typename Key, typename Val>
-    bool IsKeyInMap(const std::unordered_map<Key, Val>& input_map, const Key& input_key);
+    bool IsKeyInMap(const std::unordered_map<Key, Val>& input_map, const Key& input_key) const;
 
     // Return a subset of the input vector by selecting elements by indices.
     // Should I rename this to SubsetByIndices or similar?
     template <class C>
     std::vector<C> CollectByIndices(const std::vector<C>& input,
-                                    const std::vector<size_t>& inds);
+                                    const std::vector<size_t>& inds) const;
 
     // Group elements of a vector by a common value in the "field" member.
     // The map key is the value of "field" common to all elements in the vector
@@ -136,19 +136,19 @@ class IterableTools
     // that have the key value as the value of "a."
     template <class C, typename F>
     std::unordered_map<F, std::vector<C>> GroupByMember(const std::vector<C>& input,
-                                                        const F(C::*field));
+                                                        const F(C::*field)) const;
 
     // Get a vector of the keys in a map.
     template <typename Keys, typename Vals>
-    std::vector<Keys> GetKeys(const std::map<Keys, Vals>& input_map);
+    std::vector<Keys> GetKeys(const std::map<Keys, Vals>& input_map) const;
     template <typename Keys, typename Vals>
-    std::vector<Keys> GetKeys(const std::unordered_map<Keys, Vals>& input_map);
+    std::vector<Keys> GetKeys(const std::unordered_map<Keys, Vals>& input_map) const;
 
     // Get a vector of the values in a map.
     template <typename Keys, typename Vals>
-    std::vector<Vals> GetVals(const std::map<Keys, Vals>& input_map);
+    std::vector<Vals> GetVals(const std::map<Keys, Vals>& input_map) const;
     template <typename Keys, typename Vals>
-    std::vector<Vals> GetVals(const std::unordered_map<Keys, Vals>& input_map);
+    std::vector<Vals> GetVals(const std::unordered_map<Keys, Vals>& input_map) const;
 
     // Update the keys in a map, leaving the values completed untouched.
     // If the keys in the input map correspond to any of the keys in the
@@ -159,10 +159,10 @@ class IterableTools
     // 10 and return updated map = {key:10 --> val:"hi"}
     template <typename Key, typename Val>
     std::map<Key, Val> UpdateMapKeys(const std::map<Key, Val>& input_map,
-                                     const std::map<Key, Key>& update_map);
+                                     const std::map<Key, Key>& update_map) const;
     template <typename Key, typename Val>
     std::unordered_map<Key, Val> UpdateMapKeys(const std::unordered_map<Key, Val>& input_map,
-                                               const std::unordered_map<Key, Key>& update_map);
+                                               const std::unordered_map<Key, Key>& update_map) const;
 
     // Update the values in a map, leaving the keys completely untouched.
     // If the values in the input map correspond to any of the keys in the
@@ -174,19 +174,19 @@ class IterableTools
     // "test" and return updated map = {key:3 --> val:"test"}
     template <typename Key, typename Val>
     std::map<Key, Val> UpdateMapVals(const std::map<Key, Val>& input_map,
-                                     const std::map<Val, Val>& update_map);
+                                     const std::map<Val, Val>& update_map) const;
     template <typename Key, typename Val>
     std::unordered_map<Key, Val> UpdateMapVals(const std::unordered_map<Key, Val>& input_map,
-                                               const std::unordered_map<Val, Val>& update_map);
+                                               const std::unordered_map<Val, Val>& update_map) const;
 
     // Return a set of keys present in the input map that map to the input
     // match value.
     template <typename Key, typename Val>
-    std::set<Key> GetKeysByValue(const std::map<Key, Val>& input_map, const Val& match_val);
+    std::set<Key> GetKeysByValue(const std::map<Key, Val>& input_map, const Val& match_val) const;
 
     template <typename Key, typename Val>
     std::set<Key> GetKeysByValue(const std::unordered_map<Key, Val>& input_map,
-                                 const Val& match_val);
+                                 const Val& match_val) const;
 
     // Adds key/values from the update_map to the input_map if
     // the key from the update_map is not in the input_map
@@ -198,11 +198,11 @@ class IterableTools
     //                {key:4 -- > val:"four"}
     template <typename Key, typename Val>
     std::map<Key, Val> CombineMaps(const std::map<Key, Val>& input_map,
-                                   const std::map<Key, Val>& update_map);
+                                   const std::map<Key, Val>& update_map) const;
 
     template <typename Key, typename Val>
     std::unordered_map<Key, Val> CombineMaps(const std::unordered_map<Key, Val>& input_map,
-                                             const std::unordered_map<Key, Val>& update_map);
+                                             const std::unordered_map<Key, Val>& update_map) const;
 
     // Adds key/set<value> pairs to the input map if a key found in
     // the update map is not present in the input map. If a key
@@ -221,24 +221,24 @@ class IterableTools
     // Converts a vector to a set
     //
     template <typename T>
-    std::set<T> VecToSet(const std::vector<T>& input_vec);
+    std::set<T> VecToSet(const std::vector<T>& input_vec) const;
 
     // Check if two sets are equal regardless of order
     //
     template <typename T>
-    bool EqualSets(const std::set<T>& set1, const std::set<T>& set2);
+    bool EqualSets(const std::set<T>& set1, const std::set<T>& set2) const;
 
     // Deletes the values specified in the deletion set from the original set
     // Returns the new set
     //
     template <typename T>
-    std::set<T> DeleteFromSet(const std::set<T>& original, const std::set<T>& deletions);
+    std::set<T> DeleteFromSet(const std::set<T>& original, const std::set<T>& deletions) const;
 
     // Deletes one value from a set
     // Returns the new set
     //
     template <typename T>
-    std::set<T> DeleteFromSet(const std::set<T>& original, T deletion);
+    std::set<T> DeleteFromSet(const std::set<T>& original, T deletion) const;
 
     // Returns the reverse map when the map is a key to a set
     //
@@ -249,7 +249,7 @@ class IterableTools
     //                key: "cool" --> val: {3, 4}
     //                key: "step" --> val: {4}
     template <typename Key, typename Val>
-    std::map<Val, std::set<Key>> ReverseMapSet(const std::map<Key, std::set<Val>>& input_map);
+    std::map<Val, std::set<Key>> ReverseMapSet(const std::map<Key, std::set<Val>>& input_map) const;
 
     // Returns the reverse unordered map when the map is a key to a set
     //
@@ -260,7 +260,7 @@ class IterableTools
     //                key: "cool" --> val: {3, 4}
     //                key: "step" --> val: {4}
     template <typename Key, typename Val>
-    std::unordered_map<Val, std::set<Key>> ReverseMapSet(const std::unordered_map<Key, std::set<Val>>& input_map);
+    std::unordered_map<Val, std::set<Key>> ReverseMapSet(const std::unordered_map<Key, std::set<Val>>& input_map) const;
 
     // Binary searches the input vector/set and returns index of the first
     // matching element, otherwise return std::string::npos.
@@ -269,9 +269,9 @@ class IterableTools
     // is invalid. This function is meant to be very fast, so there is no check
     // for sorted data.
     template <typename T>
-    size_t IndexOf(const std::vector<T>& input, const T& search_key);
+    size_t IndexOf(const std::vector<T>& input, const T& search_key) const;
     template <typename T>
-    size_t IndexOf(const std::set<T>& input, const T& search_key);
+    size_t IndexOf(const std::set<T>& input, const T& search_key) const;
 
     // Formats the map elements into a string. The input map can be a key to a set
     // Sorts the list in order of largest to smallest set
@@ -283,7 +283,7 @@ class IterableTools
     //                  3:    hi,jack
     //
     template <typename Key, typename Val>
-    std::string GetPrintableMapElements_KeyToSet(std::map<Key, std::set<Val>> input_map);
+    std::string GetPrintableMapElements_KeyToSet(std::map<Key, std::set<Val>> input_map) const;
 
     // Formats the map elements into a string. The input map can be a key to a value
     // Returns: the printable string
@@ -293,7 +293,7 @@ class IterableTools
     // return value   = 3:    hi
     //                  4:    sorry
     template <typename Key, typename Val>
-    std::string GetPrintableMapElements_KeyToValue(const std::map<Key, Val>& input_map);
+    std::string GetPrintableMapElements_KeyToValue(const std::map<Key, Val>& input_map) const;
 
     // Formats the map elements into a string. The input map can be a key to a bool value
     // Returns: the printable string
@@ -303,7 +303,7 @@ class IterableTools
     // return value   = 3:    true
     //                  4:    false
     template <typename Key>
-    std::string GetPrintableMapElements_KeyToBool(const std::map<Key, bool>& input_map);
+    std::string GetPrintableMapElements_KeyToBool(const std::map<Key, bool>& input_map) const;
 
     // Prints map with header. The input map can be a key to a set
     // Returns: the printed string
@@ -320,7 +320,7 @@ class IterableTools
     //                   4:    sorry,jack
     template <typename Key, typename Val>
     std::string PrintMapWithHeader_KeyToSet(const std::map<Key, std::set<Val>>& input_map,
-                                            std::vector<std::string> columns, std::string map_name);
+                                            std::vector<std::string> columns, std::string map_name) const;
 
     // Prints map with header. The input map can be a key to a value
     // Returns: the printed string
@@ -336,7 +336,7 @@ class IterableTools
     //                   3:    hi
     //                   4:    sorry
     template <typename Key, typename Val>
-    std::string PrintMapWithHeader_KeyToValue(const std::map<Key, Val>& input_map, std::vector<std::string> columns, std::string map_name);
+    std::string PrintMapWithHeader_KeyToValue(const std::map<Key, Val>& input_map, std::vector<std::string> columns, std::string map_name) const;
 
     // Prints map with header. The input map can be a key to a value
     // Returns: the printed string
@@ -352,7 +352,7 @@ class IterableTools
     //                   3:    true
     //                   4:    false
     template <typename Key>
-    std::string PrintMapWithHeader_KeyToBool(const std::map<Key, bool>& input_map, std::vector<std::string> columns, std::string map_name);
+    std::string PrintMapWithHeader_KeyToBool(const std::map<Key, bool>& input_map, std::vector<std::string> columns, std::string map_name) const;
 
     // Returns a header with a title, column(s), and header bar
     //
@@ -362,16 +362,16 @@ class IterableTools
     // return value  =    map name
     //                   (Col1) | (Col2)
     //                  ---------------------------
-    std::string GetHeader(std::vector<std::string> columns, std::string title);
+    std::string GetHeader(std::vector<std::string> columns, std::string title) const;
 
     // Returns a string with the header/footer bar
     //
     // return value  =   ---------------------------
-    std::string GetPrintBar();
+    std::string GetPrintBar() const;
 
     // Prints the string and returns the printed string (used for testing purposes)
     //
-    std::string print(std::string print_string);
+    std::string print(std::string print_string) const;
 
     // Note for yaml emitter help functions below:
     // a key type of uint8_t is interpreted as a char and will
@@ -391,10 +391,10 @@ class IterableTools
     //
     template <typename Key, typename Val>
     void EmitKeyValuePair(YAML::Emitter& e, const Key& input_key,
-                          const Val& input_value);
+                          const Val& input_value) const;
     template <typename Key, typename Val>
     void EmitKeyValuePairWithinMap(YAML::Emitter& e, const Key& input_key,
-                          const Val& input_value);
+                          const Val& input_value) const;
 
 
     // Emits a key:value map to the Yaml emitter passed as an argument.
@@ -406,10 +406,10 @@ class IterableTools
     //
     template <typename Key, typename Val>
     void EmitSimpleMap(YAML::Emitter& e, const std::map<Key, Val>& input_map,
-                       const std::string& map_name);
+                       const std::string& map_name) const;
     template <typename Key, typename Val>
     void EmitSimpleMapWithinMap(YAML::Emitter& e, const std::map<Key, Val>& input_map,
-                       const std::string& map_name);
+                       const std::string& map_name) const;
 
     // Emits a key:set<values> map to the Yaml emitter passed as an argument.
     //
@@ -420,10 +420,10 @@ class IterableTools
     //
     template <typename Key, typename Val>
     void EmitCompoundMapToSet(YAML::Emitter& e,
-                              const std::map<Key, std::set<Val>>& input_map, const std::string& key);
+                              const std::map<Key, std::set<Val>>& input_map, const std::string& key) const;
     template <typename Key, typename Val>
     void EmitCompoundMapToSetWithinMap(YAML::Emitter& e,
-                              const std::map<Key, std::set<Val>>& input_map, const std::string& key);
+                              const std::map<Key, std::set<Val>>& input_map, const std::string& key) const;
 
 
     // Emits a key:vector<values> map to the Yaml emitter passed as an argument.
@@ -435,10 +435,10 @@ class IterableTools
     //
     template <typename Key, typename Val>
     void EmitCompoundMapToVector(YAML::Emitter& e,
-                                 const std::map<Key, std::vector<Val>>& input_map, const std::string& key);
+                                 const std::map<Key, std::vector<Val>>& input_map, const std::string& key) const;
     template <typename Key, typename Val>
     void EmitCompoundMapToVectorWithinMap(YAML::Emitter& e,
-                                 const std::map<Key, std::vector<Val>>& input_map, const std::string& key);
+                                 const std::map<Key, std::vector<Val>>& input_map, const std::string& key) const;
 
     // Emits a sequence<vector<Value>> map to the Yaml emitter passed as an argument.
     // The top-level vector is output in block style and the secondary vector is
@@ -450,12 +450,12 @@ class IterableTools
     //
     template <typename Val>
     void EmitSequenceOfVectors(YAML::Emitter& e,
-                               const std::vector<std::vector<Val>>& input_vec);
+                               const std::vector<std::vector<Val>>& input_vec) const;
 };
 
 template <typename T>
 std::string IterableTools::GetIterablePrintString(const T& input_iterable, std::string title,
-                                                  std::string format_spec, std::string delim)
+                                                  std::string format_spec, std::string delim) const
 {
     int i = 0;
     std::string ret_val = title + ":\n";
@@ -481,10 +481,10 @@ std::string IterableTools::GetIterablePrintString(const T& input_iterable, std::
 template <>
 std::string IterableTools::GetIterablePrintString<std::vector<std::string>>(
     const std::vector<std::string>& input_iterable, std::string title,
-    std::string format_spec, std::string delim);
+    std::string format_spec, std::string delim) const;
 
 template <typename T>
-std::vector<T> IterableTools::Sort(const std::vector<T>& input_iterable)
+std::vector<T> IterableTools::Sort(const std::vector<T>& input_iterable) const
 {
     std::vector<T> input_sorted(input_iterable.size());
     std::partial_sort_copy(input_iterable.begin(), input_iterable.end(),
@@ -494,7 +494,7 @@ std::vector<T> IterableTools::Sort(const std::vector<T>& input_iterable)
 
 template <typename T>
 std::vector<T> IterableTools::Intersection(const std::vector<T>& input_iterable1,
-                                           const std::vector<T>& input_iterable2)
+                                           const std::vector<T>& input_iterable2) const
 {
     // Create a sorted version of the inputs.
     std::vector<T> in1_sorted = Sort<T>(input_iterable1);
@@ -519,7 +519,7 @@ std::vector<T> IterableTools::Intersection(const std::vector<T>& input_iterable1
 
 template <typename T>
 std::set<T> IterableTools::Intersection(const std::set<T>& input_iterable1,
-                                        const std::set<T>& input_iterable2)
+                                        const std::set<T>& input_iterable2) const
 {
     // Initialize the output.
     std::set<T> output_iterable;
@@ -534,7 +534,7 @@ std::set<T> IterableTools::Intersection(const std::set<T>& input_iterable1,
 
 template <typename T>
 std::vector<T> IterableTools::Union(const std::vector<T>& input_iterable1,
-                                    const std::vector<T>& input_iterable2)
+                                    const std::vector<T>& input_iterable2) const
 {
     // Create a sorted version of the inputs.
     std::vector<T> in1_sorted = Sort<T>(input_iterable1);
@@ -557,7 +557,7 @@ std::vector<T> IterableTools::Union(const std::vector<T>& input_iterable1,
 
 template <typename T>
 std::set<T> IterableTools::Union(const std::set<T>& input_iterable1,
-                                 const std::set<T>& input_iterable2)
+                                 const std::set<T>& input_iterable2) const
 {
     // Initialize the output.
     std::set<T> output_iterable;
@@ -571,7 +571,7 @@ std::set<T> IterableTools::Union(const std::set<T>& input_iterable1,
 }
 
 template <typename T>
-std::vector<T> IterableTools::UniqueElements(std::vector<T> input)
+std::vector<T> IterableTools::UniqueElements(std::vector<T> input) const
 {
     // Sort the elements.
     std::sort(input.begin(), input.end());
@@ -586,7 +586,7 @@ std::vector<T> IterableTools::UniqueElements(std::vector<T> input)
 }
 
 template <class C, typename F>
-std::vector<F> IterableTools::VectorOfMember(const std::vector<C>& input, const F(C::*field))
+std::vector<F> IterableTools::VectorOfMember(const std::vector<C>& input, const F(C::*field)) const
 {
     std::vector<F> output(input.size());
     for (size_t i = 0; i < input.size(); i++)
@@ -597,7 +597,7 @@ std::vector<F> IterableTools::VectorOfMember(const std::vector<C>& input, const 
 }
 
 template <typename T>
-std::vector<size_t> IterableTools::IndicesOfMatching(const std::vector<T>& input, const T& match)
+std::vector<size_t> IterableTools::IndicesOfMatching(const std::vector<T>& input, const T& match) const
 {
     std::vector<size_t> inds;
     for (size_t i = 0; i < input.size(); i++)
@@ -610,7 +610,7 @@ std::vector<size_t> IterableTools::IndicesOfMatching(const std::vector<T>& input
 
 template <class C>
 std::vector<C> IterableTools::CollectByIndices(const std::vector<C>& input,
-                                               const std::vector<size_t>& inds)
+                                               const std::vector<size_t>& inds) const
 {
     std::vector<C> output;
     for (size_t i = 0; i < inds.size(); i++)
@@ -622,7 +622,7 @@ std::vector<C> IterableTools::CollectByIndices(const std::vector<C>& input,
 
 template <class C, typename F>
 std::unordered_map<F, std::vector<C>> IterableTools::GroupByMember(
-    const std::vector<C>& input, const F(C::*field))
+    const std::vector<C>& input, const F(C::*field)) const
 {
     // Get the member values for each element.
     std::vector<F> member_vals = VectorOfMember<C, F>(input, field);
@@ -648,7 +648,7 @@ std::unordered_map<F, std::vector<C>> IterableTools::GroupByMember(
 }
 
 template <typename Keys, typename Vals>
-std::vector<Keys> IterableTools::GetKeys(const std::map<Keys, Vals>& input_map)
+std::vector<Keys> IterableTools::GetKeys(const std::map<Keys, Vals>& input_map) const
 {
     std::vector<Keys> output_keys;
     for (typename std::map<Keys, Vals>::const_iterator it = input_map.begin();
@@ -660,7 +660,7 @@ std::vector<Keys> IterableTools::GetKeys(const std::map<Keys, Vals>& input_map)
 }
 
 template <typename Keys, typename Vals>
-std::vector<Keys> IterableTools::GetKeys(const std::unordered_map<Keys, Vals>& input_map)
+std::vector<Keys> IterableTools::GetKeys(const std::unordered_map<Keys, Vals>& input_map) const
 {
     std::vector<Keys> output_keys;
     for (typename std::unordered_map<Keys, Vals>::const_iterator it = input_map.begin();
@@ -672,7 +672,7 @@ std::vector<Keys> IterableTools::GetKeys(const std::unordered_map<Keys, Vals>& i
 }
 
 template <typename Keys, typename Vals>
-std::vector<Vals> IterableTools::GetVals(const std::map<Keys, Vals>& input_map)
+std::vector<Vals> IterableTools::GetVals(const std::map<Keys, Vals>& input_map) const
 {
     std::vector<Vals> output_vals;
     for (typename std::map<Keys, Vals>::const_iterator it = input_map.begin();
@@ -684,7 +684,7 @@ std::vector<Vals> IterableTools::GetVals(const std::map<Keys, Vals>& input_map)
 }
 
 template <typename Keys, typename Vals>
-std::vector<Vals> IterableTools::GetVals(const std::unordered_map<Keys, Vals>& input_map)
+std::vector<Vals> IterableTools::GetVals(const std::unordered_map<Keys, Vals>& input_map) const
 {
     std::vector<Vals> output_vals;
     for (typename std::unordered_map<Keys, Vals>::const_iterator it = input_map.begin();
@@ -696,7 +696,7 @@ std::vector<Vals> IterableTools::GetVals(const std::unordered_map<Keys, Vals>& i
 }
 
 template <typename T>
-bool IterableTools::IsSubset(const std::vector<T>& input1, const std::vector<T>& input2)
+bool IterableTools::IsSubset(const std::vector<T>& input1, const std::vector<T>& input2) const
 {
     // Sort the inputs.
     std::vector<T> in1_sorted = Sort<T>(input1);
@@ -714,7 +714,7 @@ bool IterableTools::IsSubset(const std::vector<T>& input1, const std::vector<T>&
 }
 
 template <typename T>
-bool IterableTools::IsSubset(const std::set<T>& input1, const std::set<T>& input2)
+bool IterableTools::IsSubset(const std::set<T>& input1, const std::set<T>& input2) const
 {
     std::set<T> intersect = Intersection<T>(input1, input2);
     if (input1.size() == intersect.size())
@@ -724,7 +724,7 @@ bool IterableTools::IsSubset(const std::set<T>& input1, const std::set<T>& input
 }
 
 template <typename T>
-std::vector<size_t> IterableTools::ArgSortAscending(const std::vector<T>& input)
+std::vector<size_t> IterableTools::ArgSortAscending(const std::vector<T>& input) const
 {
     // Get a vector of an index starting from 0 and
     // incrementing for each element in the input.
@@ -738,7 +738,7 @@ std::vector<size_t> IterableTools::ArgSortAscending(const std::vector<T>& input)
 }
 
 template <typename T>
-std::vector<size_t> IterableTools::ArgSortDescending(const std::vector<T>& input)
+std::vector<size_t> IterableTools::ArgSortDescending(const std::vector<T>& input) const
 {
     // Get a vector of an index starting from 0 and
     // incrementing for each element in the input.
@@ -753,7 +753,7 @@ std::vector<size_t> IterableTools::ArgSortDescending(const std::vector<T>& input
 
 template <typename Key, typename Val>
 std::vector<Key> IterableTools::SortMapToIterableByValueSize(
-    const std::map<Key, Val>& input_map)
+    const std::map<Key, Val>& input_map) const
 {
     // This implementation is valid for both ordered and unordered maps.
 
@@ -780,7 +780,7 @@ std::vector<Key> IterableTools::SortMapToIterableByValueSize(
 
 template <typename Key, typename Val>
 std::vector<Key> IterableTools::SortMapToIterableByValueSize(
-    const std::unordered_map<Key, Val>& input_map)
+    const std::unordered_map<Key, Val>& input_map) const
 {
     // This implementation is valid for both ordered and unordered maps.
 
@@ -807,7 +807,7 @@ std::vector<Key> IterableTools::SortMapToIterableByValueSize(
 
 template <typename Key, typename Val>
 std::map<Val, Key> IterableTools::ReverseMap(const std::map<Key, Val>& input_map,
-                                             bool& lost_entries)
+                                             bool& lost_entries) const
 {
     lost_entries = false;
 
@@ -834,7 +834,7 @@ std::map<Val, Key> IterableTools::ReverseMap(const std::map<Key, Val>& input_map
 
 template <typename Key, typename Val>
 std::unordered_map<Val, Key> IterableTools::ReverseMap(
-    const std::unordered_map<Key, Val>& input_map, bool& lost_entries)
+    const std::unordered_map<Key, Val>& input_map, bool& lost_entries) const
 {
     lost_entries = false;
 
@@ -865,7 +865,7 @@ std::unordered_map<Val, Key> IterableTools::ReverseMap(
 
 template <typename Key, typename Val>
 bool IterableTools::IsKeyInMap(const std::map<Key, Val>& input_map,
-                               const Key& input_key)
+                               const Key& input_key) const
 {
     if (input_map.count(input_key) > 0)
         return true;
@@ -875,7 +875,7 @@ bool IterableTools::IsKeyInMap(const std::map<Key, Val>& input_map,
 
 template <typename Key, typename Val>
 bool IterableTools::IsKeyInMap(const std::unordered_map<Key, Val>& input_map,
-                               const Key& input_key)
+                               const Key& input_key) const
 {
     if (input_map.count(input_key) > 0)
         return true;
@@ -885,7 +885,7 @@ bool IterableTools::IsKeyInMap(const std::unordered_map<Key, Val>& input_map,
 
 template <typename Key, typename Val>
 std::map<Key, Val> IterableTools::UpdateMapKeys(const std::map<Key, Val>& input_map,
-                                                const std::map<Key, Key>& update_map)
+                                                const std::map<Key, Key>& update_map) const
 {
     std::map<Key, Val> new_map;
     // Iterate over the input map. If the current key is in the update map
@@ -906,7 +906,7 @@ std::map<Key, Val> IterableTools::UpdateMapKeys(const std::map<Key, Val>& input_
 
 template <typename Key, typename Val>
 std::unordered_map<Key, Val> IterableTools::UpdateMapKeys(const std::unordered_map<Key, Val>& input_map,
-                                                          const std::unordered_map<Key, Key>& update_map)
+                                                          const std::unordered_map<Key, Key>& update_map) const
 {
     std::unordered_map<Key, Val> new_map;
     // Iterate over the input map. If the current key is in the update map
@@ -927,7 +927,7 @@ std::unordered_map<Key, Val> IterableTools::UpdateMapKeys(const std::unordered_m
 
 template <typename Key, typename Val>
 std::map<Key, Val> IterableTools::UpdateMapVals(const std::map<Key, Val>& input_map,
-                                                const std::map<Val, Val>& update_map)
+                                                const std::map<Val, Val>& update_map) const
 {
     std::map<Key, Val> new_map;
     // Iterate over the input map. If the current value is a key in the update map
@@ -949,7 +949,7 @@ std::map<Key, Val> IterableTools::UpdateMapVals(const std::map<Key, Val>& input_
 template <typename Key, typename Val>
 std::unordered_map<Key, Val> IterableTools::UpdateMapVals(
     const std::unordered_map<Key, Val>& input_map,
-    const std::unordered_map<Val, Val>& update_map)
+    const std::unordered_map<Val, Val>& update_map) const
 {
     std::unordered_map<Key, Val> new_map;
     // Iterate over the input map. If the current value is a key in the update map
@@ -969,7 +969,7 @@ std::unordered_map<Key, Val> IterableTools::UpdateMapVals(
 }
 
 template <typename Key, typename Val>
-std::map<Key, Val> IterableTools::CombineMaps(const std::map<Key, Val>& input_map, const std::map<Key, Val>& update_map)
+std::map<Key, Val> IterableTools::CombineMaps(const std::map<Key, Val>& input_map, const std::map<Key, Val>& update_map) const
 {
     std::map<Key, Val> new_map = input_map;
     // Iterate over the update map
@@ -985,7 +985,7 @@ std::map<Key, Val> IterableTools::CombineMaps(const std::map<Key, Val>& input_ma
 
 template <typename Key, typename Val>
 std::unordered_map<Key, Val> IterableTools::CombineMaps(
-    const std::unordered_map<Key, Val>& input_map, const std::unordered_map<Key, Val>& update_map)
+    const std::unordered_map<Key, Val>& input_map, const std::unordered_map<Key, Val>& update_map) const
 {
     std::unordered_map<Key, Val> new_map = input_map;
     // Iterate over the update map
@@ -1000,14 +1000,14 @@ std::unordered_map<Key, Val> IterableTools::CombineMaps(
 }
 
 template <typename T>
-std::set<T> IterableTools::VecToSet(const std::vector<T>& input_vec)
+std::set<T> IterableTools::VecToSet(const std::vector<T>& input_vec) const
 {
     return std::set<T>(input_vec.begin(), input_vec.end());
 }
 
 template <typename Key, typename Val>
 std::set<Key> IterableTools::GetKeysByValue(const std::map<Key, Val>& input_map,
-                                            const Val& match_val)
+                                            const Val& match_val) const
 {
     std::set<Key> match_keys;
     for (typename std::map<Key, Val>::const_iterator it = input_map.begin();
@@ -1021,7 +1021,7 @@ std::set<Key> IterableTools::GetKeysByValue(const std::map<Key, Val>& input_map,
 
 template <typename Key, typename Val>
 std::set<Key> IterableTools::GetKeysByValue(const std::unordered_map<Key, Val>& input_map,
-                                            const Val& match_val)
+                                            const Val& match_val) const
 {
     std::set<Key> match_keys;
     for (typename std::unordered_map<Key, Val>::const_iterator it = input_map.begin();
@@ -1034,7 +1034,7 @@ std::set<Key> IterableTools::GetKeysByValue(const std::unordered_map<Key, Val>& 
 }
 
 template <typename T>
-bool IterableTools::EqualSets(const std::set<T>& set1, const std::set<T>& set2)
+bool IterableTools::EqualSets(const std::set<T>& set1, const std::set<T>& set2) const
 {
     IterableTools it;
 
@@ -1046,7 +1046,7 @@ bool IterableTools::EqualSets(const std::set<T>& set1, const std::set<T>& set2)
 }
 
 template <typename T>
-std::set<T> IterableTools::DeleteFromSet(const std::set<T>& original, const std::set<T>& deletions)
+std::set<T> IterableTools::DeleteFromSet(const std::set<T>& original, const std::set<T>& deletions) const
 {
     std::set<T> return_set = original;
     for (auto value : deletions)
@@ -1058,7 +1058,7 @@ std::set<T> IterableTools::DeleteFromSet(const std::set<T>& original, const std:
 }
 
 template <typename T>
-std::set<T> IterableTools::DeleteFromSet(const std::set<T>& original, T deletion)
+std::set<T> IterableTools::DeleteFromSet(const std::set<T>& original, T deletion) const
 {
     std::set<T> return_set = original;
     if (return_set.find(deletion) != return_set.end())
@@ -1068,7 +1068,7 @@ std::set<T> IterableTools::DeleteFromSet(const std::set<T>& original, T deletion
 }
 
 template <typename Key, typename Val>
-std::map<Val, std::set<Key>> IterableTools::ReverseMapSet(const std::map<Key, std::set<Val>>& input_map)
+std::map<Val, std::set<Key>> IterableTools::ReverseMapSet(const std::map<Key, std::set<Val>>& input_map) const
 {
     // Create empty return map
     std::map<Val, std::set<Key>> return_map;
@@ -1089,7 +1089,7 @@ std::map<Val, std::set<Key>> IterableTools::ReverseMapSet(const std::map<Key, st
 }
 
 template <typename Key, typename Val>
-std::unordered_map<Val, std::set<Key>> IterableTools::ReverseMapSet(const std::unordered_map<Key, std::set<Val>>& input_map)
+std::unordered_map<Val, std::set<Key>> IterableTools::ReverseMapSet(const std::unordered_map<Key, std::set<Val>>& input_map) const 
 {
     // Create empty return map
     std::unordered_map<Val, std::set<Key>> return_map;
@@ -1110,7 +1110,7 @@ std::unordered_map<Val, std::set<Key>> IterableTools::ReverseMapSet(const std::u
 }
 
 template <typename T>
-size_t IterableTools::IndexOf(const std::vector<T>& input, const T& search_key)
+size_t IterableTools::IndexOf(const std::vector<T>& input, const T& search_key) const
 {
     typename std::vector<T>::const_iterator it = std::lower_bound(input.cbegin(), input.cend(), search_key);
     if (it != input.cend() && (*it == search_key))
@@ -1122,7 +1122,7 @@ size_t IterableTools::IndexOf(const std::vector<T>& input, const T& search_key)
 }
 
 template <typename T>
-size_t IterableTools::IndexOf(const std::set<T>& input, const T& search_key)
+size_t IterableTools::IndexOf(const std::set<T>& input, const T& search_key) const
 {
     typename std::set<T>::const_iterator it = std::lower_bound(input.cbegin(), input.cend(), search_key);
     if (it != input.cend() && (*it == search_key))
@@ -1134,7 +1134,7 @@ size_t IterableTools::IndexOf(const std::set<T>& input, const T& search_key)
 }
 
 template <typename Key, typename Val>
-std::string IterableTools::GetPrintableMapElements_KeyToSet(std::map<Key, std::set<Val>> input_map)
+std::string IterableTools::GetPrintableMapElements_KeyToSet(std::map<Key, std::set<Val>> input_map) const
 {
     std::stringstream ss;
 
@@ -1160,7 +1160,7 @@ std::string IterableTools::GetPrintableMapElements_KeyToSet(std::map<Key, std::s
 }
 
 template <typename Key, typename Val>
-std::string IterableTools::GetPrintableMapElements_KeyToValue(const std::map<Key, Val>& input_map)
+std::string IterableTools::GetPrintableMapElements_KeyToValue(const std::map<Key, Val>& input_map) const
 {
     std::stringstream ss;
     for (typename std::map<Key, Val>::const_iterator it = input_map.begin(); it != input_map.end(); it++)
@@ -1174,7 +1174,7 @@ std::string IterableTools::GetPrintableMapElements_KeyToValue(const std::map<Key
 }
 
 template <typename Key>
-std::string IterableTools::GetPrintableMapElements_KeyToBool(const std::map<Key, bool>& input_map)
+std::string IterableTools::GetPrintableMapElements_KeyToBool(const std::map<Key, bool>& input_map) const
 {
     std::stringstream ss;
     for (typename std::map<Key, bool>::const_iterator it = input_map.begin(); it != input_map.end(); it++)
@@ -1188,7 +1188,7 @@ std::string IterableTools::GetPrintableMapElements_KeyToBool(const std::map<Key,
 }
 
 template <typename Key, typename Val>
-std::string IterableTools::PrintMapWithHeader_KeyToSet(const std::map<Key, std::set<Val>>& input_map, std::vector<std::string> columns, std::string map_name)
+std::string IterableTools::PrintMapWithHeader_KeyToSet(const std::map<Key, std::set<Val>>& input_map, std::vector<std::string> columns, std::string map_name) const
 {
     std::stringstream ss;
     ss << GetHeader(columns, map_name);
@@ -1198,7 +1198,7 @@ std::string IterableTools::PrintMapWithHeader_KeyToSet(const std::map<Key, std::
 }
 
 template <typename Key, typename Val>
-std::string IterableTools::PrintMapWithHeader_KeyToValue(const std::map<Key, Val>& input_map, std::vector<std::string> columns, std::string map_name)
+std::string IterableTools::PrintMapWithHeader_KeyToValue(const std::map<Key, Val>& input_map, std::vector<std::string> columns, std::string map_name) const
 {
     std::stringstream ss;
     ss << GetHeader(columns, map_name);
@@ -1208,7 +1208,7 @@ std::string IterableTools::PrintMapWithHeader_KeyToValue(const std::map<Key, Val
 }
 
 template <typename Key>
-std::string IterableTools::PrintMapWithHeader_KeyToBool(const std::map<Key, bool>& input_map, std::vector<std::string> columns, std::string map_name)
+std::string IterableTools::PrintMapWithHeader_KeyToBool(const std::map<Key, bool>& input_map, std::vector<std::string> columns, std::string map_name) const
 {
     std::stringstream ss;
     ss << GetHeader(columns, map_name);
@@ -1219,7 +1219,7 @@ std::string IterableTools::PrintMapWithHeader_KeyToBool(const std::map<Key, bool
 
 template <typename Key, typename Val>
 void IterableTools::EmitKeyValuePairWithinMap(YAML::Emitter& e, const Key& input_key,
-                                     const Val& input_value)
+                                     const Val& input_value) const
 {
     e << YAML::Key << input_key;
     e << YAML::Value << input_value;
@@ -1227,7 +1227,7 @@ void IterableTools::EmitKeyValuePairWithinMap(YAML::Emitter& e, const Key& input
 
 template <typename Key, typename Val>
 void IterableTools::EmitKeyValuePair(YAML::Emitter& e, const Key& input_key,
-                                     const Val& input_value)
+                                     const Val& input_value) const
 {
     e << YAML::BeginMap;
     EmitKeyValuePairWithinMap(e, input_key, input_value);
@@ -1237,7 +1237,7 @@ void IterableTools::EmitKeyValuePair(YAML::Emitter& e, const Key& input_key,
 template <typename Key, typename Val>
 void IterableTools::EmitSimpleMapWithinMap(YAML::Emitter& e, 
                             const std::map<Key, Val>& input_map,
-                            const std::string& map_name)
+                            const std::string& map_name) const
 {
     e << YAML::Key << map_name;
     e << YAML::Value << input_map;
@@ -1245,7 +1245,7 @@ void IterableTools::EmitSimpleMapWithinMap(YAML::Emitter& e,
 
 template <typename Key, typename Val>
 void IterableTools::EmitSimpleMap(YAML::Emitter& e,
-                                  const std::map<Key, Val>& input_map, const std::string& map_name)
+                                  const std::map<Key, Val>& input_map, const std::string& map_name) const
 {
     e << YAML::BeginMap;
     EmitSimpleMapWithinMap(e, input_map, map_name);
@@ -1254,7 +1254,7 @@ void IterableTools::EmitSimpleMap(YAML::Emitter& e,
 
 template <typename Key, typename Val>
 void IterableTools::EmitCompoundMapToSetWithinMap(YAML::Emitter& e,
-                                         const std::map<Key, std::set<Val>>& input_map, const std::string& map_name)
+                                         const std::map<Key, std::set<Val>>& input_map, const std::string& map_name) const
 {
     e << YAML::Key << map_name;
     e << YAML::Value << YAML::BeginMap;
@@ -1269,7 +1269,7 @@ void IterableTools::EmitCompoundMapToSetWithinMap(YAML::Emitter& e,
 
 template <typename Key, typename Val>
 void IterableTools::EmitCompoundMapToSet(YAML::Emitter& e,
-                                         const std::map<Key, std::set<Val>>& input_map, const std::string& map_name)
+                                         const std::map<Key, std::set<Val>>& input_map, const std::string& map_name) const
 {
     e << YAML::BeginMap;
     EmitCompoundMapToSetWithinMap(e, input_map, map_name);
@@ -1278,7 +1278,7 @@ void IterableTools::EmitCompoundMapToSet(YAML::Emitter& e,
 
 template <typename Key, typename Val>
 void IterableTools::EmitCompoundMapToVectorWithinMap(YAML::Emitter& e,
-                                            const std::map<Key, std::vector<Val>>& input_map, const std::string& map_name)
+                                            const std::map<Key, std::vector<Val>>& input_map, const std::string& map_name) const
 {
     e << YAML::Key << map_name;
     e << YAML::Value << YAML::BeginMap;
@@ -1293,7 +1293,7 @@ void IterableTools::EmitCompoundMapToVectorWithinMap(YAML::Emitter& e,
 
 template <typename Key, typename Val>
 void IterableTools::EmitCompoundMapToVector(YAML::Emitter& e,
-                                            const std::map<Key, std::vector<Val>>& input_map, const std::string& map_name)
+                                            const std::map<Key, std::vector<Val>>& input_map, const std::string& map_name) const
 {
     e << YAML::BeginMap;
     EmitCompoundMapToVectorWithinMap(e, input_map, map_name);
@@ -1302,7 +1302,7 @@ void IterableTools::EmitCompoundMapToVector(YAML::Emitter& e,
 
 template <typename Val>
 void IterableTools::EmitSequenceOfVectors(YAML::Emitter& e,
-                                          const std::vector<std::vector<Val>>& input_vec)
+                                          const std::vector<std::vector<Val>>& input_vec) const
 {
     e << YAML::BeginSeq;
 

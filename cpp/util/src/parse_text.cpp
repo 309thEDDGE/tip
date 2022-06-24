@@ -3,7 +3,7 @@
 // Split the string on delimiter
 // Returns vector of string split by delimiter
 std::vector<std::string> ParseText::Split(std::string input_string, const char& delim,
-    bool keep_quotes)
+    bool keep_quotes) const
 {
     std::vector<std::string> return_vec;
 
@@ -208,7 +208,7 @@ std::string ParseText::Join(const std::vector<std::string>& input_vec)
 
 bool ParseText::ExtractQuotedSections(const std::string& input_string,
                                       std::map<int, std::string>& quoted_sections,
-                                      std::map<int, std::string>& unquoted_sections)
+                                      std::map<int, std::string>& unquoted_sections) const
 {
     // Determine if quoted text exists within the input string.
     size_t n_quotes = std::count(input_string.begin(), input_string.end(), '\"');

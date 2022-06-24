@@ -52,8 +52,7 @@ int Ch10ParseMain(int argc, char** argv)
 
 
     double duration = 0.0;
-    ParseManager pm;
-    StartParse(input_path, output_path, config, duration, &pm);
+    StartParse(input_path, output_path, config, duration);
     spdlog::get("pm_logger")->info("Duration: {:.3f} sec", duration);
 
     // Avoid deadlock in windows, see
@@ -109,24 +108,12 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_out
 }
 
 bool StartParse(ManagedPath input_path, ManagedPath output_path,
-                const ParserConfigParams& config, double& duration, 
-                ParseManager* pm)
+                const ParserConfigParams& config, double& duration)
 {
     // Get start time.
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    // Configure checks configuration, prepares output paths,
-    // and calculates internal quantities in preparation for
-    // parsing.
-    if (!pm->Configure(input_path, output_path, config))
-        return false;
-
-    // Begin parsing of Ch10 data by starting workers.
-    if (!pm->Parse(config))
-        return false;
-
-    // Record metadata
-    if (!pm->RecordMetadata(input_path, config))
+    if(!Parse(input_path, output_path, config))
         return false;
 
     // Get stop time and print duration.

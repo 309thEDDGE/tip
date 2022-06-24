@@ -448,7 +448,7 @@ target_link_libraries(${ch10comp_lib_name} PUBLIC ${util_lib_name}
 #########################################################
 add_library(${parsech10_lib_name} STATIC
     ${common_inc_dir}/ch10_packet_type.h
-    ${parsech10_inc_dir}/worker_config.h
+    ${parsech10_inc_dir}/worker_config.h ${parsech10_src_dir}/worker_config.cpp
     ${parsech10_inc_dir}/parse_manager.h ${parsech10_src_dir}/parse_manager.cpp
     ${parsech10_inc_dir}/parse_worker.h ${parsech10_src_dir}/parse_worker.cpp
     ${parsech10_src_dir}/ch10_parse_main.cpp ${parsech10_inc_dir}/ch10_parse_main.h
@@ -639,6 +639,7 @@ add_executable(${test_exe_name}
                 ${test_src_dir}/parser_paths_u.cpp
                 ${test_src_dir}/parser_metadata_u.cpp
                 ${test_src_dir}/ch10_packet_type_specific_metadata_u.cpp
+                ${test_src_dir}/worker_config_u.cpp
                 )
 
 target_include_directories(${test_exe_name} PUBLIC ${test_inc_dir} ${gsuite_inc_dirs}

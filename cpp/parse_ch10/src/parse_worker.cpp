@@ -5,8 +5,7 @@ ParseWorker::ParseWorker() : complete_(false)
 {
 }
 
-void ParseWorker::operator()(WorkerConfig& worker_config,
-                             std::vector<std::string>& tmats_body_vec, Ch10Context* ctx)
+void ParseWorker::operator()(WorkerConfig& worker_config, Ch10Context* ctx)
 {
     // Reset completion status.
     complete_ = false;
@@ -32,7 +31,7 @@ void ParseWorker::operator()(WorkerConfig& worker_config,
         return;
     }
 
-    ParseBufferData(ctx, &worker_config.bb_, tmats_body_vec);
+    ParseBufferData(ctx, worker_config.bb_);
 
     // Update last_position_;
     worker_config.last_position_ = ctx->absolute_position;
@@ -48,6 +47,10 @@ void ParseWorker::operator()(WorkerConfig& worker_config,
     SPDLOG_INFO("({:02d}) End of worker's shift", worker_config.worker_index_);
     SPDLOG_DEBUG("({:02d}) End of shift, absolute position: {:d}",
                  worker_config.worker_index_, worker_config.last_position_);
+
+    //new
+    worker_config.bb_->Clear();
+
     complete_ = true;
 }
 
@@ -85,8 +88,7 @@ bool ParseWorker::ConfigureContext(Ch10Context* ctx,
     return true;
 }
 
-void ParseWorker::ParseBufferData(Ch10Context* ctx, BinBuff* bb,
-                                  std::vector<std::string>& tmats_vec)
+void ParseWorker::ParseBufferData(Ch10Context* ctx, BinBuff* bb)
 {
     Ch10PacketHeaderComponent header(ctx);
     Ch10TMATSComponent tmats(ctx);
@@ -105,7 +107,7 @@ void ParseWorker::ParseBufferData(Ch10Context* ctx, BinBuff* bb,
     }
 
     // Instantiate Ch10Packet object
-    Ch10Packet packet(bb, ctx, &ch10time, tmats_vec);
+    Ch10Packet packet(bb, ctx, &ch10time);
     packet.SetCh10ComponentParsers(&header, &tmats, &tdp, &milstd1553, &vid, &eth, &arinc429);
     if(!packet.IsConfigured())
         return;

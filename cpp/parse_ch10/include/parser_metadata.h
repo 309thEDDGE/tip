@@ -10,11 +10,13 @@
 #include <set>
 #include <memory>
 #include "ch10_context.h"
+#include "parquet_tdpf1.h"
 #include "parser_paths.h"
 #include "iterable_tools.h"
 #include "parser_config_params.h"
 #include "tmats_data.h"
 #include "managed_path.h"
+#include "parse_text.h"
 #include "provenance_data.h"
 #include "tip_md_document.h"
 #include "sha256_tools.h"
@@ -115,6 +117,72 @@ class ParserMetadataFunctions
         */
         virtual bool WriteStringToFile(const ManagedPath& outpath, const std::string& outdata);
 
+
+
+        /*
+        Record time data ("Time Data, Format 1") which is stored in Ch10Context
+        instances to Parquet format.
+
+        Args:
+            ctx_vec			--> Vector of Ch10Contexts from which time data
+                                will be gathered
+            pqtdp			--> Instance of ParquetTDPF1 which will be used
+                                to write the time data to Parquet
+            file_path		--> Complete output file path
+
+        Return:
+            False if any steps fail; true otherwise.
+        */
+        bool WriteTDPData(const std::vector<const Ch10Context*>& ctx_vec,
+            ParquetTDPF1* pqtdp, const ManagedPath& file_path);
+
+
+
+        /*
+        Log the ch10_packet_type_map_. This is a convenience function to clean up
+        the clutter that this code introduces.
+
+        Args:
+            pkt_type_config_map	--> Input map of Ch10PacketType to bool that
+                                    represents the enable state of ch10 packet types
+        */
+        void LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map);
+
+
+
+        /*
+        Assemble the set of all parsed packet types from the workers and
+        log the information.
+
+        Args:
+            ctx_vec			        --> Vector of Ch10Contexts from which data
+                                        will be gathered
+            parsed_packet_types 	--> Set of Ch10PacketType to be filled
+        */
+        void AssembleParsedPacketTypesSet(const std::vector<const Ch10Context*>& ctx_vec,
+            std::set<Ch10PacketType>& parsed_packet_types);
+
+
+        /*
+        Concatenate TMATS matter into single string. In the majority of cases,
+        tmats data will be extracted by one worker in one thread unless the 
+        tmats matter exceeds the maximum tmats packet size, which is ~134 MB.
+        It is unlikely that this will ever be the case. However, if multiple
+        workers do observe and parse tmats packets, we loop over all of the 
+        Ch10Context instances, one for each worker, and concatenate the result.
+
+        Note this is specific to ch10 Computer Generated Data, Format 1 data.
+
+        Args:
+            ctx_vec         --> Vector of Ch10Contexts from which data
+                                will be gathered
+            tmats_vec       --> Output vector of all tmats matter
+        */
+        void GatherTMATSData(const std::vector<const Ch10Context*>& ctx_vec,
+            std::vector<std::string>& tmats_vec);
+
+
+
         virtual bool RecordCh10PktTypeSpecificMetadata(Ch10PacketType pkt_type, 
             const std::vector<const Ch10Context*>& context_vec, MDCategoryMap* runtime_metadata, 
             const TMATSData* tmats, Ch10PacketTypeSpecificMetadata* spec_md);
@@ -136,6 +204,10 @@ class ParserMetadata
 
         ProvenanceData prov_data_;
 
+        ParserConfigParams config_;
+
+        ParserPaths parser_paths_;
+
     public:
         ParserMetadata();
 
@@ -149,11 +221,16 @@ class ParserMetadata
 
         Args:
             ch10_path       --> Ch10 input file path
+            config          --> Instance of populated ParserConfigParams
+            parser_paths    --> Instance of configured ParserPaths object,
+                                i.e., one for which ::CreateOutputPaths has
+                                been called
 
         Return:
             False if GetProvenanceData returns false; true otherwise.
         */
-        bool Initialize(const ManagedPath& ch10_path);
+        virtual bool Initialize(const ManagedPath& ch10_path, const ParserConfigParams& config,
+            const ParserPaths& parser_paths);
 
 
         /*
@@ -162,18 +239,6 @@ class ParserMetadata
         Args:
             md_filename         --> File name only of all output metadata
                                     files for each parsed ch10 packet type
-            parser_paths        --> Instance of configured ParserPaths object,
-                                    i.e., one for which ::CreateOutputPaths has
-                                    been called
-            parsed_pkt_types    --> Set of Ch10PacketType populated with all of
-                                    the packets type which existed and were
-                                    parsed at parse-time
-            config              --> Instance of populated ParserConfigParams
-            tmats_body_vec      --> Vector of TMATS matter gathered during parse
-                                    time. In general, there will be only one 
-                                    TMATS packet in the ch10 and the first worker
-                                    will collect it so there will be only one element
-                                    in this vector.
             context_vec         --> Vector of Ch10Context instances associatd with
                                     each parser worker thread. Input here to obtain
                                     additional metadata from the contexts. 
@@ -181,9 +246,7 @@ class ParserMetadata
         Return:
             True if no errors occur; false otherwise.
         */
-        bool RecordMetadata(ManagedPath md_filename, const ParserPaths* parser_paths,
-            const std::set<Ch10PacketType>& parsed_pkt_types, 
-            const ParserConfigParams& config, const std::vector<std::string>& tmats_body_vec,
+        virtual bool RecordMetadata(ManagedPath md_filename, 
             const std::vector<const Ch10Context*>& context_vec);
 
         

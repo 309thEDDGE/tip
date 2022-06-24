@@ -12,39 +12,32 @@
 #include "parser_config_params.h"
 #include "ch10_header_format.h"
 #include "ch10_1553f1_msg_hdr_format.h"
-#include "parquet_tdpf1_mock.h"
 #include "ch10_tdpf1_hdr_format.h"
+#include "parser_paths_mock.h"
+#include "parse_manager_mock.h"
+#include "worker_config_mock.h"
+#include "parser_metadata_mock.h"
+#include "managed_path_mock.h"
 
 using ::testing::Return;
-
-// Mock BinBuff
-class MockBinBuffParseManager : public BinBuff
-{
-   public:
-    MockBinBuffParseManager() : BinBuff() {}
-    MOCK_METHOD4(Initialize, uint64_t(std::ifstream& file,
-                                      const uint64_t& file_size, const uint64_t& read_pos,
-                                      const uint64_t& read_count));
-};
+using ::testing::ReturnRef;
+using ::testing::_;
 
 class ParseManagerTest : public ::testing::Test
 {
    protected:
     ParserConfigParams config;
     ParseManager pm;
+    ParseManagerFunctions pmf;
     std::ifstream file;
     std::string line;
     bool result_;
     std::map<Ch10PacketType, bool> pkt_enabled_map_;
     std::map<Ch10PacketType, ManagedPath> output_dir_map_;
     WorkerConfig worker_config_;
-    BinBuff* bb_ptr_;
-    MockBinBuffParseManager mock_bb_;
 
-    ParseManagerTest() : result_(false),
-                         mock_bb_(),
-                         bb_ptr_(&mock_bb_),
-                         file()
+    ParseManagerTest() : result_(false), pm(), pmf(), config(), line(""), worker_config_(),
+        file()
     {}
 
     bool InitializeParserConfig()
@@ -64,359 +57,812 @@ class ParseManagerTest : public ::testing::Test
     }
 };
 
-TEST_F(ParseManagerTest, AllocateResourcesValidateCalculatedParams)
+TEST_F(ParseManagerTest, IngestUserConfigValidateCalculatedParams)
 {
     EXPECT_TRUE(InitializeParserConfig());
-    uint64_t file_size = 1e9;
-    result_ = pm.AllocateResources(config, file_size);
-    EXPECT_TRUE(result_);
-    EXPECT_EQ(config.parse_chunk_bytes_ * 1e6, pm.worker_chunk_size_bytes);
+    uint64_t file_size = 4e9;
+    uint64_t chunk_bytes = 0;
+    uint16_t worker_count = 0;
+    pmf.IngestUserConfig(config, file_size, chunk_bytes, worker_count);
+    EXPECT_EQ(config.parse_chunk_bytes_ * 1e6, chunk_bytes);
 
     uint16_t expected_worker_count = int(ceil(float(file_size) /
-                                              float(pm.worker_chunk_size_bytes)));
-    EXPECT_EQ(expected_worker_count, pm.worker_count);
+                                              float(chunk_bytes)));
+    EXPECT_EQ(expected_worker_count, worker_count);
 }
 
-TEST_F(ParseManagerTest, AllocateResourcesConfirmVectorAllocations)
+TEST_F(ParseManagerTest, IngestUserConfigWorkerCountLimited)
 {
     EXPECT_TRUE(InitializeParserConfig());
-    uint64_t file_size = 1e9;
-    result_ = pm.AllocateResources(config, file_size);
-    EXPECT_TRUE(result_);
-    EXPECT_EQ(pm.worker_count, pm.workers_vec.size());
-    EXPECT_EQ(pm.worker_count, pm.threads_vec.size());
-    EXPECT_EQ(pm.worker_count, pm.worker_config_vec.size());
+    config.max_chunk_read_count_ = 3;
+    uint64_t chunk_bytes = 0;
+    uint16_t worker_count = 0;
+    uint64_t file_size = 4e9;
+    pmf.IngestUserConfig(config, file_size, chunk_bytes, worker_count);
+    EXPECT_EQ(config.parse_chunk_bytes_ * 1e6, chunk_bytes);
+    EXPECT_EQ(3, worker_count);
 }
 
-TEST_F(ParseManagerTest, AllocateResourcesConfirmParseWorkerAllocation)
+TEST_F(ParseManagerTest, OpenCh10FileFail)
 {
-    EXPECT_TRUE(InitializeParserConfig());
-    uint64_t file_size = 1e9;
-    result_ = pm.AllocateResources(config, file_size);
-    EXPECT_TRUE(result_);
-    EXPECT_EQ(pm.worker_count, pm.workers_vec.size());
-    for (uint16_t worker_ind = 0; worker_ind < pm.worker_count; worker_ind++)
-    {
-        EXPECT_TRUE(pm.workers_vec[worker_ind].get() != nullptr);
-    }
+    ManagedPath input_path{"not", "a_real", "directory", "OpenCh10FileTest.txt"};
+    std::ifstream input_stream;
+
+    ASSERT_FALSE(pmf.OpenCh10File(input_path, input_stream));
+    EXPECT_FALSE(input_stream.is_open());
+    EXPECT_FALSE(input_path.is_regular_file());
 }
 
-TEST_F(ParseManagerTest, ConfigureWorkerNotFinalWorker)
+TEST_F(ParseManagerTest, OpenCh10File)
 {
-    pkt_enabled_map_[Ch10PacketType::MILSTD1553_F1] = true;
+    ManagedPath input_path{"OpenCh10FileTest.txt"};
+    std::ifstream input_stream;
 
-    // Note that elsewhere this map is used as the base path for various packet types,
-    // whereas the map with the same prototype is used in ConfigureWorker to hold
-    // the output paths specific to a worker. Here I'll use this map to hold some
-    // arbitrary path for the sake of testing.
-    output_dir_map_[Ch10PacketType::MILSTD1553_F1] = ManagedPath(std::string("test"));
+    std::ofstream out_stream(input_path.string().c_str());
+    ASSERT_TRUE(out_stream.is_open());
+    out_stream << "here is some text for the file";
+    out_stream.close();
 
-    uint16_t worker_index = 5;
-    uint16_t worker_count = 10;
-    uint64_t read_pos = 13456641;
-    uint64_t read_size = 250e6;
-    std::streamsize actual_read_size = 0;
-    uint64_t total_size = 500e6;
+    ASSERT_TRUE(pmf.OpenCh10File(input_path, input_stream));
+    EXPECT_TRUE(input_stream.is_open());
+    EXPECT_TRUE(input_path.is_regular_file());
 
-    EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size, read_pos, read_size))
-        .Times(1)
-        .WillOnce(::testing::Return(read_size));
-
-    result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
-                                 read_size, total_size, bb_ptr_, file, actual_read_size,
-                                 output_dir_map_, pkt_enabled_map_);
-    EXPECT_TRUE(result_);
-
-    EXPECT_EQ(false, worker_config_.final_worker_);
-    EXPECT_EQ(worker_index, worker_config_.worker_index_);
-    EXPECT_EQ(read_pos, worker_config_.start_position_);
-    EXPECT_EQ(false, worker_config_.append_mode_);
-    EXPECT_EQ(actual_read_size, read_size);
-    EXPECT_EQ(output_dir_map_, worker_config_.output_file_paths_);
-    EXPECT_EQ(pkt_enabled_map_, worker_config_.ch10_packet_type_map_);
+    input_stream.close();
+    EXPECT_TRUE(input_path.remove());
+    EXPECT_FALSE(input_path.is_regular_file());
 }
 
-TEST_F(ParseManagerTest, ConfigureWorkerFinalWorker)
+TEST_F(ParseManagerTest, MakeWorkUnitsInitializeWorkers)
 {
-    pkt_enabled_map_[Ch10PacketType::MILSTD1553_F1] = true;
+    uint16_t worker_count = 7;
+    uint64_t read_size = 483282;
+    uint64_t append_read_size = 100000;
+    uint64_t total_size = 77149954;
+    std::ifstream input_stream;
+    MockParserPaths parser_paths;
 
-    // Note that elsewhere this map is used as the base path for various packet types,
-    // whereas the map with the same prototype is used in ConfigureWorker to hold
-    // the output paths specific to a worker. Here I'll use this map to hold some
-    // arbitrary path for the sake of testing.
-    output_dir_map_[Ch10PacketType::MILSTD1553_F1] = ManagedPath(std::string("test"));
+    ManagedPath bogus_path;
+    std::vector<std::map<Ch10PacketType, ManagedPath>> worker_path_vec{
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+    };
+    EXPECT_CALL(parser_paths, GetWorkerPathVec()).Times(worker_count)
+        .WillRepeatedly(ReturnRef(worker_path_vec));
 
-    uint16_t worker_index = 9;  // = worker_count - 1
-    uint16_t worker_count = 10;
-    uint64_t read_pos = 13456641;
-    uint64_t read_size = 250e6;
-    std::streamsize actual_read_size = 0;
-    uint64_t total_size = 500e6;
+    std::map<Ch10PacketType, bool> pkt_enabled_map{{Ch10PacketType::MILSTD1553_F1, true}};
+    EXPECT_CALL(parser_paths, GetCh10PacketTypeEnabledMap()).Times(worker_count)
+        .WillRepeatedly(ReturnRef(pkt_enabled_map));
 
-    EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size, read_pos, read_size))
-        .Times(1)
-        .WillOnce(::testing::Return(read_size));
+    std::vector<WorkUnit> work_units;
+    ASSERT_TRUE(pmf.MakeWorkUnits(work_units, worker_count, read_size, 
+        append_read_size, total_size, input_stream, &parser_paths));
+    ASSERT_EQ(worker_count, work_units.size());
 
-    result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
-                                 read_size, total_size, bb_ptr_, file, actual_read_size,
-                                 output_dir_map_, pkt_enabled_map_);
-    EXPECT_TRUE(result_);
-
-    EXPECT_EQ(true, worker_config_.final_worker_);
-    EXPECT_EQ(worker_index, worker_config_.worker_index_);
-    EXPECT_EQ(read_pos, worker_config_.start_position_);
-    EXPECT_EQ(false, worker_config_.append_mode_);
-    EXPECT_EQ(actual_read_size, read_size);
-    EXPECT_EQ(output_dir_map_, worker_config_.output_file_paths_);
-    EXPECT_EQ(pkt_enabled_map_, worker_config_.ch10_packet_type_map_);
+    EXPECT_EQ(read_size, work_units.at(0).conf_.read_bytes_);
+    EXPECT_EQ(total_size, work_units.at(3).conf_.total_bytes_);
+    EXPECT_EQ(6, work_units.at(6).conf_.worker_index_);
 }
 
-TEST_F(ParseManagerTest, ConfigureWorkeIndexLarge)
+TEST_F(ParseManagerTest, MakeWorkUnitsInitializeWorkersFail)
 {
-    uint16_t worker_index = 10;  // > worker_count - 1
-    uint16_t worker_count = 10;
-    uint64_t read_pos = 13456641;
-    uint64_t read_size = 250e6;
-    std::streamsize actual_read_size = 0;
-    uint64_t total_size = 500e6;
+    uint16_t worker_count = 8;  // too many works for the elements in worker_path_vec
+    uint64_t read_size = 483282;
+    uint64_t append_read_size = 100000;
+    uint64_t total_size = 77149954;
+    std::ifstream input_stream;
+    MockParserPaths parser_paths;
 
-    result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
-                                 read_size, total_size, bb_ptr_, file, actual_read_size,
-                                 output_dir_map_, pkt_enabled_map_);
-    EXPECT_FALSE(result_);
+    ManagedPath bogus_path;
+    std::vector<std::map<Ch10PacketType, ManagedPath>> worker_path_vec{
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+        {{Ch10PacketType::MILSTD1553_F1, bogus_path}},
+    };
+    EXPECT_CALL(parser_paths, GetWorkerPathVec()).Times(worker_count)
+        .WillRepeatedly(ReturnRef(worker_path_vec));
+
+    std::map<Ch10PacketType, bool> pkt_enabled_map{{Ch10PacketType::MILSTD1553_F1, true}};
+    EXPECT_CALL(parser_paths, GetCh10PacketTypeEnabledMap()).Times(7)
+        .WillRepeatedly(ReturnRef(pkt_enabled_map));
+
+    std::vector<WorkUnit> work_units;
+    ASSERT_FALSE(pmf.MakeWorkUnits(work_units, worker_count, read_size, 
+        append_read_size, total_size, input_stream, &parser_paths));
+    ASSERT_EQ(worker_count, work_units.size());
 }
 
-TEST_F(ParseManagerTest, ConfigureWorkerBufferNoInitError)
+TEST_F(ParseManagerTest, ActivateWorkerCheckConfFail)
 {
-    uint16_t worker_index = 5;
-    uint16_t worker_count = 10;
-    uint64_t read_pos = 13456641;
-    uint64_t read_size = 250e6;
-    std::streamsize actual_read_size = 0;
-    uint64_t total_size = 500e6;
+    MockWorkUnit work_unit;
+    std::vector<uint16_t> active_workers;
+    uint16_t worker_ind = 0;
+    bool append_mode = true;
+    uint64_t read_pos = 54812589;
 
-    // Note the use of ::testing::Ref here! This took a couple hours of digging
-    // and this test won't compile without it. Apparently in the EXPECT_CALL
-    // construction, all of the expected values are passed by value, which of
-    // course breaks when trying to pass something that doesn't have a copy
-    // constructor such as std::ifstream. It was very confusing because the
-    // mocked function for Initialize is defined with a std::ifstream& pass
-    // by reference. That is different that what is used when one constructs
-    // the expected values within the test.
-    EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size, read_pos, read_size))
-        .Times(1)
-        .WillOnce(::testing::Return(read_size));
+    EXPECT_CALL(work_unit, CheckConfiguration(append_mode, read_pos)).WillOnce(Return(false));
 
-    result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
-                                 read_size, total_size, bb_ptr_, file, actual_read_size,
-                                 output_dir_map_, pkt_enabled_map_);
-    EXPECT_TRUE(result_);
-
-    EXPECT_EQ(actual_read_size, read_size);
+    ASSERT_FALSE(pmf.ActivateWorker(&work_unit, active_workers, worker_ind, append_mode, read_pos));
 }
 
-TEST_F(ParseManagerTest, ConfigureWorkerBufferInitError)
+TEST_F(ParseManagerTest, ActivateWorker)
 {
-    uint16_t worker_index = 5;
-    uint16_t worker_count = 10;
-    uint64_t read_pos = 13456641;
+    MockWorkUnit work_unit;
+    std::vector<uint16_t> active_workers;
+    uint16_t worker_ind = 7;
+    bool append_mode = false;
+    uint64_t read_pos = 54812589;
 
-    // Note: read_size > total_size. This value isn't actually used to determine
-    // error or cause the error condition to be returned from BinBuff::Initialize.
-    // I've set the value in example that it would cause an error condition in practice.
-    // The error is set explicitly in EXPECT_CALL below.
-    uint64_t read_size = 501e6;
-    std::streamsize actual_read_size = 0;
-    uint64_t total_size = 500e6;
+    EXPECT_CALL(work_unit, CheckConfiguration(append_mode, read_pos)).WillOnce(Return(true));
+    EXPECT_CALL(work_unit, Activate());
 
-    EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size, read_pos, read_size))
-        .Times(1)
-        .WillOnce(::testing::Return(UINT64_MAX));
-
-    result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
-                                 read_size, total_size, bb_ptr_, file, actual_read_size,
-                                 output_dir_map_, pkt_enabled_map_);
-    EXPECT_FALSE(result_);
-
-    EXPECT_EQ(UINT64_MAX, actual_read_size);
+    ASSERT_TRUE(pmf.ActivateWorker(&work_unit, active_workers, worker_ind, append_mode, read_pos));
+    ASSERT_EQ(1, active_workers.size());
+    EXPECT_EQ(worker_ind, active_workers.at(0));
 }
 
-TEST_F(ParseManagerTest, ConfigureWorkerUnequalReadSizeLastWorker)
+TEST_F(ParseManagerTest, JoinWorker)
 {
-    uint16_t worker_index = 9;  // Last worker
-    uint16_t worker_count = 10;
-    uint64_t read_pos = 13456641;
-    uint64_t read_size = 20e6;
-    std::streamsize actual_read_size = 0;
-    uint64_t total_size = 500e6;
+    MockWorkUnit work_unit;
+    std::vector<uint16_t> active_workers{3, 2, 4};
+    uint16_t active_worker_ind = 1;
 
-    // Returning 15e6 < read_size = 20e6
-    EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size, read_pos, read_size))
-        .Times(1)
-        .WillOnce(::testing::Return(15e6));
+    EXPECT_CALL(work_unit, Join());
 
-    result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
-                                 read_size, total_size, bb_ptr_, file, actual_read_size,
-                                 output_dir_map_, pkt_enabled_map_);
-    EXPECT_TRUE(result_);
-
-    EXPECT_EQ(15e6, actual_read_size);
+    ASSERT_TRUE(pmf.JoinWorker(&work_unit, active_workers, active_worker_ind));
+    ASSERT_EQ(2, active_workers.size());
+    EXPECT_EQ(4, active_workers.at(1));
 }
 
-TEST_F(ParseManagerTest, ConfigureWorkerUnequalReadSizeNotLastWorker)
+TEST_F(ParseManagerTest, JoinWorkerRemoveUnavailableIndex)
 {
-    uint16_t worker_index = 6;  // not ast worker
-    uint16_t worker_count = 10;
-    uint64_t read_pos = 13456641;
-    uint64_t read_size = 20e6;
-    std::streamsize actual_read_size = 0;
-    uint64_t total_size = 500e6;
+    MockWorkUnit work_unit;
+    std::vector<uint16_t> active_workers{2, 3, 5};
+    uint16_t active_worker_ind = 3;
 
-    // Returning 15e6 < read_size = 20e6
-    EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size, read_pos, read_size))
-        .Times(1)
-        .WillOnce(::testing::Return(15e6));
+    EXPECT_CALL(work_unit, Join());
 
-    result_ = pm.ConfigureWorker(worker_config_, worker_index, worker_count, read_pos,
-                                 read_size, total_size, bb_ptr_, file, actual_read_size,
-                                 output_dir_map_, pkt_enabled_map_);
-    EXPECT_FALSE(result_);
-
-    EXPECT_EQ(15e6, actual_read_size);
+    ASSERT_FALSE(pmf.JoinWorker(&work_unit, active_workers, active_worker_ind));
+    ASSERT_EQ(3, active_workers.size());
 }
 
-TEST_F(ParseManagerTest, ConfigureAppendWorkerNoInitError)
+TEST_F(ParseManagerTest, ActivateInitialThreadAllThreadActivated)
 {
-    worker_config_.last_position_ = 4311993045;
-    uint16_t worker_index = 1;
-    uint64_t read_size = 250e6;
-    std::streamsize actual_read_size = 0;
-    uint64_t total_size = 500e6;
+    MockWorkUnit work_unit;
+    MockParseManagerFunctions mock_pmf;
+    std::vector<uint16_t> active_workers{2, 3, 5};
+    uint16_t active_worker_ind = 3;
+    bool append_mode = false;
+    std::chrono::milliseconds worker_wait(10);
+    uint64_t read_pos = 383838;
+    uint16_t conf_thread_count = 6;
+    uint16_t active_thread_count = conf_thread_count;
+    bool thread_started = true;
 
-    EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size,
-                                     worker_config_.last_position_, read_size))
-        .Times(1)
-        .WillOnce(::testing::Return(read_size));
-    result_ = pm.ConfigureAppendWorker(worker_config_, worker_index, read_size, total_size,
-                                       bb_ptr_, file, actual_read_size);
-    EXPECT_TRUE(result_);
-    EXPECT_EQ(worker_config_.last_position_, worker_config_.start_position_);
-    EXPECT_EQ(read_size, actual_read_size);
+    ASSERT_TRUE(pm.ActivateInitialThread(&mock_pmf, append_mode, &work_unit, worker_wait, 
+        active_workers, active_worker_ind, read_pos, active_thread_count, conf_thread_count,
+        thread_started));
+    EXPECT_EQ(false, thread_started);
 }
 
-TEST_F(ParseManagerTest, ConfigureAppendWorkerInitError)
+TEST_F(ParseManagerTest, ActivateInitialThreadActivateWorkerFail)
 {
-    worker_config_.last_position_ = 4311993045;
-    uint16_t worker_index = 1;
-    uint64_t read_size = 250e6;
-    std::streamsize actual_read_size = 0;
-    uint64_t total_size = 500e6;
+    MockWorkUnit work_unit;
+    MockParseManagerFunctions mock_pmf;
+    std::vector<uint16_t> active_workers{2, 3, 5};
+    uint16_t active_worker_ind = 3;
+    bool append_mode = false;
+    std::chrono::milliseconds worker_wait(10);
+    uint64_t init_read_pos = 848190;
+    uint64_t read_pos = init_read_pos;
+    uint16_t conf_thread_count = 6;
+    uint16_t active_thread_count = conf_thread_count - 1;
+    bool thread_started = true;
 
-    EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size,
-                                     worker_config_.last_position_, read_size))
-        .Times(1)
-        .WillOnce(::testing::Return(UINT64_MAX));
-    result_ = pm.ConfigureAppendWorker(worker_config_, worker_index, read_size, total_size,
-                                       bb_ptr_, file, actual_read_size);
-    EXPECT_FALSE(result_);
-    EXPECT_EQ(UINT64_MAX, actual_read_size);
+    EXPECT_CALL(mock_pmf, ActivateWorker(&work_unit, active_workers, active_worker_ind, 
+        append_mode, read_pos)).WillOnce(Return(false));
+
+    ASSERT_FALSE(pm.ActivateInitialThread(&mock_pmf, append_mode, &work_unit, worker_wait, 
+        active_workers, active_worker_ind, read_pos, active_thread_count, conf_thread_count,
+        thread_started));
+    EXPECT_EQ(false, thread_started);
 }
 
-TEST_F(ParseManagerTest, ConfigureAppendWorkerAppendReadSizeLarge)
+TEST_F(ParseManagerTest, ActivateInitialThread)
 {
-    /*
-	This test is created to address the case in which the
-	default append_read_size (100MB) is greater than the
-	dangling bytes at the end of the current worker chunk
-	to the end of the file.
-	*/
-    worker_config_.last_position_ = 150e6;
-    uint16_t worker_index = 1;
-    uint64_t read_size = 100e6;
-    std::streamsize actual_read_size = 0;
-    uint64_t total_size = 220e6;
+    MockWorkUnit work_unit;
+    MockParseManagerFunctions mock_pmf;
+    std::vector<uint16_t> active_workers{2, 3, 5};
+    uint16_t active_worker_ind = 3;
+    bool append_mode = false;
+    std::chrono::milliseconds worker_wait(10);
+    uint64_t init_read_pos = 848190;
+    uint64_t read_pos = init_read_pos;
+    uint16_t conf_thread_count = 6;
+    uint16_t active_thread_count = conf_thread_count - 1;
+    bool thread_started = true;
 
-    uint64_t expected_read_size = (220 - 150) * 1e6;
-    EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size,
-                                     worker_config_.last_position_, read_size))
-        .Times(1)
-        .WillOnce(::testing::Return(
-            expected_read_size));
-    result_ = pm.ConfigureAppendWorker(worker_config_, worker_index, read_size, total_size,
-                                       bb_ptr_, file, actual_read_size);
-    EXPECT_TRUE(result_);
-    EXPECT_EQ(expected_read_size, actual_read_size);
+    EXPECT_CALL(mock_pmf, ActivateWorker(&work_unit, active_workers, active_worker_ind, 
+        append_mode, read_pos)).WillOnce(Return(true));
+
+    uint64_t read_bytes = 58803;
+    EXPECT_CALL(work_unit, GetReadBytes()).WillOnce(ReturnRef(read_bytes));
+
+    ASSERT_TRUE(pm.ActivateInitialThread(&mock_pmf, append_mode, &work_unit, worker_wait, 
+        active_workers, active_worker_ind, read_pos, active_thread_count, conf_thread_count,
+        thread_started));
+    EXPECT_EQ(true, thread_started);
+    EXPECT_EQ(conf_thread_count, active_thread_count);
+    EXPECT_EQ(init_read_pos + read_bytes, read_pos);
 }
 
-TEST_F(ParseManagerTest, ConfigureAppendWorkerUnequalReadSize)
+TEST_F(ParseManagerTest, ActivateAvailableThreadAlreadyStarted)
 {
-    worker_config_.last_position_ = 100e6;
-    uint16_t worker_index = 1;
-    uint64_t read_size = 250e6;
-    std::streamsize actual_read_size = 0;
-    uint64_t total_size = 500e6;
+    MockWorkUnit work_unit1;
+    MockWorkUnit work_unit2;
+    MockWorkUnit work_unit3;
+    std::vector<WorkUnit*> work_units{&work_unit1, &work_unit2, &work_unit3};
+    MockParseManagerFunctions mock_pmf;
+    std::vector<uint16_t> active_workers{2, 3, 5};
+    uint16_t active_worker_ind = 3;
+    bool append_mode = false;
+    std::chrono::milliseconds worker_wait(10);
+    uint64_t init_read_pos = 848190;
+    uint64_t read_pos = init_read_pos;
+    bool thread_started = true;
 
-    // Return 260e6 != read_size
-    EXPECT_CALL(mock_bb_, Initialize(::testing::Ref(file), total_size,
-                                     worker_config_.last_position_, read_size))
-        .Times(1)
-        .WillOnce(::testing::Return(260e6));
-    result_ = pm.ConfigureAppendWorker(worker_config_, worker_index, read_size, total_size,
-                                       bb_ptr_, file, actual_read_size);
-    EXPECT_FALSE(result_);
+    ASSERT_TRUE(pm.ActivateAvailableThread(&mock_pmf, append_mode, work_units, worker_wait,
+        active_workers, active_worker_ind, read_pos, thread_started));
 }
 
-TEST_F(ParseManagerTest, WriteTDPDataInitializeFail)
+TEST_F(ParseManagerTest, ActivateAvailableThreadAllThreadsUnavailable)
 {
-    ManagedPath out_path({"test.parquet"});
+    MockWorkUnit work_unit1;
+    MockWorkUnit work_unit2;
+    MockWorkUnit work_unit3;
+    MockWorkUnit work_unit4;
+    std::vector<WorkUnit*> work_units{&work_unit1, &work_unit2, &work_unit3, &work_unit4};
+    MockParseManagerFunctions mock_pmf;
+    std::vector<uint16_t> active_workers{0, 2};
+    uint16_t active_worker_ind = 3;
+    bool append_mode = false;
+    std::chrono::milliseconds worker_wait(10);
+    uint64_t init_read_pos = 848190;
+    uint64_t read_pos = init_read_pos;
+    bool thread_started = false;
+
+    EXPECT_CALL(work_unit1, IsComplete()).WillOnce(Return(false));
+    EXPECT_CALL(work_unit3, IsComplete()).WillOnce(Return(false));
+
+    ASSERT_TRUE(pm.ActivateAvailableThread(&mock_pmf, append_mode, work_units, worker_wait,
+        active_workers, active_worker_ind, read_pos, thread_started));
+    EXPECT_FALSE(thread_started);
+}
+
+TEST_F(ParseManagerTest, ActivateAvailableThreadSecondThreadCompleteActivateWorkerFail)
+{
+    MockWorkUnit work_unit1;
+    MockWorkUnit work_unit2;
+    MockWorkUnit work_unit3;
+    MockWorkUnit work_unit4;
+    std::vector<WorkUnit*> work_units{&work_unit1, &work_unit2, &work_unit3, &work_unit4};
+    MockParseManagerFunctions mock_pmf;
+    std::vector<uint16_t> active_workers{0, 2};
+    uint16_t active_worker_ind = 3;
+    bool append_mode = false;
+    std::chrono::milliseconds worker_wait(10);
+    uint64_t init_read_pos = 848190;
+    uint64_t read_pos = init_read_pos;
+    bool thread_started = false;
+
+    EXPECT_CALL(work_unit1, IsComplete()).WillOnce(Return(false));
+    EXPECT_CALL(work_unit3, IsComplete()).WillOnce(Return(true));
+
+    EXPECT_CALL(mock_pmf, JoinWorker(&work_unit3, active_workers, 1)).WillOnce(Return(true));
+    EXPECT_CALL(mock_pmf, ActivateWorker(&work_unit4, active_workers, active_worker_ind,
+        append_mode, read_pos)).WillOnce(Return(false));
+
+    ASSERT_FALSE(pm.ActivateAvailableThread(&mock_pmf, append_mode, work_units, worker_wait,
+        active_workers, active_worker_ind, read_pos, thread_started));
+    EXPECT_FALSE(thread_started);
+}
+
+TEST_F(ParseManagerTest, ActivateAvailableThreadFirstThreadComplete)
+{
+    MockWorkUnit work_unit1;
+    MockWorkUnit work_unit2;
+    MockWorkUnit work_unit3;
+    MockWorkUnit work_unit4;
+    std::vector<WorkUnit*> work_units{&work_unit1, &work_unit2, &work_unit3, &work_unit4};
+    MockParseManagerFunctions mock_pmf;
+    std::vector<uint16_t> active_workers{0, 2};
+    uint16_t active_worker_ind = 3;
+    bool append_mode = false;
+    std::chrono::milliseconds worker_wait(10);
+    uint64_t init_read_pos = 848190;
+    uint64_t read_pos = init_read_pos;
+    bool thread_started = false;
+
+    EXPECT_CALL(work_unit1, IsComplete()).WillOnce(Return(true));
+
+    EXPECT_CALL(mock_pmf, JoinWorker(&work_unit1, active_workers, 0)).WillOnce(Return(true));
+    EXPECT_CALL(mock_pmf, ActivateWorker(&work_unit4, active_workers, active_worker_ind,
+        append_mode, read_pos)).WillOnce(Return(true));
+    uint64_t read_bytes = 154952;
+    EXPECT_CALL(work_unit4, GetReadBytes()).WillOnce(ReturnRef(read_bytes));
+
+    ASSERT_TRUE(pm.ActivateAvailableThread(&mock_pmf, append_mode, work_units, worker_wait,
+        active_workers, active_worker_ind, read_pos, thread_started));
+    EXPECT_TRUE(thread_started);
+    EXPECT_EQ(init_read_pos + read_bytes, read_pos);
+}
+
+TEST_F(ParseManagerTest, StopThreads)
+{
+    MockWorkUnit work_unit1;
+    MockWorkUnit work_unit2;
+    MockWorkUnit work_unit3;
+    MockWorkUnit work_unit4;
+    std::vector<WorkUnit*> work_units{&work_unit1, &work_unit2, &work_unit3, &work_unit4};
+    MockParseManagerFunctions mock_pmf;
+    std::vector<uint16_t> active_workers{0, 2};
+    int worker_shift_wait = 10;
+
+    ::testing::Sequence seq;
+    EXPECT_CALL(work_unit1, IsComplete()).InSequence(seq).WillOnce(Return(false));
+    EXPECT_CALL(work_unit3, IsComplete()).InSequence(seq).WillOnce(Return(false));
+
+    EXPECT_CALL(work_unit1, IsComplete()).InSequence(seq).WillOnce(Return(false));
+    EXPECT_CALL(work_unit3, IsComplete()).InSequence(seq).WillOnce(Return(true));
+    std::vector<uint16_t> new_active_workers1{0};
+    EXPECT_CALL(mock_pmf, JoinWorker(&work_unit3, active_workers, 1)).InSequence(seq)
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(new_active_workers1), Return(true)));
+
+    EXPECT_CALL(work_unit1, IsComplete()).InSequence(seq).WillOnce(Return(false));
+    EXPECT_CALL(work_unit1, IsComplete()).InSequence(seq).WillOnce(Return(true));
+    std::vector<uint16_t> new_active_workers2;
+    EXPECT_CALL(mock_pmf, JoinWorker(&work_unit1, new_active_workers1, 0)).InSequence(seq)
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(new_active_workers2), Return(true)));
+
+    ASSERT_TRUE(pm.StopThreads(work_units, active_workers, worker_shift_wait, &mock_pmf));
+}
+
+TEST_F(ParseManagerTest, WorkUnitCheckConfigurationFail)
+{
+    WorkUnit work_unit;
+    MockWorkerConfig conf;
+    bool append_mode = false;
+    uint64_t read_pos = 483811;
+
+    EXPECT_CALL(conf, CheckConfiguration()).WillOnce(Return(false));
+
+    ASSERT_FALSE(work_unit.CheckConfiguration(append_mode, read_pos, &conf));
+}
+
+TEST_F(ParseManagerTest, WorkUnitCheckConfigurationPass)
+{
+    WorkUnit work_unit;
+    MockWorkerConfig conf;
+    bool append_mode = false;
+    uint64_t read_pos = 483811;
+
+    EXPECT_CALL(conf, CheckConfiguration()).WillOnce(Return(true));
+
+    ASSERT_TRUE(work_unit.CheckConfiguration(append_mode, read_pos, &conf));
+    EXPECT_EQ(append_mode, conf.append_mode_);
+    EXPECT_EQ(read_pos, conf.start_position_);
+}
+
+TEST_F(ParseManagerTest, RecordMetadataFail)
+{
+    MockParserMetadata metadata;
+    WorkUnit wu1;
+    WorkUnit wu2;
+    std::vector<WorkUnit*> work_units{&wu1, &wu2};
+    ManagedPath metadata_fname("md.file");
+
+    std::vector<const Ch10Context*> ctx_vec;
+    for(std::vector<WorkUnit*>::iterator it = work_units.begin(); it != work_units.end(); ++it)
+        ctx_vec.push_back((*it)->ctx_.get());
     
-    // ParquetTDPF1 INitialized
-    ParquetContext ctx;
-    MockParquetTDPF1 pqtdp(&ctx);
-    EXPECT_CALL(pqtdp, Initialize(out_path, 0)).WillOnce(Return(false));
+    EXPECT_CALL(metadata, RecordMetadata(metadata_fname, ctx_vec)).WillOnce(Return(false));
 
-    Ch10Context ctx1(13344545, 0);
-    Ch10Context ctx2(848348, 1);
-    std::vector<const Ch10Context*> ctx_vec{&ctx1, &ctx2};
-
-    EXPECT_FALSE(pm.WriteTDPData(ctx_vec, &pqtdp, out_path));
+    ASSERT_FALSE(pm.RecordMetadata(work_units, &metadata, metadata_fname));
 }
 
-TEST_F(ParseManagerTest, WriteTDPData)
+TEST_F(ParseManagerTest, RecordMetadataPass)
 {
-    ManagedPath out_path({"test.parquet"});
+    MockParserMetadata metadata;
+    WorkUnit wu1;
+    WorkUnit wu2;
+    std::vector<WorkUnit*> work_units{&wu1, &wu2};
+    ManagedPath metadata_fname("md.file");
+
+    std::vector<const Ch10Context*> ctx_vec;
+    for(std::vector<WorkUnit*>::iterator it = work_units.begin(); it != work_units.end(); ++it)
+        ctx_vec.push_back((*it)->ctx_.get());
     
-    // ParquetTDPF1 INitialized
-    ParquetContext ctx;
-    MockParquetTDPF1 pqtdp(&ctx);
-    EXPECT_CALL(pqtdp, Initialize(out_path, 0)).WillOnce(Return(true));
+    EXPECT_CALL(metadata, RecordMetadata(metadata_fname, ctx_vec)).WillOnce(Return(true));
 
-    Ch10Context ctx1(13344545, 0);
-    Ch10Context ctx2(848348, 1);
+    ASSERT_TRUE(pm.RecordMetadata(work_units, &metadata, metadata_fname));
+}
 
-    TDF1CSDWFmt tdcsdw1{};
-    uint64_t abs_time1 = 483882;
-    uint8_t tdp_doy = 0;
-    ctx1.UpdateWithTDPData(abs_time1, tdp_doy, true, tdcsdw1);
+TEST_F(ParseManagerTest, ConfigureGetFileSizeFail)
+{
+    MockParserMetadata metadata;
+    MockManagedPath ch10_file_path;
+    ManagedPath outdir{"test_outdir"};
+    ParserConfigParams config;
+    MockParseManagerFunctions pmf;
+    MockParserPaths parser_paths;
+    std::vector<WorkUnit> work_units;
+    std::ifstream ch10_stream;
 
-    uint64_t abs_time2 = 88112311102;
-    TDF1CSDWFmt tdcsdw2{};
-    tdcsdw2.date_fmt = 1;
-    tdcsdw2.time_fmt = 3;
-    ctx1.UpdateWithTDPData(abs_time2, tdp_doy, false, tdcsdw2);
+    uint64_t ch10_file_size = 4858584834;
+    EXPECT_CALL(ch10_file_path, GetFileSize(_, _)).WillOnce(::testing::DoAll(
+        ::testing::SetArgReferee<0>(false), ::testing::SetArgReferee<1>(ch10_file_size)));
 
-    uint64_t abs_time3 = 123481201;
-    TDF1CSDWFmt tdcsdw3{};
-    tdcsdw3.date_fmt = 0;
-    tdcsdw3.time_fmt = 2;
-    ctx2.UpdateWithTDPData(abs_time3, tdp_doy, true, tdcsdw3);
-    std::vector<const Ch10Context*> ctx_vec{&ctx1, &ctx2};
+    ASSERT_FALSE(pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
+        &metadata, work_units, ch10_stream));
+}
 
-    EXPECT_CALL(pqtdp, Append(abs_time1, tdcsdw1));
-    EXPECT_CALL(pqtdp, Append(abs_time2, tdcsdw2));
-    EXPECT_CALL(pqtdp, Append(abs_time3, tdcsdw3));
+TEST_F(ParseManagerTest, ConfigureCreateOutputPathsFail)
+{
+    MockParserMetadata metadata;
+    MockManagedPath ch10_file_path;
+    ManagedPath outdir{"test_outdir"};
+    ParserConfigParams config;
+    MockParseManagerFunctions pmf;
+    MockParserPaths parser_paths;
+    std::vector<WorkUnit> work_units;
+    std::ifstream ch10_stream;
 
-    EXPECT_CALL(pqtdp, Close(0));
+    uint64_t ch10_file_size = 4858584834;
+    EXPECT_CALL(ch10_file_path, GetFileSize(_, _)).WillOnce(::testing::DoAll(
+        ::testing::SetArgReferee<0>(true), ::testing::SetArgReferee<1>(ch10_file_size)));
 
-    EXPECT_TRUE(pm.WriteTDPData(ctx_vec, &pqtdp, out_path));
+    uint64_t chunk_bytes = 888582;
+    uint16_t worker_count = 12;
+    EXPECT_CALL(pmf, IngestUserConfig(config, ch10_file_size, _, _)).
+        WillOnce(::testing::DoAll(::testing::SetArgReferee<2>(chunk_bytes), 
+        ::testing::SetArgReferee<3>(worker_count)));
+
+    EXPECT_CALL(parser_paths, CreateOutputPaths(ch10_file_path, outdir, 
+        config.ch10_packet_enabled_map_, worker_count)).WillOnce(Return(false));
+
+    ASSERT_FALSE(pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
+        &metadata, work_units, ch10_stream));
+}
+
+TEST_F(ParseManagerTest, ConfigureMakeWorkUnitsFail)
+{
+    MockParserMetadata metadata;
+    MockManagedPath ch10_file_path;
+    ManagedPath outdir{"test_outdir"};
+    ParserConfigParams config;
+    MockParseManagerFunctions pmf;
+    MockParserPaths parser_paths;
+    std::vector<WorkUnit> work_units;
+    std::ifstream ch10_stream;
+
+    uint64_t ch10_file_size = 4858584834;
+    EXPECT_CALL(ch10_file_path, GetFileSize(_, _)).WillOnce(::testing::DoAll(
+        ::testing::SetArgReferee<0>(true), ::testing::SetArgReferee<1>(ch10_file_size)));
+
+    uint64_t chunk_bytes = 888582;
+    uint16_t worker_count = 12;
+    EXPECT_CALL(pmf, IngestUserConfig(config, ch10_file_size, _, _))
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<2>(chunk_bytes), 
+        ::testing::SetArgReferee<3>(worker_count)));
+
+    EXPECT_CALL(parser_paths, CreateOutputPaths(ch10_file_path, outdir, 
+        config.ch10_packet_enabled_map_, worker_count)).WillOnce(Return(true));
+
+    EXPECT_CALL(pmf, MakeWorkUnits(::testing::Ref(work_units), worker_count, chunk_bytes, 
+        ParseManager::append_chunk_size_bytes_, ch10_file_size, ::testing::Ref(ch10_stream), 
+        &parser_paths)).WillOnce(Return(false));
+
+    ASSERT_FALSE(pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
+        &metadata, work_units, ch10_stream));
+}
+
+TEST_F(ParseManagerTest, ConfigureInitializeFail)
+{
+    MockParserMetadata metadata;
+    MockManagedPath ch10_file_path;
+    ManagedPath outdir{"test_outdir"};
+    ParserConfigParams config;
+    MockParseManagerFunctions pmf;
+    MockParserPaths parser_paths;
+    std::vector<WorkUnit> work_units;
+    std::ifstream ch10_stream;
+
+    uint64_t ch10_file_size = 4858584834;
+    EXPECT_CALL(ch10_file_path, GetFileSize(_, _)).WillOnce(::testing::DoAll(
+        ::testing::SetArgReferee<0>(true), ::testing::SetArgReferee<1>(ch10_file_size)));
+
+    uint64_t chunk_bytes = 888582;
+    uint16_t worker_count = 12;
+    EXPECT_CALL(pmf, IngestUserConfig(config, ch10_file_size, _, _))
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<2>(chunk_bytes), 
+        ::testing::SetArgReferee<3>(worker_count)));
+
+    EXPECT_CALL(parser_paths, CreateOutputPaths(ch10_file_path, outdir, 
+        config.ch10_packet_enabled_map_, worker_count)).WillOnce(Return(true));
+
+    EXPECT_CALL(pmf, MakeWorkUnits(::testing::Ref(work_units), worker_count, chunk_bytes, 
+        ParseManager::append_chunk_size_bytes_, ch10_file_size, ::testing::Ref(ch10_stream), 
+        &parser_paths)).WillOnce(Return(true));
+
+    EXPECT_CALL(metadata, Initialize(ch10_file_path, config, ::testing::Ref(parser_paths)))
+        .WillOnce(Return(false));
+
+    ASSERT_FALSE(pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
+        &metadata, work_units, ch10_stream));
+}
+
+TEST_F(ParseManagerTest, ConfigureOpenCh10FileFail)
+{
+    MockParserMetadata metadata;
+    MockManagedPath ch10_file_path;
+    ManagedPath outdir{"test_outdir"};
+    ParserConfigParams config;
+    MockParseManagerFunctions pmf;
+    MockParserPaths parser_paths;
+    std::vector<WorkUnit> work_units;
+    std::ifstream ch10_stream;
+
+    uint64_t ch10_file_size = 4858584834;
+    EXPECT_CALL(ch10_file_path, GetFileSize(_, _)).WillOnce(::testing::DoAll(
+        ::testing::SetArgReferee<0>(true), ::testing::SetArgReferee<1>(ch10_file_size)));
+
+    uint64_t chunk_bytes = 888582;
+    uint16_t worker_count = 12;
+    EXPECT_CALL(pmf, IngestUserConfig(config, ch10_file_size, _, _))
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<2>(chunk_bytes), 
+        ::testing::SetArgReferee<3>(worker_count)));
+
+    EXPECT_CALL(parser_paths, CreateOutputPaths(ch10_file_path, outdir, 
+        config.ch10_packet_enabled_map_, worker_count)).WillOnce(Return(true));
+
+    EXPECT_CALL(pmf, MakeWorkUnits(::testing::Ref(work_units), worker_count, chunk_bytes, 
+        ParseManager::append_chunk_size_bytes_, ch10_file_size, ::testing::Ref(ch10_stream), 
+        &parser_paths)).WillOnce(Return(true));
+
+    EXPECT_CALL(metadata, Initialize(ch10_file_path, config, ::testing::Ref(parser_paths)))
+        .WillOnce(Return(true));
+
+    EXPECT_CALL(pmf, OpenCh10File(ch10_file_path, ::testing::Ref(ch10_stream)))
+        .WillOnce(Return(false));
+
+    ASSERT_FALSE(pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
+        &metadata, work_units, ch10_stream));
+}
+
+TEST_F(ParseManagerTest, Configure)
+{
+    MockParserMetadata metadata;
+    MockManagedPath ch10_file_path;
+    ManagedPath outdir{"test_outdir"};
+    ParserConfigParams config;
+    MockParseManagerFunctions pmf;
+    MockParserPaths parser_paths;
+    std::vector<WorkUnit> work_units;
+    std::ifstream ch10_stream;
+
+    uint64_t ch10_file_size = 4858584834;
+    EXPECT_CALL(ch10_file_path, GetFileSize(_, _)).WillOnce(::testing::DoAll(
+        ::testing::SetArgReferee<0>(true), ::testing::SetArgReferee<1>(ch10_file_size)));
+
+    uint64_t chunk_bytes = 888582;
+    uint16_t worker_count = 12;
+    EXPECT_CALL(pmf, IngestUserConfig(config, ch10_file_size, _, _))
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<2>(chunk_bytes), 
+        ::testing::SetArgReferee<3>(worker_count)));
+
+    EXPECT_CALL(parser_paths, CreateOutputPaths(ch10_file_path, outdir, 
+        config.ch10_packet_enabled_map_, worker_count)).WillOnce(Return(true));
+
+    EXPECT_CALL(pmf, MakeWorkUnits(::testing::Ref(work_units), worker_count, chunk_bytes, 
+        ParseManager::append_chunk_size_bytes_, ch10_file_size, ::testing::Ref(ch10_stream), 
+        &parser_paths)).WillOnce(Return(true));
+
+    EXPECT_CALL(metadata, Initialize(ch10_file_path, config, ::testing::Ref(parser_paths)))
+        .WillOnce(Return(true));
+
+    EXPECT_CALL(pmf, OpenCh10File(ch10_file_path, ::testing::Ref(ch10_stream)))
+        .WillOnce(Return(true));
+
+    ASSERT_TRUE(pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
+        &metadata, work_units, ch10_stream));
+}
+
+TEST_F(ParseManagerTest, ParseCh10InitialStartThreadsFail)
+{
+    size_t work_unit_count = 5;
+    std::vector<WorkUnit> work_units(work_unit_count);
+
+    std::vector<WorkUnit*> work_unit_ptrs;
+    for (std::vector<WorkUnit>::iterator it = work_units.begin(); it != work_units.end(); ++it)
+        work_unit_ptrs.push_back(&(*it));
+
+    ParserConfigParams config;
+    MockParseManager pm;
+    ParseManagerFunctions pmf;
+    bool append = false;
+
+    std::vector<uint16_t> active_workers1;
+    EXPECT_CALL(pm, StartThreads(append, _, work_units.size(), config, work_unit_ptrs, &pmf))
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers1), Return(false)));
+
+    ASSERT_FALSE(ParseCh10(work_unit_ptrs, &pmf, &pm, config));
+}
+
+TEST_F(ParseManagerTest, ParseCh10InitialStopThreadsFail)
+{
+    size_t work_unit_count = 5;
+    std::vector<WorkUnit> work_units(work_unit_count);
+
+    std::vector<WorkUnit*> work_unit_ptrs;
+    for (std::vector<WorkUnit>::iterator it = work_units.begin(); it != work_units.end(); ++it)
+        work_unit_ptrs.push_back(&(*it));
+
+    ParserConfigParams config;
+    config.worker_offset_wait_ms_ = 200;
+    config.worker_shift_wait_ms_ = 100;
+    MockParseManager pm;
+    ParseManagerFunctions pmf;
+    bool append = false;
+
+    std::vector<uint16_t> active_workers1{3, 4};
+    EXPECT_CALL(pm, StartThreads(append, _, work_units.size(), config, work_unit_ptrs, &pmf))
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers1), Return(true)));
+
+    std::vector<uint16_t> active_workers2;
+    EXPECT_CALL(pm, StopThreads(work_unit_ptrs, active_workers1, config.worker_shift_wait_ms_,
+        &pmf)).WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers2), Return(false)));
+
+    ASSERT_FALSE(ParseCh10(work_unit_ptrs, &pmf, &pm, config));
+}
+
+TEST_F(ParseManagerTest, ParseCh10SingleThreadEarlyReturn)
+{
+    size_t work_unit_count = 1;
+    std::vector<WorkUnit> work_units(work_unit_count);
+
+    std::vector<WorkUnit*> work_unit_ptrs;
+    for (std::vector<WorkUnit>::iterator it = work_units.begin(); it != work_units.end(); ++it)
+        work_unit_ptrs.push_back(&(*it));
+
+    ParserConfigParams config;
+    config.worker_offset_wait_ms_ = 200;
+    config.worker_shift_wait_ms_ = 100;
+    MockParseManager pm;
+    ParseManagerFunctions pmf;
+    bool append = false;
+
+    std::vector<uint16_t> active_workers1{0};
+    EXPECT_CALL(pm, StartThreads(append, _, work_units.size(), config, work_unit_ptrs, &pmf))
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers1), Return(true)));
+
+    std::vector<uint16_t> active_workers2;
+    EXPECT_CALL(pm, StopThreads(work_unit_ptrs, active_workers1, config.worker_shift_wait_ms_,
+        &pmf)).WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers2), Return(true)));
+
+    ASSERT_TRUE(ParseCh10(work_unit_ptrs, &pmf, &pm, config));
+}
+
+TEST_F(ParseManagerTest, ParseCh10FinalStartThreadsFail)
+{
+    size_t work_unit_count = 5;
+    std::vector<WorkUnit> work_units(work_unit_count);
+
+    std::vector<WorkUnit*> work_unit_ptrs;
+    for (std::vector<WorkUnit>::iterator it = work_units.begin(); it != work_units.end(); ++it)
+        work_unit_ptrs.push_back(&(*it));
+
+    ParserConfigParams config;
+    config.worker_offset_wait_ms_ = 200;
+    config.worker_shift_wait_ms_ = 100;
+    MockParseManager pm;
+    ParseManagerFunctions pmf;
+    bool append = false;
+
+    std::vector<uint16_t> active_workers1{3, 4};
+    EXPECT_CALL(pm, StartThreads(append, _, work_units.size(), config, work_unit_ptrs, &pmf))
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers1), Return(true)));
+
+    std::vector<uint16_t> active_workers2;
+    EXPECT_CALL(pm, StopThreads(work_unit_ptrs, active_workers1, config.worker_shift_wait_ms_,
+        &pmf)).WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers2), Return(true)));
+
+    append = true;
+    std::vector<uint16_t> active_workers3{2, 3};
+    EXPECT_CALL(pm, StartThreads(append, active_workers2, work_units.size()-1, config, 
+        work_unit_ptrs, &pmf)).WillOnce(::testing::DoAll(
+            ::testing::SetArgReferee<1>(active_workers3), Return(false)));
+
+    ASSERT_FALSE(ParseCh10(work_unit_ptrs, &pmf, &pm, config));
+}
+
+TEST_F(ParseManagerTest, ParseCh10FinalStopThreadsFail)
+{
+    size_t work_unit_count = 5;
+    std::vector<WorkUnit> work_units(work_unit_count);
+
+    std::vector<WorkUnit*> work_unit_ptrs;
+    for (std::vector<WorkUnit>::iterator it = work_units.begin(); it != work_units.end(); ++it)
+        work_unit_ptrs.push_back(&(*it));
+
+    ParserConfigParams config;
+    config.worker_offset_wait_ms_ = 200;
+    config.worker_shift_wait_ms_ = 100;
+    MockParseManager pm;
+    ParseManagerFunctions pmf;
+    bool append = false;
+
+    std::vector<uint16_t> active_workers1{3, 4};
+    EXPECT_CALL(pm, StartThreads(append, _, work_units.size(), config, work_unit_ptrs, &pmf))
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers1), Return(true)));
+
+    std::vector<uint16_t> active_workers2;
+    EXPECT_CALL(pm, StopThreads(work_unit_ptrs, active_workers1, config.worker_shift_wait_ms_,
+        &pmf)).WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers2), Return(true)));
+
+    append = true;
+    std::vector<uint16_t> active_workers3{2, 3};
+    EXPECT_CALL(pm, StartThreads(append, active_workers2, work_units.size()-1, config, 
+        work_unit_ptrs, &pmf)).WillOnce(::testing::DoAll(
+            ::testing::SetArgReferee<1>(active_workers3), Return(true)));
+
+    std::vector<uint16_t> active_workers4;
+    EXPECT_CALL(pm, StopThreads(work_unit_ptrs, active_workers3, config.worker_shift_wait_ms_,
+        &pmf)).WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers4), Return(false)));
+
+    ASSERT_FALSE(ParseCh10(work_unit_ptrs, &pmf, &pm, config));
+}
+
+TEST_F(ParseManagerTest, ParseCh10)
+{
+    size_t work_unit_count = 5;
+    std::vector<WorkUnit> work_units(work_unit_count);
+
+    std::vector<WorkUnit*> work_unit_ptrs;
+    for (std::vector<WorkUnit>::iterator it = work_units.begin(); it != work_units.end(); ++it)
+        work_unit_ptrs.push_back(&(*it));
+
+    ParserConfigParams config;
+    config.worker_offset_wait_ms_ = 200;
+    config.worker_shift_wait_ms_ = 100;
+    MockParseManager pm;
+    ParseManagerFunctions pmf;
+    bool append = false;
+
+    std::vector<uint16_t> active_workers1{3, 4};
+    EXPECT_CALL(pm, StartThreads(append, _, work_units.size(), config, work_unit_ptrs, &pmf))
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers1), Return(true)));
+
+    std::vector<uint16_t> active_workers2;
+    EXPECT_CALL(pm, StopThreads(work_unit_ptrs, active_workers1, config.worker_shift_wait_ms_,
+        &pmf)).WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers2), Return(true)));
+
+    append = true;
+    std::vector<uint16_t> active_workers3{2, 3};
+    EXPECT_CALL(pm, StartThreads(append, active_workers2, work_units.size()-1, config, 
+        work_unit_ptrs, &pmf)).WillOnce(::testing::DoAll(
+            ::testing::SetArgReferee<1>(active_workers3), Return(true)));
+
+    std::vector<uint16_t> active_workers4;
+    EXPECT_CALL(pm, StopThreads(work_unit_ptrs, active_workers3, config.worker_shift_wait_ms_,
+        &pmf)).WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers4), Return(true)));
+
+    ASSERT_TRUE(ParseCh10(work_unit_ptrs, &pmf, &pm, config));
 }

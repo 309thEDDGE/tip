@@ -28,7 +28,7 @@ class ParseText
         Vector of substrings from input_string which are separated by delim
     */
     std::vector<std::string> Split(std::string input_string, const char& delim,
-        bool keep_quotes = false);
+        bool keep_quotes = false) const;
 
 
 
@@ -120,7 +120,7 @@ class ParseText
     // removed.
     bool ExtractQuotedSections(const std::string& input_string,
                                std::map<int, std::string>& quoted_sections,
-                               std::map<int, std::string>& unquoted_sections);
+                               std::map<int, std::string>& unquoted_sections) const;
 
     /*
 	Return true if input string qualifies as ASCII; return false otherwise.

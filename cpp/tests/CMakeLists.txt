@@ -25,6 +25,7 @@ set(headers
     include/parser_metadata_mock.h
     include/ch10_packet_type_specific_metadata_mock.h
     include/parser_paths_mock.h
+    include/worker_config_mock.h
 )
 
 add_executable(tests
@@ -108,6 +109,7 @@ add_executable(tests
     src/parser_paths_u.cpp
     src/parser_metadata_u.cpp
     src/ch10_packet_type_specific_metadata_u.cpp
+    src/worker_config_u.cpp
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)

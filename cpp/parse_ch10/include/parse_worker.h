@@ -53,12 +53,9 @@ class ParseWorker
 	Args:
 		worker_config	--> WorkerConfig object defining the worker configuration
 							state and binary data to be parsed
-		tmats_body_vec	--> Vector to which any TMATs matter found in the binary 
-							data are appended
 		ctx				--> Ch10 state associated with the specific worker
 	*/
-    void operator()(WorkerConfig& worker_config,
-                    std::vector<std::string>& tmats_body_vec, Ch10Context* ctx);
+    void operator()(WorkerConfig& worker_config, Ch10Context* ctx);
 
     /*
 	Helper function for aesthetics. Configure instance of Ch10Context by calling the
@@ -88,8 +85,7 @@ class ParseWorker
 		tmats_vec	--> Reference to vector of strings in which to append
 						found TMATs data
 	*/
-    void ParseBufferData(Ch10Context* ctx, BinBuff* bb,
-                         std::vector<std::string>& tmats_vec);
+    void ParseBufferData(Ch10Context* ctx, BinBuff* bb);
 };
 
 #endif
