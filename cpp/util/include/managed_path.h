@@ -227,7 +227,7 @@ class ManagedPath : public fs::path
 		result	- Output result indicating file size in bytes.
 		Set to 0 if success is false.
 	*/
-    void GetFileSize(bool& success, uint64_t& result) const;
+    virtual void GetFileSize(bool& success, uint64_t& result) const;
 
     /*
 	Fill the output_list vector with ManagedPath objects corresponding

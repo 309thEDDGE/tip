@@ -13,6 +13,7 @@
 #include "parser_paths_mock.h"
 #include "tip_md_document_mock.h"
 #include "ch10_packet_type_specific_metadata_mock.h"
+#include "parquet_tdpf1_mock.h"
 
 using ::testing::Return;
 using ::testing::ReturnRef;
@@ -634,4 +635,102 @@ TEST_F(ParserMetadataTest, RecordMetadataForPktType)
 
     EXPECT_TRUE(pm_.RecordMetadataForPktType(md_filename, pkt_type, &parser_paths, 
         config, prov_data, &tmats, ctx_vec, &tip_md, &funcs));
+}
+
+TEST_F(ParserMetadataTest, WriteTDPDataInitializeFail)
+{
+    ManagedPath out_path({"test.parquet"});
+    
+    // ParquetTDPF1 INitialized
+    ParquetContext ctx;
+    MockParquetTDPF1 pqtdp(&ctx);
+    EXPECT_CALL(pqtdp, Initialize(out_path, 0)).WillOnce(Return(false));
+
+    Ch10Context ctx1(13344545, 0);
+    Ch10Context ctx2(848348, 1);
+    std::vector<const Ch10Context*> ctx_vec{&ctx1, &ctx2};
+
+    EXPECT_FALSE(pf_.WriteTDPData(ctx_vec, &pqtdp, out_path));
+}
+
+TEST_F(ParserMetadataTest, WriteTDPData)
+{
+    ManagedPath out_path({"test.parquet"});
+    
+    // ParquetTDPF1 INitialized
+    ParquetContext ctx;
+    MockParquetTDPF1 pqtdp(&ctx);
+    EXPECT_CALL(pqtdp, Initialize(out_path, 0)).WillOnce(Return(true));
+
+    Ch10Context ctx1(13344545, 0);
+    Ch10Context ctx2(848348, 1);
+
+    TDF1CSDWFmt tdcsdw1{};
+    uint64_t abs_time1 = 483882;
+    uint8_t tdp_doy = 0;
+    ctx1.UpdateWithTDPData(abs_time1, tdp_doy, true, tdcsdw1);
+
+    uint64_t abs_time2 = 88112311102;
+    TDF1CSDWFmt tdcsdw2{};
+    tdcsdw2.date_fmt = 1;
+    tdcsdw2.time_fmt = 3;
+    ctx1.UpdateWithTDPData(abs_time2, tdp_doy, false, tdcsdw2);
+
+    uint64_t abs_time3 = 123481201;
+    TDF1CSDWFmt tdcsdw3{};
+    tdcsdw3.date_fmt = 0;
+    tdcsdw3.time_fmt = 2;
+    ctx2.UpdateWithTDPData(abs_time3, tdp_doy, true, tdcsdw3);
+    std::vector<const Ch10Context*> ctx_vec{&ctx1, &ctx2};
+
+    EXPECT_CALL(pqtdp, Append(abs_time1, tdcsdw1));
+    EXPECT_CALL(pqtdp, Append(abs_time2, tdcsdw2));
+    EXPECT_CALL(pqtdp, Append(abs_time3, tdcsdw3));
+
+    EXPECT_CALL(pqtdp, Close(0));
+
+    EXPECT_TRUE(pf_.WriteTDPData(ctx_vec, &pqtdp, out_path));
+}
+
+TEST_F(ParserMetadataTest, GatherTMATSData)
+{
+    MockCh10Context ctx1;
+    MockCh10Context ctx2;
+    std::vector<const Ch10Context*> ctx_vec{&ctx1, &ctx2};
+
+    std::string tmats_matter1 = "here are some tmats data";
+    std::string tmats_matter2 = "some more tmats data yay!";
+    Sequence seq;
+
+    EXPECT_CALL(ctx1, GetTMATSMatter()).InSequence(seq).WillOnce(Return(tmats_matter1));
+    EXPECT_CALL(ctx2, GetTMATSMatter()).InSequence(seq).WillOnce(Return(tmats_matter2));
+    
+    std::vector<std::string> tmats_vec;
+    pf_.GatherTMATSData(ctx_vec, tmats_vec);
+
+    std::vector<std::string> expected{tmats_matter1, tmats_matter2};
+    EXPECT_THAT(expected, ::testing::ContainerEq(tmats_vec));
+}
+
+TEST_F(ParserMetadataTest, AssembleParsedPacketTypesSet)
+{
+    MockCh10Context ctx1;
+    MockCh10Context ctx2;
+    std::vector<const Ch10Context*> ctx_vec{&ctx1, &ctx2};
+
+    std::set<Ch10PacketType> parsed_types1{Ch10PacketType::MILSTD1553_F1, 
+        Ch10PacketType::COMPUTER_GENERATED_DATA_F1};
+    std::set<Ch10PacketType> parsed_types2{Ch10PacketType::MILSTD1553_F1, 
+        Ch10PacketType::VIDEO_DATA_F0};
+    
+    EXPECT_CALL(ctx1, GetParsedPacketTypes()).WillOnce(ReturnRef(parsed_types1));
+    EXPECT_CALL(ctx2, GetParsedPacketTypes()).WillOnce(ReturnRef(parsed_types2));
+
+    std::set<Ch10PacketType> expected_parsed_packet_types{Ch10PacketType::MILSTD1553_F1, 
+        Ch10PacketType::COMPUTER_GENERATED_DATA_F1, Ch10PacketType::VIDEO_DATA_F0};
+
+    std::set<Ch10PacketType> parsed_packet_types;
+    pf_.AssembleParsedPacketTypesSet(ctx_vec, parsed_packet_types);
+
+    EXPECT_THAT(expected_parsed_packet_types, ::testing::ContainerEq(parsed_packet_types));
 }

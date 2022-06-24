@@ -10,6 +10,7 @@ class MockManagedPath : public ManagedPath
    public:
     MockManagedPath() : ManagedPath() {}
     MOCK_CONST_METHOD0(is_regular_file, bool());
+    MOCK_CONST_METHOD2(GetFileSize, void(bool& success, uint64_t& result));
 };
 
 #endif  // MANAGED_PATH_MOCK_H_

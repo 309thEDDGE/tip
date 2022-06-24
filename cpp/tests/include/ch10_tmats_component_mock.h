@@ -9,8 +9,7 @@ class MockCh10TMATSComponent: public Ch10TMATSComponent
 {
    public:
     MockCh10TMATSComponent(Ch10Context* const ch10ctx) : Ch10TMATSComponent(ch10ctx) {}
-    MOCK_METHOD2(Parse, Ch10Status(const uint8_t*& data,
-                     std::vector<std::string>& tmats_vec));
+    MOCK_METHOD1(Parse, Ch10Status(const uint8_t*& data));
 };
 
 

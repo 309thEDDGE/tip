@@ -55,7 +55,8 @@ Ch10Context::Ch10Context(const uint64_t& abs_pos, uint16_t id) : absolute_positi
                                                                  videof0_pq_ctx_(nullptr),
                                                                  parsed_packet_types(parsed_packet_types_),
                                                                  tdf1csdw_vec(tdf1csdw_vec_),
-                                                                 tdp_abs_time_vec(tdp_abs_time_vec_)
+                                                                 tdp_abs_time_vec(tdp_abs_time_vec_),
+                                                                 tmats_matter_()
 {
     CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }
@@ -113,7 +114,8 @@ Ch10Context::Ch10Context() : absolute_position_(0),
                              pkt_type_paths_map(pkt_type_paths_enabled_map_),
                              parsed_packet_types(parsed_packet_types_),
                              tdf1csdw_vec(tdf1csdw_vec_),
-                             tdp_abs_time_vec(tdp_abs_time_vec_)
+                             tdp_abs_time_vec(tdp_abs_time_vec_),
+                             tmats_matter_()
 {
     CreateDefaultPacketTypeConfig(pkt_type_config_map_);
 }

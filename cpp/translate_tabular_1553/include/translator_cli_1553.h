@@ -96,6 +96,12 @@ inline bool ConfigureTranslatorCLI(CLIGroup& cli_group, TranslationConfigParams&
     //     config.exit_after_table_creation_);
     cli->AddOption("--disable_sys_limits", "", auto_sys_limits_help, true, config.auto_sys_limits_);
 
+    std::string disable_validation_help = "Do not process input DTS1553 yaml file with "
+        "schema validator. Primarily for testing purposes. Use at your own risk.";
+    cli->AddOption("--disable_dts_validation", "", disable_validation_help, false, 
+        config.disable_dts_schema_validation_);
+
+
     if(!cli_group.CheckConfiguration())
         return false;
     return true;

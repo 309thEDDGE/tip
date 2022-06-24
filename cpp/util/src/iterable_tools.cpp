@@ -8,13 +8,13 @@ IterableTools::~IterableTools()
 {
 }
 
-std::string IterableTools::print(std::string print_string)
+std::string IterableTools::print(std::string print_string) const
 {
     printf("%s", print_string.c_str());
     return print_string;
 }
 
-std::string IterableTools::GetHeader(std::vector<std::string> columns, std::string title)
+std::string IterableTools::GetHeader(std::vector<std::string> columns, std::string title) const
 {
     std::stringstream ss;
     // Name of the header
@@ -31,7 +31,7 @@ std::string IterableTools::GetHeader(std::vector<std::string> columns, std::stri
     return ss.str();
 }
 
-std::string IterableTools::GetPrintBar()
+std::string IterableTools::GetPrintBar() const
 {
     return "-------------------------------";
 }
@@ -39,7 +39,7 @@ std::string IterableTools::GetPrintBar()
 template <>
 std::string IterableTools::GetIterablePrintString<std::vector<std::string>>(
     const std::vector<std::string>& input_iterable, std::string title,
-    std::string format_spec, std::string delim)
+    std::string format_spec, std::string delim) const
 {
     int i = 0;
     std::string ret_val = title + ":\n";

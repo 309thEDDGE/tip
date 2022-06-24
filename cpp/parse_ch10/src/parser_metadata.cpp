@@ -1,37 +1,53 @@
 #include "parser_metadata.h"
 
-ParserMetadata::ParserMetadata() : ch10_hash_byte_count_(150e6), prov_data_()
+ParserMetadata::ParserMetadata() : ch10_hash_byte_count_(150e6), prov_data_(), config_(),
+    parser_paths_()
 {}
 
-bool ParserMetadata::Initialize(const ManagedPath& ch10_path)
+bool ParserMetadata::Initialize(const ManagedPath& ch10_path, const ParserConfigParams& config,
+    const ParserPaths& parser_paths)
 {
+    config_ = config;
+    parser_paths_ = parser_paths;
+    
     if(!GetProvenanceData(ch10_path.absolute(), ch10_hash_byte_count_, prov_data_))
         return false;
     spdlog::get("pm_logger")->info("Ch10 hash: {:s}", prov_data_.hash);
+
+    // Record the packet type config map in metadata and logs.
+    ParserMetadataFunctions funcs;
+    funcs.LogPacketTypeConfig(config.ch10_packet_enabled_map_);
+
     return true;
 }
 
-bool ParserMetadata::RecordMetadata(ManagedPath md_filename, const ParserPaths* parser_paths,
-    const std::set<Ch10PacketType>& parsed_pkt_types, 
-    const ParserConfigParams& config, const std::vector<std::string>& tmats_body_vec,
+bool ParserMetadata::RecordMetadata(ManagedPath md_filename, 
     const std::vector<const Ch10Context*>& context_vec)
 {
+    ParserMetadataFunctions funcs;
+
+    // Create a set of all the parsed packet types
+    std::set<Ch10PacketType> parsed_pkt_types;
+    funcs.AssembleParsedPacketTypesSet(context_vec, parsed_pkt_types);
+
+    std::vector<std::string> tmats_body_vec;
+    funcs.GatherTMATSData(context_vec, tmats_body_vec);
+
     // Process TMATs matter and record
     TMATSData tmats_data;
-    ParserMetadataFunctions funcs;
-    funcs.ProcessTMATS(tmats_body_vec, parser_paths->GetTMATSOutputPath(), 
+    funcs.ProcessTMATS(tmats_body_vec, parser_paths_.GetTMATSOutputPath(), 
         tmats_data, parsed_pkt_types);
     spdlog::get("pm_logger")->debug("RecordMetadata: begin record metadata");
 
     for (std::map<Ch10PacketType, bool>::const_iterator it = 
-        parser_paths->GetCh10PacketTypeEnabledMap().cbegin();
-         it != parser_paths->GetCh10PacketTypeEnabledMap().cend(); ++it)
+        parser_paths_.GetCh10PacketTypeEnabledMap().cbegin();
+         it != parser_paths_.GetCh10PacketTypeEnabledMap().cend(); ++it)
     {
         if (it->second && (parsed_pkt_types.count(it->first) == 1))
         {
             TIPMDDocument tip_md;
-            if(!RecordMetadataForPktType(md_filename, it->first, parser_paths, 
-                config, prov_data_, &tmats_data, context_vec, &tip_md, &funcs))
+            if(!RecordMetadataForPktType(md_filename, it->first, &parser_paths_, 
+                config_, prov_data_, &tmats_data, context_vec, &tip_md, &funcs))
             {
                spdlog::get("pm_logger")->error("RecordMetadata: Failed for type {:s}",
                 ch10packettype_to_string_map.at(it->first));
@@ -39,6 +55,15 @@ bool ParserMetadata::RecordMetadata(ManagedPath md_filename, const ParserPaths* 
             }
         }
     }
+
+    // write tdpdata
+    spdlog::get("pm_logger")->debug("Recording Time Data");
+    ParquetContext pq_ctx;
+    ParquetTDPF1 pq_tdp(&pq_ctx);
+    if(!funcs.WriteTDPData(context_vec, &pq_tdp, parser_paths_.GetTDPOutputPath()))
+        return false;
+
+    parser_paths_.RemoveCh10PacketOutputDirs(parsed_pkt_types);
 
     spdlog::get("pm_logger")->debug("RecordMetadata: complete record metadata");
     return true;
@@ -199,6 +224,93 @@ bool ParserMetadataFunctions::RecordCh10PktTypeSpecificMetadata(Ch10PacketType p
     return true;
 }
 
+bool ParserMetadataFunctions::WriteTDPData(const std::vector<const Ch10Context*>& ctx_vec,
+    ParquetTDPF1* pqtdp, const ManagedPath& file_path)
+{
+    if(!pqtdp->Initialize(file_path, 0))
+    {
+        spdlog::get("pm_logger")->error("Failed to initialize writer for time data, format 1 for "
+            "output file: {:s}", file_path.RawString());
+        return false;
+    }
+
+    for(std::vector<const Ch10Context*>::const_iterator it = ctx_vec.cbegin(); 
+        it != ctx_vec.cend(); ++it)
+    {
+        const std::vector<TDF1CSDWFmt>& tdcsdw_vec = (*it)->tdf1csdw_vec;
+        const std::vector<uint64_t>& time_vec = (*it)->tdp_abs_time_vec;
+        for(size_t i = 0; i < time_vec.size(); i++)
+        {
+            pqtdp->Append(time_vec.at(i), tdcsdw_vec.at(i));
+        }
+    }
+    uint16_t thread_id = 0;
+    pqtdp->Close(thread_id);
+
+    return true;
+}
+
+void ParserMetadataFunctions::LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map)
+{
+    // Convert the Ch10PacketType to bool --> string to bool
+    std::map<std::string, bool> str_packet_type_map;
+    for (std::map<Ch10PacketType, bool>::const_iterator it = pkt_type_config_map.cbegin();
+         it != pkt_type_config_map.cend(); ++it)
+    {
+        if(ch10packettype_to_string_map.count(it->first) == 1)
+            str_packet_type_map[ch10packettype_to_string_map.at(it->first)] = it->second;
+        else
+        {
+            spdlog::get("pm_logger")->warn("Ch10PacketType with integer value {:d} not in packet type "
+                "to string map", static_cast<uint8_t>(it->first));
+        }
+    }
+
+    IterableTools iter_tools;
+    ParseText parse_text;
+
+    // Get string representation of key-value pairs
+    std::string stringrepr = iter_tools.GetPrintableMapElements_KeyToBool(
+        str_packet_type_map);
+
+    // Log the map information.
+    spdlog::get("pm_logger")->info("Ch10 packet configuration:");
+    std::vector<std::string> splitstr = parse_text.Split(stringrepr, '\n');
+    for (std::vector<std::string>::const_iterator it = splitstr.cbegin();
+         it != splitstr.cend(); ++it)
+    {
+        spdlog::get("pm_logger")->info("{:s}", *it);
+    }
+    spdlog::get("pm_logger")->flush();
+}
+
+void ParserMetadataFunctions::AssembleParsedPacketTypesSet(const std::vector<const Ch10Context*>& ctx_vec,
+    std::set<Ch10PacketType>& parsed_packet_types)
+{
+    std::set<Ch10PacketType> temp_parsed_packet_types;
+    for (std::vector<const Ch10Context*>::const_iterator it = ctx_vec.cbegin();
+        it != ctx_vec.cend(); ++it)
+    {
+        temp_parsed_packet_types = (*it)->GetParsedPacketTypes();
+        parsed_packet_types.insert(temp_parsed_packet_types.cbegin(), temp_parsed_packet_types.cend());
+    }
+
+    // Log the parsed packet types
+    spdlog::get("pm_logger")->info("Parsed packet types:");
+    for (std::set<Ch10PacketType>::const_iterator it = parsed_packet_types.cbegin();
+        it != parsed_packet_types.cend(); ++it)
+    {
+        if(ch10packettype_to_string_map.count(*it) == 1)
+            spdlog::get("pm_logger")->info(" - {:s}", ch10packettype_to_string_map.at(*it));
+        else
+        {
+            spdlog::get("pm_logger")->warn("Ch10PacketType with integer value {:d} not in packet type "
+                "to string map", static_cast<uint8_t>(*it));
+        }
+    }
+    spdlog::get("pm_logger")->flush();
+}
+
 bool ParserMetadataFunctions::RecordCh10PktTypeSpecificMetadata(Ch10PacketType pkt_type, 
     const std::vector<const Ch10Context*>& context_vec, MDCategoryMap* runtime_metadata, 
     const TMATSData* tmats)
@@ -206,6 +318,16 @@ bool ParserMetadataFunctions::RecordCh10PktTypeSpecificMetadata(Ch10PacketType p
     Ch10PacketTypeSpecificMetadata spec_md;
     return RecordCh10PktTypeSpecificMetadata(pkt_type, context_vec, runtime_metadata,
         tmats, &spec_md);
+}
+
+void ParserMetadataFunctions::GatherTMATSData(const std::vector<const Ch10Context*>& ctx_vec,
+    std::vector<std::string>& tmats_vec)
+{
+    for (std::vector<const Ch10Context*>::const_iterator it = ctx_vec.cbegin();
+        it != ctx_vec.cend(); ++it)
+    {
+        tmats_vec.push_back((*it)->GetTMATSMatter());
+    }
 }
 
 bool ParserMetadata::RecordMetadataForPktType(const ManagedPath& md_filename, 

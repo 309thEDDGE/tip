@@ -37,11 +37,10 @@ class Ch10PacketTest : public ::testing::Test
     NiceMock<MockCh10VideoF0Component> mock_vid_;
     NiceMock<MockCh10EthernetF0Component> mock_eth_;
     NiceMock<MockCh10429F0Component> mock_arinc429_;
-    std::vector<std::string> tmats_vec_;
     Ch10Packet p_;
 
     Ch10PacketTest() : status_(Ch10Status::NONE), mock_bb_(), mock_ctx_(), mock_ch10_time_(),
-        tmats_vec_{}, p_(&mock_bb_, &mock_ctx_, &mock_ch10_time_, tmats_vec_),
+        p_(&mock_bb_, &mock_ctx_, &mock_ch10_time_),
         mock_tmats_(&mock_ctx_), mock_tdp_(&mock_ctx_), mock_milstd1553_(&mock_ctx_), mock_vid_(&mock_ctx_),
         mock_eth_(&mock_ctx_), mock_arinc429_(&mock_ctx_), mock_hdr_(&mock_ctx_)
     {
@@ -430,7 +429,7 @@ TEST_F(Ch10PacketTest, ParseBodyComputerGeneratedDataF1)
     EXPECT_CALL(mock_hdr_, GetHeader()).WillOnce(Return(&hdr_fmt));
     EXPECT_CALL(mock_ctx_, IsPacketTypeEnabled(Ch10PacketType::COMPUTER_GENERATED_DATA_F1))
         .WillOnce(Return(true));
-    EXPECT_CALL(mock_tmats_, Parse(_, tmats_vec_)).WillOnce(Return(Ch10Status::OK));
+    EXPECT_CALL(mock_tmats_, Parse(_)).WillOnce(Return(Ch10Status::OK));
 
     p_.ParseBody();
     EXPECT_EQ(Ch10PacketType::COMPUTER_GENERATED_DATA_F1, p_.current_pkt_type);

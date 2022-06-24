@@ -25,6 +25,8 @@ class MockCh10Context: public Ch10Context
     MOCK_CONST_METHOD0(GetChannelIDToMinVideoTimestampMap, std::map<uint16_t, uint64_t>());
     MOCK_CONST_METHOD0(GetChannelIDToLabelsMap, std::map<uint32_t, std::set<uint16_t>>());
     MOCK_CONST_METHOD0(GetChannelIDToBusNumbersMap, std::map<uint32_t, std::set<uint16_t>>());
+    MOCK_CONST_METHOD0(GetTMATSMatter, std::string());
+    MOCK_CONST_METHOD0(GetParsedPacketTypes, const std::set<Ch10PacketType>&());
 };
 
 

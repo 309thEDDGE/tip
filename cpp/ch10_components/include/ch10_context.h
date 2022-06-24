@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <string>
 #include <map>
 #include <vector>
 #include <unordered_map>
@@ -160,6 +161,9 @@ class Ch10Context
     std::vector<TDF1CSDWFmt> tdf1csdw_vec_;
     std::vector<uint64_t> tdp_abs_time_vec_;
 
+    // Hold TMATS matter for later recording
+    std::string tmats_matter_;
+
    public:
     const uint16_t& thread_id;
     const uint64_t& absolute_position;
@@ -208,6 +212,10 @@ class Ch10Context
     { return chanid_labels_map_; } 
     virtual std::map<uint32_t, std::set<uint16_t>> GetChannelIDToBusNumbersMap() const
     { return chanid_busnumbers_map_; } 
+    virtual std::string GetTMATSMatter() const { return tmats_matter_; } 
+    virtual void AddTMATSMatter(const std::string& matter) { tmats_matter_ += matter; }
+
+    virtual const std::set<Ch10PacketType>& GetParsedPacketTypes() const { return parsed_packet_types_; }
 
 
     /*
