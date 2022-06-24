@@ -12,7 +12,6 @@ COPY --chown=jovyan:jovyan ./conf/ /opt/data/conf/
 ENV ARTIFACT_DIR=".ci_artifacts/build-metadata/build-artifacts"
 ENV CI_JOB_TOKEN="$CI_JOB_TOKEN"
 
-
 WORKDIR /home/jovyan
 
 COPY --chown=jovyan:jovyan $ARTIFACT_DIR/local_channel.tar .
