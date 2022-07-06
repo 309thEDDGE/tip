@@ -24,7 +24,7 @@ Use `markdown_to_html.py` in the tip_scripts directory to convert md file to htm
 ## CMake Build
 
 ### Setup
-
+ 
 #### Source
 
 * `cd` to TIP root dir (let's call it `tip/`)
