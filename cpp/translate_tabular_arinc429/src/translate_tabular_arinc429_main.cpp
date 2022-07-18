@@ -12,7 +12,7 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     bool show_dts_info = false;
     std::string high_level_description("Translate parsed ARINC429 data in Parquet format to "
         "engineering units, grouped into word-specific Parquet tables.");
-    if(!ConfigureTranslatorCLI429(cli_group, config, help_requested, show_version, 
+    if(!ConfigureTranslatorCLI429(cli_group, config, help_requested, show_version,
         show_dts_info, high_level_description))
     {
         printf("ConfigureTranslatorCLI failed\n");
@@ -41,7 +41,7 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     if(show_dts_info && nickname == "clidts")
     {
         printf("Raw DTS429 schema (yaml-formatted):\n%s\n\n", dts_429_schema.c_str());
-        printf("%s\n\n%s\n\n%s\n\n", dts_429_word_explanation.c_str(), 
+        printf("%s\n\n%s\n\n%s\n\n", dts_429_word_explanation.c_str(),
             dts_429_parameter_defs.c_str(), dts_429_suppl_labels.c_str());
         return 0;
     }
@@ -51,7 +51,7 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     ManagedPath icd_path;
     ManagedPath output_dir;
     ManagedPath log_dir;
-    if (!transtab429::ValidatePaths(config.input_data_path_str_, config.input_dts_path_str_, 
+    if (!transtab429::ValidatePaths(config.input_data_path_str_, config.input_dts_path_str_,
         config.output_path_str_, config.log_path_str_, input_path, icd_path,
         output_dir, log_dir, &av))
         return 0;
@@ -59,7 +59,7 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     if(av.CheckExtension(icd_path.RawString(), {"yaml", "yml"}))
     {
         YamlSV ysv;
-        std::string icd_string; 
+        std::string icd_string;
         if(!av.ValidateDocument(icd_path, icd_string))
             return 0;
         std::vector<LogItem> log_items;
@@ -144,8 +144,10 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     SPDLOG_INFO("Translated data output dir: {:s}", transl_output_dir.RawString());
 
     std::set<std::string> translate_word_names;
+    std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> chanid_busnum_labels;
+
     if (!transtab429::Translate(thread_count, input_path, output_dir, arinc429_dts_data,
-                   transl_output_dir, output_base_name, translate_word_names))
+                   transl_output_dir, output_base_name, translate_word_names, chanid_busnum_labels))
 
     {
         SPDLOG_WARN(
@@ -160,7 +162,7 @@ int TranslateTabularARINC429Main(int argc, char** argv)
 
     transtab429::RecordMetadata(config, transl_output_dir, icd_path,
                                 input_path, translate_word_names, prov_data,
-                                parser_md_doc);
+                                parser_md_doc, chanid_busnum_labels);
 
     // Avoid deadlock in windows, see
     // http://stackoverflow.com/questions/10915233/stdthreadjoin-hangs-if-called-after-main-exits-when-using-vs2012-rc
@@ -172,7 +174,7 @@ int TranslateTabularARINC429Main(int argc, char** argv)
 namespace transtab429
 {
     bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
-                    const std::string& str_output_dir, const std::string& str_log_dir, 
+                    const std::string& str_output_dir, const std::string& str_log_dir,
                     ManagedPath& input_path, ManagedPath& icd_path,
                     ManagedPath& output_dir, ManagedPath& log_dir, ArgumentValidation* av)
     {
@@ -371,7 +373,8 @@ namespace transtab429
             const ManagedPath& output_dir, const ARINC429Data& icd,
             const ManagedPath& translated_data_dir,
             const ManagedPath& output_base_name,
-            std::set<std::string>& translated_msg_names)
+            std::set<std::string>& translated_msg_names,
+            std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>>& chanid_busnum_labels_map)
     {
         // Get list of input files
         bool success = false;
@@ -417,10 +420,16 @@ namespace transtab429
         std::shared_ptr<TranslateTabularContextARINC429> ctx;
         for (size_t i = 0; i < managers.size(); i++)
         {
+            std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> temp_chanid_busname_labels;
+
             ctx = std::dynamic_pointer_cast<TranslateTabularContextARINC429>(
                 managers[i]->GetContext());
             translated_msg_names.insert(ctx->translated_msg_names.begin(),
                                         ctx->translated_msg_names.end());
+
+            temp_chanid_busname_labels = ctx->GetChanidBusnameLabels();
+            chanid_busnum_labels_map.insert(temp_chanid_busname_labels.begin(),
+                                        temp_chanid_busname_labels.end());
         }
 
         return true;
@@ -431,7 +440,8 @@ namespace transtab429
                         const ManagedPath& dts_path,
                         const ManagedPath& input_path,
                         const std::set<std::string>& translated_messages,
-                        const ProvenanceData& prov_data, const TIPMDDocument& parser_md_doc)
+                        const ProvenanceData& prov_data, const TIPMDDocument& parser_md_doc,
+                        const std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>>& chanid_busnum_labels)
 
     {
         TIPMDDocument md;
@@ -486,6 +496,10 @@ namespace transtab429
         // Record translated messages.
         md.runtime_category_->SetArbitraryMappedValue("translated_messages",
             translated_messages);
+
+        // Record relationship between translated: chanid -> busnum -> [labels]
+        md.runtime_category_->SetArbitraryMappedValue("translated_chanid_busnum_labels_mapping",
+            chanid_busnum_labels);
 
         // Get a string containing the complete metadata output and
         // and write it to the yaml file.

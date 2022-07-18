@@ -7,6 +7,7 @@
 #include <vector>
 #include <set>
 #include <unordered_map>
+#include <map>
 
 
 /*
@@ -59,6 +60,7 @@ private:
     std::vector<uint8_t> parity_;
 
     std::unordered_map<std::string, size_t> arinc_word_name_to_unique_index_map_;
+    std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> chanid_busnum_labels_;
 
 
 public:
@@ -67,6 +69,10 @@ public:
     TranslateTabularContextARINC429(ARINC429Data icd);
     virtual ~TranslateTabularContextARINC429() {}
 
+    virtual std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> GetChanidBusnameLabels()
+    {
+        return chanid_busnum_labels_;
+    }
 
     //////////////////////////////////////////////////////////////////
     //                     Internal Functions
@@ -131,7 +137,7 @@ public:
 
 
     // Override of TranslateTabularContextBase. Creates a TranslatableARINC429Table
-    // and adds it as the TranslatableTableBase class to the table_map. 
+    // and adds it as the TranslatableTableBase class to the table_map.
     virtual bool CreateTranslatableTable(const std::string& name, size_t row_group_size,
                             size_t index,
                             std::unordered_map<size_t, std::shared_ptr<TranslatableTableBase>>& table_map,
@@ -148,10 +154,10 @@ public:
 
     // Similar to TranslateTabularParquet::AppendTimeAndRawDataToTable with the
     // addition of the SSM argument.
-    bool AppendTimeAndRawDataToTable(const size_t& thread_index, 
+    bool AppendTimeAndRawDataToTable(const size_t& thread_index,
         std::shared_ptr<TranslatableTableBase> table, const uint8_t* time_data,
-        const uint8_t* raw_data, const size_t& raw_data_count, 
-        const std::string& table_name, int8_t sign); 
+        const uint8_t* raw_data, const size_t& raw_data_count,
+        const std::string& table_name, int8_t sign);
 
 };
 
@@ -175,7 +181,7 @@ bool TranslateTabularContextARINC429::AppendExplicitSignColumn(
             return false;
         }
 
-        std::shared_ptr<TranslatableARINC429Table> arinc_table_ptr = 
+        std::shared_ptr<TranslatableARINC429Table> arinc_table_ptr =
             std::dynamic_pointer_cast<TranslatableARINC429Table>(table_ptr);
         if (!arinc_table_ptr->AppendExplicitSignTranslatableColumn<RawType, TranslatedType>(
                 col_name, ridealong, arrow_type, icd_elem))

@@ -391,6 +391,7 @@ void Ch10Context::UpdateARINC429Maps(const uint32_t& chanid,
 {
     chanid_labels_map_[chanid].insert(data_header->label);
     chanid_busnumbers_map_[chanid].insert(data_header->bus);
+    chanid_busnumbers_labels_map_[chanid][data_header->bus].insert(data_header->label);
 }
 
 bool Ch10Context::CheckConfiguration(

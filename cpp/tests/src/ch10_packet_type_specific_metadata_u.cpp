@@ -21,7 +21,7 @@ class Ch10PacketTypeSpecificMetadataTest : public ::testing::Test
         Ch10PacketTypeSpecificMetadata pm_;
         Ch10PacketTypeSpecificMetadataFunctions fm_;
         bool result_;
-        
+
         Ch10PacketTypeSpecificMetadataTest() : pm_(), fm_(), result_(false)
         {}
 };
@@ -46,7 +46,7 @@ TEST_F(Ch10PacketTypeSpecificMetadataTest, RecordMilStd1553F1SpecificMetadataCom
 
     MockCh10PacketTypeSpecificMetadataFunctions func_mock;
     std::map<uint32_t, std::set<uint16_t>> output_remoteaddr_map{{321, {10, 12, 13}}};
-    EXPECT_CALL(func_mock, CombineChannelIDToLRUAddressesMetadata(_, 
+    EXPECT_CALL(func_mock, CombineChannelIDToLRUAddressesMetadata(_,
         chanid_lruaddr1_maps, chanid_lruaddr2_maps)).WillOnce(
             DoAll(SetArgReferee<0>(output_remoteaddr_map), Return(false)));
 
@@ -74,7 +74,7 @@ TEST_F(Ch10PacketTypeSpecificMetadataTest, RecordMilStd1553F1SpecificMetadataCom
 
     MockCh10PacketTypeSpecificMetadataFunctions func_mock;
     std::map<uint32_t, std::set<uint16_t>> output_remoteaddr_map{{321, {10, 12, 13}}};
-    EXPECT_CALL(func_mock, CombineChannelIDToLRUAddressesMetadata(_, 
+    EXPECT_CALL(func_mock, CombineChannelIDToLRUAddressesMetadata(_,
         chanid_lruaddr1_maps, chanid_lruaddr2_maps)).WillOnce(
             DoAll(SetArgReferee<0>(output_remoteaddr_map), Return(true)));
 
@@ -115,7 +115,7 @@ TEST_F(Ch10PacketTypeSpecificMetadataTest, RecordMilStd1553F1SpecificMetadata)
 
     MockCh10PacketTypeSpecificMetadataFunctions func_mock;
     std::map<uint32_t, std::set<uint16_t>> output_remoteaddr_map{{321, {10, 12, 13}}};
-    EXPECT_CALL(func_mock, CombineChannelIDToLRUAddressesMetadata(_, 
+    EXPECT_CALL(func_mock, CombineChannelIDToLRUAddressesMetadata(_,
         chanid_lruaddr1_maps, chanid_lruaddr2_maps)).WillOnce(
             DoAll(SetArgReferee<0>(output_remoteaddr_map), Return(true)));
 
@@ -139,7 +139,7 @@ TEST_F(Ch10PacketTypeSpecificMetadataTest, RecordMilStd1553F1SpecificMetadata)
     ASSERT_TRUE(chanid_lruaddrs_node.IsMap());
     YAML::Node chanid_lruaddrs_set_node = chanid_lruaddrs_node["321"];
     ASSERT_TRUE(chanid_lruaddrs_set_node.IsSequence());
-    EXPECT_THAT(chanid_lruaddrs_set_node.as<std::vector<uint16_t>>(), 
+    EXPECT_THAT(chanid_lruaddrs_set_node.as<std::vector<uint16_t>>(),
         ::testing::UnorderedElementsAre(10, 12, 13));
 
     YAML::Node chanid_commwords_node = runtime.node["chanid_to_comm_words"];
@@ -178,10 +178,10 @@ TEST_F(Ch10PacketTypeSpecificMetadataTest, RecordVideoDataF0SpecificMetadata)
     MockCh10PacketTypeSpecificMetadataFunctions func_mock;
 
     std::map<uint16_t, uint64_t> output_min_timestamp_map{{34, 1982394939}, {35, 198384050}};
-    EXPECT_CALL(func_mock, CreateChannelIDToMinVideoTimestampsMetadata(_, 
+    EXPECT_CALL(func_mock, CreateChannelIDToMinVideoTimestampsMetadata(_,
         worker_chanid_to_mintimestamps_maps)).WillOnce(
             SetArgReferee<0>(output_min_timestamp_map));
-    
+
     MDCategoryMap runtime("runtime");
     EXPECT_TRUE(pm_.RecordVideoDataF0SpecificMetadata(ctx_vec, &runtime, &func_mock));
 
@@ -198,7 +198,7 @@ TEST_F(Ch10PacketTypeSpecificMetadataTest, RecordARINC429F0SpecificMetadataCombi
     std::map<uint32_t, std::set<uint16_t>> chanid_labels_map2{{456, {43, 2}}};
     std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_label_maps{
         chanid_labels_map1, chanid_labels_map2};
-        
+
     MockCh10Context ctx1;
     MockCh10Context ctx2;
     std::vector<const Ch10Context*> ctx_vec{&ctx1, &ctx2};
@@ -212,7 +212,7 @@ TEST_F(Ch10PacketTypeSpecificMetadataTest, RecordARINC429F0SpecificMetadataCombi
         WillOnce(DoAll(SetArgReferee<0>(output_chanid_label_map), Return(false)));
 
     MDCategoryMap runtime("runtime");
-    MockTMATSData tmats_mock;    
+    MockTMATSData tmats_mock;
     EXPECT_FALSE(pm_.RecordARINC429F0SpecificMetadata(ctx_vec, &runtime, &tmats_mock, &func_mock));
 
 }
@@ -223,7 +223,7 @@ TEST_F(Ch10PacketTypeSpecificMetadataTest, RecordARINC429F0SpecificMetadataCombi
     std::map<uint32_t, std::set<uint16_t>> chanid_labels_map2{{456, {43, 2}}};
     std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_label_maps{
         chanid_labels_map1, chanid_labels_map2};
-        
+
     MockCh10Context ctx1;
     MockCh10Context ctx2;
     std::vector<const Ch10Context*> ctx_vec{&ctx1, &ctx2};
@@ -237,7 +237,7 @@ TEST_F(Ch10PacketTypeSpecificMetadataTest, RecordARINC429F0SpecificMetadataCombi
         WillOnce(DoAll(SetArgReferee<0>(output_chanid_label_map), Return(true)));
 
     MDCategoryMap runtime("runtime");
-    MockTMATSData tmats_mock;    
+    MockTMATSData tmats_mock;
 
     std::map<uint32_t, std::set<uint16_t>> busnum_map1{{104, {549, 828}}};
     std::map<uint32_t, std::set<uint16_t>> busnum_map2{{14, {54, 82}}};
@@ -260,7 +260,7 @@ TEST_F(Ch10PacketTypeSpecificMetadataTest, RecordARINC429F0SpecificMetadata)
     std::map<uint32_t, std::set<uint16_t>> chanid_labels_map2{{456, {43, 2}}};
     std::vector<std::map<uint32_t, std::set<uint16_t>>> chanid_label_maps{
         chanid_labels_map1, chanid_labels_map2};
-        
+
     MockCh10Context ctx1;
     MockCh10Context ctx2;
     std::vector<const Ch10Context*> ctx_vec{&ctx1, &ctx2};
@@ -274,7 +274,7 @@ TEST_F(Ch10PacketTypeSpecificMetadataTest, RecordARINC429F0SpecificMetadata)
         WillOnce(DoAll(SetArgReferee<0>(output_chanid_label_map), Return(true)));
 
     MDCategoryMap runtime("runtime");
-    MockTMATSData tmats_mock;    
+    MockTMATSData tmats_mock;
 
     std::map<uint32_t, std::set<uint16_t>> busnum_map1{{104, {549, 828}}};
     std::map<uint32_t, std::set<uint16_t>> busnum_map2{{14, {54, 82}}};
@@ -502,6 +502,34 @@ TEST_F(Ch10PacketTypeSpecificMetadataTest, CombineChannelIDToBusNumbersMetadata)
 
     result_ = fm_.CombineChannelIDToBusNumbersMetadata(output,
                                                   chanid_busnumbers_maps);
+    EXPECT_TRUE(result_);
+    EXPECT_EQ(expected, output);
+}
+
+TEST_F(Ch10PacketTypeSpecificMetadataTest, CombineChannelIDToBusNumbersToLabelsMetadata)
+{
+    std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> output;
+    std::vector<std::map<uint32_t, std::map<uint32_t,
+        std::set<uint16_t>>>> chanid_busnumbers_labels_maps;
+
+    std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> map1_0 = {
+        {5, {{1, {194, 202}}, {2, {201}}}},
+        {10, {{1, {193, 202}}}}
+        };
+    std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> map1_1 = {
+        {5, {{1, {201}}}},
+        {10, {{1, {67}}}}
+        };
+
+    chanid_busnumbers_labels_maps.push_back(map1_0);
+    chanid_busnumbers_labels_maps.push_back(map1_1);
+
+    std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> expected = {
+        {5, {{1, {194, 201, 202}}, {2, {201}}}},
+        {10, {{1, {67, 193, 202}}}}};
+
+    result_ = fm_.CombineChannelIDToBusNumbersToLabelsMetadata(output,
+                                                  chanid_busnumbers_labels_maps);
     EXPECT_TRUE(result_);
     EXPECT_EQ(expected, output);
 }

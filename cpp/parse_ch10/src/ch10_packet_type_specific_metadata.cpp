@@ -5,7 +5,7 @@ Ch10PacketTypeSpecificMetadataFunctions::Ch10PacketTypeSpecificMetadataFunctions
 
 
 bool Ch10PacketTypeSpecificMetadata::RecordMilStd1553F1SpecificMetadata(
-    std::vector<const Ch10Context*> context_vec, 
+    std::vector<const Ch10Context*> context_vec,
     MDCategoryMap* runtime_metadata)
 {
     return RecordMilStd1553F1SpecificMetadata(context_vec, runtime_metadata, &funcs_);
@@ -27,7 +27,7 @@ bool Ch10PacketTypeSpecificMetadata::RecordARINC429F0SpecificMetadata(
 }
 
 bool Ch10PacketTypeSpecificMetadata::RecordMilStd1553F1SpecificMetadata(
-    std::vector<const Ch10Context*> context_vec, MDCategoryMap* runtime_metadata, 
+    std::vector<const Ch10Context*> context_vec, MDCategoryMap* runtime_metadata,
     Ch10PacketTypeSpecificMetadataFunctions* func)
 {
     // Obtain the tx and rx combined channel ID to LRU address map and
@@ -63,7 +63,7 @@ bool Ch10PacketTypeSpecificMetadata::RecordMilStd1553F1SpecificMetadata(
 }
 
 bool Ch10PacketTypeSpecificMetadata::RecordVideoDataF0SpecificMetadata(
-    std::vector<const Ch10Context*> context_vec, MDCategoryMap* runtime_metadata, 
+    std::vector<const Ch10Context*> context_vec, MDCategoryMap* runtime_metadata,
     Ch10PacketTypeSpecificMetadataFunctions* func)
 {
      // Get the channel ID to minimum time stamp map.
@@ -81,7 +81,7 @@ bool Ch10PacketTypeSpecificMetadata::RecordVideoDataF0SpecificMetadata(
     // total yaml text to file.
     runtime_metadata->SetArbitraryMappedValue("chanid_to_first_timestamp",
         output_min_timestamp_map);
-        
+
     return true;
 }
 
@@ -113,6 +113,19 @@ bool Ch10PacketTypeSpecificMetadata::RecordARINC429F0SpecificMetadata(
     runtime_metadata->SetArbitraryMappedValue("chanid_to_bus_numbers",
         output_chanid_busnumber_map);
 
+    // Obtain Channel Id to subchannel id to labels maps
+    std::vector<std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>>> chanid_busnumbers_labels_maps;
+    for (uint16_t worker_ind = 0; worker_ind < context_vec.size(); worker_ind++)
+        chanid_busnumbers_labels_maps.push_back(context_vec.at(worker_ind)->GetChannelIDToBusNumbersToLabelsMap());
+
+    std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> output_chanid_busnumbers_labels_map;
+    if (!func->CombineChannelIDToBusNumbersToLabelsMetadata(output_chanid_busnumbers_labels_map,
+                                                chanid_busnumbers_labels_maps))
+        return false;
+
+    runtime_metadata->SetArbitraryMappedValue("chanid_to_bus_numbers_to_labels",
+        output_chanid_busnumbers_labels_map);
+
     // Record ARINC429-specific TMATS data
     runtime_metadata->SetArbitraryMappedValue("tmats_chanid_to_429_format",
         tmats->GetChannelIDTo429Format());
@@ -120,7 +133,7 @@ bool Ch10PacketTypeSpecificMetadata::RecordARINC429F0SpecificMetadata(
         tmats->GetChannelIDTo429Subchans());
     runtime_metadata->SetArbitraryMappedValue("tmats_chanid_to_429_subchan_and_name",
         tmats->GetChannelIDTo429SubchanAndName());
-    
+
     return true;
 }
 
@@ -247,5 +260,42 @@ bool Ch10PacketTypeSpecificMetadataFunctions::CombineChannelIDToBusNumbersMetada
     return true;
 }
 
+bool Ch10PacketTypeSpecificMetadataFunctions::CombineChannelIDToBusNumbersToLabelsMetadata(
+    std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>>& output_chanid_busnumbers_labels_map,
+    const std::vector<std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>>>& chanid_busnumbers_labels_maps) const
+{
+    std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> output_map;
+
+    // iterate over vector of nested maps
+    for (size_t i = 0; i < chanid_busnumbers_labels_maps.size(); i++)
+    {
+        std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> temp_map = chanid_busnumbers_labels_maps.at(i);
+
+        // iterate chanid and nested busnum+labels map
+        std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>>::iterator it;
+        for (it = temp_map.begin(); it != temp_map.end();
+             it++)
+        {
+            uint32_t chanid = it->first;
+
+            //  iterate busnumber and set of labels
+            std::map<uint32_t, std::set<uint16_t>>::iterator it2;
+            for (it2 = it->second.begin(); it2 != it->second.end(); it2++)
+            {
+                uint32_t busnumber = it2->first;
+
+                // if a key missing from output_map
+                if (output_map.count(chanid) == 0 || output_map[chanid].count(busnumber) == 0)
+                    output_map[chanid][busnumber] = it2->second;
+                else
+                    output_map[chanid][busnumber].insert(it2->second.begin(), it2->second.end());
+            }
+        }
+    }
+
+    output_chanid_busnumbers_labels_map = output_map;
+
+    return true;
+}
 
 

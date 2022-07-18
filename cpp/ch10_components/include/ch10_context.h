@@ -122,6 +122,9 @@ class Ch10Context
     // Record mapping of ARINC 429 channel ID to IPDH bus number.
     std::map<uint32_t, std::set<uint16_t>> chanid_busnumbers_map_;
 
+    // Record mapping of channel id to IPDH bus number to labels on bus
+    std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> chanid_busnumbers_labels_map_;
+
     // Track the minimum (earliest) video timestamp per channel ID
     std::map<uint16_t, uint64_t> chanid_minvideotimestamp_map_;
 
@@ -151,7 +154,7 @@ class Ch10Context
 
     // Set of packet types which are in the pkt_type_config_map_
     // and enabled and which are queried for config
-    // status in IsPacketTypeEnabled(). This set is used to 
+    // status in IsPacketTypeEnabled(). This set is used to
     // identify the packet types which were parsed by the worker
     // associated with this Ch10Context instance.
     std::set<Ch10PacketType> parsed_packet_types_;
@@ -201,18 +204,20 @@ class Ch10Context
     void Initialize(const uint64_t& abs_pos, uint16_t id);
     virtual ~Ch10Context();
     virtual std::map<uint32_t, std::set<uint16_t>> GetChannelIDToRemoteAddr1Map() const
-    { return chanid_remoteaddr1_map_; } 
+    { return chanid_remoteaddr1_map_; }
     virtual std::map<uint32_t, std::set<uint16_t>> GetChannelIDToRemoteAddr2Map() const
-    { return chanid_remoteaddr2_map_; } 
+    { return chanid_remoteaddr2_map_; }
     virtual std::map<uint32_t, std::set<uint32_t>> GetChannelIDToCommWordsMap() const
-    { return chanid_commwords_map_; } 
+    { return chanid_commwords_map_; }
     virtual std::map<uint16_t, uint64_t> GetChannelIDToMinVideoTimestampMap() const
-    { return chanid_minvideotimestamp_map_; } 
+    { return chanid_minvideotimestamp_map_; }
     virtual std::map<uint32_t, std::set<uint16_t>> GetChannelIDToLabelsMap() const
-    { return chanid_labels_map_; } 
+    { return chanid_labels_map_; }
     virtual std::map<uint32_t, std::set<uint16_t>> GetChannelIDToBusNumbersMap() const
-    { return chanid_busnumbers_map_; } 
-    virtual std::string GetTMATSMatter() const { return tmats_matter_; } 
+    { return chanid_busnumbers_map_; }
+    virtual std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> GetChannelIDToBusNumbersToLabelsMap() const
+    { return chanid_busnumbers_labels_map_; }
+    virtual std::string GetTMATSMatter() const { return tmats_matter_; }
     virtual void AddTMATSMatter(const std::string& matter) { tmats_matter_ += matter; }
 
     virtual const std::set<Ch10PacketType>& GetParsedPacketTypes() const { return parsed_packet_types_; }
@@ -232,7 +237,7 @@ class Ch10Context
     /*
     Check if input packet type is enabled.
 
-    This function also curates a set of Ch10PacketType, 
+    This function also curates a set of Ch10PacketType,
     parsed_packet_types_, to which a type is inserted if
     the input to the function is in the pkt_type_config_map_ and
     the is configured to true, i.e., to be parsed.
@@ -256,8 +261,8 @@ class Ch10Context
         pkt_type    --> Ch10PacketType to be registered
 
     Return:
-        True if input pkt_type has not been found and 
-        registered via this function; false otherwise. 
+        True if input pkt_type has not been found and
+        registered via this function; false otherwise.
     */
     virtual bool RegisterUnhandledPacketType(const Ch10PacketType& pkt_type);
 
