@@ -143,28 +143,50 @@ class Ch10PacketTypeSpecificMetadataFunctions
             std::map<uint16_t, uint64_t>& output_chanid_to_mintimestamp_map,
             const std::vector<std::map<uint16_t, uint64_t>>& chanid_mintimestamp_maps) const;
 
+        /*
+        Combine channel ID to 429 IPDH Bus Numbers to 429 Word label maps from a vector of maps,
+        where each map in the vector corresponds to a map of observed channel ID
+        to 429 IPDH Bus Numbers to labels retrieved from a worker. The output map is used in
+        another function where it is recorded to metadata.
+
+        Args:
+        output_chanid_busnumbers_labels_map	--> Output map. Maps ch10 channel ID to set of all IPDH
+                                                 Bus Numbers to labels observed on the bus.
+        chanid_busnumbers_labels_maps		--> Vector of maps mapping ch10 channel ID to set of all IPDH
+                                                 Bus Numbers to 429 word labels observed on the bus.
+
+        Return:
+            True if no errors, false if errors occur and
+            execution ought to stop.
+        */
+        virtual bool CombineChannelIDToBusNumbersToLabelsMetadata(
+            std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>>&
+                                                            output_chanid_busnumbers_labels_map,
+            const std::vector<std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>>>&
+                                                            chanid_busnumbers_labels_maps) const;
+
 };
 
 class Ch10PacketTypeSpecificMetadata
 {
     private:
         Ch10PacketTypeSpecificMetadataFunctions funcs_;
-        
+
     public:
         Ch10PacketTypeSpecificMetadata() : funcs_()
-        {} 
+        {}
 
-        bool RecordMilStd1553F1SpecificMetadata(std::vector<const Ch10Context*> context_vec, 
+        bool RecordMilStd1553F1SpecificMetadata(std::vector<const Ch10Context*> context_vec,
             MDCategoryMap* runtime_metadata, Ch10PacketTypeSpecificMetadataFunctions* func);
 
         bool RecordVideoDataF0SpecificMetadata(std::vector<const Ch10Context*> context_vec,
             MDCategoryMap* runtime_metadata, Ch10PacketTypeSpecificMetadataFunctions* func);
 
         bool RecordARINC429F0SpecificMetadata(std::vector<const Ch10Context*> context_vec,
-            MDCategoryMap* runtime_metadata, const TMATSData* tmats, 
+            MDCategoryMap* runtime_metadata, const TMATSData* tmats,
             Ch10PacketTypeSpecificMetadataFunctions* func);
 
-        virtual bool RecordMilStd1553F1SpecificMetadata(std::vector<const Ch10Context*> context_vec, 
+        virtual bool RecordMilStd1553F1SpecificMetadata(std::vector<const Ch10Context*> context_vec,
             MDCategoryMap* runtime_metadata);
 
         virtual bool RecordVideoDataF0SpecificMetadata(std::vector<const Ch10Context*> context_vec,
