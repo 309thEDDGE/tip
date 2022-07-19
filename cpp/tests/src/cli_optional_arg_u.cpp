@@ -290,6 +290,28 @@ TEST_F(CLIOptionalArgTest, ParseStringUseSpecialConfigDefaultUseParentDirOf)
     EXPECT_EQ(expected, output);
 }
 
+TEST_F(CLIOptionalArgTest, ParseStringUseSpecialConfigDefaultUseParentDirOfLocalFile)
+{
+    std::string output = "";
+    user_str_ = "--test -v";
+    temp_label_ = "--test_opt";  
+    temp_short_label_ = "-t";  
+
+    ManagedPath cwd;
+    ManagedPath file_name("file.txt");
+
+    std::string special_config_input = file_name.RawString();
+    std::string expected = cwd.RawString();
+    std::string default_val = "nothing";
+    std::shared_ptr<CLIArg> optarg = CLIOptionalArg<std::string>::Make(temp_label_, 
+        temp_short_label_, temp_help_str_, default_val, output);
+    optarg->DefaultUseParentDirOf(special_config_input);
+    ASSERT_TRUE(optarg->Parse(user_str_));
+    EXPECT_FALSE(optarg->IsPresent());
+    EXPECT_FALSE(optarg->IsValid());
+    EXPECT_EQ(expected, output);
+}
+
 TEST_F(CLIOptionalArgTest, ParseStringUseSpecialConfigDefaultUseValueOf)
 {
     int output = 0;

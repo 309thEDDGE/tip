@@ -68,4 +68,19 @@ class MilStd1553F1DataHeaderCommWordOnlyFmt
     uint16_t comm_word2 : 16;
 };
 
+class MilStd1553F1StatusWordFmt
+{
+    public:
+        uint16_t terminal       : 1;
+        uint16_t dynbusctrl     : 1;
+        uint16_t subsys         : 1;
+        uint16_t busy           : 1;
+        uint16_t bcastrcv       : 1;
+        uint16_t                : 3;
+        uint16_t svcreq         : 1;
+        uint16_t instr          : 1;
+        uint16_t msgerr         : 1;
+        uint16_t rtaddr         : 5; 
+};
+
 #endif

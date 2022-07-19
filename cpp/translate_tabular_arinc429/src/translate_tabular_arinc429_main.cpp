@@ -23,7 +23,10 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     std::shared_ptr<CLIGroupMember> cli;
     fflush(stdout);
     if (!cli_group.Parse(argc, argv, nickname, cli))
+    {
+        printf("%s", cli_group.MakeHelpString().c_str());
         return 0;
+    }
     fflush(stdout);
 
     if (help_requested && nickname == "clihelp")

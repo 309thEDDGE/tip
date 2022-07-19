@@ -70,7 +70,8 @@ Ch10Status Ch101553F1Component::ParseMessages(const uint32_t& msg_count, const u
         // Append parsed data to the file.
         ctx_->milstd1553f1_pq_writer->Append(abs_time_, ctx_->tdp_doy,
                                              *milstd1553f1_csdw_elem_.element, milstd1553f1_data_hdr_commword_ptr_,
-                                             payload_ptr_, ctx_->channel_id, calc_payload_word_count_, is_payload_incomplete_);
+                                             payload_ptr_, ctx_->channel_id, calc_payload_word_count_, is_payload_incomplete_,
+                                             status_word1_, status_word2_);
     }
 
     return Ch10Status::OK;
@@ -94,6 +95,8 @@ Ch10Status Ch101553F1Component::ParsePayload(const uint8_t*& data,
 
     // Set the payload pointer to the position of data pointer.
     payload_ptr_ = (const uint16_t*)data;
+
+    ParseStatusWords(payload_ptr_, data_header, status_word1_, status_word2_);
 
     // Calculate the message payload count from the message length.
     // We are interested in calculating the payload count to know if
@@ -168,4 +171,83 @@ uint16_t Ch101553F1Component::GetWordCountFromDataHeader(
     if (data_header->word_count1 == 0)
         return 32;
     return data_header->word_count1;
+}
+
+void Ch101553F1Component::ParseStatusWords(const uint16_t*& payload, 
+    const MilStd1553F1DataHeaderCommWordFmt*& header, 
+    const MilStd1553F1StatusWordFmt*& status1, 
+    const MilStd1553F1StatusWordFmt*& status2)
+{
+    // RT to RT
+    if(header->RR == 1)
+    {
+        // + 4 (rxcomm, txcomm, status . . . . status)
+        if((header->length / 2) >= (header->word_count1 + 4))
+        {
+            status1 = reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 2);
+            status2 = reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 3 + header->word_count1);
+        }
+        else if((header->length / 2) > 2)
+        {
+            status1 = reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 2);
+            status2 = nullptr;
+        }
+        else
+        {
+            status1 = nullptr;
+            status2 = nullptr;
+        }
+    }
+    // Mode code
+    else if(header->sub_addr1 == 0 || header->sub_addr1 == 31)
+    {
+        status1 = nullptr;
+        status2 = nullptr;
+
+        // non broadcast
+        if(header->sub_addr1 == 0)
+        {
+            // with data word
+            if(header->word_count1 > 15)
+            {
+                // (modecomm, status, data)
+                if(header->tx1 == 1)
+                {
+                    if((header->length / 2) >= 2)
+                        status1 = reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 1);
+                }
+                // (modecomm, data, status)
+                else
+                {
+                    if((header->length / 2) >= 3)
+                        status1 = reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 2);
+                }
+            }
+            // without data word (modecomm, status)
+            else if((header->length / 2) >= 2)
+                status1 = reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 1);
+        }
+    }
+    // BC to RT
+    else if(header->tx1 == 0)
+    {
+        status1 = nullptr;
+        status2 = nullptr;
+
+        // + 2 (rxcomm . . . status)
+        if((header->length / 2) >= (header->word_count1 + 2))
+        {
+            status1 = reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 1 + header->word_count1);
+        }
+    }
+    // RT to BC
+    else if(header->tx1 == 1)
+    {
+        status1 = nullptr;
+        status2 = nullptr;
+
+        // + 2 (txcomm, status . . . )
+        if((header->length / 2) >= 2)
+            status1 = reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 1);
+    }
 }
