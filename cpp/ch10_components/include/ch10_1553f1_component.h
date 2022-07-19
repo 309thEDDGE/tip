@@ -76,9 +76,14 @@ class Ch101553F1Component : public Ch10PacketComponent
     // indicates a 32-word payload.
     int8_t expected_payload_word_count_;
 
+    // Pointers to status words to avoid copying    
+    const MilStd1553F1StatusWordFmt* status_word1_;
+    const MilStd1553F1StatusWordFmt* status_word2_;
+
     Ch10Time ch10_time_;
 
    public:
+
     const uint64_t& abs_time;
     const int8_t& expected_payload_word_count;
     const int8_t& calc_payload_word_count;
@@ -110,9 +115,14 @@ class Ch101553F1Component : public Ch10PacketComponent
                                                       milstd1553f1_data_hdr_commword_ptr_(nullptr),
                                                       payload_ptr_ptr(&payload_ptr_),
                                                       ch10_time_(),
-                                                      ipts_time_(0)
+                                                      ipts_time_(0),
+                                                      status_word1_(nullptr), status_word2_(nullptr)
     {
     }
+
+    void GetStatusWordPointers(const MilStd1553F1StatusWordFmt*& word1, 
+        const MilStd1553F1StatusWordFmt*& word2) const
+    { word1 = status_word1_; word2 = status_word2_; }
 
     virtual Ch10Status Parse(const uint8_t*& data);
 
@@ -139,6 +149,23 @@ class Ch101553F1Component : public Ch10PacketComponent
                             const MilStd1553F1DataHeaderCommWordFmt* data_header);
 
     uint16_t GetWordCountFromDataHeader(const MilStd1553F1DataHeaderCommWordFmt* data_header);
+
+
+    /*
+    Set status word pointers to addresses which contain status words.
+    If a second status word does not exist, set the second status word
+    pointer to nullptr.
+
+    Args:
+        payload     --> Pointer to position of beginning of 1553 data
+                        payload, including comm words, etc. 
+        header      --> Pointer to ch10 message-level header and comm words
+        status1     --> Pointer to status word 1
+        status2     --> Pointer to status word 2
+
+    */
+    void ParseStatusWords(const uint16_t*& payload, const MilStd1553F1DataHeaderCommWordFmt*& header, 
+        const MilStd1553F1StatusWordFmt*& status1, const MilStd1553F1StatusWordFmt*& status2);
 };
 
 #endif
