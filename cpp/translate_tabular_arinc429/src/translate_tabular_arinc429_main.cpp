@@ -135,7 +135,7 @@ int TranslateTabularARINC429Main(int argc, char** argv)
 
     if (config.auto_sys_limits_)
     {
-        if (!transtab429::SetSystemLimits(thread_count, arinc429_message_count))
+        if (!transtab429::SetSystemLimits(static_cast<uint8_t>(thread_count), arinc429_message_count))
             return 0;
     }
 
@@ -454,7 +454,7 @@ namespace transtab429
         std::string label = ch10packettype_to_string_map.at(Ch10PacketType::ARINC429_F0);
         std::string dts429hash = prov_data.hash;
         std::string parsed429uuid = parser_md_doc.uid_category_->node.as<std::string>();
-        std::string uid = Sha256(dts429hash + prov_data.time +
+        std::string uid = CalcSHA256(dts429hash + prov_data.time +
             prov_data.tip_version + parsed429uuid);
 
         md.type_category_->SetScalarValue("translated_" + label);

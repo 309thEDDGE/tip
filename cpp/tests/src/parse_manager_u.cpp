@@ -700,7 +700,7 @@ TEST_F(ParseManagerTest, ParseCh10InitialStartThreadsFail)
     bool append = false;
 
     std::vector<uint16_t> active_workers1;
-    EXPECT_CALL(pm, StartThreads(append, _, work_units.size(), config, work_unit_ptrs, &pmf))
+    EXPECT_CALL(pm, StartThreads(append, _, static_cast<uint16_t>(work_units.size()), config, work_unit_ptrs, &pmf))
         .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers1), Return(false)));
 
     ASSERT_FALSE(ParseCh10(work_unit_ptrs, &pmf, &pm, config));
@@ -723,7 +723,7 @@ TEST_F(ParseManagerTest, ParseCh10InitialStopThreadsFail)
     bool append = false;
 
     std::vector<uint16_t> active_workers1{3, 4};
-    EXPECT_CALL(pm, StartThreads(append, _, work_units.size(), config, work_unit_ptrs, &pmf))
+    EXPECT_CALL(pm, StartThreads(append, _, static_cast<uint16_t>(work_units.size()), config, work_unit_ptrs, &pmf))
         .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers1), Return(true)));
 
     std::vector<uint16_t> active_workers2;
@@ -750,7 +750,7 @@ TEST_F(ParseManagerTest, ParseCh10SingleThreadEarlyReturn)
     bool append = false;
 
     std::vector<uint16_t> active_workers1{0};
-    EXPECT_CALL(pm, StartThreads(append, _, work_units.size(), config, work_unit_ptrs, &pmf))
+    EXPECT_CALL(pm, StartThreads(append, _, static_cast<uint16_t>(work_units.size()), config, work_unit_ptrs, &pmf))
         .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers1), Return(true)));
 
     std::vector<uint16_t> active_workers2;
@@ -777,7 +777,7 @@ TEST_F(ParseManagerTest, ParseCh10FinalStartThreadsFail)
     bool append = false;
 
     std::vector<uint16_t> active_workers1{3, 4};
-    EXPECT_CALL(pm, StartThreads(append, _, work_units.size(), config, work_unit_ptrs, &pmf))
+    EXPECT_CALL(pm, StartThreads(append, _, static_cast<uint16_t>(work_units.size()), config, work_unit_ptrs, &pmf))
         .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers1), Return(true)));
 
     std::vector<uint16_t> active_workers2;
@@ -786,7 +786,7 @@ TEST_F(ParseManagerTest, ParseCh10FinalStartThreadsFail)
 
     append = true;
     std::vector<uint16_t> active_workers3{2, 3};
-    EXPECT_CALL(pm, StartThreads(append, active_workers2, work_units.size()-1, config, 
+    EXPECT_CALL(pm, StartThreads(append, active_workers2, static_cast<uint16_t>(work_units.size()-1), config, 
         work_unit_ptrs, &pmf)).WillOnce(::testing::DoAll(
             ::testing::SetArgReferee<1>(active_workers3), Return(false)));
 
@@ -810,7 +810,7 @@ TEST_F(ParseManagerTest, ParseCh10FinalStopThreadsFail)
     bool append = false;
 
     std::vector<uint16_t> active_workers1{3, 4};
-    EXPECT_CALL(pm, StartThreads(append, _, work_units.size(), config, work_unit_ptrs, &pmf))
+    EXPECT_CALL(pm, StartThreads(append, _, static_cast<uint16_t>(work_units.size()), config, work_unit_ptrs, &pmf))
         .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers1), Return(true)));
 
     std::vector<uint16_t> active_workers2;
@@ -819,7 +819,7 @@ TEST_F(ParseManagerTest, ParseCh10FinalStopThreadsFail)
 
     append = true;
     std::vector<uint16_t> active_workers3{2, 3};
-    EXPECT_CALL(pm, StartThreads(append, active_workers2, work_units.size()-1, config, 
+    EXPECT_CALL(pm, StartThreads(append, active_workers2, static_cast<uint16_t>(work_units.size()-1), config, 
         work_unit_ptrs, &pmf)).WillOnce(::testing::DoAll(
             ::testing::SetArgReferee<1>(active_workers3), Return(true)));
 
@@ -847,7 +847,7 @@ TEST_F(ParseManagerTest, ParseCh10)
     bool append = false;
 
     std::vector<uint16_t> active_workers1{3, 4};
-    EXPECT_CALL(pm, StartThreads(append, _, work_units.size(), config, work_unit_ptrs, &pmf))
+    EXPECT_CALL(pm, StartThreads(append, _, static_cast<uint16_t>(work_units.size()), config, work_unit_ptrs, &pmf))
         .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers1), Return(true)));
 
     std::vector<uint16_t> active_workers2;
@@ -856,7 +856,7 @@ TEST_F(ParseManagerTest, ParseCh10)
 
     append = true;
     std::vector<uint16_t> active_workers3{2, 3};
-    EXPECT_CALL(pm, StartThreads(append, active_workers2, work_units.size()-1, config, 
+    EXPECT_CALL(pm, StartThreads(append, active_workers2, static_cast<uint16_t>(work_units.size()-1), config, 
         work_unit_ptrs, &pmf)).WillOnce(::testing::DoAll(
             ::testing::SetArgReferee<1>(active_workers3), Return(true)));
 

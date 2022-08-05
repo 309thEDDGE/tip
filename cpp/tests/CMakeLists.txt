@@ -119,15 +119,17 @@ target_include_directories(tests
 )
 
 target_link_libraries(tests
-    PUBLIC common parsech10_lib ch10_parquet ch10ethernet parquet_context ch10comp
-    dts_1553 dts_429 tiputil parquet_compare pq_vid_extract yamlsv
-    arrow_shared parquet spdlog::spdlog translate_tabular translate_tabular_1553
-    metadata cli translate_tabular_arinc429
+    PUBLIC common yaml-cpp tiputil spdlog::spdlog yamlsv cli metadata 
+    sha256 ch10_parquet parquet_context ch10ethernet ch10comp
+    dts_1553 dts_429 parquet_compare pq_vid_extract 
+    translate_tabular translate_tabular_1553
+    translate_tabular_arinc429 parsech10_lib 
     PRIVATE ${GTEST_LIBRARIES}
 )
 
 install(
     TARGETS tests
+    DESTINATION ${out_bin_dir}
 )
 
 enable_testing()

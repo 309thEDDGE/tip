@@ -52,29 +52,8 @@ class ContainerArg
             initialized; false otherwise.
         */
         virtual bool CheckFromCharsResultExactMatch(std::from_chars_result& status,
-            const std::string& input_str) 
-        {
-            if(status.ec == std::errc::invalid_argument) 
-            {
-                std::cout << "CheckFromCharsResultExactMatch: invalid_argument" << std::endl;
-                std::cout << "pointer: " << std::quoted(status.ptr) << std::endl;
-                return false;
-            }
-            if(status.ec == std::errc::result_out_of_range)
-            {
-                std::cout << "CheckFromCharsResultExactMatch: result_out_of_range" << std::endl;
-                std::cout << "pointer: " << std::quoted(status.ptr) << std::endl;
-                return false;
-            }
+            const std::string& input_str);
 
-            if (status.ptr != (input_str.data() + input_str.size()))
-            {
-                std::cout << "pointer: " << std::quoted(status.ptr) << std::endl;
-                return false;
-            }
-
-            return true;
-        }
 
 
         /*
@@ -91,30 +70,14 @@ class ContainerArg
             if some error occurs.
         */
         virtual bool SplitOnColon(const std::string& user_input, std::string& key,
-            std::string& val)
-        {
-            if(user_input.find(':') == std::string::npos)
-                return false;
+            std::string& val);
 
-            std::vector<std::string> comp = pt_.Split(user_input, ':');
-            if(comp.size() != 2)
-                return false;
-
-            key = comp.at(0);
-            val = comp.at(1);
-
-            if (key == "" || val == "")
-                return false;
-
-            return true;
-        }
 
         template<typename T>
         bool ParseComponent(const std::string& input, T& parsed);
        
 };
 
-inline const std::string ContainerArg::whitespace_code = "--..--";
 
 template<typename T>
 bool ContainerArg::ParseComponent(const std::string& input, T& parsed)
@@ -245,35 +208,6 @@ bool ContainerArgMap<KeyType, ValType>::Parse(const std::string& user_input)
     return true;
 }
 
-// template<typename ValType>
-// class ContainerArgScalar : public ContainerArg
-// {
-//     private:
-//         ValType* scalar_ptr_;
-
-//     public:
-//         ContainerArgScalar(ValType& input_scalar) : ContainerArg(), 
-//             scalar_ptr_(&input_scalar) {}
-//         virtual ~ContainerArgScalar() {}
-
-//         /*
-//         Parse single user input value by casting to ValType
-//         and insert into *vec_ptr_ if no errors occur.
-//         */
-//         virtual bool Parse(const std::string& user_input);
-// };
-
-// template<typename ValType>
-// bool ContainerArgScalar<ValType>::Parse(const std::string& user_input)
-// {
-//     ValType result{};
-//     if(!ParseComponent(user_input, result))
-//         return false;
-
-//     *(this->scalar_ptr_) = result;
-//     return true;
-// }
-
 template<typename ValType>
 inline std::shared_ptr<ContainerArg> MakeContainerArg(std::vector<ValType>& input_vec,
     ValType& parsed_val)
@@ -291,13 +225,5 @@ inline std::shared_ptr<ContainerArg> MakeContainerArg(std::map<KeyType, ValType>
         input_map, parsed_key, parsed_val);
     return carg;
 }
-
-// template<typename ValType>
-// inline std::shared_ptr<ContainerArg> MakeContainerArg(ValType& input_val)
-// {
-//     std::shared_ptr<ContainerArg> carg = std::make_shared<ContainerArgScalar<ValType>>(
-//         input_val);
-//     return carg;
-// }
 
 #endif  // CONTAINER_ARG_H_

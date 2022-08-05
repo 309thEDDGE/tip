@@ -86,7 +86,7 @@ TEST_F(ContainerArgTest, ParseVecFloat)
     user_str_ = "65.3";
     ASSERT_TRUE(carg_ptr_->Parse(user_str_));
     ASSERT_EQ(2, v.size());
-    float expected = 65.3;
+    float expected = 65.3F;
     EXPECT_EQ(expected, v.at(1));
 
     user_str_ = "notdouble";
@@ -118,7 +118,7 @@ TEST_F(ContainerArgTest, ParseVecFloatFail)
 {
     user_str_ = "90 ff";
     std::vector<float> v;
-    float parsed_val = 0;
+    float parsed_val(0);
     carg_ptr_ = MakeContainerArg(v, parsed_val);
     ASSERT_FALSE(carg_ptr_->Parse(user_str_));
     ASSERT_EQ(0, v.size());

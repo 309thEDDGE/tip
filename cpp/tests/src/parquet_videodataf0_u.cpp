@@ -39,7 +39,7 @@ class ParquetVideoDataF0Test : public ::testing::Test
         vid_flags_.SRS = 0;
 
         for(size_t i = 0; i < video_data_.size(); i++)
-            video_data_[i] = i;
+            video_data_[i] = static_cast<video_datum>(i);
     }
 
     void ValidateInitializeAddField()

@@ -748,7 +748,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
                                          fieldName,
                                          typeid(NativeType).name(),
                                          boolField,
-                                         data.size());
+                                         static_cast<int>(data.size()));
 
                 SPDLOG_DEBUG("Cast from {:s} planned for: {:s}",
                              typeid(NativeType).name(),
@@ -761,7 +761,7 @@ bool ParquetContext::SetMemoryLocation(std::vector<NativeType>& data,
                                          fieldName,
                                          "",
                                          boolField,
-                                         data.size());
+                                         static_cast<int>(data.size()));
             }
 
             std::shared_ptr<InputDataBase> input_data =
@@ -879,13 +879,14 @@ bool ParquetContext::SetColumnMemoryLocation(std::vector<NativeType>& data,
         }
 
         col_data->SetColumnData(data.data(), col_data->field_name_, typeid(NativeType).name(),
-                                    boolField, data.size());
+                                    boolField, static_cast<int>(data.size()));
 
         SPDLOG_DEBUG("Cast from {:s} planned for: {:s}", typeid(NativeType).name(), col_data->field_name_);
     }
     // Data types are the same and no casting required
     else
-        col_data->SetColumnData(data.data(), col_data->field_name_, "", boolField, data.size());
+        col_data->SetColumnData(data.data(), col_data->field_name_, "", boolField, 
+            static_cast<int>(data.size()));
 
     std::shared_ptr<InputDataBase> input_data =
         std::make_shared<InputData<NativeType>>(data.data());

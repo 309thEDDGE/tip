@@ -41,10 +41,6 @@ protected:
     ManagedPath icd_schema_path_;
     ManagedPath log_path_;
     
-    ManagedPath temp_conf_base_path_;
-    ManagedPath temp_conf_path_;
-    ManagedPath temp_schemas_path_;
-
 public:
     // Make the default output path (out_path_) equal to a real path. In this case, simply
     // set it to the cwd. This will allow the line in ValidatePaths, 
@@ -53,8 +49,8 @@ public:
     TranslateTabular1553MainTest() : mock_av_(), str_input_path_(""), str_out_path_(""), str_conf_path_(""),
         str_log_path_(""), input_path_(), out_path_(str_out_path_), 
         conf_path_(), log_path_(str_log_path_), conf_schema_path_(""), str_icd_path_(""),
-        icd_path_(str_icd_path_), icd_schema_path_(), temp_conf_base_path_({"temp_conf"}), temp_conf_path_(),
-        temp_schemas_path_(), mock_fr_(), mock_dts1553_(), mock_managed_path_(), mock_tip_doc_()
+        icd_path_(str_icd_path_), icd_schema_path_(), mock_fr_(), mock_dts1553_(), 
+        mock_managed_path_(), mock_tip_doc_()
     {}
 
 };

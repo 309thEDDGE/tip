@@ -99,8 +99,6 @@ bool UserInput::GetString(std::string& output,
     printf("\n");
 
     std::string input;
-    int converted;
-
     bool testing;
     bool valid = false;
 

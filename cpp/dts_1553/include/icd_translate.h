@@ -34,7 +34,7 @@ REGISTER_TRANSLATE_TYPE(float);
 REGISTER_TRANSLATE_TYPE(double);
 REGISTER_TRANSLATE_TYPE(char);
 
-const size_t BCDDigitBitCount = 4;
+const int BCDDigitBitCount = 4;
 
 class ICDTranslate
 {
@@ -721,7 +721,7 @@ void ICDTranslate::TranslateBCD(const std::vector<uint16_t>& input_words,
     size_t bcd_digit_count = bcd_partial ? static_cast<size_t>(ceil(digit_count)):
         static_cast<size_t>(floor(digit_count));
     uint16_t partial_bit_count = static_cast<uint16_t>(bit_count_ % BCDDigitBitCount);
-    size_t digit_ind = 0;
+    int digit_ind = 0;
     uint16_t downshift = 0;
     uint16_t mask = 0b1111;
     uint16_t partial_mask = (1 << partial_bit_count) - 1;

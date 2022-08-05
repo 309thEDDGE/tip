@@ -38,7 +38,7 @@ class Organize429ICDTest : public ::testing::Test
     expected_element.sdi_= 2;            // 8-bit
     expected_element.bus_name_="SET1B";
     expected_element.msg_name_="TestWord";
-    expected_element.rate_=1.1;
+    expected_element.rate_= 1.1F;
     expected_element.description_="Altitude";
     expected_element.xmit_lru_name_="LRU921";
     expected_element.elem_name_="107_alt";
@@ -710,7 +710,7 @@ TEST_F(Organize429ICDTest, OrganizeICDMapWordValidateOutputEndToEnd)
     input_element.sdi_= 1;            // 8-bit
     input_element.bus_name_="MISS1";
     input_element.msg_name_="MissWord";
-    input_element.rate_=1.1;
+    input_element.rate_= 1.1F;
     input_element.description_="Altitude";
     input_element.xmit_lru_name_="LRU921";
     input_element.elem_name_="107_alt";
@@ -781,7 +781,7 @@ TEST_F(Organize429ICDTest, OrganizeICDMapWordValidateOutputEndToEndBadElement)
     input_element.sdi_= 5;            // 8-bit
     input_element.bus_name_="MISS1";
     input_element.msg_name_="MissWord";
-    input_element.rate_=1.1;
+    input_element.rate_= 1.1F;
     input_element.description_="Altitude";
     input_element.xmit_lru_name_="LRU921";
     input_element.elem_name_="107_alt";
@@ -863,7 +863,7 @@ TEST_F(Organize429ICDTest, OrganizeICDMapWordValidateOutputArincWordNames)
     input_element.sdi_= 1;            // 8-bit
     input_element.bus_name_="MISS1";
     input_element.msg_name_="MissWord";
-    input_element.rate_=1.1;
+    input_element.rate_= 1.1F;
     input_element.description_="Altitude";
     input_element.xmit_lru_name_="LRU921";
     input_element.elem_name_="107_alt";
@@ -921,7 +921,7 @@ TEST_F(Organize429ICDTest, OrganizeICDMapIndexInLookupMap)
     input_element.sdi_= 2;            // 8-bit
     input_element.bus_name_="SET1B";
     input_element.msg_name_="IndexInMapWord";
-    input_element.rate_=1.1;
+    input_element.rate_= 1.1F;
     input_element.description_="Altitude";
     input_element.xmit_lru_name_="LRU921";
     input_element.elem_name_="107_alt";

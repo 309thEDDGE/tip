@@ -57,7 +57,7 @@ class ARINC429DataTest : public ::testing::Test
         elem.sdi_= 1;            // 8-bit
         elem.bus_name_="SET1B";
         elem.msg_name_="TestWord";
-        elem.rate_=1.1;
+        elem.rate_= 1.1F;
         elem.description_="Altitude";
         elem.xmit_lru_name_="LRU921";
         elem.elem_name_="107_alt";

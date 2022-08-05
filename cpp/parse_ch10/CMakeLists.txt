@@ -12,7 +12,7 @@ set(headers
     include/ch10_packet_type_specific_metadata.h
 )
 
-add_library(parsech10_lib
+add_library(parsech10_lib 
     src/parse_manager.cpp
     src/ch10_parse_main.cpp
     src/parse_worker.cpp
@@ -35,15 +35,20 @@ set_target_properties(parsech10_lib
 )
 
 target_link_libraries(parsech10_lib
-    PUBLIC tiputil ch10comp yamlsv spdlog::spdlog metadata cli
+    PRIVATE common spdlog::spdlog yaml-cpp tiputil ch10comp yamlsv 
+    spdlog::spdlog metadata cli parquet_context ch10_parquet ch10ethernet
 )
 
 add_executable("${CH10_PARSE_EXE_NAME}" main/ch10parse.cpp)
 
 target_compile_features("${CH10_PARSE_EXE_NAME}" PUBLIC cxx_std_17)
 
-target_link_libraries("${CH10_PARSE_EXE_NAME}" PUBLIC common parsech10_lib)
+target_link_libraries("${CH10_PARSE_EXE_NAME}" PUBLIC parsech10_lib
+    common spdlog::spdlog yaml-cpp tiputil ch10comp yamlsv 
+    spdlog::spdlog metadata cli parquet_context ch10_parquet ch10ethernet
+)
 
 install(
-    TARGETS parsech10_lib "${CH10_PARSE_EXE_NAME}"
+    TARGETS "${CH10_PARSE_EXE_NAME}"
+    DESTINATION ${out_bin_dir}
 )
