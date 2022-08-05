@@ -5,49 +5,77 @@ Government or integration into licensed services for the US Government
 (1/1/2021). Other requests shall be referred to (309th Software Engineering 
 Group - Hill AFB).   
 
-# Ch10 Parser Notes 
+# Table of Contents
 
-## Table of Contents
-- [Markdown](#markdown)
 - [CMake Build](#cmake-build)
 - [Code Convention](#code-convention)
 - [Linting](#linting)
-- [Configuration Files](#configuration-files)
+- [Singleuser Container](#singleuser-container)
 - [Usage](#usage)
-- [Build Notes](#build-notes)
-- [Preprocessor Definitions](#preprocessor-definitions)
-- [Changelog](#changelog)
 
-## Markdown
-Use `markdown_to_html.py` in the tip_scripts directory to convert md file to html. Requires markdown2.py to be in PYTHONPATH. markdown2 is approved for use in SWEG.
+# CMake Build
 
-## CMake Build
+## Ubuntu 22.04 LTS
 
-### Setup
- 
-#### Source
+Prepare system 
+ ```bash
+apt update && apt install build-essential ninja-build cmake git
+```
+### yaml-cpp
 
-* `cd` to TIP root dir (let's call it `tip/`)
-* `mkdir build`
+```bash
+apt install libyaml-cpp-dev
+```
 
-#### Dependencies
+### GoogleTest
+```bash
+apt install googletest libgtest-dev libgmock-dev
+```
 
-* Dependencies for developers will be provided via the `tip_deps.zip` file which contains a "deps" directory which shall be copied into `tip/`
-* `tip/deps` contains the following subdirectories:
-	- arrow\_library\_dependencies
-	- yaml-cpp-yaml-cpp-0.6.0 (itself containing a subdirectory of the same name)
-	- googletest-release-1.8.1libs
-	- libirig106
-	- libtins
-	- npcap
+### libtins
+Prerequisites:
+```bash
+git clone https://github.com/mfontanini/libtins.git
+apt install libpcap-dev libssl-dev cmake
+```
+Build and install:
+```bash
+cd libtins && mkdir build && cd build
+cmake .. -DLIBTINS_ENABLE_WPA2=0 -DLIBTINS_ENABLE_CXX11=1 
+make install
+```
 
-#### Development
+### arrow-cpp
+```bash
+apt update
+apt install -y -V ca-certificates lsb-release wget
+wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
+apt install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
+apt update
+apt install -y -V libarrow-dev # For C++
+apt install -y -V libparquet-dev # For Apache Parquet C++
+```
 
-Development is done within conda environments. In order to first begin
-development install
-[conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)
+### spdlog
+```bash
+apt install libspdlog-dev
+```
+
+### Build TIP
+```bash
+git clone <tip_repo>
+cd <tip_repo> && mkdir build && cd build
+
+# Some warnings may emit due to arrow-cpp. Ignore. 
+cmake .. -GNinja
+ninja install 
+```
+
+## Conda
+
+Install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)
 for your given operating system. All tip dependencies have been
-packaged for Windows, Linux, and OSX. Once conda has been installed
+packaged for Windows and Linux. After conda is installed,
 create the development environment. If the environment name already
 exists you will want to update the environment instead.
 
@@ -56,6 +84,7 @@ are required to build native C++ using Conda packages. The best way to
 obtain this tool set (currently) is to download VS 2022 Community and
 enable only that toolset. 
 
+Create the environment
 ```shell
 conda env create -f environment_local_build.yaml
 # conda env update -f environment_local_build.yaml
@@ -69,98 +98,60 @@ conda activate tip-dev
 # source activate tip-dev
 ```
 
-Now start a tip build and all build dependencies should be available
-in your path automatically. The following works on all
-platforms.
-
+Now create a build directory and configure, then build the project
 ```shell
 mkdir build
 cd build
 
 # linux build
-cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_INSTALL_LIBDIR=lib
+cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX 
 cmake --build . --target install
 
 # windows build (Command Prompt)
-cmake .. -GNinja -DCONDA_PREFIX=%CONDA_PREFIX% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib
+cmake .. -GNinja -DCONDA_PREFIX=%CONDA_PREFIX% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX%
 cmake --build . --target install
 
 # windows build (Powershell)
-cmake .. -GNinja -DCONDA_PREFIX="$Env:CONDA_PREFIX" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$Env:CONDA_PREFIX" -DCMAKE_INSTALL_LIBDIR=lib
+cmake .. -GNinja -DCONDA_PREFIX="$Env:CONDA_PREFIX" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$Env:CONDA_PREFIX"
 cmake --build . --target install
-
-cd ..
 ```
 
-Running the tests within the build directory
-
+If you wish to check code coverage, change the
+build option to `-DCMAKE_BUILD_TYPE=Profile`. This will enable the
+compiler flags for code coverage. Run the tests within the build directory to generate code coverage information, then generate the coverage report
 ```shell
-ctest
+./cpp/tests/tests
+gcovr -r ../. --exclude-unreachable-branches --exclude-throw-branches --html-details ./overall-coverage.html .
 ```
 
-Checking code coverage. If you wish to check code coverage change the
-build option to `-DCMAKE_BUILD_TYPE=Debug` this will enable the
-compiler flags for debugging as well as code coverage.
+## Offline Builds (not recommended)
 
-```shell
-gcovr -j --verbose --exclude-unreachable-branches --exclude-throw-branches --object-directory="build/cpp"
-```
-	
-#### CMake
-
-* `cd tip/build`
-* `cmake .. -GNinja -D<option>=<value>`
-	- add `-GNinja` for faster build
-* Default options: 
-	- CONTAINER=OFF (see below)
-* Options given with `-D<option>=<value>`, multiple options with `-D<option1>=<val1> -D<option2>=<val2> ...`:
-	- Container mode (`-DCONTAINER=ON`) - use shared libs in Linux-standard lib directories, default OFF
-		- linux standard builds outside of a container are in progress
-	-  If git isn't installed or if tip isn't tracked by git you can manually specify the version at configure time using `-DCI_COMMIT_TAG=<CI_COMMIT_TAG>` or `-DCI_COMMIT_SHORT_SHA=<CI_COMMIT_SHORT_SHA>`
-	
-* build according to platform (see "Platform-Specific" below)
+* Dependencies will provided by the developer in a directory specified by the configure-time flag `USE_DEPS_DIR`
+* `USE_DEPS_DIR` contains the following subdirectories:
+	- arrow
+	- yaml-cpp 
+	- googletest
+	- spdlog-1.8.2
+	- tins
+	- npcap (Windows only)
+* Fine structure is determined from reading `cmake/CMake_linux_depsdir.txt|CMake_windows_depsdir.txt`
+* If git isn't installed or if tip isn't tracked by git you can manually specify the version at configure time using `-DCI_COMMIT_TAG=<CI_COMMIT_TAG>` or `-DCI_COMMIT_SHORT_SHA=<CI_COMMIT_SHORT_SHA>` or if you are not using a git tag or hash use `-DUSER_VERSION=<user specified>`
 * Executables are placed in `tip/bin`
-* Libraries are placed in `tip/bin/lib`
 
-### Platform-Specific
+## Build Options
 
-#### Windows
+See CMakeLists.txt for more details. Options are passed to CMake with the `-D<option>=<value>` pattern. Some options require values (an argument must be passed) and others can be used as switches (without arguments). 
 
-* Must install cmake in Windows
-* In command prompt or VS x64 command prompt:
-	- `cd tip/build`
-	- `cmake .. -GNinja -D<option>=<value>`
-	- build with one of these commands
-		- `ninja install` (if -GNinja was included)
-		- `msbuild.exe INSTALL.vcxproj /property:Configuration=Release`
-			- must be in VS x64 Native Tools Command Prompt
-			- VS x64 Native Tools Command Prompt can be installed with VS, developer tools module enabled. License not required. From the Start menu navigate to the Visual Studio 2019 folder and select the correct command prompt.		
-		- `cmake --build . --config Release`
+* `USE_DEPS_DIR=<value>`: Specify a directory in which dependencies may be found. Used to indicate an offline build. Generally, all dependencies will be searched in the specified directory. See cmake/CMake_windows_depsdir.cmake or cmake/CMake_linux_depsdir.cmake for variables that must be configured to identify header and source locations and library names. 
+* `USER_INSTALL_DIR=<value>`: Specify binary installation directory. Defaults confine installation artifacts to conda environments for conda builds, typical PATH locations for native linux and `<tip root directory>/bin` for offline builds.
+* Compilation-time configuration of version:
+  - Determined automatically from git if git is present and TIP source resides within a git repo. No user inputs required.
+  - `CI_COMMIT_TAG=<value>`: Manually specify the commit tag when it can't be obtained automatically from git
+  - `CI_COMMIT_SHORT_SHA=<value>`: Alternatively specify the commit short SHA when it can't be obtained automatically from git
+  - `USER_VERSION=<value>`: Set the TIP display version if it can't be obtained by git or the tag/hash from git ought not be used
+* `USE_NEWARROW`: Force use of compile-time macro `NEWARROW`. This is generally configured automically for native linux and conda builds and is required for new versions of arrow. Causes source code to utilize new-style arrow-cpp library calls, which is relevant for arrow >~0.17. 
 
-* INSTALL will automatically run ALL_BUILD
-* gtest/gmock and yaml-cpp libraries are included in `tip_deps.zip`, but if a rebuild is necessary, note the following:  
-	- gmock/gtest  
-		- msbuild automatically uses the dynamically linked runtime libraries so gtest/gmock must be build with the `"-Dgtest_force_shared_crt=ON"` flag to link those libs with the dynamic runtime. Building on x64 may also need specified using `-DCMAKE_GENERATOR_PLATFORM=x64`.  
-		- example  
-			- `cmake .. -Dgtest_force_shared_crt=ON -DCMAKE_GENERATOR_PLATFORM=x64`
-			- `cmake --build . --config Release`
-	- yaml-cpp
-		- If using older version of yaml-cpp, update exceptions.h and exceptions.cpp  
-			 `#if defined(_MSC_VER) && _MSC_VER < 1900`  
-    		 `  #define YAML_CPP_NOEXCEPT _NOEXCEPT`  
-			 `#else`  
-    		 `	#define YAML_CPP_NOEXCEPT noexcept`  
-			 `#endif`  
-		- CMakeLists.txt updates
-			- option(`YAML_CPP_BUILD_TESTS` “Enable testing” OFF)
-			- option(`BUILD_SHARED_LIBS` "Build Shared Libraries" OFF)
-			- option(`MSVC_SHARED_RT` "MSVC: Build with shared runtime libs (/MD)" ON)
-		- example
-			- `cmake .. -DCMAKE_GENERATOR_PLATFORM=x64`
-			- `cmake --build . --config Release`
-
-
-## Code Convention
+# Code Convention
 Attempt to follow the Google C++ Style Guide which can be found at google.github.io/styleguide/cppguide.html. All source code (`*.h`, `*.cpp`) in `tip/cpp` shall be formatted with `clang-format` from the root directory and configured by the `.clang-format` file. 
 
 OS-specific usage:
@@ -172,195 +163,58 @@ OS-specific usage:
   - Install LLVM toolchain for `clang-format.exe`
   - (PowerShell) `& 'C:\Program Files\LLVM\bin\clang-format.exe' -i (Get-ChildItem .\cpp\*\*\*.h) (Get-ChildItem .\cpp\*\*\*.cpp)`
 
-## Linting
+# Linting
 
 `cpplint` is the preferred linter and it is also used in the CI. `CPPLINT.cfg` files in the root dir and some sub-directories in `cpp/` specify the overall linting configuration and library-specific configuration, respectively. Only files in `tip/cpp` shall be linted. Pip install cpplint then use the following commands from the root dir:
 
 - Linux: `cpplint ./cpp/**/**/*.h ./cpp/**/**/*.cpp`
 - Windows (PowerShell): `cpplint (Get-ChildItem .\cpp\*\*\*.h) (Get-ChildItem .\cpp\*\*\*.cpp)`
 
-## Configuration Files
+# Singleuser Container
 
-Configuration files must be present in `tip/conf` which is relative to the binary via `../conf`. Default configuration files
-are located in `tip/conf/default_conf` and shall not be edited. Initially the user shall copy relevant `\*.yaml` files into 
-`tip/conf` from `tip/conf/default_conf` and edit them as necessary.
-If the `parse_and_translate.py` script is used, relevant config files are automatically copied from `tip/conf/default_conf` to 
-`tip/conf` on the first run. Detailed comments for each configuration parameter are provided in the configuration files.  
+The singleuser container is much more than a container in which the TIP executables reside. It is a full JupyterLab instance with an analytics environment and TIP executables on the PATH. The analytics environment includes numpy, matplotlib, pandas, and other common Python tools. 
 
-### Standard config files
-
-* `translate_conf.yaml`
-* `parse_conf.yaml`
-
-## Usage
-
-Several methods to setup the singleuser container are available.
-
-### Singleuser Container Quickstart
-
-This is the recommended setup method, as it places the user directly into a useable environment.
-
-1. Run the container
+Run the container
 ```bash
-docker run -it -p 8888:8888 -v <host path>:<container path> registry.il2.dso.mil/skicamp/project-opal/tip:<latest>
+docker run -p 8888:8888 -v <host path>:<container path> registry.il2.dso.mil/skicamp/project-opal/tip:<latest>
 ```
 
-Replace `<latest>` with the most recent container tag from https://code.il2.dso.mil/skicamp/project-opal/tip/container_registry/1904
+Replace `<latest>` with the most recent container tag from https://code.il2.dso.mil/skicamp/project-opal/tip/container_registry/1904. Use flag `--rm` to delete the running container on exit. 
 
-The easiest way to find the latest image is to get the commit hash from the most recent successful pipeline run on master and then search the container registry.
-
-`<host path>` is the path to the data you want to work with on your host system. (ch10, parquet, etc.)
-
-`<container path>` is where the data will be mounted within the container.
+The easiest way to find the latest image is to get the commit hash from the most recent successful pipeline run on master and then search the container registry. `<host path>` is the path to the data you want to work with on your host system. (ch10, parquet, etc.). `<container path>` is where the data will be mounted within the container.
 
 For example, `-v /home/user/data/ch10/:/data/` will mount the files in `/home/user/data/ch10/` on the host system to `/data/` in the container. If the container path does not exist, it will be created automatically.
 
-This command will directly run a local jupyterlab server with tip, pandas, matplotlib, and pyarrow available.
+To start the JuptyerLab GUI, copy+paste the `127.0.0.1:8888/lab?token=...` link provided at the end of the docker run command output into your browser.
 
-To enter juptyerlab, copy+paste the `127.0.0.1:8888/lab?token=...` link provided at the bottom of the end of jupyterlab's output.
+## Using TIP Within the Singleuser Container
 
-### Singleuser container manual setup 
+When running TIP or associated executables in the singleuser container, ensure that commands are executed from either
 
-This method is recommended for those who do not need access to a jupyterlab environment, but still wish to use tip or the available data science tools.
+* the singleuser environment Jupyter notebook (and preceded with `!` to run shell commands)
+* the JupyterLab shell and the singleuser conda environment is active 
 
-1. Boot into the container with
-```bash
-docker run -it -p 8888:8888 -v <host path>:<container path> --entrypoint bash registry.il2.dso.mil/skicamp/project-opal/tip:<latest>
-```
+# Usage 
 
-2. Once inside the container, build the tip environment using available
-   local channels
-```bash
-conda create -n tip tip jupyterlab pandas matplotlib pyarrow \
-     -c /home/user/local-channels/singleuser-channel/local_conda-forge \
-     -c /home/user/local-channels/tip-package-channel \
-     -c /home/user/local-channels/tip-dependencies-channel/local_conda-forge \
-     --offline -y
-```
+Navigate to `tip/bin` to call executables or find them on the path if in a conda environment or TIP was built and installed.
 
-3. Activate the newly created environment and run jupyterlab
-```bash
-source activate tip
-jupyter lab
-```
+Executables:
 
-4. The command line will log the URL with token necessary to navigate to
-   the jupyter lab instance.
+- **tests**: Google tests executable to run entire test suite
+- **tip\_parse**: Parse ch10 file into intermediate Parquet files. `tip_parse -h`  
+- **parquet\_video\_extractor** (useful CLI soon): Extract video transport stream data from parquet files. Exports TS files to a folder `<ch10path>/<ch10name>_video_TS` next to `<ch10path>/<ch10name>_video.parquet`  
+`parquet_video_extractor [path to <ch10path>/<ch10name>_video.parquet folder]`  
+- **tip\_translate_1553**: Translate raw 1553 data from Parquet files to parquet tables of enginering units. `tip_translate_1553 -h`
+- **tip\_translate_arinc429**: Similar to `tip_translate_1553`. See CLI for usage: `tip_translate_arinc429 -h`	 
+- **pqcompare** (useful CLI soon): Compare every cell of two parquet tables. Check for equivalent schema (column count, names, data type), then row by row. Used to quickly compare parquet files in end-to-end testing. 
+- **bincompare** (useful CLI soon): Compare two files byte-for-byte. Used to quickly compare files in end-to-end testing. 
+- **validate\_yaml** (useful CLI soon): Schema validate a yaml file given an input schema (also in yaml). Primarily used for debugging the schema validator code.
 
-### Automagically create conda environment and run jupyterlab
+## Parse/translate Helper Script 
 
-This is a simpler alternative to the above step, and automatically provides the user with a running jupyterlab instance.
+Generate Parquet files with engineering units with a single call. Removes the need for consecutive calls to `tip_parse` then `tip_translate_1553` or `tip_translate_arinc429`. This script is used by the end-to-end validation system. Due to simplified parse and translate CLIs, this script is nearly obsolete. It remains for the few users who rely on it as part of their workflow and will likely be removed when the end-to-end validation software is updated or rewritten. 
 
-A script has been provided to simplify the setup process within the container. 
-
-Run
-```bash
-/home/user/user_scripts/start_jupyter_nb.sh
-```
-To generate a conda environment and run a jupyterlab instance. Rerunning this script will skip the conda env generation process and immediately launch a new jupyterlab instance.
-
-### Using TIP within the singleuser container
-
-When running TIP, the configuration path will need to be supplied as an argument. By default, the configuration files are located in `/home/user/miniconda3/conf`
-
-For example, `tip_parse` will need to be run as follows:
-```bash
-tip_parse <path to ch10> <output path> <configuration path> <logfile output path>
-```
-
-### For Deployment on Jupyterhub
-
-The setup script provided for launching a singleuser jupyterlab offers a flag for running a jupyterhub-specific lab instance.
-
-Run the script 
-```bash
-/home/user/user_scripts/start_jupyter_nb.sh -D
-```
-within jupyterhub's dockerspawner config. This will generate a jupyterhub-friendly conda environment, as well as run the `labhub` version of jupyterlab
-
-### Helper Script (preferred)
-
-* Must be run in an environment in which the sys.path can be appended to by the script (i.e., not the base conda environment)
-* numpy required
-* Call `parse_and_translate.py` script in TIP root directory with -h flag for helps
+* Must be run in an environment in which the sys.path can be appended by the script (i.e., not a base conda environment)
+* Call `parse_and_translate_cli.py` script in TIP root directory with -h flag for helps
 * Example: `python <path/to/TIP/root>/parse_and_translate.py -h`
-
-### Call Executables Directly
-
-#### --Standard executables
-Navigate to `tip/bin` to call executables.
-
-**tip\_parse.exe**: Parse ch10 file into intermediate Parquet files with raw 1553 payload information. If the second command line argument is not specified, the output parquet path is the folder containing the ch10 provided in the first argument.  
- `tip_parse.exe [path to \*.ch10 file] [optional argument, output directory]`  
-
- **tip\_parse\_video.exe**: Only available when built with `-DVIDEO=ON`. Parse ch10 file into intermediate Parquet files with raw 1553 payload information and video transport stream data. If the second command line argument is not specified, the output parquet path is the folder containing the ch10 provided in the first argument.  
- `tip_parse_video.exe [path to \*.ch10 file] [optional argument, output directory]`  
-
- **parquet\_video\_extractor.exe**: Only available when built with `-DVIDEO=ON`. Extract video transport stream data from parquet files. Exports TS files to a folder `<ch10path>/<ch10name>_video_TS` next to `<ch10path>/<ch10name>_video.parquet`  
- `parquet_video_extractor.exe [path to <ch10path>/<ch10name>_video.parquet folder]`  
-
-  **tip\_translate.exe**: Translate raw 1553 data from Parquet files to parquet tables of enginering units.  The translated output is placed in the same folder as the parsed Parquet data.  The second argument is a DTS file, which stands for "Data Translation Specification"; this file is based on the Comet Flat Files, which come from the ICD specifications, but the DTS file is in a machine readable format. There is a sample at Sample_DTS.yaml.
-`tip_translate.exe [path to parsed 1553 data directory, output from *ch10parse.exe ('<ch10path>/<ch10name>_1553.parquet')] [path to DTS]`
-
-## Build Notes
-
-### Preprocessor Definitions
-Flags control debug print statement output verbosity, toggle enable/disable parsing of Ch10 packet types, indicate specific 1553 message selection, and specify output file type. **Default definitions are already handled in CMakeLists.txt**.
-
-* `__WIN64` - Compatibility mode for Windows 64-bit. This is the only mode implemented currently.
-* `DEBUG` - Debug level for print statements. If defined, print statements will be turned on but only printed if the value assigned is greater than each print statements threshold. Recommend 1 for normal use. Values in the range 3 to 5 are only useful in true debug mode because the output is too verbose for regular program functionality.
-* `COLLECT_STATS` - Collect and print 1553 message statistics upon parse completion. 
-* `LOCALDB` - Write database locally. Must be used in conjunction with `PARQUET` to write Parquet files to the local disk. (currently, only local writing is implemented)
-* `_CRT_SECURE_NO_WARNINGS` - Definition for VS/cl to reduce warnings.
-* `XDAT` - 1553 message selection. If defined, permits configuration file selection of 1553 messages. `select_specific_msgs` must be specified in [translate_conf.yaml](conf/default_conf/translate_conf.yaml). See *Configuration Files* for more information. 
-* `VIDEO_DATA` - If defined, parse and record video data packets.
-* `PARQUET` - When coupled with `LOCALDB`, causes Parquet format files to be written locally.
-* `ARROW_STATIC` and `PARQUET_STATIC` - Must be defined when `PARQUET` is used and linker is configured to link statically.
-* `ETHERNET_DATA` - (*Not Implemented*) If defined, parse and record Ethernet data packets. Does not cause Ethernet data payloads to be translated into distinct messages with engineering units.
-* `NEWARROW` - build using newer arrow implementation (mainly used for container builds).
-* `LIBIRIG106` - implement libirig106 libraries.
-
-## Changelog
-
-v0.1 - First tag
-* Minimal 1553 payload or translated data validation 
-* 1553 data written to Parquet format if selected via [preproccesor flags](#preprocessor-definitions)
-* No build system
-
-v0.1.1
-* Reverse comet lookup for 1553 message name matching. Intended to mimic DRA's apparent matching strategy.
-* Add buffering capability to ParquetContext - reduce I/O load related to head movement
-* Fix Parquet Translation bug that causes each thread to drop the last <10,000 translated rows
-* Add improved auto-bus map vs TMATS bus map selection
-* Fix corner cases for translation of most float types
-* Fix Float32 1750 and Float16
-* Add configuration parameters to `parquet_translation1553.conf` and parse.conf and A10bus1553.conf
-
-v0.1.2
-* Add RMCOMET preprocessor definition to remove parse-time comet query
-* RMCOMET: include channel ID --> LRU address, TMATS metadata in parquet file
-* RMCOMET: translate-time bus mapping and comet query
-
-v1.0.0
-* YAML configuration files used with RMCOMET preprocessor definition
-* CMake build system
-* Add unit tests for most code associated with RMCOMET refactor
-* Parquet video output
-* Executable for extraction of TS video files from Parquet output
-* `parse_and_translate.py` script for automatic parse and translation
-* Fix boolean and signed bits bugs related to translation routine
-* Optimize compilation for faster execution
-* Reorganize directory structure for compatibility with build system
-* Humble beginnings of containerized TIP and a potential in-container RESTful API
-* Update deliverable script to avoid conflicts with other common Python packages
-* Capability to ingest YAML DTS
-
-v1.0.1
-* Rename scripts directory to tip_scripts
-* Update parse_and_translate.py to import new module name
-
-v1.0.2
-* Remove direct dependence on COMET
-* RMCOMET mode logic applied permanently
-* Remove references to potentially sensitive information
 

@@ -6,7 +6,7 @@ set(headers
     include/icd_translate.h
 )
 
-add_library(dts_1553
+add_library(dts_1553 
     src/bus_map.cpp
     src/dts1553.cpp
     src/icd_data.cpp
@@ -25,6 +25,5 @@ set_target_properties(dts_1553
 )
 
 target_link_libraries(dts_1553
-  PUBLIC tiputil parquet_context yamlsv ch10_parquet
-  yaml-cpp arrow_shared parquet tins
+  PRIVATE spdlog::spdlog yaml-cpp tiputil yamlsv 
 )

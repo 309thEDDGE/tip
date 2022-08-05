@@ -52,10 +52,6 @@ class TranslateTabularARINC429MainTest : public ::testing::Test
     ManagedPath icd_schema_path_;
     ManagedPath log_path_;
 
-    ManagedPath temp_conf_base_path_;
-    ManagedPath temp_conf_path_;
-    ManagedPath temp_schemas_path_;
-
     std::vector<std::string> icd_lines_;
     size_t arinc_message_count_;
     YAML::Node parser_md_node_;
@@ -74,8 +70,8 @@ class TranslateTabularARINC429MainTest : public ::testing::Test
     TranslateTabularARINC429MainTest() : mock_av_(), str_input_path_(""), str_out_path_(""), str_conf_path_(""),
         str_log_path_(""), input_path_(), out_path_(str_out_path_),
         conf_path_(), log_path_(str_log_path_), conf_schema_path_(""), str_icd_path_(""),
-        icd_path_(str_icd_path_), icd_schema_path_(), temp_conf_base_path_({"temp_conf"}), temp_conf_path_(),
-        temp_schemas_path_(), mock_fr_(),  mock_managed_path_(), mock_tip_doc_(), mock_dts429_(), mock_org_429_(),
+        icd_path_(str_icd_path_), icd_schema_path_(), mock_fr_(),  mock_managed_path_(), 
+        mock_tip_doc_(), mock_dts429_(), mock_org_429_(),
         mock_data_429_(), mock_data_429_ptr_(&mock_data_429_)
     {}
 

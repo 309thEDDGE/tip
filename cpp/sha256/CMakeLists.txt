@@ -2,8 +2,7 @@ set(headers
     include/sha256.h
 )
 
-add_library(sha256
-    STATIC
+add_library(sha256 
     src/sha256.cpp
 )
 
@@ -16,8 +15,3 @@ target_include_directories(sha256
 set_target_properties(sha256
     PROPERTIES PUBLIC_HEADER "${headers}"
 )
-
-install(
-    TARGETS sha256
-)
-

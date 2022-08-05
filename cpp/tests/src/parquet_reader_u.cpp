@@ -68,7 +68,7 @@ class ParquetReaderTest : public ::testing::Test
         }
 
         // Assume each vector is of the same size
-        int row_size = output[0].size();
+        int row_size = static_cast<int>(output[0].size());
 
         if (!pc.OpenForWrite(path, true))
         {
@@ -125,7 +125,7 @@ class ParquetReaderTest : public ::testing::Test
         pc.SetMemoryLocation<T>(output, "data");
 
         // Assume each vector is of the same size
-        int row_count = output.size() / list_size;
+        int row_count = static_cast<int>(output.size() / list_size);
         if (!pc.OpenForWrite(path, true))
         {
             printf("failed to open parquet path %s\n", path.c_str());
@@ -189,7 +189,7 @@ class ParquetReaderTest : public ::testing::Test
         pc.SetMemoryLocation(output2, colname2, nullptr);
 
         // Assume each vector is of the same size
-        int row_size = output1.size();
+        int row_size = static_cast<int>(output1.size());
 
         if (!pc.OpenForWrite(path, true))
         {
@@ -450,7 +450,7 @@ TEST_F(ParquetReaderTest, ParquetFolderWithParquetAndNonParquetFiles)
     std::vector<int16_t> output{1, 2, 3};
     pc.SetMemoryLocation<int16_t>(output, "data");
 
-    int row_size = output.size();
+    int row_size = static_cast<int>(output.size());
 
     ASSERT_TRUE(pc.OpenForWrite(path, true));
 

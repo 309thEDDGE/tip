@@ -1,3 +1,4 @@
+#include <cmath>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "icd_translate.h"
@@ -1375,10 +1376,10 @@ TEST_F(ICDTranslateTest, TranslateFloat32GPSCornerCases)
     input_words_[1] = 0;
     icdt_.ConfigureWordLevel(input_words_.size(), output_eu_float_, icde_);
     icdt_.TranslateFloat32GPS(input_words_, output_eu_float_);
-    EXPECT_TRUE(isnan(output_eu_float_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_float_[0]));
     output_eu_float_.resize(0);
     res = icdt_.TranslateArrayOfElement(input_words_, output_eu_float_, icde_);
-    EXPECT_TRUE(isnan(output_eu_float_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_float_[0]));
 
     // Case in which value is in [0, 0.5), exponent bits zeros.
     input_words_[0] = 32;
@@ -1438,10 +1439,10 @@ TEST_F(ICDTranslateTest, TranslateFloat64GPSCornerCases)
     input_words_[3] = 11112;
     icdt_.ConfigureWordLevel(input_words_.size(), output_eu_double_, icde_);
     icdt_.TranslateFloat64GPS(input_words_, output_eu_double_);
-    EXPECT_TRUE(isnan(output_eu_double_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_double_[0]));
     output_eu_double_.resize(0);
     res = icdt_.TranslateArrayOfElement(input_words_, output_eu_double_, icde_);
-    EXPECT_TRUE(isnan(output_eu_double_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_double_[0]));
 
     // Values in [0, 0.5).
     input_words_[0] = 83;  // < 1 << 7
@@ -1500,10 +1501,10 @@ TEST_F(ICDTranslateTest, TranslateCAPSCornerCases)
     input_words_[2] = (1 << 15) + 4459;
     icdt_.ConfigureWordLevel(input_words_.size(), output_eu_double_, icde_);
     icdt_.TranslateCAPS(input_words_, output_eu_double_);
-    EXPECT_TRUE(isnan(output_eu_double_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_double_[0]));
     output_eu_double_.resize(0);
     res = icdt_.TranslateArrayOfElement(input_words_, output_eu_double_, icde_);
-    EXPECT_TRUE(isnan(output_eu_double_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_double_[0]));
 
     // Values in [0, 0.5).
     input_words_[0] = 3072;  // first 7 bits == 0
@@ -1525,7 +1526,7 @@ TEST_F(ICDTranslateTest, TranslateFloat32IEEE)
     icde_.schema_ = ICDElementSchema::FLOAT32_IEEE;
     icde_.elem_word_count_ = 2;
 
-    float val = -3.78632e-5;
+    float val = -3.78632e-5F;
     uint16_t* ui16ptr = (uint16_t*)&val;
     input_words_.push_back(ui16ptr[1]);
     input_words_.push_back(ui16ptr[0]);
@@ -1562,19 +1563,19 @@ TEST_F(ICDTranslateTest, TranslateFloat32IEEECornerCases)
     input_words_[1] = 0;                    // All other fraction bits low.
     icdt_.ConfigureWordLevel(input_words_.size(), output_eu_float_, icde_);
     icdt_.TranslateFloat32IEEE(input_words_, output_eu_float_);
-    EXPECT_TRUE(isinf(output_eu_float_[0]));
+    EXPECT_TRUE(std::isinf(output_eu_float_[0]));
     output_eu_float_.resize(0);
     res = icdt_.TranslateArrayOfElement(input_words_, output_eu_float_, icde_);
-    EXPECT_TRUE(isinf(output_eu_float_[0]));
+    EXPECT_TRUE(std::isinf(output_eu_float_[0]));
 
     output_eu_float_.resize(0);
     input_words_[0] += 1 << 15;  // add sign bit for neg inf.
     icdt_.ConfigureWordLevel(input_words_.size(), output_eu_float_, icde_);
     icdt_.TranslateFloat32IEEE(input_words_, output_eu_float_);
-    EXPECT_TRUE(isinf(output_eu_float_[0]));
+    EXPECT_TRUE(std::isinf(output_eu_float_[0]));
     output_eu_float_.resize(0);
     res = icdt_.TranslateArrayOfElement(input_words_, output_eu_float_, icde_);
-    EXPECT_TRUE(isinf(output_eu_float_[0]));
+    EXPECT_TRUE(std::isinf(output_eu_float_[0]));
 
     // NaN. Sign bit either high or low, exponent all high, mantissa anything
     // but all zeros (all zero mantissa is inf).
@@ -1582,19 +1583,19 @@ TEST_F(ICDTranslateTest, TranslateFloat32IEEECornerCases)
     input_words_[1] = 4432;
     icdt_.ConfigureWordLevel(input_words_.size(), output_eu_float_, icde_);
     icdt_.TranslateFloat32IEEE(input_words_, output_eu_float_);
-    EXPECT_TRUE(isnan(output_eu_float_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_float_[0]));
     output_eu_float_.resize(0);
     res = icdt_.TranslateArrayOfElement(input_words_, output_eu_float_, icde_);
-    EXPECT_TRUE(isnan(output_eu_float_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_float_[0]));
 
     output_eu_float_.resize(0);
     input_words_[0] += (1 << 15);  // Add sign bit
     icdt_.ConfigureWordLevel(input_words_.size(), output_eu_float_, icde_);
     icdt_.TranslateFloat32IEEE(input_words_, output_eu_float_);
-    EXPECT_TRUE(isnan(output_eu_float_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_float_[0]));
     output_eu_float_.resize(0);
     res = icdt_.TranslateArrayOfElement(input_words_, output_eu_float_, icde_);
-    EXPECT_TRUE(isnan(output_eu_float_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_float_[0]));
 }
 
 TEST_F(ICDTranslateTest, TranslateFloat64IEEE)
@@ -1648,19 +1649,19 @@ TEST_F(ICDTranslateTest, TranslateFloat64IEEECornerCases)
     input_words_[3] = 0;
     icdt_.ConfigureWordLevel(input_words_.size(), output_eu_double_, icde_);
     icdt_.TranslateFloat64IEEE(input_words_, output_eu_double_);
-    EXPECT_TRUE(isinf(output_eu_double_[0]));
+    EXPECT_TRUE(std::isinf(output_eu_double_[0]));
     output_eu_double_.resize(0);
     res = icdt_.TranslateArrayOfElement(input_words_, output_eu_double_, icde_);
-    EXPECT_TRUE(isinf(output_eu_double_[0]));
+    EXPECT_TRUE(std::isinf(output_eu_double_[0]));
 
     output_eu_double_.resize(0);
     input_words_[0] += 1 << 15;  // add sign bit for neg inf.
     icdt_.ConfigureWordLevel(input_words_.size(), output_eu_double_, icde_);
     icdt_.TranslateFloat64IEEE(input_words_, output_eu_double_);
-    EXPECT_TRUE(isinf(output_eu_double_[0]));
+    EXPECT_TRUE(std::isinf(output_eu_double_[0]));
     output_eu_double_.resize(0);
     res = icdt_.TranslateArrayOfElement(input_words_, output_eu_double_, icde_);
-    EXPECT_TRUE(isinf(output_eu_double_[0]));
+    EXPECT_TRUE(std::isinf(output_eu_double_[0]));
 
     // NaN. Sign bit either high or low, exponent all high, mantissa anything
     // but all zeros (all zero mantissa is inf).
@@ -1670,19 +1671,19 @@ TEST_F(ICDTranslateTest, TranslateFloat64IEEECornerCases)
     input_words_[3] = 8873;
     icdt_.ConfigureWordLevel(input_words_.size(), output_eu_double_, icde_);
     icdt_.TranslateFloat64IEEE(input_words_, output_eu_double_);
-    EXPECT_TRUE(isnan(output_eu_double_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_double_[0]));
     output_eu_double_.resize(0);
     res = icdt_.TranslateArrayOfElement(input_words_, output_eu_double_, icde_);
-    EXPECT_TRUE(isnan(output_eu_double_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_double_[0]));
 
     output_eu_double_.resize(0);
     input_words_[0] += (1 << 15);  // Add sign bit
     icdt_.ConfigureWordLevel(input_words_.size(), output_eu_double_, icde_);
     icdt_.TranslateFloat64IEEE(input_words_, output_eu_double_);
-    EXPECT_TRUE(isnan(output_eu_double_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_double_[0]));
     output_eu_double_.resize(0);
     res = icdt_.TranslateArrayOfElement(input_words_, output_eu_double_, icde_);
-    EXPECT_TRUE(isnan(output_eu_double_[0]));
+    EXPECT_TRUE(std::isnan(output_eu_double_[0]));
 }
 
 TEST_F(ICDTranslateTest, TranslateFloat321750)

@@ -66,7 +66,7 @@ class ParquetArrowValidatorTest : public ::testing::Test
         }
 
         // Assume each vector is of the same size
-        int row_size = output[0].size();
+        int row_size = static_cast<int>(output[0].size());
 
         if (!pc.OpenForWrite(path, true))
         {
@@ -129,7 +129,7 @@ class ParquetArrowValidatorTest : public ::testing::Test
         pc.SetMemoryLocation(output2, colname2, nullptr);
 
         // Assume each vector is of the same size
-        int row_size = output1.size();
+        int row_size = static_cast<int>(output1.size());
 
         if (!pc.OpenForWrite(path, true))
         {
@@ -183,7 +183,7 @@ class ParquetArrowValidatorTest : public ::testing::Test
         pc.SetMemoryLocation<uint16_t>(output, "data");
 
         // Assume each vector is of the same size
-        int row_count = output.size() / list_size;
+        int row_count = static_cast<int>(output.size() / list_size);
         if (!pc.OpenForWrite(path, true))
         {
             printf("failed to open parquet path %s\n", path.c_str());
@@ -1085,15 +1085,15 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareDoubleDifferentNaNImpls)
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareFloatMatch)
 {
     //												column1				column2
-    std::vector<std::vector<float>> file1a = {{16.54, 5.34, 4.24,
-                                               9.14, 8.11},
-                                              {7.1, 8.2, 20.3, 50.4, 60.5}};
-    std::vector<std::vector<float>> file1b = {{-20.2, 100.1}, {51.6, 50.7}};
+    std::vector<std::vector<float>> file1a = {{16.54F, 5.34F, 4.24F,
+                                               9.14F, 8.11F},
+                                              {7.1F, 8.2F, 20.3F, 50.4F, 60.5F}};
+    std::vector<std::vector<float>> file1b = {{-20.2F, 100.1F}, {51.6F, 50.7F}};
 
-    std::vector<std::vector<float>> file2 = {{16.54, 5.34, 4.24,
-                                              9.14, 8.11,
-                                              -20.2, 100.1},
-                                             {7.1, 8.2, 20.3, 50.4, 60.5, 51.6, 50.7}};
+    std::vector<std::vector<float>> file2 = {{16.54F, 5.34F, 4.24F,
+                                              9.14F, 8.11F,
+                                              -20.2F, 100.1F},
+                                             {7.1F, 8.2F, 20.3F, 50.4F, 60.5F, 51.6F, 50.7F}};
 
     std::string dirname1 = "file1.parquet";
     std::string dirname2 = "file2.parquet";
@@ -1114,15 +1114,15 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareFloatMatch)
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareFloatMisMatch)
 {
     //												column1				column2
-    std::vector<std::vector<float>> file1a = {{16.54, 5.34, 4.24,
-                                               9.14, 8.11},
-                                              {7.1, 8.2, 20.3, 50.4, 60.5}};
-    std::vector<std::vector<float>> file1b = {{-20.2, 11100.1}, {51.6, 50.7}};
+     std::vector<std::vector<float>> file1a = {{16.54F, 5.34F, 4.24F,
+                                               9.14F, 8.11F},
+                                              {7.1F, 8.2F, 20.3F, 50.4F, 60.5F}};
+    std::vector<std::vector<float>> file1b = {{-20.2F, 11100.1F}, {51.6F, 50.7F}};
 
-    std::vector<std::vector<float>> file2 = {{16.54, 5.34, 4.24,
-                                              9.14, 8.11,
-                                              -20.2, 100.1},
-                                             {7.1, 8.2, 20.3, 50.4, 60.5, 51.6, 50.8}};
+    std::vector<std::vector<float>> file2 = {{16.54F, 5.34F, 4.24F,
+                                              9.14F, 8.11F,
+                                              -20.2F, 100.1F},
+                                             {7.1F, 8.2F, 20.3F, 50.4F, 60.5F, 51.6F, 50.8F}};
 
     std::string dirname1 = "file1.parquet";
     std::string dirname2 = "file2.parquet";
@@ -1153,15 +1153,14 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareFloatMisMatch)
 TEST_F(ParquetArrowValidatorTest, ComparatorEnsureVectorBeginningPosition1Reset)
 {
     //												column1				column2
-    std::vector<std::vector<float>> file1 = {{-16.54, 5.34, 4.24,
-                                              9.14, 8.11,
-                                              -20.2, 101.1},
-                                             {7.1, 8.2, 20.3, 50.4, 60.5, 51.6, 50.7}};
-
-    std::vector<std::vector<float>> file2 = {{16.54, 5.34, 4.24,
-                                              9.14, 8.11,
-                                              -20.2, 101.1},
-                                             {7.1, 8.2, 20.3, 50.4, 60.5, 51.6, 50.7}};
+    std::vector<std::vector<float>> file1 = {{-16.54F, 5.34F, 4.24F,
+                                              9.14F, 8.11F,
+                                              -20.2F, 101.1F},
+                                             {7.1F, 8.2F, 20.3F, 50.4F, 60.5F, 51.6F, 50.7F}};
+    std::vector<std::vector<float>> file2 = {{16.54F, 5.34F, 4.24F,
+                                              9.14F, 8.11F,
+                                              -20.2F, 101.1F},
+                                             {7.1F, 8.2F, 20.3F, 50.4F, 60.5F, 51.6F, 50.7F}};
 
     std::string dirname1 = "file1.parquet";
     std::string dirname2 = "file2.parquet";
@@ -1183,15 +1182,14 @@ TEST_F(ParquetArrowValidatorTest, ComparatorEnsureVectorBeginningPosition1Reset)
 TEST_F(ParquetArrowValidatorTest, ComparatorEnsureVectorBeginningPosition2Reset)
 {
     //												column1				column2
-    std::vector<std::vector<float>> file1 = {{-16.54, 5.34, 4.24,
-                                              9.14, 8.11,
-                                              -20.2, 101.1},
-                                             {7.1, 8.2, 20.3, 50.4, 60.5, 51.6, 50.7}};
-
-    std::vector<std::vector<float>> file2 = {{16.54, 5.34, 4.24,
-                                              9.14, 8.11,
-                                              -20.2, 101.1},
-                                             {7.1, 8.2, 20.3, 50.4, 60.5, 51.6, 50.7}};
+    std::vector<std::vector<float>> file1 = {{-16.54F, 5.34F, 4.24F,
+                                              9.14F, 8.11F,
+                                              -20.2F, 101.1F},
+                                             {7.1F, 8.2F, 20.3F, 50.4F, 60.5F, 51.6F, 50.7F}};
+    std::vector<std::vector<float>> file2 = {{16.54F, 5.34F, 4.24F,
+                                              9.14F, 8.11F,
+                                              -20.2F, 101.1F},
+                                             {7.1F, 8.2F, 20.3F, 50.4F, 60.5F, 51.6F, 50.7F}};
 
     std::string dirname1 = "file1.parquet";
     std::string dirname2 = "file2.parquet";
@@ -1213,8 +1211,8 @@ TEST_F(ParquetArrowValidatorTest, ComparatorEnsureVectorBeginningPosition2Reset)
 TEST_F(ParquetArrowValidatorTest, ComparatorCompareFloatNaN)
 {
     //												column1
-    std::vector<std::vector<float>> file1a = {{16.54, 5.34, 4.24, 9.14, std::numeric_limits<float>::quiet_NaN()}};
-    std::vector<std::vector<float>> file1b = {{-20.2, std::numeric_limits<float>::quiet_NaN(), 100.1}};
+    std::vector<std::vector<float>> file1a = {{16.54F, 5.34F, 4.24F, 9.14F, std::numeric_limits<float>::quiet_NaN()}};
+    std::vector<std::vector<float>> file1b = {{-20.2F, std::numeric_limits<float>::quiet_NaN(), 100.1F}};
 
     std::string dirname1 = "file1.parquet";
     std::string dirname2 = "file2.parquet";
@@ -1507,7 +1505,7 @@ TEST_F(ParquetArrowValidatorTest, FloatNullMatch)
 {
     std::string dirname1 = "file1.parquet";
     std::string dirname2 = "file2.parquet";
-    std::vector<std::vector<float>> file = {{1.5, 2, 1, 3, 1, 4, 5.5, 6, -8.66, 9, 1, 2, 9, 8}};
+    std::vector<std::vector<float>> file = {{1.5F, 2.F, 1.F, 3.F, 1.F, 4.F, 5.5F, 6.F, -8.66F, 9.F, 1.F, 2.F, 9.F, 8.F}};
     std::vector<uint8_t> bool_fields = {0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1};
 
     ASSERT_TRUE(CreateParquetFile(arrow::float32(), dirname1, file, 6, &bool_fields));
@@ -1573,7 +1571,8 @@ TEST_F(ParquetArrowValidatorTest, FloatNullMisMatch)
 {
     std::string dirname1 = "file1.parquet";
     std::string dirname2 = "file2.parquet";
-    std::vector<std::vector<float>> file = {{1.5, 2, 1, 3, 1, 4, 5.5, 6, -8.66, 9, 1, 2, 9, 8}};
+    std::vector<std::vector<float>> file = {{1.5F, 2.F, 1.F, 3.F, 1.F, 4.F, 5.5F, 6.F, -8.66F, 9.F, 1.F, 2.F, 9.F, 8.F}};
+    std::vector<uint8_t> bool_fields = {0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1};
     std::vector<uint8_t> bool_fields1 = {0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1};
     std::vector<uint8_t> bool_fields2 = {0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0};
 

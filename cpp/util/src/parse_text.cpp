@@ -37,7 +37,7 @@ std::vector<std::string> ParseText::Split(std::string input_string, const char& 
     {
         // Add each quoted section directly to the output vector and
         // split unquoted sections by the delimiter.
-        int n_sections = quoted_sections.size() + unquoted_sections.size();
+        size_t n_sections = quoted_sections.size() + unquoted_sections.size();
         IterableTools it;
         bool new_element = false;
         bool preceding_is_quoted = false;
@@ -68,7 +68,7 @@ std::vector<std::string> ParseText::Split(std::string input_string, const char& 
             }
             else
             {
-                std::string curr_string = unquoted_sections[i];
+                std::string curr_string = unquoted_sections.at(i);
 
                 // Remove any delimiters that may exist at the beginning
                 // or end of the string.
@@ -216,7 +216,6 @@ bool ParseText::ExtractQuotedSections(const std::string& input_string,
     // There must be an even count of quote instances to be considered.
     if (n_quotes > 0 && n_quotes % 2 == 0)
     {
-        int quoted_section_count = n_quotes / 2;
         std::vector<size_t> quote_pos;
 
         // Locate all of the quote positions.

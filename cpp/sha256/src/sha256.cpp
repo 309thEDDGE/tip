@@ -1,5 +1,3 @@
-#include <cstring>
-#include <fstream>
 #include "sha256.h"
 
 const unsigned int SHA256::sha256_k[64] =  //UL = uint32
@@ -120,7 +118,7 @@ void SHA256::final(unsigned char *digest)
     }
 }
 
-std::string sha256(std::string input)
+std::string CalcSHA256(std::string input)
 {
     unsigned char digest[SHA256::DIGEST_SIZE];
     memset(digest, 0, SHA256::DIGEST_SIZE);

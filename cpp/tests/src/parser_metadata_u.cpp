@@ -168,7 +168,7 @@ TEST_F(ParserMetadataTest, RecordProvenanceData)
     EXPECT_TRUE(tipdoc.type_category_->node.IsScalar());
     EXPECT_EQ(expected_type, tipdoc.type_category_->node.Scalar());
 
-    std::string expected_uid = Sha256(prov.hash + prov.time + prov.tip_version + pkt_label);
+    std::string expected_uid = CalcSHA256(prov.hash + prov.time + prov.tip_version + pkt_label);
     EXPECT_TRUE(tipdoc.uid_category_->node.IsScalar());
     EXPECT_EQ(expected_uid, tipdoc.uid_category_->node.Scalar());
 
@@ -639,7 +639,7 @@ TEST_F(ParserMetadataTest, RecordMetadataForPktType)
 
 TEST_F(ParserMetadataTest, WriteTDPDataInitializeFail)
 {
-    ManagedPath out_path({"test.parquet"});
+    ManagedPath out_path{"test.parquet"};
     
     // ParquetTDPF1 INitialized
     ParquetContext ctx;
@@ -655,7 +655,7 @@ TEST_F(ParserMetadataTest, WriteTDPDataInitializeFail)
 
 TEST_F(ParserMetadataTest, WriteTDPData)
 {
-    ManagedPath out_path({"test.parquet"});
+    ManagedPath out_path{"test.parquet"};
     
     // ParquetTDPF1 INitialized
     ParquetContext ctx;

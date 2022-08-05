@@ -4,7 +4,7 @@ set(headers
     include/arinc429_data.h
 )
 
-add_library(dts_429
+add_library(dts_429 
     src/dts429.cpp
     src/organize_429_icd.cpp
     src/arinc429_data.cpp
@@ -21,6 +21,9 @@ set_target_properties(dts_429
 )
 
 target_link_libraries(dts_429
-  PUBLIC tiputil parquet_context yamlsv ch10_parquet
-  yaml-cpp arrow_shared parquet tins dts_1553
+  PRIVATE spdlog::spdlog yaml-cpp tiputil yamlsv 
+)
+
+target_link_libraries(dts_429
+  PUBLIC dts_1553
 )

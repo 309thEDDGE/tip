@@ -76,7 +76,7 @@ void ParserMetadataFunctions::RecordProvenanceData(TIPMDDocument* md,
     md->type_category_->SetScalarValue("parsed_" + packet_type_label);
 
     std::string ch10_hash = prov_data.hash;
-    std::string uid = Sha256(ch10_hash + prov_data.time +
+    std::string uid = CalcSHA256(ch10_hash + prov_data.time +
         prov_data.tip_version + packet_type_label);
     md->uid_category_->SetScalarValue(uid);
     md->AddResource("CH10", input_ch10_file_path.RawString(), ch10_hash);

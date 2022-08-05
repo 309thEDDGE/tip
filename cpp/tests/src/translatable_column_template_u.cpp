@@ -19,8 +19,8 @@ class TranslatableColumnTemplateTest : public ::testing::Test
    public:
     TranslatableColumnTemplateTest() : name_(""), arrow_type_(nullptr), result_(false), words_per_value_(0), row_group_size_(1000), payload_offset_(0), icd_elem_(), thread_index_(0)
     {
-        icd_elem_.elem_word_count_ = words_per_value_;
-        icd_elem_.offset_ = payload_offset_;
+        icd_elem_.elem_word_count_ = static_cast<uint8_t>(words_per_value_);
+        icd_elem_.offset_ = static_cast<uint8_t>(payload_offset_);
     }
 
     template <typename RawType>

@@ -81,7 +81,7 @@ class Ch10PacketHeaderComponent : public Ch10PacketComponent
                                                             sync_(0xEB25),
                                                             std_hdr_size_(std_hdr_elem_.size),
                                                             secondary_hdr_size_(12),
-                                                            header_checksum_byte_count_(std_hdr_elem_.size - 2),
+                                                            header_checksum_byte_count_(static_cast<uint8_t>(std_hdr_elem_.size - 2)),
                                                             checksum_unit_count_(0),
                                                             checksum_data_ptr16_(nullptr),
                                                             checksum_value16_(0),

@@ -1,7 +1,8 @@
 #include "cli_arg.h"
 
-const int CLIArg::minimum_help_string_char_width_ = 40;
-const std::string CLIArg::whitespace_code = ContainerArg::whitespace_code;
+const size_t CLIArg::minimum_help_string_char_width_ = 40;
+// const std::string CLIArg::whitespace_code = ContainerArg::whitespace_code;
+const std::string CLIArg::whitespace_code = "--..--";
 
 CLIArg::CLIArg(const std::string& label, const std::string& help_str, 
     const std::string& the_default) : label_(label), 
@@ -10,13 +11,13 @@ CLIArg::CLIArg(const std::string& label, const std::string& help_str,
     container_arg_ptr_(nullptr), is_container_arg_(false), use_simple_format_(false)
 {}
 
-bool CLIArg::FormatString(const std::string& help_str, int max_char_width,
+bool CLIArg::FormatString(const std::string& help_str, size_t max_char_width,
     const size_t& indent, std::string& fmt_str, std::string sep)
 {
 
     if (max_char_width < minimum_help_string_char_width_)
     {
-        printf("CLIArg::FormatHelpString: Require max_char_width >= %d\n", minimum_help_string_char_width_);
+        printf("CLIArg::FormatHelpString: Require max_char_width >= %zu\n", minimum_help_string_char_width_);
         return false;
     }
 
@@ -111,7 +112,7 @@ bool CLIArg::FormatString(const std::string& help_str, const size_t& indent,
     return true;
 }
 
-bool CLIArg::GetHelpString(int max_char_width, const size_t& indent, 
+bool CLIArg::GetHelpString(size_t max_char_width, const size_t& indent, 
     std::string& fmt_str)
 {
     std::map<int, std::string> nonescaped;
@@ -121,7 +122,7 @@ bool CLIArg::GetHelpString(int max_char_width, const size_t& indent,
         size_t component_count = nonescaped.size() + escaped.size();
         std::string temp = "";
         std::string formatted = "";
-        for(size_t i = 0; i < component_count; i++)
+        for(int i = 0; i < component_count; i++)
         {
             if(escaped.count(i) == 1)
             {
@@ -314,9 +315,9 @@ bool CLIArg::FindEscapedComponents(const std::string& input_str,
         for(size_t i = 0; i < components.size(); i++)
         {
             if(i % 2 == 0)
-                escaped[i] = components.at(i);
+                escaped[static_cast<int>(i)] = components.at(i);
             else
-                nonescaped[i] = components.at(i);
+                nonescaped[static_cast<int>(i)] = components.at(i);
         }
     }
     else
@@ -324,9 +325,9 @@ bool CLIArg::FindEscapedComponents(const std::string& input_str,
         for(size_t i = 0; i < components.size(); i++)
         {
             if(i % 2 == 0)
-                nonescaped[i] = components.at(i);
+                nonescaped[static_cast<int>(i)] = components.at(i);
             else
-                escaped[i] = components.at(i);
+                escaped[static_cast<int>(i)] = components.at(i);
         }
     }
 

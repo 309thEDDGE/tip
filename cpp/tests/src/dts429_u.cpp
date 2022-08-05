@@ -336,7 +336,7 @@ TEST_F(DTS429Test, CreateICDElementFromWordNodesTestOutput)
     expected_element.sdi_= 2;            // 8-bit
     expected_element.bus_name_="BUS5";  // upper to test case sensitivity
     expected_element.msg_name_="TestWord";
-    expected_element.rate_=1.1;
+    expected_element.rate_= 1.1F;
     expected_element.description_="Altitude";
     expected_element.xmit_lru_name_="LRU921";
     expected_element.elem_name_="107_alt";
@@ -390,7 +390,7 @@ TEST_F(DTS429Test, CreateICDElementFromWordNodesTestOutputParameterInSDI)
     expected_element.sdi_= 2;            // 8-bit
     expected_element.bus_name_="BUS5";  // upper to test case sensitivity
     expected_element.msg_name_="TestWord";
-    expected_element.rate_=1.1;
+    expected_element.rate_= 1.1F;
     expected_element.description_="Altitude";
     expected_element.xmit_lru_name_="LRU921";
     expected_element.elem_name_="107_alt";

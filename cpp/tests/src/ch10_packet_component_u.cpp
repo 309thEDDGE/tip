@@ -23,7 +23,7 @@ class ArrayFloat
 {
    public:
     float ff[2];
-    ArrayFloat() : ff{-9.0, 50.1} {}
+    ArrayFloat() : ff{-9.0F, 50.1F} {}
 };
 
 class Ch10PacketComponentTest : public ::testing::Test
