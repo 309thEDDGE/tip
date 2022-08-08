@@ -8,7 +8,7 @@ set(headers
     include/dts_arinc429_schema.h 
 )
 
-add_library(translate_tabular_arinc429
+add_library(translate_tabular_arinc429 
             src/translate_tabular_arinc429_main.cpp
             src/translate_tabular_context_arinc429.cpp
             src/translatable_arinc429_table.cpp
@@ -25,16 +25,20 @@ set_target_properties(translate_tabular_arinc429
 )
 
 target_link_libraries(translate_tabular_arinc429
-  PUBLIC translate_tabular tiputil ch10_parquet yamlsv metadata dts_1553
-  dts_429 spdlog::spdlog cli
+  PRIVATE common yaml-cpp spdlog::spdlog tiputil yamlsv sha256 cli dts_429 
+  translate_tabular metadata ch10_parquet
 )
 
 add_executable("${TRANSLATE_429_EXE_NAME}" main/translate_tabular_arinc429.cpp)
 
-target_link_libraries("${TRANSLATE_429_EXE_NAME}" translate_tabular_arinc429)
+target_link_libraries("${TRANSLATE_429_EXE_NAME}" translate_tabular_arinc429
+    common yaml-cpp spdlog::spdlog tiputil yamlsv cli dts_429 
+    translate_tabular metadata ch10_parquet
+)
 
 target_compile_features("${TRANSLATE_429_EXE_NAME}" PUBLIC cxx_std_17)
 
 install(
-    TARGETS translate_tabular_arinc429 "${TRANSLATE_429_EXE_NAME}"
+    TARGETS "${TRANSLATE_429_EXE_NAME}"
+    DESTINATION ${out_bin_dir}
 )

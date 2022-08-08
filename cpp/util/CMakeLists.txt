@@ -19,7 +19,7 @@ set(headers
     include/terminal.h
 )
 
-add_library(tiputil STATIC
+add_library(tiputil 
             src/argument_validation.cpp
             src/binbuff.cpp
             src/data_organization.cpp
@@ -45,9 +45,9 @@ target_include_directories(tiputil PUBLIC include)
 set_target_properties(tiputil PROPERTIES PUBLIC_HEADER "${headers}")
 
 target_link_libraries(tiputil
-    PUBLIC common spdlog::spdlog yaml-cpp sha256
+    PRIVATE common spdlog::spdlog yaml-cpp 
 )
 
-install(
-    TARGETS tiputil
+target_link_libraries(tiputil
+    PUBLIC sha256
 )

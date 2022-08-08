@@ -13,6 +13,7 @@ with re-definitions by spdlog headers of arrow defs.
 #include <chrono>
 #include <vector>
 #include <unordered_map>
+#include <map>
 #include <iostream>
 #include <fstream>
 #include "spdlog/spdlog.h"
@@ -45,7 +46,7 @@ int TranslateTabularARINC429Main(int argc, char** argv);
 namespace transtab429
 {
     bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
-                    const std::string& str_output_dir, const std::string& str_log_dir, 
+                    const std::string& str_output_dir, const std::string& str_log_dir,
                     ManagedPath& input_path, ManagedPath& icd_path,
                     ManagedPath& output_dir, ManagedPath& log_dir, ArgumentValidation* av);
 
@@ -67,14 +68,16 @@ namespace transtab429
                 const ManagedPath& output_dir, const ARINC429Data& icd,
                 const ManagedPath& translated_data_dir,
                 const ManagedPath& output_base_name,
-                std::set<std::string>& translated_msg_names);
+                std::set<std::string>& translated_msg_names,
+                std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>>& chanid_busnum_labels_map);
 
     bool RecordMetadata(const TranslationConfigParams& config,
                     const ManagedPath& translated_data_dir,
                     const ManagedPath& dts_path,
                     const ManagedPath& input_path,
                     const std::set<std::string>& translated_messages,
-                    const ProvenanceData& prov_data, const TIPMDDocument& parser_md_doc);
+                    const ProvenanceData& prov_data, const TIPMDDocument& parser_md_doc,
+                    const std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>>& chanid_busnum_labels);
 }  // namespace transtab429
 
 #endif  // TRANSLATE_TABULAR_ARINC429_MAIN_H_

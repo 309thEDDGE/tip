@@ -54,7 +54,7 @@ class CLIArg : public std::enable_shared_from_this<CLIArg>
         std::smatch rgx_match_;
 
         // Minimum user-configurable help message char width
-        static const int minimum_help_string_char_width_; 
+        static const size_t minimum_help_string_char_width_; 
 
         // Set to true if argument is present and can be extracted
         // and/or interpreted as expected by parsing the user 
@@ -252,7 +252,7 @@ class CLIArg : public std::enable_shared_from_this<CLIArg>
         Return:
             True if no errors occurred; false otherwise.
         */
-        static bool FormatString(const std::string& help_str, int max_char_width,
+        static bool FormatString(const std::string& help_str, size_t max_char_width,
             const size_t& indent, std::string& fmt_str, std::string sep);
 
         /*
@@ -266,7 +266,7 @@ class CLIArg : public std::enable_shared_from_this<CLIArg>
         Meta handler for returning appropriately formatted help string. 
         Similar input as FormatString.
         */
-        bool GetHelpString(int max_char_width, const size_t& indent, 
+        bool GetHelpString(size_t max_char_width, const size_t& indent, 
             std::string& fmt_str);
 
 

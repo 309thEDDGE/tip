@@ -13,7 +13,7 @@ class BitField
 
 TEST(Ch10PacketElementTest, SetFloat)
 {
-    float f = 30.2;
+    float f = 30.2F;
     Ch10PacketElement<float> elem;
     EXPECT_EQ(sizeof(float), elem.size);
 
@@ -22,7 +22,7 @@ TEST(Ch10PacketElementTest, SetFloat)
     ASSERT_TRUE(elem.element != nullptr);
     EXPECT_EQ(**elem.element, f);
 
-    float f2 = 100.0;
+    float f2 = 100.0F;
     elem.Set((const uint8_t*)&f2);
     EXPECT_EQ(**elem.element, f2);
 }

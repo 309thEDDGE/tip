@@ -178,7 +178,8 @@ bool TranslateTabular::CreateTranslationManagerObjects(
     {
         std::shared_ptr<TranslationManager> temp_tm = std::make_shared<TranslationManager>();
         std::shared_ptr<TranslateTabularContextBase> temp_context = context->Clone();
-        temp_tm->Configure(temp_context, i, file_paths[i], output_dir, output_base_name);
+        temp_tm->Configure(temp_context, static_cast<int>(i), file_paths.at(i), 
+            output_dir, output_base_name);
         tm_obj_vec.push_back(temp_tm);
     }
     SPDLOG_INFO("TranslationManager objects created");

@@ -1,0 +1,26 @@
+---
+translatable_word_definitions:
+  word_1:
+    wrd_data: {label: 121, bus: ABC, sdi: 1, rate: 12.5, desc: arinc_label_121_left, lru_name: "Left LRU_2"}
+    elem:
+      Engine_word1: {schema: UNSIGNEDBITS, msbval: 2048.0,  lsb: 18, bitcnt: 12, desc: "Left Speed", uom: "NONE", class: 0}
+  word_2:
+    wrd_data: {label: 121, bus: ABC, sdi: 2, rate: 12.5, desc: arinc_label_121_right, lru_name: "Right LRU_2"}
+    elem:
+      Engine_word2: {schema: UNSIGNEDBITS, msbval: 2048.0,  lsb: 18, bitcnt: 12, desc: "Right Speed", uom: "NONE", class: 0}
+  word_3:
+    wrd_data: {label: 121, bus: ABC, sdi: 3, rate: 12.5, desc: arinc_label_121_center, lru_name: "Center LRU_2"}
+    elem:
+      Engine_word3: {schema: UNSIGNEDBITS, msbval: 2048.0,  lsb: 18, bitcnt: 12, desc: "Center Speed", uom: "NONE", class: 0}
+  word_4:
+    wrd_data: {label: 122, bus: ABC, sdi: 3, rate: 12.5, desc: arinc_label_122_center, lru_name: "Center LRU_2"}
+    elem:
+      Engine_word4: {schema: SIGNEDBITS, msbval: 512.0,  lsb: 17, bitcnt: 13, desc: "Center Temperature", uom: "NONE", class: 0}
+  word_5:
+    wrd_data: {label: 120, bus: ABC, sdi: -1, rate: 12.5, desc: arinc_label_120_all, lru_name: "Validity bits"}
+    elem:
+      Engine_word1_valid: {schema: UNSIGNEDBITS, msbval: 1.0,  lsb: 29, bitcnt: 1, desc: "Left Speed Valid", uom: "NONE", class: 0}
+      Engine_word2_valid: {schema: UNSIGNEDBITS, msbval: 1.0,  lsb: 28, bitcnt: 1, desc: "Right Speed Valid", uom: "NONE", class: 0}
+      Engine_word3_valid: {schema: UNSIGNEDBITS, msbval: 1.0,  lsb: 27, bitcnt: 1, desc: "Center Speed Valid", uom: "NONE", class: 0}
+      Engine_word4_valid: {schema: UNSIGNEDBITS, msbval: 1.0,  lsb: 26, bitcnt: 1, desc: "Center Temp Valid", uom: "NONE", class: 0}
+supplemental_bus_map_labels: {}

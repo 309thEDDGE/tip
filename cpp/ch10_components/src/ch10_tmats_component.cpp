@@ -9,7 +9,7 @@ Ch10Status Ch10TMATSComponent::Parse(const uint8_t*& data)
 
     // Calculate TMATS body (read: payload) size and save string
     // in vector that is passed in as argument.
-    int tmats_byte_length = ctx_->data_size - tmats_csdw_elem_.size;
+    int tmats_byte_length = static_cast<int>(ctx_->data_size) - static_cast<int>(tmats_csdw_elem_.size);
     if (tmats_byte_length > 0)
     {
         std::string tmats_body(reinterpret_cast<const char*>(data), 

@@ -113,6 +113,7 @@ TranslateStatus TranslateTabularContextARINC429::ConsumeRowGroup(const size_t& t
                     continue;
                 }
                 translated_msg_names_.insert(table_name);
+                chanid_busnum_labels_[channelid_[row_ind]][subchannel_id].insert(label_[row_ind]);
             }
 
             if(!arinc_data_.SSMSignForBCD(ssm_[row_ind], sign))

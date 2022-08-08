@@ -645,7 +645,7 @@ void YamlSV::PrintLogItems(const std::vector<LogItem>& log_items, int print_coun
                                                            "validator log items:"
            << std::endl;
 
-    int start_index = log_items.size() - print_count;
+    int start_index = static_cast<int>(log_items.size()) - print_count;
     if (start_index < 0)
         start_index = 0;
 

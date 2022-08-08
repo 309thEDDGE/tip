@@ -222,5 +222,5 @@ void TranslatableTableBase::CloseOutputFile()
     }
 
     if (pq_ctx_ != nullptr)
-        pq_ctx_->Close(thread_index_);
+        pq_ctx_->Close(static_cast<uint16_t>(thread_index_));
 }

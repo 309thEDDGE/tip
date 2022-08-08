@@ -10,12 +10,12 @@ set(headers
     include/validate_special_config.h 
     include/container_arg.h 
 )
-add_library(cli
-    STATIC
+add_library(cli 
     src/cli_arg.cpp
     src/cli_flag.cpp
     src/cli.cpp
     src/cli_group.cpp
+    src/container_arg.cpp
 )
 
 target_compile_features(cli PUBLIC cxx_std_17)
@@ -29,8 +29,4 @@ set_target_properties(cli
 )
 
 target_link_libraries(cli 
-    PUBLIC tiputil)
-
-install(
-    TARGETS cli
-)
+    PRIVATE tiputil yaml-cpp spdlog::spdlog)

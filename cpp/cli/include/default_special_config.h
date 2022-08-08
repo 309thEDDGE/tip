@@ -14,7 +14,7 @@ class ArgParentPathConfig : public ArgSpecialConfig<std::string>
         virtual void Compute()
         {
             ManagedPath temp(*input_);
-            *output_ = temp.parent_path().string();
+            *output_ = temp.absolute().parent_path().string();
         }
 };
 

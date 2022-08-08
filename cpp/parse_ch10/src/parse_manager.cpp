@@ -102,7 +102,7 @@ bool ParseCh10(std::vector<WorkUnit*>& work_units, ParseManagerFunctions* pmf,
 	ParseManager* pm, const ParserConfigParams& user_config)
 {
     bool append = false;
-    uint16_t effective_worker_count = work_units.size();
+    uint16_t effective_worker_count = static_cast<uint16_t>(work_units.size());
     std::vector<uint16_t> active_workers_vec;
 
     spdlog::get("pm_logger")->debug("Parse: begin parsing with workers");

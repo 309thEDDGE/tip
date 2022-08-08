@@ -26,7 +26,10 @@ int TranslateTabular1553Main(int argc, char** argv)
     std::string nickname = "";
     std::shared_ptr<CLIGroupMember> cli;
     if (!cli_group.Parse(argc, argv, nickname, cli))
+    {
+        printf("%s", cli_group.MakeHelpString().c_str());
         return 0;
+    }
 
     if (help_requested && nickname == "clihelp")
     {
@@ -115,7 +118,8 @@ int TranslateTabular1553Main(int argc, char** argv)
 
     if (config.auto_sys_limits_)
     {
-        if (!transtab1553::SetSystemLimits(thread_count, dts1553.ICDDataPtr()->valid_message_count))
+        if (!transtab1553::SetSystemLimits(static_cast<uint8_t>(thread_count), 
+            dts1553.ICDDataPtr()->valid_message_count))
             return 0;
     }
     else
@@ -553,7 +557,7 @@ namespace transtab1553
         std::string label = ch10packettype_to_string_map.at(Ch10PacketType::MILSTD1553_F1);
         std::string dts1553hash = prov_data.hash;
         std::string parsed1553uuid = parser_md_doc.uid_category_->node.as<std::string>();
-        std::string uid = Sha256(dts1553hash + prov_data.time +
+        std::string uid = CalcSHA256(dts1553hash + prov_data.time +
             prov_data.tip_version + parsed1553uuid);
 
         md.type_category_->SetScalarValue("translated_" + label);

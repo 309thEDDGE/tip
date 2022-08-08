@@ -7,7 +7,7 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
     uint32_t subpacket_size = GetSubpacketSize((*csdw_element.element)->IPH);
 
     /*(signed)*/ int16_t subpacket_count = DivideExactInteger(
-        ctx_->data_size - csdw_element.size, subpacket_size);
+        ctx_->data_size - static_cast<uint32_t>(csdw_element.size), subpacket_size);
     if (subpacket_count <= 0)
     {
         SPDLOG_WARN(

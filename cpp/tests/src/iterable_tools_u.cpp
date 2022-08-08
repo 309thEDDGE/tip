@@ -72,12 +72,12 @@ class IterableToolsVectorOfMemberTest : public ::testing::Test
     IterableToolsVectorOfMemberTest() {}
     void SetUp() override
     {
-        std::vector<float> temp = {30.3, 100.0, 0.554};
+        std::vector<float> temp{30.3F, 100.0F, 0.554F};
         test_obj_.push_back(T0(3, "hi", temp));
-        temp[0] = 6.0;
+        temp[0] = 6.0F;
         test_obj_.push_back(T0(45, "anything else", temp));
-        temp[1] = 50.0;
-        temp[2] = 21.1;
+        temp[1] = 50.0F;
+        temp[2] = 21.1F;
         test_obj_.push_back(T0(2199, "hemisphere", temp));
     }
 };
@@ -176,7 +176,7 @@ class IterableToolsGetKeysValsTest : public ::testing::Test
     IterableToolsGetKeysValsTest() {}
     void SetUp() override
     {
-        std::vector<float> temp = {30.3, 100.0, 0.554};
+        std::vector<float> temp{30.3F, 100.0F, 0.554F};
         test_map_["abrupt"] = 23;
         test_uomap_["abrupt"] = 23;
         test_class_map_[2] = T0(3, "hi", temp);
@@ -184,7 +184,7 @@ class IterableToolsGetKeysValsTest : public ::testing::Test
         test_map_vec_[1] = temp;
         test_uomap_vec_[1] = temp;
 
-        temp[0] = 6.0;
+        temp[0] = 6.0F;
         test_map_["ab"] = 17;
         test_uomap_["ab"] = 17;
         test_class_map_[38] = T0(45, "anything else", temp);
@@ -192,8 +192,8 @@ class IterableToolsGetKeysValsTest : public ::testing::Test
         test_map_vec_[10] = temp;
         test_uomap_vec_[10] = temp;
 
-        temp[1] = 50.0;
-        temp[2] = 21.1;
+        temp[1] = 50.0F;
+        temp[2] = 21.1F;
         test_map_["count"] = 600;
         test_uomap_["count"] = 600;
         test_class_map_[2198] = T0(2199, "hemisphere", temp);
@@ -329,17 +329,17 @@ class IterableToolsGroupByMemberTest : public ::testing::Test
     IterableToolsGroupByMemberTest() {}
     void SetUp() override
     {
-        std::vector<float> temp = {30.3, 100.0, 0.554};
+        std::vector<float> temp{30.3F, 100.0F, 0.554F};
         test_obj_.push_back(T0(3, "hi", temp));
         test_struct_.push_back(S0(3, "hi", temp));
-        temp[0] = 6.0;
+        temp[0] = 6.0F;
         test_obj_.push_back(T0(45, "anything else", temp));
         test_struct_.push_back(S0(45, "anything else", temp));
-        temp[1] = 50.0;
-        temp[2] = 21.1;
+        temp[1] = 50.0F;
+        temp[2] = 21.1F;
         test_obj_.push_back(T0(2199, "hemisphere", temp));
         test_struct_.push_back(S0(2199, "hemisphere", temp));
-        temp[0] = 33.0;
+        temp[0] = 33.0F;
         test_obj_.push_back(T0(45, "underwater", temp));
         test_obj_.push_back(T0(541, "hi", temp));
         test_struct_.push_back(S0(45, "underwater", temp));

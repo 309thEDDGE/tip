@@ -1,6 +1,5 @@
 import os, sys
 import time
-import numpy as np
 import argparse
 from pathlib import Path
 import platform
