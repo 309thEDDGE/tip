@@ -2,29 +2,73 @@
 #include <chrono>
 #include <cinttypes>
 #include "comparator.h"
+#include "cli_group.h"
 
 typedef std::chrono::high_resolution_clock Clock;
+
+bool ConfigureCLI(CLIGroup& cli_group, bool& help_requested, std::string& truth_path_str,
+    std::string& test_path_str);
 
 int main(int argc, char* argv[])
 {
     auto t1 = Clock::now();
 
-    Comparator comp;
+    CLIGroup cli_group;
+    bool help_requested = false;
+    std::string truth_path_str("");
+    std::string test_path_str("");
 
-    if (argc < 3)
+    if(!ConfigureCLI(cli_group, help_requested, truth_path_str, test_path_str))
+        return -1;
+
+    std::string nickname = "";
+    std::shared_ptr<CLIGroupMember> cli;
+    if (!cli_group.Parse(argc, argv, nickname, cli) || help_requested)
     {
-        printf("Requires two parquet file paths as arguments");
-        return 0;
+        printf("%s", cli_group.MakeHelpString().c_str());
+        return -1;
     }
 
-    std::string path1(argv[1]);
-    std::string path2(argv[2]);
-    comp.Initialize(ManagedPath(path1), ManagedPath(path2));
-    comp.CompareAll();
+    Comparator comp;
+    if(!comp.Initialize(ManagedPath(truth_path_str), ManagedPath(test_path_str)))
+        return -1;
+    bool result = comp.CompareAll();
 
     auto t2 = Clock::now();
     printf("\nElapsed Time: %" PRId64 " seconds\n",
            std::chrono::duration_cast<std::chrono::seconds>(t2 - t1).count());
 
+    if(!result)
+        return 1;
     return 0;
+}
+
+bool ConfigureCLI(CLIGroup& cli_group, bool& help_requested, std::string& truth_path_str, 
+    std::string& test_path_str)
+{
+    std::string exe_name = "pqcompare";
+    std::string description = "Compare a test parquet path against a truth parquet path. Input Parquet "
+        "paths may either be files or directories with the suffix \".parquet\". Print \"PASS\" (0) to stdout "
+        "if equivalent, or \"FAIL\" (1) if not equivalent and return the value shown in parentheses. A NULL result, "
+        "meaning the comparison couldn't be conducted due to bad paths or some other issue, returns -1. "
+        "Column count and schema (column label and data type) will be compared first, followed by element-wise "
+        "comparison of columns as arrays. All list-type columns are assumed to be arrow::Int32Type.";
+    std::shared_ptr<CLIGroupMember> cli_help = cli_group.AddCLI(exe_name, 
+    description, "clihelp");
+    cli_help->AddOption("--help", "-h", "Show usage information", false, 
+    help_requested, true);
+
+    std::shared_ptr<CLIGroupMember> cli_full = cli_group.AddCLI(exe_name,
+        description, "clifull");
+
+    std::string truth_path_help = "Full path to TRUTH data";
+    cli_full->AddOption("truth_parquet_path", truth_path_help, truth_path_str, true);
+
+    std::string test_path_help = "Full path to TEST data";
+    cli_full->AddOption("test_parquet_path", test_path_help, test_path_str, true);
+
+    if(!cli_group.CheckConfiguration())
+        return false;
+
+    return true;
 }

@@ -202,7 +202,6 @@ void ParquetVideoExtraction::WriteRowGroup(const arrow::NumericArray<arrow::Int3
          ++it)
     {
         int buffer_length = buffer_lengths_[it->first] / 2;
-
         uint32_t* temp_ptr = reinterpret_cast<uint32_t*>(it->second.data());
 
         for (int i = 0; i < buffer_length; i++)
@@ -212,12 +211,8 @@ void ParquetVideoExtraction::WriteRowGroup(const arrow::NumericArray<arrow::Int3
 
             // Equivalent of a 16 bit endian swap, but 32 bits at a time
             temp_ptr[i] =
-                ((temp_ptr[i] & 0b11111111000000001111111100000000) >> 8) | ((temp_ptr[i] & 0b00000000111111110000000011111111) << 8);
-
-            // Equivalent of a 16 bit endian swap, but 64 bits at a time
-            /*temp_ptr[i] = 
-			  ((temp_ptr[i] & 0b1111111100000000111111110000000011111111000000001111111100000000) >> 8) 
-			| ((temp_ptr[i] & 0b0000000011111111000000001111111100000000111111110000000011111111) << 8);*/
+                ((temp_ptr[i] & 0b11111111000000001111111100000000) >> 8) | 
+                ((temp_ptr[i] & 0b00000000111111110000000011111111) << 8);
         }
 
         video_streams_[it->first]->write(reinterpret_cast<char*>(temp_ptr), buffer_length * sizeof(uint32_t));
@@ -225,7 +220,7 @@ void ParquetVideoExtraction::WriteRowGroup(const arrow::NumericArray<arrow::Int3
     }
 }
 
-bool ParquetVideoExtraction::Initialize(ManagedPath video_path)
+bool ParquetVideoExtraction::Initialize(ManagedPath video_path, ManagedPath output_dir)
 {
     if (!video_path.is_directory())
     {
@@ -233,11 +228,18 @@ bool ParquetVideoExtraction::Initialize(ManagedPath video_path)
         return false;
     }
 
-    printf("Transport Stream Extractor--\nParquet Path: %s\n", video_path.RawString().c_str());
+    if(!output_dir.is_directory())
+    {
+        printf("Output directory %s does not exist\n", output_dir.RawString().c_str());
+        return false;
+    }
 
     parquet_path_ = video_path;
     std::string ext_replacement = "_TS";
-    output_path_ = parquet_path_.parent_path().CreatePathObject(parquet_path_, ext_replacement);
+    output_path_ = output_dir.CreatePathObject(parquet_path_, ext_replacement);
+
+    printf("\nTransport Stream Extractor--\nInput parquet path: %s\n", parquet_path_.RawString().c_str());
+    printf("Output directory: %s\n", output_path_.RawString().c_str());
 
     if (!output_path_.create_directory())
     {

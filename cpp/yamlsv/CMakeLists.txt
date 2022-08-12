@@ -23,7 +23,7 @@ add_executable(validate_yaml main/validate_yaml.cpp)
 target_compile_features(validate_yaml PUBLIC cxx_std_17)
 
 target_link_libraries(validate_yaml yamlsv
-    tiputil yaml-cpp spdlog::spdlog
+    tiputil yaml-cpp spdlog::spdlog cli
 )
 
 install(
