@@ -200,15 +200,14 @@ Navigate to `tip/bin` to call executables or find them on the path if in a conda
 
 Executables:
 
-- **tests**: Google tests executable to run entire test suite
+- **tests**: Google tests executable to run entire test suite. `tests -h`
 - **tip\_parse**: Parse ch10 file into intermediate Parquet files. `tip_parse -h`  
-- **parquet\_video\_extractor** (useful CLI soon): Extract video transport stream data from parquet files. Exports TS files to a folder `<ch10path>/<ch10name>_video_TS` next to `<ch10path>/<ch10name>_video.parquet`  
-`parquet_video_extractor [path to <ch10path>/<ch10name>_video.parquet folder]`  
+- **parquet\_video\_extractor**: Extract video transport stream data from parquet files and export TS video files. `parquet_video_extractor -h`
 - **tip\_translate_1553**: Translate raw 1553 data from Parquet files to parquet tables of enginering units. `tip_translate_1553 -h`
 - **tip\_translate_arinc429**: Similar to `tip_translate_1553`. See CLI for usage: `tip_translate_arinc429 -h`	 
-- **pqcompare** (useful CLI soon): Compare every cell of two parquet tables. Check for equivalent schema (column count, names, data type), then row by row. Used to quickly compare parquet files in end-to-end testing. 
-- **bincompare** (useful CLI soon): Compare two files byte-for-byte. Used to quickly compare files in end-to-end testing. 
-- **validate\_yaml** (useful CLI soon): Schema validate a yaml file given an input schema (also in yaml). Primarily used for debugging the schema validator code.
+- **pqcompare**: Compare two parquet tables for equivalence. `pqcompare -h`
+- **bincompare**: Compare two files at the byte level for equivalence. `bincompare -h`
+- **validate\_yaml**: Validate a yaml file with an input schema. `validate_yaml -h`
 
 ## Parse/translate Helper Script 
 

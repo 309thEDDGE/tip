@@ -58,7 +58,7 @@ class ParquetVideoExtraction
 							the output TS path could not be created
 				 True  -> Other wise	
 	*/
-    bool Initialize(ManagedPath video_path);
+    bool Initialize(ManagedPath video_path, ManagedPath output_dir);
 
     /*
 		Extract transport stream data from 

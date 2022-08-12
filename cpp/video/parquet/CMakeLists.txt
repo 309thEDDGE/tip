@@ -25,7 +25,7 @@ add_executable(parquet_video_extractor main/parquet_video_extractor.cpp)
 target_compile_features(parquet_video_extractor PUBLIC cxx_std_17)
 
 target_link_libraries(parquet_video_extractor pq_vid_extract
-    spdlog::spdlog yaml-cpp tiputil arrow_shared parquet
+    spdlog::spdlog yaml-cpp tiputil cli arrow_shared parquet
 )
 
 install(
