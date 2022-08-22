@@ -82,7 +82,8 @@ RUN rm -rf /opt/conda/pkgs/future-0.18.2-py39hf3d152e_4/lib/python3.9/site-packa
     && rm -rf /opt/conda/pkgs/code-server-4.4.0-ha770c72_0/share/code-server/node_modules/pem/test/fixtures/ru_openssl.key \
     && rm -rf /opt/conda/pkgs/code-server-4.4.0-ha770c72_0/share/code-server/node_modules/pem/test/fixtures/test.key \
     && rm -rf /opt/conda/pkgs/code-server-4.4.0-ha770c72_0/share/code-server/node_modules/pem/test/fixtures/testnopw.key \
-    && rm -rf /opt/conda/pkgs/code-server-4.4.0-ha770c72_0/share/code-server/node_modules/proxy-agent/test/ssl-cert-snakeoil.key 
+    && rm -rf /opt/conda/pkgs/code-server-4.4.0-ha770c72_0/share/code-server/node_modules/proxy-agent/test/ssl-cert-snakeoil.key \
+    && rm -rf /opt/conda/pkgs/tornado-6.2-py39hb9d737c_0/lib/python3.9/site-packages/tornado/test/test.key
 
 ENTRYPOINT ["tini", "-g", "--"]
 CMD ["/usr/local/bin/start-notebook.sh"]
