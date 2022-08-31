@@ -13,7 +13,7 @@ jobs:
       CODE_COV_FNAME: overall-coverage.xml
       RANDOM_CACHE_FNAME: random-cache-key
     container:
-      image: registry.il2.dso.mil/skicamp/project-opal/tip/dev:ghbuild_ubuntu
+      image: registry.il2.dso.mil/skicamp/project-opal/tip/dev:ghbuild_ubuntu_gcovr
       credentials:
         username: ${{ secrets.TIP_REGISTRY_USER }}
         password: ${{ secrets.TIP_REGISTRY_PASS }}
@@ -33,10 +33,10 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ubuntu
-      # - name: Make python link
-      #   run: |
-      #       ln -fs /usr/bin/python3 /usr/bin/python
-      #       chmod a+x /usr/bin/python
+      - name: Make python link
+        run: |
+            ln -fs /usr/bin/python3 /usr/bin/python
+            chmod a+x /usr/bin/python
       # - name: Restore timestamps
       #   uses: chetan/git-restore-mtime-action@v1.1
       - name: home debug
@@ -64,7 +64,7 @@ jobs:
         run: |
           mkdir -p $BUILD_DIR
           cd $BUILD_DIR
-          cmake .. -GNinja \
+          cmake .. -GNinja -DCMAKE_BUILD_TYPE=Profile \
             -DCI_COMMIT_TAG=$CI_COMMIT_TAG \
             -DCI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA
       - name: Build tip binaries
@@ -73,16 +73,16 @@ jobs:
             ninja install
       - name: Run tests
         run: which tests && tests
-      # - name: Run gcov
-      #   run: |
-      #       gcovr -r . $BUILD_DIR/ -j 4 \
-      #       --exclude-unreachable-branches \
-      #       --exclude-throw-branches \
-      #       --xml ./$CODE_COV_FNAME \
-      #       --print-summary \
-      #       --exclude cpp/tests/
-      #       ls -lh .
-      #       ls -lh $BUILD_DIR
+      - name: Run gcov
+        run: |
+            gcovr -r . $BUILD_DIR/ -j 4 \
+            --exclude-unreachable-branches \
+            --exclude-throw-branches \
+            --xml ./$CODE_COV_FNAME \
+            --print-summary \
+            --exclude cpp/tests/
+            ls -lh .
+            ls -lh $BUILD_DIR
       # Metric:
       # "hit" indicates that the source code was executed by the test suite.
       #
@@ -92,11 +92,12 @@ jobs:
       # "miss" indicates that the source code was not executed by the test suite.
       #
       # Coverage is the ratio of hits / (sum of hit + partial + miss
-      # - uses: codecov/codecov-action@v2
-      #   with:
-      #     token: ${{ secrets.CODECOV_IO_TOKEN }}
-      #     files: ./${{ env.CODE_COV_FNAME }}
-      #     flags: unittests
-      #     fail_ci_if_error: true
-      #     verbose: true
+      - name: Code Coverage
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_IO_TOKEN }}
+          files: ./${{ env.CODE_COV_FNAME }}
+          flags: unittests
+          fail_ci_if_error: true
+          verbose: true
 
