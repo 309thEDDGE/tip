@@ -496,6 +496,7 @@ std::set<size_t> ICDData::TempLookupTableIndex(const std::string& bus_name,
     }
     catch (const std::out_of_range& oor)
     {
+        
         temp_table_inds_ = table_inds_vec();
     }
     return temp_table_inds_;
@@ -540,7 +541,7 @@ bool ICDData::ReplaceBusNameWithChannelIDInLookup(const std::map<std::string,
                 chanid_set = input_map.at(*it);
                 for (setit = chanid_set.begin(); setit != chanid_set.end(); ++setit)
                 {
-                    icd_lookup_[*setit] = icd_temp_lookup_[*it];
+                    icd_lookup_[static_cast<uint16_t>(*setit)] = icd_temp_lookup_.at(*it);
                 }
             }
         }

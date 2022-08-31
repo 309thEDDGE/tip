@@ -74,7 +74,7 @@ class ParquetContextTest : public ::testing::Test
         }
 
         // Assume each vector is of the same size
-        int row_size = output[0].size();
+        int row_size = static_cast<int>(output[0].size());
 
         if (!pc.OpenForWrite(file_name, truncate))
             return false;
@@ -126,7 +126,7 @@ class ParquetContextTest : public ::testing::Test
             return false;
 
         // Assume each vector is of the same size
-        int row_size = output.size() / list_size;
+        int row_size = static_cast<int>(output.size() / list_size);
 
         if (!pc.OpenForWrite(file_name, truncate))
             return false;
@@ -816,7 +816,7 @@ TEST_F(ParquetContextTest, int8Test)
 
 TEST_F(ParquetContextTest, Float32Test)
 {
-    std::vector<float> data = {16.546, 5.9856, 4.153, 9.531, 8.897};
+    std::vector<float> data{16.546F, 5.9856F, 4.153F, 9.531F, 8.897F};
     std::vector<std::vector<float>> file;
     file.push_back(data);
 
@@ -827,7 +827,7 @@ TEST_F(ParquetContextTest, Float32Test)
     ASSERT_FALSE(SetPQPath(file_name));
 
     // no cast
-    std::vector<float> data_ = {16.546, 5.9856, 4.153, 9.531, 8.894547};
+    std::vector<float> data_ = {16.546F, 5.9856F, 4.153F, 9.531F, 8.894547F};
     std::vector<std::vector<float>> file_;
     file_.push_back(data_);
 
@@ -2435,7 +2435,7 @@ class ParquetContextRowCountTrackingTest : public ::testing::Test
     uint16_t listdata_incr_;
     size_t listdata_count_per_row_;
 
-    ParquetContextRowCountTrackingTest() : pq_file_("temp.parquet"), pc_(), rg_count_(10), mult_(2), max_count_(rg_count_ * mult_), time_begin_(0), data_begin_(0.3332), time_incr_(1), data_incr_(2.81), print_msg_("test"), print_activity_(true), listdata_begin_(0), listdata_incr_(2), listdata_count_per_row_(10){
+    ParquetContextRowCountTrackingTest() : pq_file_("temp.parquet"), pc_(), rg_count_(10), mult_(2), max_count_(rg_count_ * mult_), time_begin_(0), data_begin_(0.3332F), time_incr_(1), data_incr_(2.81F), print_msg_("test"), print_activity_(true), listdata_begin_(0), listdata_incr_(2), listdata_count_per_row_(10){
 
                                                                                                                                                                                                                                                                                             };
 
@@ -2462,7 +2462,7 @@ class ParquetContextRowCountTrackingTest : public ::testing::Test
 
         // list col
         listdata_.resize(max_count_ * listdata_count_per_row_);
-        pc_.AddField(arrow::int32(), "listdata", listdata_count_per_row_);
+        pc_.AddField(arrow::int32(), "listdata", static_cast<int>(listdata_count_per_row_));
         pc_.SetMemoryLocation(listdata_, "listdata");
 
         if (!pc_.OpenForWrite(pq_file_, true))
@@ -2481,7 +2481,8 @@ class ParquetContextRowCountTrackingTest : public ::testing::Test
             time_[pc_.append_count_] = time_begin_ + time_incr_ * i;
             data_[pc_.append_count_] = data_begin_ + data_incr_ * i;
             for (size_t ii = 0; ii < listdata_count_per_row_; ii++)
-                listdata_[pc_.append_count_ * listdata_count_per_row_ + ii] = (listdata_count_per_row_ * i + ii) * listdata_incr_;
+                listdata_[pc_.append_count_ * listdata_count_per_row_ + ii] = 
+                static_cast<uint16_t>((listdata_count_per_row_ * i + ii)) * listdata_incr_;
 
             did_write = pc_.IncrementAndWrite();
         }

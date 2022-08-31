@@ -129,18 +129,18 @@ class ICDData
 
     /*
     Get a set of indices of the tables which are represented by
-    a set of message names. 
+    a set of message names.
 
     Args:
-        selected_msg_names  --> Set of string message names which 
+        selected_msg_names  --> Set of string message names which
                                 will be used to create a set of indices.
                                 Each of the names is mapped to a table
                                 represented by the corresponding index in tables_.
         all_table_names     --> Vector of table names from which indices
                                 will be determined.
-    
+
     Return:
-        A set of indices which map to tables in the tables_ vector. 
+        A set of indices which map to tables in the tables_ vector.
         Only message names which are found in the table_names_ vector
         will be included.
     */
@@ -148,7 +148,7 @@ class ICDData
                                                 const std::vector<std::string>& all_table_names);
 
     /*
-	* Below are primarily for testing and shouldn't be called by the user. 
+	* Below are primarily for testing and shouldn't be called by the user.
 	*/
 
     std::vector<uint16_t> GetLookupTableChannelIDKeys();
@@ -208,15 +208,15 @@ class ICDData
 		msg_data_node   --> Yaml::Node which satisfies the criterion that
                             MapNodeHasRequiredKeys(msg_data_node, yaml_msg_data_keys_)
                             == true
-        word_elem_name  --> Name of element 
+        word_elem_name  --> Name of element
         word_elem_node  --> Yaml::Node with word element data which satisfies
-                            the criteriion that 
+                            the criteriion that
                             MapNodeHasRequiredKeys(word_elem_node, yaml_word_elem_keys_)
                             == true
-    
+
     Return:
         True if all required member variables of the icd_elem can be set. False
-        if a required key-value pair is missing or a data component can't be 
+        if a required key-value pair is missing or a data component can't be
         converted or casted as expected.
 	*/
     bool ConfigureWordElementFromYamlNodes(ICDElement& icd_elem, const std::string& msg_name,
@@ -235,15 +235,15 @@ class ICDData
 		msg_data_node   --> Yaml::Node which satisfies the criterion that
                             MapNodeHasRequiredKeys(msg_data_node, yaml_msg_data_keys_)
                             == true
-        bit_elem_name  --> Name of element 
+        bit_elem_name  --> Name of element
         bit_elem_node  --> Yaml::Node with bit element data which satisfies
-                            the criteriion that 
+                            the criteriion that
                             MapNodeHasRequiredKeys(bit_elem_node, yaml_bit_elem_keys_)
                             == true
-    
+
     Return:
         True if all required member variables of the icd_elem can be set. False
-        if a required key-value pair is missing or a data component can't be 
+        if a required key-value pair is missing or a data component can't be
         converted or casted as expected.
 	*/
     bool ConfigureBitElementFromYamlNodes(ICDElement& icd_elem, const std::string& msg_name,
@@ -280,8 +280,8 @@ class ICDData
 		word_elem_node  --> Yaml::Node which satisfies the criterion that
                             MapNodeHasRequiredKeys(word_elem_node, yaml_word_elem_keys_)
                             == true
-        word_elem_name  --> Name of element 
-                           
+        word_elem_name  --> Name of element
+
 
     Return:
         True if all required fields of the word_elem_node are present and
@@ -301,8 +301,8 @@ class ICDData
 		bit_elem_node  --> Yaml::Node which satisfies the criterion that
                             MapNodeHasRequiredKeys(bit_elem_node, yaml_bit_elem_keys_)
                             == true
-        bit_elem_name  --> Name of element 
-                           
+        bit_elem_name  --> Name of element
+
 
     Return:
         True if all required fields of the bit_elem_node are present and
@@ -314,20 +314,20 @@ class ICDData
                                           const std::string& bit_elem_name);
 
     /*
-    Fill an output variable from a yaml node using the parameter name as key. 
-    If the parameter name is not in a vector of required parameters, then the 
+    Fill an output variable from a yaml node using the parameter name as key.
+    If the parameter name is not in a vector of required parameters, then the
     key and value are not required to be present.
 
     Args:
-        node            --> YAML::Node from which key/val data are retrieved 
+        node            --> YAML::Node from which key/val data are retrieved
         param_name      --> Name of the parameter which is being retrieved
-        required_params --> Vector of parameter names. Inclusion of a name in 
+        required_params --> Vector of parameter names. Inclusion of a name in
                             the vector implies that the parameter is required.
         output          --> Variable into which will be placed the mapped value
 
     Return:
-        True if the mapped value is present and can be cast to the data type 
-        of the output variable or the param_name is not in required_params. 
+        True if the mapped value is present and can be cast to the data type
+        of the output variable or the param_name is not in required_params.
         False otherwise.
     */
     template <typename T>
@@ -336,24 +336,24 @@ class ICDData
                                 T& output);
 
     /*
-    Fill an output vector from a yaml sequence node. 
-    If the parameter name is not in a vector of required parameters, then the 
+    Fill an output vector from a yaml sequence node.
+    If the parameter name is not in a vector of required parameters, then the
     key and value are not required to be present.
 
     Args:
-        node            --> YAML::Node which contains a sequence which is 
+        node            --> YAML::Node which contains a sequence which is
                             mapped by the key param_name. The sequence which
                             is mapped contains the values that will fill
                             the output vector.
         param_name      --> Name of the parameter which is being retrieved
-        required_params --> Vector of parameter names. Inclusion of a name in 
+        required_params --> Vector of parameter names. Inclusion of a name in
                             the vector implies that the parameter is required.
         output          --> Vector into which will be placed the mapped value
 
     Return:
-        True if the mapped node is present and is a sequence node and 
-        the values in the sequence can be casted to the data type of 
-        the output vector OR the param_name is not in required_params. 
+        True if the mapped node is present and is a sequence node and
+        the values in the sequence can be casted to the data type of
+        the output vector OR the param_name is not in required_params.
         False otherwise.
     */
     template <typename T>

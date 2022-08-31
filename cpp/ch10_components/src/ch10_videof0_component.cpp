@@ -7,7 +7,7 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
     uint32_t subpacket_size = GetSubpacketSize((*csdw_element.element)->IPH);
 
     /*(signed)*/ int16_t subpacket_count = DivideExactInteger(
-        ctx_->data_size - csdw_element.size, subpacket_size);
+        ctx_->data_size - static_cast<uint32_t>(csdw_element.size), subpacket_size);
     if (subpacket_count <= 0)
     {
         SPDLOG_WARN(
@@ -18,7 +18,16 @@ Ch10Status Ch10VideoF0Component::Parse(const uint8_t*& data)
         return Ch10Status::VIDEOF0_NONINTEGER_SUBPKT_COUNT;
     }
 
-    if (subpacket_count > MAX_TransportStream_UNITS)
+    if((*csdw_element.element)->IPH && (subpacket_count > MAX_TransportStream_UNITS_IPH))
+    {
+        SPDLOG_ERROR(
+            "({:02d}) subpacket_count = {:d}, greater than "
+            "MAX_TransportStream_UNITS_IPH ({:d})",
+            ctx_->thread_id, subpacket_count,
+            MAX_TransportStream_UNITS_IPH);
+        return Ch10Status::VIDEOF0_SUBPKT_COUNT_BIG;
+    }
+    else if (subpacket_count > MAX_TransportStream_UNITS)
     {
         SPDLOG_ERROR(
             "({:02d}) subpacket_count = {:d}, greater than "

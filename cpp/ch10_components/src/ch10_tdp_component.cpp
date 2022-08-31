@@ -12,7 +12,7 @@ Ch10Status Ch10TDPComponent::Parse(const uint8_t*& data)
     if ((*tdp_csdw_elem_.element)->time_fmt == 0xf || (*tdp_csdw_elem_.element)->src == 0xf)
     {
         // Update context with TDP data.
-        ctx_->UpdateWithTDPData(abs_time, doy, false);
+        ctx_->UpdateWithTDPData(abs_time, doy, false, *(*tdp_csdw_elem_.element));
         return Ch10Status::TDP_NONE;
     }
 
@@ -35,7 +35,7 @@ Ch10Status Ch10TDPComponent::Parse(const uint8_t*& data)
     }
 
     // Update context with TDP data.
-    ctx_->UpdateWithTDPData(abs_time, doy, true);
+    ctx_->UpdateWithTDPData(abs_time, doy, true, *(*tdp_csdw_elem_.element));
 
     return Ch10Status::OK;
 }

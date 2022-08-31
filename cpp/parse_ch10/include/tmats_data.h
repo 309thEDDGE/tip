@@ -1,16 +1,16 @@
 #ifndef TMATS_DATA_H_
 #define TMATS_DATA_H_
 
-
-#define RETFAIL(x, y) if(!(x)) {printf("TMATSData::Parse: Failed to MapAttrs: " y); return false; }
-
 #include <map>
 #include <vector>
+#include <set>
 #include <string>
 #include "spdlog/spdlog.h"
 #include "iterable_tools.h"
 #include "tmats_parser.h"
 #include "ch10_packet_type.h"
+
+#define RETFAIL(x, y) if(!(x)) {SPDLOG_WARN("TMATSData::Parse: Failed to MapAttrs: " y); return false; }
 
 using cmap = std::map<std::string, std::string>;
 using cmapvec = std::map<std::string, std::vector<std::string>>;
@@ -36,6 +36,11 @@ public:
     TMATSData();
     virtual ~TMATSData() {}
 
+    virtual const cmap& GetChannelIDToTypeMap() const { return chanid_to_type_map_; } 
+    virtual const cmap& GetChannelIDToSourceMap() const { return chanid_to_source_map_; }
+    virtual const cmap& GetChannelIDTo429Format() const { return chanid_to_429_format_; }
+    virtual const cmapvec& GetChannelIDTo429Subchans() const { return chanid_to_429_subchans_; }
+    virtual const cmapmap& GetChannelIDTo429SubchanAndName() const { return chanid_to_429_subchan_and_name_; }
 
 
     /*
@@ -45,12 +50,14 @@ public:
         tmats_data      --> String representation of entire
                             TMATs blob. Includes formatting
                             chars such as newlines.
-    
+    	parsed_pkt_types--> Set of Ch10PacketType that contains only the
+							present and parsed types
+
     Return:
         False if one of the attributes fails to map; true
         otherwise.
     */
-   bool Parse(const std::string& tmats_data);
+   bool Parse(const std::string& tmats_data, const std::set<Ch10PacketType>& parsed_pkt_types);
 
 
     //////////////////////////////////////////////////////////////////////////
@@ -87,7 +94,7 @@ public:
     Return:
         True if no errors occur; false otherwise 
     */
-    bool FilterTMATSType(const cmap& type_map, Ch10PacketType type_enum,
+    virtual bool FilterTMATSType(const cmap& type_map, Ch10PacketType type_enum,
         cmap& filtered_map) const;
 
 
@@ -116,7 +123,7 @@ public:
     Return:
         Filtered input_map
     */
-    cmap FilterByChannelIDToType(const cmap& type_map, const cmap& input_map) const;
+    virtual cmap FilterByChannelIDToType(const cmap& type_map, const cmap& input_map) const;
 };
 
 

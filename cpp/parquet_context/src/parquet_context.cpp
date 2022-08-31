@@ -734,7 +734,7 @@ bool ParquetContext::WriteColumns(const int& rows, const int offset)
 
 bool ParquetContext::WriteColumns()
 {
-    return WriteColumns(ROW_GROUP_COUNT_, 0);
+    return WriteColumns(static_cast<int>(ROW_GROUP_COUNT_), 0);
 }
 
 std::string ParquetContext::GetTypeIDFromArrowType(const std::shared_ptr<arrow::DataType> type,
@@ -870,7 +870,7 @@ bool ParquetContext::IncrementAndWrite(const uint16_t& thread_id)
         for (int i = 0; i < row_group_count_multiplier_; i++)
         {
             //printf("writecolumns(%zu, %zu)\n", ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
-            result = WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
+            result = WriteColumns(static_cast<int>(ROW_GROUP_COUNT_), static_cast<int>(i * ROW_GROUP_COUNT_));
             if (!result)
                 SPDLOG_ERROR("WriteColumns() failure");
         }
@@ -947,7 +947,8 @@ void ParquetContext::Finalize(const uint16_t& thread_id)
                              appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_,
                              i * ROW_GROUP_COUNT_);
 
-                if (!WriteColumns(appended_row_count_ - (n_calls - 1) * ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
+                if (!WriteColumns(static_cast<int>(appended_row_count_ - static_cast<size_t>(n_calls - 1) * ROW_GROUP_COUNT_),
+                     static_cast<int>(i * ROW_GROUP_COUNT_)))
                 {
                     SPDLOG_ERROR("({:02d}) {:s}, WriteColumns() failure",
                                  thread_id, print_msg_);
@@ -958,7 +959,7 @@ void ParquetContext::Finalize(const uint16_t& thread_id)
                 SPDLOG_DEBUG("({:02d}) {:s}, WriteColumns(count = {:d}, offset = {:d})",
                              thread_id, print_msg_, ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_);
 
-                if (!WriteColumns(ROW_GROUP_COUNT_, i * ROW_GROUP_COUNT_))
+                if (!WriteColumns(static_cast<int>(ROW_GROUP_COUNT_), static_cast<int>(i * ROW_GROUP_COUNT_)))
                 {
                     SPDLOG_ERROR("({:02d}) {:s}, WriteColumns() failure", thread_id,
                                  print_msg_);

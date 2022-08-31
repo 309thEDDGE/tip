@@ -2,7 +2,8 @@
 
 // Split the string on delimiter
 // Returns vector of string split by delimiter
-std::vector<std::string> ParseText::Split(std::string input_string, const char& delim)
+std::vector<std::string> ParseText::Split(std::string input_string, const char& delim,
+    bool keep_quotes) const
 {
     std::vector<std::string> return_vec;
 
@@ -15,9 +16,6 @@ std::vector<std::string> ParseText::Split(std::string input_string, const char& 
     if ((input_string.back() == '\n') || (input_string.back() == '\r'))
         input_string.pop_back();
 
-    /*size_t pos = input_string.find('\n');
-	if ((pos + 1) == input_string.length())
-		input_string = input_string.substr(0, pos);*/
     size_t pos = 0;
 
     // Count the number of delimiters
@@ -35,36 +33,57 @@ std::vector<std::string> ParseText::Split(std::string input_string, const char& 
     bool have_quoted_sections = ExtractQuotedSections(input_string, quoted_sections,
                                                       unquoted_sections);
 
-    /*if (have_quoted_sections)
-	{
-		IterableTools it;
-		std::vector<std::string> cols = { "Index", "SplitElem" };
-		it.PrintMapWithHeader_KeyToValue(quoted_sections, cols, "Quoted Sections");
-		it.PrintMapWithHeader_KeyToValue(unquoted_sections, cols, "Unquoted Sections");
-		}*/
-
     if (have_quoted_sections)
     {
         // Add each quoted section directly to the output vector and
         // split unquoted sections by the delimiter.
-        int n_sections = quoted_sections.size() + unquoted_sections.size();
+        size_t n_sections = quoted_sections.size() + unquoted_sections.size();
         IterableTools it;
+        bool new_element = false;
+        bool preceding_is_quoted = false;
+        std::string quoted = "";
         for (int i = 0; i < n_sections; i++)
         {
             if (it.IsKeyInMap(quoted_sections, i))
             {
-                return_vec.push_back(quoted_sections[i]);
+                if(keep_quotes)
+                    quoted = "\"" + quoted_sections.at(i) + "\"";
+                else
+                    quoted = quoted_sections.at(i);
+
+                if(new_element)
+                    return_vec.push_back(quoted);
+                else
+                {
+                    if(return_vec.size() == 0)
+                        return_vec.push_back(quoted);
+                    else
+                    {
+                        size_t elem_pos = return_vec.size() - 1;
+                        return_vec[elem_pos] = return_vec.at(elem_pos) + quoted;
+                    }
+                }
+                preceding_is_quoted = true;
+                new_element = false;
             }
             else
             {
-                std::string curr_string = unquoted_sections[i];
+                std::string curr_string = unquoted_sections.at(i);
 
                 // Remove any delimiters that may exist at the beginning
                 // or end of the string.
                 if (curr_string[curr_string.length() - 1] == delim)
+                {
                     curr_string.erase(curr_string.length() - 1, 1);
+                    new_element = true;
+                }
+                if (curr_string.size() == 0)
+                    continue;
                 if (curr_string[0] == delim)
+                {
                     curr_string.erase(0, 1);
+                    preceding_is_quoted = false;
+                }
 
                 // If the string consists of only a delimiter then the
                 // previous erasure will have made an empty string.
@@ -75,14 +94,30 @@ std::vector<std::string> ParseText::Split(std::string input_string, const char& 
                 pos = curr_string.find(delim);
                 while (pos != std::string::npos)
                 {
-                    return_vec.push_back(curr_string.substr(0, pos));
+                    if(preceding_is_quoted)
+                    {
+                        size_t elem_pos = return_vec.size() - 1;
+                        return_vec[elem_pos] = return_vec.at(elem_pos) + curr_string.substr(0, pos);
+                        preceding_is_quoted = false;
+                    }
+                    else
+                        return_vec.push_back(curr_string.substr(0, pos));
+
                     // Erase the portion of string consumed
                     curr_string.erase(0, pos + 1);
                     pos = curr_string.find(delim);
                 }
 
                 // Gather the last portion
-                return_vec.push_back(curr_string);
+                if(preceding_is_quoted)
+                {
+                        size_t elem_pos = return_vec.size() - 1;
+                        return_vec[elem_pos] = return_vec.at(elem_pos) + curr_string;
+                }
+                else
+                    return_vec.push_back(curr_string);
+
+                preceding_is_quoted = false;
             }
         }
     }
@@ -104,9 +139,76 @@ std::vector<std::string> ParseText::Split(std::string input_string, const char& 
     return return_vec;
 }
 
+
+std::vector<std::string> ParseText::Split(std::string input_string, const std::string& delim,
+    bool keep_delim)
+{
+    std::vector<std::string> split;
+    if(input_string.size() == 0)
+        return split;
+
+    size_t pos = 0; 
+    size_t start_pos = 0;
+    std::string keep_part = delim.substr(0, delim.size()-1);
+    std::string found = "";
+    while((pos = input_string.find(delim, start_pos)) != std::string::npos)
+    {
+        found = input_string.substr(start_pos, pos-start_pos);
+        if (keep_delim)
+        {
+            if((found.size() + keep_part.size()) > 0)
+                split.push_back(found + keep_part);
+        }
+        else
+        {
+            if(found.size() > 0)
+                split.push_back(found);
+        }
+        start_pos = pos + delim.size();
+    }
+    if(start_pos < input_string.size())
+        split.push_back(input_string.substr(start_pos, input_string.size() - start_pos));
+
+    return split;
+}
+
+std::vector<std::string> ParseText::Split(std::string input_string)
+{
+    std::vector<std::string> split;
+    std::regex rgx("(^|[^ ]+)[ ]+");
+    std::smatch match;
+    std::string input = input_string;
+    std::string matched_substr = "";
+    while(std::regex_search(input, match, rgx))
+    {
+        matched_substr = match[1].str();
+        if(matched_substr.size() > 0)
+            split.push_back(matched_substr);
+
+        input = match.suffix().str();
+    }
+
+    if(input.size() > 0)
+        split.push_back(input);
+
+    return split;
+}
+
+std::string ParseText::Join(const std::vector<std::string>& input_vec)
+{
+    std::string join = "";
+    if(input_vec.size() > 0)
+    {
+        join = input_vec.at(0);
+        for (size_t i = 1; i < input_vec.size(); i++)
+            join += (" " + input_vec.at(i));
+    }
+    return join;
+}
+
 bool ParseText::ExtractQuotedSections(const std::string& input_string,
                                       std::map<int, std::string>& quoted_sections,
-                                      std::map<int, std::string>& unquoted_sections)
+                                      std::map<int, std::string>& unquoted_sections) const
 {
     // Determine if quoted text exists within the input string.
     size_t n_quotes = std::count(input_string.begin(), input_string.end(), '\"');
@@ -114,7 +216,6 @@ bool ParseText::ExtractQuotedSections(const std::string& input_string,
     // There must be an even count of quote instances to be considered.
     if (n_quotes > 0 && n_quotes % 2 == 0)
     {
-        int quoted_section_count = n_quotes / 2;
         std::vector<size_t> quote_pos;
 
         // Locate all of the quote positions.
@@ -407,4 +508,31 @@ std::string ParseText::ToLower(const std::string& input_str) const
             lower_str[i] = std::tolower(lower_str[i]);
     }
     return lower_str;
+}
+
+std::string ParseText::ToUpper(const std::string& input_str) const
+{
+    std::string upper_str = input_str;
+    for (size_t i = 0; i < upper_str.length(); i++)
+    {
+        if (!std::isupper(upper_str[i]))
+            upper_str[i] = std::toupper(upper_str[i]);
+    }
+
+    return upper_str;
+}
+
+std::string ParseText::Replace(std::string input_string, std::string find_string,
+    std::string replace_string)
+{
+    std::string mod = input_string;
+    size_t pos = 0;
+    size_t find_str_len = find_string.size();
+    size_t repl_str_len = replace_string.size();
+    while((pos = mod.find(find_string, pos)) != std::string::npos)
+    {
+        mod = mod.replace(pos, find_str_len, replace_string);
+        pos += repl_str_len;
+    }
+    return mod;
 }

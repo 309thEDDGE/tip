@@ -93,6 +93,15 @@ class TranslatableColumnBase
 
     // virtual size_t GetRawDataAppendCount() { return raw_data_append_count_; }
 
+
+    /*
+    Get const ref to ICDElem.
+
+    Return:
+        ICDElem object
+    */
+   virtual const ICDElement& GetICDElement() { return icd_elem_; }
+
     /*
     Get raw data vector size.
 
@@ -141,6 +150,27 @@ class TranslatableColumnBase
     {
         return true;
     }
+
+
+
+    /*
+    Overload of AppendRawData with explicit sign.
+
+    Args:
+        data    --> Pointer to data "payload" from which
+                    data will be copied.
+        count   --> Total count of elements in the vector
+                    pointed by data
+
+    Return:
+        True if no errors; false otherwise.
+    */
+    virtual bool AppendRawData(const uint8_t* data, const size_t& count, int8_t sign)
+    {
+        return true;
+    }
+
+
 
     /*
     Append ridealong data to column.

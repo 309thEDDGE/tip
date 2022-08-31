@@ -104,7 +104,7 @@ class BinBuffTest : public ::testing::Test
         write_size_ += sizeof(ui32val);
 
         // pos 406: write float value
-        float fval = 80021.345;
+        float fval = 80021.345F;
         outfile.write((char*)&fval, sizeof(fval));
         write_size_ += sizeof(fval);
 
@@ -341,7 +341,7 @@ TEST_F(BinBuffTest, FindPatternFirstOccurrenceDiffTypes)
     uint32_t ui32val = 66069;
     EXPECT_EQ(bb_.FindPattern(ui32val), 402);
 
-    float fval = 80021.345;
+    float fval = 80021.345F;
     EXPECT_EQ(bb_.FindPattern(fval), 406);
     infile_.close();
 }
@@ -363,7 +363,7 @@ TEST_F(BinBuffTest, FindPattern2ndOccurrence)
     int16_t i16val = -300;
     EXPECT_EQ(bb_.FindPattern(i16val), 0);
 
-    float fval = 80021.345;
+    float fval = 80021.345F;
     EXPECT_EQ(bb_.FindPattern(fval), 102);
 
     // Advance to position prior to second float value.
@@ -494,7 +494,7 @@ TEST_F(BinBuffTest, FindAllPatternFloat)
     // int32. In the case of little-endian bytes, -300 has the same
     // first two bytes.
     std::vector<uint64_t> expected = {406, 474};
-    float fval = 80021.345;
+    float fval = 80021.345F;
     EXPECT_THAT(bb_.FindAllPattern(fval), ::testing::ElementsAreArray(expected));
 
     // No calls have been made to change the read position. Confirm it

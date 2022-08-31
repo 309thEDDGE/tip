@@ -597,3 +597,15 @@ void BusMap::SubmitToFinalBusMap(const std::map<uint64_t,
         }
     }
 }
+
+void BusMap::GetFinalMaps(const std::map<uint64_t, std::pair<std::string, std::string>>& final_map_with_source,
+    std::map<uint64_t, std::string>& chanid_to_name, 
+    std::map<uint64_t, std::string>& chanid_to_source) const
+{
+    for(std::map<uint64_t, std::pair<std::string, std::string>>::const_iterator it = 
+        final_map_with_source.cbegin(); it != final_map_with_source.cend(); ++it)
+    {
+        chanid_to_name[it->first] = it->second.first;
+        chanid_to_source[it->first] = it->second.second;
+    }
+}

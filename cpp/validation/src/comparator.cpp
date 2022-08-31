@@ -2,16 +2,29 @@
 
 bool Comparator::Initialize(ManagedPath path1, ManagedPath path2)
 {
-    if (!path1.is_directory())
+    bool is_dir = false;
+    if (path1.is_directory())
     {
-        printf("\nERROR!! parquet directory %s doesn't exist: \n", path1.RawString().c_str());
+        is_dir = true;
+    }
+    else if(!path1.is_regular_file())
+    {
+        printf("\nERROR!! Input path 1 (%s) is not a directory or file\n", path1.RawString().c_str());
         failure_ = true;
+        return !failure_;
     }
 
-    if (!path2.is_directory())
+    if (is_dir && !path2.is_directory())
     {
-        printf("\nERROR!! parquet directory %s doesn't exist: \n", path2.RawString().c_str());
+        printf("\nERROR!! Input path 2 (%s) is not a directory\n", path2.RawString().c_str());
         failure_ = true;
+        return !failure_;
+    }
+    else if(!is_dir && !path2.is_regular_file())
+    {
+        printf("\nERROR!! Input path 2 (%s) is not a file\n", path2.RawString().c_str());
+        failure_ = true;
+        return !failure_;
     }
 
     bool return_status = false;

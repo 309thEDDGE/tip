@@ -2,9 +2,9 @@
 
 
 bool DTS429::IngestLines(const std::vector<std::string>& lines,
-                      std::unordered_map<std::string, std::vector<ICDElement>> word_elements)
+                      std::unordered_map<std::string, std::vector<ICDElement>>& word_elements)
 {
-    SPDLOG_WARN("DTS429::IngestLines(): Handling yaml file data\n");
+    SPDLOG_INFO("DTS429::IngestLines(): Handling yaml file data\n");
 
     if(lines.empty())
     {
@@ -173,6 +173,16 @@ bool DTS429::CreateICDElementFromWordNodes(const std::string& msg_name,
 
     try
     {
+        uint16_t temp_dts_lsb = elem_data["lsb"].as<uint16_t>();
+        // if lsb is in the SDI field
+        uint8_t start_bit_offset = 11;
+        if(temp_dts_lsb < 11) start_bit_offset = 9;
+
+        // get lsb and msb as translator expects
+        uint8_t lsb = 32 - temp_dts_lsb + start_bit_offset;
+        uint8_t bitcnt = elem_data["bitcnt"].as<uint16_t>();
+        uint8_t msb = lsb - bitcnt + 1;
+
         arinc_param.label_=wrd_data["label"].as<uint16_t>();
         arinc_param.sdi_=static_cast<int8_t>(wrd_data["sdi"].as<int16_t>());
         arinc_param.bus_name_=wrd_data["bus"].as<std::string>();
@@ -186,10 +196,13 @@ bool DTS429::CreateICDElementFromWordNodes(const std::string& msg_name,
         arinc_param.is_bitlevel_=true;
         arinc_param.bcd_partial_=-1;
         arinc_param.msb_val_=elem_data["msbval"].as<float>();
-        arinc_param.bitlsb_=static_cast<uint8_t>(elem_data["lsb"].as<uint16_t>());
-        arinc_param.bit_count_=static_cast<uint8_t>(elem_data["bitcnt"].as<uint16_t>());
+        arinc_param.bitlsb_=static_cast<uint8_t>(lsb);
+        arinc_param.bit_count_=bitcnt;//static_cast<uint8_t>(elem_data["bitcnt"].as<uint16_t>());
         arinc_param.uom_=elem_data["uom"].as<std::string>();
         arinc_param.classification_=static_cast<uint8_t>(elem_data["class"].as<uint16_t>());
+        arinc_param.offset_=static_cast<uint8_t>(0);
+        arinc_param.elem_word_count_=static_cast<uint8_t>(1);
+        arinc_param.bitmsb_=static_cast<uint8_t>(msb);
 
         // handle all 429 bus names as Uppercase to eliminate case sensitivity
         std::transform(arinc_param.bus_name_.begin(), arinc_param.bus_name_.end(),

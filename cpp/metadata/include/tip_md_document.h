@@ -29,6 +29,10 @@ public:
 
     TIPMDDocument();
     virtual ~TIPMDDocument() {}
+    virtual std::shared_ptr<MDCategoryMap> GetConfigCategory()
+    { return config_category_; }
+    virtual std::shared_ptr<MDCategoryMap> GetRuntimeCategory()
+    { return runtime_category_; }
 
 
     /*

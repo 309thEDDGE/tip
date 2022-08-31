@@ -14,7 +14,9 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <string>
 #include <map>
+#include <vector>
 #include <unordered_map>
 #include <set>
 #include <cmath>
@@ -26,11 +28,15 @@
 #include "ch10_1553f1_msg_hdr_format.h"
 #include "ch10_videof0_header_format.h"
 #include "ch10_arinc429f0_msg_hdr_format.h"
+#include "ch10_tdpf1_hdr_format.h"
 #include "spdlog/spdlog.h"
+
+#include <fstream>
 
 class Ch10Context
 {
    private:
+
     // ID to control or generate thread-specific log output.
     uint16_t thread_id_;
 
@@ -116,6 +122,9 @@ class Ch10Context
     // Record mapping of ARINC 429 channel ID to IPDH bus number.
     std::map<uint32_t, std::set<uint16_t>> chanid_busnumbers_map_;
 
+    // Record mapping of channel id to IPDH bus number to labels on bus
+    std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> chanid_busnumbers_labels_map_;
+
     // Track the minimum (earliest) video timestamp per channel ID
     std::map<uint16_t, uint64_t> chanid_minvideotimestamp_map_;
 
@@ -128,9 +137,6 @@ class Ch10Context
     // and its return value was true.
     bool is_configured_;
 
-    // Calculate relative and absolute time.
-    //Ch10TimeComponent ch10_time_;
-
     //
     // File writers are owned by Ch10Context to maintain state
     //
@@ -142,6 +148,24 @@ class Ch10Context
     std::unique_ptr<ParquetEthernetF0> ethernetf0_pq_writer_;
     std::unique_ptr<ParquetContext> arinc429f0_pq_ctx_;
     std::unique_ptr<ParquetARINC429F0> arinc429f0_pq_writer_;
+
+    // Internal state to be used in RegisterUnhandledPacketType()
+    std::set<Ch10PacketType> registered_unhandled_packet_types_;
+
+    // Set of packet types which are in the pkt_type_config_map_
+    // and enabled and which are queried for config
+    // status in IsPacketTypeEnabled(). This set is used to
+    // identify the packet types which were parsed by the worker
+    // associated with this Ch10Context instance.
+    std::set<Ch10PacketType> parsed_packet_types_;
+
+    // Record of each parsed TDP packet with generated
+    // absolute time.
+    std::vector<TDF1CSDWFmt> tdf1csdw_vec_;
+    std::vector<uint64_t> tdp_abs_time_vec_;
+
+    // Hold TMATS matter for later recording
+    std::string tmats_matter_;
 
    public:
     const uint16_t& thread_id;
@@ -171,11 +195,33 @@ class Ch10Context
     ParquetEthernetF0* ethernetf0_pq_writer;
     ParquetARINC429F0* arinc429f0_pq_writer;
     const uint32_t intrapacket_ts_size_ = sizeof(uint64_t);
+    const std::set<Ch10PacketType>& parsed_packet_types;
+    const std::vector<TDF1CSDWFmt>& tdf1csdw_vec;
+    const std::vector<uint64_t>& tdp_abs_time_vec;
 
     Ch10Context(const uint64_t& abs_pos, uint16_t id = 0);
     Ch10Context();
     void Initialize(const uint64_t& abs_pos, uint16_t id);
     virtual ~Ch10Context();
+    virtual std::map<uint32_t, std::set<uint16_t>> GetChannelIDToRemoteAddr1Map() const
+    { return chanid_remoteaddr1_map_; }
+    virtual std::map<uint32_t, std::set<uint16_t>> GetChannelIDToRemoteAddr2Map() const
+    { return chanid_remoteaddr2_map_; }
+    virtual std::map<uint32_t, std::set<uint32_t>> GetChannelIDToCommWordsMap() const
+    { return chanid_commwords_map_; }
+    virtual std::map<uint16_t, uint64_t> GetChannelIDToMinVideoTimestampMap() const
+    { return chanid_minvideotimestamp_map_; }
+    virtual std::map<uint32_t, std::set<uint16_t>> GetChannelIDToLabelsMap() const
+    { return chanid_labels_map_; }
+    virtual std::map<uint32_t, std::set<uint16_t>> GetChannelIDToBusNumbersMap() const
+    { return chanid_busnumbers_map_; }
+    virtual std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> GetChannelIDToBusNumbersToLabelsMap() const
+    { return chanid_busnumbers_labels_map_; }
+    virtual std::string GetTMATSMatter() const { return tmats_matter_; }
+    virtual void AddTMATSMatter(const std::string& matter) { tmats_matter_ += matter; }
+
+    virtual const std::set<Ch10PacketType>& GetParsedPacketTypes() const { return parsed_packet_types_; }
+
 
     /*
 	Return is_configured_. This value is set during call to CheckConfiguration.
@@ -186,7 +232,41 @@ class Ch10Context
     bool IsConfigured();
 
     void SetSearchingForTDP(bool should_search);
-    Ch10Status ContinueWithPacketType(uint8_t data_type);
+    virtual Ch10Status ContinueWithPacketType(uint8_t data_type);
+
+    /*
+    Check if input packet type is enabled.
+
+    This function also curates a set of Ch10PacketType,
+    parsed_packet_types_, to which a type is inserted if
+    the input to the function is in the pkt_type_config_map_ and
+    the is configured to true, i.e., to be parsed.
+
+    Args:
+        pkt_type    --> Ch10PacketType to be checked
+
+    Return:
+        True if enabled; false otherwise.
+    */
+    virtual bool IsPacketTypeEnabled(const Ch10PacketType& pkt_type);
+
+
+
+    /*
+    Mark the input un-handled Ch10PacketType as being found in the data.
+    Used to prevent many log entries indicating that a given packet type
+    is not handled. Unhandled packets ought to call this function
+    and print to log only if it returns true.
+    Args:
+        pkt_type    --> Ch10PacketType to be registered
+
+    Return:
+        True if input pkt_type has not been found and
+        registered via this function; false otherwise.
+    */
+    virtual bool RegisterUnhandledPacketType(const Ch10PacketType& pkt_type);
+
+
 
     /*
 	Advance the absolute position by advance_bytes.
@@ -195,7 +275,7 @@ class Ch10Context
 		advance_bytes	--> Count of bytes by which to advance/increase
 							the absolute_position_
 	*/
-    void AdvanceAbsPos(uint64_t advance_bytes);
+    virtual void AdvanceAbsPos(uint64_t advance_bytes);
 
     /*
 	Update the members that are of primary importance for conveyance
@@ -216,7 +296,7 @@ class Ch10Context
 		Ch10Status value
 
 	*/
-    Ch10Status UpdateContext(const uint64_t& abs_pos,
+    virtual Ch10Status UpdateContext(const uint64_t& abs_pos,
                              const Ch10PacketHeaderFmt* const hdr_fmt_ptr_, const uint64_t& rtc_time);
 
     void CreateDefaultPacketTypeConfig(std::unordered_map<Ch10PacketType, bool>& input);
@@ -261,10 +341,12 @@ class Ch10Context
 							0 = year-mth-day time
 		tdp_valid		--> true if tdp csdw time_fmt or src are none,
 							false otherwise. Set to false if tdp data is invalid.
+        tdf1csdw        --> Instance of TDF1CSDWFmt to append to internal
+                            record
 
 	*/
     void UpdateWithTDPData(const uint64_t& tdp_abs_time, uint8_t tdp_doy,
-                           bool tdp_valid);
+                           bool tdp_valid, const TDF1CSDWFmt& tdf1csdw);
 
     /*
 	Calculate absolute time from RTC time format. This context
@@ -415,7 +497,7 @@ class Ch10Context
 		ts		--> Video timestamp in nanosecond unit, counting from the
 					unix epoch
 	*/
-    void RecordMinVideoTimeStamp(const uint64_t& ts);
+    virtual void RecordMinVideoTimeStamp(const uint64_t& ts);
 
     /*
 	Set the current packet secondary header time, which is
@@ -424,7 +506,8 @@ class Ch10Context
 	Args:
 		time_ns		--> Secondary header time, nanosecond unit
 	*/
-    void UpdateWithSecondaryHeaderTime(const uint64_t& time_ns);
+    virtual void UpdateWithSecondaryHeaderTime(const uint64_t& time_ns);
+
 };
 
 #endif

@@ -13,6 +13,7 @@ class Ch10PacketElement : public Ch10PacketElementBase
    public:
     const T* const* const element = &element_;
     Ch10PacketElement() : Ch10PacketElementBase(sizeof(T)), element_(nullptr) {}
+    virtual ~Ch10PacketElement() {}
     void Set(const uint8_t* data) override;
 };
 

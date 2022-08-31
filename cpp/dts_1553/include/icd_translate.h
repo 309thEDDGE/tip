@@ -34,7 +34,7 @@ REGISTER_TRANSLATE_TYPE(float);
 REGISTER_TRANSLATE_TYPE(double);
 REGISTER_TRANSLATE_TYPE(char);
 
-const size_t BCDDigitBitCount = 4;
+const int BCDDigitBitCount = 4;
 
 class ICDTranslate
 {
@@ -81,8 +81,8 @@ class ICDTranslate
     }
 
     /*
-    Meta-function for translation. Generalizes input word (sometimes referred 
-    to as raw data or payload words) format/data type. 
+    Meta-function for translation. Generalizes input word (sometimes referred
+    to as raw data or payload words) format/data type.
 
     Incomplete until a generic conversion schema from non-uint16_t payload words
     to uint16_t data type. Similar scheme is necessary to convert the passed ICDElement
@@ -93,11 +93,11 @@ class ICDTranslate
     Each of the current translation schemes was written with the goal
     of translating 1553 data which comes packed in 16-bit words (uint16_t on
     delivery). 1553 data is big-endian at source, thus the swap of 16-bit values
-    in, for example, TranslateSigned32. 
+    in, for example, TranslateSigned32.
 
     This TranslateArray function must account for the 16-bit word size and
-    big-endian ordering for which the translate functions were written and 
-    tested. 
+    big-endian ordering for which the translate functions were written and
+    tested.
 
     Args:
 
@@ -106,15 +106,25 @@ class ICDTranslate
     bool TranslateArray(const std::vector<RawType>& input_words,
                         std::vector<OutType>& output_eu, const ICDElement& icd_elem);
 
-    // Assumes 32-bit words, little-endian (first 32-bit word in 64-bit int is 
+    // Assumes 32-bit words, little-endian (first 32-bit word in 64-bit int is
     // least significant)
     template <typename OutType>
     bool TranslateArray(const std::vector<uint32_t>& input_words,
                         std::vector<OutType>& output_eu, const ICDElement& icd_elem);
 
+    // For use with explicit sign value as in BCD data.
+    template <typename OutType>
+    bool TranslateArray(const std::vector<uint32_t>& input_words,
+                        std::vector<OutType>& output_eu, const ICDElement& icd_elem,
+                        const std::vector<int8_t>& explicit_sign);
+
     template <typename OutType>
     bool TranslateArrayOfElement(const std::vector<uint16_t>& input_words, std::vector<OutType>& output_eu,
                                  const ICDElement& icd_elem);
+    template <typename OutType>
+    bool TranslateArrayOfElement(const std::vector<uint16_t>& input_words, std::vector<OutType>& output_eu,
+                                 const ICDElement& icd_elem, const std::vector<int8_t>& explicit_sign);
+
 
     template <typename OutType>
     void ConfigureBitLevel(size_t input_word_count, std::vector<OutType>& output_eu, const ICDElement& icd_elem);
@@ -131,6 +141,11 @@ class ICDTranslate
     template <typename OutType>
     void TranslateBCD(const std::vector<uint16_t>& input_words,
                              std::vector<OutType>& output_eu, int8_t bcd_partial = 0);
+     template <typename OutType>
+    void TranslateBCD(const std::vector<uint16_t>& input_words,
+                             std::vector<OutType>& output_eu, int8_t bcd_partial,
+                             const std::vector<int8_t>& explicit_sign);
+           
     template <typename OutType>
     void TranslateSignMag(const std::vector<uint16_t>& input_words,
                              std::vector<OutType>& output_eu);
@@ -162,11 +177,11 @@ class ICDTranslate
     template <typename OutType>
     void TranslateFloat16(const std::vector<uint16_t>& input_words,
                           std::vector<OutType>& output_eu);
-    
+
     template <typename OutType>
     void TranslateFloat64IEEE(const std::vector<uint16_t>& input_words,
                               std::vector<OutType>& output_eu);
-    
+
     template <typename OutType>
     void TranslateFloat321750(const std::vector<uint16_t>& input_words,
                               std::vector<OutType>& output_eu);
@@ -185,16 +200,16 @@ class ICDTranslate
 
     /*
     Modify the members of an ICDElement object relevant to ICDElementSchema::SIGNEDBITS
-    or ICDElementSchema::UNSIGNEDBITS for an input type of uint32_t such that it 
+    or ICDElementSchema::UNSIGNEDBITS for an input type of uint32_t such that it
     can be processed as a uint16_t type.
 
     Args:
         icd_elem        --> Object of ICDElement which will be modified.
-        input_words     --> Vector of input words 
+        input_words     --> Vector of input words
         output_words    --> Vector of uint16_t output words
     */
-    void ConfigureU32BitElemForU16(ICDElement& icd_elem, 
-        const std::vector<uint32_t>& input_words, std::vector<uint16_t>& output_words);    
+    void ConfigureU32BitElemForU16(ICDElement& icd_elem,
+        const std::vector<uint32_t>& input_words, std::vector<uint16_t>& output_words);
 
 
 
@@ -207,31 +222,31 @@ class ICDTranslate
                             16-bit components will be swapped
         output_words    --> Vector of uint16_t output words
     */
-    void Swap16(const std::vector<uint32_t>& input_words, 
+    void Swap16(const std::vector<uint32_t>& input_words,
         std::vector<uint16_t>& output_words);
 
 
-    
+
     /*
     Keep only the most significant 16 bits and save the
     output.
 
     Args:
-        input_words     --> Vector of input words for which the MS 
+        input_words     --> Vector of input words for which the MS
                             16-bits will be kept
         output_words    --> Vector of uint16_t output words
     */
     void KeepMS16(const std::vector<uint32_t>& input_words,
         std::vector<uint16_t>& output_words);
 
-    
+
 
     /*
     Keep only the least significant 16 bits and save the
     output.
 
     Args:
-        input_words     --> Vector of input words for which the LS 
+        input_words     --> Vector of input words for which the LS
                             16-bits will be kept
         output_words    --> Vector of uint16_t output words
     */
@@ -248,12 +263,19 @@ class ICDTranslate
     void PrintNotImpl(const char* func_name);
 };
 
-
-
-
 template <typename OutType>
 bool ICDTranslate::TranslateArrayOfElement(const std::vector<uint16_t>& input_words,
                                            std::vector<OutType>& output_eu, const ICDElement& icd_elem)
+{
+    std::vector<int8_t> temp(0);
+    return TranslateArrayOfElement(input_words, output_eu, icd_elem, temp);
+}
+
+template <typename OutType>
+bool ICDTranslate::TranslateArrayOfElement(const std::vector<uint16_t>& input_words,
+                                           std::vector<OutType>& output_eu, 
+                                           const ICDElement& icd_elem, 
+                                           const std::vector<int8_t>& explicit_sign)
 {
     // Check if ICDElement fields are not defaults:
     // msg_name_, elem_name_, elem_word_count_, schema_.
@@ -294,10 +316,11 @@ bool ICDTranslate::TranslateArrayOfElement(const std::vector<uint16_t>& input_wo
                 break;
             case ICDElementSchema::BCD:
                 if(!CheckType<OutType>(std::vector<std::string>(
-                    {"uint8_t", "uint16_t", "uint32_t", "uint64_t", "float", "double"}),
+                    {"uint8_t", "int8_t", "uint16_t", "int16_t", "uint32_t", 
+                    "int32_t", "uint64_t", "int64_t", "float", "double"}),
                     icd_elem.elem_name_)) return false;
                 ConfigureBitLevel(input_words.size(), output_eu, icd_elem);
-                TranslateBCD(input_words, output_eu, icd_elem.bcd_partial_);
+                TranslateBCD(input_words, output_eu, icd_elem.bcd_partial_, explicit_sign);
                 break;
             case ICDElementSchema::SIGNMAG:
                 if(!CheckType<OutType>(std::vector<std::string>(
@@ -621,13 +644,13 @@ void ICDTranslate::TranslateSignedBits(const std::vector<uint16_t>& input_words,
             {
                 if (input_words[elem_word_count_ * i] & sign_bit_mask_)
                 {
-                    part1 = ~((input_words[elem_word_count_ * i] >> downshift1_) & mask1_twos_);
-                    part2 = ~((input_words[elem_word_count_ * i + 1] >> downshift2_) & mask2_twos_) + 1;
-                    output_eu[i] = static_cast<double>(((part1 & mask1_twos_) << part1_upshift) + (part2 & mask2_twos_)) * -scale_twos_;
+                    part1 = ~(input_words[elem_word_count_ * i]) & mask1_twos_;
+                    part2 = (~(input_words[elem_word_count_ * i + 1] >> downshift2_) & mask2_twos_) + 1;
+                    output_eu[i] = static_cast<double>((part1 << part1_upshift) + part2) * -scale_twos_;
                 }
                 else
                 {
-                    part1 = (input_words[elem_word_count_ * i] >> downshift1_) & mask1_twos_;
+                    part1 = (input_words[elem_word_count_ * i]) & mask1_twos_;
                     part2 = (input_words[elem_word_count_ * i + 1] >> downshift2_) & mask2_twos_;
                     output_eu[i] = static_cast<double>((part1 << part1_upshift) + part2) * scale_twos_;
                 }
@@ -681,18 +704,26 @@ void ICDTranslate::TranslateSignedBits(const std::vector<uint16_t>& input_words,
         }
     }
 }
-
 template <typename OutType>
 void ICDTranslate::TranslateBCD(const std::vector<uint16_t>& input_words,
                                          std::vector<OutType>& output_eu, int8_t bcd_partial)
 {
+    std::vector<int8_t> temp;
+    TranslateBCD(input_words, output_eu, bcd_partial, temp);
+}
+
+template <typename OutType>
+void ICDTranslate::TranslateBCD(const std::vector<uint16_t>& input_words,
+                                         std::vector<OutType>& output_eu, int8_t bcd_partial,
+                                         const std::vector<int8_t>& explicit_sign)
+{
     float digit_count = static_cast<float>(bit_count_) / static_cast<float>(BCDDigitBitCount);
-    size_t bcd_digit_count = bcd_partial ? static_cast<size_t>(ceil(digit_count)): 
+    size_t bcd_digit_count = bcd_partial ? static_cast<size_t>(ceil(digit_count)):
         static_cast<size_t>(floor(digit_count));
     uint16_t partial_bit_count = static_cast<uint16_t>(bit_count_ % BCDDigitBitCount);
-    size_t digit_ind = 0;
+    int digit_ind = 0;
     uint16_t downshift = 0;
-    uint16_t mask = 0b1111; 
+    uint16_t mask = 0b1111;
     uint16_t partial_mask = (1 << partial_bit_count) - 1;
     OutType bcd = 0;
     OutType digit = 0;
@@ -769,7 +800,7 @@ void ICDTranslate::TranslateBCD(const std::vector<uint16_t>& input_words,
                     output_eu[i] = bcd;
                 }
             }
-        }       
+        }
         else
         {
             printf("ICDTranslate::TranslateBCD: elem_word_count_ = %hhu\n not implemented!\n",
@@ -837,6 +868,14 @@ void ICDTranslate::TranslateBCD(const std::vector<uint16_t>& input_words,
                 }
                 output_eu[i] = bcd;
             }
+        }
+    }
+
+    if (output_eu.size() == explicit_sign.size())
+    {
+        for(size_t i = 0; i < output_eu.size(); i++)
+        {
+            output_eu[i] = explicit_sign.at(i) * output_eu.at(i);
         }
     }
 }
@@ -1126,37 +1165,37 @@ inline void ICDTranslate::TranslateFloat64IEEE<double>(const std::vector<uint16_
                                         std::vector<double>& output_eu)
 {
     /*
-	Note about NaNs: During comparison of linux- and windows-generated 
+	Note about NaNs: During comparison of linux- and windows-generated
 	translated pq files from the same commit it was discovered that the
 	NaNs are not of the same variety and thus are represented by different
 	bits in the pq file. It appears that linux is better at encoding the type
-	of NaN, neg or pos, etc. 
+	of NaN, neg or pos, etc.
 
 	The pq comparator code uses std::equal on arrays of data casted
-	to uint8_t as a general solution for comparing columns of different 
+	to uint8_t as a general solution for comparing columns of different
 	data types. In the case of different NaNs, which are by definition not
-	comparable and therefore shouldn't be compared, the comparison fails 
+	comparable and therefore shouldn't be compared, the comparison fails
 	because the underlying bits of the NaN
 	representations are different. We can solve this in two ways:
 
 	1) catch the presence of NaN in the for loop below, set the value to some portable and
-	generic version of NaN such that the bits are the same and the comparator 
-	does not fail. Note again that NaNs can't be compared, so the presence of 
+	generic version of NaN such that the bits are the same and the comparator
+	does not fail. Note again that NaNs can't be compared, so the presence of
 	NaNs in a truth and test data set in the same row ought not to be compared
-	as unequal in the context of checking if the contents of two pq files are 
+	as unequal in the context of checking if the contents of two pq files are
 	dissimilar, in which case we wish NaNs to compare as equal and not indicate
 	that the two data sets are different. This option was not chosen because
 	we want to avoid another logical clause in the for loop to maximize execution
 	efficiency.
 
 	2) Do not rely on the generic comparison of uint8_t/bytes in the
-	pq comparator code and specialize the function for double type. In the 
+	pq comparator code and specialize the function for double type. In the
 	specialization, loop over the columns of data being compared and skip
 	comparison if std::isnan is true for the data in both columns. We have
 	currently chosen this option and implemented the change in comparator.cpp.
 
-	The same consideration may come up for float type. It is not implemented 
-	for float currently. 
+	The same consideration may come up for float type. It is not implemented
+	for float currently.
 	*/
     double data_val = 0.;
     uint16_t* ui16ptr = reinterpret_cast<uint16_t*>(&data_val);
@@ -1286,6 +1325,15 @@ template <typename OutType>
 bool ICDTranslate::TranslateArray(const std::vector<uint32_t>& input_words,
                     std::vector<OutType>& output_eu, const ICDElement& icd_elem)
 {
+    std::vector<int8_t> temp(0);
+    return TranslateArray(input_words, output_eu, icd_elem, temp);
+}
+
+template <typename OutType>
+bool ICDTranslate::TranslateArray(const std::vector<uint32_t>& input_words,
+                    std::vector<OutType>& output_eu, const ICDElement& icd_elem,
+                    const std::vector<int8_t>& explicit_sign)
+{
     // Expect elem word count = 1 for rawtype uint32_t and translated type
     // 32 bits.
     ICDElement elem = icd_elem;
@@ -1347,7 +1395,11 @@ bool ICDTranslate::TranslateArray(const std::vector<uint32_t>& input_words,
                 ICDElementSchemaToStringMap.at(icd_elem.schema_).c_str());
             return false;
     }
-    return TranslateArrayOfElement(mod_input, output_eu, elem);
+
+    if(!TranslateArrayOfElement(mod_input, output_eu, elem, explicit_sign))
+        return false;
+
+    return true;
 }
 
 #endif

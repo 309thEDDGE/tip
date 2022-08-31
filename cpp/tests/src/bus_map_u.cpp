@@ -1551,3 +1551,30 @@ TEST_F(BusMapTest, FinalizeReturnsFalseIfNoVotes)
     EXPECT_FALSE(continue_translation);
     EXPECT_TRUE(iterable_tools_.GetKeys(res).size() == 0);
 }
+
+TEST_F(BusMapTest, GetFinalMaps)
+{
+    std::map<uint64_t, std::pair<std::string, std::string>> final_map_with_source{
+        {11, {"busa", "tmats"}},
+        {22, {"BUSS", "vote and tmats"}},
+        {27, {"spec", "user"}}
+    };
+
+    std::map<uint64_t, std::string> chanid_to_name;
+    std::map<uint64_t, std::string> chanid_to_source;
+    b.GetFinalMaps(final_map_with_source, chanid_to_name, chanid_to_source);
+
+    std::map<uint64_t, std::string> expected_chanid_to_name{
+        {11, "busa"},
+        {22, "BUSS"},
+        {27, "spec"}
+    };
+    std::map<uint64_t, std::string> expected_chanid_to_source{
+        {11, "tmats"},
+        {22, "vote and tmats"},
+        {27, "user"}
+    };
+
+    EXPECT_THAT(expected_chanid_to_name, ::testing::ContainerEq(chanid_to_name));
+    EXPECT_THAT(expected_chanid_to_source, ::testing::ContainerEq(chanid_to_source));
+}

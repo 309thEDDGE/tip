@@ -1,8 +1,8 @@
 #include "translate_tabular_parquet.h"
 
-TranslateTabularParquet::TranslateTabularParquet() : TranslateTabularContextBase(), 
-    pq_reader_(), input_row_group_count_(-1), row_group_index_(-1), output_dir_(""), 
-    output_base_path_(""), current_row_group_row_count_(0) 
+TranslateTabularParquet::TranslateTabularParquet() : TranslateTabularContextBase(),
+    pq_reader_(), input_row_group_count_(-1), row_group_index_(-1), output_dir_(""),
+    output_base_path_(""), current_row_group_row_count_(0)
 
 { }
 
@@ -109,7 +109,7 @@ TranslateStatus TranslateTabularParquet::CloseOutputFile(
 
 TranslateStatus TranslateTabularParquet::ReadRowGroup(const size_t& thread_index,
         const size_t& row_group_count, size_t& row_group_index)
-{    
+{
     if (row_group_index == row_group_count)
         return TranslateStatus::CONTINUE;
 
@@ -126,7 +126,7 @@ TranslateStatus TranslateTabularParquet::ReadRowGroup(const size_t& thread_index
     return TranslateStatus::OK;
 }
 
-bool TranslateTabularParquet::CreateTableOutputDir(const size_t& thread_index, 
+bool TranslateTabularParquet::CreateTableOutputDir(const size_t& thread_index,
     const ManagedPath& table_path, const std::string& table_name)
 {
     SPDLOG_DEBUG("{:02d} Output file path: {:s}", thread_index,
@@ -145,7 +145,7 @@ bool TranslateTabularParquet::CreateTableOutputDir(const size_t& thread_index,
     return true;
 }
 
-bool TranslateTabularParquet::AppendTimeAndRawDataToTable(const size_t& thread_index, 
+bool TranslateTabularParquet::AppendTimeAndRawDataToTable(const size_t& thread_index,
     std::shared_ptr<TranslatableTableBase> table, const uint8_t* time_data,
     const uint8_t* raw_data, const size_t& raw_data_count, const std::string& table_name)
 {

@@ -78,7 +78,7 @@ class Ch10Time
     Return:
         RTC time in nanoseconds
     */
-    uint64_t& CalculateRTCTimeFromComponents(const uint32_t& rtc1, const uint32_t& rtc2);
+    virtual uint64_t& CalculateRTCTimeFromComponents(const uint32_t& rtc1, const uint32_t& rtc2);
 
     /*
     Parse raw binary data according the Ch10 packet secondary header criteria, time

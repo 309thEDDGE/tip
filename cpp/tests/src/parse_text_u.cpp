@@ -216,13 +216,67 @@ TEST_F(ParseTextTest, SplitRemoveCarriageReturnAtEnd)
     ASSERT_TRUE(compare_vec == return_vec);
 }
 
-TEST_F(ParseTextTest, SplitAvoidQuotedText)
+TEST_F(ParseTextTest, SplitOmitQuotedText)
 {
     test_str = "ABCD,hello,\"my test, is good\"";
     return_vec = pt.Split(test_str, ',');
     EXPECT_EQ(return_vec[0], "ABCD");
     EXPECT_EQ(return_vec[1], "hello");
     EXPECT_EQ(return_vec[2], "my test, is good");
+}
+
+TEST_F(ParseTextTest, SplitRetainQuotedText)
+{
+    test_str = "ABCD,hello,\"my test, is good\"";
+    return_vec = pt.Split(test_str, ',', true);
+    EXPECT_EQ(return_vec[0], "ABCD");
+    EXPECT_EQ(return_vec[1], "hello");
+    EXPECT_EQ(return_vec[2], "\"my test, is good\"");
+}
+
+TEST_F(ParseTextTest, SplitOmitQuotedText2)
+{
+    test_str = "ABCD,hello \"my test, is good\"";
+    return_vec = pt.Split(test_str, ',', true);
+    ASSERT_EQ(2, return_vec.size());
+    EXPECT_EQ(return_vec[0], "ABCD");
+    EXPECT_EQ(return_vec[1], "hello \"my test, is good\"");
+}
+
+TEST_F(ParseTextTest, SplitOmitQuotedText3)
+{
+    test_str = "ABCD,hello \"my test, is good\"";
+    return_vec = pt.Split(test_str, ',', false);
+    ASSERT_EQ(2, return_vec.size());
+    EXPECT_EQ(return_vec[0], "ABCD");
+    EXPECT_EQ(return_vec[1], "hello my test, is good");
+}
+
+TEST_F(ParseTextTest, SplitOmitQuotedText4)
+{
+    test_str = "ABCD,hello \"my test, is good\" all right";
+    return_vec = pt.Split(test_str, ',', false);
+    ASSERT_EQ(2, return_vec.size());
+    EXPECT_EQ(return_vec[0], "ABCD");
+    EXPECT_EQ(return_vec[1], "hello my test, is good all right");
+}
+
+TEST_F(ParseTextTest, SplitIgnoreQuotedTextIfNoDelimiter)
+{
+    test_str = "ABCD,hello \"my test is good\"";
+    return_vec = pt.Split(test_str, ',', true);
+    ASSERT_EQ(2, return_vec.size());
+    EXPECT_EQ(return_vec[0], "ABCD");
+    EXPECT_EQ(return_vec[1], "hello \"my test is good\"");
+}
+
+TEST_F(ParseTextTest, SplitIgnoreQuotedTextIfNoDelimiter2)
+{
+    test_str = "ABCD,hello \"my test is good\"";
+    return_vec = pt.Split(test_str, ',', false);
+    ASSERT_EQ(2, return_vec.size());
+    EXPECT_EQ(return_vec[0], "ABCD");
+    EXPECT_EQ(return_vec[1], "hello my test is good");
 }
 
 TEST_F(ParseTextTest, SplitAvoidMultipleQuotedText)
@@ -785,4 +839,288 @@ TEST_F(ParseTextTest, ToLowerAllUpper)
     test_str = "THIS IS A STRING_ WITH ALL UPPER CASE";
     std::string ret_str = pt.ToLower(test_str);
     EXPECT_EQ(ret_str, "this is a string_ with all upper case");
+}
+
+TEST_F(ParseTextTest, ToUpperEmptyString)
+{
+    test_str = "";
+    std::string ret_str = pt.ToUpper(test_str);
+    EXPECT_EQ(ret_str, test_str);
+}
+
+TEST_F(ParseTextTest, ToUpperAllUpper)
+{
+    test_str = "ALL UPPER ALREADY!!";
+    std::string ret_str = pt.ToUpper(test_str);
+    EXPECT_EQ(ret_str, test_str);
+}
+
+TEST_F(ParseTextTest, ToUpperMixedCase)
+{
+    test_str = "This is A String_ with MIXed case";
+    std::string ret_str = pt.ToUpper(test_str);
+    EXPECT_EQ(ret_str, "THIS IS A STRING_ WITH MIXED CASE");
+}
+
+TEST_F(ParseTextTest, ToUpperAllLower)
+{
+    test_str = "this is a string_ with all lower";
+    std::string ret_str = pt.ToUpper(test_str);
+    EXPECT_EQ(ret_str, "THIS IS A STRING_ WITH ALL LOWER");
+}
+
+TEST_F(ParseTextTest, SplitStringEmpty)
+{
+    test_str = "";
+    return_vec = pt.Split(test_str, "] ");
+    ASSERT_EQ(0, return_vec.size());
+}
+
+TEST_F(ParseTextTest, SplitStringKeepDelim)
+{
+    test_str = "helptada this is my string which tada now";
+    return_vec = pt.Split(test_str, "tada ", true);
+    compare_vec = std::vector<std::string>{"helptada", "this is my string which tada", "now"};
+    ASSERT_EQ(3, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitStringWithQuotesKeepDelim)
+{
+    test_str = "helptada this \"is my string\" which tada now";
+    return_vec = pt.Split(test_str, "tada ", true);
+    compare_vec = std::vector<std::string>{"helptada", "this \"is my string\" which tada", "now"};
+    ASSERT_EQ(3, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitStringWithQuotesKeepDelim2)
+{
+    test_str = "\"helptada this\" \"is my string\" which tada now";
+    return_vec = pt.Split(test_str, "tada ", true);
+    compare_vec = std::vector<std::string>{"\"helptada", "this\" \"is my string\" which tada", "now"};
+    ASSERT_EQ(3, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitStringLeadingSeparatorKeepDelim1)
+{
+    test_str = "tada helptada this is my string which tada now";
+    return_vec = pt.Split(test_str, "tada ", true);
+    compare_vec = std::vector<std::string>{"tada", "helptada", "this is my string which tada", "now"};
+    ASSERT_EQ(4, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitStringLeadingSeparatorKeepDelim2)
+{
+    test_str = "tadahelptada this is my string which tada now";
+    return_vec = pt.Split(test_str, "tada ", true);
+    compare_vec = std::vector<std::string>{"tadahelptada", "this is my string which tada", "now"};
+    ASSERT_EQ(3, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitStringTrailingSeparatorKeepDelim1)
+{
+    test_str = "tada helptada this is my string which tada nowtada";
+    return_vec = pt.Split(test_str, "tada ", true);
+    compare_vec = std::vector<std::string>{"tada", "helptada", 
+        "this is my string which tada", "nowtada"};
+    ASSERT_EQ(4, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitStringTrailingSeparatorKeepDelim2)
+{
+    test_str = "tada helptada this is my string which tada nowtada ";
+    return_vec = pt.Split(test_str, "tada ", true);
+    compare_vec = std::vector<std::string>{"tada", "helptada", 
+        "this is my string which tada", "nowtada"};
+    ASSERT_EQ(4, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+/////////////////////////////////////////
+
+TEST_F(ParseTextTest, SplitString)
+{
+    test_str = "helptada this is my string which tada now";
+    return_vec = pt.Split(test_str, "tada ", false);
+    compare_vec = std::vector<std::string>{"help", "this is my string which ", "now"};
+    ASSERT_EQ(3, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitStringWithQuotes)
+{
+    test_str = "helptada this \"is my string\" which tada now";
+    return_vec = pt.Split(test_str, "tada ", false);
+    compare_vec = std::vector<std::string>{"help", "this \"is my string\" which ", "now"};
+    ASSERT_EQ(3, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitStringWithQuotes2)
+{
+    test_str = "\"helptada this\" \"is my string\" which tada now";
+    return_vec = pt.Split(test_str, "tada ", false);
+    compare_vec = std::vector<std::string>{"\"help", "this\" \"is my string\" which ", "now"};
+    ASSERT_EQ(3, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitStringLeadingSeparator1)
+{
+    test_str = "tada helptada this is my string which tada now";
+    return_vec = pt.Split(test_str, "tada ", false);
+    compare_vec = std::vector<std::string>{"help", "this is my string which ", "now"};
+    ASSERT_EQ(3, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitStringLeadingSeparator2)
+{
+    test_str = "tadahelptada this is my string which tada now";
+    return_vec = pt.Split(test_str, "tada ", false);
+    compare_vec = std::vector<std::string>{"tadahelp", "this is my string which ", "now"};
+    ASSERT_EQ(3, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitStringTrailingSeparator1)
+{
+    test_str = "tada helptada this is my string which tada nowtada";
+    return_vec = pt.Split(test_str, "tada ", false);
+    compare_vec = std::vector<std::string>{"help", "this is my string which ", "nowtada"};
+    ASSERT_EQ(3, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitStringTrailingSeparator2)
+{
+    test_str = "tada helptada this is my string which tada nowtada ";
+    return_vec = pt.Split(test_str, "tada ", false);
+    compare_vec = std::vector<std::string>{"help", "this is my string which ", "now"};
+    ASSERT_EQ(3, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+
+////////////////////////////////
+TEST_F(ParseTextTest, SplitMultipleWhitespace1)
+{
+    test_str = "hello, this    is   a line with various       whitespace  characters.";
+    compare_vec = std::vector<std::string>{"hello,", "this", "is", "a", 
+        "line", "with", "various", "whitespace", "characters."};
+    return_vec = pt.Split(test_str);
+    ASSERT_EQ(9, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitMultipleWhitespace2)
+{
+    test_str = "   hello, this    is   a line with various       whitespace  characters.";
+    compare_vec = std::vector<std::string>{"hello,", "this", "is", "a", 
+        "line", "with", "various", "whitespace", "characters."};
+    return_vec = pt.Split(test_str);
+    ASSERT_EQ(9, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitMultipleWhitespace3)
+{
+    test_str = "hello, this    is   a line with various       whitespace  characters.  ";
+    compare_vec = std::vector<std::string>{"hello,", "this", "is", "a", 
+        "line", "with", "various", "whitespace", "characters."};
+    return_vec = pt.Split(test_str);
+    ASSERT_EQ(9, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitMultipleWhitespace4)
+{
+    test_str = " hello, this    is   a line with various       whitespace  characters.  ";
+    compare_vec = std::vector<std::string>{"hello,", "this", "is", "a", 
+        "line", "with", "various", "whitespace", "characters."};
+    return_vec = pt.Split(test_str);
+    ASSERT_EQ(9, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, SplitMultipleWhitespaceEmptyString)
+{
+    test_str = "";
+    compare_vec = std::vector<std::string>();
+    return_vec = pt.Split(test_str);
+    ASSERT_EQ(0, return_vec.size());
+}
+
+TEST_F(ParseTextTest, SplitMultipleWhitespaceNoSpaces)
+{
+    test_str = "this_isAstring_with-no-spaces";
+    compare_vec = std::vector<std::string>{"this_isAstring_with-no-spaces"};
+    return_vec = pt.Split(test_str);
+    ASSERT_EQ(1, return_vec.size());
+    EXPECT_THAT(compare_vec, ::testing::ContainerEq(return_vec));
+}
+
+TEST_F(ParseTextTest, JoinEmptyVec)
+{
+    std::vector<std::string> input_vec;
+    test_str = pt.Join(input_vec);
+    ASSERT_EQ("", test_str);
+}
+
+TEST_F(ParseTextTest, Join)
+{
+    std::vector<std::string> input_vec{"all", "about", "the", "data"};
+    test_str = pt.Join(input_vec);
+    std::string expected = "all about the data";
+    ASSERT_EQ(expected, test_str);
+}
+
+TEST_F(ParseTextTest, ReplaceSubNotPresent)
+{
+    test_str = "my tale of woe";
+    std::string find_str = "data";
+    std::string repl_str = "BIG";
+    std::string expected = test_str;
+    ASSERT_EQ(expected, pt.Replace(test_str, find_str, repl_str));
+}
+
+TEST_F(ParseTextTest, ReplaceEmptyString)
+{
+    test_str = "";
+    std::string find_str = "data";
+    std::string repl_str = "BIG";
+    std::string expected = test_str;
+    ASSERT_EQ(expected, pt.Replace(test_str, find_str, repl_str));
+}
+
+TEST_F(ParseTextTest, ReplaceWord)
+{
+    test_str = "my tale of data";
+    std::string find_str = "data";
+    std::string repl_str = "BIG";
+    std::string expected = "my tale of BIG";
+    ASSERT_EQ(expected, pt.Replace(test_str, find_str, repl_str));
+}
+
+TEST_F(ParseTextTest, ReplaceSub)
+{
+    test_str = "my tale of data";
+    std::string find_str = "le";
+    std::string repl_str = "boo";
+    std::string expected = "my taboo of data";
+    ASSERT_EQ(expected, pt.Replace(test_str, find_str, repl_str));
+}
+
+TEST_F(ParseTextTest, ReplaceMultiple)
+{
+    test_str = "my tale of data at level for le";
+    std::string find_str = "le";
+    std::string repl_str = "bee";
+    std::string expected = "my tabee of data at beevel for bee";
+    ASSERT_EQ(expected, pt.Replace(test_str, find_str, repl_str));
 }

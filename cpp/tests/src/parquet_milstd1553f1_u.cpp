@@ -31,12 +31,20 @@ class ParquetMilStd1553F1Test : public ::testing::Test
     const uint16_t* data; 
     const uint16_t* commword_ptr;
 
+    MilStd1553F1StatusWordFmt statwrd1_;
+    MilStd1553F1StatusWordFmt statwrd2_;
+    const MilStd1553F1StatusWordFmt* statwrd_ptr1_;
+    const MilStd1553F1StatusWordFmt* statwrd_ptr2_;
+    const uint16_t* statwrd_value1_;
+    const uint16_t* statwrd_value2_; 
+
     ParquetMilStd1553F1Test() : mock_pq_ctx_(), pq1553_(&mock_pq_ctx_), time(48284949910),
         doy(1), channel_id(9), calcwrdcnt(20), payload_incomplete(0), mode_code(0),
         chan_spec{}, msg{}, data_vec{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 
         15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32}, 
         data(data_vec.data()), commword_ptr(reinterpret_cast<const uint16_t*>(&msg) + 3),
-        outf("test.parquet"), truncate(true), thread_id(3)
+        outf("test.parquet"), truncate(true), thread_id(3), statwrd1_(), statwrd2_(),
+        statwrd_ptr1_(&statwrd1_), statwrd_ptr2_(&statwrd2_)
     { 
         chan_spec.ttb = 1;
         msg.WE = 1;
@@ -55,6 +63,9 @@ class ParquetMilStd1553F1Test : public ::testing::Test
         msg.sub_addr2 = 3;
         msg.word_count1 = calcwrdcnt;
         msg.word_count2 = calcwrdcnt;
+
+        statwrd_value1_ = reinterpret_cast<const uint16_t*>(statwrd_ptr1_);
+        statwrd_value2_ = reinterpret_cast<const uint16_t*>(statwrd_ptr2_);
     }
 
     void ValidateInitializeAddField()
@@ -88,6 +99,30 @@ class ParquetMilStd1553F1Test : public ::testing::Test
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "totwrdcnt", 0)).InSequence(seq).WillOnce(Return(true));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "calcwrdcnt", 0)).InSequence(seq).WillOnce(Return(true));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "incomplete", 0)).InSequence(seq).WillOnce(Return(true));
+
+
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "statwrd1", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "terminal1", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "dynbusctrl1", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "subsys1", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "busy1", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "bcastrcv1", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "svcreq1", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "instr1", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "msgerr1", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "status_rtaddr1", 0)).InSequence(seq).WillOnce(Return(true));
+
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "statwrd2", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "terminal2", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "dynbusctrl2", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "subsys2", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "busy2", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "bcastrcv2", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "svcreq2", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "instr2", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "msgerr2", 0)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "status_rtaddr2", 0)).InSequence(seq).WillOnce(Return(true));
+
     }
 
     void ValidateInitializeSetMemoryLocation()
@@ -121,6 +156,29 @@ class ParquetMilStd1553F1Test : public ::testing::Test
         EXPECT_CALL(mock_pq_ctx_, SetMemLocI8(_, "totwrdcnt", nullptr)).InSequence(seq).WillOnce(Return(true));
         EXPECT_CALL(mock_pq_ctx_, SetMemLocI8(_, "calcwrdcnt", nullptr)).InSequence(seq).WillOnce(Return(true));
         EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "incomplete", nullptr)).InSequence(seq).WillOnce(Return(true));
+
+
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocI32(_, "statwrd1", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "terminal1", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "dynbusctrl1", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "subsys1", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "busy1", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "bcastrcv1", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "svcreq1", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "instr1", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "msgerr1", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocI8(_, "status_rtaddr1", nullptr)).InSequence(seq).WillOnce(Return(true));
+
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocI32(_, "statwrd2", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "terminal2", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "dynbusctrl2", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "subsys2", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "busy2", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "bcastrcv2", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "svcreq2", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "instr2", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "msgerr2", nullptr)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocI8(_, "status_rtaddr2", nullptr)).InSequence(seq).WillOnce(Return(true));
     }
     
     void ValidateInitializeAddFieldFalse()
@@ -154,6 +212,29 @@ class ParquetMilStd1553F1Test : public ::testing::Test
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "totwrdcnt", 0)).InSequence(seq).WillOnce(Return(false));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "calcwrdcnt", 0)).InSequence(seq).WillOnce(Return(false));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "incomplete", 0)).InSequence(seq).WillOnce(Return(false));
+
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "statwrd1", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "terminal1", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "dynbusctrl1", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "subsys1", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "busy1", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "bcastrcv1", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "svcreq1", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "instr1", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "msgerr1", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "status_rtaddr1", 0)).InSequence(seq).WillOnce(Return(false));
+
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "statwrd2", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "terminal2", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "dynbusctrl2", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "subsys2", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "busy2", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "bcastrcv2", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "svcreq2", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "instr2", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "msgerr2", 0)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "status_rtaddr2", 0)).InSequence(seq).WillOnce(Return(false));
+
     }
 
     void ValidateInitializeSetMemoryLocationFalse()
@@ -187,6 +268,28 @@ class ParquetMilStd1553F1Test : public ::testing::Test
         EXPECT_CALL(mock_pq_ctx_, SetMemLocI8(_, "totwrdcnt", nullptr)).InSequence(seq).WillOnce(Return(false));
         EXPECT_CALL(mock_pq_ctx_, SetMemLocI8(_, "calcwrdcnt", nullptr)).InSequence(seq).WillOnce(Return(false));
         EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "incomplete", nullptr)).InSequence(seq).WillOnce(Return(false));
+
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocI32(_, "statwrd1", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "terminal1", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "dynbusctrl1", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "subsys1", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "busy1", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "bcastrcv1", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "svcreq1", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "instr1", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "msgerr1", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocI8(_, "status_rtaddr1", nullptr)).InSequence(seq).WillOnce(Return(false));
+
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocI32(_, "statwrd2", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "terminal2", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "dynbusctrl2", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "subsys2", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "busy2", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "bcastrcv2", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "svcreq2", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "instr2", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocUI8(_, "msgerr2", nullptr)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, SetMemLocI8(_, "status_rtaddr2", nullptr)).InSequence(seq).WillOnce(Return(false));
     }
 
     void ValidateInitializeResize()
@@ -294,6 +397,63 @@ class ParquetMilStd1553F1Test : public ::testing::Test
         EXPECT_EQ(msg.word_count1, pq1553_.wrdcnt2_.at(0));
         EXPECT_EQ(0, pq1553_.wrdcnt1_.at(0));
     }
+
+    void ValidateStatusWord1()
+    {
+        EXPECT_EQ(statwrd1_.terminal, pq1553_.terminal1_.at(0));
+        EXPECT_EQ(statwrd1_.dynbusctrl, pq1553_.dynbusctrl1_.at(0));
+        EXPECT_EQ(statwrd1_.subsys, pq1553_.subsys1_.at(0));
+        EXPECT_EQ(statwrd1_.busy, pq1553_.busy1_.at(0));
+        EXPECT_EQ(statwrd1_.bcastrcv, pq1553_.bcastrcv1_.at(0));
+        EXPECT_EQ(statwrd1_.svcreq, pq1553_.svcreq1_.at(0));
+        EXPECT_EQ(statwrd1_.instr, pq1553_.instr1_.at(0));
+        EXPECT_EQ(statwrd1_.msgerr, pq1553_.msgerr1_.at(0));
+        EXPECT_EQ(statwrd1_.rtaddr, pq1553_.status_rtaddr1_.at(0));
+        EXPECT_EQ(*statwrd_value1_, pq1553_.status_word1_.at(0));
+    }
+
+    void ValidateStatusWord2()
+    {
+        EXPECT_EQ(statwrd2_.terminal, pq1553_.terminal2_.at(0));
+        EXPECT_EQ(statwrd2_.dynbusctrl, pq1553_.dynbusctrl2_.at(0));
+        EXPECT_EQ(statwrd2_.subsys, pq1553_.subsys2_.at(0));
+        EXPECT_EQ(statwrd2_.busy, pq1553_.busy2_.at(0));
+        EXPECT_EQ(statwrd2_.bcastrcv, pq1553_.bcastrcv2_.at(0));
+        EXPECT_EQ(statwrd2_.svcreq, pq1553_.svcreq2_.at(0));
+        EXPECT_EQ(statwrd2_.instr, pq1553_.instr2_.at(0));
+        EXPECT_EQ(statwrd2_.msgerr, pq1553_.msgerr2_.at(0));
+        EXPECT_EQ(statwrd2_.rtaddr, pq1553_.status_rtaddr2_.at(0));
+        EXPECT_EQ(*statwrd_value2_, pq1553_.status_word2_.at(0));
+    }
+
+    void ValidateStatusWord1Null()
+    {
+        EXPECT_EQ(0, pq1553_.terminal1_.at(0));
+        EXPECT_EQ(0, pq1553_.dynbusctrl1_.at(0));
+        EXPECT_EQ(0, pq1553_.subsys1_.at(0));
+        EXPECT_EQ(0, pq1553_.busy1_.at(0));
+        EXPECT_EQ(0, pq1553_.bcastrcv1_.at(0));
+        EXPECT_EQ(0, pq1553_.svcreq1_.at(0));
+        EXPECT_EQ(0, pq1553_.instr1_.at(0));
+        EXPECT_EQ(0, pq1553_.msgerr1_.at(0));
+        EXPECT_EQ(0, pq1553_.status_rtaddr1_.at(0));
+        EXPECT_EQ(-1, pq1553_.status_word1_.at(0));
+    }
+
+    void ValidateStatusWord2Null()
+    {
+        EXPECT_EQ(0, pq1553_.terminal2_.at(0));
+        EXPECT_EQ(0, pq1553_.dynbusctrl2_.at(0));
+        EXPECT_EQ(0, pq1553_.subsys2_.at(0));
+        EXPECT_EQ(0, pq1553_.busy2_.at(0));
+        EXPECT_EQ(0, pq1553_.bcastrcv2_.at(0));
+        EXPECT_EQ(0, pq1553_.svcreq2_.at(0));
+        EXPECT_EQ(0, pq1553_.instr2_.at(0));
+        EXPECT_EQ(0, pq1553_.msgerr2_.at(0));
+        EXPECT_EQ(0, pq1553_.status_rtaddr2_.at(0));
+        EXPECT_EQ(-1, pq1553_.status_word2_.at(0));
+    }
+
 };
 
 // CC = Cyclomatic Complexity
@@ -374,7 +534,7 @@ TEST_F(ParquetMilStd1553F1Test, AppendRTtoRTModeCodeIncrementAndWriteFalseDoNotZ
  
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
     pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
-        calcwrdcnt, payload_incomplete);
+        calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
 
     ValidateAppendedMetadataRTtoRT();
     ValidateAppended1553Words(data_vec, pq1553_.data_, calcwrdcnt, 0);
@@ -401,7 +561,7 @@ TEST_F(ParquetMilStd1553F1Test, AppendRTtoRTModeCodeIncrementAndWriteTrueZeroDat
  
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
     pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
-        calcwrdcnt, payload_incomplete);
+        calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
 
     ValidateAppendedMetadataRTtoRT();
 
@@ -432,7 +592,7 @@ TEST_F(ParquetMilStd1553F1Test, AppendRTtoBCModeCodeIncrementAndWriteFalse)
  
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
     pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
-        calcwrdcnt, payload_incomplete);
+        calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
 
     ValidateAppendedMetadataRTtoBC();
     ValidateAppended1553Words(data_vec, pq1553_.data_, calcwrdcnt, 0);
@@ -460,7 +620,7 @@ TEST_F(ParquetMilStd1553F1Test, AppendBCtoRTModeCodeIncrementAndWriteFalse)
  
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
     pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
-        calcwrdcnt, payload_incomplete);
+        calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
 
     ValidateAppendedMetadataBCtoRT();
     ValidateAppended1553Words(data_vec, pq1553_.data_, calcwrdcnt, 0);
@@ -488,8 +648,127 @@ TEST_F(ParquetMilStd1553F1Test, AppendBCtoRTModeCodeIncrementAndWriteFalseCalcwr
  
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
     pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
-        calcwrdcnt, payload_incomplete);
+        calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
 
     ValidateAppendedMetadataBCtoRT();
     ValidateAppended1553Words(data_vec, pq1553_.data_, calcwrdcnt, 0);
+}
+
+TEST_F(ParquetMilStd1553F1Test, AppendStatusWord2Null)
+{
+    calcwrdcnt = 23; 
+    mode_code = 0;
+    msg.RR = 0;
+    msg.length = calcwrdcnt * 2; // bytes
+    msg.word_count1 = calcwrdcnt;
+    msg.word_count2 = calcwrdcnt;
+
+    statwrd1_.terminal = 1;
+    statwrd1_.bcastrcv = 1;
+    statwrd1_.dynbusctrl = 1;
+    statwrd1_.busy = 1;
+    statwrd1_.rtaddr = 24;
+    statwrd1_.msgerr = 1;
+    statwrd1_.subsys = 1;
+    statwrd1_.svcreq = 1;
+    statwrd1_.instr = 1;
+
+    statwrd_ptr2_ = nullptr;
+
+    ManagedPath outf("test.parquet");
+    bool truncate = true;
+    uint16_t thread_id = 2;
+    EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
+        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
+ 
+    ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
+    pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
+        calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
+
+    ValidateStatusWord1();
+    ValidateStatusWord2Null();
+}
+
+TEST_F(ParquetMilStd1553F1Test, AppendStatusWord1Null)
+{
+    calcwrdcnt = 23; 
+    mode_code = 0;
+    msg.RR = 0;
+    msg.length = calcwrdcnt * 2; // bytes
+    msg.word_count1 = calcwrdcnt;
+    msg.word_count2 = calcwrdcnt;
+
+    statwrd2_.terminal = 1;
+    statwrd2_.bcastrcv = 1;
+    statwrd2_.dynbusctrl = 1;
+    statwrd2_.busy = 1;
+    statwrd2_.rtaddr = 17;
+    statwrd2_.msgerr = 1;
+    statwrd2_.subsys = 1;
+    statwrd2_.svcreq = 1;
+    statwrd2_.instr = 1;
+
+    statwrd_ptr1_ = nullptr;
+
+    ManagedPath outf("test.parquet");
+    bool truncate = true;
+    uint16_t thread_id = 2;
+    EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
+        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
+ 
+    ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
+    pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
+        calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
+
+    ValidateStatusWord2();
+    ValidateStatusWord1Null();
+}
+
+TEST_F(ParquetMilStd1553F1Test, AppendStatusWordsNonNull)
+{
+    calcwrdcnt = 23; 
+    mode_code = 0;
+    msg.RR = 0;
+    msg.length = calcwrdcnt * 2; // bytes
+    msg.word_count1 = calcwrdcnt;
+    msg.word_count2 = calcwrdcnt;
+
+    statwrd1_.terminal = 1;
+    statwrd1_.bcastrcv = 1;
+    statwrd1_.dynbusctrl = 1;
+    statwrd1_.busy = 1;
+    statwrd1_.rtaddr = 24;
+    statwrd1_.msgerr = 1;
+    statwrd1_.subsys = 1;
+    statwrd1_.svcreq = 1;
+    statwrd1_.instr = 1;
+
+    statwrd2_.terminal = 1;
+    statwrd2_.bcastrcv = 1;
+    statwrd2_.dynbusctrl = 1;
+    statwrd2_.busy = 1;
+    statwrd2_.rtaddr = 17;
+    statwrd2_.msgerr = 1;
+    statwrd2_.subsys = 1;
+    statwrd2_.svcreq = 1;
+    statwrd2_.instr = 1;
+
+    ManagedPath outf("test.parquet");
+    bool truncate = true;
+    uint16_t thread_id = 2;
+    EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
+        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
+ 
+    ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
+    pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
+        calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
+
+    ValidateStatusWord1();
+    ValidateStatusWord2();
 }

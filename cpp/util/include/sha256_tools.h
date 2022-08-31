@@ -57,6 +57,6 @@ Args:
 Return:
     sha256 value of input
 */
-std::string Sha256(std::string input);
+// std::string Sha256(std::string input);
 
 #endif  // SHA256_TOOLS_H_

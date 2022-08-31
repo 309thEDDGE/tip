@@ -12,7 +12,6 @@ class Ch10TMATSComponentTest : public ::testing::Test
     const uint8_t* body_ptr_;
     Ch10Status status_;
     Ch10Context ctx_;
-    std::vector<std::string> tmats_vec_;
     uint64_t abs_pos_;
     uint64_t rtc_;
     uint32_t pkt_size_;
@@ -43,10 +42,10 @@ TEST_F(Ch10TMATSComponentTest, ParseTMATSZeroLength)
     // Set the data_ptr_ to the address of the csdw.
     data_ptr_ = (const uint8_t*)&tmats_fmt_;
 
-    status_ = tmats_comp_.Parse(data_ptr_, tmats_vec_);
+    status_ = tmats_comp_.Parse(data_ptr_);
 
-    // No additional data should be added to the vector.
-    EXPECT_EQ(tmats_vec_.size(), 0);
+    // No additional data should be added.
+    EXPECT_EQ(ctx_.GetTMATSMatter(), "");
 }
 
 TEST_F(Ch10TMATSComponentTest, ParseTMATSCorrectChars)
@@ -71,9 +70,8 @@ TEST_F(Ch10TMATSComponentTest, ParseTMATSCorrectChars)
     // Make a string out of the body part of the vector.
     std::string orig_str(csdw_and_data.data() + csdw_size, extra_size);
 
-    status_ = tmats_comp_.Parse(data_ptr_, tmats_vec_);
+    status_ = tmats_comp_.Parse(data_ptr_);
 
     // Confirm that the string added to the vector and original string are the same.
-    ASSERT_EQ(tmats_vec_.size(), 1);
-    EXPECT_EQ(tmats_vec_[0], orig_str);
+    EXPECT_EQ(ctx_.GetTMATSMatter(), orig_str);
 }

@@ -16,6 +16,7 @@ class ParquetARINC429F0
    private:
     int max_temp_element_count_;
     ParquetContext* pq_ctx_;
+    uint32_t temp_octal_label_;
 
    public:
     static const int ARINC429_ROW_GROUP_COUNT;

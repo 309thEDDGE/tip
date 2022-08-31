@@ -34,18 +34,18 @@ with re-definitions by spdlog headers of arrow defs.
 #include "version_info.h"
 #include "stream_buffering.h"
 #include "yaml_schema_validation.h"
+#include "translator_cli_1553.h"
 
 int TranslateTabular1553Main(int argc, char** argv);
 
 namespace transtab1553
 {
     bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
-                    const std::string& str_output_dir, const std::string& str_conf_dir,
-                    const std::string& str_log_dir, ManagedPath& input_path, ManagedPath& icd_path,
-                    ManagedPath& output_dir, ManagedPath& conf_file_path, ManagedPath& conf_schema_file_path,
-                    ManagedPath& icd_schema_file_path, ManagedPath& log_dir, ArgumentValidation* av);
+                    const std::string& str_output_dir, const std::string& str_log_dir, 
+                    ManagedPath& input_path, ManagedPath& icd_path, ManagedPath& output_dir, 
+                    ManagedPath& log_dir, ArgumentValidation* av);
 
-    bool SetupLogging(const ManagedPath& log_dir);
+    bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level);
 
     bool IngestICD(DTS1553* dts1553, const ManagedPath& dts_path,
                 std::map<std::string, std::string>& msg_name_substitutions,
@@ -55,13 +55,11 @@ namespace transtab1553
     bool PrepareBusMap(const ManagedPath& input_path, DTS1553& dts1553, 
                     const TIPMDDocument& parser_md_doc, 
                     const TranslationConfigParams& config_params,
-                    std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-                    std::set<uint64_t>& excluded_channel_ids);
+                    BusMap* bus_map);
 
     bool SynthesizeBusMap(DTS1553& dts1553, const TIPMDDocument& parser_md_doc,
                         const TranslationConfigParams& config_params,
-                        std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-                        std::set<uint64_t>& excluded_channel_ids);
+                        BusMap* bus_map);
 
     bool SetSystemLimits(uint8_t thread_count, size_t message_count);
 
@@ -75,13 +73,12 @@ namespace transtab1553
     bool RecordMetadata(const TranslationConfigParams& config, 
                         const ManagedPath& translated_data_dir,
                         const ManagedPath& dts_path, 
-                        std::map<uint64_t, std::string>& chanid_to_bus_name_map,
-                        const std::set<uint64_t>& excluded_channel_ids, 
                         const ManagedPath& input_path,
                         const std::set<std::string>& translated_messages,
                         const std::map<std::string, std::string>& msg_name_substitutions,
                         const std::map<std::string, std::string>& elem_name_substitutions,
-                        const ProvenanceData& prov_data, const TIPMDDocument& parser_md_doc);
+                        const ProvenanceData& prov_data, const TIPMDDocument& parser_md_doc,
+                        const BusMap* bus_map);
 
     bool GetParsed1553Metadata(const ManagedPath* input_md_path, 
         TIPMDDocument* parser_md_doc, FileReader* fr);

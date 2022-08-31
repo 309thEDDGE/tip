@@ -1,5 +1,79 @@
 #include "ch10_packet.h"
 
+void Ch10Packet::SetCh10ComponentParsers(Ch10PacketHeaderComponent* header_comp,
+        Ch10TMATSComponent* tmats_comp, Ch10TDPComponent* tdp_comp,
+        Ch101553F1Component* milstd1553_comp, Ch10VideoF0Component* video_comp,
+        Ch10EthernetF0Component* eth_comp, Ch10429F0Component* arinc429_comp)
+{
+    header_ = header_comp;
+    tmats_ = tmats_comp;
+    tdp_component_ = tdp_comp;
+    milstd1553f1_component_ = milstd1553_comp;
+    videof0_component_ = video_comp;
+    ethernetf0_component_ = eth_comp;
+    arinc429f0_component_ = arinc429_comp;
+}
+
+bool Ch10Packet::IsConfigured()
+{
+
+    // Pointers set by constructor
+    if(bb_ == nullptr)
+    {
+        SPDLOG_CRITICAL("BinBuff pointer is nullptr");
+        return false;
+    }
+    if(ctx_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10Context pointer is nullptr");
+        return false;
+    }
+    if(ch10_time_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10Time pointer is nullptr");
+        return false;
+    }
+
+    // Pointers set by SetCh10ComponentParsers
+    if(header_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10PacketHeaderComponent pointer is nullptr");
+        return false;
+    }
+    if(tmats_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10TMATSComponent pointer is nullptr");
+        return false;
+    }
+    if(tdp_component_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10TDPComponent pointer is nullptr");
+        return false;
+    }
+    if(milstd1553f1_component_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch101553F1Component pointer is nullptr");
+        return false;
+    }
+    if(videof0_component_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10VideoF0Component pointer is nullptr");
+        return false;
+    }
+    if(ethernetf0_component_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10EthernetF0Component pointer is nullptr");
+        return false;
+    }
+    if(arinc429f0_component_ == nullptr)
+    {
+        SPDLOG_CRITICAL("Ch10429F0Component pointer is nullptr");
+        return false;
+    }
+
+    return true;
+}
+
 Ch10Status Ch10Packet::AdvanceBuffer(const uint64_t& byte_count)
 {
     bb_response_ = bb_->AdvanceReadPos(byte_count);
@@ -101,7 +175,7 @@ Ch10Status Ch10Packet::ParseHeader()
     // Check if there are sufficient bytes in the buffer to
     // interpret the entire header, assuming initially that
     // that there is no secondary header.
-    if (!bb_->BytesAvailable(header_.std_hdr_size_))
+    if (!bb_->BytesAvailable(header_->std_hdr_size_))
         return Ch10Status::BUFFER_LIMITED;
 
     // Set the data_ptr_ at the current position within the buffer.
@@ -109,13 +183,12 @@ Ch10Status Ch10Packet::ParseHeader()
     data_ptr_ = bb_->Data();
 
     // parse header
-    status_ = header_.Parse(data_ptr_);
-    temp_pkt_size_ = (uint64_t)(*header_.std_hdr_elem.element)->pkt_size;
+    status_ = header_->Parse(data_ptr_);
+    const Ch10PacketHeaderFmt* const hdr = header_->GetHeader();
+    temp_pkt_size_ = static_cast<uint64_t>(hdr->pkt_size);
     status_ = ManageHeaderParseStatus(status_, temp_pkt_size_);
     if (status_ != Ch10Status::OK)
         return status_;
-
-    //printf("ParseHeader(): abs pos = %llu\n", ctx_->absolute_position);
 
     // Check if all of the bytes in current packet are available
     // in the buffer. There is no need to continue parsing the secondary
@@ -137,9 +210,9 @@ Ch10Status Ch10Packet::ParseHeader()
 
     // Configure context to prepare for use by the packet body parsers.
     status_ = ctx_->UpdateContext(ctx_->absolute_position + temp_pkt_size_,
-                                  *header_.std_hdr_elem.element,
-                                  ch10_time_.CalculateRTCTimeFromComponents((*header_.std_hdr_elem.element)->rtc1,
-                                                                            (*header_.std_hdr_elem.element)->rtc2));
+                                  hdr,
+                                  ch10_time_->CalculateRTCTimeFromComponents(hdr->rtc1,
+                                                                            hdr->rtc2));
     if (status_ != Ch10Status::OK)
         return Ch10Status::PKT_TYPE_NO;
 
@@ -149,17 +222,15 @@ Ch10Status Ch10Packet::ParseHeader()
     //
     // At this point data_ptr_ has been modified to point at the bytes immediately
     // after the header or header+secondary header.
-    status_ = header_.VerifyDataChecksum(data_ptr_,
-                                         (*header_.std_hdr_elem.element)->checksum_existence,
-                                         (*header_.std_hdr_elem.element)->pkt_size,
-                                         (*header_.std_hdr_elem.element)->secondary_hdr);
+    status_ = header_->VerifyDataChecksum(data_ptr_, hdr->checksum_existence,
+                                         hdr->pkt_size, hdr->secondary_hdr);
     // If the checksum does not match, Skip this pkt.
     if (status_ == Ch10Status::CHECKSUM_FALSE)
         return Ch10Status::PKT_TYPE_NO;
 
     // Handle parsing of the secondary header. This is currently not
     // completed. Data parsed in this step are not utilized.
-    status_ = header_.ParseSecondaryHeader(data_ptr_, secondary_hdr_time_ns_);
+    status_ = header_->ParseSecondaryHeader(data_ptr_, secondary_hdr_time_ns_);
     status_ = ManageSecondaryHeaderParseStatus(status_, temp_pkt_size_);
     if (status_ != Ch10Status::OK)
         return status_;
@@ -178,7 +249,7 @@ Ch10Status Ch10Packet::ParseHeader()
         ctx_->UpdateWithSecondaryHeaderTime(secondary_hdr_time_ns_);
 
     // Continue to parse depending on the context.
-    return ctx_->ContinueWithPacketType((*header_.std_hdr_elem.element)->data_type);
+    return ctx_->ContinueWithPacketType(hdr->data_type);
 }
 
 void Ch10Packet::ParseBody()
@@ -191,34 +262,34 @@ void Ch10Packet::ParseBody()
     // an argument and then ParseHeader, then ParseBody can be called. The
     // pkt_type_ can be checked via current_pkt_type.
     pkt_type_ = Ch10PacketType::NONE;
-    switch ((*header_.std_hdr_elem.element)->data_type)
+    switch (header_->GetHeader()->data_type)
     {
         case static_cast<uint8_t>(Ch10PacketType::COMPUTER_GENERATED_DATA_F1):
-            if (ctx_->pkt_type_config_map.at(Ch10PacketType::COMPUTER_GENERATED_DATA_F1))
+            if (ctx_->IsPacketTypeEnabled(Ch10PacketType::COMPUTER_GENERATED_DATA_F1))
             {
                 pkt_type_ = Ch10PacketType::COMPUTER_GENERATED_DATA_F1;
-                tmats_.Parse(data_ptr_, tmats_vec_);
+                tmats_->Parse(data_ptr_);
             }
             break;
         case static_cast<uint8_t>(Ch10PacketType::TIME_DATA_F1):
-            if (ctx_->pkt_type_config_map.at(Ch10PacketType::TIME_DATA_F1))
+            if (ctx_->IsPacketTypeEnabled(Ch10PacketType::TIME_DATA_F1))
             {
                 pkt_type_ = Ch10PacketType::TIME_DATA_F1;
-                tdp_component_.Parse(data_ptr_);
+                tdp_component_->Parse(data_ptr_);
             }
             break;
         case static_cast<uint8_t>(Ch10PacketType::MILSTD1553_F1):
-            if (ctx_->pkt_type_config_map.at(Ch10PacketType::MILSTD1553_F1))
+            if (ctx_->IsPacketTypeEnabled(Ch10PacketType::MILSTD1553_F1))
             {
                 pkt_type_ = Ch10PacketType::MILSTD1553_F1;
-                milstd1553f1_component_.Parse(data_ptr_);
+                milstd1553f1_component_->Parse(data_ptr_);
             }
             break;
         case static_cast<uint8_t>(Ch10PacketType::VIDEO_DATA_F0):
-            if (ctx_->pkt_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0))
+            if (ctx_->IsPacketTypeEnabled(Ch10PacketType::VIDEO_DATA_F0))
             {
                 pkt_type_ = Ch10PacketType::VIDEO_DATA_F0;
-                videof0_component_.Parse(data_ptr_);
+                videof0_component_->Parse(data_ptr_);
 
                 // Get the earliest subpacket absolute time that was parsed
                 // out of the Ch10 video packet. If there are no intra-packet
@@ -228,21 +299,21 @@ void Ch10Packet::ParseBody()
                 //
                 // Use the Ch10Context to keep a record of minimum timestamp
                 // per channel ID.
-                ctx_->RecordMinVideoTimeStamp(videof0_component_.subpacket_absolute_times.at(0));
+                ctx_->RecordMinVideoTimeStamp(videof0_component_->subpacket_absolute_times.at(0));
             }
             break;
         case static_cast<uint8_t>(Ch10PacketType::ETHERNET_DATA_F0):
-            if (ctx_->pkt_type_config_map.at(Ch10PacketType::ETHERNET_DATA_F0))
+            if (ctx_->IsPacketTypeEnabled(Ch10PacketType::ETHERNET_DATA_F0))
             {
                 pkt_type_ = Ch10PacketType::ETHERNET_DATA_F0;
-                ethernetf0_component_.Parse(data_ptr_);
+                ethernetf0_component_->Parse(data_ptr_);
             }
             break;
         case static_cast<uint8_t>(Ch10PacketType::ARINC429_F0):
-            if(ctx_->pkt_type_config_map.at(Ch10PacketType::ARINC429_F0))
+            if(ctx_->IsPacketTypeEnabled(Ch10PacketType::ARINC429_F0))
             {
                 pkt_type_ = Ch10PacketType::ARINC429_F0;
-                arinc429f0_component_.Parse(data_ptr_);
+                arinc429f0_component_->Parse(data_ptr_);
             }
             break;
         default:
@@ -250,16 +321,12 @@ void Ch10Packet::ParseBody()
             // and enabled (has a value of true) and does not have a parser, then
             // alert the user.
             Ch10PacketType pkt_type = static_cast<Ch10PacketType>(
-                (*header_.std_hdr_elem.element)->data_type);
-            if (ctx_->pkt_type_config_map.count(pkt_type) == 1)
+                header_->GetHeader()->data_type);
+            if (ctx_->RegisterUnhandledPacketType(pkt_type))
             {
-                if (ctx_->pkt_type_config_map.at(pkt_type))
-                {
-                    SPDLOG_WARN("({:02d}) No parser exists for {:s}", ctx_->thread_id,
-                                ch10packettype_to_string_map.at(pkt_type));
-                }
+                SPDLOG_WARN("({:02d}) No parser exists for {:s}", ctx_->thread_id,
+                            ch10packettype_to_string_map.at(pkt_type));
             }
             break;
     }
-    // Return status?
 }

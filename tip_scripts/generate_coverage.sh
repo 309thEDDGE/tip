@@ -26,7 +26,4 @@ exit_if_nonzero "Run tests"
 
 gcovr -r ../. --exclude-unreachable-branches --exclude-throw-branches --html-details ./overall-coverage.html .
 exit_if_nonzero "gcovr"
-<<<<<<< HEAD
-=======
 
->>>>>>> master

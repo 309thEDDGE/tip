@@ -8,7 +8,7 @@ set(headers
     include/tip_md_document.h
 )
 
-add_library(metadata
+add_library(metadata 
             src/md_category.cpp
             src/md_category_scalar.cpp
             src/md_category_sequence.cpp
@@ -25,9 +25,5 @@ target_include_directories(metadata PUBLIC include)
 set_target_properties(metadata PROPERTIES PUBLIC_HEADER "${headers}")
 
 target_link_libraries(metadata
-    PUBLIC yaml-cpp spdlog::spdlog
-)
-
-install(
-    TARGETS metadata 
+    PRIVATE yaml-cpp spdlog::spdlog
 )

@@ -48,7 +48,7 @@ class TranslatableColumnTemplate : public TranslatableColumnBase
         ridealong       --> True if column is ridealong column type
         arrow_type      --> Shared pointer to arrow output col type
         row_group_size  --> Size of row group
-        icd_elem        --> Contains information about payload source words and 
+        icd_elem        --> Contains information about payload source words and
                             bit configuration schema
         thread_index    --> Index of the thread in which the context is
                             processed, counting from zero for the first
@@ -146,13 +146,13 @@ bool TranslatableColumnTemplate<RawType, TranslatedType>::AppendRawData(
     /*
     Note: May need higher fidelity on return type than bool for this method,
     AppendRidealongData, and Translate. At least three possible condition
-    need to be indicated: successful, failed, continue. For example, 
+    need to be indicated: successful, failed, continue. For example,
     if(is_ridealong_) ought to convey continue, not that a problem occurred.
     Similar for the following check for sufficient values in source data.
     However, the third check, for size of raw_data_ vector, ought to return
     the fail condition. This will allow tests to be simple and calling
     functions to appropriately handle conditional results, such as marking
-    a TranslatableTable as invalid or continuing processing. 
+    a TranslatableTable as invalid or continuing processing.
     */
 
     // Ridealong columns have no need for raw data.
@@ -270,8 +270,7 @@ bool TranslatableColumnTemplate<RawType, TranslatedType>::Translate(
 
     raw_data_append_count_ = 0;
 
-    if (!icd_translate.TranslateArray<RawType, TranslatedType>(raw_data_,
-                                                               translated_data_, icd_elem_))
+    if (!icd_translate.TranslateArray(raw_data_, translated_data_, icd_elem_))
     {
         SPDLOG_WARN("{:02d} Failed to translate column \"{:s}\"",
                     thread_index_, col_name_);

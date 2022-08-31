@@ -52,7 +52,7 @@ container/docker/rhel/*~
 container/argotip_scripts/.vs
 tip_scripts/__pycache__
 !README.md
-!parse_and_translate.py
+!parse_and_translate_cli.py
 !CmakeLists.txt
 !di2e_bitbucket_clone.txt
 !.dockerignore
