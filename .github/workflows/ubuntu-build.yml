@@ -5,21 +5,19 @@ on:
       - master
 jobs:
   build-job:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
-      DEPS_DIR: /home/tip/deps 
-      BUILD_DIR: build-profile
+      BUILD_DIR: build
       CI_COMMIT_TAG: ${{github.ref_name}}
       CI_COMMIT_SHORT_SHA: ${{github.sha}}
       CODE_COV_FNAME: overall-coverage.xml
       RANDOM_CACHE_FNAME: random-cache-key
     container:
-      image: registry.il2.dso.mil/skicamp/project-opal/tip/dev:tip-ghbuild-0.3
+      image: registry.il2.dso.mil/skicamp/project-opal/tip/dev:ghbuild_ubuntu
       credentials:
         username: ${{ secrets.TIP_REGISTRY_USER }}
         password: ${{ secrets.TIP_REGISTRY_PASS }}
       env:
-        DEPS_DIR: ${{ env.DEPS_DIR }}
         BUILD_DIR: ${{ env.BUILD_DIR }}
         CI_COMMIT_TAG: ${{ github.ref_name }}
         CI_COMMIT_SHORT_SHA: ${{ github.sha }}
@@ -31,16 +29,16 @@ jobs:
         with:
           # Necessary to obtain all timestamp info
           fetch-depth: '0'
-      - name: Make python link
-        run: |
-            ln -fs /usr/bin/python3 /usr/bin/python
-            chmod a+x /usr/bin/python
-      - name: Restore timestamps
-        uses: chetan/git-restore-mtime-action@v1.1
+      # - name: Make python link
+      #   run: |
+      #       ln -fs /usr/bin/python3 /usr/bin/python
+      #       chmod a+x /usr/bin/python
+      # - name: Restore timestamps
+      #   uses: chetan/git-restore-mtime-action@v1.1
       - name: home debug
         run: pwd && ls $HOME
-      - name: Generate random cache key
-        run: head /dev/random -c 32 > $RANDOM_CACHE_FNAME
+      # - name: Generate random cache key
+      #   run: head /dev/random -c 32 > $RANDOM_CACHE_FNAME
         # Github will clear cache that hasn't been accessed in 
         # 7 days, so previously cached and now merged or old
         # branches will be automatically removed.
@@ -51,21 +49,18 @@ jobs:
         # is a match from the restore-keys, so each CI run will 
         # pull the most recent cache and upload a new cache at 
         # the end of the run.
-      - name: Cache native build artifacts
-        id: cache-build-artifacts
-        uses: actions/cache@v2
-        with: 
-          path: ./${{ env.BUILD_DIR }}
-          key: ${{ runner.os }}-native-build-cache-${{ hashFiles(env.RANDOM_CACHE_FNAME) }}
-          restore-keys: ${{ runner.os }}-native-build-cache-
-      - name: Link deps
-        run: ln -fs $DEPS_DIR ./deps
+      # - name: Cache native build artifacts
+      #   id: cache-build-artifacts
+      #   uses: actions/cache@v2
+      #   with: 
+      #     path: ./${{ env.BUILD_DIR }}
+      #     key: ${{ runner.os }}-native-build-cache-${{ hashFiles(env.RANDOM_CACHE_FNAME) }}
+      #     restore-keys: ${{ runner.os }}-native-build-cache-
       - name: Configure CMake
-        #if: steps.cache-build-artifacts.outputs.cache-hit != 'true'
         run: |
           mkdir -p $BUILD_DIR
           cd $BUILD_DIR
-          cmake .. -GNinja -DCMAKE_BUILD_TYPE=Profile \
+          cmake .. -GNinja \
             -DCI_COMMIT_TAG=$CI_COMMIT_TAG \
             -DCI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA
       - name: Build tip binaries
@@ -74,16 +69,16 @@ jobs:
             ninja install
       - name: Run tests
         run: ./bin/tests
-      - name: Run gcov
-        run: |
-            gcovr -r . $BUILD_DIR/ -j 4 \
-            --exclude-unreachable-branches \
-            --exclude-throw-branches \
-            --xml ./$CODE_COV_FNAME \
-            --print-summary \
-            --exclude cpp/tests/
-            ls -lh .
-            ls -lh $BUILD_DIR
+      # - name: Run gcov
+      #   run: |
+      #       gcovr -r . $BUILD_DIR/ -j 4 \
+      #       --exclude-unreachable-branches \
+      #       --exclude-throw-branches \
+      #       --xml ./$CODE_COV_FNAME \
+      #       --print-summary \
+      #       --exclude cpp/tests/
+      #       ls -lh .
+      #       ls -lh $BUILD_DIR
       # Metric:
       # "hit" indicates that the source code was executed by the test suite.
       #
@@ -93,11 +88,11 @@ jobs:
       # "miss" indicates that the source code was not executed by the test suite.
       #
       # Coverage is the ratio of hits / (sum of hit + partial + miss
-      - uses: codecov/codecov-action@v2
-        with:
-          token: ${{ secrets.CODECOV_IO_TOKEN }}
-          files: ./${{ env.CODE_COV_FNAME }}
-          flags: unittests
-          fail_ci_if_error: true
-          verbose: true
+      # - uses: codecov/codecov-action@v2
+      #   with:
+      #     token: ${{ secrets.CODECOV_IO_TOKEN }}
+      #     files: ./${{ env.CODE_COV_FNAME }}
+      #     flags: unittests
+      #     fail_ci_if_error: true
+      #     verbose: true
 
