@@ -37,7 +37,6 @@ jobs:
         run: |
             ln -fs /usr/bin/python3 /usr/bin/python
             chmod a+x /usr/bin/python
-            - name: home debug
 
       - name: Configure CMake
         run: |
