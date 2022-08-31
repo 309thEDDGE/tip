@@ -32,6 +32,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ubuntu
+          verbose: 2
 
       - name: Make python link
         run: |
@@ -76,11 +77,12 @@ jobs:
       #
       # Coverage is the ratio of hits / (sum of hit + partial + miss
       - name: Code Coverage
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_IO_TOKEN }}
           files: ./${{ env.CODE_COV_FNAME }}
           flags: unittests
+          name: codecov-umbrella
           fail_ci_if_error: true
           verbose: true
 
