@@ -24,42 +24,22 @@ jobs:
         CODE_COV_FNAME: ${{ env.CODE_COV_FNAME }}
       options: --cpus 2
     steps: 
+
       - name: Checkout  
         uses: actions/checkout@v2
-        # with:
-        #   # Necessary to obtain all timestamp info
-        #   fetch-depth: '0'
+
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ubuntu
+
       - name: Make python link
         run: |
             ln -fs /usr/bin/python3 /usr/bin/python
             chmod a+x /usr/bin/python
-      # - name: Restore timestamps
-      #   uses: chetan/git-restore-mtime-action@v1.1
-      - name: home debug
+            - name: home debug
         run: pwd && ls $HOME
-      # - name: Generate random cache key
-      #   run: head /dev/random -c 32 > $RANDOM_CACHE_FNAME
-        # Github will clear cache that hasn't been accessed in 
-        # 7 days, so previously cached and now merged or old
-        # branches will be automatically removed.
-        #
-        # See https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key. The prefix in restore-keys will match if there
-        # is no direct hit, which is guaranteed by the random 
-        # hash. Further, the most recent cache is pulled if there
-        # is a match from the restore-keys, so each CI run will 
-        # pull the most recent cache and upload a new cache at 
-        # the end of the run.
-      # - name: Cache native build artifacts
-      #   id: cache-build-artifacts
-      #   uses: actions/cache@v2
-      #   with: 
-      #     path: ./${{ env.BUILD_DIR }}
-      #     key: ${{ runner.os }}-native-build-cache-${{ hashFiles(env.RANDOM_CACHE_FNAME) }}
-      #     restore-keys: ${{ runner.os }}-native-build-cache-
+
       - name: Configure CMake
         run: |
           mkdir -p $BUILD_DIR
@@ -67,12 +47,16 @@ jobs:
           cmake .. -GNinja -DCMAKE_BUILD_TYPE=Profile \
             -DCI_COMMIT_TAG=$CI_COMMIT_TAG \
             -DCI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA
+
       - name: Build tip binaries
         run: |
+            export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
             cd $BUILD_DIR
             ninja install
+
       - name: Run tests
         run: which tests && tests
+
       - name: Run gcov
         run: |
             gcovr -r . $BUILD_DIR/ -j 4 \
@@ -83,6 +67,7 @@ jobs:
             --exclude cpp/tests/
             ls -lh .
             ls -lh $BUILD_DIR
+
       # Metric:
       # "hit" indicates that the source code was executed by the test suite.
       #
