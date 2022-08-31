@@ -26,9 +26,13 @@ jobs:
     steps: 
       - name: Checkout  
         uses: actions/checkout@v2
+        # with:
+        #   # Necessary to obtain all timestamp info
+        #   fetch-depth: '0'
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
         with:
-          # Necessary to obtain all timestamp info
-          fetch-depth: '0'
+          key: ubuntu
       # - name: Make python link
       #   run: |
       #       ln -fs /usr/bin/python3 /usr/bin/python
@@ -68,7 +72,7 @@ jobs:
             cd $BUILD_DIR
             ninja install
       - name: Run tests
-        run: ./bin/tests
+        run: which tests && tests
       # - name: Run gcov
       #   run: |
       #       gcovr -r . $BUILD_DIR/ -j 4 \
