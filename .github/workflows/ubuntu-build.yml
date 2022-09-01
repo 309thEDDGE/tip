@@ -51,6 +51,7 @@ jobs:
         run: |
             export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
             cd $BUILD_DIR
+            echo $PATH
             ninja install
 
       - name: Run tests
