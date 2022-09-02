@@ -1,7 +1,9 @@
 name: native-build
 on:
   push:
-    branches-ignore:
+    # branches-ignore:
+    #   - master
+    branches: 
       - master
 jobs:
   build-job:

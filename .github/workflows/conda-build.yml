@@ -1,7 +1,9 @@
 name: conda-build
 on:
   push:
-    branches:
+    # branches:
+    #   - master
+    branches-ignore:
       - master
 jobs:
   build-job:
@@ -37,10 +39,13 @@ jobs:
           cd $CONDA_RECIPES_DIR
           conda build tip -c conda-forge --croot ~/$BUILD_DIR
           cd ~/$BUILD_DIR
+          echo "prefix: $PREFIX"
+          which tests
           tree
       - name: Run tests
         shell: bash -l {0}
-        run: /usr/share/miniconda/envs/${{ env.ENV_NAME }}/bin/tests
+        # run: /usr/share/miniconda/envs/${{ env.ENV_NAME }}/bin/tests
+        run: tests
       - name: Run gcov
         run: |
             gcovr -r . ~/$BUILD_DIR/ -j 4 \
