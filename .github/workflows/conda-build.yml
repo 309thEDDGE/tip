@@ -43,6 +43,8 @@ jobs:
           BUILD_PREFIX: ${{ env.ENV_NAME }}
           CONDA_RECIPES_DIR: tip_scripts/conda-recipes
         run: |
+          export PREFIX=$PREFIX
+          export BUILD_PREFIX=$BUILD_PREFIX
           cd $CONDA_RECIPES_DIR
           conda build tip -c conda-forge --croot ~/$BUILD_DIR
           cd ~/$BUILD_DIR
