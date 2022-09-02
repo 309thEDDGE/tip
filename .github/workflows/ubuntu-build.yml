@@ -28,6 +28,9 @@ jobs:
       - name: Checkout  
         uses: actions/checkout@v2
 
+      - name: Ccache size
+        run : du -csh ./.ccache
+
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -42,6 +45,7 @@ jobs:
       - name: Configure CMake
         run: |
           mkdir -p $BUILD_DIR
+          du -csh ./.ccache
           cd $BUILD_DIR
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           cmake .. -GNinja -DCMAKE_BUILD_TYPE=Profile \
@@ -53,11 +57,10 @@ jobs:
             export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
             du -csh ./.ccache
             ps -p $$
-            echo $SHELL
             cd $BUILD_DIR
             echo $PATH
             ninja install
-            du -csh ./.ccache
+            du -csh ../.ccache
 
       - name: Run tests
         run: which tests && tests
