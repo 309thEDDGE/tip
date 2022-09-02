@@ -7,6 +7,25 @@ set(headers
     include/dts1553_mock.h
     include/managed_path_mock.h
     include/tip_md_document_mock.h
+    include/binbuff_mock.h
+    include/ch10_context_mock.h
+    include/ch10_packet_header_component_mock.h
+    include/dts_429_mock.h
+    include/organize_429_icd_mock.h
+    include/arinc429_data_mock.h
+    include/ch10_time_mock.h
+    include/ch10_tmats_component_mock.h
+    include/ch10_tdp_component_mock.h
+    include/ch10_1553f1_component_mock.h
+    include/ch10_videof0_component_mock.h
+    include/ch10_ethernetf0_component_mock.h
+    include/ch10_arinc429f0_component_mock.h
+    include/parquet_tdpf1_mock.h
+    include/tmats_data_mock.h
+    include/parser_metadata_mock.h
+    include/ch10_packet_type_specific_metadata_mock.h
+    include/parser_paths_mock.h
+    include/worker_config_mock.h
 )
 
 add_executable(tests
@@ -77,6 +96,20 @@ add_executable(tests
     src/parquet_ethernetf0_u.cpp
     src/ch10_parse_main_u.cpp
     src/translate_tabular_1553_main_u.cpp
+    src/arinc429_data_u.cpp
+    src/translate_tabular_arinc429_main_u.cpp
+    src/parquet_tdpf1_u.cpp
+    src/cli_arg_u.cpp 
+    src/cli_positional_arg_u.cpp 
+    src/cli_optional_arg_u.cpp
+    src/cli_flag_u.cpp
+    src/cli_u.cpp
+    src/cli_group_u.cpp
+    src/container_arg_u.cpp
+    src/parser_paths_u.cpp
+    src/parser_metadata_u.cpp
+    src/ch10_packet_type_specific_metadata_u.cpp
+    src/worker_config_u.cpp
 )
 
 target_compile_features(tests PUBLIC cxx_std_17)
@@ -86,15 +119,17 @@ target_include_directories(tests
 )
 
 target_link_libraries(tests
-    PUBLIC common parsech10_lib ch10_parquet ch10ethernet parquet_context ch10comp
-    dts_1553 dts_429 tiputil parquet_compare pq_vid_extract yamlsv
-    arrow_shared parquet spdlog::spdlog translate_tabular translate_tabular_1553
-    metadata
+    PUBLIC common yaml-cpp tiputil spdlog::spdlog yamlsv cli metadata 
+    sha256 ch10_parquet parquet_context ch10ethernet ch10comp
+    dts_1553 dts_429 parquet_compare pq_vid_extract 
+    translate_tabular translate_tabular_1553
+    translate_tabular_arinc429 parsech10_lib 
     PRIVATE ${GTEST_LIBRARIES}
 )
 
 install(
     TARGETS tests
+    DESTINATION ${out_bin_dir}
 )
 
 enable_testing()

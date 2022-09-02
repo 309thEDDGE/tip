@@ -42,7 +42,7 @@ class Ch10VideoF0Component : public Ch10PacketComponent
 
     ~Ch10VideoF0Component() {}
 
-    Ch10Status Parse(const uint8_t*& data) override;
+    virtual Ch10Status Parse(const uint8_t*& data);
 
     /*
     Parse a video subpacket. Handles video packets of both variants, 

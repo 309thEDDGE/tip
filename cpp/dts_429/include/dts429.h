@@ -50,6 +50,7 @@ class DTS429
 
    public:
     DTS429(){}
+    virtual ~DTS429() {}
 
     /*
 		IngestLines
@@ -65,8 +66,8 @@ class DTS429
 		return:		True if success, false if failure.
 
 	*/
-    bool IngestLines(const std::vector<std::string>& lines,
-                     std::unordered_map<std::string, std::vector<ICDElement>> word_elements);
+    virtual bool IngestLines(const std::vector<std::string>& lines,
+                     std::unordered_map<std::string, std::vector<ICDElement>>& word_elements);
 
     /*
 		ProcessLinesAsYaml

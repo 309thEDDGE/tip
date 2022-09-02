@@ -8,10 +8,12 @@ class ValidationBase(object):
         self.test_path = None
         self.truth_path = None
         self.test_passed = None
-        self.regex_translated_1553_msg_dir = re.compile(".+parquet")
-        self.regex_raw_1553_dir = re.compile(".+_1553.parquet")
-        self.regex_raw_video_dir = re.compile(".+_video.parquet")
-        self.regex_parsed_arinc429_dir = re.compile(".+_arinc429.parquet")
+        self.regex_translated_1553_msg_dir = re.compile(".+_MILSTD1553_F1_translated.+parquet")
+        self.regex_raw_1553_dir = re.compile(".+_MILSTD1553_F1.parquet")
+        self.regex_raw_video_dir = re.compile(".+_VIDEO_DATA_F0.parquet")
+        self.regex_parsed_arinc429_dir = re.compile(".+_ARINC429_F0.parquet")
+        self.regex_translated_arinc429_dir = re.compile(".+_ARINC429_F0.+parquet")
+        self.regex_parsed_timef1_file = re.compile(".+_TIME_DATA_F1.parquet")
         self.ready_to_validate = False
         self.prefix = prefix
         self.truth_dir_exists = None
@@ -36,7 +38,7 @@ class ValidationBase(object):
         if self.truth_path is None:
             print('{:s} - {:s} is None!'.format(self.prefix, self.truth_path))
             return False
-           
+
         if self.test_path is None:
             print('{:s} - {:s} is None!'.format(self.prefix, self.test_path))
             return False
@@ -82,7 +84,7 @@ class ValidationBase(object):
             self.truth_file_exists = False
             return False
         self.truth_file_exists = True
-           
+
         if not os.path.isfile(self.test_path):
             print('{:s} - {:s} is not a file!'.format(self.prefix, self.test_path))
             self.test_file_exists = False
@@ -144,6 +146,30 @@ class ValidationBase(object):
                 return False
             self.test_dir_exists = True
 
+        elif type_str == 'transl429f0':
+            if not self._is_translated_arinc429_dir(self.truth_path):
+                print('{:s} - {:s} is not a translated ARINC429 word dir!'.format(self.prefix, self.truth_path))
+                self.truth_dir_exists = False
+                return False
+            self.truth_dir_exists = True
+            if not self._is_translated_arinc429_dir(self.test_path):
+                print('{:s} - {:s} is not a translated ARINC429 word dir!'.format(self.prefix, self.test_path))
+                self.test_dir_exists = False
+                return False
+            self.test_dir_exists = True
+
+        elif type_str == 'timef1':
+            if not self._is_timef1_file(self.truth_path):
+                print('{:s} - {:s} is not a time data file!'.format(self.prefix, self.truth_path))
+                self.truth_dir_exists = False
+                return False
+            self.truth_dir_exists = True
+            if not self._is_timef1_file(self.test_path):
+                print('{:s} - {:s} is not a time data file!'.format(self.prefix, self.test_path))
+                self.test_dir_exists = False
+                return False
+            self.test_dir_exists = True
+
         else:
             print('ValidationBase.set_type_paths(): type_str = {:s} not defined!'.format(type_str))
             return False
@@ -181,6 +207,21 @@ class ValidationBase(object):
         if bool(re.match(self.regex_parsed_arinc429_dir, input_path)):
             return True
 
+    def _is_translated_arinc429_dir(self, input_path):
+        if not os.path.isdir(input_path):
+            return False
+
+        if bool(re.match(self.regex_translated_arinc429_dir, input_path)):
+            return True
+        return False
+
+    def _is_timef1_file(self, input_path):
+        if not os.path.isfile(input_path):
+            return False
+        
+        if bool(re.match(self.regex_parsed_timef1_file, input_path)):
+            return True
+
         return False
 
     def directory_has_files_with_extensions(self, dir, exts_list):
@@ -197,7 +238,7 @@ class ValidationBase(object):
         if len(set(file_exts_list).intersection(set(dot_exts_list))) == 0:
             return False
         return True
-            
+
     def __repr__(self):
         r = '{:s}\ntruth: {:s}\ntest: {:s}'.format(self.prefix,
                                                    str(self.truth_path),

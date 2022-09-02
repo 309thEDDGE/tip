@@ -327,6 +327,7 @@ TEST_F(DTS429Test, CreateICDElementFromWordNodesTestOutput)
     // build nodes to build a specific element
     YAML::Node wrd_data_node = word_name_node["wrd_data"];
     YAML::Node elem_node = word_name_node["elem"]["107_alt"];
+
     ICDElement output_element;
 
     // create expected element
@@ -335,7 +336,7 @@ TEST_F(DTS429Test, CreateICDElementFromWordNodesTestOutput)
     expected_element.sdi_= 2;            // 8-bit
     expected_element.bus_name_="BUS5";  // upper to test case sensitivity
     expected_element.msg_name_="TestWord";
-    expected_element.rate_=1.1;
+    expected_element.rate_= 1.1F;
     expected_element.description_="Altitude";
     expected_element.xmit_lru_name_="LRU921";
     expected_element.elem_name_="107_alt";
@@ -343,7 +344,62 @@ TEST_F(DTS429Test, CreateICDElementFromWordNodesTestOutput)
     expected_element.is_bitlevel_=true;
     expected_element.bcd_partial_=-1;
     expected_element.msb_val_=1.0;
-    expected_element.bitlsb_= 11;        // 8-bit
+    expected_element.bitlsb_= 32;        // 8-bit
+    expected_element.bitmsb_= 25;        // 8-bit
+    expected_element.bit_count_= 8;      // 8-bit
+    expected_element.uom_="FT";
+    expected_element.classification_=0;  // 8-bit
+
+    ASSERT_TRUE(dts.CreateICDElementFromWordNodes("TestWord","107_alt",wrd_data_node, elem_node, output_element));
+
+    EXPECT_EQ(expected_element.label_, output_element.label_);
+    EXPECT_EQ(expected_element.sdi_, output_element.sdi_);
+    EXPECT_EQ(expected_element.bus_name_, output_element.bus_name_);
+    EXPECT_EQ(expected_element.msg_name_, output_element.msg_name_);
+    EXPECT_EQ(expected_element.rate_, output_element.rate_);
+    EXPECT_EQ(expected_element.description_, output_element.description_);
+    EXPECT_EQ(expected_element.xmit_lru_name_, output_element.xmit_lru_name_);
+    EXPECT_EQ(expected_element.elem_name_, output_element.elem_name_);
+    EXPECT_EQ(expected_element.schema_, output_element.schema_);
+    EXPECT_EQ(expected_element.is_bitlevel_, output_element.is_bitlevel_);
+    EXPECT_EQ(expected_element.bcd_partial_, output_element.bcd_partial_);
+    EXPECT_EQ(expected_element.msb_val_, output_element.msb_val_);
+    EXPECT_EQ(expected_element.bitlsb_, output_element.bitlsb_);
+    EXPECT_EQ(expected_element.bit_count_, output_element.bit_count_);
+    EXPECT_EQ(expected_element.uom_, output_element.uom_);
+    EXPECT_EQ(expected_element.classification_, output_element.classification_);
+}
+
+TEST_F(DTS429Test, CreateICDElementFromWordNodesTestOutputParameterInSDI)
+{
+    build_node(yaml_lines_0, root_node);
+    transl_wrd_defs = root_node["translatable_word_definitions"];
+    YAML::Node word_name_node = transl_wrd_defs["TestWord"];
+
+    // build nodes to build a specific element
+    YAML::Node wrd_data_node = word_name_node["wrd_data"];
+    YAML::Node elem_node = word_name_node["elem"]["107_alt"];
+    ICDElement output_element;
+
+    // setup elem node such that parameter occuipes sdi
+    elem_node["lsb"] = 10;
+
+    // create expected element
+    ICDElement expected_element;
+    expected_element.label_= 107;
+    expected_element.sdi_= 2;            // 8-bit
+    expected_element.bus_name_="BUS5";  // upper to test case sensitivity
+    expected_element.msg_name_="TestWord";
+    expected_element.rate_= 1.1F;
+    expected_element.description_="Altitude";
+    expected_element.xmit_lru_name_="LRU921";
+    expected_element.elem_name_="107_alt";
+    expected_element.schema_=ICDElementSchema::UNSIGNEDBITS;
+    expected_element.is_bitlevel_=true;
+    expected_element.bcd_partial_=-1;
+    expected_element.msb_val_=1.0;
+    expected_element.bitlsb_= 31;        // 8-bit
+    expected_element.bitmsb_= 25;        // 8-bit
     expected_element.bit_count_= 8;      // 8-bit
     expected_element.uom_="FT";
     expected_element.classification_=0;  // 8-bit

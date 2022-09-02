@@ -14,5 +14,4 @@ class MockDTS1553 : public DTS1553
                      std::map<std::string, std::string>& elem_name_substitutions));
 };
 
-
 #endif  // DTS_1553_MOCK_H_

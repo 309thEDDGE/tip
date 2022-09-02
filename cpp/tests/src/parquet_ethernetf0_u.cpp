@@ -52,7 +52,7 @@ class ParquetEthernetF0Test : public ::testing::Test
         ::testing::Sequence seq;
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "time", 0)).InSequence(seq).WillOnce(Return(true));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "channelid", 0)).InSequence(seq).WillOnce(Return(true));
-        EXPECT_CALL(mock_pq_ctx_, AddField(_, "payload", pq_eth_.PAYLOAD_LIST_COUNT)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "payload", static_cast<int>(pq_eth_.PAYLOAD_LIST_COUNT))).InSequence(seq).WillOnce(Return(true));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "payload_sz", 0)).InSequence(seq).WillOnce(Return(true));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "dstmac", 0)).InSequence(seq).WillOnce(Return(true));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "srcmac", 0)).InSequence(seq).WillOnce(Return(true));
@@ -99,7 +99,7 @@ class ParquetEthernetF0Test : public ::testing::Test
         ::testing::Sequence seq;
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "time", 0)).InSequence(seq).WillOnce(Return(false));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "channelid", 0)).InSequence(seq).WillOnce(Return(false));
-        EXPECT_CALL(mock_pq_ctx_, AddField(_, "payload", pq_eth_.PAYLOAD_LIST_COUNT)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "payload", static_cast<int>(pq_eth_.PAYLOAD_LIST_COUNT))).InSequence(seq).WillOnce(Return(false));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "payload_sz", 0)).InSequence(seq).WillOnce(Return(false));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "dstmac", 0)).InSequence(seq).WillOnce(Return(false));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "srcmac", 0)).InSequence(seq).WillOnce(Return(false));

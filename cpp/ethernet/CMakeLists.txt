@@ -3,7 +3,7 @@ set(headers
     include/ethernet_data.h
 )
 
-add_library(ch10ethernet
+add_library(ch10ethernet 
     src/network_packet_parser.cpp
     src/ethernet_data.cpp
 )
@@ -19,9 +19,9 @@ set_target_properties(ch10ethernet
 )
 
 target_link_libraries(ch10ethernet
-    PUBLIC tins tiputil pcap
+    PUBLIC tins pcap
 )
 
-install(
-    TARGETS ch10ethernet
+target_link_libraries(ch10ethernet
+    PRIVATE yaml-cpp spdlog::spdlog tiputil 
 )

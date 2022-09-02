@@ -19,8 +19,8 @@ class TranslatableTableBase
     /*
 
     TODO: Move Parquet-specific code to derived class. Modify
-    existing functions which take a ParquetContext object as an 
-    argument by removing that argument and calling the base 
+    existing functions which take a ParquetContext object as an
+    argument by removing that argument and calling the base
     class function in the derived function.
     */
 
@@ -133,7 +133,7 @@ class TranslatableTableBase
         arrow_type      --> Shared pointer to arrow output col type
         columns_vec     --> Vector of pointer to TranslatableColumnBase
                             to which newly created object will be added
-        icd_elem        --> Contains information about payload source words and 
+        icd_elem        --> Contains information about payload source words and
                             bit configuration schema
 
     Return:
@@ -164,9 +164,65 @@ class TranslatableTableBase
                     pointed by data
 
     Return:
-        True if no errors occur; false otherwise. 
+        True if no errors occur; false otherwise.
     */
     virtual bool AppendRawData(const uint8_t* data, const size_t& count);
+
+
+
+    /*
+    Similar to AppendRawData, with the addition of explicit sign.
+
+    Args:
+        data    --> Pointer to the first element of the raw data
+                    from which data shall be copied into the various
+                    columns
+        count   --> Total count of elements in the vector
+                    pointed by data
+        sign    --> Explicit sign
+
+    Return:
+        True if no errors occur; false otherwise.
+    */
+    virtual bool AppendRawData(const uint8_t* data, const size_t& count, int8_t sign)
+    { return true; }
+
+
+
+    /*
+    Helper function to iterates over columns and calls 
+    TranslatableColumnBase::AppendRawData. Facilitates overloads
+    for special column types. Called in AppendRawData.
+
+    Args:
+        data    --> Pointer to the first element of the raw data
+                    from which data shall be copied into the various
+                    columns
+        count   --> Total count of elements in the vector
+                    pointed by data
+    */
+    virtual void _AppendToColumns(const uint8_t* data, const size_t& count); 
+
+
+
+    /*
+    Similar to above, with explicit sign included.
+
+    Args:
+        data    --> Pointer to the first element of the raw data
+                    from which data shall be copied into the various
+                    columns
+        count   --> Total count of elements in the vector
+                    pointed by data
+        sign    --> Explicit sign
+    */
+    virtual void _AppendToColumns(const uint8_t* data, const size_t& count, int8_t sign) {}
+
+    /*
+    Helper function to simplify AppendRawData. 
+    */
+    virtual bool _IncrementAndTranslate();
+
 
     /*
     Append data to the raw data vectors in each of the columns.
@@ -180,7 +236,7 @@ class TranslatableTableBase
         col_name--> name of column
 
     Return:
-        True if no errors occur; false otherwise. 
+        True if no errors occur; false otherwise.
     */
     virtual bool AppendRidealongColumnData(const uint8_t* data, const size_t& count,
                                            const std::string& col_name);
@@ -189,21 +245,21 @@ class TranslatableTableBase
     Finalize ParquetContext configuration after calls to AppendTranslatableColumn. Set
     up TranslatableColumn-to-parquet schema mapping and create the output
     file. Set is_pqctx_configured_ to true, which will prevent the addition
-    of columns. 
+    of columns.
 
     Args:
         pq_ctx      --> Pointer to ParquetContext which shall be assigned
                         to an object and configured
         columns     --> Vector of pointer to TranslatableColumnBase. The collection
                         of columns which will be used to configure ParquetContext
-        is_valid    --> Boolean flag indicates obj configuration state. See 
+        is_valid    --> Boolean flag indicates obj configuration state. See
                         description of is_valid_ above.
         rg_count    --> Count of rows in a Parquet row group
         output_path --> Complete output path for table data
 
     Return:
         True if no errors; false otherwise. False if columns.size() equal
-        to zero. 
+        to zero.
     */
     virtual bool ConfigurePqContext(std::shared_ptr<ParquetContext>& pq_ctx,
                                     const std::vector<std::shared_ptr<TranslatableColumnBase>>& columns,

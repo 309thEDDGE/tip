@@ -80,3 +80,34 @@ TEST(ProvenanceDataTest, ClassInstantiation)
     EXPECT_EQ("", prov_data.hash);
     EXPECT_EQ("", prov_data.time);
 }
+
+TEST(ProvenanceDataTest, EqualityOpFalse)
+{
+    ProvenanceData prov_data;
+    prov_data.hash = "p93q4twgoihu4";
+    prov_data.time = "tkjdgf02";
+    prov_data.tip_version = "8259h";
+
+    ProvenanceData prov_data_test;
+    prov_data_test.hash = prov_data.hash;
+    prov_data_test.time = "not correct";
+    prov_data_test.tip_version = prov_data.tip_version;
+
+    ASSERT_FALSE(prov_data==prov_data_test);
+}
+
+TEST(ProvenanceDataTest, EqualityOpTrue)
+{
+    ProvenanceData prov_data;
+    prov_data.hash = "p93q4twgoihu4";
+    prov_data.time = "tkjdgf02";
+    prov_data.tip_version = "8259h";
+
+    ProvenanceData prov_data_test;
+    prov_data_test.hash = prov_data.hash;
+    prov_data_test.time = prov_data.time;
+    prov_data_test.tip_version = prov_data.tip_version;
+
+    ASSERT_TRUE(prov_data==prov_data_test);
+
+}

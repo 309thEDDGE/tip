@@ -12,6 +12,10 @@ class TranslationConfigParams
 {
    public:
     // Parameters (refer to translate_conf.yaml for more detail)
+    std::string input_data_path_str_;
+    std::string input_dts_path_str_;
+    std::string output_path_str_;
+    std::string log_path_str_;
     bool use_tmats_busmap_;
     std::map<std::string, std::string> tmats_busname_corrections_;
     std::vector<std::string> select_specific_messages_;
@@ -23,6 +27,15 @@ class TranslationConfigParams
     bool auto_sys_limits_;
     int translate_thread_count_;
     std::vector<std::string> bus_name_exclusions_;
+    std::string stdout_log_level_;
+    bool disable_dts_schema_validation_;
+
+    TranslationConfigParams() : use_tmats_busmap_(false), exit_after_table_creation_(false),
+        stop_after_bus_map_(false), vote_threshold_(1), prompt_user_(false),
+        vote_method_checks_tmats_(false), auto_sys_limits_(false), translate_thread_count_(1),
+        stdout_log_level_(""), input_data_path_str_(""), input_dts_path_str_(""),
+        output_path_str_(""), log_path_str_(""), disable_dts_schema_validation_(false)
+    {}
 
     /*
 	Attempt to read the required parameters from the
@@ -72,6 +85,8 @@ class TranslationConfigParams
 
         success.insert(yr.GetParams("auto_sys_limits",
                                     auto_sys_limits_, true));
+
+        success.insert(yr.GetParams("stdout_log_level", stdout_log_level_, true));
 
         // If one config option was not read correctly return false
         if (success.find(false) != success.end())

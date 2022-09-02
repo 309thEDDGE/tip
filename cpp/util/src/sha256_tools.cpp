@@ -36,7 +36,7 @@ bool ComputeSHA256(std::istream& input_stream, std::string& sha256_value,
         std::copy_n(it, stream_size, std::back_inserter(input));
     }
 
-    sha256_value = sha256(input);
+    sha256_value = CalcSHA256(input);
 
     return true;
 }
@@ -80,7 +80,7 @@ bool ComputeFileSHA256(const ManagedPath& input_file, std::string& sha256_value,
 }
 
 
-std::string Sha256(std::string input)
-{
-    return sha256(input);
-}
+// std::string Sha256(std::string input)
+// {
+//     return sha256(input);
+// }

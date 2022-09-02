@@ -3,7 +3,7 @@ set(headers
     include/column_data.h
 )
 
-add_library(parquet_context
+add_library(parquet_context 
     src/parquet_context.cpp
 )
 
@@ -18,9 +18,9 @@ set_target_properties(parquet_context
 )
 
 target_link_libraries(parquet_context
-    PUBLIC arrow_shared parquet spdlog::spdlog
+    PUBLIC arrow_shared parquet 
 )
 
-install(
-    TARGETS parquet_context
+target_link_libraries(parquet_context
+    PRIVATE spdlog::spdlog
 )

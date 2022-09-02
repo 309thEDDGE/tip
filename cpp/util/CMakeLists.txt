@@ -16,9 +16,10 @@ set(headers
     include/stream_buffering.h
     include/sha256_tools.h
     include/provenance_data.h
+    include/terminal.h
 )
 
-add_library(tiputil STATIC
+add_library(tiputil 
             src/argument_validation.cpp
             src/binbuff.cpp
             src/data_organization.cpp
@@ -34,6 +35,7 @@ add_library(tiputil STATIC
             src/stream_buffering.cpp
             src/sha256_tools.cpp
             src/provenance_data.cpp
+            src/terminal.cpp
 )
 
 target_compile_features(tiputil PUBLIC cxx_std_17)
@@ -43,9 +45,9 @@ target_include_directories(tiputil PUBLIC include)
 set_target_properties(tiputil PROPERTIES PUBLIC_HEADER "${headers}")
 
 target_link_libraries(tiputil
-    PUBLIC common spdlog::spdlog yaml-cpp sha256
+    PRIVATE common spdlog::spdlog yaml-cpp 
 )
 
-install(
-    TARGETS tiputil
+target_link_libraries(tiputil
+    PUBLIC sha256
 )

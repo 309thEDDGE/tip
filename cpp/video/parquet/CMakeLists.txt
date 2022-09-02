@@ -2,7 +2,7 @@ set(headers
     include/parquet_video_extraction.h
 )
 
-add_library(pq_vid_extract
+add_library(pq_vid_extract 
     src/parquet_video_extraction.cpp
 )
 
@@ -17,16 +17,18 @@ set_target_properties(pq_vid_extract
 )
 
 target_link_libraries(pq_vid_extract
-    PUBLIC tiputil
-    arrow_shared parquet
+    PRIVATE spdlog::spdlog yaml-cpp tiputil arrow_shared parquet
 )
 
 add_executable(parquet_video_extractor main/parquet_video_extractor.cpp)
 
 target_compile_features(parquet_video_extractor PUBLIC cxx_std_17)
 
-target_link_libraries(parquet_video_extractor pq_vid_extract)
+target_link_libraries(parquet_video_extractor pq_vid_extract
+    spdlog::spdlog yaml-cpp tiputil cli arrow_shared parquet
+)
 
 install(
-    TARGETS pq_vid_extract parquet_video_extractor
+    TARGETS parquet_video_extractor
+    DESTINATION ${out_bin_dir}
 )

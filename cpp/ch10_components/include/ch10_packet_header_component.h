@@ -81,7 +81,7 @@ class Ch10PacketHeaderComponent : public Ch10PacketComponent
                                                             sync_(0xEB25),
                                                             std_hdr_size_(std_hdr_elem_.size),
                                                             secondary_hdr_size_(12),
-                                                            header_checksum_byte_count_(std_hdr_elem_.size - 2),
+                                                            header_checksum_byte_count_(static_cast<uint8_t>(std_hdr_elem_.size - 2)),
                                                             checksum_unit_count_(0),
                                                             checksum_data_ptr16_(nullptr),
                                                             checksum_value16_(0),
@@ -89,7 +89,9 @@ class Ch10PacketHeaderComponent : public Ch10PacketComponent
                                                             checksum_value32_(0),
                                                             checksum_data_ptr8_(nullptr),
                                                             checksum_value8_(0) {}
-    Ch10Status Parse(const uint8_t*& data) override;
+    virtual Ch10Status Parse(const uint8_t*& data);
+    virtual const Ch10PacketHeaderFmt* const GetHeader() const
+    { return *std_hdr_elem_.element; }
 
     /*
     Parse a position in memory with the assumption that the binary data
@@ -106,7 +108,7 @@ class Ch10PacketHeaderComponent : public Ch10PacketComponent
     Return:
         Ch10Status indicator
     */
-    Ch10Status ParseSecondaryHeader(const uint8_t*& data, uint64_t& time_ns);
+    virtual Ch10Status ParseSecondaryHeader(const uint8_t*& data, uint64_t& time_ns);
 
     /*
     Verify the secondary header checksum.
@@ -121,19 +123,19 @@ class Ch10PacketHeaderComponent : public Ch10PacketComponent
     Ch10Status VerifySecondaryHeaderChecksum(const uint8_t* pkt_data,
                                              const uint16_t& checksum_value);
 
-    Ch10Status VerifyHeaderChecksum(const uint8_t* pkt_data, const uint32_t& checksum_value);
-    Ch10Status VerifyDataChecksum(const uint8_t* body_data, const uint32_t& checksum_existence,
+    virtual Ch10Status VerifyHeaderChecksum(const uint8_t* pkt_data, const uint32_t& checksum_value);
+    virtual Ch10Status VerifyDataChecksum(const uint8_t* body_data, const uint32_t& checksum_existence,
                                   const uint32_t& pkt_size, const uint32_t& secondary_hdr);
 
     /*
     Parse a block of raw binary data beginning at the 'data' pointer
-    according to the Ch10PacketHeaderFmt::intrapkt_ts_source and 
-    Ch10PacketHeaderFmt::time_format. 
+    according to the Ch10PacketHeaderFmt::intrapkt_ts_source and
+    Ch10PacketHeaderFmt::time_format.
 
     Args:
         data	--> pointer to a position in the binary data which is currently
 					expected to contain IPTS data
-        time_ns --> 
+        time_ns -->
     */
     void ParseTimeStampNS(const uint8_t*& data, uint64_t& time_ns);
 };

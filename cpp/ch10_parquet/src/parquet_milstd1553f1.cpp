@@ -47,6 +47,29 @@ bool ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread
     calcwrdcnt_.resize(max_temp_element_count_);
     payload_incomplete_.resize(max_temp_element_count_);
 
+    status_word1_.resize(max_temp_element_count_);
+    terminal1_.resize(max_temp_element_count_);
+    dynbusctrl1_.resize(max_temp_element_count_);
+    subsys1_.resize(max_temp_element_count_);
+    busy1_.resize(max_temp_element_count_);
+    bcastrcv1_.resize(max_temp_element_count_);
+    svcreq1_.resize(max_temp_element_count_);
+    instr1_.resize(max_temp_element_count_);
+    msgerr1_.resize(max_temp_element_count_);
+    status_rtaddr1_.resize(max_temp_element_count_);
+
+    status_word2_.resize(max_temp_element_count_);
+    terminal2_.resize(max_temp_element_count_);
+    dynbusctrl2_.resize(max_temp_element_count_);
+    subsys2_.resize(max_temp_element_count_);
+    busy2_.resize(max_temp_element_count_);
+    bcastrcv2_.resize(max_temp_element_count_);
+    svcreq2_.resize(max_temp_element_count_);
+    instr2_.resize(max_temp_element_count_);
+    msgerr2_.resize(max_temp_element_count_);
+    status_rtaddr2_.resize(max_temp_element_count_);
+
+
     // Add fields to table.
     pq_ctx_->AddField(arrow::int64(), "time");  // GCOVR_EXCL_LINE
     pq_ctx_->AddField(arrow::boolean(), "doy");  // GCOVR_EXCL_LINE
@@ -76,6 +99,28 @@ bool ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread
     pq_ctx_->AddField(arrow::int8(), "totwrdcnt");  // GCOVR_EXCL_LINE
     pq_ctx_->AddField(arrow::int8(), "calcwrdcnt");  // GCOVR_EXCL_LINE
     pq_ctx_->AddField(arrow::boolean(), "incomplete");  // GCOVR_EXCL_LINE
+
+    pq_ctx_->AddField(arrow::int32(), "statwrd1");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "terminal1");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "dynbusctrl1");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "subsys1");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "busy1");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "bcastrcv1");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "svcreq1");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "instr1");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "msgerr1");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::int8(), "status_rtaddr1");  // GCOVR_EXCL_LINE
+
+    pq_ctx_->AddField(arrow::int32(), "statwrd2");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "terminal2");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "dynbusctrl2");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "subsys2");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "busy2");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "bcastrcv2");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "svcreq2");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "instr2");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::boolean(), "msgerr2");  // GCOVR_EXCL_LINE
+    pq_ctx_->AddField(arrow::int8(), "status_rtaddr2");  // GCOVR_EXCL_LINE
 
     // Set memory locations.
     pq_ctx_->SetMemoryLocation(time_stamp_, "time");
@@ -107,6 +152,29 @@ bool ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread
     pq_ctx_->SetMemoryLocation(calcwrdcnt_, "calcwrdcnt");
     pq_ctx_->SetMemoryLocation(payload_incomplete_, "incomplete");
 
+    pq_ctx_->SetMemoryLocation(status_word1_, "statwrd1");
+    pq_ctx_->SetMemoryLocation(terminal1_, "terminal1");
+    pq_ctx_->SetMemoryLocation(dynbusctrl1_, "dynbusctrl1");
+    pq_ctx_->SetMemoryLocation(subsys1_, "subsys1");
+    pq_ctx_->SetMemoryLocation(busy1_, "busy1");
+    pq_ctx_->SetMemoryLocation(bcastrcv1_, "bcastrcv1");
+    pq_ctx_->SetMemoryLocation(svcreq1_, "svcreq1");
+    pq_ctx_->SetMemoryLocation(instr1_, "instr1");
+    pq_ctx_->SetMemoryLocation(msgerr1_, "msgerr1");
+    pq_ctx_->SetMemoryLocation(status_rtaddr1_, "status_rtaddr1");
+
+    pq_ctx_->SetMemoryLocation(status_word2_, "statwrd2");
+    pq_ctx_->SetMemoryLocation(terminal2_, "terminal2");
+    pq_ctx_->SetMemoryLocation(dynbusctrl2_, "dynbusctrl2");
+    pq_ctx_->SetMemoryLocation(subsys2_, "subsys2");
+    pq_ctx_->SetMemoryLocation(busy2_, "busy2");
+    pq_ctx_->SetMemoryLocation(bcastrcv2_, "bcastrcv2");
+    pq_ctx_->SetMemoryLocation(svcreq2_, "svcreq2");
+    pq_ctx_->SetMemoryLocation(instr2_, "instr2");
+    pq_ctx_->SetMemoryLocation(msgerr2_, "msgerr2");
+    pq_ctx_->SetMemoryLocation(status_rtaddr2_, "status_rtaddr2");
+
+
     if (!pq_ctx_->OpenForWrite(outfile_, true))
     {
         SPDLOG_ERROR("({:03d}) OpenForWrite failed for file {:s}", thread_id_,
@@ -130,7 +198,9 @@ bool ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread
 void ParquetMilStd1553F1::Append(const uint64_t& time_stamp, uint8_t doy,
                                  const MilStd1553F1CSDWFmt* const chan_spec,
                                  const MilStd1553F1DataHeaderCommWordFmt* msg, const uint16_t* const data,
-                                 const uint16_t& chanid, int8_t calcwrdcnt, uint8_t payload_incomplete)
+                                 const uint16_t& chanid, int8_t calcwrdcnt, uint8_t payload_incomplete, 
+                                 const MilStd1553F1StatusWordFmt* statwrd1,
+                                 const MilStd1553F1StatusWordFmt* statwrd2)
 {
     WE_[pq_ctx_->append_count_] = msg->WE;
     SE_[pq_ctx_->append_count_] = msg->SE;
@@ -222,6 +292,66 @@ void ParquetMilStd1553F1::Append(const uint64_t& time_stamp, uint8_t doy,
         mode_code_[pq_ctx_->append_count_] = 0;
     else
         mode_code_[pq_ctx_->append_count_] = 1;
+
+    // Status words will be set to -1 if the status word is not present for the given 
+    // message (indicated by nullptr). This is a way to explicitly indicate the 
+    // status word is null. All of the decomposed fields will be set to 0.
+    if(statwrd1 == nullptr)
+    {
+        status_word1_[pq_ctx_->append_count_] = -1;
+        terminal1_[pq_ctx_->append_count_] = 0;
+        dynbusctrl1_[pq_ctx_->append_count_] = 0;
+        subsys1_[pq_ctx_->append_count_] = 0;
+        busy1_[pq_ctx_->append_count_] = 0;
+        bcastrcv1_[pq_ctx_->append_count_] = 0;
+        svcreq1_[pq_ctx_->append_count_] = 0;
+        instr1_[pq_ctx_->append_count_] = 0;
+        msgerr1_[pq_ctx_->append_count_] = 0;
+        status_rtaddr1_[pq_ctx_->append_count_] = 0;
+    }
+    else
+    {
+        status_word1_[pq_ctx_->append_count_] = static_cast<int32_t>(
+            *(reinterpret_cast<const uint16_t*>(statwrd1)));
+        terminal1_[pq_ctx_->append_count_] = statwrd1->terminal;
+        dynbusctrl1_[pq_ctx_->append_count_] = statwrd1->dynbusctrl;
+        subsys1_[pq_ctx_->append_count_] = statwrd1->subsys;
+        busy1_[pq_ctx_->append_count_] = statwrd1->busy;
+        bcastrcv1_[pq_ctx_->append_count_] = statwrd1->bcastrcv;
+        svcreq1_[pq_ctx_->append_count_] = statwrd1->svcreq;
+        instr1_[pq_ctx_->append_count_] = statwrd1->instr;
+        msgerr1_[pq_ctx_->append_count_] = statwrd1->msgerr;
+        status_rtaddr1_[pq_ctx_->append_count_] = statwrd1->rtaddr;
+    }
+
+    if(statwrd2 == nullptr)
+    {
+        status_word2_[pq_ctx_->append_count_] = -1;
+        terminal2_[pq_ctx_->append_count_] = 0;
+        dynbusctrl2_[pq_ctx_->append_count_] = 0;
+        subsys2_[pq_ctx_->append_count_] = 0;
+        busy2_[pq_ctx_->append_count_] = 0;
+        bcastrcv2_[pq_ctx_->append_count_] = 0;
+        svcreq2_[pq_ctx_->append_count_] = 0;
+        instr2_[pq_ctx_->append_count_] = 0;
+        msgerr2_[pq_ctx_->append_count_] = 0;
+        status_rtaddr2_[pq_ctx_->append_count_] = 0;
+    }
+    else
+    {
+        status_word2_[pq_ctx_->append_count_] = static_cast<int32_t>(
+            *(reinterpret_cast<const uint16_t*>(statwrd2)));
+        terminal2_[pq_ctx_->append_count_] = statwrd2->terminal;
+        dynbusctrl2_[pq_ctx_->append_count_] = statwrd2->dynbusctrl;
+        subsys2_[pq_ctx_->append_count_] = statwrd2->subsys;
+        busy2_[pq_ctx_->append_count_] = statwrd2->busy;
+        bcastrcv2_[pq_ctx_->append_count_] = statwrd2->bcastrcv;
+        svcreq2_[pq_ctx_->append_count_] = statwrd2->svcreq;
+        instr2_[pq_ctx_->append_count_] = statwrd2->instr;
+        msgerr2_[pq_ctx_->append_count_] = statwrd2->msgerr;
+        status_rtaddr2_[pq_ctx_->append_count_] = statwrd2->rtaddr;
+    }
+
 
     // Increment the count variable and write data if row group(s) are filled.
     if (pq_ctx_->IncrementAndWrite(thread_id_))

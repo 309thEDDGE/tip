@@ -4,7 +4,7 @@ set(headers
     include/yaml_schema_validation.h
 )
 
-add_library(yamlsv
+add_library(yamlsv 
             src/yaml_schema_validation.cpp
 )
 
@@ -15,15 +15,18 @@ target_include_directories(yamlsv PUBLIC include)
 set_target_properties(yamlsv PROPERTIES PUBLIC_HEADER "${headers}")
 
 target_link_libraries(yamlsv
-    PUBLIC tiputil yaml-cpp
+    PRIVATE tiputil yaml-cpp spdlog::spdlog
 )
 
 add_executable(validate_yaml main/validate_yaml.cpp)
 
 target_compile_features(validate_yaml PUBLIC cxx_std_17)
 
-target_link_libraries(validate_yaml yamlsv)
+target_link_libraries(validate_yaml yamlsv
+    tiputil yaml-cpp spdlog::spdlog cli
+)
 
 install(
-    TARGETS yamlsv validate_yaml
+    TARGETS validate_yaml
+    DESTINATION ${out_bin_dir}
 )

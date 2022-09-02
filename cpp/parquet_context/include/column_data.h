@@ -232,9 +232,9 @@ class ColumnData
         }
         pointer_set_ = true;
         if (is_list_)
-            initial_max_row_size_ = data.size() / list_size_;
+            initial_max_row_size_ = static_cast<int>(data.size()) / list_size_;
         else
-            initial_max_row_size_ = data.size();
+            initial_max_row_size_ = static_cast<int>(data.size());
     }
 
     void SetInputData(std::shared_ptr<InputDataBase> input_data)

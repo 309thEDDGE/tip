@@ -11,8 +11,12 @@ class Ch101553F1ComponentTest : public ::testing::Test
     Ch10Status status_;
     Ch10Context ctx_;
     MilStd1553F1DataHeaderCommWordFmt fmt_;
+    const MilStd1553F1StatusWordFmt* statwrd1_;
+    const MilStd1553F1StatusWordFmt* statwrd2_;
+    const MilStd1553F1DataHeaderCommWordFmt* fmt_ptr_;
 
-    Ch101553F1ComponentTest() : wrd_cnt_(0), data_ptr_(nullptr), status_(Ch10Status::NONE), ctx_(0), comp_(&ctx_)
+    Ch101553F1ComponentTest() : wrd_cnt_(0), data_ptr_(nullptr), status_(Ch10Status::NONE), 
+        ctx_(0), comp_(&ctx_), statwrd1_(nullptr), statwrd2_(nullptr), fmt_ptr_(&fmt_)
     {
     }
 };
@@ -187,4 +191,361 @@ TEST_F(Ch101553F1ComponentTest, ParsePayloadWordCountNonRTtoRT)
     EXPECT_EQ(comp_.calc_payload_word_count, 1);
     EXPECT_EQ(comp_.is_payload_incomplete, 0);
     EXPECT_EQ(*comp_.payload_ptr_ptr, payload + 1);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsRTtoRTAllWords)
+{
+    fmt_.RR = 1;
+    fmt_.word_count1 = 21;
+    fmt_.sub_addr1 = 3;
+
+    // + 4 (rxcomm, txcomm, status . . . . status)
+    fmt_.length = (fmt_.word_count1 + 4) * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 2), statwrd1_);
+    EXPECT_EQ(reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 3 + fmt_.word_count1), statwrd2_);
+}
+ 
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsRTtoRTFewerWords)
+{
+    fmt_.RR = 1;
+    fmt_.word_count1 = 21;
+    fmt_.sub_addr1 = 3;
+
+    // + 4 (rxcomm, txcomm, status . . . . status)
+    // subtract 3 to have fewer words than required
+    fmt_.length = (fmt_.word_count1 + 4 - 3) * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 2), statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsRTtoRTInsufficientWords)
+{
+    fmt_.RR = 1;
+    fmt_.word_count1 = 21;
+    fmt_.sub_addr1 = 3;
+
+    // + 4 (rxcomm, txcomm, status . . . . status)
+    // only two words present, sufficient for only rxcomm, txcomm
+    fmt_.length = 2 * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(nullptr, statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsBCtoRTAllWords)
+{
+    fmt_.RR = 0;
+    fmt_.word_count1 = 11;
+    fmt_.tx1 = 0;
+    fmt_.sub_addr1 = 3;
+
+    // + 2 (rxcomm . . . status)
+    fmt_.length = (fmt_.word_count1 + 2) * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 1 + fmt_.word_count1), statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsBCtoRTFewerWords)
+{
+    fmt_.RR = 0;
+    fmt_.word_count1 = 11;
+    fmt_.tx1 = 0;
+    fmt_.sub_addr1 = 3;
+
+    // + 2 (rxcomm . . . status)
+    // - 5 to have fewer words
+    fmt_.length = (fmt_.word_count1 + 2 - 5) * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(nullptr, statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsRTtoBCAllWords)
+{
+    fmt_.RR = 0;
+    fmt_.word_count1 = 11;
+    fmt_.tx1 = 1;
+    fmt_.sub_addr1 = 3;
+
+    // + 2 (txcomm, status . . . )
+    fmt_.length = (fmt_.word_count1 + 2) * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 1), statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsRTtoBCFewerWords)
+{
+    fmt_.RR = 0;
+    fmt_.word_count1 = 11;
+    fmt_.tx1 = 1;
+    fmt_.sub_addr1 = 3;
+
+    // + 2 (txcomm, status . . . )
+    // - 3 to have fewer words
+    fmt_.length = (fmt_.word_count1 + 2 - 3) * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 1), statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsModeCodeWOutWordAllWords)
+{
+    fmt_.RR = 0;
+
+    // word count has different meaning for mode codes. If count > 15, then 
+    // a single data word is implied.
+    fmt_.word_count1 = 14;
+    fmt_.tx1 = 0;
+    fmt_.sub_addr1 = 0; 
+
+    // (modecomm, status)
+    fmt_.length = 2 * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 1), statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsModeCodeWOutWordFewerWords)
+{
+    fmt_.RR = 0;
+    fmt_.word_count1 = 14;
+    fmt_.tx1 = 0;
+    fmt_.sub_addr1 = 0; 
+
+    // (modecomm, status)
+    fmt_.length = 1 * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(nullptr, statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsBroadcastModeCode)
+{
+    fmt_.RR = 0;
+
+    // word count has different meaning for mode codes. If count > 15, then 
+    // a single data word is implied.
+    fmt_.word_count1 = 14;
+    fmt_.tx1 = 0;
+    fmt_.sub_addr1 = 0b11111; 
+
+    // (modecomm)
+    fmt_.length = 1 * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(nullptr, statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsModeCodeWWordTxAllWords)
+{
+    fmt_.RR = 0;
+
+    // word count has different meaning for mode codes. If count > 15, then 
+    // a single data word is implied.
+    fmt_.word_count1 = 17;
+    fmt_.tx1 = 1;
+    fmt_.sub_addr1 = 0; 
+
+    // (modecomm, status, data)
+    fmt_.length = 3 * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 1), statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsModeCodeWWordTxFewerWords)
+{
+    fmt_.RR = 0;
+    fmt_.word_count1 = 17;
+    fmt_.tx1 = 1;
+    fmt_.sub_addr1 = 0; 
+
+    // (modecomm, status, data)
+    fmt_.length = (3 - 2) * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(nullptr, statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsModeCodeWWordRxAllWords)
+{
+    fmt_.RR = 0;
+
+    // word count has different meaning for mode codes. If count > 15, then 
+    // a single data word is implied.
+    fmt_.word_count1 = 17;
+    fmt_.tx1 = 0;
+    fmt_.sub_addr1 = 0; 
+
+    // (modecomm, data, status)
+    fmt_.length = 3 * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 2), statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsModeCodeWWordRxFewerWords)
+{
+    fmt_.RR = 0;
+    fmt_.word_count1 = 17;
+    fmt_.tx1 = 0;
+    fmt_.sub_addr1 = 0; 
+
+    // (modecomm, data, status)
+    fmt_.length = (3 - 1) * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(nullptr, statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsModeCodeWWordBroadcast)
+{
+    fmt_.RR = 0;
+    fmt_.word_count1 = 17;
+    fmt_.tx1 = 0;
+    fmt_.sub_addr1 = 0b11111; 
+
+    // (modecomm, data)
+    fmt_.length = 2 * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(nullptr, statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsBCtoRTBroadcast)
+{
+    fmt_.RR = 0;
+    fmt_.word_count1 = 5;
+    fmt_.tx1 = 0;
+    fmt_.sub_addr1 = 0b11111; 
+
+    // (rxcomm, data, ....)
+    fmt_.length = (fmt_.word_count1 + 1) * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(nullptr, statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsRTtoRTBroadcastAllWords)
+{
+    fmt_.RR = 1;
+    fmt_.word_count1 = 5;
+    fmt_.tx1 = 0;
+    fmt_.sub_addr1 = 0b11111; 
+    fmt_.tx2 = 1;
+    // (rxcomm, txcomm, status, data, ....)
+    fmt_.length = (fmt_.word_count1 + 3) * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 2), statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParseStatusWordsRTtoRTBroadcastFewerWords)
+{
+    fmt_.RR = 1;
+    fmt_.word_count1 = 5;
+    fmt_.tx1 = 0;
+    fmt_.sub_addr1 = 0b11111; 
+
+    // (rxcomm, txcomm, status, data, ....)
+    fmt_.length = 2 * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+
+    comp_.ParseStatusWords(payload, fmt_ptr_, statwrd1_, statwrd2_);
+
+    EXPECT_EQ(nullptr, statwrd1_);
+    EXPECT_EQ(nullptr, statwrd2_);
+}
+
+TEST_F(Ch101553F1ComponentTest, ParsePayloadCallsParseStatusWords)
+{
+    fmt_.RR = 1;
+    fmt_.word_count1 = 5;
+    fmt_.tx1 = 0;
+
+    fmt_.length = (fmt_.word_count1 + 4) * 2;  // * 2 --> bytes
+    std::vector<uint16_t> payload_vec(fmt_.length / 2, 0);
+    const uint16_t* payload = payload_vec.data();
+    const uint8_t* data = reinterpret_cast<const uint8_t*>(payload);
+
+    status_ = comp_.ParsePayload(data, fmt_ptr_);
+    EXPECT_EQ(Ch10Status::OK, status_);
+
+    comp_.GetStatusWordPointers(statwrd1_, statwrd2_);
+
+    EXPECT_EQ(reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 2), statwrd1_);
+    EXPECT_EQ(reinterpret_cast<const MilStd1553F1StatusWordFmt*>(payload + 3 + fmt_.word_count1), statwrd2_);
 }

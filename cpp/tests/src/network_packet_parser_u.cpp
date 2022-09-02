@@ -78,7 +78,7 @@ class NetworkPacketParserTest : public ::testing::Test
 TEST_F(NetworkPacketParserTest, ParseHandleMalformedPacket)
 {
     std::vector<uint8_t> buff(10);  // too small
-    data_length_ = buff.size();
+    data_length_ = static_cast<uint32_t>(buff.size());
     result_ = npp_.Parse(buff.data(), data_length_, &eth_data_, channel_id_);
     EXPECT_FALSE(result_);
 }
@@ -86,11 +86,11 @@ TEST_F(NetworkPacketParserTest, ParseHandleMalformedPacket)
 TEST_F(NetworkPacketParserTest, ParseIdentifyDot3)
 {
     std::vector<uint8_t> buff(1000);
-    data_length_ = buff.size();
+    data_length_ = static_cast<uint32_t>(buff.size());
     Tins::Dot3 dot3(buff.data(), data_length_);
     dot3.length(data_length_);
     std::vector<uint8_t> serial = dot3.serialize();
-    data_length_ = serial.size();
+    data_length_ = static_cast<uint32_t>(serial.size());
 
     EXPECT_CALL(mock_npp_top_level_, ParseEthernet(_, &eth_data_))
         .Times(1)
@@ -105,7 +105,7 @@ TEST_F(NetworkPacketParserTest, ParseIdentifyEthernetII)
 {
     Tins::EthernetII eth2 = Tins::EthernetII() / Tins::IP() / Tins::TCP();
     std::vector<uint8_t> serial = eth2.serialize();
-    data_length_ = serial.size();
+    data_length_ = static_cast<uint32_t>(serial.size());
 
     EXPECT_CALL(mock_npp_top_level_, ParseEthernetII(_, &eth_data_))
         .Times(1)
@@ -316,7 +316,7 @@ TEST_F(NetworkPacketParserTest, ParseRawHeaderAndPayloadInChain)
     // that calling it multiple times results in undefined behavior.
     Tins::PDU::serialization_type serial_data = eth_packet.serialize();
     uint8_t* buff = serial_data.data();
-    data_length_ = serial_data.size();
+    data_length_ = static_cast<uint32_t>(serial_data.size());
 
     result_ = npp_.Parse(buff, data_length_, &eth_data_, channel_id_);
     EXPECT_TRUE(result_);

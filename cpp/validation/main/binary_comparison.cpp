@@ -3,32 +3,42 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include "cli_group.h"
 
 bool OpenFile(const char* path, std::ifstream& ifs);
 std::streamsize ReadBytes(std::ifstream& ifs, std::streamsize read_count, char* data);
+bool ConfigureCLI(CLIGroup& cli_group, bool& help_requested, std::string& truth_path_str,
+    std::string& test_path_str);
 
 int main(int argc, char* argv[])
 {
     std::streamsize read_size = static_cast<int>(1e6);
-    if (argc < 3)
-    {
-        printf("Requires two arguments, absolute path to two files to be compared.\n");
 
-        // Indicate a null result
-        return 1;
+    CLIGroup cli_group;
+    bool help_requested = false;
+    std::string truth_path_str("");
+    std::string test_path_str("");
+
+    if(!ConfigureCLI(cli_group, help_requested, truth_path_str, test_path_str))
+        return -1;
+
+    std::string nickname = "";
+    std::shared_ptr<CLIGroupMember> cli;
+    if (!cli_group.Parse(argc, argv, nickname, cli) || help_requested)
+    {
+        printf("%s", cli_group.MakeHelpString().c_str());
+        return -1;
     }
 
-    char* file1_path = argv[1];
-    char* file2_path = argv[2];
     std::ifstream ifile1;
     std::ifstream ifile2;
 
     // If either file can't be opened, return 1 to indicate a
     // null comparison.
-    if (!OpenFile(file1_path, ifile1))
-        return 0;
-    if (!OpenFile(file2_path, ifile2))
-        return 0;
+    if (!OpenFile(truth_path_str.c_str(), ifile1))
+        return -1;
+    if (!OpenFile(test_path_str.c_str(), ifile2))
+        return -1;
 
     std::vector<char> file1_data(read_size);
     std::vector<char> file2_data(read_size);
@@ -36,6 +46,7 @@ int main(int argc, char* argv[])
     std::streamsize file2_read_count = 0;
 
     bool equal_result = false;
+    bool pass = false;
     int chunk_count = 0;
     while (true)
     {
@@ -60,15 +71,18 @@ int main(int argc, char* argv[])
         if (file1_read_count != read_size)
         {
             printf("PASS\n");
+            pass = true;
             break;
         }
-
         chunk_count++;
     }
 
     ifile1.close();
     ifile2.close();
-    return 0;
+
+    if(pass)
+        return 0;
+    return 1;
 }
 
 bool OpenFile(const char* path, std::ifstream& ifs)
@@ -86,4 +100,31 @@ std::streamsize ReadBytes(std::ifstream& ifs, std::streamsize read_count, char* 
 {
     ifs.read(data, read_count);
     return ifs.gcount();
+}
+
+bool ConfigureCLI(CLIGroup& cli_group, bool& help_requested, std::string& truth_path_str, 
+    std::string& test_path_str)
+{
+    std::string exe_name = "bincompare";
+    std::string description = "Compare a test file against a truth file, byte by byte. Print "
+        "\"PASS\" (0) to stdout if equivalent, or \"FAIL\" (1) if not equivalent and return the "
+        "value shown in parentheses. A NULL result will return -1.";
+    std::shared_ptr<CLIGroupMember> cli_help = cli_group.AddCLI(exe_name, 
+    description, "clihelp");
+    cli_help->AddOption("--help", "-h", "Show usage information", false, 
+    help_requested, true);
+
+    std::shared_ptr<CLIGroupMember> cli_full = cli_group.AddCLI(exe_name,
+        description, "clifull");
+
+    std::string truth_path_help = "Full path to TRUTH file";
+    cli_full->AddOption("truth_path", truth_path_help, truth_path_str, true);
+
+    std::string test_path_help = "Full path to TEST file";
+    cli_full->AddOption("test_path", test_path_help, test_path_str, true);
+
+    if(!cli_group.CheckConfiguration())
+        return false;
+
+    return true;
 }

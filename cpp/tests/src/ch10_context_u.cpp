@@ -227,7 +227,8 @@ TEST(Ch10ContextTest, UpdateWithTDPDataTDPIsNone)
 
     // Update with TDP, but set tdp_valid bool to false = invalid.
     bool tdp_valid = false;
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     EXPECT_EQ(ctx.tdp_valid, tdp_valid);
 
@@ -259,7 +260,8 @@ TEST(Ch10ContextTest, UpdateWithTDPDataVarsUpdated)
 
     // Update with TDP valid
     bool tdp_valid = true;
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     EXPECT_EQ(ctx.tdp_valid, tdp_valid);
 
@@ -269,6 +271,33 @@ TEST(Ch10ContextTest, UpdateWithTDPDataVarsUpdated)
     EXPECT_EQ(ctx.tdp_rtc, rtc);
     EXPECT_EQ(ctx.tdp_doy, tdp_doy);
     EXPECT_EQ(ctx.found_tdp, true);
+}
+
+TEST(Ch10ContextTest, UpdateWithTDPCSDWVectorUpdated)
+{
+    Ch10Context ctx(0);
+    uint64_t tdp_abs_time = 344199919;
+    uint8_t tdp_doy = 1;
+    bool tdp_valid = true;
+    TDF1CSDWFmt tdcsdw{};
+    tdcsdw.date_fmt = 1;
+
+    ASSERT_EQ(ctx.tdf1csdw_vec.size(), 0);
+
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
+    ASSERT_EQ(ctx.tdf1csdw_vec.size(), 1);
+    ASSERT_EQ(ctx.tdp_abs_time_vec.size(), 1);
+    EXPECT_EQ(ctx.tdf1csdw_vec.at(0).date_fmt, 1);
+    EXPECT_EQ(ctx.tdp_abs_time_vec.at(0), tdp_abs_time);
+
+    tdcsdw.time_fmt = 3;
+    tdp_valid = false;
+    tdp_abs_time = 53288110;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
+    ASSERT_EQ(ctx.tdf1csdw_vec.size(), 2);
+    ASSERT_EQ(ctx.tdp_abs_time_vec.size(), 2);
+    EXPECT_EQ(ctx.tdf1csdw_vec.at(1).time_fmt, 3);
+    EXPECT_EQ(ctx.tdp_abs_time_vec.at(1), tdp_abs_time);
 }
 
 TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
@@ -290,7 +319,8 @@ TEST(Ch10ContextTest, CalculateAbsTimeFromRTCFormat)
     uint64_t tdp_abs_time = 344199919;
     uint8_t tdp_doy = 0;
     uint8_t tdp_valid = true;
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     uint64_t current_rtc1 = 321200;
     uint64_t current_rtc2 = 502999;
@@ -322,7 +352,8 @@ TEST(Ch10ContextTest, GetPacketAbsoluteTimeFromHeaderRTC)
     bool tdp_valid = true;
     Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
     EXPECT_EQ(status, Ch10Status::OK);
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     // Update context as if with a following non-TDP packet
     hdr_fmt.rtc1 += 20;
@@ -355,7 +386,8 @@ TEST(Ch10ContextTest, CalculateIPTSAbsTimeRTCSource)
     bool tdp_valid = true;
     Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
     EXPECT_EQ(status, Ch10Status::OK);
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     // Update context as if with a following non-TDP packet
     hdr_fmt.rtc1 += 20;
@@ -563,8 +595,40 @@ TEST(Ch10ContextTest, CheckConfigurationPathsRequired)
     EXPECT_EQ(enabled_paths.count(Ch10PacketType::MILSTD1553_F1), 1);
 }
 
-// Test InitializeFileWriters, this function and the other code it impacts
-// probably needs re-factoring prior.
+TEST(Ch10ContextTest, InitializeAndCloseFileWriters)
+{
+    Ch10Context ctx(0);
+    std::map<Ch10PacketType, ManagedPath> enabled_paths{
+        {Ch10PacketType::MILSTD1553_F1, ManagedPath{"..", "parsed1553_test.parquet"}},
+        {Ch10PacketType::VIDEO_DATA_F0, ManagedPath{"..", "parsedvideo_test.parquet"}},
+        {Ch10PacketType::ETHERNET_DATA_F0, ManagedPath{"..", "parsedeth_test.parquet"}},
+        {Ch10PacketType::ARINC429_F0, ManagedPath{"..", "parsed429_test.parquet"}},
+    };
+    ASSERT_TRUE(ctx.InitializeFileWriters(enabled_paths));
+
+    ctx.CloseFileWriters();
+}
+
+TEST(Ch10ContextTest, InitializeFileWriters1553Fail)
+{
+    Ch10Context ctx(0);
+
+    // Empty path ought to fail at pq_ctx_->OpenForWrite()
+    std::map<Ch10PacketType, ManagedPath> enabled_paths{
+        {Ch10PacketType::MILSTD1553_F1, ManagedPath("")},
+    };
+    ASSERT_FALSE(ctx.InitializeFileWriters(enabled_paths));
+}
+
+TEST(Ch10ContextTest, InitializeFileWritersDefault)
+{
+    Ch10Context ctx(0);
+
+    std::map<Ch10PacketType, ManagedPath> enabled_paths{
+        {Ch10PacketType::NONE, ManagedPath("")},
+    };
+    ASSERT_TRUE(ctx.InitializeFileWriters(enabled_paths));
+}
 
 TEST(Ch10ContextTest, RecordMinVideoTimeStampChannelIDNotPresent)
 {
@@ -652,7 +716,8 @@ TEST(Ch10ContextTest, Calculate429WordAbsTimeRTCSource)
     bool tdp_valid = true;
     Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
     EXPECT_EQ(status, Ch10Status::OK);
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     // Update context as if with a following non-TDP packet
     hdr_fmt.rtc1 += 20;
@@ -688,7 +753,8 @@ TEST(Ch10ContextTest, Calculate429AbsTimeSecondaryHeaderSource)
     bool tdp_valid = true;
     Ch10Status status = ctx.UpdateContext(abs_pos, &hdr_fmt, rtc);
     EXPECT_EQ(status, Ch10Status::OK);
-    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid);
+    TDF1CSDWFmt tdcsdw;
+    ctx.UpdateWithTDPData(tdp_abs_time, tdp_doy, tdp_valid, tdcsdw);
 
     // Update context as if with a following non-TDP packet
     hdr_fmt.rtc1 += 20;
@@ -755,4 +821,59 @@ TEST(Ch10ContextTest, UpdateARINC429Maps)
     EXPECT_EQ(ctx.chanid_labels_map.at(hdr_fmt.chanID).size(), 2);
     EXPECT_THAT(ctx.chanid_labels_map.at(hdr_fmt.chanID),
                 ::testing::UnorderedElementsAre(202, 194));
+}
+
+TEST(Ch10ContextTest, IsPacketTypeEnabledNotInMap)
+{
+    Ch10Context ctx(0);
+
+    // None not in default map
+    EXPECT_FALSE(ctx.IsPacketTypeEnabled(Ch10PacketType::NONE));
+}
+
+TEST(Ch10ContextTest, IsPacketTypeEnabledTrue)
+{
+    Ch10Context ctx(0);
+    std::map<Ch10PacketType, bool> pkt_type_conf;
+    pkt_type_conf[Ch10PacketType::MILSTD1553_F1] = true;
+    std::unordered_map<Ch10PacketType, bool> default_pkt_type_conf = {
+        {Ch10PacketType::MILSTD1553_F1, true}};
+
+    // Set the configuration.
+    bool status = ctx.SetPacketTypeConfig(pkt_type_conf, default_pkt_type_conf);
+    ASSERT_TRUE(status);
+
+    EXPECT_TRUE(ctx.IsPacketTypeEnabled(Ch10PacketType::MILSTD1553_F1));
+    EXPECT_TRUE(ctx.parsed_packet_types.count(Ch10PacketType::MILSTD1553_F1) == 1);
+}
+
+TEST(Ch10ContextTest, IsPacketTypeEnabledFalse)
+{
+    Ch10Context ctx(0);
+    std::map<Ch10PacketType, bool> pkt_type_conf;
+    pkt_type_conf[Ch10PacketType::MILSTD1553_F1] = false;
+    std::unordered_map<Ch10PacketType, bool> default_pkt_type_conf = {
+        {Ch10PacketType::MILSTD1553_F1, true}};
+
+    // Set the configuration.
+    bool status = ctx.SetPacketTypeConfig(pkt_type_conf, default_pkt_type_conf);
+    ASSERT_TRUE(status);
+
+    EXPECT_FALSE(ctx.IsPacketTypeEnabled(Ch10PacketType::MILSTD1553_F1));
+    EXPECT_TRUE(ctx.parsed_packet_types.count(Ch10PacketType::MILSTD1553_F1) == 0);
+}
+
+TEST(Ch10ContextTest, RegisterUnhandledPacketType)
+{
+    Ch10Context ctx(0);
+    Ch10PacketType anaf1 = Ch10PacketType::ANALOG_F1;
+    Ch10PacketType pcmf0 = Ch10PacketType::PCM_F0;
+    Ch10PacketType pcmf1 = Ch10PacketType::PCM_F1;
+
+    EXPECT_TRUE(ctx.RegisterUnhandledPacketType(anaf1));
+    EXPECT_TRUE(ctx.RegisterUnhandledPacketType(pcmf0));
+    EXPECT_FALSE(ctx.RegisterUnhandledPacketType(anaf1));
+    EXPECT_TRUE(ctx.RegisterUnhandledPacketType(pcmf1));
+    EXPECT_FALSE(ctx.RegisterUnhandledPacketType(pcmf0));
+    EXPECT_FALSE(ctx.RegisterUnhandledPacketType(pcmf1));
 }

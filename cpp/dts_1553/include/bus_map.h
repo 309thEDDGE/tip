@@ -219,6 +219,32 @@ class BusMap
 	*/
     void Print();
 
+
+
+    /*
+    Return the vote map
+    */
+    std::unordered_map<uint64_t, std::unordered_map<std::string, uint64_t>> GetVoteMap() const
+    { return votes_; }
+
+
+
+    /* 
+    Make two simple maps:
+    - channel ID to bus name
+    - channel ID to bus map source
+
+    Args:
+        final_map_with_source   --> See GetFinalBusMap_withSource()
+        chanid_to_name          --> channel ID to bus name map
+        chanid_to_source        --> channel ID to bus map source
+    */
+    void GetFinalMaps(const std::map<uint64_t, std::pair<std::string, std::string>>& final_map_with_source,
+        std::map<uint64_t, std::string>& chanid_to_name, 
+        std::map<uint64_t, std::string>& chanid_to_source) const;
+ 
+
+
     ///////////////////////// Utilities used for unit tests
 
     std::unordered_map<uint64_t, std::set<std::string>>
@@ -263,12 +289,12 @@ class BusMap
     }
 
     const std::map<uint64_t, std::pair<std::string, std::string>>&
-    GetFinalBusMap_withSource()
+    GetFinalBusMap_withSource() const
     {
         return final_bus_map_with_sources_;
     }
 
-    std::map<uint64_t, std::string> GetExcludedChannelIDs()
+    std::map<uint64_t, std::string> GetExcludedChannelIDs() const
     {
         return excluded_channel_ids_;
     }

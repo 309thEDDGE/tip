@@ -82,6 +82,7 @@ bool ParquetARINC429F0::Initialize(const ManagedPath& outfile, uint16_t thread_i
 void ParquetARINC429F0::Append(const uint64_t& time_stamp, uint8_t doy,
                 const ARINC429F0MsgFmt* msg, const uint16_t& chanid)
 {
+    EncodeARINC429Label(static_cast<uint32_t>(msg->label)); // sets temp_octal_label_
     time_stamp_[pq_ctx_->append_count_] = static_cast<int64_t>(time_stamp);
     doy_[pq_ctx_->append_count_] = doy;
     gap_time_[pq_ctx_->append_count_] = static_cast<int32_t>(msg->gap);
@@ -89,7 +90,7 @@ void ParquetARINC429F0::Append(const uint64_t& time_stamp, uint8_t doy,
     PE_[pq_ctx_->append_count_] = msg->PE;
     FE_[pq_ctx_->append_count_] = msg->FE;
     bus_[pq_ctx_->append_count_] = static_cast<int16_t>(msg->bus);
-    label_[pq_ctx_->append_count_] = static_cast<int16_t>(msg->label);
+    label_[pq_ctx_->append_count_] = static_cast<int16_t>(temp_octal_label_);
     SDI_[pq_ctx_->append_count_] = static_cast<int8_t>(msg->SDI);
     data_[pq_ctx_->append_count_] = static_cast<int32_t>(msg->data);
     SSM_[pq_ctx_->append_count_] = static_cast<int8_t>(msg->SSM);
@@ -110,10 +111,10 @@ uint32_t ParquetARINC429F0::EncodeARINC429Label(uint32_t raw_label)
     raw_label = (raw_label & 0xCC) >> 2 | (raw_label & 0x33) << 2;
     raw_label = (raw_label & 0xAA) >> 1 | (raw_label & 0x55) << 1;
 
-    uint32_t octal_label = 0;
-    octal_label = octal_label + ((raw_label >> 6) & 3)*((uint16_t)100);
-    octal_label = octal_label + ((raw_label >> 3) & 7)*((uint16_t)10);
-    octal_label = octal_label + (raw_label & 7);
+    temp_octal_label_ = 0;
+    temp_octal_label_ = temp_octal_label_ + ((raw_label >> 6) & 3)*((uint16_t)100);
+    temp_octal_label_ = temp_octal_label_ + ((raw_label >> 3) & 7)*((uint16_t)10);
+    temp_octal_label_ = temp_octal_label_ + (raw_label & 7);
 
-    return octal_label;
+    return temp_octal_label_;
 }

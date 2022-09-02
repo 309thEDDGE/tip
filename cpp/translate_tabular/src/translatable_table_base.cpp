@@ -56,6 +56,12 @@ void TranslatableTableBase::LogSchema()
 
 bool TranslatableTableBase::AppendRawData(const uint8_t* data, const size_t& count)
 {
+    _AppendToColumns(data, count);
+    return _IncrementAndTranslate();
+}
+
+void TranslatableTableBase::_AppendToColumns(const uint8_t* data, const size_t& count)
+{
     for (std::vector<std::shared_ptr<TranslatableColumnBase>>::iterator
              it = columns_.begin();
          it != columns_.end(); ++it)
@@ -64,7 +70,10 @@ bool TranslatableTableBase::AppendRawData(const uint8_t* data, const size_t& cou
         // sufficient count in data vector, etc. Therefore, do not check return type
         (*it)->AppendRawData(data, count);
     }
+}
 
+bool TranslatableTableBase::_IncrementAndTranslate()
+{
     // If the append count is equal to row group size, translate and
     // write the data.
     // Note that this assumes all ridealong columns have already been copied.
@@ -213,5 +222,5 @@ void TranslatableTableBase::CloseOutputFile()
     }
 
     if (pq_ctx_ != nullptr)
-        pq_ctx_->Close(thread_index_);
+        pq_ctx_->Close(static_cast<uint16_t>(thread_index_));
 }

@@ -10,8 +10,6 @@ class FileValidation(ValidationBase):
         ValidationBase.__init__(self, prefix)
         self.dry_run = False
         self.cl_process = RunCLProcess(debug=0)
-        self.regex_translated_1553_msg_dir = re.compile(".+_1553_translated.+parquet")
-        self.regex_raw_1553_dir = re.compile(".+_1553.parquet")
 
     def validate(self):
         print('FileValidation.validate(): Not overridden!')
@@ -19,7 +17,7 @@ class FileValidation(ValidationBase):
 
     def do_directory_validation(self, executable_path, output_success_string='Overall -> Pass'):
         if not self.ready_to_validate:
-            print('ValidationBase.do_validation(): Not ready to validate.')
+            print('FileValidation.do_directory_validation(): Not ready to validate.')
             return self.test_passed
 
         self.cl_process.set_executable_path(executable_path)
@@ -34,18 +32,18 @@ class FileValidation(ValidationBase):
                 self.test_passed = True
             else:
                 if ret_val != 0:
-                    print('ValidationBase.do_validation(): ret_val = {:d}'.format(ret_val))
+                    print('FileValidation.do_directory_validation(): ret_val = {:d}'.format(ret_val))
                     # Indicate test was not conducted.
                     self.test_passed = None
                 elif not output_success:
-                    print('ValidationBase.do_validation(): output_success = False'.format(ret_val))
+                    print('FileValidation.do_directory_validation(): output_success = False'.format(ret_val))
                     self.test_passed = False
 
         return self.test_passed
 
     def do_file_validation(self, executable_path, output_success_string='Overall -> Pass'):
         if not self.ready_to_validate:
-            print('ValidationBase.do_validation(): Not ready to validate.')
+            print('FileValidation.do_file_validation(): Not ready to validate.')
             return self.test_passed
 
         self.cl_process.set_executable_path(executable_path)
@@ -60,11 +58,11 @@ class FileValidation(ValidationBase):
                 self.test_passed = True
             else:
                 if ret_val != 0:
-                    print('ValidationBase.do_validation(): ret_val = {:d}'.format(ret_val))
+                    print('FileValidation.do_file_validation(): ret_val = {:d}'.format(ret_val))
                     # Indicate test was not conducted.
                     self.test_passed = None
                 elif not output_success:
-                    print('ValidationBase.do_validation(): output_success = False'.format(ret_val))
+                    print('FileValidation.do_file_validation(): output_success = False'.format(ret_val))
                     self.test_passed = False
 
         return self.test_passed
