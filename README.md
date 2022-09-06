@@ -209,7 +209,7 @@ Executables:
 - **bincompare**: Compare two files at the byte level for equivalence. `bincompare -h`
 - **validate\_yaml**: Validate a yaml file with an input schema. `validate_yaml -h`
 
-## Parse/translate Helper Script 
+## Parse/translate Helper Scripts
 
 Generate Parquet files with engineering units with a single call. Removes the need for consecutive calls to `tip_parse` then `tip_translate_1553` or `tip_translate_arinc429`. This script is used by the end-to-end validation system. Due to simplified parse and translate CLIs, this script is nearly obsolete. It remains for the few users who rely on it as part of their workflow and will likely be removed when the end-to-end validation software is updated or rewritten. 
 
