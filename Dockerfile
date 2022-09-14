@@ -36,6 +36,8 @@ RUN mkdir /home/jovyan/tip_channel \
     && printf "\n    - /opt/data/opal/opal-packages/core" >> /home/jovyan/singleuser_env.yaml \
     && printf "\n    - /opt/data/opal/opal-packages/kinds" >> /home/jovyan/singleuser_env.yaml \
     && printf "\n    - /opt/data/opal/opal-packages/search" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/publish" >> /home/jovyan/singleuser_env.yaml \
+    && printf "\n    - /opt/data/opal/opal-packages/flow" >> /home/jovyan/singleuser_env.yaml \
     && conda env create -f /home/jovyan/singleuser_env.yaml --offline \
     && rm -rf /home/jovyan/tip_deps_channel /home/jovyan/local-channel
 
