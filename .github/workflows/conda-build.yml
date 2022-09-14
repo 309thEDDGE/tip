@@ -1,0 +1,85 @@
+name: conda-build
+on:
+  push:
+    # branches:
+    #   - master
+    branches-ignore:
+      - master
+jobs:
+  build-job:
+    runs-on: ubuntu-22.04
+    env: 
+      BUILD_DIR: build
+      CODE_COV_FNAME: overall-coverage.xml
+      # TIP_PKG_NAME: tip-1.0.2-2.tar.bz2
+      ENV_NAME: tip-build
+    steps: 
+      - name: Make time stamp
+        run: echo "VERSION_TAG=$(date +"%Y.%m.%d")" >> $GITHUB_ENV
+
+      - name: Create build dir
+        run: mkdir ~/$BUILD_DIR 
+
+      - uses: actions/checkout@v2
+
+      - name: Setup miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: ${{ env.ENV_NAME }}
+          environment-file: ci_environment_pinned.yaml
+          auto-activate-base: false
+          python-version: 3.9
+
+      - name: Conda info debug
+        shell: bash -l {0}
+        run: conda info
+
+      - name: Conda build
+        shell: bash -l {0}
+        env: 
+          CI_COMMIT_TAG: ${{ env.VERSION_TAG }}
+          CI_COMMIT_SHORT_SHA: ${{ github.sha }}
+          PREFIX: /usr/share/miniconda/envs/${{ env.ENV_NAME }}/bin
+          BUILD_PREFIX: ${{ env.ENV_NAME }}
+          CONDA_RECIPES_DIR: tip_scripts/conda-recipes
+        run: |
+          export PREFIX=$PREFIX
+          export BUILD_PREFIX=$BUILD_PREFIX
+          cd $CONDA_RECIPES_DIR
+          conda build tip -c conda-forge --croot ~/$BUILD_DIR
+          cd ~/$BUILD_DIR
+          tree
+
+      - name: Run tests
+        shell: bash -l {0}
+        run: | #/usr/share/miniconda/envs/${{ env.ENV_NAME }}/bin/tests
+          ls /usr/share/miniconda/envs/$ENV_NAME/bin
+
+      - name: Run gcov
+        shell: bash -l {0}
+        run: |
+          gcovr -r . ~/$BUILD_DIR/ -j 4 \
+          --exclude-unreachable-branches \
+          --exclude-throw-branches \
+          --xml ./$CODE_COV_FNAME \
+          --print-summary \
+          --exclude cpp/tests/
+          ls -lh .
+          ls -lh ~/$BUILD_DIR
+          tree ~/$BUILD_DIR
+
+      - uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_IO_TOKEN }}
+          files: ./${{ env.CODE_COV_FNAME }}
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: true
+          verbose: true
+      # - name: Upload TIP package
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: tip-${{ env.VERSION_TAG }}.tar.bz2
+      #     path: ~/${{ env.BUILD_DIR }}/linux-64/${{ env.TIP_PKG_NAME }} 
+
+

@@ -15,6 +15,8 @@
 !.gitignore
 !.gitlab
 !.gitlab/**
+!.github
+!.github/**
 !bin
 !conf
 !conf/**
@@ -63,8 +65,9 @@ tip_scripts/__pycache__
 !CPPLINT.cfg
 *.DS_Store
 !environment*.yaml
+!ci_environment.yaml
 *.vscode
-
+!codecov.yml
 # nix
 result*
 default.nix
