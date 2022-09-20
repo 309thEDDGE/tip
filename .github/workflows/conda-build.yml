@@ -14,8 +14,8 @@ jobs:
       # TIP_PKG_NAME: tip-1.0.2-2.tar.bz2
       ENV_NAME: tip-build
     steps: 
-      - name: Make time stamp
-        run: echo "VERSION_TAG=$(date +"%Y.%m.%d")" >> $GITHUB_ENV
+      # - name: Make time stamp
+        # run: echo "VERSION_TAG=$(date +"%Y.%m.%d")" >> $GITHUB_ENV
 
       - name: Create build dir
         run: mkdir ~/$BUILD_DIR 
@@ -27,55 +27,58 @@ jobs:
         with:
           activate-environment: ${{ env.ENV_NAME }}
           environment-file: ci_environment_pinned.yaml
-          auto-activate-base: false
+          auto-activate-base: true
           python-version: 3.9
 
       - name: Conda info debug
-        shell: bash -l {0}
+        # shell: bash -l {0}
         run: conda info
 
       - name: Conda build
-        shell: bash -l {0}
+        # shell: bash -l {0}
         env: 
-          CI_COMMIT_TAG: ${{ env.VERSION_TAG }}
+          # CI_COMMIT_TAG: ${{ env.VERSION_TAG }}
+          CI_COMMIT_TAG: ${{ github.ref_name }}
           CI_COMMIT_SHORT_SHA: ${{ github.sha }}
-          PREFIX: /usr/share/miniconda/envs/${{ env.ENV_NAME }}/bin
-          BUILD_PREFIX: ${{ env.ENV_NAME }}
+          CONDA_PREFIX: /usr/share/miniconda/envs/${{ env.ENV_NAME }}
+          INSTALL_PREFIX: ${{ env.CONDA_PREFIX }}/bin
           CONDA_RECIPES_DIR: tip_scripts/conda-recipes
         run: |
-          export PREFIX=$PREFIX
-          export BUILD_PREFIX=$BUILD_PREFIX
+          export INSTALL_PREFIX=$INSTALL_PREFIX
+          export CONDA_PREFIX=$CONDA_PREFIX
           cd $CONDA_RECIPES_DIR
           conda build tip -c conda-forge --croot ~/$BUILD_DIR
           cd ~/$BUILD_DIR
+          pwd
           tree
+          ls $INSTALL_PREFIX
 
       - name: Run tests
-        shell: bash -l {0}
+        # shell: bash -l {0}
         run: | #/usr/share/miniconda/envs/${{ env.ENV_NAME }}/bin/tests
           ls /usr/share/miniconda/envs/$ENV_NAME/bin
 
-      - name: Run gcov
-        shell: bash -l {0}
-        run: |
-          gcovr -r . ~/$BUILD_DIR/ -j 4 \
-          --exclude-unreachable-branches \
-          --exclude-throw-branches \
-          --xml ./$CODE_COV_FNAME \
-          --print-summary \
-          --exclude cpp/tests/
-          ls -lh .
-          ls -lh ~/$BUILD_DIR
-          tree ~/$BUILD_DIR
+      # - name: Run gcov
+      #   shell: bash -l {0}
+      #   run: |
+      #     gcovr -r . ~/$BUILD_DIR/ -j 4 \
+      #     --exclude-unreachable-branches \
+      #     --exclude-throw-branches \
+      #     --xml ./$CODE_COV_FNAME \
+      #     --print-summary \
+      #     --exclude cpp/tests/
+      #     ls -lh .
+      #     ls -lh ~/$BUILD_DIR
+      #     tree ~/$BUILD_DIR
 
-      - uses: codecov/codecov-action@v2
-        with:
-          token: ${{ secrets.CODECOV_IO_TOKEN }}
-          files: ./${{ env.CODE_COV_FNAME }}
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: true
-          verbose: true
+      # - uses: codecov/codecov-action@v2
+      #   with:
+      #     token: ${{ secrets.CODECOV_IO_TOKEN }}
+      #     files: ./${{ env.CODE_COV_FNAME }}
+      #     flags: unittests
+      #     name: codecov-umbrella
+      #     fail_ci_if_error: true
+      #     verbose: true
       # - name: Upload TIP package
       #   uses: actions/upload-artifact@v3
       #   with:
