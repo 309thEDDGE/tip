@@ -31,11 +31,11 @@ jobs:
           python-version: 3.9
 
       - name: Conda info debug
-        # shell: bash -l {0}
+        shell: bash -l {0}
         run: conda info
 
       - name: Conda build
-        # shell: bash -l {0}
+        shell: bash -l {0}
         env: 
           # CI_COMMIT_TAG: ${{ env.VERSION_TAG }}
           CI_COMMIT_TAG: ${{ github.ref_name }}
@@ -54,7 +54,7 @@ jobs:
           ls $INSTALL_PREFIX
 
       - name: Run tests
-        # shell: bash -l {0}
+        shell: bash -l {0}
         run: | #/usr/share/miniconda/envs/${{ env.ENV_NAME }}/bin/tests
           ls /usr/share/miniconda/envs/$ENV_NAME/bin
 
