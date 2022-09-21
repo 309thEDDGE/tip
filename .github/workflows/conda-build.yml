@@ -52,8 +52,7 @@ jobs:
           tree
 
       - name: Run tests
-        shell: bash -l {0}
-        run: | #/usr/share/miniconda/envs/${{ env.ENV_NAME }}/bin/tests
+        shell: bash -l {0} run: | #/usr/share/miniconda/envs/${{ env.ENV_NAME }}/bin/tests
           ls /usr/share/miniconda/envs/$ENV_NAME/bin
 
       # - name: Run gcov

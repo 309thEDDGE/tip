@@ -2,7 +2,7 @@
 
 #echo "----> CONDA_PREFIX = $CONDA_PREFIX"
 #echo "----> INSTALL_PREFIX = $INSTALL_PREFIX" 
-echo "----> PREFIX = $PREFIX" 
+echo '----> PREFIX = "$PREFIX"' 
 
 cmake ${CMAKE_ARGS} . \
     -G Ninja \
@@ -12,8 +12,9 @@ cmake ${CMAKE_ARGS} . \
 
 cmake --build . --target install
 
-ls "$PREFIX"
-cd $PREFIX
+ls $PREFIX
+cd $PREFIX/bin
+pwd
 tree
 
     # -DCONDA_PREFIX=$CONDA_PREFIX \
