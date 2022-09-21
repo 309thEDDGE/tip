@@ -51,11 +51,13 @@ jobs:
           pwd
           tree
 
-      - name: Run tests
-        shell: bash -l {0}
-        run: | #/usr/share/miniconda/envs/${{ env.ENV_NAME }}/bin/tests
-          ls /usr/share/miniconda/envs/$ENV_NAME/bin
-
+      # - name: Run tests
+      #   shell: bash -l {0}
+      #   run: | 
+      #     conda install --use-local /home/runner/build/linux-64/tip-1.0.2-2.tar.bz2
+      #     echo $PATH
+      #     which tests
+      #     tests
       # - name: Run gcov
       #   shell: bash -l {0}
       #   run: |

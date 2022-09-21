@@ -16,8 +16,6 @@ build:
   script_env:
     - CI_COMMIT_TAG
     - CI_COMMIT_SHORT_SHA
-    - CONDA_PREFIX
-    - INSTALL_PREFIX
 
 requirements:
   build:
@@ -44,6 +42,10 @@ requirements:
     - gmock==1.10.0
     - gtest==1.10.0
     - libtins==4.2
+
+test:
+  commands:
+    - tests
 
 about:
   home: https://code.il2.dso.mil/skicamp/project-opal/tip

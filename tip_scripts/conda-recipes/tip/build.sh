@@ -1,9 +1,5 @@
 #!/bin/bash
 
-#echo "----> CONDA_PREFIX = $CONDA_PREFIX"
-#echo "----> INSTALL_PREFIX = $INSTALL_PREFIX" 
-echo '----> PREFIX = "$PREFIX"' 
-
 cmake ${CMAKE_ARGS} . \
     -G Ninja \
     -DCMAKE_BUILD_TYPE=Profile \
@@ -12,7 +8,6 @@ cmake ${CMAKE_ARGS} . \
 
 cmake --build . --target install
 
-ls $PREFIX
 cd $PREFIX/bin
 pwd
 tree
