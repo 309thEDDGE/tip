@@ -45,8 +45,6 @@ jobs:
           CONDA_RECIPES_DIR: tip_scripts/conda-recipes
           
         run: |
-          # export INSTALL_PREFIX=$INSTALL_PREFIX
-          # export CONDA_PREFIX=$CONDA_PREFIX
           cd $CONDA_RECIPES_DIR
           conda build tip -c conda-forge --croot ~/$BUILD_DIR
           cd ~/$BUILD_DIR
