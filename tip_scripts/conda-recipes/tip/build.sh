@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "----> CONDA_PREFIX = $CONDA_PREFIX"
+echo "----> INSTALL_PREFIX = $INSTALL_PREFIX" 
+
 cmake ${CMAKE_ARGS} . \
     -G Ninja \
     -DCONDA_PREFIX=$CONDA_PREFIX \
