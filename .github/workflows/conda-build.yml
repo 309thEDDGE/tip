@@ -8,7 +8,7 @@ on:
       - master
 jobs:
   call-ubuntu-build-job:
-    uses: ./.github/workflows/ubuntu-build.yml@master
+    uses: ./.github/workflows/ubuntu-build.yml
     secrets: inherit 
   build-conda-job:
     runs-on: ubuntu-22.04
