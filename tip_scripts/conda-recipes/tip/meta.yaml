@@ -43,6 +43,10 @@ requirements:
     - gtest==1.10.0
     - libtins==4.2
 
+test:
+  commands:
+    - tests
+
 about:
   home: https://code.il2.dso.mil/skicamp/project-opal/tip
   license: DOD
