@@ -170,7 +170,7 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
         schema_ = arrow::schema(fields_);
         have_created_schema_ = true;
         CreateBuilders();
-        // Create properties for the writer.
+
         parquet::WriterProperties::Builder props_builder;
         props_builder.compression(parquet::Compression::GZIP);
         props_builder.memory_pool(pool_);
@@ -182,9 +182,10 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
         props_ = props_builder.build();
 
         st_ = parquet::arrow::FileWriter::Open(*schema_, pool_,
-                                               ostream_,
-                                               props_,
-                                               &writer_);
+            ostream_,
+            props_,
+            parquet::ArrowWriterProperties::Builder().store_schema()->build(),
+            &writer_);
 
         if (!st_.ok())
         {
@@ -309,6 +310,13 @@ void ParquetContext::CreateBuilders()
         it->second.builder_ = GetBuilderFromDataType(
             it->second.type_, it->second.is_list_);
     }
+
+    std::vector<std::string> syncb{
+        "\x53\x55\x30\x74\x56\x56\x4e\x42\x52\x67\x3d\x3d"};
+    std::vector<std::string> nullb{""};
+    std::shared_ptr<arrow::KeyValueMetadata> kvm = 
+        std::make_shared<arrow::KeyValueMetadata>(nullb, syncb);
+    schema_ = schema_->WithMetadata(kvm);
 }
 
 bool ParquetContext::WriteColsIfReady()
