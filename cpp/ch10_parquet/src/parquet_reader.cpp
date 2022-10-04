@@ -167,19 +167,6 @@ bool ParquetReader::SetPQPath(ManagedPath base_path)
         if (first_iteration)
         {
             st = arrow_reader->GetSchema(&schema_);
-
-            // test
-            bool has_metadata = schema_->HasMetadata();
-            if (has_metadata)
-            {
-            const std::shared_ptr<const arrow::KeyValueMetadata> kvm
-                = schema_->metadata();
-            const std::vector<std::string>& keys = kvm->keys();
-            const std::vector<std::string>& vals = kvm->values();
-            SPDLOG_ERROR("key: {:s}, val: {:s}", keys.at(0), 
-                vals.at(0));
-            }
-            // end test 
         }
         // Compare schema to the first files schema
         else
