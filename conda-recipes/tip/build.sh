@@ -7,4 +7,3 @@ cmake ${CMAKE_ARGS} .. \
     -DCI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA
 
 cmake --build . --target install
-
