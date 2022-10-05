@@ -42,7 +42,7 @@ jobs:
           CI_COMMIT_SHORT_SHA: ${{ github.sha }}
           # CONDA_PREFIX: /usr/share/miniconda/envs/${{ env.ENV_NAME }}
           # INSTALL_PREFIX: ${{ env.CONDA_PREFIX }}/bin
-          CONDA_RECIPES_DIR: tip_scripts/conda-recipes
+          CONDA_RECIPES_DIR: conda-recipes
           
         run: |
           cd $CONDA_RECIPES_DIR

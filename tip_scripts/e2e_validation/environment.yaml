@@ -1,9 +1,0 @@
-name: tip-e2e
-channels:
- - conda-forge
- - defaults
-dependencies:
- - python=3.9.*
- - pyyaml
- - numpy
- - deepdiff=5.6.*
