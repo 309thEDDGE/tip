@@ -1,0 +1,6 @@
+# git
+.git
+
+# nix
+default.nix
+result*

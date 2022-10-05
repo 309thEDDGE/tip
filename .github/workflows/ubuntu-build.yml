@@ -1,0 +1,95 @@
+name: native-build
+on:
+  push:
+    branches-ignore:
+      - master
+  workflow_call:
+jobs:
+  build-ubuntu-job:
+    runs-on: ubuntu-22.04
+    env:
+      BUILD_DIR: build
+      CI_COMMIT_TAG: ${{github.ref_name}}
+      CI_COMMIT_SHORT_SHA: ${{github.sha}}
+      CODE_COV_FNAME: overall-coverage.xml
+      RANDOM_CACHE_FNAME: random-cache-key
+    container:
+      image: registry.il2.dso.mil/skicamp/project-opal/tip/dev:ghbuild_ubuntu_gcovr
+      credentials:
+        username: ${{ secrets.TIP_REGISTRY_USER }}
+        password: ${{ secrets.TIP_REGISTRY_PASS }}
+      env:
+        BUILD_DIR: ${{ env.BUILD_DIR }}
+        CI_COMMIT_TAG: ${{ github.ref_name }}
+        CI_COMMIT_SHORT_SHA: ${{ github.sha }}
+        CODE_COV_FNAME: ${{ env.CODE_COV_FNAME }}
+      options: --cpus 2
+    steps: 
+
+      - name: Checkout  
+        uses: actions/checkout@v2
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ubuntu
+          verbose: 2
+
+      - name: Make python link
+        run: |
+            ln -fs /usr/bin/python3 /usr/bin/python
+            chmod a+x /usr/bin/python
+
+      - name: Configure CMake
+        run: |
+          mkdir -p $BUILD_DIR
+          du -csh ./.ccache
+          cd $BUILD_DIR
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+          cmake .. -GNinja -DCMAKE_BUILD_TYPE=Profile \
+            -DCI_COMMIT_TAG=$CI_COMMIT_TAG \
+            -DCI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA
+
+      - name: Build tip binaries
+        run: |
+            export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+            du -csh ./.ccache
+            ps -p $$
+            cd $BUILD_DIR
+            echo $PATH
+            ninja install
+            du -csh ../.ccache
+
+      - name: Run tests
+        run: which tests && tests
+
+      - name: Run gcov
+        run: |
+            gcovr -r . $BUILD_DIR/ -j 4 \
+            --exclude-unreachable-branches \
+            --exclude-throw-branches \
+            --xml ./$CODE_COV_FNAME \
+            --print-summary \
+            --exclude cpp/tests/
+            ls -lh .
+            ls -lh $BUILD_DIR
+
+      # Metric:
+      # "hit" indicates that the source code was executed by the test suite.
+      #
+      # "partial" indicates that the source code was not fully executed by the test suite; 
+      # there are remaining branches that were not executed.
+      #
+      # "miss" indicates that the source code was not executed by the test suite.
+      #
+      # Coverage is the ratio of hits / (sum of hit + partial + miss
+      - name: Code Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_IO_TOKEN }}
+          files: ./${{ env.CODE_COV_FNAME }}
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: true
+          verbose: true
+
