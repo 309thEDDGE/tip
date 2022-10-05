@@ -36,9 +36,6 @@ cpp/*.cmake
 !misc/**
 !tip_scripts
 !tip_scripts/**
-!container
-!container/**
-**/__pycache__
 **/*.db
 **/*.vs
 **/venv
@@ -49,26 +46,18 @@ cpp/*.cmake
 **/.ipynb*
 **/dask-worker-space
 **/#*
-container/docker/centos/#*
-container/docker/rhel/#*
-container/docker/rhel/*~
-container/argotip_scripts/.vs
-tip_scripts/__pycache__
 !README.md
-!parse_and_translate_cli.py
 !CmakeLists.txt
-!di2e_bitbucket_clone.txt
 !.dockerignore
 **/build
 **/dist
 **/*.egg-info
 /cpp/out/build/x64-Debug (default)
-!Sample_DTS.yaml
 !.clang-format
 !CPPLINT.cfg
 *.DS_Store
 !environment*.yaml
-!ci_environment.yaml
+!ci_environment_pinned.yaml
 *.vscode
 !codecov.yml
 # nix
