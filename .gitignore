@@ -1,6 +1,7 @@
 *
 !cmake
 !cmake/**
+!CMakeLists.txt
 !*.Dockerfile
 !Dockerfile
 !cpp_pipeline_scripts
@@ -29,13 +30,6 @@ conf/*.conf
 conf/*.conf~
 !cpp
 !cpp/**
-cpp/CMakeFiles
-cpp/*.a
-cpp/*.cmake
-!misc
-!misc/**
-!tip_scripts
-!tip_scripts/**
 **/*.db
 **/*.vs
 **/venv
