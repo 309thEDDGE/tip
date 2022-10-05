@@ -21,6 +21,8 @@
 !conf
 !conf/**
 !LICENSE
+!conda-recipes
+!conda-recipes/**
 conf/*.yaml
 conf/*.yaml~
 conf/*.conf
