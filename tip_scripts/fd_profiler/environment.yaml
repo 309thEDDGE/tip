@@ -1,7 +1,0 @@
-name: fd-profiler
-channels:
-  - conda-forge
-  - defaults
-dependencies:
-  - python=3.9.*
-  - psutil

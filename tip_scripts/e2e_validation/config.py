@@ -1,1 +1,0 @@
-COMPARE_YAML = True

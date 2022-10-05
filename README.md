@@ -5,7 +5,6 @@
 - [CMake Build](#cmake-build)
 - [Code Convention](#code-convention)
 - [Linting](#linting)
-- [Singleuser Container](#singleuser-container)
 - [Usage](#usage)
 
 # TIP
@@ -79,7 +78,9 @@ One will be most successful in either of these efforts if initially assisted by 
 
 ## Ubuntu 22.04 LTS
 
-Prepare system 
+Use the `ubuntu_dev.Dockerfile` to build a docker container in which TIP can be built and installed or follow the instructions to prepare your system:
+
+### Essentials
  ```bash
 apt update && apt install build-essential ninja-build cmake git
 ```
@@ -232,30 +233,6 @@ OS-specific usage:
 - Linux: `cpplint ./cpp/**/**/*.h ./cpp/**/**/*.cpp`
 - Windows (PowerShell): `cpplint (Get-ChildItem .\cpp\*\*\*.h) (Get-ChildItem .\cpp\*\*\*.cpp)`
 
-# Singleuser Container
-
-The singleuser container is much more than a container in which the TIP executables reside. It is a full JupyterLab instance with an analytics environment and TIP executables on the PATH. The analytics environment includes numpy, matplotlib, pandas, and other common Python tools. 
-
-Run the container
-```bash
-docker run -p 8888:8888 -v <host path>:<container path> registry.il2.dso.mil/skicamp/project-opal/tip:<latest>
-```
-
-Replace `<latest>` with the most recent container tag from https://code.il2.dso.mil/skicamp/project-opal/tip/container_registry/1904. Use flag `--rm` to delete the running container on exit. 
-
-The easiest way to find the latest image is to get the commit hash from the most recent successful pipeline run on master and then search the container registry. `<host path>` is the path to the data you want to work with on your host system. (ch10, parquet, etc.). `<container path>` is where the data will be mounted within the container.
-
-For example, `-v /home/user/data/ch10/:/data/` will mount the files in `/home/user/data/ch10/` on the host system to `/data/` in the container. If the container path does not exist, it will be created automatically.
-
-To start the JuptyerLab GUI, copy+paste the `127.0.0.1:8888/lab?token=...` link provided at the end of the docker run command output into your browser.
-
-## Using TIP Within the Singleuser Container
-
-When running TIP or associated executables in the singleuser container, ensure that commands are executed from either
-
-* the singleuser environment Jupyter notebook (and preceded with `!` to run shell commands)
-* the JupyterLab shell and the singleuser conda environment is active 
-
 # Usage 
 
 Navigate to `tip/bin` to call executables or find them on the path if in a conda environment or TIP was built and installed.
@@ -270,12 +247,3 @@ Executables:
 - **pqcompare**: Compare two parquet tables for equivalence. `pqcompare -h`
 - **bincompare**: Compare two files at the byte level for equivalence. `bincompare -h`
 - **validate\_yaml**: Validate a yaml file with an input schema. `validate_yaml -h`
-
-## Parse/translate Helper Scripts
-
-Generate Parquet files with engineering units with a single call. Removes the need for consecutive calls to `tip_parse` then `tip_translate_1553` or `tip_translate_arinc429`. This script is used by the end-to-end validation system. Due to simplified parse and translate CLIs, this script is nearly obsolete. It remains for the few users who rely on it as part of their workflow and will likely be removed when the end-to-end validation software is updated or rewritten. 
-
-* Must be run in an environment in which the sys.path can be appended by the script (i.e., not a base conda environment)
-* Call `parse_and_translate_cli.py` script in TIP root directory with -h flag for helps
-* Example: `python <path/to/TIP/root>/parse_and_translate.py -h`
-
