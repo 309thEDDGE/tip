@@ -78,7 +78,12 @@ One will be most successful in either of these efforts if initially assisted by 
 
 ## Ubuntu 22.04 LTS
 
-Use the `ubuntu_dev.Dockerfile` to build a docker container in which TIP can be built and installed or follow the instructions to prepare your system:
+Create a docker image in which TIP is built and installed (on the path) by navigating to the TIP repo root directory and executing the docker build command
+`docker build -t tip -f ubuntu_exe.Dockerfile .`
+
+Or use the `ubuntu_dev.Dockerfile` to build a development docker container which contains TIP dependencies.  
+
+Alternately, prepare your system manually: 
 
 ### Essentials
  ```bash
