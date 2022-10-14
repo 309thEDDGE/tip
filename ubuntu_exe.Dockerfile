@@ -85,5 +85,5 @@ COPY --from=build /usr/lib/x86_64-linux-gnu/libsasl2*.so* /usr/lib/x86_64-linux-
 
 RUN /usr/local/bin/tests
 
-ENTRYPOINT ["/bin/sh"]
+ENTRYPOINT ["/bin/bash"]
 
