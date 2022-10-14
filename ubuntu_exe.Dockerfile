@@ -38,16 +38,47 @@ WORKDIR /
 RUN rm -rf /tip && \
     /usr/local/bin/tests
 
-FROM frolvlad/alpine-glibc
+# We could reduce size by using a stripped down base image.
+# I had trouble with alpine-glibc due to ABI incompatiblities.
+# Not sure if it's worth the time--I estimate maybe 30 MB
+# reduction. 
+#FROM frolvlad/alpine-glibc
+FROM ubuntu:22.04
 
-COPY --from=build /usr/local/bin/tip* /bin/
-COPY --from=build /usr/local/bin/pqcompare /bin/
-COPY --from=build /usr/local/bin/bincompare /bin/
-COPY --from=build /usr/local/bin/tests /bin/
-COPY --from=build /usr/local/bin/parquet_video_extractor /bin/
-COPY --from=build /usr/local/bin/validate_yaml /bin/
+COPY --from=build /usr/local/bin/tip* /usr/local/bin/
+COPY --from=build /usr/local/bin/pqcompare /usr/local/bin/
+COPY --from=build /usr/local/bin/bincompare /usr/local/bin/
+COPY --from=build /usr/local/bin/tests /usr/local/bin/
+COPY --from=build /usr/local/bin/parquet_video_extractor /usr/local/bin/
+COPY --from=build /usr/local/bin/validate_yaml /usr/local/bin/
 
-RUN ls -l /bin && /bin/tests
+COPY --from=build /usr/lib/x86_64-linux-gnu/libarrow*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libbrotli*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libutf8proc*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libre2*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libcurl*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libnghttp2*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/librtmp*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libssh*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libpsl*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libdbus*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/liblz4*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libbz2*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libparquet*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libpcap*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libprotobuf*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libsnappy*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libspdlog*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libthrift*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libyaml*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libfmt*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/local/lib/libtins*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libzstd*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libldap*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/liblber*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libsasl2*.so* /usr/lib/x86_64-linux-gnu/ 
+
+RUN /usr/local/bin/tests
 
 ENTRYPOINT ["/bin/sh"]
 
