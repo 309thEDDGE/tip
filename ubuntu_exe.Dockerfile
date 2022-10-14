@@ -45,14 +45,19 @@ RUN rm -rf /tip && \
 #FROM frolvlad/alpine-glibc
 FROM ubuntu:22.04
 
-COPY --from=build /usr/local/bin/tip* /usr/local/bin/
-COPY --from=build /usr/local/bin/pqcompare /usr/local/bin/
-COPY --from=build /usr/local/bin/bincompare /usr/local/bin/
-COPY --from=build /usr/local/bin/tests /usr/local/bin/
-COPY --from=build /usr/local/bin/parquet_video_extractor /usr/local/bin/
-COPY --from=build /usr/local/bin/validate_yaml /usr/local/bin/
+# RUN apt update -y && apt install -y build-essential
+COPY --from=build ["/usr/local/bin/tip*", "/usr/local/bin/pqcompare", \
+    "/usr/local/bin/bincompare", "/usr/local/bin/tests", \
+    "/usr/local/bin/parquet_video_extractor", "/usr/local/bin/validate_yaml", \
+    "/usr/local/bin/"]
 
-COPY --from=build /usr/lib/x86_64-linux-gnu/libarrow*.so* /usr/lib/x86_64-linux-gnu/ 
+# COPY follows symlinks and replaces links at the destination
+# with the name of the original content and data represented
+# the target. This duplicates data in the destination (inefficient)
+# and causes ldconfig to throw warnings.
+# 
+# Also, make this a single COPY layer, as above.
+COPY --from=build /usr/lib/x86_64-linux-gnu/libarrow.so.* /usr/lib/x86_64-linux-gnu/ 
 COPY --from=build /usr/lib/x86_64-linux-gnu/libbrotli*.so* /usr/lib/x86_64-linux-gnu/ 
 COPY --from=build /usr/lib/x86_64-linux-gnu/libutf8proc*.so* /usr/lib/x86_64-linux-gnu/ 
 COPY --from=build /usr/lib/x86_64-linux-gnu/libre2*.so* /usr/lib/x86_64-linux-gnu/ 
@@ -64,13 +69,13 @@ COPY --from=build /usr/lib/x86_64-linux-gnu/libpsl*.so* /usr/lib/x86_64-linux-gn
 COPY --from=build /usr/lib/x86_64-linux-gnu/libdbus*.so* /usr/lib/x86_64-linux-gnu/ 
 COPY --from=build /usr/lib/x86_64-linux-gnu/liblz4*.so* /usr/lib/x86_64-linux-gnu/ 
 COPY --from=build /usr/lib/x86_64-linux-gnu/libbz2*.so* /usr/lib/x86_64-linux-gnu/ 
-COPY --from=build /usr/lib/x86_64-linux-gnu/libparquet*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libparquet.so.* /usr/lib/x86_64-linux-gnu/ 
 COPY --from=build /usr/lib/x86_64-linux-gnu/libpcap*.so* /usr/lib/x86_64-linux-gnu/ 
 COPY --from=build /usr/lib/x86_64-linux-gnu/libprotobuf*.so* /usr/lib/x86_64-linux-gnu/ 
 COPY --from=build /usr/lib/x86_64-linux-gnu/libsnappy*.so* /usr/lib/x86_64-linux-gnu/ 
 COPY --from=build /usr/lib/x86_64-linux-gnu/libspdlog*.so* /usr/lib/x86_64-linux-gnu/ 
 COPY --from=build /usr/lib/x86_64-linux-gnu/libthrift*.so* /usr/lib/x86_64-linux-gnu/ 
-COPY --from=build /usr/lib/x86_64-linux-gnu/libyaml*.so* /usr/lib/x86_64-linux-gnu/ 
+COPY --from=build /usr/lib/x86_64-linux-gnu/libyaml-cpp.so.* /usr/lib/x86_64-linux-gnu/ 
 COPY --from=build /usr/lib/x86_64-linux-gnu/libfmt*.so* /usr/lib/x86_64-linux-gnu/ 
 COPY --from=build /usr/local/lib/libtins*.so* /usr/lib/x86_64-linux-gnu/ 
 COPY --from=build /usr/lib/x86_64-linux-gnu/libzstd*.so* /usr/lib/x86_64-linux-gnu/ 
