@@ -3,6 +3,7 @@
 - [TIP](#tip)
 - [Manifesto](#manifesto)
 - [CMake Build](#cmake-build)
+- [Conda Build](#conda-build)
 - [Code Convention](#code-convention)
 - [Linting](#linting)
 - [Usage](#usage)
@@ -85,7 +86,7 @@ docker build -t tip -f ubuntu_dev.Dockerfile .
 Use `ubuntu_exe.Dockerfile` to build a docker image in which TIP is installed. Note that this provides a small-ish container which contains only TIP runtime libraries in addition to Ubuntu base image libraries. `cmake`, `git`, and other development utilities are not present. 
 
 Alternately, prepare your system manually: 
-
+    
 ### Essentials
  ```bash
 apt update && apt install build-essential ninja-build cmake git
@@ -140,7 +141,7 @@ cmake .. -GNinja
 ninja install 
 ```
 
-## Conda
+# Conda Build
 
 Install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)
 for your given operating system. All tip dependencies have been
@@ -151,7 +152,7 @@ exists you will want to update the environment instead.
 Note for Windows users: The `Visual Studio 2017 C++ x86/64 Build Tools`
 are required to build native C++ using Conda packages. The best way to
 obtain this tool set (currently) is to download VS 2022 Community and
-enable only that toolset. 
+enable only that toolset, which includes required components `C++/CLI support for v141 build tools (14.16)` and `MSVC v141 - VS 2017 C++ x64/x86 build tools (v14.16)`. Documentation in [conda-forge.org](https://conda-forge.org/docs/maintainer/knowledge_base.html#particularities-on-windows) indicates that this MSVC version is only appropriate for Python version 3.5-3.7. However, this version was confirmed to be compatible with Python 3.9.
 
 Create the environment
 ```shell
