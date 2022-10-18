@@ -19,29 +19,29 @@ build:
 
 requirements:
   build:
-    - gxx_linux-64==11.2.0
-    - make==4.3
-    - cmake==3.21.3
-    - ninja==1.10.2
-    - pkgconfig==1.5.5
+    - gxx_linux-64 ==11.2.0
+    - make ==4.3
+    - cmake ==3.21.3
+    - ninja ==1.10.2
+    - pkgconfig ==1.5.5
 
   host:
-    - libpcap==1.10.1
-    - arrow-cpp==6.0.1
-    - spdlog==1.8.5
-    - yaml-cpp==0.6.3
-    - gmock==1.10.0
-    - gtest==1.10.0
-    - libtins==4.2
+    - libpcap ==1.10.1
+    - arrow-cpp ==6.0.1
+    - spdlog ==1.8.5
+    - yaml-cpp ==0.6.3
+    - gmock ==1.10.0
+    - gtest ==1.10.0
+    - libtins ==4.2
 
   run:
-    - yaml-cpp==0.6.3
-    - libpcap==1.10.1
-    - arrow-cpp==6.0.1
-    - spdlog==1.8.5
-    - gmock==1.10.0
-    - gtest==1.10.0
-    - libtins==4.2
+    - libpcap ==1.10.1
+    - arrow-cpp ==6.0.1
+    - spdlog ==1.8.5
+    - yaml-cpp ==0.6.3
+    - gmock ==1.10.0
+    - gtest ==1.10.0
+    - libtins ==4.2
 
 test:
   commands:
