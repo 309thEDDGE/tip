@@ -625,10 +625,15 @@ TEST(ManagedPathTest, GetFileSizeNonFile)
 
 TEST(ManagedPathTest, TempDirectoryPath)
 {
+    ManagedPath temp = ManagedPath::temp_directory_path();
 #ifdef __linux__
     ManagedPath expected{"/", "tmp"};
-    ManagedPath temp = ManagedPath::temp_directory_path();
-    EXPECT_EQ(expected.RawString(), temp.RawString());
+    ASSERT_EQ(expected.RawString(), temp.RawString());
+#elif defined __WIN64
+    std::string expected_sub = "\\AppData\\Local\\Temp";
+    std::string raw = temp.RawString(); 
+    size_t res = raw.find(expected_sub);
+    ASSERT_TRUE(res != std::string::npos);
 #endif
 }
 
