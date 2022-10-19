@@ -183,8 +183,8 @@ enable only that toolset, which includes required components `C++/CLI support fo
 
 Create the environment
 ```shell
-conda env create -f environment_local_build.yaml
-# conda env update -f environment_local_build.yaml
+conda env create -f ci_environment_pinned.yaml
+# conda env update -f ci_environment_pinned.yaml
 ```
 
 Activate the development environment. Sometimes depending on how conda
