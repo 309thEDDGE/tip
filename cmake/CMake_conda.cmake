@@ -12,12 +12,11 @@ if("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
 
    link_directories("${CONDA_PREFIX}\\Library\\lib")
 
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-
+elseif(("${CMAKE_SYSTEM_NAME}" MATCHES "Linux") 
+   OR ("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin"))
    add_definitions(
 		-DNEWARROW
 		-DTINS_STATIC)
-
 else()
     message(FATAL_ERROR "No system-specific options: " ${CMAKE_SYSTEM_NAME})
 endif()
@@ -44,7 +43,8 @@ find_package(Arrow REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(spdlog REQUIRED)
 
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+if(("${CMAKE_SYSTEM_NAME}" MATCHES "Linux") 
+   OR ("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin"))
    find_package(PkgConfig)
    pkg_check_modules(LIBTINS REQUIRED libtins)
    pkg_check_modules(LIBPCAP REQUIRED libpcap)
