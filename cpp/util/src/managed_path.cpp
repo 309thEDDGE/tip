@@ -234,6 +234,12 @@ ManagedPath ManagedPath::filename() const
     return mp;
 }
 
+ManagedPath ManagedPath::temp_directory_path() 
+{
+    ManagedPath mp(fs::temp_directory_path());
+    return mp;
+}
+
 ManagedPath ManagedPath::stem() const
 {
     ManagedPath mp(this->fs::path::stem());

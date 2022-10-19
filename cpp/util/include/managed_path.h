@@ -127,6 +127,14 @@ class ManagedPath : public fs::path
 	*/
     ManagedPath filename() const;
 
+	/*
+	Get a OS-specific temporary directory. Same functionality
+	as std::filesystem::temp_directory_path.
+
+	Returns: ManagedPath object representing the temp dir.
+	*/
+	static ManagedPath temp_directory_path();
+
     /*
 	Get the stem component of the current object.
 	Same functionality as the std::filesystem::path::stem
