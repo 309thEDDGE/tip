@@ -141,6 +141,33 @@ cmake .. -GNinja
 ninja install 
 ```
 
+## Offline Builds (not recommended)
+
+* Dependencies will provided by the developer in a directory specified by the configure-time flag `USE_DEPS_DIR`
+* `USE_DEPS_DIR` contains the following subdirectories:
+	- arrow
+	- yaml-cpp 
+	- googletest
+	- spdlog-1.8.2
+	- tins
+	- npcap (Windows only)
+* Fine structure is determined from reading `cmake/CMake_linux_depsdir.txt|CMake_windows_depsdir.txt`
+* If git isn't installed or if tip isn't tracked by git you can manually specify the version at configure time using `-DCI_COMMIT_TAG=<CI_COMMIT_TAG>` or `-DCI_COMMIT_SHORT_SHA=<CI_COMMIT_SHORT_SHA>` or if you are not using a git tag or hash use `-DUSER_VERSION=<user specified>`
+* Executables are placed in `tip/bin`
+
+## Build Options
+
+See CMakeLists.txt for more details. Options are passed to CMake with the `-D<option>=<value>` pattern. Some options require values (an argument must be passed) and others can be used as switches (without arguments). 
+
+* `USE_DEPS_DIR=<value>`: Specify a directory in which dependencies may be found. Used to indicate an offline build. Generally, all dependencies will be searched in the specified directory. See cmake/CMake_windows_depsdir.cmake or cmake/CMake_linux_depsdir.cmake for variables that must be configured to identify header and source locations and library names. 
+* `USER_INSTALL_DIR=<value>`: Specify binary installation directory. Defaults confine installation artifacts to conda environments for conda builds, typical PATH locations for native linux and `<tip root directory>/bin` for offline builds.
+* Compilation-time configuration of version:
+  - Determined automatically from git if git is present and TIP source resides within a git repo. No user inputs required.
+  - `CI_COMMIT_TAG=<value>`: Manually specify the commit tag when it can't be obtained automatically from git
+  - `CI_COMMIT_SHORT_SHA=<value>`: Alternatively specify the commit short SHA when it can't be obtained automatically from git
+  - `USER_VERSION=<value>`: Set the TIP display version if it can't be obtained by git or the tag/hash from git ought not be used
+* `USE_NEWARROW`: Force use of compile-time macro `NEWARROW`. This is generally configured automically for native linux and conda builds and is required for new versions of arrow. Causes source code to utilize new-style arrow-cpp library calls, which is relevant for arrow >~0.17. 
+
 # Conda Build
 
 Install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)
@@ -193,33 +220,6 @@ compiler flags for code coverage. Run the tests within the build directory to ge
 ./cpp/tests/tests
 gcovr -r ../. --exclude-unreachable-branches --exclude-throw-branches --html-details ./overall-coverage.html .
 ```
-
-## Offline Builds (not recommended)
-
-* Dependencies will provided by the developer in a directory specified by the configure-time flag `USE_DEPS_DIR`
-* `USE_DEPS_DIR` contains the following subdirectories:
-	- arrow
-	- yaml-cpp 
-	- googletest
-	- spdlog-1.8.2
-	- tins
-	- npcap (Windows only)
-* Fine structure is determined from reading `cmake/CMake_linux_depsdir.txt|CMake_windows_depsdir.txt`
-* If git isn't installed or if tip isn't tracked by git you can manually specify the version at configure time using `-DCI_COMMIT_TAG=<CI_COMMIT_TAG>` or `-DCI_COMMIT_SHORT_SHA=<CI_COMMIT_SHORT_SHA>` or if you are not using a git tag or hash use `-DUSER_VERSION=<user specified>`
-* Executables are placed in `tip/bin`
-
-## Build Options
-
-See CMakeLists.txt for more details. Options are passed to CMake with the `-D<option>=<value>` pattern. Some options require values (an argument must be passed) and others can be used as switches (without arguments). 
-
-* `USE_DEPS_DIR=<value>`: Specify a directory in which dependencies may be found. Used to indicate an offline build. Generally, all dependencies will be searched in the specified directory. See cmake/CMake_windows_depsdir.cmake or cmake/CMake_linux_depsdir.cmake for variables that must be configured to identify header and source locations and library names. 
-* `USER_INSTALL_DIR=<value>`: Specify binary installation directory. Defaults confine installation artifacts to conda environments for conda builds, typical PATH locations for native linux and `<tip root directory>/bin` for offline builds.
-* Compilation-time configuration of version:
-  - Determined automatically from git if git is present and TIP source resides within a git repo. No user inputs required.
-  - `CI_COMMIT_TAG=<value>`: Manually specify the commit tag when it can't be obtained automatically from git
-  - `CI_COMMIT_SHORT_SHA=<value>`: Alternatively specify the commit short SHA when it can't be obtained automatically from git
-  - `USER_VERSION=<value>`: Set the TIP display version if it can't be obtained by git or the tag/hash from git ought not be used
-* `USE_NEWARROW`: Force use of compile-time macro `NEWARROW`. This is generally configured automically for native linux and conda builds and is required for new versions of arrow. Causes source code to utilize new-style arrow-cpp library calls, which is relevant for arrow >~0.17. 
 
 # Code Convention
 Attempt to follow the Google C++ Style Guide which can be found at google.github.io/styleguide/cppguide.html. All source code (`*.h`, `*.cpp`) in `tip/cpp` shall be formatted with `clang-format` from the root directory and configured by the `.clang-format` file. 
