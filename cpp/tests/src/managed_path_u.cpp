@@ -623,6 +623,15 @@ TEST(ManagedPathTest, GetFileSizeNonFile)
     EXPECT_TRUE(std::filesystem::remove(std::filesystem::path(test_fname)));
 }
 
+TEST(ManagedPathTest, TempDirectoryPath)
+{
+#ifdef __linux__
+    ManagedPath expected{"/", "tmp"};
+    ManagedPath temp = ManagedPath::temp_directory_path();
+    EXPECT_EQ(expected.RawString(), temp.RawString());
+#endif
+}
+
 TEST(ManagedPathTest, ListDirectoryEntriesDirNotExist)
 {
     // Create object representative of dir that does not exist.

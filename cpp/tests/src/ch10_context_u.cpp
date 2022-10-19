@@ -598,13 +598,26 @@ TEST(Ch10ContextTest, CheckConfigurationPathsRequired)
 TEST(Ch10ContextTest, InitializeAndCloseFileWriters)
 {
     Ch10Context ctx(0);
+    ManagedPath temp = ManagedPath::temp_directory_path();
+    ManagedPath parsed1553 = temp / "parsed1553_test.parquet";
+    ManagedPath parsedvid = temp / "parsedvideo_test.parquet";
+    ManagedPath parsedeth = temp / "parsedeth_test.parquet";
+    ManagedPath parsed429 = temp / "parsed429_test.parquet";
     std::map<Ch10PacketType, ManagedPath> enabled_paths{
-        {Ch10PacketType::MILSTD1553_F1, ManagedPath{"..", "parsed1553_test.parquet"}},
-        {Ch10PacketType::VIDEO_DATA_F0, ManagedPath{"..", "parsedvideo_test.parquet"}},
-        {Ch10PacketType::ETHERNET_DATA_F0, ManagedPath{"..", "parsedeth_test.parquet"}},
-        {Ch10PacketType::ARINC429_F0, ManagedPath{"..", "parsed429_test.parquet"}},
+        {Ch10PacketType::MILSTD1553_F1, parsed1553},
+        {Ch10PacketType::VIDEO_DATA_F0, parsedvid},
+        {Ch10PacketType::ETHERNET_DATA_F0, parsedeth},
+        {Ch10PacketType::ARINC429_F0, parsed429},
     };
     ASSERT_TRUE(ctx.InitializeFileWriters(enabled_paths));
+
+    // CloseFileWriters automatically deletes files to whichi
+    // row groups are not written. The lines below are
+    // redundant.
+    ASSERT_TRUE(parsed1553.remove());
+    ASSERT_TRUE(parsedvid.remove());
+    ASSERT_TRUE(parsedeth.remove());
+    ASSERT_TRUE(parsed429.remove());
 
     ctx.CloseFileWriters();
 }
