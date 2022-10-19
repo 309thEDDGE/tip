@@ -611,14 +611,8 @@ TEST(Ch10ContextTest, InitializeAndCloseFileWriters)
     };
     ASSERT_TRUE(ctx.InitializeFileWriters(enabled_paths));
 
-    // CloseFileWriters automatically deletes files to whichi
-    // row groups are not written. The lines below are
-    // redundant.
-    ASSERT_TRUE(parsed1553.remove());
-    ASSERT_TRUE(parsedvid.remove());
-    ASSERT_TRUE(parsedeth.remove());
-    ASSERT_TRUE(parsed429.remove());
-
+    // CloseFileWriters automatically deletes files to which
+    // row groups are not written. 
     ctx.CloseFileWriters();
 }
 
