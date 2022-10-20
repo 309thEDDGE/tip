@@ -176,10 +176,25 @@ packaged for Windows and Linux. After conda is installed,
 create the development environment. If the environment name already
 exists you will want to update the environment instead.
 
-Note for Windows users: The `Visual Studio 2017 C++ x86/64 Build Tools`
-are required to build native C++ using Conda packages. The best way to
-obtain this tool set (currently) is to download VS 2022 Community and
-enable only that toolset, which includes required components `C++/CLI support for v141 build tools (14.16)` and `MSVC v141 - VS 2017 C++ x64/x86 build tools (v14.16)`. Documentation in [conda-forge.org](https://conda-forge.org/docs/maintainer/knowledge_base.html#particularities-on-windows) indicates that this MSVC version is only appropriate for Python version 3.5-3.7. However, this version was confirmed to be compatible with Python 3.9.
+## Note for Windows Users
+
+The `Visual Studio 2017 C++ x86/64 Build Tools`
+or a collection of tools which it comprises are required to build native C++ using Conda packages. The best way to obtain this tool set (currently) is to download VS 2022 Community and
+enable required components:
+
+* C++/CLI support for v141 build tools (14.16)
+* MSVC v141 - VS 2017 C++ x64/x86 build tools (v14.16)
+* C++ CMake tools for Windows
+* Windows 10 SDK (10.0.18362.0) (*Exact version may not be necessary.*)
+ 
+Documentation in [conda-forge.org](https://conda-forge.org/docs/maintainer/knowledge_base.html#particularities-on-windows) indicates that this MSVC version is only appropriate for Python version 3.5-3.7. However, this version was confirmed to be compatible with Python 3.9.
+
+In order to build with the proper tool chain and reference the correct runtime, environment variables must be set in the command prompt or powershell in which the Conda environment is activated (see below). The easiest way to configure environment variables for both the Conda development environment and Windows C++ tool chain is
+
+1. Open the `x64 Native Tools Command Prompt for VS 2022` (or use the powershell version)
+2. Execute the `activate.bat` script in `<(mini)conda/installation/dir>/condabin/`, then follow the remaining steps to create, activate the dev environment, and finally build the project
+
+## Create Conda Environment
 
 Create the environment
 ```shell
@@ -195,7 +210,9 @@ conda activate tip-dev
 # source activate tip-dev
 ```
 
-Now create a build directory and configure, then build the project
+## Build in Conda Environment
+
+Create a build directory and configure, then build the project
 ```shell
 mkdir build
 cd build
