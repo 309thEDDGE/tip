@@ -1,0 +1,17 @@
+name: tip-dev
+channels:
+ - conda-forge
+dependencies:
+ - cxx-compiler
+ - make
+ - cmake
+ - ninja
+ - pkgconfig
+ - libpcap
+ - arrow-cpp=4.0.1
+ - spdlog
+ - yaml-cpp
+ - gmock
+ - gtest
+ - libtins
+ - gcovr
