@@ -127,6 +127,12 @@ if(NOT EXISTS "${linux_config_include_file}")
     message(FATAL_ERROR "CMake_linux_config.cmake not found in cmake/")
 endif()
 
+file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMake_darwin_config.cmake" darwin_config_include_file)
+if(NOT EXISTS "${darwin_config_include_file}")
+    message(FATAL_ERROR "CMake_darwin_config.cmake not found in cmake/")
+endif()
+
+
 #########################################################
 #                      System Specific
 #########################################################
@@ -137,6 +143,8 @@ if("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
     include("${win_config_include_file}")    
 elseif("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
     include("${linux_config_include_file}")    
+elseif("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
+    include("${darwin_config_include_file}")    
 endif()
 
 if(DEFINED CONDA_PREFIX)
