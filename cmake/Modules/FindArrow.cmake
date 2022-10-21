@@ -9,9 +9,12 @@ find_package(Brotlidec REQUIRED)
 find_package(Brotlienc REQUIRED)
 
 find_package(Doubleconversion REQUIRED)
-find_package(Flatbuffers QUIET)
-find_package(Glog QUIET)
-find_package(Jemalloc QUIET)
+find_package(Flatbuffers REQUIRED)
+
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+    find_package(Glog QUIET)
+    find_package(Jemalloc QUIET)
+endif()
 
 find_package(Boostfilesystem REQUIRED)
 find_package(Boostregex REQUIRED)
