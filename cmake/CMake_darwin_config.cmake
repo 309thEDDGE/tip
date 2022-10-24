@@ -14,7 +14,9 @@ add_definitions(
 )
 
 message(STATUS "Compiler ID: ${CMAKE_CXX_COMPILER_ID}")
-if(CMAKE_CXX_COMPILER_ID STREQUAL "CLang")
+# Use MATCHES (regex) because CMAKE_CXX_COMPILER_ID 
+# includes version, "Clang 14.xxx"
+if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang.*")
 
     if("${CMAKE_BUILD_TYPE}" STREQUAL Profile)
         message(FATAL_ERROR "CMAKE_BUILD_TYPE: Profile not supported for ${CMAKE_CXX_COMPILER_ID}")
