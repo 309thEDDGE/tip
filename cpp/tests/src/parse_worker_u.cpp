@@ -18,10 +18,11 @@ class ParseWorkerTest : public ::testing::Test
         worker_cfg_.last_position_ = 0;
         worker_cfg_.final_worker_ = false;
         worker_cfg_.append_mode_ = false;
+        ManagedPath temp_bad = ManagedPath::temp_directory_path() / "blah1" / "blah2";
         worker_cfg_.output_file_paths_[Ch10PacketType::MILSTD1553_F1] =
-            ManagedPath(std::string("/data/1553"));
+            temp_bad / "1553";
         worker_cfg_.output_file_paths_[Ch10PacketType::VIDEO_DATA_F0] =
-            ManagedPath(std::string("/data/video"));
+            temp_bad / "video";
 
         // This map must have at least all of the types defined by default
         // in Ch10Context::CreateDefaultPacketTypeConfig with the exception
