@@ -24,7 +24,7 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     fflush(stdout);
     if (!cli_group.Parse(argc, argv, nickname, cli))
     {
-        printf("%s", cli_group.MakeHelpString().c_str());
+        // printf("%s", cli_group.MakeHelpString().c_str());
         return 0;
     }
     fflush(stdout);

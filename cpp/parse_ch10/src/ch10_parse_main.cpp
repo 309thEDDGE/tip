@@ -20,7 +20,7 @@ int Ch10ParseMain(int argc, char** argv)
     std::shared_ptr<CLIGroupMember> cli;
     if (!cli_group.Parse(argc, argv, nickname, cli))
     {
-        printf("%s", cli_group.MakeHelpString().c_str());
+        // printf("%s", cli_group.MakeHelpString().c_str());
         return 0;
     }
 
