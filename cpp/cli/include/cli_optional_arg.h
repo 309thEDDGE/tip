@@ -38,8 +38,8 @@ class CLIOptionalArgBase : public CLIArg
             label_config_rgx_("^(--[a-zA-Z0-9/_]+)$"), 
             short_label_config_rgx_("^(-[a-zA-Z0-9]{1})$"),
             // label_user_rgx_("(^|.*\\s)" + label + "\\s([\\w:.\\\\/-]+)(\\s.*|$)"),
-            label_user_rgx_("(^|.*\\s)" + label + "\\s([\\w:.\\\\/-]+)"),
-            short_label_user_rgx_("(^|\\s)" + short_label + "\\s([\\w:.\\\\/-]+)")
+            label_user_rgx_("(^|.*\\s)" + label + "\\s([\\w:.\\\\/\\-\\(\\)\\$\\#]+)"),
+            short_label_user_rgx_("(^|\\s)" + short_label + "\\s([\\w:.\\\\/\\-\\(\\)\\$\\#]+)")
             // short_label_user_rgx_("(^|.*\\s)" + short_label + "\\s([\\w:.\\\\/-]+)(\\s.*|$)")
         {
             arg_type_ = CLIArgType::OPT;

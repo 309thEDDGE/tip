@@ -117,3 +117,16 @@ TEST_F(CLIPositionalArgTest, GetPrintName)
     std::string expected = "LIBPATH";
     ASSERT_EQ(expected, cli.GetPrintName());
 }
+
+// See test of same name from CLIOptionalArgTest suite
+TEST_F(CLIPositionalArgTest, ParseAllowSpecialCharacters)
+{
+    // Add #, (, ), $
+    std::string output = "";
+    CLIPositionalArg cli(temp_label_, temp_help_str_, output);
+    user_str_ = "D:\\data$\\located(at)\\here.#txt";  
+    ASSERT_TRUE(cli.Parse(user_str_));
+    EXPECT_TRUE(cli.IsPresent());
+    EXPECT_TRUE(cli.IsValid());
+    EXPECT_EQ(user_str_, output);
+}
