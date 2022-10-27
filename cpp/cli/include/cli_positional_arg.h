@@ -38,7 +38,7 @@ CLIPositionalArg<ArgDataType>::CLIPositionalArg(std::string label, std::string h
     CLIArg(label, help_str, ""), parsed_value_(output)
 { 
     arg_type_ = CLIArgType::POS;
-    user_rgx_ = "^([a-zA-Z0-9\\\\\\/_:\\. -]+)$";
+    user_rgx_ = "^([a-zA-Z0-9\\\\\\/_:\\. \\-\\(\\)\\$\\#]+)$";
 }
 
 template<typename ArgDataType>
@@ -50,8 +50,8 @@ bool CLIPositionalArg<ArgDataType>::Parse(const std::string& input)
 {
     if(!ValidateUser(input))
     {
-        // printf("Input \"%s\" contains character(s) which are not valid for "
-        //     "positional argument %s\n", input.c_str(), GetUsageRepr().c_str());
+        printf("Input \"%s\" contains character(s) which are not valid for "
+            "positional argument %s\n", input.c_str(), GetUsageRepr().c_str());
         return false;
     }
     arg_present_ = true;

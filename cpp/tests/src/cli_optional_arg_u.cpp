@@ -772,3 +772,21 @@ TEST_F(CLIOptionalArgTest, MapGetDefaultString)
     std::string expected = "default: [(A, 10), (SEE, 17), (bee, 2)]";
     ASSERT_EQ(expected, cli->GetDefaultString());
 }
+
+// See test of same name from CLIPositionalArgTest suite
+TEST_F(CLIOptionalArgTest, ParseAllowSpecialCharacters)
+{
+    // Add #, (, ), $
+    std::string output = "";
+    std::string expected = "my(value)_#is$good-one";
+    user_str_ = "-t " + expected;
+    temp_label_ = "--test_opt";  
+    temp_short_label_ = "-t";  
+    std::string default_str = "none";
+    CLIOptionalArg<std::string> cli(temp_label_, temp_short_label_, temp_help_str_, 
+        default_str, output);
+    ASSERT_TRUE(cli.Parse(user_str_));
+    EXPECT_TRUE(cli.IsPresent());
+    EXPECT_TRUE(cli.IsValid());
+    EXPECT_EQ(expected, output);
+}
