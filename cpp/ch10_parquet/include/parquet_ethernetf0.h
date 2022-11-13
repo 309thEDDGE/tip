@@ -45,6 +45,13 @@ class ParquetEthernetF0
     std::vector<int32_t> dst_port_;  // original type is uint16_t
     std::vector<int32_t> src_port_;  // original type is uint16_t
 
+      // Static functions which return static const data 
+      // remove the need to declare exports when building
+      // dynamic libraries in Windows. 
+      static int GetRowGroupRowCount();
+      static int GetRowGroupBufferCount();
+      static int GetDataPayloadListElementCount();
+
     ParquetEthernetF0(ParquetContext* pq_ctx);
     bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
     void Append(const uint64_t& time_stamp, const uint32_t& chanid,

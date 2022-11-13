@@ -31,6 +31,12 @@ class ParquetTDPF1
 
     std::string outfile_;
 
+      // Static functions which return static const data 
+      // remove the need to declare exports when building
+      // dynamic libraries in Windows. 
+      static int GetRowGroupRowCount();
+      static int GetRowGroupBufferCount();
+
     ParquetTDPF1(ParquetContext* pq_ctx);
     virtual bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
     virtual void Append(const uint64_t& time_stamp, const TDF1CSDWFmt& tdp);

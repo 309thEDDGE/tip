@@ -10,6 +10,17 @@ ParseManager::~ParseManager()
 const std::string ParseManager::metadata_filename_ = "_metadata.yaml";
 const uint32_t ParseManager::append_chunk_size_bytes_ = 100000000;
 
+uint32_t ParseManager::GetAppendChunkSizeBytes()
+{
+    return append_chunk_size_bytes_;
+}
+
+std::string ParseManager::GetMetadataFilename()
+{
+    return metadata_filename_;
+}
+
+
 bool Parse(ManagedPath ch10_path, ManagedPath out_dir, const ParserConfigParams& config)
 {
     ParseManager pm;

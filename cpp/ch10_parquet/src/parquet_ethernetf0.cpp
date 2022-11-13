@@ -13,6 +13,21 @@ ParquetEthernetF0::ParquetEthernetF0(ParquetContext* pq_ctx) : pq_ctx_(pq_ctx),
 {
 }
 
+int ParquetEthernetF0::GetRowGroupRowCount()
+{
+    return DEFAULT_ROW_GROUP_COUNT;
+}
+
+int ParquetEthernetF0::GetRowGroupBufferCount()
+{
+    return DEFAULT_BUFFER_SIZE_MULTIPLIER;
+}
+
+int ParquetEthernetF0::GetDataPayloadListElementCount()
+{
+    return PAYLOAD_LIST_COUNT;
+}
+
 bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_id)
 {
     thread_id_ = thread_id;

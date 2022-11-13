@@ -99,8 +99,8 @@ class ParquetVideoDataF0Test : public ::testing::Test
 
     void ValidateInitializeResize()
     {
-        size_t expected_size = ParquetVideoDataF0::DEFAULT_ROW_GROUP_COUNT_VIDEO * 
-            ParquetVideoDataF0::DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO;
+        size_t expected_size = ParquetVideoDataF0::GetRowGroupRowCount() * 
+            ParquetVideoDataF0::GetRowGroupBufferCount();
         EXPECT_EQ(expected_size, pq_video_.time_.size());
         EXPECT_EQ(expected_size, pq_video_.doy_.size());
         EXPECT_EQ(expected_size, pq_video_.ET_.size());
@@ -136,8 +136,8 @@ TEST_F(ParquetVideoDataF0Test, Initialize)
 
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf_.string(), truncate_)).WillOnce(Return(true));
 
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq_video_.DEFAULT_ROW_GROUP_COUNT_VIDEO, 
-        pq_video_.DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO, true, "VideoDataF0")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq_video_.GetRowGroupRowCount(), 
+        pq_video_.GetRowGroupBufferCount(), true, "VideoDataF0")).WillOnce(Return(true));
 
     EXPECT_CALL(mock_pq_ctx_, EnableEmptyFileDeletion(outf_.string())).Times(Exactly(1));
 
@@ -155,8 +155,8 @@ TEST_F(ParquetVideoDataF0Test, InitializeFalse)
 
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf_.string(), truncate_)).WillOnce(Return(true));
 
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq_video_.DEFAULT_ROW_GROUP_COUNT_VIDEO, 
-        pq_video_.DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO, true, "VideoDataF0")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq_video_.GetRowGroupRowCount(), 
+        pq_video_.GetRowGroupBufferCount(), true, "VideoDataF0")).WillOnce(Return(true));
 
     EXPECT_CALL(mock_pq_ctx_, EnableEmptyFileDeletion(outf_.string())).Times(Exactly(1));
 
@@ -185,8 +185,8 @@ TEST_F(ParquetVideoDataF0Test, InitializeSetupRowCountTrackingFail)
 
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf_.string(), truncate_)).WillOnce(Return(true));
 
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq_video_.DEFAULT_ROW_GROUP_COUNT_VIDEO, 
-        pq_video_.DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO, true, "VideoDataF0")).WillOnce(Return(false));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq_video_.GetRowGroupRowCount(), 
+        pq_video_.GetRowGroupBufferCount(), true, "VideoDataF0")).WillOnce(Return(false));
 
     ASSERT_FALSE(pq_video_.Initialize(outf_, thread_id_));
     EXPECT_EQ(thread_id_, pq_video_.thread_id_);
@@ -197,8 +197,8 @@ TEST_F(ParquetVideoDataF0Test, InitializeSetupRowCountTrackingFail)
 TEST_F(ParquetVideoDataF0Test, AppendIncrementAndWriteFalse)
 {
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf_.string(), truncate_)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq_video_.DEFAULT_ROW_GROUP_COUNT_VIDEO, 
-        pq_video_.DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO, true, "VideoDataF0")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq_video_.GetRowGroupRowCount(), 
+        pq_video_.GetRowGroupBufferCount(), true, "VideoDataF0")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id_)).WillOnce(Return(false));
     ASSERT_TRUE(pq_video_.Initialize(outf_, thread_id_));
     pq_video_.Append(time_stamp_, doy_, channel_id_, vid_flags_, video_data_ptr_);
@@ -209,8 +209,8 @@ TEST_F(ParquetVideoDataF0Test, AppendIncrementAndWriteFalse)
 TEST_F(ParquetVideoDataF0Test, AppendIncrementAndWriteTrue)
 {
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf_.string(), truncate_)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq_video_.DEFAULT_ROW_GROUP_COUNT_VIDEO, 
-        pq_video_.DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO, true, "VideoDataF0")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq_video_.GetRowGroupRowCount(), 
+        pq_video_.GetRowGroupBufferCount(), true, "VideoDataF0")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id_)).WillOnce(Return(true));
     ASSERT_TRUE(pq_video_.Initialize(outf_, thread_id_));
     pq_video_.Append(time_stamp_, doy_, channel_id_, vid_flags_, video_data_ptr_);

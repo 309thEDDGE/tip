@@ -10,6 +10,11 @@ ICDElement::~ICDElement()
 {
 }
 
+int ICDElement::GetFillElementCount() 
+{
+    return kFillElementCount;
+}
+
 ICDElement::ICDElement(const ICDElement& C)
 {
     msg_name_ = C.msg_name_;
