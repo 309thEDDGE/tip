@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
     if (!cli_group.Parse(argc, argv, nickname, cli) || help_requested)
     {
         printf("%s", cli_group.MakeHelpString().c_str());
-        return -1;
+        return 0;
     }
 
     std::ifstream ifile1;
