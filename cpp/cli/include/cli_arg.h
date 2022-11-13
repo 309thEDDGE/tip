@@ -87,7 +87,6 @@ class CLIArg : public std::enable_shared_from_this<CLIArg>
         CLIArg(const std::string& label, const std::string& help_str, 
             const std::string& the_default);
         virtual ~CLIArg() {}
-        // static const std::string whitespace_code;
         bool IsValid() const { return arg_valid_; }
         bool IsPresent() const { return arg_present_; }
         CLIArgType ArgType() const { return arg_type_; }

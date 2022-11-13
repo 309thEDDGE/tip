@@ -23,7 +23,6 @@ class ContainerArg
     public:
         ContainerArg() : pt_() {}
         virtual ~ContainerArg() {}
-        // static const std::string whitespace_code;
 
         /*
         Parse user input and place in container.

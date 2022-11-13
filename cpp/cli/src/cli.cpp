@@ -6,7 +6,10 @@ CLI::CLI(const std::string& prog_name, const std::string& description) : program
 {
     size_t col_count, row_count; 
     if(!GetTerminalSize(row_count, col_count))
+    {
         max_width_ = 100;
+        printf("CLI(): Failed to get terminal size\n");
+    }
     else
         max_width_ = col_count;
 }

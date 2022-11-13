@@ -1,9 +1,5 @@
 #include "cli_arg.h"
 
-// const size_t CLIArg::minimum_help_string_char_width_ = 40;
-// const std::string CLIArg::whitespace_code = ContainerArg::whitespace_code;
-// const std::string CLIArg::whitespace_code = "--..--";
-
 CLIArg::CLIArg(const std::string& label, const std::string& help_str, 
     const std::string& the_default) : label_(label), 
     arg_type_(CLIArgType::BASE), pt_(), default_(the_default), arg_valid_(false),
