@@ -9,9 +9,8 @@ if("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
 		TINS_STATIC
 		NEWARROW
       )
-
+   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
    link_directories("${CONDA_PREFIX}\\Library\\lib")
-
 elseif(("${CMAKE_SYSTEM_NAME}" MATCHES "Linux") 
    OR ("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin"))
    add_definitions(

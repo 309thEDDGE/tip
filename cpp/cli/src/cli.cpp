@@ -178,7 +178,7 @@ std::string CLI::ConcatenateUserArgs(int argc, char* argv[], const ArgsVec& cli_
         curr_arg = user_args.at(i);
         if(encode)
         {
-            curr_arg = pt.Replace(curr_arg, " ", CLIArg::whitespace_code);
+            curr_arg = pt.Replace(curr_arg, " ", CLIConf::GetWhitespaceCode());
             encode = false;
         }
         else

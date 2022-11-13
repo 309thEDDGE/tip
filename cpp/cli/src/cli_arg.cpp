@@ -1,8 +1,8 @@
 #include "cli_arg.h"
 
-const size_t CLIArg::minimum_help_string_char_width_ = 40;
+// const size_t CLIArg::minimum_help_string_char_width_ = 40;
 // const std::string CLIArg::whitespace_code = ContainerArg::whitespace_code;
-const std::string CLIArg::whitespace_code = "--..--";
+// const std::string CLIArg::whitespace_code = "--..--";
 
 CLIArg::CLIArg(const std::string& label, const std::string& help_str, 
     const std::string& the_default) : label_(label), 
@@ -15,9 +15,9 @@ bool CLIArg::FormatString(const std::string& help_str, size_t max_char_width,
     const size_t& indent, std::string& fmt_str, std::string sep)
 {
 
-    if (max_char_width < minimum_help_string_char_width_)
+    if (max_char_width < CLIConf::GetMinHelpStrCharWidth())
     {
-        printf("CLIArg::FormatHelpString: Require max_char_width >= %zu\n", minimum_help_string_char_width_);
+        printf("CLIArg::FormatHelpString: Require max_char_width >= %zu\n", CLIConf::GetMinHelpStrCharWidth());
         return false;
     }
 
