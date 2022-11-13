@@ -143,25 +143,25 @@ class ParquetEthernetF0Test : public ::testing::Test
 
     void ValidateInitializeResize()
     {
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.time_stamp_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.channel_id_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT * pq_eth_.GetDataPayloadListElementCount(), pq_eth_.payload_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.payload_size_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.dst_mac_addr_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.src_mac_addr_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.ethertype_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.frame_format_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.dsap_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.ssap_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.snd_seq_number_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.rcv_seq_number_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.dst_ip_addr_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.src_ip_addr_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.id_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.protocol_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.offset_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.dst_port_.size());
-        EXPECT_EQ(pq_eth_.MAX_TEMP_ELEMENT_COUNT, pq_eth_.src_port_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.time_stamp_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.channel_id_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount() * pq_eth_.GetDataPayloadListElementCount(), pq_eth_.payload_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.payload_size_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.dst_mac_addr_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.src_mac_addr_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.ethertype_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.frame_format_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.dsap_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.ssap_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.snd_seq_number_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.rcv_seq_number_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.dst_ip_addr_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.src_ip_addr_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.id_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.protocol_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.offset_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.dst_port_.size());
+        EXPECT_EQ(ParquetEthernetF0::GetRowGroupRowCount() * ParquetEthernetF0::GetRowGroupBufferCount(), pq_eth_.src_port_.size());
     }
 
     void ValidateAppendedData()
