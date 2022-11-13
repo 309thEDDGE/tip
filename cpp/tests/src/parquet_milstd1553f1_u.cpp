@@ -85,7 +85,7 @@ class ParquetMilStd1553F1Test : public ::testing::Test
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "gap1", 0)).InSequence(seq).WillOnce(Return(true));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "gap2", 0)).InSequence(seq).WillOnce(Return(true));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "mode", 0)).InSequence(seq).WillOnce(Return(true));
-        EXPECT_CALL(mock_pq_ctx_, AddField(_, "data", ParquetMilStd1553F1::DATA_PAYLOAD_LIST_COUNT)).InSequence(seq).WillOnce(Return(true));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "data", ParquetMilStd1553F1::GetDataPayloadListElementCount())).InSequence(seq).WillOnce(Return(true));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "txcommwrd", 0)).InSequence(seq).WillOnce(Return(true));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "rxcommwrd", 0)).InSequence(seq).WillOnce(Return(true));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "txrtaddr", 0)).InSequence(seq).WillOnce(Return(true));
@@ -198,7 +198,7 @@ class ParquetMilStd1553F1Test : public ::testing::Test
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "gap1", 0)).InSequence(seq).WillOnce(Return(false));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "gap2", 0)).InSequence(seq).WillOnce(Return(false));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "mode", 0)).InSequence(seq).WillOnce(Return(false));
-        EXPECT_CALL(mock_pq_ctx_, AddField(_, "data", ParquetMilStd1553F1::DATA_PAYLOAD_LIST_COUNT)).InSequence(seq).WillOnce(Return(false));
+        EXPECT_CALL(mock_pq_ctx_, AddField(_, "data", ParquetMilStd1553F1::GetDataPayloadListElementCount())).InSequence(seq).WillOnce(Return(false));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "txcommwrd", 0)).InSequence(seq).WillOnce(Return(false));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "rxcommwrd", 0)).InSequence(seq).WillOnce(Return(false));
         EXPECT_CALL(mock_pq_ctx_, AddField(_, "txrtaddr", 0)).InSequence(seq).WillOnce(Return(false));
@@ -294,8 +294,8 @@ class ParquetMilStd1553F1Test : public ::testing::Test
 
     void ValidateInitializeResize()
     {
-        size_t expected_size = ParquetMilStd1553F1::DEFAULT_ROW_GROUP_COUNT * 
-            ParquetMilStd1553F1::DEFAULT_BUFFER_SIZE_MULTIPLIER;
+        size_t expected_size = ParquetMilStd1553F1::GetRowGroupRowCount() * 
+            ParquetMilStd1553F1::GetRowGroupBufferCount();
         EXPECT_EQ(expected_size, pq1553_.time_stamp_.size());
         EXPECT_EQ(expected_size, pq1553_.doy_.size());
         EXPECT_EQ(expected_size, pq1553_.ttb_.size());
@@ -309,7 +309,7 @@ class ParquetMilStd1553F1Test : public ::testing::Test
         EXPECT_EQ(expected_size, pq1553_.gap1_.size());
         EXPECT_EQ(expected_size, pq1553_.gap2_.size());
         EXPECT_EQ(expected_size, pq1553_.mode_code_.size());
-        EXPECT_EQ(expected_size * ParquetMilStd1553F1::DATA_PAYLOAD_LIST_COUNT, pq1553_.data_.size());
+        EXPECT_EQ(expected_size * ParquetMilStd1553F1::GetDataPayloadListElementCount(), pq1553_.data_.size());
         EXPECT_EQ(expected_size, pq1553_.comm_word1_.size());
         EXPECT_EQ(expected_size, pq1553_.comm_word2_.size());
         EXPECT_EQ(expected_size, pq1553_.rtaddr1_.size());
@@ -330,7 +330,7 @@ class ParquetMilStd1553F1Test : public ::testing::Test
         const std::vector<int32_t>& appended_data, int8_t calcwrdcnt, 
         size_t offset)
     {
-        size_t total_offset = offset * ParquetMilStd1553F1::DATA_PAYLOAD_LIST_COUNT;
+        size_t total_offset = offset * ParquetMilStd1553F1::GetDataPayloadListElementCount();
         for(int8_t i = 0; i < calcwrdcnt; i++)
         {
             EXPECT_EQ(input_data.at(i), appended_data.at(total_offset + i));
@@ -463,8 +463,8 @@ TEST_F(ParquetMilStd1553F1Test, Initialize)
     ValidateInitializeSetMemoryLocation();
 
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
-        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
+        pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, EnableEmptyFileDeletion(outf.string())).Times(Exactly(1));
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
     EXPECT_EQ(thread_id, pq1553_.thread_id_);
@@ -490,8 +490,8 @@ TEST_F(ParquetMilStd1553F1Test, InitializeSetupRowCountTrackingFail)
     ValidateInitializeSetMemoryLocation();
 
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
-        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(false));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
+        pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(false));
     ASSERT_FALSE(pq1553_.Initialize(outf, thread_id));
     EXPECT_EQ(thread_id, pq1553_.thread_id_);
 
@@ -504,8 +504,8 @@ TEST_F(ParquetMilStd1553F1Test, InitializeFalse)
     ValidateInitializeSetMemoryLocationFalse();
 
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
-        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
+        pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, EnableEmptyFileDeletion(outf.string())).Times(Exactly(1));
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
     EXPECT_EQ(thread_id, pq1553_.thread_id_);
@@ -528,8 +528,8 @@ TEST_F(ParquetMilStd1553F1Test, AppendRTtoRTModeCodeIncrementAndWriteFalseDoNotZ
     bool truncate = true;
     uint16_t thread_id = 2;
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
-        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
+        pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
@@ -551,12 +551,12 @@ TEST_F(ParquetMilStd1553F1Test, AppendRTtoRTModeCodeIncrementAndWriteTrueZeroDat
     msg.word_count1 = calcwrdcnt;
     msg.word_count2 = calcwrdcnt;
 
-    ManagedPath outf("test.parquet");
-    bool truncate = true;
-    uint16_t thread_id = 2;
+    
+   
+   
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
-        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
+        pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(true));
  
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
@@ -586,8 +586,8 @@ TEST_F(ParquetMilStd1553F1Test, AppendRTtoBCModeCodeIncrementAndWriteFalse)
     bool truncate = true;
     uint16_t thread_id = 2;
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
-        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
+        pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
@@ -614,8 +614,8 @@ TEST_F(ParquetMilStd1553F1Test, AppendBCtoRTModeCodeIncrementAndWriteFalse)
     bool truncate = true;
     uint16_t thread_id = 2;
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
-        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
+        pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
@@ -642,8 +642,8 @@ TEST_F(ParquetMilStd1553F1Test, AppendBCtoRTModeCodeIncrementAndWriteFalseCalcwr
     bool truncate = true;
     uint16_t thread_id = 2;
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
-        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
+        pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
@@ -679,8 +679,8 @@ TEST_F(ParquetMilStd1553F1Test, AppendStatusWord2Null)
     bool truncate = true;
     uint16_t thread_id = 2;
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
-        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
+        pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
@@ -716,8 +716,8 @@ TEST_F(ParquetMilStd1553F1Test, AppendStatusWord1Null)
     bool truncate = true;
     uint16_t thread_id = 2;
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
-        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
+        pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
@@ -761,8 +761,8 @@ TEST_F(ParquetMilStd1553F1Test, AppendStatusWordsNonNull)
     bool truncate = true;
     uint16_t thread_id = 2;
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.DEFAULT_ROW_GROUP_COUNT, 
-        pq1553_.DEFAULT_BUFFER_SIZE_MULTIPLIER, true, "MilStd1553F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
+        pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
     ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));

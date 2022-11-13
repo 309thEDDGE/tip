@@ -3,6 +3,16 @@
 const int ParquetARINC429F0::ARINC429_ROW_GROUP_COUNT = 10000;
 const int ParquetARINC429F0::ARINC429_BUFFER_SIZE_MULTIPLIER = 10;
 
+int ParquetARINC429F0::GetRowGroupRowCount()
+{
+    return ARINC429_ROW_GROUP_COUNT;
+}
+
+int ParquetARINC429F0::GetRowGroupBufferCount()
+{
+    return ARINC429_BUFFER_SIZE_MULTIPLIER;
+}
+
 ParquetARINC429F0::ParquetARINC429F0(ParquetContext* pq_ctx) : pq_ctx_(pq_ctx),
                                             max_temp_element_count_(ARINC429_ROW_GROUP_COUNT * ARINC429_BUFFER_SIZE_MULTIPLIER),
                                             thread_id_(UINT16_MAX)

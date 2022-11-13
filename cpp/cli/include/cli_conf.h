@@ -3,6 +3,10 @@
 
 #include <string>
 
+/*
+CLIConf exists to remove complications that occur when 
+dynamically building libraries in windows. 
+*/
 class CLIConf
 {
     private:

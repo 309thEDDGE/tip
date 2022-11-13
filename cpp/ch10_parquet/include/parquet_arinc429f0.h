@@ -40,6 +40,12 @@ class ParquetARINC429F0
 
     std::string outfile_;
 
+    // Static functions which return static const data 
+    // remove the need to declare exports when building
+    // dynamic libraries in Windows. 
+    static int GetRowGroupRowCount();
+    static int GetRowGroupBufferCount();
+
     ParquetARINC429F0(ParquetContext* pq_ctx);
     bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
     void Append(const uint64_t& time_stamp, uint8_t doy,
