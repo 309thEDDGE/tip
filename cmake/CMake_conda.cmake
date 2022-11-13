@@ -1,4 +1,4 @@
-set(BUILD_SHARED_LIBS OFF)
+set(BUILD_SHARED_LIBS ON)
 
 # NEWARROW is used if the new (~0.17+) version of
 # Arrow is used. Currently the version of arrow supplied by the 

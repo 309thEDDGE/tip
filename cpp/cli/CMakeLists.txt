@@ -30,3 +30,7 @@ set_target_properties(cli
 
 target_link_libraries(cli 
     PRIVATE tiputil yaml-cpp spdlog::spdlog)
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS cli)
+endif()

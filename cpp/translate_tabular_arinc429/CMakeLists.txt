@@ -42,3 +42,7 @@ install(
     TARGETS "${TRANSLATE_429_EXE_NAME}"
     DESTINATION ${out_bin_dir}
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS translate_tabular_arinc429)
+endif()

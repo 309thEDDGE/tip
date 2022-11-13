@@ -24,3 +24,7 @@ target_link_libraries(parquet_context
 target_link_libraries(parquet_context
     PRIVATE spdlog::spdlog
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS parquet_context)
+endif()

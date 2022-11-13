@@ -34,3 +34,8 @@ target_link_libraries(ch10_parquet
 target_link_libraries(ch10_parquet
     PUBLIC parquet_context 
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS ch10_parquet)
+endif()
+

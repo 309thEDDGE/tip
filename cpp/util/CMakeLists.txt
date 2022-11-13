@@ -51,3 +51,7 @@ target_link_libraries(tiputil
 target_link_libraries(tiputil
     PUBLIC sha256
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS tiputil)
+endif()

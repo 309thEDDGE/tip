@@ -37,3 +37,7 @@ install(
     TARGETS pqcompare bincompare
     DESTINATION ${out_bin_dir}
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS parquet_compare)
+endif()

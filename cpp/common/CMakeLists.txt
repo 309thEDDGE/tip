@@ -19,3 +19,7 @@ target_include_directories(common
 set_target_properties(common
     PROPERTIES PUBLIC_HEADER "${headers}"
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS common)
+endif()

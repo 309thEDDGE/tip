@@ -52,3 +52,7 @@ install(
     TARGETS "${CH10_PARSE_EXE_NAME}"
     DESTINATION ${out_bin_dir}
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS parsech10_lib)
+endif()

@@ -43,3 +43,7 @@ set_target_properties(ch10comp
 target_link_libraries(ch10comp
     PRIVATE common yaml-cpp tiputil spdlog::spdlog parquet_context ch10ethernet ch10_parquet
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS ch10comp)
+endif()

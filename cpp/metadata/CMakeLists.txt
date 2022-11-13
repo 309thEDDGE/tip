@@ -27,3 +27,7 @@ set_target_properties(metadata PROPERTIES PUBLIC_HEADER "${headers}")
 target_link_libraries(metadata
     PRIVATE yaml-cpp spdlog::spdlog
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS metadata)
+endif()

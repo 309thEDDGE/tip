@@ -32,3 +32,7 @@ install(
     TARGETS parquet_video_extractor
     DESTINATION ${out_bin_dir}
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS pq_vid_extract)
+endif()

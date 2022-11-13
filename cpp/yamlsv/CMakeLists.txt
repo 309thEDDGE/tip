@@ -30,3 +30,8 @@ install(
     TARGETS validate_yaml
     DESTINATION ${out_bin_dir}
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS yamlsv)
+endif()
+

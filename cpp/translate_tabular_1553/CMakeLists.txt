@@ -39,3 +39,7 @@ install(
     TARGETS "${TRANSLATE_1553_EXE_NAME}"
     DESTINATION ${out_bin_dir}
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS translate_tabular_1553)
+endif()

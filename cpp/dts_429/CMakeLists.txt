@@ -27,3 +27,8 @@ target_link_libraries(dts_429
 target_link_libraries(dts_429
   PUBLIC dts_1553
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS dts_429)
+endif()
+

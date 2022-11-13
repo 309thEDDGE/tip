@@ -27,3 +27,7 @@ set_target_properties(dts_1553
 target_link_libraries(dts_1553
   PRIVATE spdlog::spdlog yaml-cpp tiputil yamlsv 
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS dts_1553)
+endif()

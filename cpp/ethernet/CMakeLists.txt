@@ -25,3 +25,7 @@ target_link_libraries(ch10ethernet
 target_link_libraries(ch10ethernet
     PRIVATE yaml-cpp spdlog::spdlog tiputil 
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS ch10ethernet)
+endif()

@@ -15,3 +15,7 @@ target_include_directories(sha256
 set_target_properties(sha256
     PROPERTIES PUBLIC_HEADER "${headers}"
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS sha256)
+endif()

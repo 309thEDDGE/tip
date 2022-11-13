@@ -27,3 +27,7 @@ set_target_properties(translate_tabular PROPERTIES PUBLIC_HEADER "${headers}")
 target_link_libraries(translate_tabular
     PRIVATE yaml-cpp spdlog::spdlog tiputil yamlsv cli ch10_parquet dts_1553 
 )
+
+if(BUILD_SHARED_LIBS)
+    install(TARGETS translate_tabular)
+endif()
