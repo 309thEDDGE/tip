@@ -8,6 +8,7 @@ if("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
 	add_compile_definitions(
 		TINS_STATIC
 		NEWARROW
+      GTEST_LINKED_AS_SHARED_LIBRARY=1
       )
    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
    link_directories("${CONDA_PREFIX}\\Library\\lib")
@@ -29,7 +30,7 @@ if("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
       message(FATAL_ERROR "Windows Conda build with build type ${CMAKE_BUILD_TYPE} not implemented")
    else()
       if(BUILD_SHARED_LIBS)
-         set(GTEST_LIBRARIES gtest_dll-md gmock_main-md gtest_main-md)
+         set(GTEST_LIBRARIES gtest_dll-md gmock-md gtest_main-md)
       else()
          set(GTEST_LIBRARIES gtest-md gmock_main-md gtest_main-md)
       endif()
