@@ -567,7 +567,7 @@ TEST_F(ParseManagerTest, ConfigureMakeWorkUnitsFail)
         config.ch10_packet_enabled_map_, worker_count)).WillOnce(Return(true));
 
     EXPECT_CALL(pmf, MakeWorkUnits(::testing::Ref(work_units), worker_count, chunk_bytes, 
-        ParseManager::append_chunk_size_bytes_, ch10_file_size, ::testing::Ref(ch10_stream), 
+        ParseManager::GetAppendChunkSizeBytes(), ch10_file_size, ::testing::Ref(ch10_stream), 
         &parser_paths)).WillOnce(Return(false));
 
     ASSERT_FALSE(pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
@@ -599,7 +599,7 @@ TEST_F(ParseManagerTest, ConfigureInitializeFail)
         config.ch10_packet_enabled_map_, worker_count)).WillOnce(Return(true));
 
     EXPECT_CALL(pmf, MakeWorkUnits(::testing::Ref(work_units), worker_count, chunk_bytes, 
-        ParseManager::append_chunk_size_bytes_, ch10_file_size, ::testing::Ref(ch10_stream), 
+        ParseManager::GetAppendChunkSizeBytes(), ch10_file_size, ::testing::Ref(ch10_stream), 
         &parser_paths)).WillOnce(Return(true));
 
     EXPECT_CALL(metadata, Initialize(ch10_file_path, config, ::testing::Ref(parser_paths)))
@@ -634,7 +634,7 @@ TEST_F(ParseManagerTest, ConfigureOpenCh10FileFail)
         config.ch10_packet_enabled_map_, worker_count)).WillOnce(Return(true));
 
     EXPECT_CALL(pmf, MakeWorkUnits(::testing::Ref(work_units), worker_count, chunk_bytes, 
-        ParseManager::append_chunk_size_bytes_, ch10_file_size, ::testing::Ref(ch10_stream), 
+        ParseManager::GetAppendChunkSizeBytes(), ch10_file_size, ::testing::Ref(ch10_stream), 
         &parser_paths)).WillOnce(Return(true));
 
     EXPECT_CALL(metadata, Initialize(ch10_file_path, config, ::testing::Ref(parser_paths)))
@@ -672,7 +672,7 @@ TEST_F(ParseManagerTest, Configure)
         config.ch10_packet_enabled_map_, worker_count)).WillOnce(Return(true));
 
     EXPECT_CALL(pmf, MakeWorkUnits(::testing::Ref(work_units), worker_count, chunk_bytes, 
-        ParseManager::append_chunk_size_bytes_, ch10_file_size, ::testing::Ref(ch10_stream), 
+        ParseManager::GetAppendChunkSizeBytes(), ch10_file_size, ::testing::Ref(ch10_stream), 
         &parser_paths)).WillOnce(Return(true));
 
     EXPECT_CALL(metadata, Initialize(ch10_file_path, config, ::testing::Ref(parser_paths)))

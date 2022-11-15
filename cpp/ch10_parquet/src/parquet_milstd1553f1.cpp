@@ -12,6 +12,22 @@ ParquetMilStd1553F1::ParquetMilStd1553F1(ParquetContext* parquet_context) :
 {
 }
 
+int ParquetMilStd1553F1::GetRowGroupRowCount()
+{
+    return DEFAULT_ROW_GROUP_COUNT;
+}
+
+int ParquetMilStd1553F1::GetRowGroupBufferCount()
+{
+    return DEFAULT_BUFFER_SIZE_MULTIPLIER;
+}
+
+int ParquetMilStd1553F1::GetDataPayloadListElementCount()
+{
+    return DATA_PAYLOAD_LIST_COUNT;
+}
+
+
 bool ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread_id)
 {
     thread_id_ = thread_id;

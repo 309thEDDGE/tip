@@ -1,7 +1,5 @@
 #include "container_arg.h"
 
-const std::string ContainerArg::whitespace_code = "--..--";
-
 bool ContainerArg::CheckFromCharsResultExactMatch(std::from_chars_result& status,
     const std::string& input_str) 
 {

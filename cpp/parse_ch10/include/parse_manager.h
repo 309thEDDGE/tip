@@ -180,6 +180,8 @@ class ParseManager
 
     ParseManager();
     virtual ~ParseManager();
+	static uint32_t GetAppendChunkSizeBytes();
+	static std::string GetMetadataFilename(); 
 
 
     //////////////////////////////////////////////////////////////////////////////

@@ -89,6 +89,13 @@ class ParquetVideoDataF0
 	*/
     std::vector<int32_t> channel_id_;
 
+      // Static functions which return static const data 
+      // remove the need to declare exports when building
+      // dynamic libraries in Windows. 
+      static int GetRowGroupRowCount();
+      static int GetRowGroupBufferCount();
+
+
     ParquetVideoDataF0(ParquetContext* parquet_context);
     bool Initialize(ManagedPath outfile, uint16_t thread_id);
 

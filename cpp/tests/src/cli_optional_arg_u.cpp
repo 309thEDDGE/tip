@@ -252,7 +252,7 @@ TEST_F(CLIOptionalArgTest, ParseIntFailMissingArg)
 TEST_F(CLIOptionalArgTest, ParseStringWhiteSpacePass)
 {
     std::string output = "";
-    user_str_ = "-t my" + CLIArg::whitespace_code + "data" + CLIArg::whitespace_code + "str";
+    user_str_ = "-t my" + CLIConf::GetWhitespaceCode() + "data" + CLIConf::GetWhitespaceCode() + "str";
     temp_label_ = "--test_opt";  
     temp_short_label_ = "-t";  
     std::string default_str = "none";

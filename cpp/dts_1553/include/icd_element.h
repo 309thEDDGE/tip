@@ -604,6 +604,7 @@ class ICDElement
     ICDElement& operator=(const ICDElement& C);
     bool Fill(const std::string& icdelem_str);
     bool FillElements(const std::vector<std::string>& input_str_vec);
+	static int GetFillElementCount();
 };
 
 #endif

@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include "parse_text.h"
+#include "cli_conf.h"
 #include "arg_special_config.h"
 #include "cli_arg.h"
 #include "default_special_config.h"
@@ -525,10 +526,10 @@ inline bool CLIOptionalArg<std::string>::Parse(const std::string& input)
         return false;
     }
 
-    if(parsed_value_.find(CLIArg::whitespace_code) != std::string::npos)
+    if(parsed_value_.find(CLIConf::GetWhitespaceCode()) != std::string::npos)
     {
         ParseText pt;
-        parsed_value_ = pt.Replace(parsed_value_, CLIArg::whitespace_code, " ");
+        parsed_value_ = pt.Replace(parsed_value_, CLIConf::GetWhitespaceCode(), " ");
     }
 
     arg_valid_ = true;

@@ -1,4 +1,5 @@
 set(headers
+    include/cli_conf.h
     include/cli_arg.h
     include/cli_positional_arg.h
     include/cli_optional_arg.h
@@ -11,6 +12,7 @@ set(headers
     include/container_arg.h 
 )
 add_library(cli 
+    src/cli_conf.cpp
     src/cli_arg.cpp
     src/cli_flag.cpp
     src/cli.cpp

@@ -9,6 +9,16 @@ ParquetTDPF1::ParquetTDPF1(ParquetContext* pq_ctx) : pq_ctx_(pq_ctx),
 {
 }
 
+int ParquetTDPF1::GetRowGroupRowCount()
+{
+    return TDP_ROW_GROUP_COUNT;
+}
+
+int ParquetTDPF1::GetRowGroupBufferCount()
+{
+    return TDP_BUFFER_SIZE_MULTIPLIER;
+}
+
 bool ParquetTDPF1::Initialize(const ManagedPath& outfile, uint16_t thread_id)
 {
     thread_id_ = thread_id;

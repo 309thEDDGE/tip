@@ -9,6 +9,16 @@ ParquetVideoDataF0::ParquetVideoDataF0(ParquetContext* parquet_context) : pq_ctx
 {
 }
 
+int ParquetVideoDataF0::GetRowGroupRowCount()
+{
+    return DEFAULT_ROW_GROUP_COUNT_VIDEO;
+}
+
+int ParquetVideoDataF0::GetRowGroupBufferCount()
+{
+    return DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO;
+}
+
 bool ParquetVideoDataF0::Initialize(ManagedPath outfile, uint16_t thread_id)
 {
     thread_id_ = thread_id;

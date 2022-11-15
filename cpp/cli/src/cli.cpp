@@ -6,7 +6,10 @@ CLI::CLI(const std::string& prog_name, const std::string& description) : program
 {
     size_t col_count, row_count; 
     if(!GetTerminalSize(row_count, col_count))
+    {
         max_width_ = 100;
+        printf("CLI(): Failed to get terminal size\n");
+    }
     else
         max_width_ = col_count;
 }
@@ -178,7 +181,7 @@ std::string CLI::ConcatenateUserArgs(int argc, char* argv[], const ArgsVec& cli_
         curr_arg = user_args.at(i);
         if(encode)
         {
-            curr_arg = pt.Replace(curr_arg, " ", CLIArg::whitespace_code);
+            curr_arg = pt.Replace(curr_arg, " ", CLIConf::GetWhitespaceCode());
             encode = false;
         }
         else

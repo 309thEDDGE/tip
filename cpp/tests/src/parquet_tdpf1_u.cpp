@@ -74,8 +74,8 @@ class ParquetTDPF1Test : public ::testing::Test
 
     void ValidateInitializeResize()
     {
-        size_t expected_size = ParquetTDPF1::TDP_ROW_GROUP_COUNT * 
-            ParquetTDPF1::TDP_BUFFER_SIZE_MULTIPLIER;
+        size_t expected_size = ParquetTDPF1::GetRowGroupRowCount() * 
+            ParquetTDPF1::GetRowGroupBufferCount();
         EXPECT_EQ(expected_size, pqtdp_.time_stamp_.size());
         EXPECT_EQ(expected_size, pqtdp_.src_.size());
         EXPECT_EQ(expected_size, pqtdp_.time_fmt_.size());
@@ -100,8 +100,8 @@ TEST_F(ParquetTDPF1Test, Initialize)
     ValidateInitializeSetMemoryLocation();
 
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf_.string(), truncate_)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pqtdp_.TDP_ROW_GROUP_COUNT, 
-        pqtdp_.TDP_BUFFER_SIZE_MULTIPLIER, true, "TIME_DATA_F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pqtdp_.GetRowGroupRowCount(), 
+        pqtdp_.GetRowGroupBufferCount(), true, "TIME_DATA_F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, EnableEmptyFileDeletion(outf_.string())).Times(Exactly(1));
 
     ASSERT_TRUE(pqtdp_.Initialize(outf_, thread_id_));
@@ -116,8 +116,8 @@ TEST_F(ParquetTDPF1Test, InitializeSetupRowCountTrackingFail)
     ValidateInitializeSetMemoryLocation();
 
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf_.string(), truncate_)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pqtdp_.TDP_ROW_GROUP_COUNT, 
-        pqtdp_.TDP_BUFFER_SIZE_MULTIPLIER, true, "TIME_DATA_F1")).WillOnce(Return(false));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pqtdp_.GetRowGroupRowCount(), 
+        pqtdp_.GetRowGroupBufferCount(), true, "TIME_DATA_F1")).WillOnce(Return(false));
 
     ASSERT_FALSE(pqtdp_.Initialize(outf_, thread_id_));
     EXPECT_EQ(thread_id_, pqtdp_.thread_id_);
@@ -153,8 +153,8 @@ TEST_F(ParquetTDPF1Test, InitializeFalse)
 TEST_F(ParquetTDPF1Test, AppendIncrementAndWriteFalse)
 {
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf_.string(), truncate_)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pqtdp_.TDP_ROW_GROUP_COUNT, 
-        pqtdp_.TDP_BUFFER_SIZE_MULTIPLIER, true, "TIME_DATA_F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pqtdp_.GetRowGroupRowCount(), 
+        pqtdp_.GetRowGroupBufferCount(), true, "TIME_DATA_F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id_)).WillOnce(Return(false));
     ASSERT_TRUE(pqtdp_.Initialize(outf_, thread_id_));
     
@@ -166,8 +166,8 @@ TEST_F(ParquetTDPF1Test, AppendIncrementAndWriteFalse)
 TEST_F(ParquetTDPF1Test, AppendIncrementAndWriteTrue)
 {
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf_.string(), truncate_)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pqtdp_.TDP_ROW_GROUP_COUNT, 
-        pqtdp_.TDP_BUFFER_SIZE_MULTIPLIER, true, "TIME_DATA_F1")).WillOnce(Return(true));
+    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pqtdp_.GetRowGroupRowCount(), 
+        pqtdp_.GetRowGroupBufferCount(), true, "TIME_DATA_F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id_)).WillOnce(Return(true));
     ASSERT_TRUE(pqtdp_.Initialize(outf_, thread_id_));
     

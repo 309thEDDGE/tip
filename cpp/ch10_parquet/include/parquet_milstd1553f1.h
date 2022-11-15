@@ -82,6 +82,12 @@ class ParquetMilStd1553F1
       std::vector<uint8_t> msgerr2_;  // single bit
       std::vector<int8_t> status_rtaddr2_; 
 
+      // Static functions which return static const data 
+      // remove the need to declare exports when building
+      // dynamic libraries in Windows. 
+      static int GetRowGroupRowCount();
+      static int GetRowGroupBufferCount();
+      static int GetDataPayloadListElementCount();
 
       ParquetMilStd1553F1(ParquetContext* parquet_context);
       bool Initialize(const ManagedPath& outfile, uint16_t thread_id);

@@ -133,5 +133,7 @@ install(
 )
 
 enable_testing()
-include(GoogleTest)
-gtest_discover_tests(tests)
+if(NOT BUILD_SHARED_LIBS)
+    include(GoogleTest)
+    gtest_discover_tests(tests)
+endif()

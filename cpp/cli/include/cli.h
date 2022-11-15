@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include "parse_text.h"
+#include "cli_conf.h"
 #include "cli_arg.h"
 #include "cli_positional_arg.h"
 #include "cli_optional_arg.h"

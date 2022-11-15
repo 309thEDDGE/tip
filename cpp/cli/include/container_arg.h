@@ -12,6 +12,7 @@
 #include <charconv>
 #include <system_error>
 #include "parse_text.h"
+#include "cli_conf.h"
 
 class ContainerArg
 {
@@ -22,7 +23,6 @@ class ContainerArg
     public:
         ContainerArg() : pt_() {}
         virtual ~ContainerArg() {}
-        static const std::string whitespace_code;
 
         /*
         Parse user input and place in container.
@@ -110,9 +110,9 @@ inline bool ContainerArg::ParseComponent(const std::string& input, float& parsed
 template<>
 inline bool ContainerArg::ParseComponent(const std::string& input, std::string& parsed)
 {
-    if(input.find(whitespace_code) != std::string::npos)
+    if(input.find(CLIConf::GetWhitespaceCode()) != std::string::npos)
     {
-        parsed = pt_.Replace(input, whitespace_code, " ");
+        parsed = pt_.Replace(input, CLIConf::GetWhitespaceCode(), " ");
     }
     else
         parsed = input;

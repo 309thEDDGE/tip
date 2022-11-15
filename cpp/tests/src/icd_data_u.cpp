@@ -1043,7 +1043,7 @@ TEST_F(ICDDataIngestYamlTest, CreateVectorOfStringICDComponents)
                                                   icd_node_[elem_name], is_bit_elem, output_vec);
     EXPECT_FALSE(res_);
 
-    output_vec.resize(ICDElement::kFillElementCount);
+    output_vec.resize(ICDElement::GetFillElementCount());
     res_ = icd_.CreateVectorOfStringICDComponents(msg_name, msg_data_node_, elem_name,
                                                   icd_node_[elem_name], is_bit_elem, output_vec);
     EXPECT_TRUE(res_);
