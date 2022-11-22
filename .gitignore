@@ -52,6 +52,7 @@ conf/*.conf~
 *.DS_Store
 !environment*.yaml
 !ci_environment_pinned.yaml
+!dev_environment*.yaml
 *.vscode
 !codecov.yml
 # nix
