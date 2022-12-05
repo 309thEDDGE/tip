@@ -2,20 +2,17 @@ name: tip-build
 channels:
  - conda-forge
 dependencies:
- - conda-forge::conda-build
- - conda-forge::cxx-compiler
- - conda-forge::gxx_linux-64
- - conda-forge::make
- - conda-forge::cmake
- - conda-forge::ninja
- - conda-forge::pkgconfig
- - conda-forge::libpcap
- - conda-forge::arrow-cpp
- - conda-forge::spdlog
- - conda-forge::yaml-cpp
- - conda-forge::gmock
- - conda-forge::gtest
- - conda-forge::libtins
- - conda-forge::gcovr
- - conda-forge::python
+ - conda-build
+ - cxx-compiler
+ - cmake
+ - ninja
+ - pkgconfig
+ - libpcap
+ - arrow-cpp
+ - spdlog
+ - yaml-cpp
+ - gmock
+ - gtest
+ - libtins
+ - gcovr
  
