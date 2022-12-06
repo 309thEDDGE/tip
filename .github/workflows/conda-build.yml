@@ -31,6 +31,19 @@ jobs:
           repository: conda-forge/tip-feedstock
           path: ./tip-feedstock
 
+      - name: Checkout pinning-feedstock
+        uses: actions/checkout@v3
+        with: 
+          fetch-depth: 1
+          repository: conda-forge/conda-forge-pinning-feedstock
+          path: ./pinning-feedstock
+
+      - name: Copy build config
+        env:
+          CONFIG_PATH: ./pinning-feedstock/recipe/conda_build.config.yaml
+          COPY_PATH: ./tip-feedstock/recipe
+        shell: cp ${{ env.CONFIG_PATH }} ${{ env.COPY_PATH }}
+
       - name: Setup miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
@@ -62,18 +75,15 @@ jobs:
             '
 
       - name: cat meta.yaml
-        run: cat ./tip-feedstock/recipe/meta.yaml
+        run: ls ./tip-feedstock/recipe && \
+              cat ./tip-feedstock/recipe/meta.yaml
 
-
-      # - name: Conda build
-      #   shell: bash -l {0}
-      #   env: 
-      #     CI_COMMIT_TAG: ${{ github.ref_name }}
-      #     CI_COMMIT_SHORT_SHA: ${{ github.sha }}
-      #     CONDA_RECIPES_DIR: conda-recipes
-      #   run: |
-      #     cd $CONDA_RECIPES_DIR
-      #     conda build tip -c conda-forge --croot ~/$BUILD_DIR
-      #     cd ~/$BUILD_DIR
-      #     pwd
-      #     tree
+      - name: Conda build
+        shell: bash -l {0}
+        env: 
+          CI_COMMIT_TAG: ${{ github.ref_name }}
+          CI_COMMIT_SHORT_SHA: ${{ github.sha }}
+          RECIPE_DIR: ./tip-feedstock/recipe
+        run: |
+          conda build -c conda-forge --error-overlinking \
+            --no-anaconda-upload $RECIPE_DIR
