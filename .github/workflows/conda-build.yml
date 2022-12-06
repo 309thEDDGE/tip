@@ -50,7 +50,7 @@ jobs:
         run: |
           python -c 'import sys; \
             print(sys.version); \
-            f = open(${{ env.META_FNAME }}, "r"); \
+            f = open("${{ env.META_FNAME }}", "r"); \
             meta_str = f.read(); \
             f.close(); \
             print(meta_str);'
