@@ -40,7 +40,7 @@ jobs:
 
       - name: Copy build config
         env:
-          CONFIG_PATH: ./pinning-feedstock/recipe/conda_build.config.yaml
+          CONFIG_PATH: ./pinning-feedstock/recipe/conda_build_config.yaml
           COPY_PATH: ./tip-feedstock/recipe
         run: cp ${{ env.CONFIG_PATH }} ${{ env.COPY_PATH }}
 
