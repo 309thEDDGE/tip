@@ -44,10 +44,9 @@ jobs:
         run: conda info
 
       - name: Check python interp
-        shell: python
+        shell: bash -l {0}
         run: |
-          import sys
-          print(sys.version)
+          python -c "import sys; print(sys.version);"
 
       # - name: Edit meta.yaml
       #   shell: python {0}
