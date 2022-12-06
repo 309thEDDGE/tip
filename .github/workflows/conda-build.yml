@@ -42,7 +42,7 @@ jobs:
         env:
           CONFIG_PATH: ./pinning-feedstock/recipe/conda_build.config.yaml
           COPY_PATH: ./tip-feedstock/recipe
-        shell: cp ${{ env.CONFIG_PATH }} ${{ env.COPY_PATH }}
+        run: cp ${{ env.CONFIG_PATH }} ${{ env.COPY_PATH }}
 
       - name: Setup miniconda
         uses: conda-incubator/setup-miniconda@v2
