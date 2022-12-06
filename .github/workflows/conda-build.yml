@@ -7,9 +7,9 @@ on:
   #   branches:
   #     - master
 jobs:
-  call-ubuntu-build-job:
-    uses: ./.github/workflows/ubuntu-build.yml
-    secrets: inherit 
+  # call-ubuntu-build-job:
+  #   uses: ./.github/workflows/ubuntu-build.yml
+  #   secrets: inherit 
   build-conda-job:
     runs-on: ubuntu-22.04
     env: 
@@ -47,7 +47,7 @@ jobs:
         shell: python {0}
         run: |
           import sys
-          sys.version
+          print(sys.version)
 
       # - name: Edit meta.yaml
       #   shell: python {0}
