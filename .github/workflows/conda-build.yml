@@ -44,7 +44,7 @@ jobs:
         run: conda info
 
       - name: Check python interp
-        shell: python {0}
+        shell: python
         run: |
           import sys
           print(sys.version)
