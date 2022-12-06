@@ -1,3 +1,4 @@
+# Used in the conda build CI: .github/workflows/conda-build.yml
 name: tip-conda-build
 channels:
  - conda-forge

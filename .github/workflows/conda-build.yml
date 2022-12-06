@@ -1,15 +1,15 @@
 name: main-build
 on:
+  pull_request:
+    branches:
+      - master
   push:
-    # branches:
-      # - master
-  # pull_request:
-  #   branches:
-  #     - master
+    branches:
+      - master
 jobs:
-  # call-ubuntu-build-job:
-  #   uses: ./.github/workflows/ubuntu-build.yml
-  #   secrets: inherit 
+  call-ubuntu-build-job:
+    uses: ./.github/workflows/ubuntu-build.yml
+    secrets: inherit 
   build-conda-job:
     runs-on: ubuntu-22.04
     env: 
