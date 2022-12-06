@@ -48,14 +48,21 @@ jobs:
         env:
           META_FNAME: ./tip-feedstock/recipe/meta.yaml
         run: |
-          python -c 'import sys; \
-            print(sys.version); \
-            f = open("${{ env.META_FNAME }}", "r"); \
-            meta_str = f.read(); \
-            f.close(); \
-            print(meta_str);'
+          python -c '\
+            import ruamel.yaml; \
+            import pathlib; \
+            fp = pathlib.Path("${{ env.META_FNAME }}"); \
+            yaml = ruamel.yaml.YAML(typ="jinja2"); \
+            yaml.preserve_quotes = True; \
+            data = yaml.load_all(fp); \
+            del data[0]["source"]["url"]; \
+            del data[0]["source"]["sha256"]; \
+            data[0]["source"]["path"] = "."; \
+            yaml.dump_all(data, fp); \
+            '
 
-
+      - name: cat meta.yaml
+        run: cat ./tip-feedstock/recipe/meta.yaml
 
 
       # - name: Conda build
