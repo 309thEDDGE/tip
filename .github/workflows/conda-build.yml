@@ -94,13 +94,13 @@ jobs:
       # Do the conda build. Note that meta.yaml calls out
       # the tests. I believe this build emulates, as closely
       # as possible, the conda-forge CI in a way that minimizes 
-      # complexity, i.e., without mirroring conda-forge worfkows, 
+      # complexity, i.e., without mirroring conda-forge workflows, 
       # env vars, etc.
+      #
+      # The --error-overlinking flag is used in conda-forge builds.
       - name: Conda build
         shell: bash -l {0}
         env: 
-          CI_COMMIT_TAG: ${{ github.ref_name }}
-          CI_COMMIT_SHORT_SHA: ${{ github.sha }}
           RECIPE_DIR: ./tip-feedstock/recipe
         run: |
           conda build -c conda-forge --error-overlinking \
