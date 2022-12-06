@@ -43,18 +43,18 @@ jobs:
         shell: bash -l {0}
         run: conda info
 
-      - name: Check python interp
+      - name: Edit meta.yaml
         shell: bash -l {0}
+        env:
+          META_FNAME: ./tip-feedstock/recipe/meta.yaml
         run: |
-          python -c "import sys; print(sys.version);"
+          python -c 'import sys; \
+            print(sys.version); \
+            f = open(${{ env.META_FNAME }}, "r"); \
+            meta_str = f.read(); \
+            f.close(); \
+            print(meta_str);'
 
-      # - name: Edit meta.yaml
-      #   shell: python {0}
-      #   env:
-      #     META_FNAME: ./tip-feedstock/recipe/meta.yaml
-      #   run: |
-      #     import sys
-      #     sys.version
 
 
 
