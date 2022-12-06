@@ -1,7 +1,8 @@
 name: native-build
 on:
   push:
-    branches-ignore:
+    # branches-ignore:
+    branches:
       - master
   workflow_call:
 jobs:
@@ -27,7 +28,9 @@ jobs:
     steps: 
 
       - name: Checkout  
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2

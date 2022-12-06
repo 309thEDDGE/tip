@@ -1,8 +1,8 @@
 name: main-build
 on:
   push:
-    branches:
-      - master
+    # branches:
+      # - master
   # pull_request:
   #   branches:
   #     - master
@@ -15,18 +15,27 @@ jobs:
     env: 
       BUILD_DIR: build
       CODE_COV_FNAME: overall-coverage.xml
-      ENV_NAME: tip-build
+      ENV_NAME: tip-conda-build
     steps: 
-      - name: Create build dir
-        run: mkdir ~/$BUILD_DIR 
+      # - name: Create build dir
+        # run: mkdir ~/$BUILD_DIR 
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with: 
+          fetch-depth: 1
+
+      - name: Checkout tip-feedstock
+        uses: actions/checkout@v3
+        with: 
+          fetch-depth: 1
+          repository: conda-forge/tip-feedstock
+          path: ./tip-feedstock
 
       - name: Setup miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: ${{ env.ENV_NAME }}
-          environment-file: ci_environment_pinned.yaml
+          environment-file: conda/ci_environment_pinned.yaml
           auto-activate-base: false
           python-version: 3.9
 
@@ -34,15 +43,31 @@ jobs:
         shell: bash -l {0}
         run: conda info
 
-      - name: Conda build
-        shell: bash -l {0}
-        env: 
-          CI_COMMIT_TAG: ${{ github.ref_name }}
-          CI_COMMIT_SHORT_SHA: ${{ github.sha }}
-          CONDA_RECIPES_DIR: conda-recipes
+      - name: Check python interp
+        shell: python {0}
         run: |
-          cd $CONDA_RECIPES_DIR
-          conda build tip -c conda-forge --croot ~/$BUILD_DIR
-          cd ~/$BUILD_DIR
-          pwd
-          tree
+          import sys
+          sys.version
+
+      # - name: Edit meta.yaml
+      #   shell: python {0}
+      #   env:
+      #     META_FNAME: ./tip-feedstock/recipe/meta.yaml
+      #   run: |
+      #     import sys
+      #     sys.version
+
+
+
+      # - name: Conda build
+      #   shell: bash -l {0}
+      #   env: 
+      #     CI_COMMIT_TAG: ${{ github.ref_name }}
+      #     CI_COMMIT_SHORT_SHA: ${{ github.sha }}
+      #     CONDA_RECIPES_DIR: conda-recipes
+      #   run: |
+      #     cd $CONDA_RECIPES_DIR
+      #     conda build tip -c conda-forge --croot ~/$BUILD_DIR
+      #     cd ~/$BUILD_DIR
+      #     pwd
+      #     tree
