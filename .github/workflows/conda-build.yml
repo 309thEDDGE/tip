@@ -22,6 +22,7 @@ jobs:
         with: 
           fetch-depth: 1
 
+      # Grab the current tip conda-forge recipe
       - name: Checkout tip-feedstock
         uses: actions/checkout@v3
         with: 
@@ -29,6 +30,14 @@ jobs:
           repository: conda-forge/tip-feedstock
           path: ./tip-feedstock
 
+      # Get the conda_build_confi.yaml from the pinning
+      # feedstock. If placed in the recipe directory, 
+      # alongside the meta.yaml and build.sh, etc., 
+      # conda build will ingest the conda_build_config.yaml.
+      # This config contains a bunch of pinned resources 
+      # which the official conda-forge build CIs use. 
+      # This was communicated to me privately by a conda-forge
+      # maintainer during the initial tip onboarding. 
       - name: Checkout pinning-feedstock
         uses: actions/checkout@v3
         with: 
@@ -36,6 +45,7 @@ jobs:
           repository: conda-forge/conda-forge-pinning-feedstock
           path: ./pinning-feedstock
 
+      # Move the build config to the recipe directory. 
       - name: Copy build config
         env:
           CONFIG_PATH: ./pinning-feedstock/recipe/conda_build_config.yaml
@@ -54,6 +64,10 @@ jobs:
         shell: bash -l {0}
         run: conda info
 
+      # Edit the "official" build meta.yaml to remove a reference
+      # to the source tarball, which is not current given the
+      # push or PR that triggered this pipeline. Replace the
+      # source url and sha256 fields with path.
       - name: Edit meta.yaml
         shell: bash -l {0}
         env:
@@ -68,7 +82,7 @@ jobs:
             data = list(yaml.load_all(fp)); \
             del data[0]["source"]["url"]; \
             del data[0]["source"]["sha256"]; \
-            data[0]["source"]["path"] = "."; \
+            data[0]["source"]["path"] = "../../"; \
             yaml.dump_all(data, fp); \
             '
 
@@ -77,6 +91,11 @@ jobs:
           ls ./tip-feedstock/recipe && \
             cat ./tip-feedstock/recipe/meta.yaml
 
+      # Do the conda build. Note that meta.yaml calls out
+      # the tests. I believe this build emulates, as closely
+      # as possible, the conda-forge CI in a way that minimizes 
+      # complexity, i.e., without mirroring conda-forge worfkows, 
+      # env vars, etc.
       - name: Conda build
         shell: bash -l {0}
         env: 
