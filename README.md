@@ -198,9 +198,11 @@ In order to build with the proper tool chain and reference the correct runtime, 
 
 Create the environment
 ```shell
-conda env create -f ci_environment_pinned.yaml
-# conda env update -f ci_environment_pinned.yaml
+conda env create -f dev_environment_pinned.yaml
+# conda env update -f dev_environment_pinned.yaml
 ```
+
+Alternately, use the non-pinned `dev_environment.yaml`, which may take up to an _hour_ to solve! 
 
 Activate the development environment. Sometimes depending on how conda
 is installed it must be activated via `source activate ...`.

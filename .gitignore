@@ -2,28 +2,14 @@
 !cmake
 !cmake/**
 !CMakeLists.txt
-!*.Dockerfile
-!Dockerfile
-!cpp_pipeline_scripts
-!cpp_pipeline_scripts/**
-!vendor
-!vendor/*.gz
-!vendor/*.sh
-!vendor/*.bz2
-!vendor/*.zip
-!vendor/parquet-testing-master
-!vendor/.timestamp
 !.gitignore
-!.gitlab
-!.gitlab/**
 !.github
 !.github/**
-!bin
-!conf
-!conf/**
 !LICENSE
 !conda-recipes
 !conda-recipes/**
+!conda
+!conda/**
 conf/*.yaml
 conf/*.yaml~
 conf/*.conf
@@ -44,14 +30,9 @@ conf/*.conf~
 !CmakeLists.txt
 !.dockerignore
 **/build
-**/dist
-**/*.egg-info
-/cpp/out/build/x64-Debug (default)
 !.clang-format
 !CPPLINT.cfg
 *.DS_Store
-!environment*.yaml
-!ci_environment_pinned.yaml
 *.vscode
 !codecov.yml
 # nix

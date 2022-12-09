@@ -1,17 +1,18 @@
-name: tip-dev
+name: tip-build
 channels:
  - conda-forge
 dependencies:
+ - conda-build
  - cxx-compiler
- - make
  - cmake
  - ninja
  - pkgconfig
  - libpcap
- - arrow-cpp ==6.0.2
+ - arrow-cpp
  - spdlog
  - yaml-cpp
  - gmock
  - gtest
  - libtins
  - gcovr
+ 

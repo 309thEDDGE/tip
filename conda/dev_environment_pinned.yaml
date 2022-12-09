@@ -1,0 +1,18 @@
+name: tip-build
+channels:
+ - conda-forge
+dependencies:
+ - conda-build ==3.23.1
+ - cxx-compiler ==1.5.1
+ - cmake ==3.25.0
+ - ninja ==1.11.0
+ - pkgconfig ==1.5.5
+ - libpcap ==1.10.1
+ - arrow-cpp ==9.0.0
+ - spdlog ==1.11.0
+ - yaml-cpp ==0.7.0
+ - gmock ==1.11.0
+ - gtest ==1.11.0
+ - libtins ==4.4
+ - gcovr ==5.1
+ 

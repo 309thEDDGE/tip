@@ -1,11 +1,11 @@
 name: main-build
 on:
+  pull_request:
+    branches:
+      - master
   push:
     branches:
       - master
-  # pull_request:
-  #   branches:
-  #     - master
 jobs:
   call-ubuntu-build-job:
     uses: ./.github/workflows/ubuntu-build.yml
@@ -15,18 +15,48 @@ jobs:
     env: 
       BUILD_DIR: build
       CODE_COV_FNAME: overall-coverage.xml
-      ENV_NAME: tip-build
+      ENV_NAME: tip-conda-build
     steps: 
-      - name: Create build dir
-        run: mkdir ~/$BUILD_DIR 
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with: 
+          fetch-depth: 1
+
+      # Grab the current tip conda-forge recipe
+      - name: Checkout tip-feedstock
+        uses: actions/checkout@v3
+        with: 
+          fetch-depth: 1
+          repository: conda-forge/tip-feedstock
+          path: ./tip-feedstock
+
+      # Get the conda_build_confi.yaml from the pinning
+      # feedstock. If placed in the recipe directory, 
+      # alongside the meta.yaml and build.sh, etc., 
+      # conda build will ingest the conda_build_config.yaml.
+      # This config contains a bunch of pinned resources 
+      # which the official conda-forge build CIs use. 
+      # This was communicated to me privately by a conda-forge
+      # maintainer during the initial tip onboarding. 
+      - name: Checkout pinning-feedstock
+        uses: actions/checkout@v3
+        with: 
+          fetch-depth: 1
+          repository: conda-forge/conda-forge-pinning-feedstock
+          path: ./pinning-feedstock
+
+      # Move the build config to the recipe directory. 
+      - name: Copy build config
+        env:
+          CONFIG_PATH: ./pinning-feedstock/recipe/conda_build_config.yaml
+          COPY_PATH: ./tip-feedstock/recipe
+        run: cp ${{ env.CONFIG_PATH }} ${{ env.COPY_PATH }}
 
       - name: Setup miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: ${{ env.ENV_NAME }}
-          environment-file: ci_environment_pinned.yaml
+          environment-file: conda/ci_environment_pinned.yaml
           auto-activate-base: false
           python-version: 3.9
 
@@ -34,15 +64,44 @@ jobs:
         shell: bash -l {0}
         run: conda info
 
+      # Edit the "official" build meta.yaml to remove a reference
+      # to the source tarball, which is not current given the
+      # push or PR that triggered this pipeline. Replace the
+      # source url and sha256 fields with path.
+      - name: Edit meta.yaml
+        shell: bash -l {0}
+        env:
+          META_FNAME: ./tip-feedstock/recipe/meta.yaml
+        run: |
+          python -c '\
+            import ruamel.yaml; \
+            import pathlib; \
+            fp = pathlib.Path("${{ env.META_FNAME }}"); \
+            yaml = ruamel.yaml.YAML(typ="jinja2"); \
+            yaml.preserve_quotes = True; \
+            data = list(yaml.load_all(fp)); \
+            del data[0]["source"]["url"]; \
+            del data[0]["source"]["sha256"]; \
+            data[0]["source"]["path"] = "../../"; \
+            yaml.dump_all(data, fp); \
+            '
+
+      - name: cat meta.yaml
+        run: |
+          ls ./tip-feedstock/recipe && \
+            cat ./tip-feedstock/recipe/meta.yaml
+
+      # Do the conda build. Note that meta.yaml calls out
+      # the tests. I believe this build emulates, as closely
+      # as possible, the conda-forge CI in a way that minimizes 
+      # complexity, i.e., without mirroring conda-forge workflows, 
+      # env vars, etc.
+      #
+      # The --error-overlinking flag is used in conda-forge builds.
       - name: Conda build
         shell: bash -l {0}
         env: 
-          CI_COMMIT_TAG: ${{ github.ref_name }}
-          CI_COMMIT_SHORT_SHA: ${{ github.sha }}
-          CONDA_RECIPES_DIR: conda-recipes
+          RECIPE_DIR: ./tip-feedstock/recipe
         run: |
-          cd $CONDA_RECIPES_DIR
-          conda build tip -c conda-forge --croot ~/$BUILD_DIR
-          cd ~/$BUILD_DIR
-          pwd
-          tree
+          conda build -c conda-forge --error-overlinking \
+            --no-anaconda-upload $RECIPE_DIR
