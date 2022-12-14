@@ -609,7 +609,7 @@ TEST(Ch10ContextTest, InitializeAndCloseFileWriters)
         {Ch10PacketType::ETHERNET_DATA_F0, parsedeth},
         {Ch10PacketType::ARINC429_F0, parsed429},
     };
-    ASSERT_TRUE(ctx.InitializeFileWriters(enabled_paths));
+    ASSERT_EQ(0, ctx.InitializeFileWriters(enabled_paths));
 
     // CloseFileWriters automatically deletes files to which
     // row groups are not written. 
@@ -624,7 +624,7 @@ TEST(Ch10ContextTest, InitializeFileWriters1553Fail)
     std::map<Ch10PacketType, ManagedPath> enabled_paths{
         {Ch10PacketType::MILSTD1553_F1, ManagedPath("")},
     };
-    ASSERT_FALSE(ctx.InitializeFileWriters(enabled_paths));
+    ASSERT_EQ(74, ctx.InitializeFileWriters(enabled_paths));
 }
 
 TEST(Ch10ContextTest, InitializeFileWritersDefault)
@@ -634,7 +634,7 @@ TEST(Ch10ContextTest, InitializeFileWritersDefault)
     std::map<Ch10PacketType, ManagedPath> enabled_paths{
         {Ch10PacketType::NONE, ManagedPath("")},
     };
-    ASSERT_TRUE(ctx.InitializeFileWriters(enabled_paths));
+    ASSERT_EQ(0, ctx.InitializeFileWriters(enabled_paths));
 }
 
 TEST(Ch10ContextTest, RecordMinVideoTimeStampChannelIDNotPresent)

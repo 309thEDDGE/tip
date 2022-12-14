@@ -441,10 +441,11 @@ bool Ch10Context::IsConfigured()
     return is_configured_;
 }
 
-bool Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPath>& enabled_paths)
+int Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPath>& enabled_paths)
 {
     // Loop over enabled packet types and create, then submit to relevant parser,
     // a pointer to the file writer.
+    int retcode = 0;
     using MapIt = std::map<Ch10PacketType, ManagedPath>::const_iterator;
     for (MapIt it = enabled_paths.cbegin(); it != enabled_paths.cend(); ++it)
     {
@@ -470,8 +471,8 @@ bool Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
                 // in the parser class. This breaks the paradigm that a file writer is very context
                 // specific and should be held by Ch10Context. This will need careful thinking
                 // and rework at some point.
-                if (!milstd1553f1_pq_writer_->Initialize(it->second, thread_id))
-                    return false;
+                if ((retcode = milstd1553f1_pq_writer_->Initialize(it->second, thread_id)) != 0)
+                    return retcode;
                 milstd1553f1_pq_writer = milstd1553f1_pq_writer_.get();
                 break;
             case Ch10PacketType::VIDEO_DATA_F0:
@@ -482,8 +483,8 @@ bool Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
                 // Create the writer object.
                 videof0_pq_ctx_ = std::make_unique<ParquetContext>();
                 videof0_pq_writer_ = std::make_unique<ParquetVideoDataF0>(videof0_pq_ctx_.get());
-                if (!videof0_pq_writer_->Initialize(it->second, thread_id))
-                    return false;
+                if ((retcode = videof0_pq_writer_->Initialize(it->second, thread_id)) != 0)
+                    return retcode;
                 videof0_pq_writer = videof0_pq_writer_.get();
                 break;
             case Ch10PacketType::ETHERNET_DATA_F0:
@@ -492,8 +493,8 @@ bool Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
                 pkt_type_paths_enabled_map_[Ch10PacketType::ETHERNET_DATA_F0] = it->second;
                 ethernetf0_pq_ctx_ = std::make_unique<ParquetContext>();
                 ethernetf0_pq_writer_ = std::make_unique<ParquetEthernetF0>(ethernetf0_pq_ctx_.get());
-                if (!ethernetf0_pq_writer_->Initialize(it->second, thread_id))
-                    return false;
+                if ((retcode = ethernetf0_pq_writer_->Initialize(it->second, thread_id)) != 0)
+                    return retcode;
                 ethernetf0_pq_writer = ethernetf0_pq_writer_.get();
                 break;
             case Ch10PacketType::ARINC429_F0:
@@ -508,8 +509,8 @@ bool Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
 
                 // See note after the milstd1553f1_pq_writer_ defined above.
                 // That thought applies here.
-                if(!arinc429f0_pq_writer_->Initialize(it->second, thread_id))
-                    return false;
+                if((retcode = arinc429f0_pq_writer_->Initialize(it->second, thread_id)) != 0)
+                    return retcode;
                 arinc429f0_pq_writer = arinc429f0_pq_writer_.get();
                 break;
             default:
@@ -518,7 +519,7 @@ bool Ch10Context::InitializeFileWriters(const std::map<Ch10PacketType, ManagedPa
                 break;
         }
     }
-    return true;
+    return 0;
 }
 
 void Ch10Context::CloseFileWriters() const

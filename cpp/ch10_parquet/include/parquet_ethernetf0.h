@@ -53,7 +53,7 @@ class ParquetEthernetF0
       static int GetDataPayloadListElementCount();
 
     ParquetEthernetF0(ParquetContext* pq_ctx);
-    bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
+    int Initialize(const ManagedPath& outfile, uint16_t thread_id);
     void Append(const uint64_t& time_stamp, const uint32_t& chanid,
                 const EthernetData* eth_data);
 };

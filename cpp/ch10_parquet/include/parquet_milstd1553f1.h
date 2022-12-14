@@ -90,7 +90,7 @@ class ParquetMilStd1553F1
       static int GetDataPayloadListElementCount();
 
       ParquetMilStd1553F1(ParquetContext* parquet_context);
-      bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
+      int Initialize(const ManagedPath& outfile, uint16_t thread_id);
       void Append(const uint64_t& time_stamp, uint8_t doy,
                   const MilStd1553F1CSDWFmt* const chan_spec,
                   const MilStd1553F1DataHeaderCommWordFmt* msg, const uint16_t* const data,

@@ -201,26 +201,10 @@ TEST_F(ParquetEthernetF0Test, Initialize)
         pq_eth_.GetRowGroupBufferCount(), true, "EthernetF0")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, EnableEmptyFileDeletion(outf_.string())).Times(Exactly(1));
 
-    ASSERT_TRUE(pq_eth_.Initialize(outf_, thread_id_));
+    ASSERT_EQ(0, pq_eth_.Initialize(outf_, thread_id_));
     EXPECT_EQ(thread_id_, pq_eth_.thread_id_);
     EXPECT_EQ(pq_eth_.payload_ptr_, pq_eth_.payload_.data());
     EXPECT_EQ(outf_.string(), pq_eth_.outfile_);
-    ValidateInitializeResize();
-}
-
-TEST_F(ParquetEthernetF0Test, InitializeFalse)
-{
-    ValidateInitializeAddFieldFalse();
-    ValidateInitializeSetMemoryLocationFalse();
-
-    EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf_.string(), truncate_)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq_eth_.GetRowGroupRowCount(), 
-        pq_eth_.GetRowGroupBufferCount(), true, "EthernetF0")).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, EnableEmptyFileDeletion(outf_.string())).Times(Exactly(1));
-
-    ASSERT_TRUE(pq_eth_.Initialize(outf_, thread_id_));
-    EXPECT_EQ(thread_id_, pq_eth_.thread_id_);
-    EXPECT_EQ(pq_eth_.payload_ptr_, pq_eth_.payload_.data());
     ValidateInitializeResize();
 }
 
@@ -231,7 +215,7 @@ TEST_F(ParquetEthernetF0Test, InitializeOpenForWriteFail)
 
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf_.string(), truncate_)).WillOnce(Return(false));
 
-    ASSERT_FALSE(pq_eth_.Initialize(outf_, thread_id_));
+    ASSERT_EQ(74, pq_eth_.Initialize(outf_, thread_id_));
     EXPECT_EQ(thread_id_, pq_eth_.thread_id_);
     EXPECT_EQ(pq_eth_.payload_ptr_, pq_eth_.payload_.data());
     ValidateInitializeResize();
@@ -246,7 +230,7 @@ TEST_F(ParquetEthernetF0Test, InitializeSetupRowCountTrackingFail)
     EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq_eth_.GetRowGroupRowCount(), 
         pq_eth_.GetRowGroupBufferCount(), true, "EthernetF0")).WillOnce(Return(false));
 
-    ASSERT_FALSE(pq_eth_.Initialize(outf_, thread_id_));
+    ASSERT_EQ(70, pq_eth_.Initialize(outf_, thread_id_));
     EXPECT_EQ(thread_id_, pq_eth_.thread_id_);
     EXPECT_EQ(pq_eth_.payload_ptr_, pq_eth_.payload_.data());
     ValidateInitializeResize();
@@ -259,7 +243,7 @@ TEST_F(ParquetEthernetF0Test, AppendIncrementAndWriteFalse)
         pq_eth_.GetRowGroupBufferCount(), true, "EthernetF0")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id_)).WillOnce(Return(false));
 
-    ASSERT_TRUE(pq_eth_.Initialize(outf_, thread_id_));
+    ASSERT_EQ(0, pq_eth_.Initialize(outf_, thread_id_));
     pq_eth_.Append(time_stamp_, channel_id_, &eth_data_);
 
     ValidateAppendedData();
@@ -272,7 +256,7 @@ TEST_F(ParquetEthernetF0Test, AppendIncrementAndWriteTrue)
         pq_eth_.GetRowGroupBufferCount(), true, "EthernetF0")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id_)).WillOnce(Return(true));
 
-    ASSERT_TRUE(pq_eth_.Initialize(outf_, thread_id_));
+    ASSERT_EQ(0, pq_eth_.Initialize(outf_, thread_id_));
     pq_eth_.Append(time_stamp_, channel_id_, &eth_data_);
 
     // Zero comparison payload

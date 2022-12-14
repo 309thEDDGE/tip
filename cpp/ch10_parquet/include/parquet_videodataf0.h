@@ -97,7 +97,7 @@ class ParquetVideoDataF0
 
 
     ParquetVideoDataF0(ParquetContext* parquet_context);
-    bool Initialize(ManagedPath outfile, uint16_t thread_id);
+    int Initialize(ManagedPath outfile, uint16_t thread_id);
 
     /*
 		Appends one video packet from the chapter 10

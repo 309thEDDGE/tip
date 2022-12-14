@@ -178,7 +178,7 @@ TEST_F(ParquetARINC429F0Test, Initialize)
         pq429_.GetRowGroupBufferCount(), true, "ARINC429F0")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, EnableEmptyFileDeletion(outf_.string())).Times(Exactly(1));
 
-    ASSERT_TRUE(pq429_.Initialize(outf_, thread_id_));
+    ASSERT_EQ(0, pq429_.Initialize(outf_, thread_id_));
     EXPECT_EQ(thread_id_, pq429_.thread_id_);
     EXPECT_EQ(outf_.string(), pq429_.outfile_);
     ValidateInitializeResize();
@@ -193,7 +193,7 @@ TEST_F(ParquetARINC429F0Test, InitializeSetupRowCountTrackingFail)
     EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq429_.GetRowGroupRowCount(),
         pq429_.GetRowGroupBufferCount(), true, "ARINC429F0")).WillOnce(Return(false));
 
-    ASSERT_FALSE(pq429_.Initialize(outf_, thread_id_));
+    ASSERT_EQ(70, pq429_.Initialize(outf_, thread_id_));
     EXPECT_EQ(thread_id_, pq429_.thread_id_);
 
     ValidateInitializeResize();
@@ -206,20 +206,7 @@ TEST_F(ParquetARINC429F0Test, InitializeOpenForWriteFail)
 
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf_.string(), truncate_)).WillOnce(Return(false));
 
-    ASSERT_FALSE(pq429_.Initialize(outf_, thread_id_));
-    EXPECT_EQ(thread_id_, pq429_.thread_id_);
-
-    ValidateInitializeResize();
-}
-
-TEST_F(ParquetARINC429F0Test, InitializeFalse)
-{
-    ValidateInitializeAddFieldFalse();
-    ValidateInitializeSetMemoryLocationFalse();
-
-    EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf_.string(), truncate_)).WillOnce(Return(false));
-
-    ASSERT_FALSE(pq429_.Initialize(outf_, thread_id_));
+    ASSERT_EQ(74, pq429_.Initialize(outf_, thread_id_));
     EXPECT_EQ(thread_id_, pq429_.thread_id_);
 
     ValidateInitializeResize();
@@ -231,7 +218,7 @@ TEST_F(ParquetARINC429F0Test, AppendIncrementAndWriteFalse)
     EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq429_.GetRowGroupRowCount(),
         pq429_.GetRowGroupBufferCount(), true, "ARINC429F0")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id_)).WillOnce(Return(false));
-    ASSERT_TRUE(pq429_.Initialize(outf_, thread_id_));
+    ASSERT_EQ(0, pq429_.Initialize(outf_, thread_id_));
 
     pq429_.Append(time_stamp_, doy_, &msg_, channel_id_);
 
@@ -244,7 +231,7 @@ TEST_F(ParquetARINC429F0Test, AppendIncrementAndWriteTrue)
     EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq429_.GetRowGroupRowCount(),
         pq429_.GetRowGroupBufferCount(), true, "ARINC429F0")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id_)).WillOnce(Return(true));
-    ASSERT_TRUE(pq429_.Initialize(outf_, thread_id_));
+    ASSERT_EQ(0, pq429_.Initialize(outf_, thread_id_));
 
     pq429_.Append(time_stamp_, doy_, &msg_, channel_id_);
 

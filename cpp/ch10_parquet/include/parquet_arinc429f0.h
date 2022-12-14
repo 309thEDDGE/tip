@@ -47,7 +47,7 @@ class ParquetARINC429F0
     static int GetRowGroupBufferCount();
 
     ParquetARINC429F0(ParquetContext* pq_ctx);
-    bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
+    int Initialize(const ManagedPath& outfile, uint16_t thread_id);
     void Append(const uint64_t& time_stamp, uint8_t doy,
                 const ARINC429F0MsgFmt* msg, const uint16_t& chanid);
 

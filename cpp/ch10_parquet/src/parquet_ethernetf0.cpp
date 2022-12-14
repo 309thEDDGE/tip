@@ -28,7 +28,7 @@ int ParquetEthernetF0::GetDataPayloadListElementCount()
     return PAYLOAD_LIST_COUNT;
 }
 
-bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_id)
+int ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_id)
 {
     thread_id_ = thread_id;
     outfile_ = outfile.string();
@@ -101,7 +101,7 @@ bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_i
     {
         SPDLOG_ERROR("({:03d}) OpenForWrite failed for file {:s}", thread_id_,
                      outfile_);
-        return false;
+        return 74;
     }
 
     // Setup automatic tracking of appended data.
@@ -110,11 +110,11 @@ bool ParquetEthernetF0::Initialize(const ManagedPath& outfile, uint16_t thread_i
     {
         SPDLOG_ERROR("({:03d}) SetupRowCountTracking not configured correctly",
                      thread_id_);
-        return false;
+        return 70;
     }
 
     pq_ctx_->EnableEmptyFileDeletion(outfile_);
-    return true;
+    return 0;
 }
 
 void ParquetEthernetF0::Append(const uint64_t& time_stamp, const uint32_t& chanid,

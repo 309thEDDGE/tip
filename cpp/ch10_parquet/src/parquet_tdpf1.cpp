@@ -19,7 +19,7 @@ int ParquetTDPF1::GetRowGroupBufferCount()
     return TDP_BUFFER_SIZE_MULTIPLIER;
 }
 
-bool ParquetTDPF1::Initialize(const ManagedPath& outfile, uint16_t thread_id)
+int ParquetTDPF1::Initialize(const ManagedPath& outfile, uint16_t thread_id)
 {
     thread_id_ = thread_id;
     outfile_ = outfile.string();
@@ -49,7 +49,7 @@ bool ParquetTDPF1::Initialize(const ManagedPath& outfile, uint16_t thread_id)
     {
         SPDLOG_ERROR("({:03d}) OpenForWrite failed for file {:s}", thread_id_,
                      outfile_);
-        return false;
+        return 74;
     }
 
     // Setup automatic tracking of appended data.
@@ -58,11 +58,11 @@ bool ParquetTDPF1::Initialize(const ManagedPath& outfile, uint16_t thread_id)
     {
         SPDLOG_ERROR("({:03d}) SetupRowCountTracking not configured correctly",
                      thread_id_);
-        return false;
+        return 70;
     }
 
     pq_ctx_->EnableEmptyFileDeletion(outfile_);
-    return true;
+    return 0;
 }
 
 void ParquetTDPF1::Append(const uint64_t& time_stamp, const TDF1CSDWFmt& tdp)

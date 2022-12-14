@@ -28,7 +28,7 @@ int ParquetMilStd1553F1::GetDataPayloadListElementCount()
 }
 
 
-bool ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread_id)
+int ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread_id)
 {
     thread_id_ = thread_id;
     outfile_ = outfile.string();
@@ -195,7 +195,7 @@ bool ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread
     {
         SPDLOG_ERROR("({:03d}) OpenForWrite failed for file {:s}", thread_id_,
                      outfile_);
-        return false;
+        return 74;
     }
 
     // Setup automatic tracking of appended data.
@@ -204,11 +204,11 @@ bool ParquetMilStd1553F1::Initialize(const ManagedPath& outfile, uint16_t thread
     {
         SPDLOG_ERROR("({:03d}) SetupRowCountTracking not configured correctly",
                      thread_id_);
-        return false;
+        return 70;
     }
 
     pq_ctx_->EnableEmptyFileDeletion(outfile_);
-    return true;
+    return 0;
 }
 
 void ParquetMilStd1553F1::Append(const uint64_t& time_stamp, uint8_t doy,

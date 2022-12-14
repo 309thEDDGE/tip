@@ -19,7 +19,7 @@ int ParquetVideoDataF0::GetRowGroupBufferCount()
     return DEFAULT_BUFFER_SIZE_MULTIPLIER_VIDEO;
 }
 
-bool ParquetVideoDataF0::Initialize(ManagedPath outfile, uint16_t thread_id)
+int ParquetVideoDataF0::Initialize(ManagedPath outfile, uint16_t thread_id)
 {
     thread_id_ = thread_id;
     outfile_ = outfile.string();
@@ -66,7 +66,7 @@ bool ParquetVideoDataF0::Initialize(ManagedPath outfile, uint16_t thread_id)
     {
         SPDLOG_ERROR("({:03d}) OpenForWrite failed for file {:s}", thread_id_,
                      outfile_);
-        return false;
+        return 74;
     }
 
     // Setup automatic tracking of appended data.
@@ -75,11 +75,11 @@ bool ParquetVideoDataF0::Initialize(ManagedPath outfile, uint16_t thread_id)
     {
         SPDLOG_ERROR("({:03d}) SetupRowCountTracking not configured correctly",
                      thread_id_);
-        return false;
+        return 70;
     }
 
     pq_ctx_->EnableEmptyFileDeletion(outfile_);
-    return true;
+    return 0;
 }
 
 void ParquetVideoDataF0::Append(
