@@ -355,7 +355,7 @@ Args:
 Return:
 	False if parsing fails in some way.
 */
-bool ParseCh10(std::vector<WorkUnit*>& work_units, ParseManagerFunctions* pmf,
+int ParseCh10(std::vector<WorkUnit*>& work_units, ParseManagerFunctions* pmf,
 	ParseManager* pm, const ParserConfigParams& user_config);
 
 
@@ -372,7 +372,7 @@ Args:
 Return:
 	True if no errors occur.
 */
-bool Parse(ManagedPath ch10_path, ManagedPath out_dir, const ParserConfigParams& config);
+int Parse(ManagedPath ch10_path, ManagedPath out_dir, const ParserConfigParams& config);
 
 
 #endif

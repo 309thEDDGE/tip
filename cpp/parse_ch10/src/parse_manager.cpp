@@ -21,7 +21,7 @@ std::string ParseManager::GetMetadataFilename()
 }
 
 
-bool Parse(ManagedPath ch10_path, ManagedPath out_dir, const ParserConfigParams& config)
+int Parse(ManagedPath ch10_path, ManagedPath out_dir, const ParserConfigParams& config)
 {
     ParseManager pm;
     ParseManagerFunctions pmf;
@@ -29,6 +29,7 @@ bool Parse(ManagedPath ch10_path, ManagedPath out_dir, const ParserConfigParams&
     ParserMetadata metadata;
     std::ifstream ch10_input_stream;
     std::vector<WorkUnit> work_units;
+    int retcode = 0;
 
     if(!pm.Configure(&ch10_path, out_dir, config, &pmf, &parser_paths, &metadata, 
         work_units, ch10_input_stream))
@@ -42,11 +43,11 @@ bool Parse(ManagedPath ch10_path, ManagedPath out_dir, const ParserConfigParams&
     for (std::vector<WorkUnit>::iterator it = work_units.begin(); it != work_units.end(); ++it)
         work_unit_ptrs.push_back(&(*it));
 
-    if(!ParseCh10(work_unit_ptrs, &pmf, &pm, config))
+    if((retcode = ParseCh10(work_unit_ptrs, &pmf, &pm, config)) != 0)
     {
         spdlog::get("pm_logger")->error("Parse error: ParseCh10 failure");
         ch10_input_stream.close();
-        return false;
+        return retcode;
     }
 
     ManagedPath metadata_fname(pm.metadata_filename_);
@@ -58,7 +59,7 @@ bool Parse(ManagedPath ch10_path, ManagedPath out_dir, const ParserConfigParams&
     }
 
     ch10_input_stream.close();
-    return true;
+    return 0;
 }
 
 bool ParseManager::Configure(const ManagedPath* input_ch10_file_path, ManagedPath output_dir,

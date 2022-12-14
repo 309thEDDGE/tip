@@ -30,7 +30,7 @@ jobs:
           repository: conda-forge/tip-feedstock
           path: ./tip-feedstock
 
-      # Get the conda_build_confi.yaml from the pinning
+      # Get the conda_build_config.yaml from the pinning
       # feedstock. If placed in the recipe directory, 
       # alongside the meta.yaml and build.sh, etc., 
       # conda build will ingest the conda_build_config.yaml.

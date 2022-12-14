@@ -13,15 +13,15 @@ int Ch10ParseMain(int argc, char** argv)
     if(!ConfigureParserCLI(cli_group, config, help_requested, show_version))
     {
         printf("ConfigureParserCLI failed\n");
-        return 0;
+        return 70;
     }
 
     std::string nickname = "";
     std::shared_ptr<CLIGroupMember> cli;
-    if (!cli_group.Parse(argc, argv, nickname, cli))
+    int retcode = 0;
+    if ((retcode = cli_group.Parse(argc, argv, nickname, cli)) != 0)
     {
-        // printf("%s", cli_group.MakeHelpString().c_str());
-        return 0;
+        return retcode;
     }
 
     if (help_requested && nickname == "clihelp")
@@ -41,12 +41,12 @@ int Ch10ParseMain(int argc, char** argv)
     ManagedPath output_path;
     ManagedPath log_dir;
     ArgumentValidation av;
-    if (!ValidatePaths(config.input_path_str_, config.output_path_str_, 
-                       config.log_path_str_, input_path, output_path, log_dir, &av))
-        return 0;
+    if ((retcode = ValidatePaths(config.input_path_str_, config.output_path_str_, 
+                       config.log_path_str_, input_path, output_path, log_dir, &av)) != 0)
+        return retcode;
 
-    if (!SetupLogging(log_dir, spdlog::level::from_str(config.stdout_log_level_)))
-        return 0;
+    if ((retcode = SetupLogging(log_dir, spdlog::level::from_str(config.stdout_log_level_))) != 0)
+        return retcode;
 
     spdlog::get("pm_logger")->info(CH10_PARSE_EXE_NAME " version: {:s}", GetVersionString());
     spdlog::get("pm_logger")->info("Ch10 file path: {:s}", input_path.absolute().RawString());
@@ -55,7 +55,8 @@ int Ch10ParseMain(int argc, char** argv)
 
 
     double duration = 0.0;
-    StartParse(input_path, output_path, config, duration);
+    if((retcode = StartParse(input_path, output_path, config, duration)) != 0)
+        return retcode;
     spdlog::get("pm_logger")->info("Duration: {:.3f} sec", duration);
 
     // Avoid deadlock in windows, see
@@ -66,7 +67,7 @@ int Ch10ParseMain(int argc, char** argv)
 
 }
 
-bool ValidatePaths(const std::string& str_input_path, const std::string& str_output_path,
+int ValidatePaths(const std::string& str_input_path, const std::string& str_output_path,
                    const std::string& str_log_dir, ManagedPath& input_path, 
                    ManagedPath& output_path, ManagedPath& log_dir, const ArgumentValidation* av)
 {
@@ -75,14 +76,14 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_out
         printf(
             "User-defined input path (%s) does not have one of the case-insensitive "
             "extensions: ch10, c10\n", str_input_path.c_str());
-        return false;
+        return 65;
     }
     // Check utf-8 conformity and verify existence of input path
     if (!av->ValidateInputFilePath(str_input_path, input_path))
     {
         printf("User-defined input path is not a file/does not exist: %s\n",
                str_input_path.c_str());
-        return false;
+        return 66;
     }
 
     // If no output path is specified, use the input path.
@@ -97,36 +98,37 @@ bool ValidatePaths(const std::string& str_input_path, const std::string& str_out
         {
             printf("Output path is not a directory: %s\n",
                    str_output_path.c_str());
-            return false;
+            return 69;
         }
     }
 
     if (!av->ValidateDirectoryPath(str_log_dir, log_dir))
     {
         printf("Log path is not a directory: %s\n", str_log_dir.c_str());
-        return false;
+        return 69;
     }
 
-    return true;
+    return 0;
 }
 
-bool StartParse(ManagedPath input_path, ManagedPath output_path,
+int StartParse(ManagedPath input_path, ManagedPath output_path,
                 const ParserConfigParams& config, double& duration)
 {
     // Get start time.
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    if(!Parse(input_path, output_path, config))
-        return false;
+    int retcode = 0;
+    if((retcode = Parse(input_path, output_path, config)) != 0)
+        return retcode;
 
     // Get stop time and print duration.
     auto stop_time = std::chrono::high_resolution_clock::now();
     duration = (stop_time - start_time).count() / 1.0e9;
 
-    return true;
+    return 0;
 }
 
-bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level)  // GCOVR_EXCL_LINE
+int SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level)  // GCOVR_EXCL_LINE
 {
     // Use the chart on this page for logging level reference:
     // https://www.tutorialspoint.com/log4j/log4j_logging_levels.htm
@@ -189,7 +191,7 @@ bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_l
     catch (const spdlog::spdlog_ex& ex)  // GCOVR_EXCL_LINE
     {
         printf("SetupLogging() failed: %s\n", ex.what());  // GCOVR_EXCL_LINE
-        return false;  // GCOVR_EXCL_LINE
+        return 70;  // GCOVR_EXCL_LINE
     }
-    return true;  // GCOVR_EXCL_LINE
+    return 0;  // GCOVR_EXCL_LINE
 }

@@ -32,12 +32,13 @@ class ParseManagerTest : public ::testing::Test
     std::ifstream file;
     std::string line;
     bool result_;
+    int retval_;
     std::map<Ch10PacketType, bool> pkt_enabled_map_;
     std::map<Ch10PacketType, ManagedPath> output_dir_map_;
     WorkerConfig worker_config_;
 
     ParseManagerTest() : result_(false), pm(), pmf(), config(), line(""), worker_config_(),
-        file()
+        file(), retval_(0)
     {}
 
     bool InitializeParserConfig()

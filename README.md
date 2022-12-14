@@ -7,6 +7,7 @@
 - [Code Convention](#code-convention)
 - [Linting](#linting)
 - [Usage](#usage)
+- Exit Codes
 
 # TIP
 
@@ -268,8 +269,14 @@ Executables:
 - **tests**: Google tests executable to run entire test suite. `tests -h`
 - **tip\_parse**: Parse ch10 file into intermediate Parquet files. `tip_parse -h`  
 - **parquet\_video\_extractor**: Extract video transport stream data from parquet files and export TS video files. `parquet_video_extractor -h`
-- **tip\_translate_1553**: Translate raw 1553 data from Parquet files to parquet tables of enginering units. `tip_translate_1553 -h`
-- **tip\_translate_arinc429**: Similar to `tip_translate_1553`. See CLI for usage: `tip_translate_arinc429 -h`	 
+- **tip\_translate\_1553**: Translate raw 1553 data from Parquet files to parquet tables of enginering units. `tip_translate_1553 -h`
+- **tip\_translate\_arinc429**: Similar to `tip_translate_1553`. See CLI for usage: `tip_translate_arinc429 -h`	 
 - **pqcompare**: Compare two parquet tables for equivalence. `pqcompare -h`
 - **bincompare**: Compare two files at the byte level for equivalence. `bincompare -h`
 - **validate\_yaml**: Validate a yaml file with an input schema. `validate_yaml -h`
+
+# Exit Codes
+
+TIP follows Linux `/usr/include/sysexits.h` as closely as possible. Because TIP is (currently) intended to be built in both Linux and Windows, the header is not referenced directly and the macros are not used in lieu of explicit integers in the source. 
+
+For all executables, zero is returned if proper arguments are passed, can be parsed, and no other error occurs. This implies that help menus and version printing sub-commands always result in an exit code of zero. All other cases shall result in non-zero exit codes. 

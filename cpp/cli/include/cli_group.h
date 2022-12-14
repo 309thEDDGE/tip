@@ -148,7 +148,7 @@ class CLIGroup
             member      --> Pointer to valid CLIGroupMember
 
         Return:
-            True if at least one of the CLIGroupMembers added via AddCLI is valid,
+            0 if at least one of the CLIGroupMembers added via AddCLI is valid,
             false otherwise. A return value of false indicates that a user input
             is not valid according to the defined CLIGroupMembers, that help matter
             should be printed and the program exit.
@@ -156,8 +156,10 @@ class CLIGroup
             A CLIGroupMember is valid if all of the CLIArgs within the member that
             are marked as group indicators (GroupIndicator::SetGroupIndicator()) 
             have the property (IsValid() && IsPresent()).
+
+            Use /usr/include/sysexits.h for error return values.
         */ 
-        bool Parse(int argc, char* argv[], std::string& nickname, 
+        int Parse(int argc, char* argv[], std::string& nickname, 
             std::shared_ptr<CLIGroupMember>& member);
 
         
