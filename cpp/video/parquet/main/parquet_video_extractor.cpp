@@ -40,17 +40,17 @@ int main(int argc, char* argv[])
     ManagedPath input_path(input_path_str);
     ManagedPath output_path(output_path_str);
     ParquetVideoExtraction pe;
-    bool valid_path = pe.Initialize(input_path, output_path);
-    if (!valid_path)
+    if((retcode = pe.Initialize(input_path, output_path)) != 0)
     {
-        return 70;
+        return retcode;
     }
-    pe.ExtractTS();
+
+    retcode = pe.ExtractTS();
 
     auto t2 = Clock::now();
     printf("\nElapsed Time: %" PRId64 " seconds\n", std::chrono::duration_cast<std::chrono::seconds>(t2 - t1).count());
 
-    return 0;
+    return retcode;
 }
 
 

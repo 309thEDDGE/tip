@@ -42,9 +42,9 @@ int main(int argc, char* argv[])
     // If either file can't be opened, return 1 to indicate a
     // null comparison.
     if (!OpenFile(truth_path_str.c_str(), ifile1))
-        return -1;
+        return 66;
     if (!OpenFile(test_path_str.c_str(), ifile2))
-        return -1;
+        return 66;
 
     std::vector<char> file1_data(read_size);
     std::vector<char> file2_data(read_size);
@@ -114,7 +114,7 @@ bool ConfigureCLI(CLIGroup& cli_group, bool& help_requested, std::string& truth_
     std::string exe_name = "bincompare";
     std::string description = "Compare a test file against a truth file, byte by byte. Print "
         "\"PASS\" (0) to stdout if equivalent, or \"FAIL\" (1) if not equivalent and return the "
-        "value shown in parentheses. A NULL result will return -1.";
+        "value shown in parentheses. A NULL result will return a number greater than 1.";
     std::shared_ptr<CLIGroupMember> cli_help = cli_group.AddCLI(exe_name, 
     description, "clihelp");
     cli_help->AddOption("--help", "-h", "Show usage information", false, 

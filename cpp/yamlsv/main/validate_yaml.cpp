@@ -36,13 +36,13 @@ int main(int argc, char* argv[])
     if (fr_test.ReadFile(yaml_path.string()) == 1)
     {
         printf("Failed to read YAML file under test: %s\n", yaml_path.RawString().c_str());
-        return -1;
+        return 66;
     }
     FileReader fr_schema;
     if (fr_schema.ReadFile(schema_path.string()) == 1)
     {
         printf("Failed to read YAML schema file: %s\n", schema_path.RawString().c_str());
-        return -1;
+        return 66;
     }
 
     // Concatenate all lines into a single string. It is requisite to append
@@ -102,7 +102,7 @@ bool ConfigureCLI(CLIGroup& cli_group, bool& help_requested, std::string& yaml_p
         "and an explanation of the fields in the corresponding 1553 or ARINC429 ICD configuration "
         "documents, respectively, which are to be validated by the aforementioned schema.\n\nPrint "
         "\"PASS\" (0) to stdout if YAML_PATH is valid according to SCHEMA_PATH, or \"FAIL\" (1) "
-        "if invalid and return the value shown in parentheses. A NULL result returns -1.";
+        "if invalid and return the value shown in parentheses. A NULL result returns a number greater than 1.";
     std::shared_ptr<CLIGroupMember> cli_help = cli_group.AddCLI(exe_name, 
     description, "clihelp");
     cli_help->AddOption("--help", "-h", "Show usage information", false, help_requested, true);

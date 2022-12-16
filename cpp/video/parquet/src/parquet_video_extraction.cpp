@@ -220,18 +220,18 @@ void ParquetVideoExtraction::WriteRowGroup(const arrow::NumericArray<arrow::Int3
     }
 }
 
-bool ParquetVideoExtraction::Initialize(ManagedPath video_path, ManagedPath output_dir)
+int ParquetVideoExtraction::Initialize(ManagedPath video_path, ManagedPath output_dir)
 {
     if (!video_path.is_directory())
     {
         printf("Video directory %s does not exist\n", video_path.RawString().c_str());
-        return false;
+        return 66;
     }
 
     if(!output_dir.is_directory())
     {
         printf("Output directory %s does not exist\n", output_dir.RawString().c_str());
-        return false;
+        return 66;
     }
 
     parquet_path_ = video_path;
@@ -244,13 +244,13 @@ bool ParquetVideoExtraction::Initialize(ManagedPath video_path, ManagedPath outp
     if (!output_path_.create_directory())
     {
         printf("Creation of directory %s failed\n", output_path_.RawString().c_str());
-        return false;
+        return 73;
     }
 
-    return true;
+    return 0;
 }
 
-bool ParquetVideoExtraction::ExtractTS()
+int ParquetVideoExtraction::ExtractTS()
 {
     // Get list of entries in the parquet_path_ directory and
     // select only those which are files and contain the substring
@@ -264,6 +264,7 @@ bool ParquetVideoExtraction::ExtractTS()
     {
         printf("Failed to get list of directory entries from %s\n",
                parquet_path_.RawString().c_str());
+        return 74;
     }
 
     std::vector<ManagedPath> matching_files = ManagedPath::SelectPathsWithSubString(
@@ -275,16 +276,16 @@ bool ParquetVideoExtraction::ExtractTS()
         printf("\n\n--Reading parquet file: \n%s\n", it->stem().RawString().c_str());
         if (!OpenParquetFile(*it))
         {
-            return false;
+            return 74;
         }
 
         if (!ExtractFileTS())
         {
-            return false;
+            return 70;
         }
     }
 
     printf("\n\n --Finished\nTransport Stream Output Written to: %s\n",
            output_path_.RawString().c_str());
-    return true;
+    return 0;
 }

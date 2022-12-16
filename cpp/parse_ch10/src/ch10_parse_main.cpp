@@ -4,7 +4,7 @@
 int Ch10ParseMain(int argc, char** argv)
 {
     if (!SetLineBuffering(stdout))
-        return 0;
+        return 71;
 
     CLIGroup cli_group;
     ParserConfigParams config;

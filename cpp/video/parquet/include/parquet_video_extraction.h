@@ -54,18 +54,18 @@ class ParquetVideoExtraction
     /*
 		Pass the path to the folder with parquet video files
 
-		Returns: False -> If video_path does not exist OR 
+		Returns: nonzero -> If video_path does not exist OR 
 							the output TS path could not be created
-				 True  -> Other wise	
+				 0  -> Other wise	
 	*/
-    bool Initialize(ManagedPath video_path, ManagedPath output_dir);
+    int Initialize(ManagedPath video_path, ManagedPath output_dir);
 
     /*
 		Extract transport stream data from 
 		all parquet files in the video_path
 
-		Returns: False -> if success
-					   -> if failure
+		Returns: nonzero -> if success
+			     zero    -> if failure
 	*/
-    bool ExtractTS();
+    int ExtractTS();
 };

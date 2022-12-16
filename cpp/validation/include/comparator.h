@@ -51,11 +51,11 @@ class Comparator
     /*
 		Pass the two parquet folder paths to be compared
 
-		Returns: False -> If either path is invalid
-				 True  -> Other wise	
+		Returns: nonzero -> If either path is invalid
+				 0  -> Other wise	
 	*/
-    bool Initialize(ManagedPath path1, ManagedPath path2);
-    bool Initialize(std::string path1, std::string path2);
+    int Initialize(ManagedPath path1, ManagedPath path2);
+    int Initialize(std::string path1, std::string path2);
 
     /*
 		Compares two vectors from start position to (size + start position)
