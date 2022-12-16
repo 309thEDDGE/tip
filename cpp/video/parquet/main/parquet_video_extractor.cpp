@@ -21,11 +21,17 @@ int main(int argc, char* argv[])
     std::string output_path_str("");
 
     if(!ConfigureCLI(cli_group, help_requested, input_path_str, output_path_str))
-        return 0;
+        return 70;
 
     std::string nickname = "";
     std::shared_ptr<CLIGroupMember> cli;
-    if (!cli_group.Parse(argc, argv, nickname, cli) || help_requested)
+    int retcode = 0;
+    if ((retcode = cli_group.Parse(argc, argv, nickname, cli)) != 0)
+    {
+        return retcode;
+    }
+
+    if (help_requested)
     {
         printf("%s", cli_group.MakeHelpString().c_str());
         return 0;
@@ -37,7 +43,7 @@ int main(int argc, char* argv[])
     bool valid_path = pe.Initialize(input_path, output_path);
     if (!valid_path)
     {
-        return 0;
+        return 70;
     }
     pe.ExtractTS();
 

@@ -280,3 +280,5 @@ Executables:
 TIP follows Linux `/usr/include/sysexits.h` as closely as possible. Because TIP is (currently) intended to be built in both Linux and Windows, the header is not referenced directly and the macros are not used in lieu of explicit integers in the source. 
 
 For all executables, zero is returned if proper arguments are passed, can be parsed, and no other error occurs. This implies that help menus and version printing sub-commands always result in an exit code of zero. All other cases shall result in non-zero exit codes. 
+
+Most internal functions return boolean. Only functions with internal logic that deviate from "internal error" such as "input/output error" or "command line usage error" return exit codes. High-level functions which return values to main intepret non-exit code returning function successes and failures as 0 and 70, respectively. 

@@ -39,7 +39,7 @@ class MockParserMetadata : public ParserMetadata
     public:
         MockParserMetadata() : ParserMetadata() {}
 
-        MOCK_METHOD2(RecordMetadata, bool(ManagedPath md_filename, 
+        MOCK_METHOD2(RecordMetadata, int(ManagedPath md_filename, 
             const std::vector<const Ch10Context*>& context_vec));
         MOCK_METHOD3(Initialize, bool(const ManagedPath& ch10_path, 
             const ParserConfigParams& config, const ParserPaths& parser_paths));

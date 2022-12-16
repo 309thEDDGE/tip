@@ -31,12 +31,12 @@ int Parse(ManagedPath ch10_path, ManagedPath out_dir, const ParserConfigParams& 
     std::vector<WorkUnit> work_units;
     int retcode = 0;
 
-    if(!pm.Configure(&ch10_path, out_dir, config, &pmf, &parser_paths, &metadata, 
-        work_units, ch10_input_stream))
+    if((retcode = pm.Configure(&ch10_path, out_dir, config, &pmf, &parser_paths, &metadata, 
+        work_units, ch10_input_stream)) != 0)
     {
         spdlog::get("pm_logger")->error("Parse error: ParseManager::Configure failure");
         ch10_input_stream.close();
-        return 70;
+        return retcode;
     }
 
     std::vector<WorkUnit*> work_unit_ptrs;
@@ -51,11 +51,11 @@ int Parse(ManagedPath ch10_path, ManagedPath out_dir, const ParserConfigParams& 
     }
 
     ManagedPath metadata_fname(pm.metadata_filename_);
-    if(!pm.RecordMetadata(work_unit_ptrs, &metadata, metadata_fname))
+    if((retcode = pm.RecordMetadata(work_unit_ptrs, &metadata, metadata_fname)) != 0)
     {
         spdlog::get("pm_logger")->error("Parse error: ParseManager::RecordMetadata failure");
         ch10_input_stream.close();
-        return 70;
+        return retcode;
     }
 
     ch10_input_stream.close();
@@ -246,7 +246,11 @@ int ParseManager::ActivateAvailableThread(ParseManagerFunctions* pmf, bool appen
                     active_worker_ind);
 
                 if(retcode != 0)
+                {
+                    spdlog::get("pm_logger")->error("ActivateAvailableThread: worker {:d} "
+                        "retcode = {:d}", current_active_worker, retcode);
                     return retcode;
+                }
 
                 if(!pmf->ActivateWorker(work_units.at(worker_index), active_workers, 
                     worker_index, append_mode, read_pos))

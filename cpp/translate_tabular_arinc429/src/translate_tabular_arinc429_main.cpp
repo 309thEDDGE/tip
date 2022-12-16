@@ -16,16 +16,16 @@ int TranslateTabularARINC429Main(int argc, char** argv)
         show_dts_info, high_level_description))
     {
         printf("ConfigureTranslatorCLI failed\n");
-        return 0;
+        return 70;
     }
 
     std::string nickname = "";
     std::shared_ptr<CLIGroupMember> cli;
     fflush(stdout);
-    if (!cli_group.Parse(argc, argv, nickname, cli))
+    int retcode = 0;
+    if ((retcode = cli_group.Parse(argc, argv, nickname, cli)) != 0)
     {
-        // printf("%s", cli_group.MakeHelpString().c_str());
-        return 0;
+        return retcode;
     }
     fflush(stdout);
 
