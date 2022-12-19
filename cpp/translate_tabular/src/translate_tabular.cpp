@@ -71,24 +71,35 @@ int TranslateTabular::Translate()
 
     // Print thread success results
     std::string status_string = "";
-    bool total_success = true;
+    int exit_code = 0;
     for (std::vector<std::shared_ptr<TranslationManager>>::const_iterator it =
              manager_vec_.cbegin();
          it != manager_vec_.cend(); ++it)
     {
         if ((*it)->success)
+        {
             status_string = "SUCCESS";
+            SPDLOG_INFO("TranslationManager associated with thread {:d} "
+                "status: {:s}, exit code {:d}", (*it)->thread_index, 
+                status_string, (*it)->exit_code);
+        }
         else
         {
             status_string = "FAIL";
-            total_success = false;
-        }
+            if (exit_code == 0)
+                exit_code = (*it)->exit_code;
 
-        SPDLOG_INFO("TranslationManager associated with thread {:d} status: {:s}",
-                    (*it)->thread_index, status_string);
+            SPDLOG_ERROR("TranslationhManager associated with thread {:d} "
+                "status: {:s}, exit code {:d}", (*it)->thread_index, 
+                status_string, (*it)->exit_code);
+        }
     }
-    if (!total_success)
-        return EX_SOFTWARE;
+    if (exit_code != 0)
+    {
+        SPDLOG_ERROR("TranslateTabuler::Translate: Returning exit "
+            "code of first failed TranslationManager object");
+        return exit_code;
+    }
     return EX_OK;
 }
 

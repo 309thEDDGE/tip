@@ -16,6 +16,7 @@ with re-definitions by spdlog headers of arrow defs.
 #include <map>
 #include <iostream>
 #include <fstream>
+#include "sysexits.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/logger.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
@@ -45,7 +46,7 @@ int TranslateTabularARINC429Main(int argc, char** argv);
 
 namespace transtab429
 {
-    bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
+    int ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
                     const std::string& str_output_dir, const std::string& str_log_dir,
                     ManagedPath& input_path, ManagedPath& icd_path,
                     ManagedPath& output_dir, ManagedPath& log_dir, ArgumentValidation* av);
@@ -64,7 +65,7 @@ namespace transtab429
 
     bool GetFileContents(std::string file_name, std::vector<std::string>& file_contents);
 
-    bool Translate(size_t thread_count, const ManagedPath& input_path,
+    int Translate(size_t thread_count, const ManagedPath& input_path,
                 const ManagedPath& output_dir, const ARINC429Data& icd,
                 const ManagedPath& translated_data_dir,
                 const ManagedPath& output_base_name,

@@ -62,7 +62,8 @@ int TranslateTabular1553Main(int argc, char** argv)
                        output_dir, log_dir, &av)) != 0)
         return retcode;
 
-    if(av.CheckExtension(icd_path.RawString(), {"yaml", "yml"}) && !config.disable_dts_schema_validation_)
+    bool check_extension_result = false;
+    if(av.CheckExtension(icd_path.RawString(), {"yaml", "yml"}))
     {
         YamlSV ysv;
         std::string icd_string; 
@@ -77,6 +78,8 @@ int TranslateTabular1553Main(int argc, char** argv)
             return EX_DATAERR;
         }
     }
+    else
+        return EX_DATAERR;
 
     if (!transtab1553::SetupLogging(log_dir, spdlog::level::from_str(config.stdout_log_level_)))
         return EX_SOFTWARE;
