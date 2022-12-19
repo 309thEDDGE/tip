@@ -4,7 +4,7 @@
 int Ch10ParseMain(int argc, char** argv)
 {
     if (!SetLineBuffering(stdout))
-        return 71;
+        return EX_OSERR;
 
     CLIGroup cli_group;
     ParserConfigParams config;
@@ -13,7 +13,7 @@ int Ch10ParseMain(int argc, char** argv)
     if(!ConfigureParserCLI(cli_group, config, help_requested, show_version))
     {
         printf("ConfigureParserCLI failed\n");
-        return 70;
+        return EX_SOFTWARE;
     }
 
     std::string nickname = "";

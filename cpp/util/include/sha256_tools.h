@@ -7,6 +7,7 @@
 #include <iterator>
 #include <vector>
 #include <string>
+#include "sysexits.h"
 #include "managed_path.h"
 #include "sha256.h"
 
@@ -22,10 +23,10 @@ Args:
                         the sha256 shall be computed for the entire file.
                     
 Return:
-    True if the sufficient chars in the stream and the hash can be 
-    computed as expected; false otherwise.
+    0 if the sufficient chars in the stream and the hash can be 
+    computed as expected; nonzero otherwise.
 */
-bool ComputeSHA256(std::istream& input_stream, std::string& sha256_value,
+int ComputeSHA256(std::istream& input_stream, std::string& sha256_value,
                    size_t byte_count = 0);
 
 /*
@@ -40,10 +41,10 @@ Args:
                         the sha256 shall be computed for the entire file.
                     
 Return:
-    True if the file exists, can be read, and the hash can be 
-    computed as expected; false otherwise.
+    0 if the file exists, can be read, and the hash can be 
+    computed as expected; nonzero otherwise.
 */
-bool ComputeFileSHA256(const ManagedPath& input_file, std::string& sha256_value,
+int ComputeFileSHA256(const ManagedPath& input_file, std::string& sha256_value,
                        size_t byte_count = 0);
 
 

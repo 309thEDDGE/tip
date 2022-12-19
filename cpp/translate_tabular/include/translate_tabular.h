@@ -11,6 +11,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include "sysexits.h"
 #include "spdlog/spdlog.h"
 #include "managed_path.h"
 #include "translation_manager.h"
@@ -82,9 +83,9 @@ class TranslateTabular
     Primary function which executes preparation and translation.
 
     Return:
-        False if a failure of some kind occurred. True if no failures occur.
+        Nonzero if a failure of some kind occurred. 0 if no failures occur.
     */
-    bool Translate();
+    int Translate();
 
     /*
     Get the vector of TranslationManager objects. Can be used to access
@@ -110,9 +111,9 @@ class TranslateTabular
         context     --> Configured derived class pointing to TranslateTabularContextBase
 
     Return:
-        True if configured correctly. False otherwise.
+        0 if configured correctly. Nonzero otherwise.
     */
-    bool CheckConfiguration(std::shared_ptr<TranslateTabularContextBase> context);
+    int CheckConfiguration(std::shared_ptr<TranslateTabularContextBase> context);
 
     /*
     Allocate input files to each of the threads.

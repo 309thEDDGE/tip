@@ -43,10 +43,11 @@ void TranslateTabular::SetOutputDir(const ManagedPath& output_dir,
     output_base_name_ = output_base_name;
 }
 
-bool TranslateTabular::Translate()
+int TranslateTabular::Translate()
 {
-    if (!CheckConfiguration(ctx_))
-        return false;
+    int retcode = 0;
+    if ((retcode = CheckConfiguration(ctx_)) != 0)
+        return retcode;
 
     size_t required_thread_count = 0;
     std::vector<std::vector<ManagedPath>> thread_file_paths;
@@ -61,7 +62,7 @@ bool TranslateTabular::Translate()
 
     if (!CreateTranslationManagerObjects(ctx_, n_threads_, thread_file_paths,
                                          output_dir_, output_base_name_, manager_vec_))
-        return false;
+        return EX_SOFTWARE;
 
     std::vector<std::thread> thread_vec;
     StartThreads(thread_vec, manager_vec_);
@@ -70,6 +71,7 @@ bool TranslateTabular::Translate()
 
     // Print thread success results
     std::string status_string = "";
+    bool total_success = true;
     for (std::vector<std::shared_ptr<TranslationManager>>::const_iterator it =
              manager_vec_.cbegin();
          it != manager_vec_.cend(); ++it)
@@ -77,26 +79,31 @@ bool TranslateTabular::Translate()
         if ((*it)->success)
             status_string = "SUCCESS";
         else
+        {
             status_string = "FAIL";
+            total_success = false;
+        }
 
         SPDLOG_INFO("TranslationManager associated with thread {:d} status: {:s}",
                     (*it)->thread_index, status_string);
     }
-    return true;
+    if (!total_success)
+        return EX_SOFTWARE;
+    return EX_OK;
 }
 
-bool TranslateTabular::CheckConfiguration(std::shared_ptr<TranslateTabularContextBase> context)
+int TranslateTabular::CheckConfiguration(std::shared_ptr<TranslateTabularContextBase> context)
 {
     if (!context->IsConfigured())
     {
         SPDLOG_WARN("Context is not configured");
-        return false;
+        return EX_CONFIG;
     }
 
     if (!is_file_list_valid_)
     {
         SPDLOG_WARN("File list has not been set or is not valid. Use SetInputFiles()");
-        return false;
+        return EX_CONFIG;
     }
 
     // File is present
@@ -106,10 +113,10 @@ bool TranslateTabular::CheckConfiguration(std::shared_ptr<TranslateTabularContex
         if (!it->is_regular_file())
         {
             SPDLOG_WARN("Input file {:s} does not exist", it->RawString());
-            return false;
+            return EX_NOINPUT;
         }
     }
-    return true;
+    return EX_OK;
 }
 
 void TranslateTabular::AssignFilesToThreads(size_t thread_count,

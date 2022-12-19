@@ -106,22 +106,22 @@ TEST(SHA256ToolsTest, ComputeSHA256FailOnBadBits)
     ss.setstate(state);
     std::string hash;
     std::string null_hash("null");
-    bool status = ComputeSHA256(ss, hash);
-    EXPECT_FALSE(status);
+    int status = ComputeSHA256(ss, hash);
+    EXPECT_EQ(EX_IOERR, status);
     EXPECT_EQ(null_hash, hash);
 
     state = std::ios::badbit;
     ss.setstate(state);
     hash = "";
     status = ComputeSHA256(ss, hash);
-    EXPECT_FALSE(status);
+    EXPECT_EQ(EX_IOERR, status);
     EXPECT_EQ(null_hash, hash);
 
     state = std::ios::eofbit;
     ss.setstate(state);
     hash = "";
     status = ComputeSHA256(ss, hash);
-    EXPECT_FALSE(status);
+    EXPECT_EQ(EX_IOERR, status);
     EXPECT_EQ(null_hash, hash);
 }
 
@@ -132,8 +132,8 @@ TEST(SHA256ToolsTest, ComputeSHA256ByteCountGreaterThanStreamLength)
     ss << input_chars;
     std::string hash;
     std::string null_hash("null");
-    bool status = ComputeSHA256(ss, hash, input_chars.size() + 10);
-    EXPECT_FALSE(status);
+    int status = ComputeSHA256(ss, hash, input_chars.size() + 10);
+    EXPECT_EQ(EX_IOERR, status);
     EXPECT_EQ(null_hash, hash);
 }
 
@@ -144,8 +144,8 @@ TEST(SHA256ToolsTest, ComputeSHA256TotalStream)
     ss << input_chars;
     std::string hash;
     std::string expected_hash = "138566517af4eba8f202cad0a674723e6d689ebbea3b8fb3288c915e54dc7b07";
-    bool status = ComputeSHA256(ss, hash);
-    EXPECT_TRUE(status);
+    int status = ComputeSHA256(ss, hash);
+    EXPECT_EQ(EX_OK, status);
     EXPECT_EQ(expected_hash, hash);
 }
 
@@ -156,8 +156,8 @@ TEST(SHA256ToolsTest, ComputeSHA256PartialStream)
     ss << input_chars;
     std::string hash;
     std::string expected_hash = "57366d809ddeaa63605a185ee80414a63e50cafd6d02cce710ada8ce402a0a67";
-    bool status = ComputeSHA256(ss, hash, input_chars.size() - 10);
-    EXPECT_TRUE(status);
+    int status = ComputeSHA256(ss, hash, input_chars.size() - 10);
+    EXPECT_EQ(EX_OK, status);
     EXPECT_EQ(expected_hash, hash);
 }
 
@@ -187,8 +187,8 @@ TEST(SHA256ToolsTest, ComputeSHA256NonASCII)
     ss << input_chars;
     std::string hash;
     std::string expected_hash = "45cbf918c2193304db9433b8c1c7a2c20c85042593b3b8c9ffe4b9f7a9e611f7";
-    bool status = ComputeSHA256(ss, hash, input_chars.size());
-    EXPECT_TRUE(status);
+    int status = ComputeSHA256(ss, hash, input_chars.size());
+    EXPECT_EQ(EX_OK, status);
     EXPECT_EQ(expected_hash, hash);
 }
 
@@ -207,8 +207,8 @@ TEST(SHA256ToolsTest, ComputeSHA256FromIStreamTotal)
 
     std::string hash;
     std::string expected_hash = "bbff0ed06d7f7e5e9769936dfd3f42ccd9b9dbbec016015691c616e4f2eba00f";
-    bool status = ComputeSHA256(instream, hash);
-    EXPECT_TRUE(status);
+    int status = ComputeSHA256(instream, hash);
+    EXPECT_EQ(EX_OK, status);
     EXPECT_EQ(expected_hash, hash);
 
     instream.close();
@@ -230,8 +230,8 @@ TEST(SHA256ToolsTest, ComputeSHA256FromIStreamPartial)
 
     std::string hash;
     std::string expected_hash = "63cb2cb1dd6197b3b24575cd02accad390baf88e28de15fdc26043e884e720ec";
-    bool status = ComputeSHA256(instream, hash, 426);
-    EXPECT_TRUE(status);
+    int status = ComputeSHA256(instream, hash, 426);
+    EXPECT_EQ(EX_OK, status);
     EXPECT_EQ(expected_hash, hash);
 
     instream.close();
@@ -245,8 +245,8 @@ TEST(SHA256ToolsTest, ComputeFileSHA256FileNotExist)
     ASSERT_FALSE(temp_path.is_regular_file());
 
     std::string hash;
-    bool status = ComputeFileSHA256(temp_path, hash);
-    EXPECT_FALSE(status);
+    int status = ComputeFileSHA256(temp_path, hash);
+    EXPECT_EQ(EX_NOINPUT, status);
 }
 
 TEST(SHA256ToolsTest, ComputeFileSHA256)
@@ -261,8 +261,8 @@ TEST(SHA256ToolsTest, ComputeFileSHA256)
 
     std::string hash;
     std::string expected_hash = "bbff0ed06d7f7e5e9769936dfd3f42ccd9b9dbbec016015691c616e4f2eba00f";
-    bool status = ComputeFileSHA256(temp_path, hash);
-    EXPECT_TRUE(status);
+    int status = ComputeFileSHA256(temp_path, hash);
+    EXPECT_EQ(EX_OK, status);
     EXPECT_EQ(expected_hash, hash);
     EXPECT_TRUE(temp_path.remove());
 }
@@ -280,8 +280,8 @@ TEST(SHA256ToolsTest, ComputeFileSHA256ByteCountGreaterThanSize)
     std::string hash;
     std::string expected_hash = "bbff0ed06d7f7e5e9769936dfd3f42ccd9b9dbbec016015691c616e4f2eba00f";
     size_t hash_byte_count = 100e6;  // Much greater than total size of file
-    bool status = ComputeFileSHA256(temp_path, hash, hash_byte_count);
-    EXPECT_TRUE(status);
+    int status = ComputeFileSHA256(temp_path, hash, hash_byte_count);
+    EXPECT_EQ(EX_OK, status);
     EXPECT_EQ(expected_hash, hash);
     EXPECT_TRUE(temp_path.remove());
 }

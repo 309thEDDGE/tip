@@ -1,21 +1,22 @@
 #include "provenance_data.h"
 
-bool GetProvenanceData(const ManagedPath& hash_file_path, size_t hash_byte_count, 
+int GetProvenanceData(const ManagedPath& hash_file_path, size_t hash_byte_count, 
     ProvenanceData& data)
 {
     data.time = GetGMTString("%F %T");
     data.tip_version = GetVersionString();
 
     std::string hash;
-    if(!ComputeFileSHA256(hash_file_path, hash, hash_byte_count))
+    int retcode = 0;
+    if((retcode = ComputeFileSHA256(hash_file_path, hash, hash_byte_count)) != 0)
     {
         SPDLOG_WARN("Failed to compute sha256 for file: {:s}",
             hash_file_path.RawString());
-        return false;
+        return retcode;
     }
     data.hash = hash;
 
-    return true;
+    return EX_OK;
 }
 
 std::string GetGMTString(const std::string& strftime_fmt)

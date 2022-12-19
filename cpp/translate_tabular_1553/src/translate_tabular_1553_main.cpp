@@ -7,7 +7,7 @@
 int TranslateTabular1553Main(int argc, char** argv)
 {
     if (!SetLineBuffering(stdout))
-        return 0;
+        return EX_OSERR;
 
     CLIGroup cli_group;
     TranslationConfigParams config;
@@ -20,7 +20,7 @@ int TranslateTabular1553Main(int argc, char** argv)
         show_dts_info, high_level_description))
     {
         printf("ConfigureTranslatorCLI failed\n");
-        return 70;
+        return EX_SOFTWARE;
     }
 
     std::string nickname = "";
@@ -34,13 +34,13 @@ int TranslateTabular1553Main(int argc, char** argv)
     if (help_requested && nickname == "clihelp")
     {
         printf("%s", cli_group.MakeHelpString().c_str());
-        return 0;
+        return EX_OK;
     }
 
     if (show_version && nickname == "cliversion")
     {
         printf(TRANSLATE_1553_EXE_NAME " version %s\n", GetVersionString().c_str());
-        return 0;
+        return EX_OK;
     }
 
     if(show_dts_info && nickname == "clidts")
@@ -49,7 +49,7 @@ int TranslateTabular1553Main(int argc, char** argv)
         printf("\nRaw DTS1553 schema (yaml-formatted):\n%s\n\n", dts_1553_schema.c_str());
         printf("%s\n\n%s\n\n%s\n\n", dts_1553_commword_explanation.c_str(), 
             dts_1553_parameter_defs.c_str(), dts_1553_suppl_commwords.c_str());
-        return 0;
+        return EX_OK;
     }
 
     ArgumentValidation av;
@@ -57,39 +57,39 @@ int TranslateTabular1553Main(int argc, char** argv)
     ManagedPath icd_path;
     ManagedPath output_dir;
     ManagedPath log_dir;
-    if (!transtab1553::ValidatePaths(config.input_data_path_str_, config.input_dts_path_str_, 
+    if ((retcode = transtab1553::ValidatePaths(config.input_data_path_str_, config.input_dts_path_str_, 
                        config.output_path_str_, config.log_path_str_, input_path, icd_path,
-                       output_dir, log_dir, &av))
-        return 0;
+                       output_dir, log_dir, &av)) != 0)
+        return retcode;
 
     if(av.CheckExtension(icd_path.RawString(), {"yaml", "yml"}) && !config.disable_dts_schema_validation_)
     {
         YamlSV ysv;
         std::string icd_string; 
         if(!av.ValidateDocument(icd_path, icd_string))
-            return 0;
+            return EX_DATAERR;
         std::vector<LogItem> log_items;
         if(!ysv.Validate(icd_string, dts_1553_schema, log_items))
         {
             printf("Schema validation failed for %s\n", icd_path.RawString().c_str());
             int print_count = 20;
             YamlSV::PrintLogItems(log_items, print_count, std::cout);
-            return 0;
+            return EX_DATAERR;
         }
     }
 
     if (!transtab1553::SetupLogging(log_dir, spdlog::level::from_str(config.stdout_log_level_)))
-        return 0;
+        return EX_SOFTWARE;
 
     TIPMDDocument parser_md_doc;
     ManagedPath parser_md_path = input_path / "_metadata.yaml";
     FileReader fr;
-    if(!transtab1553::GetParsed1553Metadata(&parser_md_path, &parser_md_doc, &fr))
-        return 0;
+    if((retcode = transtab1553::GetParsed1553Metadata(&parser_md_path, &parser_md_doc, &fr)) != 0)
+        return retcode;
 
     ProvenanceData prov_data;
-    if(!GetProvenanceData(icd_path.absolute(), 0, prov_data))
-        return 0;
+    if((retcode = GetProvenanceData(icd_path.absolute(), 0, prov_data)) != 0)
+        return retcode;
 
     // Use logger to print and record these values after logging
     // is implemented.
@@ -105,22 +105,22 @@ int TranslateTabular1553Main(int argc, char** argv)
     DTS1553 dts1553;
     std::map<std::string, std::string> msg_name_substitutions;
     std::map<std::string, std::string> elem_name_substitutions;
-    if (!transtab1553::IngestICD(&dts1553, icd_path, msg_name_substitutions,
-        elem_name_substitutions, &fr))
-        return 0;
+    if ((retcode = transtab1553::IngestICD(&dts1553, icd_path, msg_name_substitutions,
+        elem_name_substitutions, &fr)) != 0)
+        return retcode;
 
     BusMap bm;
     if (!transtab1553::PrepareBusMap(input_path, dts1553, parser_md_doc, config,
         &bm))
     {
-        return 0;
+        return EX_SOFTWARE;
     }
 
     if (config.auto_sys_limits_)
     {
         if (!transtab1553::SetSystemLimits(static_cast<uint8_t>(thread_count), 
             dts1553.ICDDataPtr()->valid_message_count))
-            return 0;
+            return EX_OSERR;
     }
     else
         SPDLOG_WARN("Automatic system limits (file handle allocation) disabled");
@@ -128,20 +128,20 @@ int TranslateTabular1553Main(int argc, char** argv)
     auto start_time = std::chrono::high_resolution_clock::now();
     ManagedPath transl_output_dir = output_dir.CreatePathObject(input_path, "_translated");
     if (!transl_output_dir.create_directory())
-        return 0;
+        return EX_IOERR;
     ManagedPath output_base_name("");
     std::set<std::string> translated_msg_names;
     SPDLOG_INFO("Translated data output dir: {:s}", transl_output_dir.RawString());
 
-    if (!transtab1553::Translate(thread_count, input_path, output_dir, dts1553.GetICDData(),
+    if ((retcode = transtab1553::Translate(thread_count, input_path, output_dir, dts1553.GetICDData(),
                    transl_output_dir, output_base_name, config.select_specific_messages_,
-                   translated_msg_names))
+                   translated_msg_names)) != 0)
     {
         SPDLOG_WARN(
             "Failed to configure 1553 translation stage or an error occurred "
             "during translation");
         spdlog::shutdown();
-        return 0;
+        return retcode;
     }
 
     auto stop_time = std::chrono::high_resolution_clock::now();
@@ -154,18 +154,18 @@ int TranslateTabular1553Main(int argc, char** argv)
                     elem_name_substitutions, prov_data, parser_md_doc, &bm))
     {
         SPDLOG_ERROR("RecordMetadata failure");
+        spdlog::shutdown();
+        return EX_IOERR;
     }
-
     // Avoid deadlock in windows, see
     // http://stackoverflow.com/questions/10915233/stdthreadjoin-hangs-if-called-after-main-exits-when-using-vs2012-rc
     spdlog::shutdown();
-
-    return 0;
+    return EX_OK;
 }
 
 namespace transtab1553
 {
-    bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
+    int ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
                     const std::string& str_output_dir, const std::string& str_log_dir, 
                     ManagedPath& input_path, ManagedPath& icd_path, ManagedPath& output_dir, 
                     ManagedPath& log_dir, ArgumentValidation* av)
@@ -174,12 +174,12 @@ namespace transtab1553
         {
             printf("Input path \"%s\" does not have extension \"parquet\"\n",
                 str_input_path.c_str());
-            return false;
+            return EX_DATAERR;
         }
         if (!av->ValidateDirectoryPath(str_input_path, input_path))
         {
             printf("Input path \"%s\" is not a valid path\n", str_input_path.c_str());
-            return false;
+            return EX_NOINPUT;
         }
 
         if (!av->CheckExtension(str_icd_path, {"txt", "csv", "yaml", "yml"}))
@@ -188,21 +188,21 @@ namespace transtab1553
                 "DTS1553 (ICD) path \"%s\" does not have extension: txt, csv, "
                 "yaml, yml\n",
                 str_icd_path.c_str());
-            return false;
+            return EX_DATAERR;
         }
         if (!av->ValidateInputFilePath(str_icd_path, icd_path))
         {
             printf("DTS1553 (ICD) path \"%s\" is not a valid path\n", str_icd_path.c_str());
-            return false;
+            return EX_NOINPUT;
         }
 
         if (!av->ValidateDirectoryPath(str_output_dir, output_dir))
-            return false;
+            return EX_NOINPUT;
 
         if (!av->ValidateDirectoryPath(str_log_dir, log_dir))
-            return false;
+            return EX_NOINPUT;
 
-        return true;
+        return EX_OK;
     }
 
     bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level)  // GCOVR_EXCL_LINE
@@ -249,7 +249,7 @@ namespace transtab1553
         return true;  // GCOVR_EXCL_LINE
     }
 
-    bool IngestICD(DTS1553* dts1553, const ManagedPath& dts_path,
+    int IngestICD(DTS1553* dts1553, const ManagedPath& dts_path,
                 std::map<std::string, std::string>& msg_name_substitutions,
                 std::map<std::string, std::string>& elem_name_substitutions,
                 FileReader* fr)
@@ -259,20 +259,20 @@ namespace transtab1553
         if (fr->ReadFile(dts_path.string()) == 1)
         {
             SPDLOG_ERROR("Failed to read ICD: {:s}", dts_path.RawString());
-            return false;
+            return EX_IOERR;
         }
 
         if (!dts1553->IngestLines(dts_path, fr->GetLines(), msg_name_substitutions,
                                 elem_name_substitutions))
         {
             SPDLOG_ERROR("Failed to ingest DTS1553 data");
-            return false;
+            return EX_DATAERR;
         }
         auto stop_time = std::chrono::high_resolution_clock::now();
         SPDLOG_INFO("DTS1553 ingest and message lookup table synthesis duration: {:d} sec",
             std::chrono::duration_cast<std::chrono::seconds>(stop_time - start_time).count());
 
-        return true;
+        return EX_OK;
     }
 
     bool PrepareBusMap(const ManagedPath& input_path, DTS1553& dts1553,
@@ -438,7 +438,7 @@ namespace transtab1553
         return true;
     }
 
-    bool Translate(size_t thread_count, const ManagedPath& input_path,
+    int Translate(size_t thread_count, const ManagedPath& input_path,
                 const ManagedPath& output_dir, ICDData icd,
                 const ManagedPath& translated_data_dir,
                 const ManagedPath& output_base_name,
@@ -450,7 +450,7 @@ namespace transtab1553
         std::vector<ManagedPath> dir_entries;
         input_path.ListDirectoryEntries(success, dir_entries);
         if (!success)
-            return false;
+            return EX_IOERR;
 
         // Filter to get files only and exclude certain files.
         std::vector<std::string> file_exclusion_substrings({"metadata", "TMATS"});
@@ -480,13 +480,14 @@ namespace transtab1553
         TranslateTabular translate(thread_count, context);
         if (!translate.SetInputFiles(dir_entries, ".parquet"))
         {
-            return false;
+            return EX_SOFTWARE;
         }
 
         translate.SetOutputDir(translated_data_dir, output_base_name);
-        if (!translate.Translate())
+        int retcode = 0;
+        if ((retcode = translate.Translate()) != 0)
         {
-            return false;
+            return retcode;
         }
 
         // Collect the translated message names from each of the Context objects.
@@ -500,31 +501,32 @@ namespace transtab1553
                                         ctx->translated_msg_names.end());
         }
 
-        return true;
+        return EX_OK;
     }
 
-    bool GetParsed1553Metadata(const ManagedPath* input_md_path,
+    int GetParsed1553Metadata(const ManagedPath* input_md_path,
         TIPMDDocument* parser_md_doc, FileReader* fr)
     {
         if(!input_md_path->is_regular_file())
         {
             SPDLOG_ERROR("Input metadata path not present: {:s}",
                 input_md_path->RawString());
-            return false;
+            return EX_NOINPUT;
         }
 
-        if(fr->ReadFile(input_md_path->string()) != 0)
+        int retcode = 0;
+        if((retcode = fr->ReadFile(input_md_path->string())) != 0)
         {
             SPDLOG_ERROR("Failed to read input metadata file: {:s}",
                 input_md_path->RawString());
-            return false;
+            return retcode;
         }
 
         if(!parser_md_doc->ReadDocument(fr->GetDocumentAsString()))
         {
             SPDLOG_ERROR("Failed to interpret input metadata as TIPMDDocument: {:s}",
                 input_md_path->RawString());
-            return false;
+            return EX_DATAERR;
         }
 
         std::string parsed_type = parser_md_doc->type_category_->node.as<std::string>();
@@ -533,9 +535,9 @@ namespace transtab1553
         {
             SPDLOG_ERROR("Parsed metadata document at {:s} has type {:s}. "
                 "Must be {:s}", input_md_path->RawString(), parsed_type, expected_type);
-            return false;
+            return EX_DATAERR;
         }
-        return true;
+        return EX_OK;
     }
 
 
