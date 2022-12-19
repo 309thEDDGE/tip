@@ -11,7 +11,7 @@ int FileReader::ReadFile(std::string file_name)
 
     // Check if file is valid
     if (!in_file.is_open())
-        return 1;
+        return EX_NOINPUT;
 
     while (std::getline(in_file, line, '\n'))
     {
@@ -21,7 +21,7 @@ int FileReader::ReadFile(std::string file_name)
     // Close file
     in_file.close();
 
-    return 0;
+    return EX_OK;
 }
 
 std::string FileReader::GetDocumentAsString()

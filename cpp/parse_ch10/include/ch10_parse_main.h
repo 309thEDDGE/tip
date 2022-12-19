@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdio>
 #include <iostream>
+#include "sysexits.h"
 #include "parse_manager.h"
 #include "parser_config_params.h"
 #include "parser_cli.h"

@@ -13,6 +13,7 @@ parser_rewrite lib.
 #include <memory>
 #include <map>
 #include <vector>
+#include "sysexits.h"
 #include "ch10_packet_type.h"
 #include "ch10_context.h"
 #include "ch10_packet.h"

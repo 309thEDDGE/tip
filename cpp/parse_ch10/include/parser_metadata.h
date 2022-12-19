@@ -9,6 +9,7 @@
 #include <vector>
 #include <set>
 #include <memory>
+#include "sysexits.h"
 #include "ch10_context.h"
 #include "parquet_tdpf1.h"
 #include "parser_paths.h"

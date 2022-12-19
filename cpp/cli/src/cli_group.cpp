@@ -58,7 +58,7 @@ int CLIGroup::Parse(int argc, char* argv[], std::string& nickname,
     {
         printf("CLIGroup::Parse: Not configured\n");
         parse_fail = true;
-        return 70;
+        return EX_SOFTWARE;
     }
 
     if(argc == 1 && !parse_fail)
@@ -85,7 +85,7 @@ int CLIGroup::Parse(int argc, char* argv[], std::string& nickname,
 
         std::vector<std::string> pos_args;
         if(!CLI::ValidateUserInput(argc, argv, all_args, pos_args))
-            return 64;
+            return EX_USAGE;
 
         // printf("after validateuserinput\n");
         // fflush(stdout);
@@ -124,7 +124,7 @@ int CLIGroup::Parse(int argc, char* argv[], std::string& nickname,
                     {
                         nickname = *it;
                         member = curr_member;
-                        return 0;
+                        return EX_OK;
                     }
                 }
             }

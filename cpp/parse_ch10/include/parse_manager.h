@@ -20,6 +20,7 @@
 #include <map>
 #include <set>
 
+#include "sysexits.h"
 #include "parse_worker.h"
 #include "parser_config_params.h"
 #include "parser_paths.h"

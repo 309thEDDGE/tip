@@ -3,6 +3,7 @@
 #include <ctime>
 #include <cinttypes>
 #include <chrono>
+#include "sysexits.h"
 #include "parquet_video_extraction.h"
 #include "cli_group.h"
 
@@ -21,7 +22,7 @@ int main(int argc, char* argv[])
     std::string output_path_str("");
 
     if(!ConfigureCLI(cli_group, help_requested, input_path_str, output_path_str))
-        return 70;
+        return EX_SOFTWARE;
 
     std::string nickname = "";
     std::shared_ptr<CLIGroupMember> cli;
@@ -34,7 +35,7 @@ int main(int argc, char* argv[])
     if (help_requested)
     {
         printf("%s", cli_group.MakeHelpString().c_str());
-        return 0;
+        return EX_OK;
     }
 
     ManagedPath input_path(input_path_str);

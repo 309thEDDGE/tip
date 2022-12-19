@@ -27,13 +27,13 @@ int Ch10ParseMain(int argc, char** argv)
     if (help_requested && nickname == "clihelp")
     {
         printf("%s", cli_group.MakeHelpString().c_str());
-        return 0;
+        return EX_OK;
     }
 
     if (show_version && nickname == "cliversion")
     {
         printf(CH10_PARSE_EXE_NAME " version %s\n", GetVersionString().c_str());
-        return 0;
+        return EX_OK;
     }
     config.MakeCh10PacketEnabledMap();
 
@@ -63,7 +63,7 @@ int Ch10ParseMain(int argc, char** argv)
     // http://stackoverflow.com/questions/10915233/stdthreadjoin-hangs-if-called-after-main-exits-when-using-vs2012-rc
     spdlog::shutdown();
 
-    return 0;
+    return EX_OK;
 
 }
 
@@ -76,14 +76,14 @@ int ValidatePaths(const std::string& str_input_path, const std::string& str_outp
         printf(
             "User-defined input path (%s) does not have one of the case-insensitive "
             "extensions: ch10, c10\n", str_input_path.c_str());
-        return 65;
+        return EX_DATAERR;
     }
     // Check utf-8 conformity and verify existence of input path
     if (!av->ValidateInputFilePath(str_input_path, input_path))
     {
         printf("User-defined input path is not a file/does not exist: %s\n",
                str_input_path.c_str());
-        return 66;
+        return EX_NOINPUT;
     }
 
     // If no output path is specified, use the input path.
@@ -98,17 +98,17 @@ int ValidatePaths(const std::string& str_input_path, const std::string& str_outp
         {
             printf("Output path is not a directory: %s\n",
                    str_output_path.c_str());
-            return 69;
+            return EX_NOINPUT;
         }
     }
 
     if (!av->ValidateDirectoryPath(str_log_dir, log_dir))
     {
         printf("Log path is not a directory: %s\n", str_log_dir.c_str());
-        return 69;
+        return EX_NOINPUT;
     }
 
-    return 0;
+    return EX_OK;
 }
 
 int StartParse(ManagedPath input_path, ManagedPath output_path,
@@ -125,7 +125,7 @@ int StartParse(ManagedPath input_path, ManagedPath output_path,
     auto stop_time = std::chrono::high_resolution_clock::now();
     duration = (stop_time - start_time).count() / 1.0e9;
 
-    return 0;
+    return EX_OK;
 }
 
 int SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level)  // GCOVR_EXCL_LINE
@@ -191,7 +191,7 @@ int SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_le
     catch (const spdlog::spdlog_ex& ex)  // GCOVR_EXCL_LINE
     {
         printf("SetupLogging() failed: %s\n", ex.what());  // GCOVR_EXCL_LINE
-        return 70;  // GCOVR_EXCL_LINE
+        return EX_SOFTWARE;  // GCOVR_EXCL_LINE
     }
-    return 0;  // GCOVR_EXCL_LINE
+    return EX_OK;  // GCOVR_EXCL_LINE
 }

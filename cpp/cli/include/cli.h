@@ -8,6 +8,7 @@
 #include <map>
 #include <unordered_map>
 #include <algorithm>
+#include "sysexits.h"
 #include "parse_text.h"
 #include "cli_conf.h"
 #include "cli_arg.h"

@@ -5,6 +5,7 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include "sysexits.h"
 #include "parquet_context.h"
 #include "managed_path.h"
 #include "ch10_tdpf1_hdr_format.h"

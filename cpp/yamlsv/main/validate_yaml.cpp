@@ -1,3 +1,4 @@
+#include "sysexits.h"
 #include "yaml_schema_validation.h"
 #include "file_reader.h"
 #include "managed_path.h"
@@ -14,7 +15,7 @@ int main(int argc, char* argv[])
     std::string schema_path_str("");
 
     if(!ConfigureCLI(cli_group, help_requested, yaml_path_str, schema_path_str))
-        return 70;
+        return EX_SOFTWARE;
 
     std::string nickname = "";
     std::shared_ptr<CLIGroupMember> cli;
@@ -27,7 +28,7 @@ int main(int argc, char* argv[])
     if (help_requested)
     {
         printf("%s", cli_group.MakeHelpString().c_str());
-        return 0;
+        return EX_OK;
     }
 
     ManagedPath yaml_path(yaml_path_str);
@@ -36,13 +37,13 @@ int main(int argc, char* argv[])
     if (fr_test.ReadFile(yaml_path.string()) == 1)
     {
         printf("Failed to read YAML file under test: %s\n", yaml_path.RawString().c_str());
-        return 66;
+        return EX_NOINPUT;
     }
     FileReader fr_schema;
     if (fr_schema.ReadFile(schema_path.string()) == 1)
     {
         printf("Failed to read YAML schema file: %s\n", schema_path.RawString().c_str());
-        return 66;
+        return EX_NOINPUT;
     }
 
     // Concatenate all lines into a single string. It is requisite to append
@@ -83,7 +84,7 @@ int main(int argc, char* argv[])
     if (res)
     {
         printf("\nValidation result: PASS\n");
-        return 0;
+        return EX_OK;
     }
     else
     {

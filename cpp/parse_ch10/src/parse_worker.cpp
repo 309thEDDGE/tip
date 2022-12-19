@@ -74,7 +74,7 @@ int ParseWorker::ConfigureContext(Ch10Context* ctx,
     {
         // Configure packet parsing.
         if (!ctx->SetPacketTypeConfig(ch10_packet_type_map, ctx->pkt_type_config_map))
-            return 70;
+            return EX_SOFTWARE;
 
         // Check configuration. Are the packet parse and output paths configs
         // consistent?
@@ -82,7 +82,7 @@ int ParseWorker::ConfigureContext(Ch10Context* ctx,
         bool config_ok = ctx->CheckConfiguration(ctx->pkt_type_config_map,
                                                 output_file_paths_map, enabled_paths);
         if (!config_ok)
-            return 70;
+            return EX_SOFTWARE;
 
         // For each packet type that is enabled and has an output path specified,
         // create a file writer object that is owned by Ch10Context to maintain
@@ -93,7 +93,7 @@ int ParseWorker::ConfigureContext(Ch10Context* ctx,
         if ((retcode = ctx->InitializeFileWriters(enabled_paths)) != 0)
             return retcode;
     }
-    return 0;
+    return EX_OK;
 }
 
 void ParseWorker::ParseBufferData(Ch10Context* ctx, BinBuff* bb)

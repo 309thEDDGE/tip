@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "sysexits.h"
 #include "parquet_context.h"
 #include "ethernet_data.h"
 #include "managed_path.h"

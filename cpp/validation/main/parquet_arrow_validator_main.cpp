@@ -1,6 +1,7 @@
 #include <ctime>
 #include <chrono>
 #include <cinttypes>
+#include "sysexits.h"
 #include "comparator.h"
 #include "cli_group.h"
 
@@ -19,7 +20,7 @@ int main(int argc, char* argv[])
     std::string test_path_str("");
 
     if(!ConfigureCLI(cli_group, help_requested, truth_path_str, test_path_str))
-        return 70;
+        return EX_SOFTWARE;
 
     std::string nickname = "";
     std::shared_ptr<CLIGroupMember> cli;
@@ -32,7 +33,7 @@ int main(int argc, char* argv[])
     if (help_requested)
     {
         printf("%s", cli_group.MakeHelpString().c_str());
-        return 0;
+        return EX_OK;
     }
 
     Comparator comp;
@@ -46,7 +47,7 @@ int main(int argc, char* argv[])
 
     if(!result)
         return 1;
-    return 0;
+    return EX_OK;
 }
 
 bool ConfigureCLI(CLIGroup& cli_group, bool& help_requested, std::string& truth_path_str, 

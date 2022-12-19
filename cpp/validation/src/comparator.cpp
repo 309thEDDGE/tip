@@ -11,20 +11,20 @@ int Comparator::Initialize(ManagedPath path1, ManagedPath path2)
     {
         printf("\nERROR!! Input path 1 (%s) is not a directory or file\n", path1.RawString().c_str());
         failure_ = true;
-        return 66;
+        return EX_NOINPUT;
     }
 
     if (is_dir && !path2.is_directory())
     {
         printf("\nERROR!! Input path 2 (%s) is not a directory\n", path2.RawString().c_str());
         failure_ = true;
-        return 66;
+        return EX_NOINPUT;
     }
     else if(!is_dir && !path2.is_regular_file())
     {
         printf("\nERROR!! Input path 2 (%s) is not a file\n", path2.RawString().c_str());
         failure_ = true;
-        return 66;
+        return EX_NOINPUT;
     }
 
     bool return_status = false;
@@ -32,19 +32,19 @@ int Comparator::Initialize(ManagedPath path1, ManagedPath path2)
     if (!return_status)
     {
         failure_ = true;
-        return 74;
+        return EX_IOERR;
     }
     return_status = pm2_.SetPQPath(path2);
     if (!return_status)
     {
         failure_ = true;
-        return 74;
+        return EX_IOERR;
     }
 
     if (!failure_)
         InitializeStats();
 
-    return 0;
+    return EX_OK;
 }
 
 int Comparator::Initialize(std::string path1, std::string path2)

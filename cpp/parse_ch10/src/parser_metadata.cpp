@@ -67,7 +67,7 @@ int ParserMetadata::RecordMetadata(ManagedPath md_filename,
     parser_paths_.RemoveCh10PacketOutputDirs(parsed_pkt_types);
 
     spdlog::get("pm_logger")->debug("RecordMetadata: complete record metadata");
-    return 0;
+    return EX_OK;
 }
 
 void ParserMetadataFunctions::RecordProvenanceData(TIPMDDocument* md,
@@ -249,7 +249,7 @@ int ParserMetadataFunctions::WriteTDPData(const std::vector<const Ch10Context*>&
     uint16_t thread_id = 0;
     pqtdp->Close(thread_id);
 
-    return 0;
+    return EX_OK;
 }
 
 void ParserMetadataFunctions::LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map)
@@ -351,10 +351,10 @@ int ParserMetadata::RecordMetadataForPktType(const ManagedPath& md_filename,
 
     if(!md_funcs->RecordCh10PktTypeSpecificMetadata(pkt_type, context_vec, 
         tip_md->GetRuntimeCategory().get(), tmats_data))
-        return 70;
+        return EX_SOFTWARE;
 
     if(!md_funcs->ProcessTMATSForType(tmats_data, tip_md, pkt_type))
-        return 70;
+        return EX_SOFTWARE;
 
     // Write the complete Yaml record to the metadata file.
     tip_md->CreateDocument();
@@ -362,8 +362,8 @@ int ParserMetadata::RecordMetadataForPktType(const ManagedPath& md_filename,
     {
         spdlog::get("pm_logger")->warn("Failed to write metadata file for {:s}",
             pkt_type_label.c_str());
-        return 74;
+        return EX_IOERR;
     }
 
-    return 0;
+    return EX_OK;
 }

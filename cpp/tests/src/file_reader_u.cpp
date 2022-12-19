@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include "sysexits.h"
 #include "file_reader.h"
 #include <fstream>
 #include <iostream>
@@ -20,7 +21,7 @@ TEST_F(FileReaderTest, ReadFileReturnsInvalidFileFlag)
 {
     std::string filename = "badFilePath.txt";
     int returnVal = fr.ReadFile(filename);
-    ASSERT_EQ(returnVal, 1);
+    ASSERT_EQ(returnVal, EX_NOINPUT);
 }
 
 TEST_F(FileReaderTest, ReadFileReturnsValidFileFlag)
@@ -32,7 +33,7 @@ TEST_F(FileReaderTest, ReadFileReturnsValidFileFlag)
     file.close();
 
     int returnVal = fr.ReadFile(filename);
-    ASSERT_EQ(returnVal, 0);
+    ASSERT_EQ(returnVal, EX_OK);
     remove(filename.c_str());
 }
 
@@ -84,7 +85,7 @@ TEST_F(FileReaderTest, GetDocumentAsString)
     file << data;
     file.close();
 
-    EXPECT_EQ(fr.ReadFile(filename), 0);
+    EXPECT_EQ(fr.ReadFile(filename), EX_OK);
     std::string doc = fr.GetDocumentAsString();
     EXPECT_TRUE(doc.size() > 0);
     EXPECT_EQ(doc, data);
@@ -99,7 +100,7 @@ TEST_F(FileReaderTest, ReadFileReadNewFile)
     file << "Line1\nLine2\n";
     file.close();
 
-    EXPECT_EQ(fr.ReadFile(filename), 0);
+    EXPECT_EQ(fr.ReadFile(filename), EX_OK);
     EXPECT_EQ(fr.GetLines().size(), 2);
     remove(filename.c_str());
 
@@ -107,7 +108,7 @@ TEST_F(FileReaderTest, ReadFileReadNewFile)
     file << "newline1\nnewline2\n";
     file.close();
 
-    EXPECT_EQ(fr.ReadFile(filename), 0);
+    EXPECT_EQ(fr.ReadFile(filename), EX_OK);
     EXPECT_EQ(fr.GetLines().size(), 2);
     remove(filename.c_str());
 }

@@ -66,7 +66,7 @@ int ParquetVideoDataF0::Initialize(ManagedPath outfile, uint16_t thread_id)
     {
         SPDLOG_ERROR("({:03d}) OpenForWrite failed for file {:s}", thread_id_,
                      outfile_);
-        return 74;
+        return EX_IOERR;
     }
 
     // Setup automatic tracking of appended data.
@@ -75,11 +75,11 @@ int ParquetVideoDataF0::Initialize(ManagedPath outfile, uint16_t thread_id)
     {
         SPDLOG_ERROR("({:03d}) SetupRowCountTracking not configured correctly",
                      thread_id_);
-        return 70;
+        return EX_SOFTWARE;
     }
 
     pq_ctx_->EnableEmptyFileDeletion(outfile_);
-    return 0;
+    return EX_OK;
 }
 
 void ParquetVideoDataF0::Append(

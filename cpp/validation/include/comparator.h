@@ -10,6 +10,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include "sysexits.h"
 #include "parquet_reader.h"
 #include "managed_path.h"
 

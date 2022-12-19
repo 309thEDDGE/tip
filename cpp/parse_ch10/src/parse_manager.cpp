@@ -59,7 +59,7 @@ int Parse(ManagedPath ch10_path, ManagedPath out_dir, const ParserConfigParams& 
     }
 
     ch10_input_stream.close();
-    return 0;
+    return EX_OK;
 }
 
 int ParseManager::Configure(const ManagedPath* input_ch10_file_path, ManagedPath output_dir,
@@ -73,7 +73,7 @@ int ParseManager::Configure(const ManagedPath* input_ch10_file_path, ManagedPath
     if (!success)
     {
         spdlog::get("pm_logger")->error("Configure error: GetFileSize failure");
-        return 74;
+        return EX_IOERR;
     }
     spdlog::get("pm_logger")->info("Ch10 file size: {:f} MB", ch10_file_size / (1000.0 * 1000.0));
 
@@ -85,29 +85,29 @@ int ParseManager::Configure(const ManagedPath* input_ch10_file_path, ManagedPath
         user_config.ch10_packet_enabled_map_, worker_count))
     {
         spdlog::get("pm_logger")->error("Configure error: CreateOutputPaths failure");
-        return 73;
+        return EX_CANTCREAT;
     }
 
     if(!pmf->MakeWorkUnits(work_units, worker_count, chunk_bytes, append_chunk_size_bytes_, 
         ch10_file_size, ch10_stream, parser_paths))
     {
         spdlog::get("pm_logger")->error("Configure error: MakeWorkUnits failure");
-        return 70;
+        return EX_SOFTWARE;
     }
 
     if(!metadata->Initialize(*input_ch10_file_path, user_config, *parser_paths))
     {
         spdlog::get("pm_logger")->error("Configure error: ParserMetadata::Initialize failure");
-        return 70;
+        return EX_SOFTWARE;
     }
 
     if(!pmf->OpenCh10File(*input_ch10_file_path, ch10_stream))
     {
         spdlog::get("pm_logger")->error("Configure error: OpenCh10File failure");
-        return 74;
+        return EX_IOERR;
     }
 
-    return 0;
+    return EX_OK;
 }
 
 int ParseCh10(std::vector<WorkUnit*>& work_units, ParseManagerFunctions* pmf,
@@ -130,13 +130,13 @@ int ParseCh10(std::vector<WorkUnit*>& work_units, ParseManagerFunctions* pmf,
     // Wait for all active workers to finish.
     if (!pm->StopThreads(work_units, active_workers_vec, user_config.worker_shift_wait_ms_,
         pmf))
-        return 70;
+        return EX_SOFTWARE;
 
     append = true;
     if (effective_worker_count > 1)
         effective_worker_count--;
     else
-        return 0;
+        return EX_OK;
 
     spdlog::get("pm_logger")->debug("Parse: begin parsing in append mode");
     if ((retcode = pm->StartThreads(append, active_workers_vec, effective_worker_count, user_config,
@@ -150,10 +150,10 @@ int ParseCh10(std::vector<WorkUnit*>& work_units, ParseManagerFunctions* pmf,
     // Wait for all active workers to finish.
     if (!pm->StopThreads(work_units, active_workers_vec, user_config.worker_shift_wait_ms_,
         pmf))
-        return 70;
+        return EX_SOFTWARE;
     spdlog::get("pm_logger")->info("Parse: Parsing complete with no errors");
 
-    return 0;
+    return EX_OK;
 }
 
 int ParseManager::StartThreads(bool append_mode, 
@@ -186,7 +186,7 @@ int ParseManager::StartThreads(bool append_mode,
                 return retcode_;
         }  
     }  
-    return 0;
+    return EX_OK;
 }
 
 int ParseManager::ActivateInitialThread(ParseManagerFunctions* pmf, bool append_mode,
@@ -202,7 +202,7 @@ int ParseManager::ActivateInitialThread(ParseManagerFunctions* pmf, bool append_
             active_thread_count);
 
         if(!pmf->ActivateWorker(work_unit, active_workers, worker_index, append_mode, read_pos))
-            return 70;
+            return EX_SOFTWARE;
 
         active_thread_count += 1;
         read_pos += work_unit->GetReadBytes();
@@ -211,7 +211,7 @@ int ParseManager::ActivateInitialThread(ParseManagerFunctions* pmf, bool append_
         if (!append_mode)
             std::this_thread::sleep_for(worker_wait_ms);
     }
-    return 0;
+    return EX_OK;
 }
 
 int ParseManager::ActivateAvailableThread(ParseManagerFunctions* pmf, bool append_mode,
@@ -254,7 +254,7 @@ int ParseManager::ActivateAvailableThread(ParseManagerFunctions* pmf, bool appen
 
                 if(!pmf->ActivateWorker(work_units.at(worker_index), active_workers, 
                     worker_index, append_mode, read_pos))
-                    return 70;
+                    return EX_SOFTWARE;
 
                 thread_started = true;
                 read_pos += work_units.at(worker_index)->GetReadBytes();
@@ -271,7 +271,7 @@ int ParseManager::ActivateAvailableThread(ParseManagerFunctions* pmf, bool appen
         spdlog::get("pm_logger")->trace("ActivateAvailableThread: waiting for workers");
         std::this_thread::sleep_for(worker_wait_ms);
     }
-    return 0;
+    return EX_OK;
 }
 
 bool ParseManager::StopThreads(std::vector<WorkUnit*>& work_units,
