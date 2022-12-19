@@ -248,7 +248,7 @@ TEST_F(ParseManagerTest, ActivateInitialThreadAllThreadActivated)
     uint16_t active_thread_count = conf_thread_count;
     bool thread_started = true;
 
-    ASSERT_EQ(0, pm.ActivateInitialThread(&mock_pmf, append_mode, &work_unit, worker_wait, 
+    ASSERT_EQ(EX_OK, pm.ActivateInitialThread(&mock_pmf, append_mode, &work_unit, worker_wait, 
         active_workers, active_worker_ind, read_pos, active_thread_count, conf_thread_count,
         thread_started));
     EXPECT_EQ(false, thread_started);
@@ -271,7 +271,7 @@ TEST_F(ParseManagerTest, ActivateInitialThreadActivateWorkerFail)
     EXPECT_CALL(mock_pmf, ActivateWorker(&work_unit, active_workers, active_worker_ind, 
         append_mode, read_pos)).WillOnce(Return(false));
 
-    ASSERT_EQ(70, pm.ActivateInitialThread(&mock_pmf, append_mode, &work_unit, worker_wait, 
+    ASSERT_EQ(EX_SOFTWARE, pm.ActivateInitialThread(&mock_pmf, append_mode, &work_unit, worker_wait, 
         active_workers, active_worker_ind, read_pos, active_thread_count, conf_thread_count,
         thread_started));
     EXPECT_EQ(false, thread_started);
@@ -297,7 +297,7 @@ TEST_F(ParseManagerTest, ActivateInitialThread)
     uint64_t read_bytes = 58803;
     EXPECT_CALL(work_unit, GetReadBytes()).WillOnce(ReturnRef(read_bytes));
 
-    ASSERT_EQ(0, pm.ActivateInitialThread(&mock_pmf, append_mode, &work_unit, worker_wait, 
+    ASSERT_EQ(EX_OK, pm.ActivateInitialThread(&mock_pmf, append_mode, &work_unit, worker_wait, 
         active_workers, active_worker_ind, read_pos, active_thread_count, conf_thread_count,
         thread_started));
     EXPECT_EQ(true, thread_started);
@@ -320,7 +320,7 @@ TEST_F(ParseManagerTest, ActivateAvailableThreadAlreadyStarted)
     uint64_t read_pos = init_read_pos;
     bool thread_started = true;
 
-    ASSERT_EQ(0, pm.ActivateAvailableThread(&mock_pmf, append_mode, work_units, worker_wait,
+    ASSERT_EQ(EX_OK, pm.ActivateAvailableThread(&mock_pmf, append_mode, work_units, worker_wait,
         active_workers, active_worker_ind, read_pos, thread_started));
 }
 
@@ -343,7 +343,7 @@ TEST_F(ParseManagerTest, ActivateAvailableThreadAllThreadsUnavailable)
     EXPECT_CALL(work_unit1, IsComplete()).WillOnce(Return(false));
     EXPECT_CALL(work_unit3, IsComplete()).WillOnce(Return(false));
 
-    ASSERT_EQ(0, pm.ActivateAvailableThread(&mock_pmf, append_mode, work_units, worker_wait,
+    ASSERT_EQ(EX_OK, pm.ActivateAvailableThread(&mock_pmf, append_mode, work_units, worker_wait,
         active_workers, active_worker_ind, read_pos, thread_started));
     EXPECT_FALSE(thread_started);
 }
@@ -371,7 +371,7 @@ TEST_F(ParseManagerTest, ActivateAvailableThreadSecondThreadCompleteActivateWork
     EXPECT_CALL(mock_pmf, ActivateWorker(&work_unit4, active_workers, active_worker_ind,
         append_mode, read_pos)).WillOnce(Return(false));
 
-    ASSERT_EQ(70, pm.ActivateAvailableThread(&mock_pmf, append_mode, work_units, worker_wait,
+    ASSERT_EQ(EX_SOFTWARE, pm.ActivateAvailableThread(&mock_pmf, append_mode, work_units, worker_wait,
         active_workers, active_worker_ind, read_pos, thread_started));
     EXPECT_FALSE(thread_started);
 }
@@ -400,7 +400,7 @@ TEST_F(ParseManagerTest, ActivateAvailableThreadFirstThreadComplete)
     uint64_t read_bytes = 154952;
     EXPECT_CALL(work_unit4, GetReadBytes()).WillOnce(ReturnRef(read_bytes));
 
-    ASSERT_EQ(0, pm.ActivateAvailableThread(&mock_pmf, append_mode, work_units, worker_wait,
+    ASSERT_EQ(EX_OK, pm.ActivateAvailableThread(&mock_pmf, append_mode, work_units, worker_wait,
         active_workers, active_worker_ind, read_pos, thread_started));
     EXPECT_TRUE(thread_started);
     EXPECT_EQ(init_read_pos + read_bytes, read_pos);
@@ -511,7 +511,7 @@ TEST_F(ParseManagerTest, ConfigureGetFileSizeFail)
     EXPECT_CALL(ch10_file_path, GetFileSize(_, _)).WillOnce(::testing::DoAll(
         ::testing::SetArgReferee<0>(false), ::testing::SetArgReferee<1>(ch10_file_size)));
 
-    ASSERT_EQ(74, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
+    ASSERT_EQ(EX_IOERR, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
         &metadata, work_units, ch10_stream));
 }
 
@@ -539,7 +539,7 @@ TEST_F(ParseManagerTest, ConfigureCreateOutputPathsFail)
     EXPECT_CALL(parser_paths, CreateOutputPaths(ch10_file_path, outdir, 
         config.ch10_packet_enabled_map_, worker_count)).WillOnce(Return(false));
 
-    ASSERT_EQ(73, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
+    ASSERT_EQ(EX_CANTCREAT, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
         &metadata, work_units, ch10_stream));
 }
 
@@ -571,7 +571,7 @@ TEST_F(ParseManagerTest, ConfigureMakeWorkUnitsFail)
         ParseManager::GetAppendChunkSizeBytes(), ch10_file_size, ::testing::Ref(ch10_stream), 
         &parser_paths)).WillOnce(Return(false));
 
-    ASSERT_EQ(70, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
+    ASSERT_EQ(EX_SOFTWARE, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
         &metadata, work_units, ch10_stream));
 }
 
@@ -606,7 +606,7 @@ TEST_F(ParseManagerTest, ConfigureInitializeFail)
     EXPECT_CALL(metadata, Initialize(ch10_file_path, config, ::testing::Ref(parser_paths)))
         .WillOnce(Return(false));
 
-    ASSERT_EQ(70, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
+    ASSERT_EQ(EX_SOFTWARE, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
         &metadata, work_units, ch10_stream));
 }
 
@@ -644,7 +644,7 @@ TEST_F(ParseManagerTest, ConfigureOpenCh10FileFail)
     EXPECT_CALL(pmf, OpenCh10File(ch10_file_path, ::testing::Ref(ch10_stream)))
         .WillOnce(Return(false));
 
-    ASSERT_EQ(74, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
+    ASSERT_EQ(EX_IOERR, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
         &metadata, work_units, ch10_stream));
 }
 
@@ -682,7 +682,7 @@ TEST_F(ParseManagerTest, Configure)
     EXPECT_CALL(pmf, OpenCh10File(ch10_file_path, ::testing::Ref(ch10_stream)))
         .WillOnce(Return(true));
 
-    ASSERT_EQ(0, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
+    ASSERT_EQ(EX_OK, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
         &metadata, work_units, ch10_stream));
 }
 
@@ -704,7 +704,7 @@ TEST_F(ParseManagerTest, ParseCh10InitialStartThreadsFail)
     EXPECT_CALL(pm, StartThreads(append, _, static_cast<uint16_t>(work_units.size()), config, work_unit_ptrs, &pmf))
         .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers1), Return(70)));
 
-    ASSERT_EQ(70, ParseCh10(work_unit_ptrs, &pmf, &pm, config));
+    ASSERT_EQ(EX_SOFTWARE, ParseCh10(work_unit_ptrs, &pmf, &pm, config));
 }
 
 TEST_F(ParseManagerTest, ParseCh10InitialStopThreadsFail)
@@ -731,7 +731,7 @@ TEST_F(ParseManagerTest, ParseCh10InitialStopThreadsFail)
     EXPECT_CALL(pm, StopThreads(work_unit_ptrs, active_workers1, config.worker_shift_wait_ms_,
         &pmf)).WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers2), Return(false)));
 
-    ASSERT_EQ(70, ParseCh10(work_unit_ptrs, &pmf, &pm, config));
+    ASSERT_EQ(EX_SOFTWARE, ParseCh10(work_unit_ptrs, &pmf, &pm, config));
 }
 
 TEST_F(ParseManagerTest, ParseCh10SingleThreadEarlyReturn)
@@ -758,7 +758,7 @@ TEST_F(ParseManagerTest, ParseCh10SingleThreadEarlyReturn)
     EXPECT_CALL(pm, StopThreads(work_unit_ptrs, active_workers1, config.worker_shift_wait_ms_,
         &pmf)).WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers2), Return(true)));
 
-    ASSERT_EQ(0, ParseCh10(work_unit_ptrs, &pmf, &pm, config));
+    ASSERT_EQ(EX_OK, ParseCh10(work_unit_ptrs, &pmf, &pm, config));
 }
 
 TEST_F(ParseManagerTest, ParseCh10FinalStartThreadsFail)
@@ -791,7 +791,7 @@ TEST_F(ParseManagerTest, ParseCh10FinalStartThreadsFail)
         work_unit_ptrs, &pmf)).WillOnce(::testing::DoAll(
             ::testing::SetArgReferee<1>(active_workers3), Return(70)));
 
-    ASSERT_EQ(70, ParseCh10(work_unit_ptrs, &pmf, &pm, config));
+    ASSERT_EQ(EX_SOFTWARE, ParseCh10(work_unit_ptrs, &pmf, &pm, config));
 }
 
 TEST_F(ParseManagerTest, ParseCh10FinalStopThreadsFail)
@@ -828,7 +828,7 @@ TEST_F(ParseManagerTest, ParseCh10FinalStopThreadsFail)
     EXPECT_CALL(pm, StopThreads(work_unit_ptrs, active_workers3, config.worker_shift_wait_ms_,
         &pmf)).WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers4), Return(false)));
 
-    ASSERT_EQ(70, ParseCh10(work_unit_ptrs, &pmf, &pm, config));
+    ASSERT_EQ(EX_SOFTWARE, ParseCh10(work_unit_ptrs, &pmf, &pm, config));
 }
 
 TEST_F(ParseManagerTest, ParseCh10)
@@ -865,5 +865,5 @@ TEST_F(ParseManagerTest, ParseCh10)
     EXPECT_CALL(pm, StopThreads(work_unit_ptrs, active_workers3, config.worker_shift_wait_ms_,
         &pmf)).WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(active_workers4), Return(true)));
 
-    ASSERT_EQ(0, ParseCh10(work_unit_ptrs, &pmf, &pm, config));
+    ASSERT_EQ(EX_OK, ParseCh10(work_unit_ptrs, &pmf, &pm, config));
 }

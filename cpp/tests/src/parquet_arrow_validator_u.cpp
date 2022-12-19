@@ -218,7 +218,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorInitializeNoFilesExist)
     Comparator comp;
     std::string file_name1 = "file1.parquet";
     std::string file_name2 = "file2.parquet";
-    EXPECT_EQ(66, comp.Initialize(ManagedPath(file_name1), ManagedPath(file_name2)));
+    EXPECT_EQ(EX_NOINPUT, comp.Initialize(ManagedPath(file_name1), ManagedPath(file_name2)));
 }
 
 TEST_F(ParquetArrowValidatorTest, ComparatorInitializeNoFilesExist2)
@@ -229,7 +229,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorInitializeNoFilesExist2)
 
     std::filesystem::create_directory(file1);
 
-    EXPECT_EQ(66, comp.Initialize(ManagedPath(file1), ManagedPath(file2)));
+    EXPECT_EQ(EX_NOINPUT, comp.Initialize(ManagedPath(file1), ManagedPath(file2)));
     std::filesystem::remove_all(file1);
 }
 
@@ -247,8 +247,8 @@ TEST_F(ParquetArrowValidatorTest, ComparatorInitializeInvalidFiles)
 
     std::filesystem::create_directory(invalid);
 
-    EXPECT_EQ(74, comp.Initialize(invalid, dirname));
-    EXPECT_EQ(74, comp.Initialize(dirname, invalid));
+    EXPECT_EQ(EX_IOERR, comp.Initialize(invalid, dirname));
+    EXPECT_EQ(EX_IOERR, comp.Initialize(dirname, invalid));
 
     std::filesystem::remove_all(invalid);
 }
@@ -370,7 +370,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnOutOfBoundsLow)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     ASSERT_FALSE(comp.CompareColumn(0));
 }
 
@@ -391,7 +391,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnOutOfBoundsHighFileOne)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     ASSERT_FALSE(comp.CompareColumn(3));
 }
 
@@ -412,7 +412,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnOutOfBoundsHighFileTwo)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     ASSERT_FALSE(comp.CompareColumn(3));
 }
 
@@ -436,7 +436,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnTwoEquivalentColumns)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
     EXPECT_TRUE(comp.CompareColumn(2));
 }
@@ -459,7 +459,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnTwoEquivalentColumnsDif
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
     EXPECT_TRUE(comp.CompareColumn(2));
 }
@@ -482,7 +482,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnTwoNonEquivalentColumns
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 }
@@ -509,7 +509,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnTwoNonEquivalentColumns
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 }
@@ -536,7 +536,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnTwoNonEquivalentColumns
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 }
@@ -563,7 +563,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareColumnOneMatchOneNonMatch)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 }
@@ -590,7 +590,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareFileOneBigger1)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 
@@ -618,7 +618,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareFileOneBigger2)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 }
@@ -645,7 +645,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareFileTwoBigger)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 
@@ -673,7 +673,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareTwoDifferentDataTypes)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
 }
 
@@ -699,7 +699,7 @@ TEST_F(ParquetArrowValidatorTest, ParquetManagerCompareListMatchUint16)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
     EXPECT_EQ(comp.GetComparedCount(1), 35);
 }
@@ -724,7 +724,7 @@ TEST_F(ParquetArrowValidatorTest, ParquetManagerCompareListMisMatchUint16)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
 }
 
@@ -743,7 +743,7 @@ TEST_F(ParquetArrowValidatorTest, ParquetManagerCompareListTypeWithNonListType)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
 }
 
@@ -765,7 +765,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareInt64Match)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
     EXPECT_TRUE(comp.CompareColumn(2));
 }
@@ -788,7 +788,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareInt64MisMatch)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 }
@@ -813,7 +813,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareInt16Match)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
     EXPECT_TRUE(comp.CompareColumn(2));
 }
@@ -836,7 +836,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareInt16MisMatch)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 
@@ -860,7 +860,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareInt8Match)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
     EXPECT_TRUE(comp.CompareColumn(2));
 }
@@ -883,7 +883,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareInt8MisMatch)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 
@@ -907,7 +907,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareBooleanMatch)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
     EXPECT_TRUE(comp.CompareColumn(2));
 }
@@ -930,7 +930,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareBooleanMismatch)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 }
@@ -953,7 +953,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareStringMatch)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
     EXPECT_TRUE(comp.CompareColumn(2));
 }
@@ -976,7 +976,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareStringMisMatch)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 
@@ -1006,7 +1006,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareDoubleMatch)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
     EXPECT_TRUE(comp.CompareColumn(2));
 }
@@ -1035,7 +1035,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareDoubleMisMatch)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 }
@@ -1058,7 +1058,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareDoubleNaN)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
 }
 
@@ -1083,7 +1083,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareDoubleDifferentNaNImpls)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
 }
 
@@ -1111,7 +1111,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareFloatMatch)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
     EXPECT_TRUE(comp.CompareColumn(2));
 }
@@ -1140,7 +1140,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareFloatMisMatch)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_FALSE(comp.CompareColumn(2));
 }
@@ -1179,7 +1179,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorEnsureVectorBeginningPosition1Reset)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_TRUE(comp.CompareColumn(2));
 }
@@ -1208,7 +1208,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorEnsureVectorBeginningPosition2Reset)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareColumn(1));
     EXPECT_TRUE(comp.CompareColumn(2));
 }
@@ -1231,7 +1231,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareFloatNaN)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_TRUE(comp.CompareColumn(1));
 }
 
@@ -1253,7 +1253,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareTotalCountInts)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_EQ(comp.GetComparedCount(1), 0);
     EXPECT_EQ(comp.GetComparedCount(2), 0);
     EXPECT_TRUE(comp.CompareColumn(1));
@@ -1278,7 +1278,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareTotalCountInts)
     // file 2
     ASSERT_TRUE(CreateParquetFile(arrow::int64(), dirname2, file2a, 2));
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_EQ(comp.GetComparedCount(1), 0);
     EXPECT_EQ(comp.GetComparedCount(2), 0);
     EXPECT_TRUE(comp.CompareColumn(1));
@@ -1312,7 +1312,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareTotalCountBool)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_EQ(comp.GetComparedCount(1), 0);
     EXPECT_EQ(comp.GetComparedCount(2), 0);
     EXPECT_TRUE(comp.CompareColumn(1));
@@ -1338,7 +1338,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareTotalCountBool)
     // file 2
     ASSERT_TRUE(CreateParquetFile(arrow::boolean(), dirname2, file2a, 2));
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_EQ(comp.GetComparedCount(1), 0);
     EXPECT_EQ(comp.GetComparedCount(2), 0);
     EXPECT_TRUE(comp.CompareColumn(1));
@@ -1372,7 +1372,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareTotalCountStrings)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_EQ(comp.GetComparedCount(1), 0);
     EXPECT_EQ(comp.GetComparedCount(2), 0);
     EXPECT_TRUE(comp.CompareColumn(1));
@@ -1397,7 +1397,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareTotalCountStrings)
     // file 2
     ASSERT_TRUE(CreateParquetFile(arrow::utf8(), dirname2, file2a, 2));
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_EQ(comp.GetComparedCount(1), 0);
     EXPECT_EQ(comp.GetComparedCount(2), 0);
     EXPECT_TRUE(comp.CompareColumn(1));
@@ -1433,7 +1433,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareAllTotalCountInts)
 
     Comparator comp;
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_FALSE(comp.CompareAll());
     EXPECT_EQ(comp.GetComparedCount(1), 7);
     EXPECT_EQ(comp.GetComparedCount(2), 7);
@@ -1457,7 +1457,7 @@ TEST_F(ParquetArrowValidatorTest, ComparatorCompareAllTotalCountInts)
     // file 2
     ASSERT_TRUE(CreateParquetFile(arrow::int64(), dirname2, file2a, 2));
 
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
     EXPECT_EQ(comp.GetComparedCount(1), 0);
     EXPECT_EQ(comp.GetComparedCount(2), 0);
     EXPECT_EQ(comp.GetComparedCount(3), 0);
@@ -1485,7 +1485,7 @@ TEST_F(ParquetArrowValidatorTest, BoolNullMatch)
     ASSERT_TRUE(CreateParquetFile(arrow::boolean(), dirname2, file, 6, &bool_fields));
 
     Comparator comp;
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
 
     ASSERT_TRUE(comp.CompareAll());
 }
@@ -1501,7 +1501,7 @@ TEST_F(ParquetArrowValidatorTest, Int64NullMatch)
     ASSERT_TRUE(CreateParquetFile(arrow::int64(), dirname2, file, 6, &bool_fields));
 
     Comparator comp;
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
 
     ASSERT_TRUE(comp.CompareAll());
 }
@@ -1517,7 +1517,7 @@ TEST_F(ParquetArrowValidatorTest, FloatNullMatch)
     ASSERT_TRUE(CreateParquetFile(arrow::float32(), dirname2, file, 6, &bool_fields));
 
     Comparator comp;
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
 
     ASSERT_TRUE(comp.CompareAll());
 }
@@ -1533,7 +1533,7 @@ TEST_F(ParquetArrowValidatorTest, StringNullMatch)
     ASSERT_TRUE(CreateParquetFile(arrow::utf8(), dirname2, file, 6, &bool_fields));
 
     Comparator comp;
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
 
     ASSERT_TRUE(comp.CompareAll());
 }
@@ -1550,7 +1550,7 @@ TEST_F(ParquetArrowValidatorTest, BoolNullMisMatch)
     ASSERT_TRUE(CreateParquetFile(arrow::boolean(), dirname2, file, 6, &bool_fields2));
 
     Comparator comp;
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
 
     ASSERT_FALSE(comp.CompareAll());
 }
@@ -1567,7 +1567,7 @@ TEST_F(ParquetArrowValidatorTest, Int64NullMisMatch)
     ASSERT_TRUE(CreateParquetFile(arrow::int64(), dirname2, file, 6, &bool_fields2));
 
     Comparator comp;
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
 
     ASSERT_FALSE(comp.CompareAll());
 }
@@ -1585,7 +1585,7 @@ TEST_F(ParquetArrowValidatorTest, FloatNullMisMatch)
     ASSERT_TRUE(CreateParquetFile(arrow::float32(), dirname2, file, 6, &bool_fields2));
 
     Comparator comp;
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
 
     ASSERT_FALSE(comp.CompareAll());
 }
@@ -1602,7 +1602,7 @@ TEST_F(ParquetArrowValidatorTest, StringNullMisMatch)
     ASSERT_TRUE(CreateParquetFile(arrow::utf8(), dirname2, file, 6, &bool_fields2));
 
     Comparator comp;
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
 
     ASSERT_FALSE(comp.CompareAll());
 }
@@ -1622,7 +1622,7 @@ TEST_F(ParquetArrowValidatorTest, CompareEmptyFilesSameSchema)
                                         arrow::int16(), col1data, "col2", 5));
 
     Comparator comp;
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
 
     ASSERT_TRUE(comp.CompareAll());
     ASSERT_TRUE(comp.CompareColumn(1));
@@ -1643,7 +1643,7 @@ TEST_F(ParquetArrowValidatorTest, CompareEmptyFilesDifferentNames)
                                         arrow::int16(), col1data, "colA", 5));
 
     Comparator comp;
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
 
     ASSERT_FALSE(comp.CompareAll());
     ASSERT_TRUE(comp.CompareColumn(1));
@@ -1665,7 +1665,7 @@ TEST_F(ParquetArrowValidatorTest, CompareSameDataDifferentColNames)
                                         arrow::int16(), col1data, "colA", 5));
 
     Comparator comp;
-    ASSERT_EQ(0, comp.Initialize(dirname1, dirname2));
+    ASSERT_EQ(EX_OK, comp.Initialize(dirname1, dirname2));
 
     ASSERT_FALSE(comp.CompareAll());
     ASSERT_TRUE(comp.CompareColumn(1));

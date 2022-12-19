@@ -50,7 +50,7 @@ TEST_F(ParseWorkerTest, ConfigureContextSetPacketTypeBadPaths)
                                    worker_cfg_.output_file_paths_);
 
     // Default paths do not exist. InitializeFileWriters will return false.
-    EXPECT_EQ(74, retcode_);
+    EXPECT_EQ(EX_IOERR, retcode_);
     EXPECT_EQ(ctx_.pkt_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0), false);
 }
 
@@ -61,7 +61,7 @@ TEST_F(ParseWorkerTest, ConfigureContextSetPacketTypeGoodPaths)
     retcode_ = pw_.ConfigureContext(&ctx_, worker_cfg_.ch10_packet_type_map_,
                                    worker_cfg_.output_file_paths_);
 
-    EXPECT_EQ(0, retcode_);
+    EXPECT_EQ(EX_OK, retcode_);
     EXPECT_EQ(ctx_.pkt_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0), false);
     ctx_.CloseFileWriters();
 }
@@ -72,7 +72,7 @@ TEST_F(ParseWorkerTest, ConfigureContextCheckConfigurationGood)
     worker_cfg_.output_file_paths_[Ch10PacketType::MILSTD1553_F1] = path1553;
     retcode_ = pw_.ConfigureContext(&ctx_, worker_cfg_.ch10_packet_type_map_,
                                    worker_cfg_.output_file_paths_);
-    EXPECT_EQ(0, retcode_);
+    EXPECT_EQ(EX_OK, retcode_);
     EXPECT_TRUE(ctx_.IsConfigured());
     ctx_.CloseFileWriters();
 }
@@ -85,7 +85,7 @@ TEST_F(ParseWorkerTest, ConfigureContextCheckConfigurationBad)
     EXPECT_EQ(worker_cfg_.output_file_paths_.erase(Ch10PacketType::MILSTD1553_F1), 1);
     retcode_ = pw_.ConfigureContext(&ctx_, worker_cfg_.ch10_packet_type_map_,
                                    worker_cfg_.output_file_paths_);
-    EXPECT_EQ(70, retcode_);
+    EXPECT_EQ(EX_SOFTWARE, retcode_);
     EXPECT_FALSE(ctx_.IsConfigured());
 }
 
@@ -98,7 +98,7 @@ TEST_F(ParseWorkerTest, ConfigureContextInitWriters)
     EXPECT_EQ(ctx_.videof0_pq_writer, nullptr);
     retcode_ = pw_.ConfigureContext(&ctx_, worker_cfg_.ch10_packet_type_map_,
                                    worker_cfg_.output_file_paths_);
-    EXPECT_EQ(0, retcode_);
+    EXPECT_EQ(EX_OK, retcode_);
 
     // Only the milstd1553, which is enabled, ought to have been updated
     // to a non-null pointer.
@@ -113,13 +113,13 @@ TEST_F(ParseWorkerTest, ConfigureContextNotIfAlreadyConfigured)
 
     retcode_ = pw_.ConfigureContext(&ctx_, worker_cfg_.ch10_packet_type_map_,
                                    worker_cfg_.output_file_paths_);
-    EXPECT_EQ(0, retcode_);
+    EXPECT_EQ(EX_OK, retcode_);
     EXPECT_TRUE(ctx_.IsConfigured());
 
     worker_cfg_.ch10_packet_type_map_[Ch10PacketType::VIDEO_DATA_F0] = true;
     retcode_ = pw_.ConfigureContext(&ctx_, worker_cfg_.ch10_packet_type_map_,
                                    worker_cfg_.output_file_paths_);
-    EXPECT_EQ(0, retcode_);
+    EXPECT_EQ(EX_OK, retcode_);
 
     // Ch10Context did not update the map.
     EXPECT_FALSE(ctx_.pkt_type_config_map.at(Ch10PacketType::VIDEO_DATA_F0));
