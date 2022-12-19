@@ -228,9 +228,9 @@ class ParserMetadata
                                 been called
 
         Return:
-            False if GetProvenanceData returns false; true otherwise.
+            Nonzero if GetProvenanceData returns false; 0 otherwise.
         */
-        virtual bool Initialize(const ManagedPath& ch10_path, const ParserConfigParams& config,
+        virtual int Initialize(const ManagedPath& ch10_path, const ParserConfigParams& config,
             const ParserPaths& parser_paths);
 
 

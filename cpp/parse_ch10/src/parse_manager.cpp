@@ -95,10 +95,11 @@ int ParseManager::Configure(const ManagedPath* input_ch10_file_path, ManagedPath
         return EX_SOFTWARE;
     }
 
-    if(!metadata->Initialize(*input_ch10_file_path, user_config, *parser_paths))
+    int retcode = 0;
+    if((retcode = metadata->Initialize(*input_ch10_file_path, user_config, *parser_paths)) != 0)
     {
         spdlog::get("pm_logger")->error("Configure error: ParserMetadata::Initialize failure");
-        return EX_SOFTWARE;
+        return retcode;
     }
 
     if(!pmf->OpenCh10File(*input_ch10_file_path, ch10_stream))

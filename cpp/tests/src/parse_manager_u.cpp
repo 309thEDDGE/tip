@@ -604,9 +604,9 @@ TEST_F(ParseManagerTest, ConfigureInitializeFail)
         &parser_paths)).WillOnce(Return(true));
 
     EXPECT_CALL(metadata, Initialize(ch10_file_path, config, ::testing::Ref(parser_paths)))
-        .WillOnce(Return(false));
+        .WillOnce(Return(EX_IOERR));
 
-    ASSERT_EQ(EX_SOFTWARE, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
+    ASSERT_EQ(EX_IOERR, pm.Configure(&ch10_file_path, outdir, config, &pmf, &parser_paths,
         &metadata, work_units, ch10_stream));
 }
 
@@ -639,7 +639,7 @@ TEST_F(ParseManagerTest, ConfigureOpenCh10FileFail)
         &parser_paths)).WillOnce(Return(true));
 
     EXPECT_CALL(metadata, Initialize(ch10_file_path, config, ::testing::Ref(parser_paths)))
-        .WillOnce(Return(true));
+        .WillOnce(Return(EX_OK));
 
     EXPECT_CALL(pmf, OpenCh10File(ch10_file_path, ::testing::Ref(ch10_stream)))
         .WillOnce(Return(false));
@@ -677,7 +677,7 @@ TEST_F(ParseManagerTest, Configure)
         &parser_paths)).WillOnce(Return(true));
 
     EXPECT_CALL(metadata, Initialize(ch10_file_path, config, ::testing::Ref(parser_paths)))
-        .WillOnce(Return(true));
+        .WillOnce(Return(EX_OK));
 
     EXPECT_CALL(pmf, OpenCh10File(ch10_file_path, ::testing::Ref(ch10_stream)))
         .WillOnce(Return(true));

@@ -306,14 +306,14 @@ namespace transtab429
         return true;
     }
 
-    bool GetParsedMetadata(const ManagedPath& input_md_path,
+    int GetParsedMetadata(const ManagedPath& input_md_path,
         TIPMDDocument& parser_md_doc)
     {
         if(!input_md_path.is_regular_file())
         {
             SPDLOG_ERROR("Input metadata path not present: {:s}",
                 input_md_path.RawString());
-            return false;
+            return EX_NOINPUT;
         }
 
         FileReader fr;
@@ -321,14 +321,14 @@ namespace transtab429
         {
             SPDLOG_ERROR("Failed to read input metadata file: {:s}",
                 input_md_path.RawString());
-            return false;
+            return EX_IOERR;
         }
 
         if(!parser_md_doc.ReadDocument(fr.GetDocumentAsString()))
         {
             SPDLOG_ERROR("Failed to interpret input metadata as TIPMDDocument: {:s}",
                 input_md_path.RawString());
-            return false;
+            return EX_DATAERR;
         }
 
         std::string parsed_type = parser_md_doc.type_category_->node.as<std::string>();
@@ -337,10 +337,10 @@ namespace transtab429
         {
             SPDLOG_ERROR("Parsed metadata document at {:s} has type {:s}. "
                 "Must be {:s}", input_md_path.RawString(), parsed_type, expected_type);
-            return false;
+            return EX_DATAERR;
         }
 
-        return true;
+        return EX_OK;
     }
 
     bool SetSystemLimits(uint8_t thread_count, size_t message_count)

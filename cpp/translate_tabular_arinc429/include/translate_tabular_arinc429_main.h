@@ -58,7 +58,7 @@ namespace transtab429
                     YAML::Node& parser_md_node,
                     std::vector<std::string>& subchan_name_lookup_misses);
 
-    bool GetParsedMetadata(const ManagedPath& input_md_path,
+    int GetParsedMetadata(const ManagedPath& input_md_path,
         TIPMDDocument& parser_md_doc);
 
     bool SetSystemLimits(uint8_t thread_count, size_t message_count);

@@ -4,21 +4,22 @@ ParserMetadata::ParserMetadata() : ch10_hash_byte_count_(150e6), prov_data_(), c
     parser_paths_()
 {}
 
-bool ParserMetadata::Initialize(const ManagedPath& ch10_path, const ParserConfigParams& config,
+int ParserMetadata::Initialize(const ManagedPath& ch10_path, const ParserConfigParams& config,
     const ParserPaths& parser_paths)
 {
     config_ = config;
     parser_paths_ = parser_paths;
     
-    if(!GetProvenanceData(ch10_path.absolute(), ch10_hash_byte_count_, prov_data_))
-        return false;
+    int retcode = 0;
+    if((retcode = GetProvenanceData(ch10_path.absolute(), ch10_hash_byte_count_, prov_data_)) != 0)
+        return retcode;
     spdlog::get("pm_logger")->info("Ch10 hash: {:s}", prov_data_.hash);
 
     // Record the packet type config map in metadata and logs.
     ParserMetadataFunctions funcs;
     funcs.LogPacketTypeConfig(config.ch10_packet_enabled_map_);
 
-    return true;
+    return EX_OK;
 }
 
 int ParserMetadata::RecordMetadata(ManagedPath md_filename, 
