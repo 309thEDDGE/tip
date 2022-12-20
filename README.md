@@ -7,7 +7,7 @@
 - [Code Convention](#code-convention)
 - [Linting](#linting)
 - [Usage](#usage)
-- Exit Codes
+- [Exit Codes](#exit-codes)
 
 # TIP
 
