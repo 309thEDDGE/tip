@@ -78,8 +78,10 @@ int TranslateTabular1553Main(int argc, char** argv)
             return EX_DATAERR;
         }
     }
-    else
-        return EX_DATAERR;
+    // Don't fail on incorrect extension now. Some legacy ICD input files are
+    // still in text format.
+    // else
+        // return EX_DATAERR;
 
     if (!transtab1553::SetupLogging(log_dir, spdlog::level::from_str(config.stdout_log_level_)))
         return EX_SOFTWARE;
