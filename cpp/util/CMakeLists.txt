@@ -46,11 +46,12 @@ set_target_properties(tiputil PROPERTIES PUBLIC_HEADER "${headers}")
 
 target_link_libraries(tiputil
     PRIVATE common spdlog::spdlog yaml-cpp 
-)
-
-target_link_libraries(tiputil
     PUBLIC sha256
 )
+
+#target_link_libraries(tiputil
+#    PUBLIC sha256
+#)
 
 if(BUILD_SHARED_LIBS)
     install(TARGETS tiputil)
