@@ -19,7 +19,7 @@ ParquetARINC429F0::ParquetARINC429F0(ParquetContext* pq_ctx) : pq_ctx_(pq_ctx),
 {
 }
 
-bool ParquetARINC429F0::Initialize(const ManagedPath& outfile, uint16_t thread_id)
+int ParquetARINC429F0::Initialize(const ManagedPath& outfile, uint16_t thread_id)
 {
     thread_id_ = thread_id;
     outfile_ = outfile.string();
@@ -73,7 +73,7 @@ bool ParquetARINC429F0::Initialize(const ManagedPath& outfile, uint16_t thread_i
     {
         SPDLOG_ERROR("({:03d}) OpenForWrite failed for file {:s}", thread_id_,
                      outfile_);
-        return false;
+        return EX_IOERR;
     }
 
     // Setup automatic tracking of appended data.
@@ -82,11 +82,11 @@ bool ParquetARINC429F0::Initialize(const ManagedPath& outfile, uint16_t thread_i
     {
         SPDLOG_ERROR("({:03d}) SetupRowCountTracking not configured correctly",
                      thread_id_);
-        return false;
+        return EX_SOFTWARE;
     }
 
     pq_ctx_->EnableEmptyFileDeletion(outfile_);
-    return true;
+    return EX_OK;
 }
 
 void ParquetARINC429F0::Append(const uint64_t& time_stamp, uint8_t doy,

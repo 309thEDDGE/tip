@@ -17,19 +17,19 @@ set_target_properties(parquet_compare
 )
 
 target_link_libraries(parquet_compare
-    PRIVATE spdlog::spdlog yaml-cpp tiputil ch10_parquet
+    PRIVATE common spdlog::spdlog yaml-cpp tiputil ch10_parquet
 )
 
 add_executable(pqcompare main/parquet_arrow_validator_main.cpp)
 
 target_link_libraries(pqcompare parquet_compare
-    spdlog::spdlog yaml-cpp tiputil cli ch10_parquet
+    common spdlog::spdlog yaml-cpp tiputil cli ch10_parquet
 )
 target_compile_features(pqcompare PUBLIC cxx_std_17)
 
 add_executable(bincompare main/binary_comparison.cpp)
 
-target_link_libraries(bincompare spdlog::spdlog yaml-cpp tiputil cli)
+target_link_libraries(bincompare common spdlog::spdlog yaml-cpp tiputil cli)
 
 target_compile_features(bincompare PUBLIC cxx_std_17)
 

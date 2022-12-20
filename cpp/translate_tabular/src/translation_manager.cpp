@@ -31,6 +31,7 @@ void TranslationManager::operator()()
         if (status_ == TranslateStatus::FAIL)
         {
             success_ = false;
+            exit_code_ = EX_NOINPUT;
             break;
         }
         else if (status_ == TranslateStatus::CONTINUE)
@@ -41,6 +42,7 @@ void TranslationManager::operator()()
         if (status_ == TranslateStatus::FAIL)
         {
             success_ = false;
+            exit_code_ = EX_IOERR;
             break;
         }
         else if (status_ == TranslateStatus::CONTINUE)
@@ -50,6 +52,7 @@ void TranslationManager::operator()()
         if (status_ == TranslateStatus::FAIL)
         {
             success_ = false;
+            exit_code_ = EX_SOFTWARE;
             break;
         }
         else if (status_ == TranslateStatus::CONTINUE)
@@ -59,6 +62,7 @@ void TranslationManager::operator()()
         if (status_ == TranslateStatus::FAIL)
         {
             success_ = false;
+            exit_code_ = EX_IOERR;
             break;
         }
         else if (status_ == TranslateStatus::CONTINUE)
@@ -68,6 +72,7 @@ void TranslationManager::operator()()
         if (status_ == TranslateStatus::FAIL)
         {
             success_ = false;
+            exit_code_ = EX_IOERR;
             break;
         }
         else if (status_ == TranslateStatus::CONTINUE)
@@ -75,4 +80,5 @@ void TranslationManager::operator()()
     }
 
     complete_ = true;
+    exit_code_ = EX_OK;
 }

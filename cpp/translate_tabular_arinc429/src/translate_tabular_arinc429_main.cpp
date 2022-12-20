@@ -3,7 +3,7 @@
 int TranslateTabularARINC429Main(int argc, char** argv)
 {
     if (!SetLineBuffering(stdout))
-        return 0;
+        return EX_OSERR;
 
     CLIGroup cli_group;
     TranslationConfigParams config;
@@ -16,29 +16,29 @@ int TranslateTabularARINC429Main(int argc, char** argv)
         show_dts_info, high_level_description))
     {
         printf("ConfigureTranslatorCLI failed\n");
-        return 0;
+        return EX_SOFTWARE;
     }
 
     std::string nickname = "";
     std::shared_ptr<CLIGroupMember> cli;
     fflush(stdout);
-    if (!cli_group.Parse(argc, argv, nickname, cli))
+    int retcode = 0;
+    if ((retcode = cli_group.Parse(argc, argv, nickname, cli)) != 0)
     {
-        // printf("%s", cli_group.MakeHelpString().c_str());
-        return 0;
+        return retcode;
     }
     fflush(stdout);
 
     if (help_requested && nickname == "clihelp")
     {
         printf("%s", cli_group.MakeHelpString().c_str());
-        return 0;
+        return EX_OK;
     }
 
     if (show_version && nickname == "cliversion")
     {
         printf(TRANSLATE_429_EXE_NAME " version %s\n", GetVersionString().c_str());
-        return 0;
+        return EX_OK;
     }
 
     if(show_dts_info && nickname == "clidts")
@@ -46,7 +46,7 @@ int TranslateTabularARINC429Main(int argc, char** argv)
         printf("Raw DTS429 schema (yaml-formatted):\n%s\n\n", dts_429_schema.c_str());
         printf("%s\n\n%s\n\n%s\n\n", dts_429_word_explanation.c_str(),
             dts_429_parameter_defs.c_str(), dts_429_suppl_labels.c_str());
-        return 0;
+        return EX_OK;
     }
 
     ArgumentValidation av;
@@ -54,38 +54,40 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     ManagedPath icd_path;
     ManagedPath output_dir;
     ManagedPath log_dir;
-    if (!transtab429::ValidatePaths(config.input_data_path_str_, config.input_dts_path_str_,
+    if ((retcode = transtab429::ValidatePaths(config.input_data_path_str_, config.input_dts_path_str_,
         config.output_path_str_, config.log_path_str_, input_path, icd_path,
-        output_dir, log_dir, &av))
-        return 0;
+        output_dir, log_dir, &av)) != 0)
+        return retcode;
 
     if(av.CheckExtension(icd_path.RawString(), {"yaml", "yml"}))
     {
         YamlSV ysv;
         std::string icd_string;
         if(!av.ValidateDocument(icd_path, icd_string))
-            return 0;
+            return EX_DATAERR;
         std::vector<LogItem> log_items;
         if(!ysv.Validate(icd_string, dts_429_schema, log_items))
         {
             printf("Schema validation failed for %s\n", icd_path.RawString().c_str());
             int print_count = 20;
             YamlSV::PrintLogItems(log_items, print_count, std::cout);
-            return 0;
+            return EX_DATAERR;
         }
     }
+    else
+        return EX_DATAERR;
 
     if (!transtab429::SetupLogging(log_dir, spdlog::level::from_str(config.stdout_log_level_)))
-        return 0;
+        return EX_SOFTWARE;
 
     TIPMDDocument parser_md_doc;
     ManagedPath parser_md_path = input_path / "_metadata.yaml";
-    if(!transtab429::GetParsedMetadata(parser_md_path, parser_md_doc))
-        return 0;
+    if((retcode = transtab429::GetParsedMetadata(parser_md_path, parser_md_doc)) != 0)
+        return retcode;
 
     ProvenanceData prov_data;
-    if(!GetProvenanceData(icd_path.absolute(), 0, prov_data))
-        return 0;
+    if((retcode = GetProvenanceData(icd_path.absolute(), 0, prov_data)) != 0)
+        return retcode;
 
 
     // Use logger to print and record these values after logging
@@ -112,7 +114,7 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     {
         SPDLOG_ERROR("Failed to read input metadata file: {:s}",
             parser_md_path.RawString());
-        return false;
+        return EX_NOINPUT;
     }
     YAML::Node root_node = YAML::Load(fr.GetDocumentAsString());
     YAML::Node runtime_node = root_node["runtime"];
@@ -120,7 +122,8 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     // DTS429 inputs
     DTS429 dts429;
     std::vector<std::string> dts429_contents;
-    transtab429::GetFileContents(icd_path.RawString(), dts429_contents);
+    if(!transtab429::GetFileContents(icd_path.RawString(), dts429_contents))
+        return EX_NOINPUT;
 
     Organize429ICD org429;
     ARINC429Data arinc429_dts_data;
@@ -128,7 +131,7 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     if(!transtab429::IngestICD(&dts429, &org429, arinc429_dts_data,
         dts429_contents, arinc429_message_count, runtime_node, subchannel_name_lookup_misses))
     {
-        return 0;
+        return EX_SOFTWARE;
     }
     SPDLOG_DEBUG(arinc429_dts_data.LookupMapToString());
     // end reading and processing DTS429
@@ -136,26 +139,27 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     if (config.auto_sys_limits_)
     {
         if (!transtab429::SetSystemLimits(static_cast<uint8_t>(thread_count), arinc429_message_count))
-            return 0;
+            return EX_OSERR;
     }
 
     auto start_time = std::chrono::high_resolution_clock::now();
     ManagedPath transl_output_dir = output_dir.CreatePathObject(input_path, "_translated");
     if (!transl_output_dir.create_directory())
-        return 0;
+        return EX_IOERR;
     ManagedPath output_base_name("");
     SPDLOG_INFO("Translated data output dir: {:s}", transl_output_dir.RawString());
 
     std::set<std::string> translate_word_names;
     std::map<uint32_t, std::map<uint32_t, std::set<uint16_t>>> chanid_busnum_labels;
 
-    if (!transtab429::Translate(thread_count, input_path, output_dir, arinc429_dts_data,
-                   transl_output_dir, output_base_name, translate_word_names, chanid_busnum_labels))
-
+    if ((retcode = transtab429::Translate(thread_count, input_path, output_dir, arinc429_dts_data,
+                   transl_output_dir, output_base_name, translate_word_names, chanid_busnum_labels)) != 0)
     {
         SPDLOG_WARN(
             "Failed to configure 429 translation stage or an error occurred "
             "during translation");
+        spdlog::shutdown();
+        return retcode;
     }
 
     auto stop_time = std::chrono::high_resolution_clock::now();
@@ -163,20 +167,23 @@ int TranslateTabularARINC429Main(int argc, char** argv)
     double duration = secs.count();
     SPDLOG_INFO("Duration: {:.3f} sec", duration);
 
-    transtab429::RecordMetadata(config, transl_output_dir, icd_path,
+    if(!transtab429::RecordMetadata(config, transl_output_dir, icd_path,
                                 input_path, translate_word_names, prov_data,
-                                parser_md_doc, chanid_busnum_labels);
+                                parser_md_doc, chanid_busnum_labels))
+    {
+        spdlog::shutdown();
+        return EX_IOERR;
+    }
 
     // Avoid deadlock in windows, see
     // http://stackoverflow.com/questions/10915233/stdthreadjoin-hangs-if-called-after-main-exits-when-using-vs2012-rc
     spdlog::shutdown();
-
-    return 0;
+    return EX_OK;
 }
 
 namespace transtab429
 {
-    bool ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
+    int ValidatePaths(const std::string& str_input_path, const std::string& str_icd_path,
                     const std::string& str_output_dir, const std::string& str_log_dir,
                     ManagedPath& input_path, ManagedPath& icd_path,
                     ManagedPath& output_dir, ManagedPath& log_dir, ArgumentValidation* av)
@@ -185,12 +192,12 @@ namespace transtab429
         {
             printf("Input path \"%s\" does not have extension \"parquet\"\n",
                 str_input_path.c_str());
-            return false;
+            return EX_DATAERR;
         }
         if (!av->ValidateDirectoryPath(str_input_path, input_path))
         {
             printf("Input path \"%s\" is not a valid path\n", str_input_path.c_str());
-            return false;
+            return EX_NOINPUT;
         }
 
         if (!av->CheckExtension(str_icd_path, {"txt", "csv", "yaml", "yml"}))
@@ -199,21 +206,21 @@ namespace transtab429
                 "DTS429 (ICD) path \"%s\" does not have extension: txt, csv, "
                 "yaml, yml\n",
                 str_icd_path.c_str());
-            return false;
+            return EX_DATAERR;
         }
         if (!av->ValidateInputFilePath(str_icd_path, icd_path))
         {
             printf("DTS429 (ICD) path \"%s\" is not a valid path\n", str_icd_path.c_str());
-            return false;
+            return EX_NOINPUT;
         }
 
         if (!av->ValidateDirectoryPath(str_output_dir, output_dir))
-            return false;
+            return EX_NOINPUT;
 
         if (!av->ValidateDirectoryPath(str_log_dir, log_dir))
-            return false;
+            return EX_NOINPUT;
 
-        return true;
+        return EX_OK;
     }
 
     bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_log_level)  // GCOVR_EXCL_LINE
@@ -299,14 +306,14 @@ namespace transtab429
         return true;
     }
 
-    bool GetParsedMetadata(const ManagedPath& input_md_path,
+    int GetParsedMetadata(const ManagedPath& input_md_path,
         TIPMDDocument& parser_md_doc)
     {
         if(!input_md_path.is_regular_file())
         {
             SPDLOG_ERROR("Input metadata path not present: {:s}",
                 input_md_path.RawString());
-            return false;
+            return EX_NOINPUT;
         }
 
         FileReader fr;
@@ -314,14 +321,14 @@ namespace transtab429
         {
             SPDLOG_ERROR("Failed to read input metadata file: {:s}",
                 input_md_path.RawString());
-            return false;
+            return EX_IOERR;
         }
 
         if(!parser_md_doc.ReadDocument(fr.GetDocumentAsString()))
         {
             SPDLOG_ERROR("Failed to interpret input metadata as TIPMDDocument: {:s}",
                 input_md_path.RawString());
-            return false;
+            return EX_DATAERR;
         }
 
         std::string parsed_type = parser_md_doc.type_category_->node.as<std::string>();
@@ -330,10 +337,10 @@ namespace transtab429
         {
             SPDLOG_ERROR("Parsed metadata document at {:s} has type {:s}. "
                 "Must be {:s}", input_md_path.RawString(), parsed_type, expected_type);
-            return false;
+            return EX_DATAERR;
         }
 
-        return true;
+        return EX_OK;
     }
 
     bool SetSystemLimits(uint8_t thread_count, size_t message_count)
@@ -372,7 +379,7 @@ namespace transtab429
         return true;
     }
 
-    bool Translate(size_t thread_count, const ManagedPath& input_path,
+    int Translate(size_t thread_count, const ManagedPath& input_path,
             const ManagedPath& output_dir, const ARINC429Data& icd,
             const ManagedPath& translated_data_dir,
             const ManagedPath& output_base_name,
@@ -384,7 +391,7 @@ namespace transtab429
         std::vector<ManagedPath> dir_entries;
         input_path.ListDirectoryEntries(success, dir_entries);
         if (!success)
-            return false;
+            return EX_IOERR;
 
         // Filter to get files only and exclude certain files.
         std::vector<std::string> file_exclusion_substrings({"metadata", "TMATS"});
@@ -409,13 +416,14 @@ namespace transtab429
         TranslateTabular translate(thread_count, context);
         if (!translate.SetInputFiles(dir_entries, ".parquet"))
         {
-            return false;
+            return EX_SOFTWARE;
         }
 
         translate.SetOutputDir(translated_data_dir, output_base_name);
-        if (!translate.Translate())
+        int retcode = 0;
+        if ((retcode = translate.Translate()) != 0)
         {
-            return false;
+            return retcode;
         }
 
         // Collect the translated message names from each of the Context objects.
@@ -435,7 +443,7 @@ namespace transtab429
                                         temp_chanid_busname_labels.end());
         }
 
-        return true;
+        return EX_OK;
     }
 
     bool RecordMetadata(const TranslationConfigParams& config,

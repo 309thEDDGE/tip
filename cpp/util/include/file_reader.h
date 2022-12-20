@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include "sysexits.h"
 
 class FileReader
 {

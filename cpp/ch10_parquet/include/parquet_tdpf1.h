@@ -5,6 +5,7 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include "sysexits.h"
 #include "parquet_context.h"
 #include "managed_path.h"
 #include "ch10_tdpf1_hdr_format.h"
@@ -38,7 +39,7 @@ class ParquetTDPF1
       static int GetRowGroupBufferCount();
 
     ParquetTDPF1(ParquetContext* pq_ctx);
-    virtual bool Initialize(const ManagedPath& outfile, uint16_t thread_id);
+    virtual int Initialize(const ManagedPath& outfile, uint16_t thread_id);
     virtual void Append(const uint64_t& time_stamp, const TDF1CSDWFmt& tdp);
     virtual void Close(const uint16_t& thread_id)
     { pq_ctx_->Close(thread_id); }

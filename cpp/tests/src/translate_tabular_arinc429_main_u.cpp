@@ -82,7 +82,7 @@ TEST_F(TranslateTabularARINC429MainTest, ValidatePathsCheckExtensionParsedDataFa
     std::vector<std::string> exts{"parquet"};
     EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, exts)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_DATAERR, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -93,7 +93,7 @@ TEST_F(TranslateTabularARINC429MainTest, ValidatePathsValidateDirectoryPathFail)
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_input_path_, input_path_)).
         WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_NOINPUT, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -107,7 +107,7 @@ TEST_F(TranslateTabularARINC429MainTest, ValidatePathsCheckExtensionICDFail)
     std::vector<std::string> icd_exts{"txt", "csv", "yaml", "yml"};
     EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_DATAERR, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -122,7 +122,7 @@ TEST_F(TranslateTabularARINC429MainTest, ValidatePathsValidateInputFilePathICDFa
     EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).WillOnce(Return(true));
     EXPECT_CALL(mock_av_, ValidateInputFilePath(str_icd_path_, icd_path_)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_NOINPUT, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -139,7 +139,7 @@ TEST_F(TranslateTabularARINC429MainTest, ValidatePathsValidateDefaultOutputDirec
 
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_out_path_, out_path_)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_NOINPUT, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -163,7 +163,7 @@ TEST_F(TranslateTabularARINC429MainTest, ValidatePathsValidateDefaultInputFilePa
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_log_path_, log_path_)).
         InSequence(seq).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_NOINPUT, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -187,7 +187,7 @@ TEST_F(TranslateTabularARINC429MainTest, ValidatePathsSucceed)
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_log_path_, log_path_)).
         InSequence(seq).WillOnce(Return(true));
 
-    ASSERT_TRUE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_OK, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 

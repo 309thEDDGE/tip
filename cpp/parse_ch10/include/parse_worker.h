@@ -13,6 +13,7 @@ parser_rewrite lib.
 #include <memory>
 #include <map>
 #include <vector>
+#include "sysexits.h"
 #include "ch10_packet_type.h"
 #include "ch10_context.h"
 #include "ch10_packet.h"
@@ -27,6 +28,9 @@ class ParseWorker
    private:
     // True if worker has completed parsing, false otherwise
     std::atomic<bool> complete_;
+	
+	// Return code from operator() function
+	std::atomic<int> retval_;
 
    public:
     ParseWorker();
@@ -39,6 +43,7 @@ class ParseWorker
 		that caused parsing to cease early, false otherwise.
 	*/
     std::atomic<bool>& CompletionStatus();
+	std::atomic<int>& ReturnValue();
 
     /*
 	The primary function of ParseWorker. To be called by passing an instance
@@ -70,9 +75,9 @@ class ParseWorker
 									output file path
 
 	Return:
-		True if configuration was successful; false otherwise.
+		0 if configuration was successful; exit code otherwise.
 	*/
-    bool ConfigureContext(Ch10Context* ctx,
+    int ConfigureContext(Ch10Context* ctx,
                           const std::map<Ch10PacketType, bool>& ch10_packet_type_map,
                           const std::map<Ch10PacketType, ManagedPath>& output_file_paths_map);
 

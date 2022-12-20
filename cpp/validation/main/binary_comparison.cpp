@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include "sysexits.h"
 #include "cli_group.h"
 
 bool OpenFile(const char* path, std::ifstream& ifs);
@@ -20,14 +21,20 @@ int main(int argc, char* argv[])
     std::string test_path_str("");
 
     if(!ConfigureCLI(cli_group, help_requested, truth_path_str, test_path_str))
-        return -1;
+        return EX_SOFTWARE;
 
     std::string nickname = "";
     std::shared_ptr<CLIGroupMember> cli;
-    if (!cli_group.Parse(argc, argv, nickname, cli) || help_requested)
+    int retcode = 0;
+    if ((retcode = cli_group.Parse(argc, argv, nickname, cli)) != 0)
+    {
+        return retcode;
+    }
+
+    if (help_requested)
     {
         printf("%s", cli_group.MakeHelpString().c_str());
-        return 0;
+        return EX_OK;
     }
 
     std::ifstream ifile1;
@@ -36,9 +43,9 @@ int main(int argc, char* argv[])
     // If either file can't be opened, return 1 to indicate a
     // null comparison.
     if (!OpenFile(truth_path_str.c_str(), ifile1))
-        return -1;
+        return EX_NOINPUT  ;
     if (!OpenFile(test_path_str.c_str(), ifile2))
-        return -1;
+        return EX_NOINPUT;
 
     std::vector<char> file1_data(read_size);
     std::vector<char> file2_data(read_size);
@@ -81,7 +88,7 @@ int main(int argc, char* argv[])
     ifile2.close();
 
     if(pass)
-        return 0;
+        return EX_OK;
     return 1;
 }
 
@@ -108,7 +115,7 @@ bool ConfigureCLI(CLIGroup& cli_group, bool& help_requested, std::string& truth_
     std::string exe_name = "bincompare";
     std::string description = "Compare a test file against a truth file, byte by byte. Print "
         "\"PASS\" (0) to stdout if equivalent, or \"FAIL\" (1) if not equivalent and return the "
-        "value shown in parentheses. A NULL result will return -1.";
+        "value shown in parentheses. A NULL result will return a number greater than 1.";
     std::shared_ptr<CLIGroupMember> cli_help = cli_group.AddCLI(exe_name, 
     description, "clihelp");
     cli_help->AddOption("--help", "-h", "Show usage information", false, 

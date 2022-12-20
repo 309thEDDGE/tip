@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdio>
 #include <iostream>
+#include "sysexits.h"
 #include "parse_manager.h"
 #include "parser_config_params.h"
 #include "parser_cli.h"
@@ -21,13 +22,13 @@
 
 int Ch10ParseMain(int argc, char** argv);
 
-bool ValidatePaths(const std::string& str_input_path, const std::string& str_output_path,
+int ValidatePaths(const std::string& str_input_path, const std::string& str_output_path,
                    const std::string& str_log_dir, ManagedPath& input_path, 
                    ManagedPath& output_path, ManagedPath& log_dir, const ArgumentValidation* av);
 
-bool StartParse(ManagedPath input_path, ManagedPath output_path,
+int StartParse(ManagedPath input_path, ManagedPath output_path,
                 const ParserConfigParams& config, double& duration);
 
-bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level);  // GCOVR_EXCL_LINE
+int SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level);  // GCOVR_EXCL_LINE
 
 #endif  // CH10_PARSE_MAIN_H_

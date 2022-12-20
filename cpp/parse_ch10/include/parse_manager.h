@@ -20,6 +20,7 @@
 #include <map>
 #include <set>
 
+#include "sysexits.h"
 #include "parse_worker.h"
 #include "parser_config_params.h"
 #include "parser_paths.h"
@@ -65,6 +66,7 @@ class WorkUnit
 		virtual const uint64_t& GetReadBytes() const { return conf_.actual_read_bytes_; }
 
 		virtual bool IsComplete() const { return worker_->CompletionStatus(); }
+		virtual int ReturnValue() const { return worker_->ReturnValue(); }
 };
 
 class ParseManagerFunctions
@@ -170,6 +172,8 @@ class ParseManagerFunctions
 
 class ParseManager
 {
+	private:
+		int retcode_; 
 
    public:
 	// Count of bytes of raw ch10 data to be parsed by
@@ -211,7 +215,7 @@ class ParseManager
 		True if no errors, false if errors occur and
 		execution ought to stop.
 	*/
-	virtual bool Configure(const ManagedPath* input_ch10_file_path, ManagedPath output_dir,
+	virtual int Configure(const ManagedPath* input_ch10_file_path, ManagedPath output_dir,
         const ParserConfigParams& user_config, ParseManagerFunctions* pmf, 
 		ParserPaths* parser_paths, ParserMetadata* metadata, std::vector<WorkUnit>& work_units,
 		std::ifstream& ch10_stream);
@@ -237,7 +241,7 @@ class ParseManager
 		True if no errors, false if errors occur and
 		execution ought to stop.
 	*/
-	virtual bool StartThreads(bool append_mode, 
+	virtual int StartThreads(bool append_mode, 
                                std::vector<uint16_t>& active_workers_vec,
                                const uint16_t& effective_worker_count,
                                const ParserConfigParams& user_config, 
@@ -287,7 +291,7 @@ class ParseManager
 	Return:
 		True if no errors occurred. 
 	*/
-	bool ActivateInitialThread(ParseManagerFunctions* pmf, bool append_mode,
+	int ActivateInitialThread(ParseManagerFunctions* pmf, bool append_mode,
 		WorkUnit* work_unit, std::chrono::milliseconds worker_wait_ms, 
 		std::vector<uint16_t>& active_workers,
 		const uint16_t& worker_index, uint64_t& read_pos, 
@@ -314,7 +318,7 @@ class ParseManager
 	Return:
 		True if no errors occurred. 
 	*/
-	bool ActivateAvailableThread(ParseManagerFunctions* pmf, bool append_mode,
+	int ActivateAvailableThread(ParseManagerFunctions* pmf, bool append_mode,
 		std::vector<WorkUnit*>& work_units, std::chrono::milliseconds worker_wait_ms, 
 		std::vector<uint16_t>& active_workers,
 		const uint16_t& worker_index, uint64_t& read_pos, bool& thread_started);
@@ -355,7 +359,7 @@ Args:
 Return:
 	False if parsing fails in some way.
 */
-bool ParseCh10(std::vector<WorkUnit*>& work_units, ParseManagerFunctions* pmf,
+int ParseCh10(std::vector<WorkUnit*>& work_units, ParseManagerFunctions* pmf,
 	ParseManager* pm, const ParserConfigParams& user_config);
 
 
@@ -372,7 +376,7 @@ Args:
 Return:
 	True if no errors occur.
 */
-bool Parse(ManagedPath ch10_path, ManagedPath out_dir, const ParserConfigParams& config);
+int Parse(ManagedPath ch10_path, ManagedPath out_dir, const ParserConfigParams& config);
 
 
 #endif

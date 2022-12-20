@@ -466,7 +466,7 @@ TEST_F(ParquetMilStd1553F1Test, Initialize)
     EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
         pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, EnableEmptyFileDeletion(outf.string())).Times(Exactly(1));
-    ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
+    ASSERT_EQ(EX_OK, pq1553_.Initialize(outf, thread_id));
     EXPECT_EQ(thread_id, pq1553_.thread_id_);
     EXPECT_EQ(outf.string(), pq1553_.outfile_);
     ValidateInitializeResize();
@@ -478,7 +478,7 @@ TEST_F(ParquetMilStd1553F1Test, InitializeOpenForWriteFail)
     ValidateInitializeSetMemoryLocation();
 
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(false));
-    ASSERT_FALSE(pq1553_.Initialize(outf, thread_id));
+    ASSERT_EQ(EX_IOERR, pq1553_.Initialize(outf, thread_id));
     EXPECT_EQ(thread_id, pq1553_.thread_id_);
 
     ValidateInitializeResize();
@@ -492,22 +492,7 @@ TEST_F(ParquetMilStd1553F1Test, InitializeSetupRowCountTrackingFail)
     EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
         pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(false));
-    ASSERT_FALSE(pq1553_.Initialize(outf, thread_id));
-    EXPECT_EQ(thread_id, pq1553_.thread_id_);
-
-    ValidateInitializeResize();
-}
-
-TEST_F(ParquetMilStd1553F1Test, InitializeFalse)
-{
-    ValidateInitializeAddFieldFalse();
-    ValidateInitializeSetMemoryLocationFalse();
-
-    EXPECT_CALL(mock_pq_ctx_, OpenForWrite(outf.string(), truncate)).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, SetupRowCountTracking(pq1553_.GetRowGroupRowCount(), 
-        pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
-    EXPECT_CALL(mock_pq_ctx_, EnableEmptyFileDeletion(outf.string())).Times(Exactly(1));
-    ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
+    ASSERT_EQ(EX_SOFTWARE, pq1553_.Initialize(outf, thread_id));
     EXPECT_EQ(thread_id, pq1553_.thread_id_);
 
     ValidateInitializeResize();
@@ -532,7 +517,7 @@ TEST_F(ParquetMilStd1553F1Test, AppendRTtoRTModeCodeIncrementAndWriteFalseDoNotZ
         pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
-    ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
+    ASSERT_EQ(EX_OK, pq1553_.Initialize(outf, thread_id));
     pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
         calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
 
@@ -559,7 +544,7 @@ TEST_F(ParquetMilStd1553F1Test, AppendRTtoRTModeCodeIncrementAndWriteTrueZeroDat
         pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(true));
  
-    ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
+    ASSERT_EQ(EX_OK, pq1553_.Initialize(outf, thread_id));
     pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
         calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
 
@@ -590,7 +575,7 @@ TEST_F(ParquetMilStd1553F1Test, AppendRTtoBCModeCodeIncrementAndWriteFalse)
         pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
-    ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
+    ASSERT_EQ(EX_OK, pq1553_.Initialize(outf, thread_id));
     pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
         calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
 
@@ -618,7 +603,7 @@ TEST_F(ParquetMilStd1553F1Test, AppendBCtoRTModeCodeIncrementAndWriteFalse)
         pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
-    ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
+    ASSERT_EQ(EX_OK, pq1553_.Initialize(outf, thread_id));
     pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
         calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
 
@@ -646,7 +631,7 @@ TEST_F(ParquetMilStd1553F1Test, AppendBCtoRTModeCodeIncrementAndWriteFalseCalcwr
         pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
-    ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
+    ASSERT_EQ(EX_OK, pq1553_.Initialize(outf, thread_id));
     pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
         calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
 
@@ -683,7 +668,7 @@ TEST_F(ParquetMilStd1553F1Test, AppendStatusWord2Null)
         pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
-    ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
+    ASSERT_EQ(EX_OK, pq1553_.Initialize(outf, thread_id));
     pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
         calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
 
@@ -720,7 +705,7 @@ TEST_F(ParquetMilStd1553F1Test, AppendStatusWord1Null)
         pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
-    ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
+    ASSERT_EQ(EX_OK, pq1553_.Initialize(outf, thread_id));
     pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
         calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
 
@@ -765,7 +750,7 @@ TEST_F(ParquetMilStd1553F1Test, AppendStatusWordsNonNull)
         pq1553_.GetRowGroupBufferCount(), true, "MilStd1553F1")).WillOnce(Return(true));
     EXPECT_CALL(mock_pq_ctx_, IncrementAndWrite(thread_id)).WillOnce(Return(false));
  
-    ASSERT_TRUE(pq1553_.Initialize(outf, thread_id));
+    ASSERT_EQ(EX_OK, pq1553_.Initialize(outf, thread_id));
     pq1553_.Append(time, doy, &chan_spec, &msg, data, channel_id, 
         calcwrdcnt, payload_incomplete, statwrd_ptr1_, statwrd_ptr2_);
 

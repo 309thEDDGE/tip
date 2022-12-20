@@ -3,6 +3,7 @@
 
 #include <string>
 #include <ctime>
+#include "sysexits.h"
 #include "version_info.h"
 #include "sha256_tools.h"
 #include "managed_path.h"
@@ -50,9 +51,9 @@ Args:
     data            --> ProvenanceData object which shall be defined
 
 Return:
-    True if no problems occur; false otherwise
+    0 if no problems occur; nonzero otherwise
 */
-bool GetProvenanceData(const ManagedPath& hash_file_path, size_t hash_byte_count, 
+int GetProvenanceData(const ManagedPath& hash_file_path, size_t hash_byte_count, 
     ProvenanceData& data);
 
 

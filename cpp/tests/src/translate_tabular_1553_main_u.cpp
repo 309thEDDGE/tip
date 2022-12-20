@@ -60,7 +60,7 @@ TEST_F(TranslateTabular1553MainTest, ValidatePathsCheckExtensionParsedDataFail)
     std::vector<std::string> exts{"parquet"};
     EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, exts)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_DATAERR, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -71,7 +71,7 @@ TEST_F(TranslateTabular1553MainTest, ValidatePathsValidateDirectoryPathFail)
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_input_path_, input_path_)).
         WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_NOINPUT, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -85,7 +85,7 @@ TEST_F(TranslateTabular1553MainTest, ValidatePathsCheckExtensionICDFail)
     std::vector<std::string> icd_exts{"txt", "csv", "yaml", "yml"};
     EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_DATAERR, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -100,7 +100,7 @@ TEST_F(TranslateTabular1553MainTest, ValidatePathsValidateInputFilePathICDFail)
     EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, icd_exts)).WillOnce(Return(true));
     EXPECT_CALL(mock_av_, ValidateInputFilePath(str_icd_path_, icd_path_)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_NOINPUT, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -122,7 +122,7 @@ TEST_F(TranslateTabular1553MainTest, ValidatePathsValidateOutDirectoryFail)
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_out_path_, out_path_)).
         InSequence(seq).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_NOINPUT, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -147,7 +147,7 @@ TEST_F(TranslateTabular1553MainTest, ValidatePathsValidateLogDirectoryFail)
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_log_path_, log_path_)).
         InSequence(seq).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_NOINPUT, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -172,7 +172,7 @@ TEST_F(TranslateTabular1553MainTest, ValidatePathsSucceed)
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_log_path_, log_path_)).
         InSequence(seq).WillOnce(Return(true));
 
-    ASSERT_TRUE(ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
+    ASSERT_EQ(EX_OK, ValidatePaths(str_input_path_, str_icd_path_, str_out_path_, 
         str_log_path_, input_path_, icd_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -182,7 +182,7 @@ TEST_F(TranslateTabular1553MainTest, IngestICDReadFileFail)
 
     std::map<std::string, std::string> msg_name_subs;
     std::map<std::string, std::string> elem_name_subs;
-    ASSERT_FALSE(IngestICD(&mock_dts1553_, icd_path_, msg_name_subs, 
+    ASSERT_EQ(EX_IOERR, IngestICD(&mock_dts1553_, icd_path_, msg_name_subs, 
         elem_name_subs, &mock_fr_));
 }
 
@@ -199,7 +199,7 @@ TEST_F(TranslateTabular1553MainTest, IngestICDIngestLinesFail)
     EXPECT_CALL(mock_dts1553_, IngestLines(icd_path_, get_lines, msg_name_subs, elem_name_subs)).
         WillOnce(Return(false));
 
-    ASSERT_FALSE(IngestICD(&mock_dts1553_, icd_path_, msg_name_subs, 
+    ASSERT_EQ(EX_DATAERR, IngestICD(&mock_dts1553_, icd_path_, msg_name_subs, 
         elem_name_subs, &mock_fr_));
 }
 
@@ -216,7 +216,7 @@ TEST_F(TranslateTabular1553MainTest, IngestICDSucceed)
     EXPECT_CALL(mock_dts1553_, IngestLines(icd_path_, get_lines, msg_name_subs, elem_name_subs)).
         WillOnce(Return(true));
 
-    ASSERT_TRUE(IngestICD(&mock_dts1553_, icd_path_, msg_name_subs, 
+    ASSERT_EQ(EX_OK, IngestICD(&mock_dts1553_, icd_path_, msg_name_subs, 
         elem_name_subs, &mock_fr_));
 }
 
@@ -224,39 +224,39 @@ TEST_F(TranslateTabular1553MainTest, GetParsed1553MetadataFileNotExist)
 {
     EXPECT_CALL(mock_managed_path_, is_regular_file()).WillOnce(Return(false));
 
-    ASSERT_FALSE(GetParsed1553Metadata(&mock_managed_path_, &mock_tip_doc_, &mock_fr_));
+    ASSERT_EQ(EX_NOINPUT, GetParsed1553Metadata(&mock_managed_path_, &mock_tip_doc_, &mock_fr_));
 }
 
 TEST_F(TranslateTabular1553MainTest, GetParsed1553MetadataReadMDFail)
 {
     EXPECT_CALL(mock_managed_path_, is_regular_file()).WillOnce(Return(true));
-    EXPECT_CALL(mock_fr_, ReadFile(mock_managed_path_.string())).WillOnce(Return(false));
+    EXPECT_CALL(mock_fr_, ReadFile(mock_managed_path_.string())).WillOnce(Return(EX_NOINPUT));
 
-    ASSERT_FALSE(GetParsed1553Metadata(&mock_managed_path_, &mock_tip_doc_, &mock_fr_));
+    ASSERT_EQ(EX_NOINPUT, GetParsed1553Metadata(&mock_managed_path_, &mock_tip_doc_, &mock_fr_));
 }
 
 TEST_F(TranslateTabular1553MainTest, GetParsed1553MetadataReadDocumentFail)
 {
     EXPECT_CALL(mock_managed_path_, is_regular_file()).WillOnce(Return(true));
-    EXPECT_CALL(mock_fr_, ReadFile(mock_managed_path_.string())).WillOnce(Return(false));
+    EXPECT_CALL(mock_fr_, ReadFile(mock_managed_path_.string())).WillOnce(Return(EX_OK));
 
     std::string doc;
     EXPECT_CALL(mock_fr_, GetDocumentAsString()).WillOnce(Return(doc));
     EXPECT_CALL(mock_tip_doc_, ReadDocument(doc)).WillOnce(Return(false));
 
-    ASSERT_FALSE(GetParsed1553Metadata(&mock_managed_path_, &mock_tip_doc_, &mock_fr_));
+    ASSERT_EQ(EX_DATAERR, GetParsed1553Metadata(&mock_managed_path_, &mock_tip_doc_, &mock_fr_));
 }
 
 TEST_F(TranslateTabular1553MainTest, GetParsed1553MetadataParsedMDIncorrectType)
 {
     EXPECT_CALL(mock_managed_path_, is_regular_file()).WillOnce(Return(true));
-    EXPECT_CALL(mock_fr_, ReadFile(mock_managed_path_.string())).WillOnce(Return(false));
+    EXPECT_CALL(mock_fr_, ReadFile(mock_managed_path_.string())).WillOnce(Return(EX_OK));
 
     std::string doc;
     EXPECT_CALL(mock_fr_, GetDocumentAsString()).WillOnce(Return(doc));
     EXPECT_CALL(mock_tip_doc_, ReadDocument(doc)).WillOnce(Return(true));
 
-    ASSERT_FALSE(GetParsed1553Metadata(&mock_managed_path_, &mock_tip_doc_, &mock_fr_));
+    ASSERT_EQ(EX_DATAERR, GetParsed1553Metadata(&mock_managed_path_, &mock_tip_doc_, &mock_fr_));
 }
 
 TEST_F(TranslateTabular1553MainTest, GetParsed1553MetadataParsedMDCorrectType)
@@ -270,5 +270,5 @@ TEST_F(TranslateTabular1553MainTest, GetParsed1553MetadataParsedMDCorrectType)
     EXPECT_CALL(mock_fr_, GetDocumentAsString()).WillOnce(Return(doc));
     EXPECT_CALL(mock_tip_doc_, ReadDocument(doc)).WillOnce(Return(true));
 
-    ASSERT_TRUE(GetParsed1553Metadata(&mock_managed_path_, &mock_tip_doc_, &mock_fr_));
+    ASSERT_EQ(EX_OK, GetParsed1553Metadata(&mock_managed_path_, &mock_tip_doc_, &mock_fr_));
 }

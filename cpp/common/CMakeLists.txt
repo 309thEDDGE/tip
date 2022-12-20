@@ -6,6 +6,7 @@ set(headers
     include/ch10_videof0_header_format.h
     include/ch10_arinc429f0_msg_hdr_format.h
     include/ch10_packet_type.h
+    include/sysexits.h
 )
 
 add_library(common INTERFACE)

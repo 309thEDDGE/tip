@@ -7,6 +7,7 @@
 #include <fstream>
 #include <vector>
 
+#include "sysexits.h"
 #include "spdlog/spdlog.h"
 
 class BinBuff

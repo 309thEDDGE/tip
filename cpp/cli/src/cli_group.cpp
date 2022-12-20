@@ -50,7 +50,7 @@ bool CLIGroup::CheckConfiguration()
     return true;
 }
 
-bool CLIGroup::Parse(int argc, char* argv[], std::string& nickname, 
+int CLIGroup::Parse(int argc, char* argv[], std::string& nickname, 
     std::shared_ptr<CLIGroupMember>& member)
 {
     bool parse_fail = false;
@@ -58,7 +58,7 @@ bool CLIGroup::Parse(int argc, char* argv[], std::string& nickname,
     {
         printf("CLIGroup::Parse: Not configured\n");
         parse_fail = true;
-        return false;
+        return EX_SOFTWARE;
     }
 
     if(argc == 1 && !parse_fail)
@@ -85,7 +85,7 @@ bool CLIGroup::Parse(int argc, char* argv[], std::string& nickname,
 
         std::vector<std::string> pos_args;
         if(!CLI::ValidateUserInput(argc, argv, all_args, pos_args))
-            return false;
+            return EX_USAGE;
 
         // printf("after validateuserinput\n");
         // fflush(stdout);
@@ -124,7 +124,7 @@ bool CLIGroup::Parse(int argc, char* argv[], std::string& nickname,
                     {
                         nickname = *it;
                         member = curr_member;
-                        return true;
+                        return EX_OK;
                     }
                 }
             }
@@ -137,7 +137,7 @@ bool CLIGroup::Parse(int argc, char* argv[], std::string& nickname,
     // printf("%s", MakeHelpString().c_str());
     nickname = "";
     member = nullptr;
-    return false;
+    return 64;
 }
 
 std::string CLIGroup::MakeHelpString()

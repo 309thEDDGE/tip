@@ -43,8 +43,7 @@ class TranslateTabularTest : public ::testing::Test
 TEST_F(TranslateTabularTest, CheckConfigurationContextNotConfigured)
 {
     ASSERT_FALSE(context_->IsConfigured());
-    result_ = translate_.CheckConfiguration(context_);
-    EXPECT_FALSE(result_);
+    EXPECT_EQ(EX_CONFIG, translate_.CheckConfiguration(context_));
 }
 
 TEST_F(TranslateTabularTest, CheckConfigurationSetInputFilesNotCalled)
@@ -53,8 +52,7 @@ TEST_F(TranslateTabularTest, CheckConfigurationSetInputFilesNotCalled)
     std::vector<std::string> data_col_names{"a", "b"};
     context_->SetColumnNames(ridealong_col_names, data_col_names);
     ASSERT_TRUE(context_->IsConfigured());
-    result_ = translate_.CheckConfiguration(context_);
-    EXPECT_FALSE(result_);
+    EXPECT_EQ(EX_CONFIG, translate_.CheckConfiguration(context_));
 }
 
 TEST_F(TranslateTabularTest, CheckConfigurationFileNotExist)
@@ -69,7 +67,7 @@ TEST_F(TranslateTabularTest, CheckConfigurationFileNotExist)
     file_list_.push_back(test_path2);
     ASSERT_TRUE(translate_.SetInputFiles(file_list_, ".txt"));
     result_ = translate_.CheckConfiguration(context_);
-    EXPECT_FALSE(result_);
+    EXPECT_EQ(EX_NOINPUT, translate_.CheckConfiguration(context_));
 }
 
 TEST_F(TranslateTabularTest, AssignFilesToThreads)

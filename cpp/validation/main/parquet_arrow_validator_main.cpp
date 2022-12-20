@@ -1,6 +1,7 @@
 #include <ctime>
 #include <chrono>
 #include <cinttypes>
+#include "sysexits.h"
 #include "comparator.h"
 #include "cli_group.h"
 
@@ -19,19 +20,25 @@ int main(int argc, char* argv[])
     std::string test_path_str("");
 
     if(!ConfigureCLI(cli_group, help_requested, truth_path_str, test_path_str))
-        return -1;
+        return EX_SOFTWARE;
 
     std::string nickname = "";
     std::shared_ptr<CLIGroupMember> cli;
-    if (!cli_group.Parse(argc, argv, nickname, cli) || help_requested)
+    int retcode = 0;
+    if ((retcode = cli_group.Parse(argc, argv, nickname, cli)) != 0)
+    {
+        return retcode;
+    }
+
+    if (help_requested)
     {
         printf("%s", cli_group.MakeHelpString().c_str());
-        return 0;
+        return EX_OK;
     }
 
     Comparator comp;
-    if(!comp.Initialize(ManagedPath(truth_path_str), ManagedPath(test_path_str)))
-        return -1;
+    if((retcode = comp.Initialize(ManagedPath(truth_path_str), ManagedPath(test_path_str))) != 0)
+        return retcode;
     bool result = comp.CompareAll();
 
     auto t2 = Clock::now();
@@ -40,7 +47,7 @@ int main(int argc, char* argv[])
 
     if(!result)
         return 1;
-    return 0;
+    return EX_OK;
 }
 
 bool ConfigureCLI(CLIGroup& cli_group, bool& help_requested, std::string& truth_path_str, 
@@ -50,7 +57,7 @@ bool ConfigureCLI(CLIGroup& cli_group, bool& help_requested, std::string& truth_
     std::string description = "Compare a test parquet path against a truth parquet path. Input Parquet "
         "paths may either be files or directories with the suffix \".parquet\". Print \"PASS\" (0) to stdout "
         "if equivalent, or \"FAIL\" (1) if not equivalent and return the value shown in parentheses. A NULL result, "
-        "meaning the comparison couldn't be conducted due to bad paths or some other issue, returns -1. "
+        "meaning the comparison couldn't be conducted due to bad paths or some other issue, returns a non-zero value greater than 1. "
         "Column count and schema (column label and data type) will be compared first, followed by element-wise "
         "comparison of columns as arrays. All list-type columns are assumed to be arrow::Int32Type.";
     std::shared_ptr<CLIGroupMember> cli_help = cli_group.AddCLI(exe_name, 

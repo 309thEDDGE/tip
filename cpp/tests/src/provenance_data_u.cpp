@@ -53,7 +53,7 @@ TEST(ProvenanceDataTest, GetProvenanceData)
     std::string exp_version = GetVersionString();
 
     ProvenanceData prov_data;
-    ASSERT_TRUE(GetProvenanceData(temp_file, 0, prov_data));
+    ASSERT_EQ(EX_OK, GetProvenanceData(temp_file, 0, prov_data));
     std::string obs_time = prov_data.time.substr(0, prov_data.time.find(" "));
 
     EXPECT_EQ(expected_time, obs_time);
@@ -70,7 +70,7 @@ TEST(ProvenanceDataTest, GetProvenanceDataFileNotExist)
     ASSERT_FALSE(temp_file.is_regular_file());
 
     ProvenanceData prov_data;
-    EXPECT_FALSE(GetProvenanceData(temp_file, 0, prov_data));
+    EXPECT_EQ(EX_NOINPUT, GetProvenanceData(temp_file, 0, prov_data));
 }
 
 TEST(ProvenanceDataTest, ClassInstantiation)

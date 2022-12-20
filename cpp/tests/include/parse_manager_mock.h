@@ -31,12 +31,12 @@ class MockParseManager : public ParseManager
 {
    public:
     MockParseManager() : ParseManager() {}
-    MOCK_METHOD3(Configure, bool(ManagedPath input_ch10_file_path, ManagedPath output_dir,
+    MOCK_METHOD3(Configure, int(ManagedPath input_ch10_file_path, ManagedPath output_dir,
                    const ParserConfigParams& user_config));
-    MOCK_METHOD1(Parse, bool(const ParserConfigParams& user_config));
+    MOCK_METHOD1(Parse, int(const ParserConfigParams& user_config));
     MOCK_METHOD2(RecordMetadata, bool(ManagedPath input_ch10_file_path,
                   const ParserConfigParams& user_config));
-    MOCK_METHOD6(StartThreads, bool(bool append_mode, std::vector<uint16_t>& active_workers_vec,
+    MOCK_METHOD6(StartThreads, int(bool append_mode, std::vector<uint16_t>& active_workers_vec,
          const uint16_t& effective_worker_count, const ParserConfigParams& user_config, 
 			std::vector<WorkUnit*>& work_units, ParseManagerFunctions* pfm));
     MOCK_METHOD4(StopThreads, bool(std::vector<WorkUnit*>& work_units,

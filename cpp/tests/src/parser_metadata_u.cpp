@@ -325,7 +325,7 @@ TEST_F(ParserMetadataTest, WriteStringToFile)
     ASSERT_TRUE(pf_.WriteStringToFile(output, outdata));
 
     FileReader fr;
-    ASSERT_EQ(0, fr.ReadFile(output.RawString()));
+    ASSERT_EQ(EX_OK, fr.ReadFile(output.RawString()));
 
     // Add a newline to expected string since GetDocumentAsString
     // adds a newline to each "line" it reads in.
@@ -471,7 +471,7 @@ TEST_F(ParserMetadataTest, RecordMetadataForPktTypeFailAtPktTypeSpecificMetadata
     EXPECT_CALL(funcs, RecordCh10PktTypeSpecificMetadata(pkt_type, ctx_vec,
         runtime_cat.get(), &tmats)).WillOnce(Return(false));
 
-    EXPECT_FALSE(pm_.RecordMetadataForPktType(md_filename, pkt_type, &parser_paths, 
+    EXPECT_EQ(EX_SOFTWARE, pm_.RecordMetadataForPktType(md_filename, pkt_type, &parser_paths, 
         config, prov_data, &tmats, ctx_vec, &tip_md, &funcs));
 }
 
@@ -521,7 +521,7 @@ TEST_F(ParserMetadataTest, RecordMetadataForPktTypeProcessTMATSFail)
     EXPECT_CALL(funcs, ProcessTMATSForType(&tmats, &tip_md, pkt_type)).
         WillOnce(Return(false));
 
-    EXPECT_FALSE(pm_.RecordMetadataForPktType(md_filename, pkt_type, &parser_paths, 
+    EXPECT_EQ(EX_SOFTWARE, pm_.RecordMetadataForPktType(md_filename, pkt_type, &parser_paths, 
         config, prov_data, &tmats, ctx_vec, &tip_md, &funcs));
 }
 
@@ -577,7 +577,7 @@ TEST_F(ParserMetadataTest, RecordMetadataForPktTypeWriteStringToFileFail)
 
     EXPECT_CALL(funcs, WriteStringToFile(md_file_path, md_string)).WillOnce(Return(false));
 
-    EXPECT_FALSE(pm_.RecordMetadataForPktType(md_filename, pkt_type, &parser_paths, 
+    EXPECT_EQ(EX_IOERR, pm_.RecordMetadataForPktType(md_filename, pkt_type, &parser_paths, 
         config, prov_data, &tmats, ctx_vec, &tip_md, &funcs));
 }
 
@@ -633,7 +633,7 @@ TEST_F(ParserMetadataTest, RecordMetadataForPktType)
 
     EXPECT_CALL(funcs, WriteStringToFile(md_file_path, md_string)).WillOnce(Return(true));
 
-    EXPECT_TRUE(pm_.RecordMetadataForPktType(md_filename, pkt_type, &parser_paths, 
+    EXPECT_EQ(EX_OK, pm_.RecordMetadataForPktType(md_filename, pkt_type, &parser_paths, 
         config, prov_data, &tmats, ctx_vec, &tip_md, &funcs));
 }
 
@@ -644,13 +644,13 @@ TEST_F(ParserMetadataTest, WriteTDPDataInitializeFail)
     // ParquetTDPF1 INitialized
     ParquetContext ctx;
     MockParquetTDPF1 pqtdp(&ctx);
-    EXPECT_CALL(pqtdp, Initialize(out_path, 0)).WillOnce(Return(false));
+    EXPECT_CALL(pqtdp, Initialize(out_path, 0)).WillOnce(Return(70));
 
     Ch10Context ctx1(13344545, 0);
     Ch10Context ctx2(848348, 1);
     std::vector<const Ch10Context*> ctx_vec{&ctx1, &ctx2};
 
-    EXPECT_FALSE(pf_.WriteTDPData(ctx_vec, &pqtdp, out_path));
+    EXPECT_EQ(EX_SOFTWARE, pf_.WriteTDPData(ctx_vec, &pqtdp, out_path));
 }
 
 TEST_F(ParserMetadataTest, WriteTDPData)
@@ -660,7 +660,7 @@ TEST_F(ParserMetadataTest, WriteTDPData)
     // ParquetTDPF1 INitialized
     ParquetContext ctx;
     MockParquetTDPF1 pqtdp(&ctx);
-    EXPECT_CALL(pqtdp, Initialize(out_path, 0)).WillOnce(Return(true));
+    EXPECT_CALL(pqtdp, Initialize(out_path, 0)).WillOnce(Return(0));
 
     Ch10Context ctx1(13344545, 0);
     Ch10Context ctx2(848348, 1);
@@ -689,7 +689,7 @@ TEST_F(ParserMetadataTest, WriteTDPData)
 
     EXPECT_CALL(pqtdp, Close(0));
 
-    EXPECT_TRUE(pf_.WriteTDPData(ctx_vec, &pqtdp, out_path));
+    EXPECT_EQ(EX_OK, pf_.WriteTDPData(ctx_vec, &pqtdp, out_path));
 }
 
 TEST_F(ParserMetadataTest, GatherTMATSData)

@@ -9,6 +9,7 @@
 #include <vector>
 #include <set>
 #include <memory>
+#include "sysexits.h"
 #include "ch10_context.h"
 #include "parquet_tdpf1.h"
 #include "parser_paths.h"
@@ -131,9 +132,9 @@ class ParserMetadataFunctions
             file_path		--> Complete output file path
 
         Return:
-            False if any steps fail; true otherwise.
+            Nonzero if any steps fail; 0 otherwise.
         */
-        bool WriteTDPData(const std::vector<const Ch10Context*>& ctx_vec,
+        int WriteTDPData(const std::vector<const Ch10Context*>& ctx_vec,
             ParquetTDPF1* pqtdp, const ManagedPath& file_path);
 
 
@@ -227,9 +228,9 @@ class ParserMetadata
                                 been called
 
         Return:
-            False if GetProvenanceData returns false; true otherwise.
+            Nonzero if GetProvenanceData returns false; 0 otherwise.
         */
-        virtual bool Initialize(const ManagedPath& ch10_path, const ParserConfigParams& config,
+        virtual int Initialize(const ManagedPath& ch10_path, const ParserConfigParams& config,
             const ParserPaths& parser_paths);
 
 
@@ -244,9 +245,9 @@ class ParserMetadata
                                     additional metadata from the contexts. 
             
         Return:
-            True if no errors occur; false otherwise.
+            0 if no errors occur; nonzero otherwise.
         */
-        virtual bool RecordMetadata(ManagedPath md_filename, 
+        virtual int RecordMetadata(ManagedPath md_filename, 
             const std::vector<const Ch10Context*>& context_vec);
 
         
@@ -273,9 +274,9 @@ class ParserMetadata
             md_funcs            --> Instance of ParserMetadataFunctions
             
         Return:
-            True if no errors occur; false otherwise.
+            0 if no errors occur; nonzero otherwise.
         */
-        bool RecordMetadataForPktType(const ManagedPath& md_filename, Ch10PacketType pkt_type,
+        int RecordMetadataForPktType(const ManagedPath& md_filename, Ch10PacketType pkt_type,
             const ParserPaths* parser_paths, const ParserConfigParams& config, 
             const ProvenanceData& prov_data, const TMATSData* tmats_data, 
             const std::vector<const Ch10Context*>& context_vec,

@@ -4,26 +4,28 @@ ParserMetadata::ParserMetadata() : ch10_hash_byte_count_(150e6), prov_data_(), c
     parser_paths_()
 {}
 
-bool ParserMetadata::Initialize(const ManagedPath& ch10_path, const ParserConfigParams& config,
+int ParserMetadata::Initialize(const ManagedPath& ch10_path, const ParserConfigParams& config,
     const ParserPaths& parser_paths)
 {
     config_ = config;
     parser_paths_ = parser_paths;
     
-    if(!GetProvenanceData(ch10_path.absolute(), ch10_hash_byte_count_, prov_data_))
-        return false;
+    int retcode = 0;
+    if((retcode = GetProvenanceData(ch10_path.absolute(), ch10_hash_byte_count_, prov_data_)) != 0)
+        return retcode;
     spdlog::get("pm_logger")->info("Ch10 hash: {:s}", prov_data_.hash);
 
     // Record the packet type config map in metadata and logs.
     ParserMetadataFunctions funcs;
     funcs.LogPacketTypeConfig(config.ch10_packet_enabled_map_);
 
-    return true;
+    return EX_OK;
 }
 
-bool ParserMetadata::RecordMetadata(ManagedPath md_filename, 
+int ParserMetadata::RecordMetadata(ManagedPath md_filename, 
     const std::vector<const Ch10Context*>& context_vec)
 {
+    int retcode = 0;
     ParserMetadataFunctions funcs;
 
     // Create a set of all the parsed packet types
@@ -46,12 +48,12 @@ bool ParserMetadata::RecordMetadata(ManagedPath md_filename,
         if (it->second && (parsed_pkt_types.count(it->first) == 1))
         {
             TIPMDDocument tip_md;
-            if(!RecordMetadataForPktType(md_filename, it->first, &parser_paths_, 
-                config_, prov_data_, &tmats_data, context_vec, &tip_md, &funcs))
+            if((retcode = RecordMetadataForPktType(md_filename, it->first, &parser_paths_, 
+                config_, prov_data_, &tmats_data, context_vec, &tip_md, &funcs)) != 0)
             {
                spdlog::get("pm_logger")->error("RecordMetadata: Failed for type {:s}",
                 ch10packettype_to_string_map.at(it->first));
-                return false;
+                return retcode;
             }
         }
     }
@@ -60,13 +62,13 @@ bool ParserMetadata::RecordMetadata(ManagedPath md_filename,
     spdlog::get("pm_logger")->debug("Recording Time Data");
     ParquetContext pq_ctx;
     ParquetTDPF1 pq_tdp(&pq_ctx);
-    if(!funcs.WriteTDPData(context_vec, &pq_tdp, parser_paths_.GetTDPOutputPath()))
-        return false;
+    if((retcode = funcs.WriteTDPData(context_vec, &pq_tdp, parser_paths_.GetTDPOutputPath())) != 0)
+        return retcode;
 
     parser_paths_.RemoveCh10PacketOutputDirs(parsed_pkt_types);
 
     spdlog::get("pm_logger")->debug("RecordMetadata: complete record metadata");
-    return true;
+    return EX_OK;
 }
 
 void ParserMetadataFunctions::RecordProvenanceData(TIPMDDocument* md,
@@ -224,14 +226,15 @@ bool ParserMetadataFunctions::RecordCh10PktTypeSpecificMetadata(Ch10PacketType p
     return true;
 }
 
-bool ParserMetadataFunctions::WriteTDPData(const std::vector<const Ch10Context*>& ctx_vec,
+int ParserMetadataFunctions::WriteTDPData(const std::vector<const Ch10Context*>& ctx_vec,
     ParquetTDPF1* pqtdp, const ManagedPath& file_path)
 {
-    if(!pqtdp->Initialize(file_path, 0))
+    int retcode = 0;
+    if((retcode = pqtdp->Initialize(file_path, 0)) != 0)
     {
         spdlog::get("pm_logger")->error("Failed to initialize writer for time data, format 1 for "
             "output file: {:s}", file_path.RawString());
-        return false;
+        return retcode;
     }
 
     for(std::vector<const Ch10Context*>::const_iterator it = ctx_vec.cbegin(); 
@@ -247,7 +250,7 @@ bool ParserMetadataFunctions::WriteTDPData(const std::vector<const Ch10Context*>
     uint16_t thread_id = 0;
     pqtdp->Close(thread_id);
 
-    return true;
+    return EX_OK;
 }
 
 void ParserMetadataFunctions::LogPacketTypeConfig(const std::map<Ch10PacketType, bool>& pkt_type_config_map)
@@ -330,7 +333,7 @@ void ParserMetadataFunctions::GatherTMATSData(const std::vector<const Ch10Contex
     }
 }
 
-bool ParserMetadata::RecordMetadataForPktType(const ManagedPath& md_filename, 
+int ParserMetadata::RecordMetadataForPktType(const ManagedPath& md_filename, 
     Ch10PacketType pkt_type,
     const ParserPaths* parser_paths, const ParserConfigParams& config, 
     const ProvenanceData& prov_data, const TMATSData* tmats_data, 
@@ -349,10 +352,10 @@ bool ParserMetadata::RecordMetadataForPktType(const ManagedPath& md_filename,
 
     if(!md_funcs->RecordCh10PktTypeSpecificMetadata(pkt_type, context_vec, 
         tip_md->GetRuntimeCategory().get(), tmats_data))
-        return false;
+        return EX_SOFTWARE;
 
     if(!md_funcs->ProcessTMATSForType(tmats_data, tip_md, pkt_type))
-        return false;
+        return EX_SOFTWARE;
 
     // Write the complete Yaml record to the metadata file.
     tip_md->CreateDocument();
@@ -360,8 +363,8 @@ bool ParserMetadata::RecordMetadataForPktType(const ManagedPath& md_filename,
     {
         spdlog::get("pm_logger")->warn("Failed to write metadata file for {:s}",
             pkt_type_label.c_str());
-        return false;
+        return EX_IOERR;
     }
 
-    return true;
+    return EX_OK;
 }

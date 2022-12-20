@@ -4,6 +4,7 @@
 #include <vector>
 
 // Order of includes is important here
+#include "sysexits.h"
 #include "ch10_parse_main.h"
 #include "argument_validation_mock.h"
 #include "managed_path.h"
@@ -47,7 +48,7 @@ TEST_F(Ch10ParseMainTest, ValidatePathsCheckExtensionFail)
     std::vector<std::string> exts{"ch10", "c10"};
     EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, _)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_out_path_, str_log_path_, 
+    ASSERT_EQ(EX_DATAERR, ValidatePaths(str_input_path_, str_out_path_, str_log_path_, 
         input_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -57,7 +58,7 @@ TEST_F(Ch10ParseMainTest, ValidatePathsValidateInputFilePathFail)
     EXPECT_CALL(mock_av_, CheckExtension(str_input_path_, _)).WillOnce(Return(true));
     EXPECT_CALL(mock_av_, ValidateInputFilePath(str_input_path_, input_path_)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_out_path_, str_log_path_, 
+    ASSERT_EQ(EX_NOINPUT, ValidatePaths(str_input_path_, str_out_path_, str_log_path_, 
         input_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -71,7 +72,7 @@ TEST_F(Ch10ParseMainTest, ValidatePathsValidateDirectoryPathFail)
     EXPECT_CALL(mock_av_, ValidateInputFilePath(str_input_path_, input_path_)).WillOnce(Return(true));
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_out_path_, out_path_)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_out_path_, str_log_path_, 
+    ASSERT_EQ(EX_NOINPUT, ValidatePaths(str_input_path_, str_out_path_, str_log_path_, 
         input_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -83,7 +84,7 @@ TEST_F(Ch10ParseMainTest, ValidatePathsValidateDefaultOutputDirectoryFalse)
 
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_log_path_, log_path_)).WillOnce(Return(false));
 
-    ASSERT_FALSE(ValidatePaths(str_input_path_, str_out_path_, str_log_path_, 
+    ASSERT_EQ(EX_NOINPUT, ValidatePaths(str_input_path_, str_out_path_, str_log_path_, 
         input_path_, out_path_, log_path_, &mock_av_));
 }
 
@@ -95,6 +96,6 @@ TEST_F(Ch10ParseMainTest, ValidatePathsTrue)
 
     EXPECT_CALL(mock_av_, ValidateDirectoryPath(str_log_path_, log_path_)).WillOnce(Return(true));
 
-    ASSERT_TRUE(ValidatePaths(str_input_path_, str_out_path_, str_log_path_, 
+    ASSERT_EQ(EX_OK, ValidatePaths(str_input_path_, str_out_path_, str_log_path_, 
         input_path_, out_path_, log_path_, &mock_av_));
 }

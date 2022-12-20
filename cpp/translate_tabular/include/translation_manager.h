@@ -6,6 +6,7 @@
 //
 #include <memory>
 #include <vector>
+#include "sysexits.h"
 #include "spdlog/spdlog.h"
 #include "translate_status.h"
 #include "managed_path.h"
@@ -37,12 +38,19 @@ class TranslationManager
 
     TranslateStatus status_;
 
+    // Hold exit code of function operator()
+    std::atomic<int> exit_code_;
+
    public:
     const int& thread_index;
     const std::atomic<bool>& complete;
     const std::atomic<bool>& success;
+    const std::atomic<int>& exit_code;
 
-    TranslationManager() : context_(nullptr), thread_index_(-1), complete_(false), success_(false), thread_index(thread_index_), complete(complete_), success(success_), status_(TranslateStatus::NONE)
+    TranslationManager() : context_(nullptr), thread_index_(-1), 
+        complete_(false), success_(false), thread_index(thread_index_), 
+        complete(complete_), success(success_), 
+        status_(TranslateStatus::NONE), exit_code_(0), exit_code(exit_code_)
     {
     }
 

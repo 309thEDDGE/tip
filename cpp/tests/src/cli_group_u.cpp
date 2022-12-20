@@ -107,7 +107,7 @@ TEST_F(CLIGroupTest, ParseFailNotConfigured)
     char* argv[2];
     cli_nickname_ = "";
     std::shared_ptr<CLIGroupMember> active_cli;
-    ASSERT_FALSE(cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
+    ASSERT_EQ(EX_SOFTWARE, cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
 }
 
 TEST_F(CLIGroupTest, ParseFailNotPresent)
@@ -128,7 +128,7 @@ TEST_F(CLIGroupTest, ParseFailNotPresent)
     char* argv[arg_count] = {a1, a2};
     cli_nickname_ = "";
     std::shared_ptr<CLIGroupMember> active_cli;
-    ASSERT_FALSE(cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
+    ASSERT_EQ(EX_USAGE, cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
 }
 
 TEST_F(CLIGroupTest, ParseFailNonIndicatorPresent)
@@ -150,7 +150,7 @@ TEST_F(CLIGroupTest, ParseFailNonIndicatorPresent)
     char* argv[arg_count] = {a1, a2, a3};
     cli_nickname_ = "";
     std::shared_ptr<CLIGroupMember> active_cli;
-    ASSERT_FALSE(cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
+    ASSERT_EQ(EX_USAGE, cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
 }
 
 TEST_F(CLIGroupTest, ParsePassIndicatorPresent)
@@ -173,7 +173,7 @@ TEST_F(CLIGroupTest, ParsePassIndicatorPresent)
     char* argv[arg_count] = {a0, a1, a2, a3};
     cli_nickname_ = "";
     std::shared_ptr<CLIGroupMember> active_cli;
-    ASSERT_TRUE(cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
+    ASSERT_EQ(EX_OK, cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
     EXPECT_EQ("1stcli", cli_nickname_);
     EXPECT_EQ(cli_prog_name_, active_cli->GetProgramName());
     EXPECT_EQ(999, output);
@@ -198,7 +198,7 @@ TEST_F(CLIGroupTest, ParseFailNonIndicatorPresent2)
     char* argv[arg_count] = {a1, a2, a3};
     cli_nickname_ = "";
     std::shared_ptr<CLIGroupMember> active_cli;
-    ASSERT_FALSE(cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
+    ASSERT_EQ(EX_USAGE, cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
 }
 
 TEST_F(CLIGroupTest, ParsePassIndicatorPresent2)
@@ -220,7 +220,7 @@ TEST_F(CLIGroupTest, ParsePassIndicatorPresent2)
     char* argv[arg_count] = {a1, a2, a3};
     cli_nickname_ = "";
     std::shared_ptr<CLIGroupMember> active_cli;
-    ASSERT_TRUE(cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
+    ASSERT_EQ(EX_OK, cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
     EXPECT_EQ("1stcli", cli_nickname_);
     EXPECT_EQ(cli_prog_name_, active_cli->GetProgramName());
     EXPECT_EQ(true, bool_output);
@@ -245,7 +245,7 @@ TEST_F(CLIGroupTest, ParseFailNonIndicatorPresent3)
     char* argv[arg_count] = {a1, a2, a3};
     cli_nickname_ = "";
     std::shared_ptr<CLIGroupMember> active_cli;
-    ASSERT_FALSE(cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
+    ASSERT_EQ(EX_USAGE, cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
 }
 
 TEST_F(CLIGroupTest, ParsePassIndicatorPresent3)
@@ -267,7 +267,7 @@ TEST_F(CLIGroupTest, ParsePassIndicatorPresent3)
     char* argv[arg_count] = {a1, a2, a3};
     cli_nickname_ = "";
     std::shared_ptr<CLIGroupMember> active_cli;
-    ASSERT_TRUE(cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
+    ASSERT_EQ(EX_OK, cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
     EXPECT_EQ("1stcli", cli_nickname_);
     EXPECT_EQ(cli_prog_name_, active_cli->GetProgramName());
     EXPECT_EQ(true, bool_output);
@@ -303,7 +303,7 @@ TEST_F(CLIGroupTest, ParseTwoCLIsPass1)
     char* argv[arg_count] = {a0, a1, a2, a3};
     cli_nickname_ = "";
     std::shared_ptr<CLIGroupMember> active_cli;
-    ASSERT_TRUE(cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
+    ASSERT_EQ(EX_OK, cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
     EXPECT_EQ("2ndcli", cli_nickname_);
     EXPECT_EQ(cli_prog_name_, active_cli->GetProgramName());
     EXPECT_EQ("file:///path/todata", str_output);
@@ -341,7 +341,7 @@ TEST_F(CLIGroupTest, ParseTwoCLIsPass2)
     char* argv[arg_count] = {a0, a1, a2, a3, a4, a5};
     cli_nickname_ = "";
     std::shared_ptr<CLIGroupMember> active_cli;
-    ASSERT_TRUE(cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
+    ASSERT_EQ(EX_OK, cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
     EXPECT_EQ("1stcli", cli_nickname_);
     EXPECT_EQ(cli_prog_name_, active_cli->GetProgramName());
     EXPECT_EQ(300, output);
@@ -379,7 +379,7 @@ TEST_F(CLIGroupTest, ParseTwoCLIsFailParse)
     char* argv[arg_count] = {a1, a2, a3, a4, a5};
     cli_nickname_ = "";
     std::shared_ptr<CLIGroupMember> active_cli;
-    ASSERT_FALSE(cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
+    ASSERT_EQ(EX_USAGE, cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
     EXPECT_EQ("", cli_nickname_);
     EXPECT_EQ(nullptr, active_cli);
 }
@@ -412,7 +412,7 @@ TEST_F(CLIGroupTest, ParseTwoCLIsFailNoIndicators)
     char* argv[arg_count] = {a1, a2, a3, a4};
     cli_nickname_ = "";
     std::shared_ptr<CLIGroupMember> active_cli;
-    ASSERT_FALSE(cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
+    ASSERT_EQ(EX_USAGE, cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
     EXPECT_EQ("", cli_nickname_);
     EXPECT_EQ(nullptr, active_cli);
 }
@@ -508,5 +508,5 @@ TEST_F(CLIGroupTest, ParseTwoCLIsPassNoArgsFail)
     char* argv[arg_count] = {a1};
     cli_nickname_ = "";
     std::shared_ptr<CLIGroupMember> active_cli;
-    ASSERT_FALSE(cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
+    ASSERT_EQ(EX_USAGE, cli_group_.Parse(argc, argv, cli_nickname_, active_cli));
 }
