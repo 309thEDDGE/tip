@@ -2,10 +2,13 @@ name: ubuntu-ci-image-build
 on:
   workflow_call:
 jobs:
-  build-image-job:
+  check-changed-dockerfile-job:
     runs-on: ubuntu-latest
     env: 
-      DOCKERFILE_PATH: ubuntu_dev.Dockerfile*
+      # DOCKERFILE_PATH: ubuntu_dev.Dockerfile
+      DOCKERFILE_PATH: .github/workflows/ubuntu-ci-image-update.yml
+    outputs:
+      dockerfile-changed-result: ${{ steps.match-changed-files.outputs.changed }}
     steps:
       - name: checkout
         uses: actions/checkout@v3
@@ -21,18 +24,25 @@ jobs:
             # *.Dockerfile
           match_directories: "false"
 
-      - name: get changed files
+      - name: match changed files
+        id: match-changed-files
         run: |
+            CHANGED="false"
             for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
               echo "$file was changed"
+              if [[ $file == ${{ env.DOCKERFILE_PATH }} ]]
+              then
+                echo "Caught ${{ env.DOCKERFILE_PATH }} changing!"
+                CHANGED="true"
+              fi
             done
+            echo "changed=${CHANGED}" >> $GITHUB_OUTPUT
 
-      - name: check Dockerfile true
-        if: steps.changed-files.outputs.only_changed == 'true'
-        run: |
-            echo "${{ env.DOCKERFILE_PATH }} was CHANGED!"
+  build-image-job:
+    runs-on: ubuntu-latest
+    needs: check-changed-dockerfile-job
+    if: jobs.check-changed-dockerfile-job.outputs.dockerfile-changed-result == 'true'
+    steps:
+      - name: test job output
+        run: echo "=======> build-image-job is running !!!!"
 
-      - name: check Dockerfile false
-        if: steps.changed-files.outputs.only_changed == 'false'
-        run: |
-            echo "${{ env.DOCKERFILE_PATH }} was NOT CHANGED!"
