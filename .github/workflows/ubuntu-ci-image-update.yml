@@ -1,0 +1,23 @@
+name: ubuntu-ci-image-build
+on:
+  workflow_call:
+jobs:
+  build-image-job:
+    runs-on: ubuntu-latest
+    env: 
+      DOCKERFILE_PATH: ./ubuntu_dev.Dockerfile
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with: 
+          fetch-depth: 2
+
+      - name: changed files
+        id: changed-files
+        with: 
+          files: ${{ env.DOCKERFILE_PATH }}
+
+      - name: check Dockerfile
+        if: steps.changed-files.outputs.only_changed == 'true'
+        run: |
+            echo "${{ env.DOCKERFILE_PATH }} was CHANGED!"
