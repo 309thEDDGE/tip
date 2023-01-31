@@ -5,6 +5,9 @@ on:
       - master
   workflow_call:
 jobs:
+  call-ci-image-update-job:
+    uses: ./.github/workflows/ubuntu-ci-image-update.yml
+
   build-ubuntu-job:
     runs-on: ubuntu-22.04
     env:
