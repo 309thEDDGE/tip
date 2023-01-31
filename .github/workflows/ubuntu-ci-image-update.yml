@@ -41,7 +41,7 @@ jobs:
   build-image-job:
     runs-on: ubuntu-latest
     needs: check-changed-dockerfile-job
-    if: jobs.check-changed-dockerfile-job.outputs.dockerfile-changed-result == 'true'
+    if: needs.check-changed-dockerfile-job.outputs.dockerfile-changed-result == 'true'
     steps:
       - name: test job output
         run: echo "=======> build-image-job is running !!!!"
