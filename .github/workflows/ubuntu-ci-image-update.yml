@@ -5,7 +5,7 @@ jobs:
   build-image-job:
     runs-on: ubuntu-latest
     env: 
-      DOCKERFILE_PATH: ./ubuntu_dev.Dockerfile
+      DOCKERFILE_PATH: ubuntu_dev.Dockerfile
     steps:
       - name: checkout
         uses: actions/checkout@v3
@@ -18,7 +18,12 @@ jobs:
         with: 
           files: ${{ env.DOCKERFILE_PATH }}
 
-      - name: check Dockerfile
+      - name: check Dockerfile true
         if: steps.changed-files.outputs.only_changed == 'true'
         run: |
             echo "${{ env.DOCKERFILE_PATH }} was CHANGED!"
+
+      - name: check Dockerfile false
+        if: steps.changed-files.outputs.only_changed == 'false'
+        run: |
+            echo "${{ env.DOCKERFILE_PATH }} was NOT CHANGED!"
