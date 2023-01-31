@@ -17,7 +17,14 @@ jobs:
         uses: tj-actions/changed-files@v35
         with: 
           # files: ${{ env.DOCKERFILE_PATH }}
-          files: ubuntu_dev.Dockerfile
+          files: *.Dockerfile
+          match_directories: "false"
+
+      - name: get changed files
+        run: |
+            for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+              echo "$file was changed"
+            done
 
       - name: check Dockerfile true
         if: steps.changed-files.outputs.only_changed == 'true'
