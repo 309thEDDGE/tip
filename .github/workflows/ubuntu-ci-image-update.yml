@@ -5,8 +5,8 @@ jobs:
   check-changed-dockerfile-job:
     runs-on: ubuntu-latest
     env: 
-      # DOCKERFILE_PATH: ubuntu_dev.Dockerfile
-      DOCKERFILE_PATH: .github/workflows/ubuntu-ci-image-update.yml
+      DOCKERFILE_PATH: ubuntu_dev.Dockerfile
+      # DOCKERFILE_PATH: .github/workflows/ubuntu-ci-image-update.yml
     outputs:
       dockerfile-changed-result: ${{ steps.match-changed-files.outputs.changed }}
     steps:
