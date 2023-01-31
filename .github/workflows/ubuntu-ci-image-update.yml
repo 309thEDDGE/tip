@@ -17,7 +17,8 @@ jobs:
         uses: tj-actions/changed-files@v35
         with: 
           # files: ${{ env.DOCKERFILE_PATH }}
-          files: *.Dockerfile
+          files: |
+            *.Dockerfile
           match_directories: "false"
 
       - name: get changed files
