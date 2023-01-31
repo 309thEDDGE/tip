@@ -53,7 +53,7 @@ jobs:
 
       - name: build CI image
         run: |
-          docker build -t ghcr.io/309theddge/tip/${{ CI_IMAGE_NAME }}:${{ CI_IMAGE_TAG }} - < ${{ env.DOCKERFILE_PATH }}
-          docker push ghcr.io/309theddge/tip/${{ CI_IMAGE_NAME }}:${{ CI_IMAGE_TAG }}
+          docker build -t ghcr.io/309theddge/tip/${{ env.CI_IMAGE_NAME }}:${{ env.CI_IMAGE_TAG }} - < ${{ env.DOCKERFILE_PATH }}
+          docker push ghcr.io/309theddge/tip/${{ env.CI_IMAGE_NAME }}:${{ env.CI_IMAGE_TAG }}
 
 
