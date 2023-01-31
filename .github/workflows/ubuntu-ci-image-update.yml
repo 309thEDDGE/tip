@@ -5,7 +5,7 @@ jobs:
   build-image-job:
     runs-on: ubuntu-latest
     env: 
-      DOCKERFILE_PATH: ubuntu_dev.Dockerfile
+      DOCKERFILE_PATH: ubuntu_dev.Dockerfile*
     steps:
       - name: checkout
         uses: actions/checkout@v3
