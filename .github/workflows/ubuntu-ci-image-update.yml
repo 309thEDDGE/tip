@@ -1,12 +1,13 @@
 name: ubuntu-ci-image-build
 on:
   workflow_call:
+env: 
+  DOCKERFILE_PATH: ubuntu_dev.Dockerfile
+  CI_IMAGE_NAME: ubuntu_ci
+  CI_IMAGE_TAG: latest
 jobs:
   check-changed-dockerfile-job:
     runs-on: ubuntu-latest
-    env: 
-      DOCKERFILE_PATH: ubuntu_dev.Dockerfile
-      # DOCKERFILE_PATH: .github/workflows/ubuntu-ci-image-update.yml
     outputs:
       dockerfile-changed-result: ${{ steps.match-changed-files.outputs.changed }}
     steps:
@@ -19,9 +20,6 @@ jobs:
         id: changed-files
         uses: tj-actions/changed-files@v35
         with: 
-          # files: ${{ env.DOCKERFILE_PATH }}
-          # files: |
-            # *.Dockerfile
           match_directories: "false"
 
       - name: match changed files
@@ -43,6 +41,19 @@ jobs:
     needs: check-changed-dockerfile-job
     if: needs.check-changed-dockerfile-job.outputs.dockerfile-changed-result == 'true'
     steps:
-      - name: test job output
-        run: echo "=======> build-image-job is running !!!!"
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: Login to ghcr.Io
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: build CI image
+        run: |
+          docker build -t ghcr.io/309theddge/tip/${{ CI_IMAGE_NAME }}:${{ CI_IMAGE_TAG }} - < ${{ env.DOCKERFILE_PATH }}
+          docker push ghcr.io/309theddge/tip/${{ CI_IMAGE_NAME }}:${{ CI_IMAGE_TAG }}
+
 
