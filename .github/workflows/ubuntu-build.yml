@@ -22,7 +22,7 @@ jobs:
       CODE_COV_FNAME: overall-coverage.xml
       RANDOM_CACHE_FNAME: random-cache-key
     container:
-      image: ghcr.io/309theddge/tip/${{ env.CI_IMAGE_NAME }}:${{ env.CI_IMAGE_TAG }}
+      image: ghcr.io/309theddge/tip/${{ vars.CI_UBUNTU_IMAGE_NAME }}:${{ env.CI_IMAGE_TAG }}
       # image: ghcr.io/309theddge/tip/ubuntu_ci:latest
       # credentials:
       #   username: ${{ secrets.TIP_REGISTRY_USER }}
