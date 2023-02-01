@@ -1,5 +1,5 @@
 FROM ubuntu:22.04
-#
+
 # Prepare base requirements
 RUN apt update -y && apt install -y build-essential ninja-build cmake git
 
