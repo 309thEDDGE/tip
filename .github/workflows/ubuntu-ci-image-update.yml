@@ -2,9 +2,9 @@ name: ubuntu-ci-image-build
 on:
   workflow_call:
 env: 
-  DOCKERFILE_PATH: ubuntu_dev.Dockerfile
-  CI_IMAGE_NAME: ubuntu_ci
-  CI_IMAGE_TAG: latest
+  DOCKERFILE_PATH: vars.CI_UBUNTU_DOCKERFILE_PATH
+  CI_IMAGE_NAME: vars.CI_UBUNTU_IMAGE_NAME
+  CI_IMAGE_TAG: vars.CI_UBUNTU_IMAGE_TAG
 jobs:
   check-changed-dockerfile-job:
     runs-on: ubuntu-latest
