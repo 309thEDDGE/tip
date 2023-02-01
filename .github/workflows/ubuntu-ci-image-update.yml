@@ -26,9 +26,7 @@ jobs:
         id: match-changed-files
         run: |
             CHANGED="false"
-            echo "dockerfile path is '${{ env.DOCKERFILE_PATH }}'"
             for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
-              echo "$file was changed"
               if [[ $file == ${{ env.DOCKERFILE_PATH }} ]]
               then
                 echo "Caught ${{ env.DOCKERFILE_PATH }} changing!"
