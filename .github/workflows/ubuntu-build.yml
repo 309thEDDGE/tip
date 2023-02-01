@@ -5,8 +5,8 @@ on:
       - master
   workflow_call:
 env:
-  CI_IMAGE_NAME: vars.CI_UBUNTU_IMAGE_NAME
-  CI_IMAGE_TAG: vars.CI_UBUNTU_IMAGE_TAG
+  CI_IMAGE_NAME: ${{ vars.CI_UBUNTU_IMAGE_NAME }}
+  CI_IMAGE_TAG: ${{ vars.CI_UBUNTU_IMAGE_TAG }}
 jobs:
   call-ci-image-update-job:
     uses: ./.github/workflows/ubuntu-ci-image-update.yml
