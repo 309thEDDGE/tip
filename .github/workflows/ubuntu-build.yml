@@ -20,7 +20,7 @@ jobs:
       CODE_COV_FNAME: overall-coverage.xml
       RANDOM_CACHE_FNAME: random-cache-key
     container:
-      image: ghcr.io/309theddge/tip/${{ CI_IMAGE_NAME }}:$CI_IMAGE_TAG
+      image: ghcr.io/309theddge/tip/$CI_IMAGE_NAME:$CI_IMAGE_TAG
       # credentials:
       #   username: ${{ secrets.TIP_REGISTRY_USER }}
       #   password: ${{ secrets.TIP_REGISTRY_PASS }}
