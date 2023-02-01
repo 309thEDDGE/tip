@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       BUILD_DIR: build
+      CI_IMAGE_NAME: ${{ env.CI_IMAGE_NAME }}
       # CI_COMMIT_TAG: ${{github.ref_name}}
       # CI_COMMIT_SHORT_SHA: ${{github.sha}}
       CODE_COV_FNAME: overall-coverage.xml
