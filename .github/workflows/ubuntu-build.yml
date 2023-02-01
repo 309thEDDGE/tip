@@ -4,6 +4,9 @@ on:
     branches-ignore:
       - master
   workflow_call:
+env:
+  CI_IMAGE_NAME: vars.CI_UBUNTU_IMAGE_NAME
+  CI_IMAGE_TAG: vars.CI_UBUNTU_IMAGE_TAG
 jobs:
   call-ci-image-update-job:
     uses: ./.github/workflows/ubuntu-ci-image-update.yml
@@ -16,8 +19,6 @@ jobs:
       # CI_COMMIT_SHORT_SHA: ${{github.sha}}
       CODE_COV_FNAME: overall-coverage.xml
       RANDOM_CACHE_FNAME: random-cache-key
-      CI_IMAGE_NAME: vars.CI_UBUNTU_IMAGE_NAME
-      CI_IMAGE_TAG: vars.CI_UBUNTU_IMAGE_TAG
     container:
       image: ghcr.io/309theddge/tip/${{ env.CI_IMAGE_NAME }}:${{ env.CI_IMAGE_TAG }}
       # credentials:
