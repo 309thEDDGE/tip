@@ -3,7 +3,6 @@
 #include "yamlsv_log_item.h"
 #include "dts_1553_schema.h"
 
-
 int TranslateTabular1553Main(int argc, char** argv)
 {
     if (!SetLineBuffering(stdout))

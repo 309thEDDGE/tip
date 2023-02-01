@@ -4,9 +4,6 @@ on:
     branches-ignore:
       - master
   workflow_call:
-env:
-  # CI_IMAGE_NAME: ${{ vars.CI_UBUNTU_IMAGE_NAME }}
-  CI_IMAGE_TAG: ${{ vars.CI_UBUNTU_IMAGE_TAG }}
 jobs:
   call-ci-image-update-job:
     uses: ./.github/workflows/ubuntu-ci-image-update.yml
@@ -16,9 +13,8 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       BUILD_DIR: build
-      CI_IMAGE_NAME: ${{ vars.CI_UBUNTU_IMAGE_NAME }}
-      # CI_COMMIT_TAG: ${{github.ref_name}}
-      # CI_COMMIT_SHORT_SHA: ${{github.sha}}
+      CI_COMMIT_TAG: ${{ github.ref_name }}
+      CI_COMMIT_SHORT_SHA: ${{ github.sha }}
       CODE_COV_FNAME: overall-coverage.xml
       RANDOM_CACHE_FNAME: random-cache-key
     container:
@@ -27,11 +23,11 @@ jobs:
       # credentials:
       #   username: ${{ secrets.TIP_REGISTRY_USER }}
       #   password: ${{ secrets.TIP_REGISTRY_PASS }}
-      env:
+      # env:
         # BUILD_DIR: ${{ env.BUILD_DIR }}
-        CI_COMMIT_TAG: ${{ github.ref_name }}
-        CI_COMMIT_SHORT_SHA: ${{ github.sha }}
-        CODE_COV_FNAME: ${{ env.CODE_COV_FNAME }}
+        # CI_COMMIT_TAG: ${{ github.ref_name }}
+        # CI_COMMIT_SHORT_SHA: ${{ github.sha }}
+        # CODE_COV_FNAME: ${{ env.CODE_COV_FNAME }}
       options: --cpus 2
     steps: 
 
