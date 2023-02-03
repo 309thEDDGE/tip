@@ -22,7 +22,6 @@ RUN apt install -y -V ca-certificates lsb-release wget && \
 
 # gcovr
 RUN ln -fs /usr/bin/python3 /usr/bin/python && \
-    chmod a+x /usr/bin/python && \
     apt install -y python3-pip && \
     pip install gcovr
 
