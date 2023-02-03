@@ -7,8 +7,6 @@ on:
     branches:
       - master
 jobs:
-  call-ci-image-update-job:
-    uses: ./.github/workflows/ubuntu-ci-image-update.yml
   call-ubuntu-build-job:
     uses: ./.github/workflows/ubuntu-build.yml
     secrets: inherit 
