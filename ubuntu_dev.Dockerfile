@@ -20,6 +20,11 @@ RUN apt install -y -V ca-certificates lsb-release wget && \
     apt install -y -V libarrow-dev && \
     apt install -y -V libparquet-dev 
 
+# gcovr
+RUN ln -fs /usr/bin/python3 /usr/bin/python && \
+    apt install -y python3-pip && \
+    pip install gcovr
+
 ENTRYPOINT ["/usr/bin/bash"]
 
 
