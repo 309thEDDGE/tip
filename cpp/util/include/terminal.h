@@ -8,7 +8,6 @@
 Get terminal/console row and column count in character units.
 
 Args:
-    stdout_fd       --> x for windows, y for linux systems
     rows            --> row count
     cols            --> column count
 
