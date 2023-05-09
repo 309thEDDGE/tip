@@ -6,13 +6,11 @@ CLIGroup::CLIGroup() : is_configured_(false), max_width_(0)
     size_t rows, cols;
     if(!GetTerminalSize(rows, cols))
     {
-        printf("CLIGroup(): Failed to get terminal size\n");
         max_width_ = 100;
     }
     else
     {
         max_width_ = cols;
-        // printf("CLIGroup(): Terminal width = %zu\n", max_width_);
     }
 }
 

@@ -13,14 +13,14 @@ bool GetTerminalSize(size_t& rows, size_t& cols)
     HANDLE hdl = GetStdHandle(STD_OUTPUT_HANDLE);
     if(hdl == INVALID_HANDLE_VALUE)
     {
-        printf("GetTerminalSize(): Failed to get stdout handle\n");
+        // printf("GetTerminalSize(): Failed to get stdout handle\n");
         return false;
     }
 
     int result = GetConsoleScreenBufferInfo(hdl, &csbi);
     if(result == 0)
     {
-        printf("GetTerminalSize(): Failed to get console buffer info\n");
+        // printf("GetTerminalSize(): Failed to get console buffer info\n");
         return false;
     }
 
@@ -44,7 +44,7 @@ bool GetTerminalSize(size_t& rows, size_t& cols)
     int result = ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     if(result != 0)
     {
-        printf("GetTerminalSize(): Call to ioctl failed\n");
+        // printf("GetTerminalSize(): Call to ioctl failed\n");
         return false;
     }
 
