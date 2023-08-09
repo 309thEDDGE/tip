@@ -8,6 +8,7 @@
 - [Linting](#linting)
 - [Usage](#usage)
 - [Exit Codes](#exit-codes)
+- [`conda-forge` Package Build](#conda-forge-package-build)
 
 # TIP
 
@@ -282,3 +283,83 @@ TIP follows Linux `/usr/include/sysexits.h` as closely as possible. Because TIP 
 For all executables, zero is returned if proper arguments are passed, arguments can be parsed, files/directories can be opened and/or created, system calls are executed, and no other error occurs. This implies that help menus and version printing sub-commands always result in an exit code of zero. All other cases shall result in non-zero exit codes. 
 
 Most internal functions return boolean. Only functions which can fail at points where the logic is relevant to one of the exit codes, not a general internal error (`EX_SOFTWARE`), and where the elucidation of which is reasonably useful, return exit codes. High-level functions, such as those which return values to main, intepret non exit code-returning function successes and failures as 0 (`EX_OK`) and 70 (`EX_SOFTWARE`), respectively. 
+
+# `conda-forge` Package Build
+
+## Clone
+
+Use the github token to clone the repo
+`git clone https://<user name>:<token>@github.com/309thEDDGE/tip.git`
+
+## Preparation
+### Environments
+Setup the Windows and Linux environments and build TIP in several non-Conda ways prior to attempting the Conda build. If source code or CMake scripts are modified to fix issues with the Conda build it is important to verify the non-Conda builds succeed. 
+
+The instructions to Conda build in the README are specific to developmental builds, i.e., configuring a Conda environment for iterative development. While that may be useful to debug issues with the TIP Conda package build, it is not necessary. The TIP Conda package build automatically creates the necessary environment, builds in that environment, creates a runtime environment, installs the built TIP package in that environment, and executes tests to confirm success. The steps below only include
+* Windows build using local dependencies
+* Windows TIP Conda package build
+* Ubuntu build using local dependencies
+* Ubuntu build using dependencies obtained from the package manager
+* Linux TIP Conda package build 
+
+#### Windows Build with Local Dependencies
+1. Install support for Windows users per the TIP README, https://github.com/309thEDDGE/tip#note-for-windows-users
+2. Obtain prebuilt dependencies and organize into directory and file name structure that can be obtained in `cmake/CMake_windows_depsdir.cmake`
+3. Open "x64 Native Tools Command Prompt for VS 2022" or similar, depending on the version of Visual Studio Build Tools. Execute remaining build commands in the command prompt.
+4. (repo root) `mkdir build`, `cd build`
+5. `cmake .. -DUSE_DEPS_DIR=C:\Users\isaac\docs\tip_windows_deps -GNinja`
+6. Run tests: `..\bin\tests.exe`
+
+#### Windows `conda-forge` Package Build
+The `conda build` process is the same for Linux and Windows. See the `conda-forge` build section.
+
+#### Ubuntu Build with Local Dependencies
+pass
+
+#### Ubuntu Build with Package Manager
+pass
+
+#### Linux `conda-forge` Package Build
+The `conda build` process is the same for Linux and Windows. See the `conda-forge` build section.
+
+## `conda-forge` Build
+Steps for building the TIP `conda-forge` package:
+1. Clone tip-feedstock repo: `git clone https://github.com/conda-forge/tip-feedstock.git`
+2. Install Anaconda or Conda. I chose miniconda for simplicity and the version for Python 3.10 for compatibility. See https://docs.conda.io/en/latest/miniconda.html. 
+3. Open Anaconda Prompt (Windows) *OR* `source activate.sh` if necessary (Linux)
+4. Create TIP package build Conda environment: `conda create -n tippkg -c conda-forge conda-build`
+5. Activate the environment: `conda activate tippkg`
+6. (tip-feedstock root) Build TIP Conda package: `conda build -c conda-forge --error-overdepending --error-overlinking --override-channels .\recipe`
+
+## `conda-forge` TIP Package Update Process
+### General Updates
+Motivation to update the recipe, `meta.yaml`, in `tip-feedstock/recipe` may be 
+* a new version of TIP has been released and the change must be reflected in the published `conda-forge` package
+* TIP has new dependencies, new executables that ought to be tested as part of the `conda-forge` build process, or the recipe needs to be updated in some other way. In the first two cases, such changes are usually accompanied by a new release so the build process and iterative debugging steps will be very similar to the first bullet.
+
+Follow the general build steps in (conda-forge build). The pattern one should follow to test build the `conda-forge` package depends on the failure mode, if present. Builds which only involve changes to the recipe should be relatively easy to iterate: modify `meta.yaml` and build according to step 6 in [conda-forge build](#conda-forge-build). 
+
+If updates to TIP source are required, then there is an interplay between pure source compilation and the configuration in `conda-forge` recipe. The `meta.yaml` in `tip-feedstock/recipe` references an archived version of a TIP release in the parameters `source.url` and `source.sha256`. To iterate on a local version of TIP instead of a formal TIP release, comment the above parameters and insert `source.path` and use the local absolute path to the TIP repo root dir. If you reference the same directory in which TIP was previously built using the standard build paradigm then a `build` directory will be present and cause a failure in the conda build. Delete the `build` directory first prior to running the conda build. 
+
+If a conda build failure can be addressed in the source code, the iterative process is
+1. Update local TIP source
+2. Build TIP in the standard way
+3. Revise as necessary until TIP builds in the standard way
+4. Conda build TIP using the *temporarily* modified `meta.yaml` in the `tip-feedstock` repo. (If there are no other recipe changes required, the insertion of `source.path` is temporary and the proper values for `source.url` and `source.sha256` should be inserted in place of `source.path` prior to committing.)
+5. If the Conda build succeeds, release a new version of TIP and generate a release archive, update `meta.yaml` with the correct `source.url` and `source.sha256` and attempt a local conda build which references the new release tarball
+6. If the Conda build fails, return to step 1.
+
+Otherwise the recipe is likely misconfigured or references a dependency which has been updated and which has conflicts with other dependencies. In this case, it is a game of update recipe (i.e., `meta.yaml.`) and rebuild. 
+
+### Updates Required due to `tip-feedstock` Automated Build Failure
+If the purpose for building the TIP Conda package is to verify or fix an automated rebuild in the tip-feedstock repo prior to approval of a PR created by the `regro-cf-autotick-bot`, it can be helpful to attempt a build using the recipe in `main` prior to troubleshooting the PR branch. If you can't build the working version of the recipe, then it is unlikely that you can troubleshoot and fix a failing PR. Follow the general guidance in [General Updates](#general-updates) to iteratively update and build the TIP `conda-forge` package. 
+
+#### Windows-specific Notes
+If `conda build` step fails with the message 
+
+> .. but ['ucrt'] not in reqs/run, (i.e. it is overlinking) (likely) or a missing dependency (less likely)
+
+the cause is likely due to a specific configuration issue in the `meta.yaml` `requirements.build/host/run` sections. `tip-feedstock` pipelines pull a library configuration yaml from another Conda repo which de-conflicts the aforementioned error message. This other file is located at `/pinning-feedstock/recipe/conda_build_config.yaml`. If this is the only error, try disabling error on overlinking by using the `--no-error-overlinking` instead of `--error-overlinking`. If the build then succeeds, try pushing to `tip-feedstock` to see if the pipelines succeed. The pipelines are the source of truth for a successful build. Also note that the recipe has several checks that are executed after the package is built and installed in a new environment, defined in `test.commands.`
+
+#### Linux-specific Notes
+pass
