@@ -113,7 +113,7 @@ apt install libpcap-dev libssl-dev cmake
 Build and install:
 ```bash
 cd libtins && mkdir build && cd build
-cmake .. -DLIBTINS_ENABLE_WPA2=0 -DLIBTINS_ENABLE_CXX11=1 
+ 
 make install
 ```
 
@@ -145,7 +145,7 @@ ninja install
 
 ## Offline Builds (not recommended)
 
-* Dependencies will provided by the developer in a directory specified by the configure-time flag `USE_DEPS_DIR`
+* Dependencies will be provided by the developer in a directory specified by the configure-time flag `USE_DEPS_DIR`
 * `USE_DEPS_DIR` contains the following subdirectories:
 	- arrow
 	- yaml-cpp 
@@ -298,26 +298,23 @@ Setup the Windows and Linux environments and build TIP in several non-Conda ways
 The instructions to Conda build in the README are specific to developmental builds, i.e., configuring a Conda environment for iterative development. While that may be useful to debug issues with the TIP Conda package build, it is not necessary. The TIP Conda package build automatically creates the necessary environment, builds in that environment, creates a runtime environment, installs the built TIP package in that environment, and executes tests to confirm success. The steps below only include
 * Windows build using local dependencies
 * Windows TIP Conda package build
-* Ubuntu build using local dependencies
 * Ubuntu build using dependencies obtained from the package manager
 * Linux TIP Conda package build 
 
 #### Windows Build with Local Dependencies
-1. Install support for Windows users per the TIP README, https://github.com/309thEDDGE/tip#note-for-windows-users
+1. Install support for Windows users per the [notes for Windows user](#note-for-windows-users)
 2. Obtain prebuilt dependencies and organize into directory and file name structure that can be obtained in `cmake/CMake_windows_depsdir.cmake`
 3. Open "x64 Native Tools Command Prompt for VS 2022" or similar, depending on the version of Visual Studio Build Tools. Execute remaining build commands in the command prompt.
 4. (repo root) `mkdir build`, `cd build`
-5. `cmake .. -DUSE_DEPS_DIR=C:\Users\isaac\docs\tip_windows_deps -GNinja`
+5. `cmake .. -DUSE_DEPS_DIR=<path to local deps> -GNinja`
 6. Run tests: `..\bin\tests.exe`
 
 #### Windows `conda-forge` Package Build
 The `conda build` process is the same for Linux and Windows. See the `conda-forge` build section.
 
-#### Ubuntu Build with Local Dependencies
-pass
-
 #### Ubuntu Build with Package Manager
-pass
+1. Follow [Ubuntu build instructions](#ubuntu-2204-lts)
+2. Run tests: `..\bin\tests.exe`
 
 #### Linux `conda-forge` Package Build
 The `conda build` process is the same for Linux and Windows. See the `conda-forge` build section.
