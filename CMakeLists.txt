@@ -93,6 +93,11 @@ if(NOT "${USER_INSTALL_DIR}" STREQUAL OFF)
 endif()
 if((NOT "${USER_INSTALL_DIR}" STREQUAL OFF) OR (NOT "${USE_DEPS_DIR}" STREQUAL OFF))
     message(STATUS "Install dir:  ${out_bin_dir}")
+    if(NOT EXISTS ${out_bin_dir})
+        file(MAKE_DIRECTORY ${out_bin_dir})
+    endif()
+else()
+    set(out_bin_dir "")
 endif()
 
 # CMake module dir
@@ -106,7 +111,6 @@ if(NOT "${USE_DEPS_DIR}" STREQUAL OFF)
     message(STATUS "Module paths: ${CMAKE_MODULE_PATH}")
 else()
 	set(USE_NEWARROW TRUE)
-    set(out_bin_dir "")
 endif()
 
 # Common includes all of the tip-relevant directories. Do not include() until
