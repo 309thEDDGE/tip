@@ -68,12 +68,6 @@ set(libpcapdll_lib_names wpcap.dll)
 set(packet_lib_names Packet.lib)
 set(packetdll_lib_names Packet.dll)
 
-# check if output bin directory exists
-# if not create it
-if(NOT EXISTS ${out_bin_dir})
-    file(MAKE_DIRECTORY ${out_bin_dir})
-endif()
-    
 # Pcap dlls that must be installed next to tip_parse.exe.
 set(pcap_dll1 ${libpcap_lib_paths}/${libpcapdll_lib_names})
 set(pcap_dll2 ${libpcap_lib_paths}/${packetdll_lib_names})

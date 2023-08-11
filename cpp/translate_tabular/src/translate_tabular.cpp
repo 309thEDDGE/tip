@@ -81,7 +81,7 @@ int TranslateTabular::Translate()
             status_string = "SUCCESS";
             SPDLOG_INFO("TranslationManager associated with thread {:d} "
                 "status: {:s}, exit code {:d}", (*it)->thread_index, 
-                status_string, (*it)->exit_code);
+                status_string, static_cast<int>((*it)->exit_code));
         }
         else
         {
@@ -91,7 +91,7 @@ int TranslateTabular::Translate()
 
             SPDLOG_ERROR("TranslationhManager associated with thread {:d} "
                 "status: {:s}, exit code {:d}", (*it)->thread_index, 
-                status_string, (*it)->exit_code);
+                status_string, static_cast<int>((*it)->exit_code));
         }
     }
     if (exit_code != 0)
