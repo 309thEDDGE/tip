@@ -338,7 +338,7 @@ Locate the directory relevant to the OS within `<output dir>` and notate the pac
 
 Create a new conda environment and install the TIP package from the local build dir
 ```bash
- conda create -n tipcforge -c conda-forge -c <output dir> tip
+ conda create -n tipcforge -c <output dir> -c conda-forge tip
 ```
 The ordering of repeated `-c` flag to specify channel is important. Activate the new environment and use `conda list` to verify that the installed version of TIP has the same hash identified above and the fourth column in the list output shows local package origin. Execute `tests` in the active environment to confirm that the package is viable. 
 
