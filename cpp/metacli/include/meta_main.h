@@ -1,0 +1,13 @@
+#ifndef META_MAIN_H_
+#define META_MAIN_H_
+
+#include <string>
+#include <cstdio>
+#include "sysexits.h"
+#include "stream_buffering.h"
+#include "version_info.h"
+#include "meta_cli.h"
+
+int MetaMain(int argc, char** argv);
+
+#endif  // META_MAIN_H_
