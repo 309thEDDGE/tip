@@ -13,6 +13,10 @@ class CLIPositionalArg : public CLIArg
         // Parsed output variable
         ArgDataType& parsed_value_;
 
+        // No default values for positional args. To be used
+        // as place holder for base class functions.
+        ArgDataType default_value_;
+
     public:
         CLIPositionalArg(std::string label, std::string help_str, 
             ArgDataType& output);
@@ -23,6 +27,8 @@ class CLIPositionalArg : public CLIArg
         virtual std::string GetUsageRepr(); 
         virtual std::string GetPrintName();
         virtual std::shared_ptr<CLIArg> DefaultUseParentDirOf(const std::string& input_path);
+        virtual std::shared_ptr<CLIArg> ValidatePermittedValuesAre(
+            const std::set<ArgDataType>& permitted_vals);  
 
         /*
         Create a shared pointer to the base class, CLIArg, of
@@ -35,7 +41,7 @@ class CLIPositionalArg : public CLIArg
 template<typename ArgDataType>
 CLIPositionalArg<ArgDataType>::CLIPositionalArg(std::string label, std::string help_str, 
     ArgDataType& output) : 
-    CLIArg(label, help_str, ""), parsed_value_(output)
+    CLIArg(label, help_str, ""), parsed_value_(output), default_value_()
 { 
     arg_type_ = CLIArgType::POS;
     user_rgx_ = "^([a-zA-Z0-9\\\\\\/_:\\. \\-\\(\\)\\$\\#]+)$";
@@ -63,6 +69,11 @@ bool CLIPositionalArg<ArgDataType>::Parse(const std::string& input)
             input.c_str(), GetUsageRepr().c_str());
         return false;
     }
+
+    ComputeDefaultSpecialConfig();
+    std::string fail_msg("Positional argument " + GetPrintName());
+    if(!ComputeValidateSpecialConfig(fail_msg))
+        return false;
 
     // Positional args must always be present, so if the 
     // indicated position is not a label-type and
@@ -109,4 +120,12 @@ std::shared_ptr<CLIArg> CLIPositionalArg<ArgDataType>::DefaultUseParentDirOf(
     printf("CLIOptionalArg::DefaultUseParentDirOf: Not defined for positional args!\n"); 
     return shared_from_this();
 }
+
+template <typename ArgDataType>
+std::shared_ptr<CLIArg> CLIPositionalArg<ArgDataType>::ValidatePermittedValuesAre(
+    const std::set<ArgDataType>& permitted_vals)
+{
+    return CLIArg::ValidatePermittedValuesAre(permitted_vals, parsed_value_, default_value_);
+}
+
 #endif  // CLI_POSITIONAL_ARG_H_
