@@ -18,7 +18,16 @@ int MetaMain(int argc, char** argv)
     std::string nickname = "";
     std::shared_ptr<CLIGroupMember> cli;
     int retcode = 0;
-    if ((retcode = cli_group.Parse(argc, argv, nickname, cli)) != 0)
+
+    // Restrict to single argument. If arg is -h, --help, -v, or
+    // --version then those options would occur anyway. If the arg
+    // is one of the subcommands then I want to ignore the flag, which
+    // would take precedence. Example tip parse -h, don't want presence
+    // of -h to trigger the 'tip' help, only the 'parse' help.
+    int temp_argc = argc;
+    char** temp_argv = argv;
+    ArgumentValidation::ArgSelectTo(2, temp_argc, &temp_argv);
+    if ((retcode = cli_group.Parse(temp_argc, temp_argv, nickname, cli)) != 0)
     {
         return retcode;
     }
@@ -38,6 +47,8 @@ int MetaMain(int argc, char** argv)
     if (config.subcommand_ == "parse")
     {
         printf("parse subcommand!\n");
+        ArgumentValidation::ArgSelectFrom(1, argc, &argv);
+        return Ch10ParseMain(argc, argv);
     }
 
     if (config.subcommand_ == "translate")
