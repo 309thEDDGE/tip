@@ -292,3 +292,20 @@ bool ArgumentValidation::CheckExtension(const std::string& input_path, std::vect
 
     return false;
 }
+
+void ArgumentValidation::ArgSelectFrom(int select_from, int& argc,
+    char*** argv)
+{
+    if (select_from < argc)
+    {
+        argv[0] += select_from;
+        argc -= select_from;
+    }
+}
+
+void ArgumentValidation::ArgSelectTo(int select_to, int& argc,
+    char*** argv)
+{
+    if (select_to < argc + 1)
+        argc = select_to;
+}

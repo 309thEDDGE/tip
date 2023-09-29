@@ -202,6 +202,39 @@ class ArgumentValidation
 		the extensions supplied as arguments, otherwise false.
 	*/
     virtual bool CheckExtension(const std::string& input_path, std::vector<std::string> exts) const;
+
+	/*
+	Select arguments from the input index location to the end for 
+	arguments given in the form of (int argc, char** argv). Modify 
+	argc and argv such that only selected arguments are present.
+
+	Args:
+		select_from	--> Index from which arguments will be selected.
+			Arguments which exist at indices prior to select_from
+			will be removed.
+		argc    	--> Argument count, including executable name
+		argv    	--> Array of arguments
+		
+	Return:
+		Inputs argc and argv are modified. 
+	*/
+	static void ArgSelectFrom(int select_from, int& argc, char*** argv);
+
+	/*
+	Select arguments from the lowest index to the input index 
+	location for arguments given in the form of (int argc, char** argv). Modify 
+	The argument at the given index is not selected.
+
+	Args:
+		select_to	--> Index to which arguments will be selected.
+		argc    	--> Argument count, including executable name
+		argv    	--> Array of arguments
+		
+	Return:
+		Inputs argc and argv are modified. 
+	*/
+	static void ArgSelectTo(int select_to, int& argc, char*** argv);
+
 };
 
 
