@@ -8,10 +8,10 @@ namespace MetaCLIHelpStrings
         R"(Entry point for Chapter 10 parser, translator, or other utilities)";
 
     const std::string help_request_help = 
-        R"(Print usage information.)";
+        R"(Print usage information)";
 
     const std::string version_request_help = 
-        R"(Print version, either latest commit git SHA or tag.)";
+        R"(Print version, either latest commit git SHA or tag)";
 
     const std::string subcommand_help =
         R"(Subcommands include: parse, translate)";
@@ -20,6 +20,9 @@ namespace MetaCLIHelpStrings
         R"(Parse a Chapter 10 file.)";
 
     const std::string translate_help =
-        R"(Translate parsed intermediate files to engineering unit data.)";
+        R"(Translate parsed intermediate files to engineering unit data)";
+
+    const std::string translate_subcommand_help = 
+        R"(Translate subcommands include: 1553, arinc429)"; 
 }
 #endif  // META_CLI_HELP_STRINGS_H_

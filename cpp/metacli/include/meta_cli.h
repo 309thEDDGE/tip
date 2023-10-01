@@ -8,8 +8,8 @@
 #include "meta_cli_config_params.h"
 
 inline bool ConfigureMetaCLI(CLIGroup& cli_group, 
-    MetaCLIConfigParams& config, bool& help_requested, 
-    bool& show_version)
+    CLIGroup& translate_cli_group, MetaCLIConfigParams& config, 
+    bool& help_requested, bool& show_version)
 {
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -44,6 +44,34 @@ inline bool ConfigureMetaCLI(CLIGroup& cli_group,
         config.subcommand_, true)->ValidatePermittedValuesAre(permitted_subcommands);
 
     if(!cli_group.CheckConfiguration())
+        return false;
+
+    ////////////////////////////////////////////////////////////////////////////////
+    //                                  translate
+    ////////////////////////////////////////////////////////////////////////////////
+
+    std::shared_ptr<CLIGroupMember> translate_cli_help = translate_cli_group.AddCLI("translate", 
+        MetaCLIHelpStrings::high_level_description, "clihelp");
+    translate_cli_help->AddOption("--help", "-h", MetaCLIHelpStrings::help_request_help, false, 
+        help_requested, true);
+
+    std::shared_ptr<CLIGroupMember> translate_cli_version = translate_cli_group.AddCLI("translate", 
+        MetaCLIHelpStrings::high_level_description, "cliversion");
+    translate_cli_version->AddOption("--version", "-v", MetaCLIHelpStrings::version_request_help, 
+        false, show_version, true);
+
+    std::shared_ptr<CLIGroupMember> translate_cli = translate_cli_group.AddCLI("translate",
+        MetaCLIHelpStrings::translate_help, "clitranslate");
+
+    // Positional arg, required
+    std::set<std::string> permitted_translate_subcommands{"1553", "arinc429"};
+    translate_cli->AddOption<std::string>(
+        "subcommand", 
+        MetaCLIHelpStrings::translate_subcommand_help, 
+        config.translate_subcommand_, true)->ValidatePermittedValuesAre(
+            permitted_translate_subcommands);
+
+    if(!translate_cli_group.CheckConfiguration())
         return false;
     return true;
 }
