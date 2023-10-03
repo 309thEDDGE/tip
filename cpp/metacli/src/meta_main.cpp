@@ -1,4 +1,6 @@
 #include "meta_main.h"
+#include "translate_tabular_1553_main.h"
+#include "translate_tabular_arinc429_main.h"
 
 int MetaMain(int argc, char** argv)
 {
@@ -17,6 +19,13 @@ int MetaMain(int argc, char** argv)
     if(!ConfigureTranslateCLI(translate_cli_group, config))
     {
         printf("ConfigureTranslateCLI failed\n");
+        return EX_SOFTWARE;
+    }
+
+    CLIGroup util_cli_group;
+    if(!ConfigureUtilityCLI(util_cli_group, config))
+    {
+        printf("ConfigureUtilityCLI failed\n");
         return EX_SOFTWARE;
     }
 
@@ -101,13 +110,14 @@ int ExecuteTranslateCLI(int argc, char** argv, CLIGroup& translate_cli_group,
     temp_argc = argc;
     temp_argv = argv;
     ArgumentValidation::ArgSelectFrom(2, temp_argc, &temp_argv);
+    // ArgumentValidation::ArgSelectTo(2, temp_argc, &temp_argv);
     if (config.translate_subcommand_ == "1553")
     {
-        printf("translate 1553 subcommand!\n");
+        return TranslateTabular1553Main(temp_argc, temp_argv);
     }
     else if (config.translate_subcommand_ == "arinc429")
     {
-        printf("translate arinc429 subcommand!\n");
+        return TranslateTabularARINC429Main(temp_argc, temp_argv);
     }
 
     return EX__MAX;

@@ -19,10 +19,21 @@ namespace MetaCLIHelpStrings
     const std::string parse_help =
         R"(Parse a Chapter 10 file.)";
 
+    const std::string translate_hl_desc = 
+        R"(Entry point for translation of post-tip parse intermediate
+        products into products with engineering units)";
+
     const std::string translate_help =
         R"(Translate parsed intermediate files to engineering unit data)";
 
     const std::string translate_subcommand_help = 
         R"(Translate subcommands include: 1553, arinc429)"; 
+
+    const std::string util_hl_desc = 
+        R"(Entry point for utilities)";
+
+    const std::string util_subcommand_help = 
+        R"(Utility subcommands include: bincomp, pqcomp, vidextract, 
+        validyaml)";
 }
 #endif  // META_CLI_HELP_STRINGS_H_
