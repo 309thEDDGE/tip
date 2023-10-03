@@ -8,8 +8,7 @@
 #include "meta_cli_config_params.h"
 
 inline bool ConfigureMetaCLI(CLIGroup& cli_group, 
-    CLIGroup& translate_cli_group, MetaCLIConfigParams& config, 
-    bool& help_requested, bool& show_version)
+    MetaCLIConfigParams& config)
 {
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -19,7 +18,7 @@ inline bool ConfigureMetaCLI(CLIGroup& cli_group,
     std::shared_ptr<CLIGroupMember> cli_help = cli_group.AddCLI("tip", 
         MetaCLIHelpStrings::high_level_description, "clihelp");
     cli_help->AddOption("--help", "-h", MetaCLIHelpStrings::help_request_help, false, 
-        help_requested, true);
+        config.help_requested_, true);
 
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -29,7 +28,7 @@ inline bool ConfigureMetaCLI(CLIGroup& cli_group,
     std::shared_ptr<CLIGroupMember> cli_version = cli_group.AddCLI("tip", 
         MetaCLIHelpStrings::high_level_description, "cliversion");
     cli_version->AddOption("--version", "-v", MetaCLIHelpStrings::version_request_help, 
-        false, show_version, true);
+        false, config.show_version_, true);
 
     ////////////////////////////////////////////////////////////////////////////////
     //                                  subcommand
@@ -45,20 +44,16 @@ inline bool ConfigureMetaCLI(CLIGroup& cli_group,
 
     if(!cli_group.CheckConfiguration())
         return false;
+    return true;
+}
 
-    ////////////////////////////////////////////////////////////////////////////////
-    //                                  translate
-    ////////////////////////////////////////////////////////////////////////////////
-
+inline bool ConfigureTranslateCLI(CLIGroup& translate_cli_group, 
+    MetaCLIConfigParams& config)
+{
     std::shared_ptr<CLIGroupMember> translate_cli_help = translate_cli_group.AddCLI("translate", 
         MetaCLIHelpStrings::high_level_description, "clihelp");
     translate_cli_help->AddOption("--help", "-h", MetaCLIHelpStrings::help_request_help, false, 
-        help_requested, true);
-
-    std::shared_ptr<CLIGroupMember> translate_cli_version = translate_cli_group.AddCLI("translate", 
-        MetaCLIHelpStrings::high_level_description, "cliversion");
-    translate_cli_version->AddOption("--version", "-v", MetaCLIHelpStrings::version_request_help, 
-        false, show_version, true);
+        config.help_requested_, true);
 
     std::shared_ptr<CLIGroupMember> translate_cli = translate_cli_group.AddCLI("translate",
         MetaCLIHelpStrings::translate_help, "clitranslate");

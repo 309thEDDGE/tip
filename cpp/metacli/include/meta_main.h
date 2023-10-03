@@ -8,8 +8,16 @@
 #include "version_info.h"
 #include "argument_validation.h"
 #include "ch10_parse_main.h"
+#include "meta_cli_config_params.h"
 #include "meta_cli.h"
 
 int MetaMain(int argc, char** argv);
+
+int ExecuteMetaCLI(int argc, char** argv, CLIGroup& cli_group, 
+    CLIGroup& translate_cli_group, MetaCLIConfigParams& config);
+
+int ExecuteTranslateCLI(int argc, char** argv, CLIGroup& translate_cli_group,
+    MetaCLIConfigParams& config);
+
 
 #endif  // META_MAIN_H_
