@@ -55,7 +55,7 @@ bool ArgumentValidation::TestOptionalArgCount(int argc,
         curr_req_arg = it->first;
     }        
 
-    SPDLOG_WARN("Argument count-1 (%d) greater than max: %d",
+    SPDLOG_WARN("Argument count-1 ({:d}) greater than max: {:d}",
         actual_argc, curr_req_arg);
     return false;
 }
