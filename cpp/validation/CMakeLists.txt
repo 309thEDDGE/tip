@@ -27,11 +27,21 @@ target_link_libraries(pqcompare parquet_compare
 )
 target_compile_features(pqcompare PUBLIC cxx_std_17)
 
+set(bincomp_headers
+    include/binary_comparison_main.h
+)
+add_library(bin_compare src/binary_comparison_main.cpp)
+target_compile_features(bin_compare PUBLIC cxx_std_17)
+target_include_directories(bin_compare PUBLIC include)
+set_target_properties(bin_compare
+    PROPERTIES PUBLIC_HEADER "${bincomp_headers}"
+)
+target_link_libraries(bin_compare
+    PRIVATE common spdlog::spdlog yaml-cpp tiputil cli
+)
 add_executable(bincompare main/binary_comparison.cpp)
-
-target_link_libraries(bincompare common spdlog::spdlog yaml-cpp tiputil cli)
-
-target_compile_features(bincompare PUBLIC cxx_std_17)
+target_link_libraries(bincompare 
+    bin_compare common spdlog::spdlog yaml-cpp tiputil cli)
 
 install(
     TARGETS pqcompare bincompare
