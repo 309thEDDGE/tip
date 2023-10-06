@@ -2,6 +2,9 @@
 #include "translate_tabular_1553_main.h"
 #include "translate_tabular_arinc429_main.h"
 #include "binary_comparison_main.h"
+#include "parquet_comparison_main.h"
+#include "parquet_video_extraction_main.h"
+#include "validate_yaml_main.h"
 
 int MetaMain(int argc, char** argv)
 {
@@ -166,15 +169,15 @@ int ExecuteUtilCLI(int argc, char** argv, CLIGroup& util_cli_group,
     }
     else if (config.util_subcommand_ == "pqcomp")
     {
-        printf("pqcomp subcommand!\n");
+        return PqCompMain(temp_argc, temp_argv);
     }
     else if (config.util_subcommand_ == "vidextract")
     {
-        printf("vidextract subcommand!\n");
+        return PqVidExtractMain(temp_argc, temp_argv);
     }
     else if (config.util_subcommand_ == "validyaml")
     {
-        printf("validyaml subcommand!\n");
+        return ValidateYamlMain(temp_argc, temp_argv);
     }
 
     return EX__MAX;
