@@ -15,7 +15,7 @@ target_sources(tip PRIVATE src/meta_main.cpp)
 
 target_link_libraries(tip PUBLIC parsech10_lib 
     dts_1553 dts_429 translate_tabular translate_tabular_1553
-    translate_tabular_arinc429
+    translate_tabular_arinc429 bin_compare
     common spdlog::spdlog yaml-cpp tiputil ch10comp yamlsv 
     spdlog::spdlog metadata cli parquet_context ch10_parquet ch10ethernet
 )

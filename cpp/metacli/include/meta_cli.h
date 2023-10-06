@@ -51,7 +51,7 @@ inline bool ConfigureTranslateCLI(CLIGroup& translate_cli_group,
     MetaCLIConfigParams& config)
 {
     std::shared_ptr<CLIGroupMember> translate_cli_help = translate_cli_group.AddCLI("translate", 
-        MetaCLIHelpStrings::translate_hl_desc, "clihelp");
+        MetaCLIHelpStrings::translate_hl_desc, "translateclihelp");
     translate_cli_help->AddOption("--help", "-h", MetaCLIHelpStrings::help_request_help, false, 
         config.help_requested_, true);
 
@@ -76,14 +76,14 @@ inline bool ConfigureUtilityCLI(CLIGroup& util_cli_group,
 {
     std::shared_ptr<CLIGroupMember> util_cli_help = 
         util_cli_group.AddCLI("util", 
-        MetaCLIHelpStrings::util_hl_desc, "clihelp");
+        MetaCLIHelpStrings::util_hl_desc, "utilclihelp");
     util_cli_help->AddOption("--help", "-h", 
         MetaCLIHelpStrings::help_request_help, false, 
         config.help_requested_, true);
 
     std::shared_ptr<CLIGroupMember> util_cli = 
         util_cli_group.AddCLI("util",
-        MetaCLIHelpStrings::translate_help, "clitranslate");
+        MetaCLIHelpStrings::util_help, "cliutil");
 
     // Positional arg, required
     std::set<std::string> permitted_util_subcommands{"bincomp", 
