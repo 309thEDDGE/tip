@@ -1,9 +1,10 @@
 set(headers
-    include/comparator.h
+    include/comparator.h parquet_comparison_main.h
 )
 
 add_library(parquet_compare
     src/comparator.cpp
+    src/parquet_comparison_main.cpp
 )
 
 target_compile_features(parquet_compare PUBLIC cxx_std_17)
@@ -17,7 +18,7 @@ set_target_properties(parquet_compare
 )
 
 target_link_libraries(parquet_compare
-    PRIVATE common spdlog::spdlog yaml-cpp tiputil ch10_parquet
+    PRIVATE common spdlog::spdlog yaml-cpp tiputil ch10_parquet cli
 )
 
 add_executable(pqcompare main/parquet_arrow_validator_main.cpp)
