@@ -29,6 +29,6 @@ else()
     message(WARN "Build flags for compiler ID ${CMAKE_CXX_COMPILER_ID} not handled.")
 endif()
 
-if(("${USER_INSTALL_DIR}" STREQUAL OFF) OR ("${USE_DEPS_DIR}" STREQUAL OFF))
+if("${USER_INSTALL_DIR}" STREQUAL OFF)
     include(GNUInstallDirs)
 endif()
