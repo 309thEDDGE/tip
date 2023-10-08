@@ -21,13 +21,6 @@ target_link_libraries(parquet_compare
     PRIVATE common spdlog::spdlog yaml-cpp tiputil ch10_parquet cli
 )
 
-add_executable(pqcompare main/parquet_arrow_validator_main.cpp)
-
-target_link_libraries(pqcompare parquet_compare
-    common spdlog::spdlog yaml-cpp tiputil cli ch10_parquet
-)
-target_compile_features(pqcompare PUBLIC cxx_std_17)
-
 set(bincomp_headers
     include/binary_comparison_main.h
 )
@@ -40,15 +33,7 @@ set_target_properties(bin_compare
 target_link_libraries(bin_compare
     PRIVATE common spdlog::spdlog yaml-cpp tiputil cli
 )
-add_executable(bincompare main/binary_comparison.cpp)
-target_link_libraries(bincompare 
-    bin_compare common spdlog::spdlog yaml-cpp tiputil cli)
-
-install(
-    TARGETS pqcompare bincompare
-    DESTINATION ${out_bin_dir}
-)
 
 if(BUILD_SHARED_LIBS)
-    install(TARGETS parquet_compare)
+    install(TARGETS bin_compare parquet_compare)
 endif()

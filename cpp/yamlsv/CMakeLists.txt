@@ -20,19 +20,6 @@ target_link_libraries(yamlsv
     PRIVATE common tiputil yaml-cpp spdlog::spdlog cli
 )
 
-add_executable(validate_yaml main/validate_yaml.cpp)
-
-target_compile_features(validate_yaml PUBLIC cxx_std_17)
-
-target_link_libraries(validate_yaml yamlsv
-    common tiputil yaml-cpp spdlog::spdlog cli
-)
-
-install(
-    TARGETS validate_yaml
-    DESTINATION ${out_bin_dir}
-)
-
 if(BUILD_SHARED_LIBS)
     install(TARGETS yamlsv)
 endif()

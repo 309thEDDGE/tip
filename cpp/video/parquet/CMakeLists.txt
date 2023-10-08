@@ -22,19 +22,6 @@ target_link_libraries(pq_vid_extract
     PRIVATE common spdlog::spdlog yaml-cpp tiputil cli arrow_shared parquet
 )
 
-add_executable(parquet_video_extractor main/parquet_video_extractor.cpp)
-
-target_compile_features(parquet_video_extractor PUBLIC cxx_std_17)
-
-target_link_libraries(parquet_video_extractor pq_vid_extract
-    common spdlog::spdlog yaml-cpp tiputil cli arrow_shared parquet
-)
-
-install(
-    TARGETS parquet_video_extractor
-    DESTINATION ${out_bin_dir}
-)
-
 if(BUILD_SHARED_LIBS)
     install(TARGETS pq_vid_extract)
 endif()

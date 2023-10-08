@@ -15,6 +15,8 @@ int ValidateYamlMain(int argc, char** argv)
     int retcode = 0;
     if ((retcode = cli_group.Parse(argc, argv, nickname, cli)) != 0)
     {
+        if (argc == 1)
+            printf("%s", cli_group.MakeHelpString().c_str());
         return retcode;
     }
 
