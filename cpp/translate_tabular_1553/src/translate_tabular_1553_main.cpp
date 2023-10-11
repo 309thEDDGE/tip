@@ -38,11 +38,11 @@ int TranslateTabular1553Main(int argc, char** argv)
         return EX_OK;
     }
 
-    if (show_version && nickname == "cliversion")
-    {
-        printf(TRANSLATE_1553_EXE_NAME " version %s\n", GetVersionString().c_str());
-        return EX_OK;
-    }
+    // if (show_version && nickname == "cliversion")
+    // {
+    //     printf(TRANSLATE_1553_EXE_NAME " version %s\n", GetVersionString().c_str());
+    //     return EX_OK;
+    // }
 
     if(show_dts_info && nickname == "clidts")
     {

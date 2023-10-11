@@ -28,10 +28,10 @@ inline bool ConfigureTranslatorCLI(CLIGroup& cli_group, TranslationConfigParams&
     //                                  version CLI
     ////////////////////////////////////////////////////////////////////////////////
 
-    std::shared_ptr<CLIGroupMember> cli_version = cli_group.AddCLI(TRANSLATE_1553_EXE_NAME, 
-        high_level_description, "cliversion");
-    cli_version->AddOption("--version", "-v", Translate1553CLIHelpStrings::version_request_help, 
-        false, show_version, true);
+    // std::shared_ptr<CLIGroupMember> cli_version = cli_group.AddCLI(TRANSLATE_1553_EXE_NAME, 
+    //     high_level_description, "cliversion");
+    // cli_version->AddOption("--version", "-v", Translate1553CLIHelpStrings::version_request_help, 
+    //     false, show_version, true);
 
     
     ////////////////////////////////////////////////////////////////////////////////

@@ -37,11 +37,11 @@ int TranslateTabularARINC429Main(int argc, char** argv)
         return EX_OK;
     }
 
-    if (show_version && nickname == "cliversion")
-    {
-        printf(TRANSLATE_429_EXE_NAME " version %s\n", GetVersionString().c_str());
-        return EX_OK;
-    }
+    // if (show_version && nickname == "cliversion")
+    // {
+    //     printf(TRANSLATE_429_EXE_NAME " version %s\n", GetVersionString().c_str());
+    //     return EX_OK;
+    // }
 
     if(show_dts_info && nickname == "clidts")
     {

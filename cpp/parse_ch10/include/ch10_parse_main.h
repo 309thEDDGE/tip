@@ -16,7 +16,6 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "stream_buffering.h"
-#include "version_info.h"
 #include "yaml_schema_validation.h"
 #include "parser_metadata.h"
 

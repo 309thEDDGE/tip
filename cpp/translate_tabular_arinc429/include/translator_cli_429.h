@@ -29,11 +29,11 @@ inline bool ConfigureTranslatorCLI429(CLIGroup& cli_group, TranslationConfigPara
     //                                  version CLI
     ////////////////////////////////////////////////////////////////////////////////
 
-    std::shared_ptr<CLIGroupMember> cli_version = cli_group.AddCLI(TRANSLATE_429_EXE_NAME, 
-        high_level_description, "cliversion");
-    cli_version->AddOption("--version", "-v", 
-        TranslateARINC429CLIHelpStrings::version_request_help, 
-        false, show_version, true);
+    // std::shared_ptr<CLIGroupMember> cli_version = cli_group.AddCLI(TRANSLATE_429_EXE_NAME, 
+    //     high_level_description, "cliversion");
+    // cli_version->AddOption("--version", "-v", 
+    //     TranslateARINC429CLIHelpStrings::version_request_help, 
+    //     false, show_version, true);
 
     
     ////////////////////////////////////////////////////////////////////////////////

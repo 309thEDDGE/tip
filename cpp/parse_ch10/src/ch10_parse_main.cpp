@@ -32,11 +32,11 @@ int Ch10ParseMain(int argc, char** argv)
         return EX_OK;
     }
 
-    if (show_version && nickname == "cliversion")
-    {
-        printf(CH10_PARSE_EXE_NAME " version %s\n", GetVersionString().c_str());
-        return EX_OK;
-    }
+    // if (show_version && nickname == "cliversion")
+    // {
+    //     printf(CH10_PARSE_EXE_NAME " version %s\n", GetVersionString().c_str());
+    //     return EX_OK;
+    // }
     config.MakeCh10PacketEnabledMap();
 
     ManagedPath input_path;
