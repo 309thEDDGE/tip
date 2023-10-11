@@ -47,9 +47,9 @@ bool ConfigurePqCompCLI(CLIGroup& cli_group, bool& help_requested, std::string& 
 {
     std::string exe_name = "pqcompare";
     std::string description = "Compare a test parquet path against a truth parquet path. Input Parquet "
-        "paths may either be files or directories with the suffix \".parquet\". Print \"PASS\" (0) to stdout "
-        "if equivalent, or \"FAIL\" (1) if not equivalent and return the value shown in parentheses. A NULL result, "
-        "meaning the comparison couldn't be conducted due to bad paths or some other issue, returns a non-zero value greater than 1. "
+        "paths may either be files or directories with the suffix \".parquet\". Print \"PASS\" (exit code 0) to stdout "
+        "if equivalent, \"FAIL\" (exit code 1) if not equivalent, or \"NULL\" (exit code >1) "
+        "if the comparison can't be made. "
         "Column count and schema (column label and data type) will be compared first, followed by element-wise "
         "comparison of columns as arrays. All list-type columns are assumed to be arrow::Int32Type.";
     std::shared_ptr<CLIGroupMember> cli_help = cli_group.AddCLI(exe_name, 

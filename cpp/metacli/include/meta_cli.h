@@ -39,7 +39,7 @@ inline bool ConfigureMetaCLI(CLIGroup& cli_group,
 
     // Positional arg, required
     std::set<std::string> permitted_subcommands{"parse", "translate", "util"};
-    subcommand_cli->AddOption<std::string>("subcommand", MetaCLIHelpStrings::subcommand_help, 
+    subcommand_cli->AddOption<std::string>("command", MetaCLIHelpStrings::subcommand_help, 
         config.subcommand_, true)->ValidatePermittedValuesAre(permitted_subcommands);
 
     if(!cli_group.CheckConfiguration())
@@ -50,12 +50,12 @@ inline bool ConfigureMetaCLI(CLIGroup& cli_group,
 inline bool ConfigureTranslateCLI(CLIGroup& translate_cli_group, 
     MetaCLIConfigParams& config)
 {
-    std::shared_ptr<CLIGroupMember> translate_cli_help = translate_cli_group.AddCLI("translate", 
+    std::shared_ptr<CLIGroupMember> translate_cli_help = translate_cli_group.AddCLI("tip translate", 
         MetaCLIHelpStrings::translate_hl_desc, "translateclihelp");
     translate_cli_help->AddOption("--help", "-h", MetaCLIHelpStrings::help_request_help, false, 
         config.help_requested_, true);
 
-    std::shared_ptr<CLIGroupMember> translate_cli = translate_cli_group.AddCLI("translate",
+    std::shared_ptr<CLIGroupMember> translate_cli = translate_cli_group.AddCLI("tip translate",
         MetaCLIHelpStrings::translate_help, "clitranslate");
 
     // Positional arg, required
@@ -75,14 +75,14 @@ inline bool ConfigureUtilityCLI(CLIGroup& util_cli_group,
     MetaCLIConfigParams& config)
 {
     std::shared_ptr<CLIGroupMember> util_cli_help = 
-        util_cli_group.AddCLI("util", 
+        util_cli_group.AddCLI("tip util", 
         MetaCLIHelpStrings::util_hl_desc, "utilclihelp");
     util_cli_help->AddOption("--help", "-h", 
         MetaCLIHelpStrings::help_request_help, false, 
         config.help_requested_, true);
 
     std::shared_ptr<CLIGroupMember> util_cli = 
-        util_cli_group.AddCLI("util",
+        util_cli_group.AddCLI("tip util",
         MetaCLIHelpStrings::util_help, "cliutil");
 
     // Positional arg, required

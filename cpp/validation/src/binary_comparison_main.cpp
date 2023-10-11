@@ -105,8 +105,8 @@ bool ConfigureCLI(CLIGroup& cli_group, bool& help_requested, std::string& truth_
 {
     std::string exe_name = "bincompare";
     std::string description = "Compare a test file against a truth file, byte by byte. Print "
-        "\"PASS\" (0) to stdout if equivalent, or \"FAIL\" (1) if not equivalent and return the "
-        "value shown in parentheses. A NULL result will return a number greater than 1.";
+        "\"PASS\" (exit code 0) to stdout if equivalent, \"FAIL\" (exit code 1) "
+        "if not equivalent, or NULL (exit code >1) if the comparison can't be made.";
     std::shared_ptr<CLIGroupMember> cli_help = cli_group.AddCLI(exe_name, 
     description, "clihelp");
     cli_help->AddOption("--help", "-h", "Show usage information", false, 
@@ -116,10 +116,10 @@ bool ConfigureCLI(CLIGroup& cli_group, bool& help_requested, std::string& truth_
         description, "clifull");
 
     std::string truth_path_help = "Full path to TRUTH file";
-    cli_full->AddOption("truth_path", truth_path_help, truth_path_str, true);
+    cli_full->AddOption("truth_file_path", truth_path_help, truth_path_str, true);
 
     std::string test_path_help = "Full path to TEST file";
-    cli_full->AddOption("test_path", test_path_help, test_path_str, true);
+    cli_full->AddOption("test_file_path", test_path_help, test_path_str, true);
 
     if(!cli_group.CheckConfiguration())
         return false;

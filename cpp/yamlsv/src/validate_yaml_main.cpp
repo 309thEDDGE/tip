@@ -94,12 +94,12 @@ bool ConfigureValidateYamlCLI(CLIGroup& cli_group, bool& help_requested, std::st
 {
     std::string exe_name = "validate_yaml";
     std::string description = "Validate an input yaml file given in YAML_PATH with "
-        "a yaml schema given in SCHEMA_PATH. For schema examples, see \"tip_translate_1553 --dts_help\" or "
-        "\"tip_translate_arinc429 --dts_help\". The text printed to stdout contains yaml schema matter "
+        "a yaml schema given in SCHEMA_PATH. For schema examples, see \"tip translate 1553 --dts_help\" or "
+        "\"tip translate arinc429 --dts_help\". The text printed to stdout contains yaml schema matter "
         "and an explanation of the fields in the corresponding 1553 or ARINC429 ICD configuration "
         "documents, respectively, which are to be validated by the aforementioned schema.\n\nPrint "
-        "\"PASS\" (0) to stdout if YAML_PATH is valid according to SCHEMA_PATH, or \"FAIL\" (1) "
-        "if invalid and return the value shown in parentheses. A NULL result returns a number greater than 1.";
+        "\"PASS\" (exit code 0) to stdout if YAML_PATH is valid according to SCHEMA_PATH, \"FAIL\" (exit code 1) "
+        "if invalid, or \"NULL\" (exit code >1) if validation could not be completed.";
     std::shared_ptr<CLIGroupMember> cli_help = cli_group.AddCLI(exe_name, 
     description, "clihelp");
     cli_help->AddOption("--help", "-h", "Show usage information", false, help_requested, true);
