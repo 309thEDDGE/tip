@@ -1,5 +1,6 @@
 set(headers
-    include/comparator.h parquet_comparison_main.h
+    include/comparator.h
+    include/parquet_comparison_main.h
 )
 
 add_library(parquet_compare
