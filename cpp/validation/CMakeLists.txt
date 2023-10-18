@@ -1,9 +1,11 @@
 set(headers
     include/comparator.h
+    include/parquet_comparison_main.h
 )
 
 add_library(parquet_compare
     src/comparator.cpp
+    src/parquet_comparison_main.cpp
 )
 
 target_compile_features(parquet_compare PUBLIC cxx_std_17)
@@ -17,27 +19,22 @@ set_target_properties(parquet_compare
 )
 
 target_link_libraries(parquet_compare
-    PRIVATE common spdlog::spdlog yaml-cpp tiputil ch10_parquet
+    PRIVATE common spdlog::spdlog yaml-cpp tiputil ch10_parquet cli
 )
 
-add_executable(pqcompare main/parquet_arrow_validator_main.cpp)
-
-target_link_libraries(pqcompare parquet_compare
-    common spdlog::spdlog yaml-cpp tiputil cli ch10_parquet
+set(bincomp_headers
+    include/binary_comparison_main.h
 )
-target_compile_features(pqcompare PUBLIC cxx_std_17)
-
-add_executable(bincompare main/binary_comparison.cpp)
-
-target_link_libraries(bincompare common spdlog::spdlog yaml-cpp tiputil cli)
-
-target_compile_features(bincompare PUBLIC cxx_std_17)
-
-install(
-    TARGETS pqcompare bincompare
-    DESTINATION ${out_bin_dir}
+add_library(bin_compare src/binary_comparison_main.cpp)
+target_compile_features(bin_compare PUBLIC cxx_std_17)
+target_include_directories(bin_compare PUBLIC include)
+set_target_properties(bin_compare
+    PROPERTIES PUBLIC_HEADER "${bincomp_headers}"
+)
+target_link_libraries(bin_compare
+    PRIVATE common spdlog::spdlog yaml-cpp tiputil cli
 )
 
 if(BUILD_SHARED_LIBS)
-    install(TARGETS parquet_compare)
+    install(TARGETS bin_compare parquet_compare)
 endif()

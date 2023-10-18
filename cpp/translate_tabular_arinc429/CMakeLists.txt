@@ -29,20 +29,6 @@ target_link_libraries(translate_tabular_arinc429
   translate_tabular metadata ch10_parquet
 )
 
-add_executable("${TRANSLATE_429_EXE_NAME}" main/translate_tabular_arinc429.cpp)
-
-target_link_libraries("${TRANSLATE_429_EXE_NAME}" translate_tabular_arinc429
-    common yaml-cpp spdlog::spdlog tiputil yamlsv cli dts_429 
-    translate_tabular metadata ch10_parquet
-)
-
-target_compile_features("${TRANSLATE_429_EXE_NAME}" PUBLIC cxx_std_17)
-
-install(
-    TARGETS "${TRANSLATE_429_EXE_NAME}"
-    DESTINATION ${out_bin_dir}
-)
-
 if(BUILD_SHARED_LIBS)
     install(TARGETS translate_tabular_arinc429)
 endif()

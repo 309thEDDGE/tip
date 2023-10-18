@@ -77,9 +77,9 @@ message(STATUS "Git version string: " "${GIT_VERSION_STRING}")
 #                      Build vars
 #########################################################
 
-set(CH10_PARSE_EXE_NAME "tip_parse")
-set(TRANSLATE_1553_EXE_NAME "tip_translate_1553")
-set(TRANSLATE_429_EXE_NAME "tip_translate_arinc429")
+set(CH10_PARSE_EXE_NAME "tip parse")
+set(TRANSLATE_1553_EXE_NAME "tip translate 1553")
+set(TRANSLATE_429_EXE_NAME "tip translate arinc429")
 
 set(include_dir_name "include")
 set(source_dir_name "src")
@@ -91,7 +91,7 @@ file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${bin_dir_name}" out_bin_dir)
 if(NOT "${USER_INSTALL_DIR}" STREQUAL OFF)
     set(out_bin_dir "${USER_INSTALL_DIR}")
 endif()
-if((NOT "${USER_INSTALL_DIR}" STREQUAL OFF) OR (NOT "${USE_DEPS_DIR}" STREQUAL OFF))
+if((NOT "${USER_INSTALL_DIR}" STREQUAL OFF) OR ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows"))
     message(STATUS "Install dir:  ${out_bin_dir}")
     if(NOT EXISTS ${out_bin_dir})
         file(MAKE_DIRECTORY ${out_bin_dir})

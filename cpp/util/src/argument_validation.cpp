@@ -55,7 +55,7 @@ bool ArgumentValidation::TestOptionalArgCount(int argc,
         curr_req_arg = it->first;
     }        
 
-    SPDLOG_WARN("Argument count-1 (%d) greater than max: %d",
+    SPDLOG_WARN("Argument count-1 ({:d}) greater than max: {:d}",
         actual_argc, curr_req_arg);
     return false;
 }
@@ -291,4 +291,21 @@ bool ArgumentValidation::CheckExtension(const std::string& input_path, std::vect
         input_path.c_str(), ext_list.c_str());
 
     return false;
+}
+
+void ArgumentValidation::ArgSelectFrom(int select_from, int& argc,
+    char*** argv)
+{
+    if (select_from < argc)
+    {
+        argv[0] += select_from;
+        argc -= select_from;
+    }
+}
+
+void ArgumentValidation::ArgSelectTo(int select_to, int& argc,
+    char*** argv)
+{
+    if (select_to < argc + 1)
+        argc = select_to;
 }

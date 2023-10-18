@@ -130,3 +130,29 @@ TEST_F(CLIPositionalArgTest, ParseAllowSpecialCharacters)
     EXPECT_TRUE(cli.IsValid());
     EXPECT_EQ(user_str_, output);
 }
+
+TEST_F(CLIPositionalArgTest, ValidatePermittedValuesAreStringNotPermitted)
+{
+    std::string output = "";
+    temp_label_ = "choice";  
+    std::shared_ptr<CLIArg> cli = CLIPositionalArg<std::string>::Make(temp_label_, 
+        temp_help_str_, output);
+    std::string user_input = "some_pos_arg";
+    std::set<std::string> permitted{"AA", "BB", "Apple"};
+    cli->ValidatePermittedValuesAre(permitted);
+    ASSERT_FALSE(cli->Parse(user_input));
+    ASSERT_FALSE(cli->IsValid());
+}
+
+TEST_F(CLIPositionalArgTest, ValidatePermittedValuesAreStringPermitted)
+{
+    std::string output = "";
+    temp_label_ = "choice";  
+    std::shared_ptr<CLIArg> cli = CLIPositionalArg<std::string>::Make(temp_label_, 
+        temp_help_str_, output);
+    std::string user_input = "AA";
+    std::set<std::string> permitted{"AA", "BB", "Apple"};
+    cli->ValidatePermittedValuesAre(permitted);
+    ASSERT_TRUE(cli->Parse(user_input));
+    ASSERT_TRUE(cli->IsValid());
+}

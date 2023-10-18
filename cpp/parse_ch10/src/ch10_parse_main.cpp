@@ -21,6 +21,8 @@ int Ch10ParseMain(int argc, char** argv)
     int retcode = 0;
     if ((retcode = cli_group.Parse(argc, argv, nickname, cli)) != 0)
     {
+        if (argc == 1)
+            printf("%s", cli_group.MakeHelpString().c_str());
         return retcode;
     }
 
@@ -30,11 +32,11 @@ int Ch10ParseMain(int argc, char** argv)
         return EX_OK;
     }
 
-    if (show_version && nickname == "cliversion")
-    {
-        printf(CH10_PARSE_EXE_NAME " version %s\n", GetVersionString().c_str());
-        return EX_OK;
-    }
+    // if (show_version && nickname == "cliversion")
+    // {
+    //     printf(CH10_PARSE_EXE_NAME " version %s\n", GetVersionString().c_str());
+    //     return EX_OK;
+    // }
     config.MakeCh10PacketEnabledMap();
 
     ManagedPath input_path;

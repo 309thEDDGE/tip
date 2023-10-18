@@ -39,20 +39,6 @@ target_link_libraries(parsech10_lib
     spdlog::spdlog metadata cli parquet_context ch10_parquet ch10ethernet
 )
 
-add_executable("${CH10_PARSE_EXE_NAME}" main/ch10parse.cpp)
-
-target_compile_features("${CH10_PARSE_EXE_NAME}" PUBLIC cxx_std_17)
-
-target_link_libraries("${CH10_PARSE_EXE_NAME}" PUBLIC parsech10_lib
-    common spdlog::spdlog yaml-cpp tiputil ch10comp yamlsv 
-    spdlog::spdlog metadata cli parquet_context ch10_parquet ch10ethernet
-)
-
-install(
-    TARGETS "${CH10_PARSE_EXE_NAME}"
-    DESTINATION ${out_bin_dir}
-)
-
 if(BUILD_SHARED_LIBS)
     install(TARGETS parsech10_lib)
 endif()

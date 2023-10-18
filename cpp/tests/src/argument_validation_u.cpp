@@ -438,3 +438,94 @@ TEST_F(ArgumentValidationTest, TestOptionalArgCount)
     };
     ASSERT_TRUE(av_.TestOptionalArgCount(arg_count, req_args));
 }
+
+TEST_F(ArgumentValidationTest, ArgSelectFromZeroArgs)
+{
+    const int arg_count = 0;
+    int argc = arg_count;
+    char** arg_vec;
+    char** argv = arg_vec;
+    av_.ArgSelectFrom(2, argc, &argv);
+    ASSERT_EQ(arg_count, argc);
+    ASSERT_EQ(arg_vec, argv);
+}
+
+TEST_F(ArgumentValidationTest, ArgSelectFromLast)
+{
+    const int arg_count = 3;
+    int argc = arg_count;
+    char a1[] = "one";
+    char a2[] = "two";
+    char a3[] = "three";
+    char* arg_vec[arg_count] = {a1, a2, a3};
+    char** argv = arg_vec;
+    char** expected = argv+2;
+    av_.ArgSelectFrom(2, argc, &argv);
+    ASSERT_EQ(1, argc);
+    ASSERT_EQ(expected, argv);
+    ASSERT_EQ(a3, argv[0]);
+}
+
+TEST_F(ArgumentValidationTest, ArgSelectFrom)
+{
+    const int arg_count = 4;
+    int argc = arg_count;
+    char a1[] = "one";
+    char a2[] = "two";
+    char a3[] = "three";
+    char a4[] = "four";
+    char* arg_vec[arg_count] = {a1, a2, a3, a4};
+    char** argv = arg_vec;
+    char** expected = argv+1;
+    av_.ArgSelectFrom(1, argc, &argv);
+    ASSERT_EQ(3, argc);
+    ASSERT_EQ(expected, argv);
+    ASSERT_EQ(a2, argv[0]);
+    ASSERT_EQ(a3, argv[1]);
+    ASSERT_EQ(a4, argv[2]);
+}
+
+TEST_F(ArgumentValidationTest, ArgSelectToZeroArgs)
+{
+    const int arg_count = 0;
+    int argc = arg_count;
+    char** arg_vec;
+    char** argv = arg_vec;
+    av_.ArgSelectTo(2, argc, &argv);
+    ASSERT_EQ(arg_count, argc);
+    ASSERT_EQ(arg_vec, argv);
+}
+
+TEST_F(ArgumentValidationTest, ArgSelectToLast)
+{
+    const int arg_count = 3;
+    int argc = arg_count;
+    char a1[] = "one";
+    char a2[] = "two";
+    char a3[] = "three";
+    char* arg_vec[arg_count] = {a1, a2, a3};
+    char** argv = arg_vec;
+    char** expected = argv;
+    av_.ArgSelectTo(2, argc, &argv);
+    ASSERT_EQ(2, argc);
+    ASSERT_EQ(expected, argv);
+    ASSERT_EQ(a1, argv[0]);
+    ASSERT_EQ(a2, argv[1]);
+}
+
+TEST_F(ArgumentValidationTest, ArgSelectTo)
+{
+    const int arg_count = 4;
+    int argc = arg_count;
+    char a1[] = "one";
+    char a2[] = "two";
+    char a3[] = "three";
+    char a4[] = "four";
+    char* arg_vec[arg_count] = {a1, a2, a3, a4};
+    char** argv = arg_vec;
+    char** expected = argv;
+    av_.ArgSelectTo(1, argc, &argv);
+    ASSERT_EQ(1, argc);
+    ASSERT_EQ(expected, argv);
+    ASSERT_EQ(a1, argv[0]);
+}

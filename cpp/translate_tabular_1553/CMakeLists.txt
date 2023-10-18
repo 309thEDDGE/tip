@@ -26,20 +26,6 @@ target_link_libraries(translate_tabular_1553 PRIVATE
     translate_tabular metadata ch10_parquet
 )
 
-add_executable("${TRANSLATE_1553_EXE_NAME}" main/translate_tabular_1553.cpp)
-
-target_link_libraries("${TRANSLATE_1553_EXE_NAME}" translate_tabular_1553
-    common yaml-cpp spdlog::spdlog tiputil yamlsv cli dts_1553
-    translate_tabular metadata ch10_parquet
-)
-
-target_compile_features("${TRANSLATE_1553_EXE_NAME}" PUBLIC cxx_std_17)
-
-install(
-    TARGETS "${TRANSLATE_1553_EXE_NAME}"
-    DESTINATION ${out_bin_dir}
-)
-
 if(BUILD_SHARED_LIBS)
     install(TARGETS translate_tabular_1553)
 endif()
