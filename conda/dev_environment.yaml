@@ -1,4 +1,4 @@
-name: tip-build
+name: tip-dev
 channels:
  - conda-forge
 dependencies:

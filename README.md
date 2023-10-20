@@ -200,11 +200,9 @@ In order to build with the proper tool chain and reference the correct runtime, 
 
 Create the environment
 ```shell
-conda env create -f dev_environment_pinned.yaml
-# conda env update -f dev_environment_pinned.yaml
+conda env create -f dev_environment.yaml
+# conda env update -f dev_environment.yaml
 ```
-
-Alternately, use the non-pinned `dev_environment.yaml`, which may take up to an _hour_ to solve! 
 
 Activate the development environment. Sometimes depending on how conda
 is installed it must be activated via `source activate ...`.
@@ -220,17 +218,24 @@ Create a build directory and configure, then build the project
 ```shell
 mkdir build
 cd build
+```
 
-# linux build
+### Configure
+```shell
+# Linux build
 cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX 
-cmake --build . --target install
-
+```
+```shell
 # windows build (Command Prompt)
 cmake .. -GNinja -DCONDA_PREFIX=%CONDA_PREFIX% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX%
-cmake --build . --target install
-
+```
+```shell
 # windows build (Powershell)
 cmake .. -GNinja -DCONDA_PREFIX="$Env:CONDA_PREFIX" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$Env:CONDA_PREFIX"
+```
+
+### Build
+```shell
 cmake --build . --target install
 ```
 
