@@ -200,11 +200,9 @@ In order to build with the proper tool chain and reference the correct runtime, 
 
 Create the environment
 ```shell
-conda env create -f dev_environment_pinned.yaml
-# conda env update -f dev_environment_pinned.yaml
+conda env create -f dev_environment.yaml
+# conda env update -f dev_environment.yaml
 ```
-
-Alternately, use the non-pinned `dev_environment.yaml`, which may take up to an _hour_ to solve! 
 
 Activate the development environment. Sometimes depending on how conda
 is installed it must be activated via `source activate ...`.
@@ -220,17 +218,24 @@ Create a build directory and configure, then build the project
 ```shell
 mkdir build
 cd build
+```
 
-# linux build
+### Configure
+```shell
+# Linux build
 cmake .. -GNinja -DCONDA_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX 
-cmake --build . --target install
-
+```
+```shell
 # windows build (Command Prompt)
 cmake .. -GNinja -DCONDA_PREFIX=%CONDA_PREFIX% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX%
-cmake --build . --target install
-
+```
+```shell
 # windows build (Powershell)
 cmake .. -GNinja -DCONDA_PREFIX="$Env:CONDA_PREFIX" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$Env:CONDA_PREFIX"
+```
+
+### Build
+```shell
 cmake --build . --target install
 ```
 
@@ -385,5 +390,5 @@ If the `conda-forge` build step fails with the message
 
 > .. but ['ucrt'] not in reqs/run, (i.e. it is overlinking) (likely) or a missing dependency (less likely)
 
-the cause is likely due to a configuration red herring in the `meta.yaml` `requirements.build/host/run` sections. `tip-feedstock` pipelines pull a configuration yaml from another `conda-forge` repo which de-conflicts the aforementioned error. This file is located at `github.com/conda-forge/conda-forge-pinning-feedstock/recipe/conda_build_config.yaml`. If this is the only error, try disabling error on overlinking by using the `--no-error-overlinking` instead of `--error-overlinking`. Then if the build succeeds, try pushing to `tip-feedstock` to see if the pipelines succeed. Pipelines are the source of truth for a successful build. 
+the cause is likely due to a configuration red herring in the `meta.yaml` `requirements.build/host/run` sections. `tip-feedstock` pipelines pull a configuration yaml from another `conda-forge` repo which de-conflicts the aforementioned error. This file is located at `github.com/conda-forge/conda-forge-pinning-feedstock/recipe/conda_build_config.yaml`. If this is the only error, try disabling error on overlinking by using the `--no-error-overlinking` instead of `--error-overlinking`. The same may be true for `--error-overdepending`, in which case use `--no-error-overdepending`. Then if the build succeeds, try pushing to `tip-feedstock` to see if the pipelines succeed. Pipelines are the source of truth for a successful build. 
 

@@ -109,7 +109,7 @@ TEST_F(TranslateTabularContextBaseTest, CreateTranslatableTableVectorFilled)
     row_group_size_ = 1000;
     table_ind_ = 21;
     ManagedPath output_path;
-    output_path /= "data";
+    output_path /= "temp_dir_name_for_testing";
     output_path /= "file.txt";
     ASSERT_TRUE(output_path.parent_path().create_directory());
     result_ = context_.CreateTranslatableTable(table_name_, row_group_size_,
