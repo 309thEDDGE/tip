@@ -1,10 +1,4 @@
 #include "meta_main.h"
-#include "translate_tabular_1553_main.h"
-#include "translate_tabular_arinc429_main.h"
-#include "binary_comparison_main.h"
-#include "parquet_comparison_main.h"
-#include "parquet_video_extraction_main.h"
-#include "validate_yaml_main.h"
 
 int MetaMain(int argc, char** argv)
 {
