@@ -34,9 +34,10 @@ set_target_properties(parsech10_lib
     PROPERTIES PUBLIC_HEADER "${headers}"
 )
 
+# spdlog::spdlog metadata 
 target_link_libraries(parsech10_lib
     PRIVATE common spdlog::spdlog yaml-cpp tiputil ch10comp yamlsv 
-    spdlog::spdlog metadata cli parquet_context ch10_parquet ch10ethernet
+    metadata cli parquet_context ch10_parquet ch10ethernet
 )
 
 if(BUILD_SHARED_LIBS)

@@ -443,7 +443,7 @@ TEST_F(ArgumentValidationTest, ArgSelectFromZeroArgs)
 {
     const int arg_count = 0;
     int argc = arg_count;
-    char** arg_vec;
+    char** arg_vec = nullptr;
     char** argv = arg_vec;
     av_.ArgSelectFrom(2, argc, &argv);
     ASSERT_EQ(arg_count, argc);
@@ -489,7 +489,7 @@ TEST_F(ArgumentValidationTest, ArgSelectToZeroArgs)
 {
     const int arg_count = 0;
     int argc = arg_count;
-    char** arg_vec;
+    char** arg_vec = nullptr;
     char** argv = arg_vec;
     av_.ArgSelectTo(2, argc, &argv);
     ASSERT_EQ(arg_count, argc);
