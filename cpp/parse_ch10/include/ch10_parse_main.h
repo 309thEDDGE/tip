@@ -23,11 +23,13 @@ int Ch10ParseMain(int argc, char** argv);
 
 int ValidatePaths(const std::string& str_input_path, const std::string& str_output_path,
                    const std::string& str_log_dir, ManagedPath& input_path, 
-                   ManagedPath& output_path, ManagedPath& log_dir, const ArgumentValidation* av);
+                   ManagedPath& output_path, ManagedPath& log_dir, 
+                   const ArgumentValidation* av);
 
 int StartParse(ManagedPath input_path, ManagedPath output_path,
                 const ParserConfigParams& config, double& duration);
 
-int SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level);  // GCOVR_EXCL_LINE
+int SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level,
+    spdlog::level::level_enum file_level);  // GCOVR_EXCL_LINE
 
 #endif  // CH10_PARSE_MAIN_H_

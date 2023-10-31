@@ -63,6 +63,8 @@ inline bool ConfigureParserCLI(CLIGroup& cli_group, ParserConfigParams& config,
         "critical", "off"};
     cli->AddOption<std::string>("--stdout_log_level", "-L", stdout_log_level_help, "info", 
         config.stdout_log_level_)->ValidatePermittedValuesAre(permitted_log_levels);
+    cli->AddOption<std::string>("--file_log_level", "-F", file_log_level_help, "info", 
+        config.file_log_level_)->ValidatePermittedValuesAre(permitted_log_levels);
 
     // Flags
     cli->AddOption("--disable_1553f1", "", disable_1553f1_help, false, config.disable_1553f1_);
