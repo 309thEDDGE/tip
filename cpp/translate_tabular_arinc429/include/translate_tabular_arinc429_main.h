@@ -51,7 +51,9 @@ namespace transtab429
                     ManagedPath& input_path, ManagedPath& icd_path,
                     ManagedPath& output_dir, ManagedPath& log_dir, ArgumentValidation* av);
 
-    bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_log_level);
+    bool SetupLogging(const ManagedPath& log_dir, 
+        spdlog::level::level_enum stdout_log_level,
+        spdlog::level::level_enum file_log_level);
 
     bool IngestICD(DTS429* dts429, Organize429ICD* org429, ARINC429Data& data429,
                     const std::vector<std::string>& icd_lines, size_t& arinc_message_count,

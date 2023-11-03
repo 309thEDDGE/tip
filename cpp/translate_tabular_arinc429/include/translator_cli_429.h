@@ -77,6 +77,10 @@ inline bool ConfigureTranslatorCLI429(CLIGroup& cli_group, TranslationConfigPara
     cli->AddOption<std::string>("--log_level", "-L", 
         TranslateARINC429CLIHelpStrings::stdout_log_level_help, "info", 
         config.stdout_log_level_)->ValidatePermittedValuesAre(permitted_log_levels)->SetSimpleHelpFormat();
+    cli->AddOption<std::string>("--file_log_level", "-F", 
+        TranslateARINC429CLIHelpStrings::file_log_level_help, "info", 
+        config.file_log_level_)->ValidatePermittedValuesAre(permitted_log_levels)->SetSimpleHelpFormat();
+
 
     cli->AddOption("--disable_sys_limits", "", 
         TranslateARINC429CLIHelpStrings::auto_sys_limits_help, true, 

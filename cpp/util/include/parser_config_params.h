@@ -28,10 +28,11 @@ class ParserConfigParams
     int worker_offset_wait_ms_;
     int worker_shift_wait_ms_;
     std::string stdout_log_level_;
+    std::string file_log_level_;
 
     ParserConfigParams() : parse_chunk_bytes_(0), parse_thread_count_(0), 
         max_chunk_read_count_(0), worker_offset_wait_ms_(0), worker_shift_wait_ms_(0),
-        stdout_log_level_(""), 
+        stdout_log_level_(""), file_log_level_(""),
         input_path_str_(""), output_path_str_(""), log_path_str_(""), disable_1553f1_(false),
         disable_videof0_(false), disable_eth0_(false), disable_arinc0_(false)
     {}
@@ -52,7 +53,8 @@ class ParserConfigParams
             (this->max_chunk_read_count_ == rhs.max_chunk_read_count_) &&
             (this->worker_offset_wait_ms_ == rhs.worker_offset_wait_ms_) &&
             (this->worker_shift_wait_ms_ == rhs.worker_shift_wait_ms_) &&
-            (this->stdout_log_level_ == rhs.stdout_log_level_));
+            (this->stdout_log_level_ == rhs.stdout_log_level_) &&
+            (this->file_log_level_ == rhs.file_log_level_));
     }
 
     /*

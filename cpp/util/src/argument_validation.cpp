@@ -246,7 +246,7 @@ bool ArgumentValidation::ValidateDirectoryPath(std::string dir,
     if (!temp_dir.is_directory())
     {
         printf(
-            "ValidateDirectoryPath: Directory dir (%s) does not exist"
+            "ValidateDirectoryPath: Directory (%s) does not exist"
             " or is not a directory\n",
             temp_dir.RawString().c_str());
         return false;

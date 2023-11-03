@@ -46,7 +46,9 @@ namespace transtab1553
                     ManagedPath& input_path, ManagedPath& icd_path, ManagedPath& output_dir, 
                     ManagedPath& log_dir, ArgumentValidation* av);
 
-    bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level);
+    bool SetupLogging(const ManagedPath& log_dir, 
+        spdlog::level::level_enum stdout_level,
+        spdlog::level::level_enum file_level);
 
     int IngestICD(DTS1553* dts1553, const ManagedPath& dts_path,
                 std::map<std::string, std::string>& msg_name_substitutions,

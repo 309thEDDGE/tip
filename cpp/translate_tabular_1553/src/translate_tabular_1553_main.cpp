@@ -38,12 +38,6 @@ int TranslateTabular1553Main(int argc, char** argv)
         return EX_OK;
     }
 
-    // if (show_version && nickname == "cliversion")
-    // {
-    //     printf(TRANSLATE_1553_EXE_NAME " version %s\n", GetVersionString().c_str());
-    //     return EX_OK;
-    // }
-
     if(show_dts_info && nickname == "clidts")
     {
         // size_t term_width = cli_group.GetTerminalWidth();
@@ -83,8 +77,9 @@ int TranslateTabular1553Main(int argc, char** argv)
     // still in text format.
     // else
         // return EX_DATAERR;
-
-    if (!transtab1553::SetupLogging(log_dir, spdlog::level::from_str(config.stdout_log_level_)))
+    spdlog::level::level_enum stdout_level = spdlog::level::from_str(config.stdout_log_level_);
+    spdlog::level::level_enum file_level = spdlog::level::from_str(config.file_log_level_);
+    if (!transtab1553::SetupLogging(log_dir, stdout_level, file_level))
         return EX_SOFTWARE;
 
     TIPMDDocument parser_md_doc;
@@ -211,7 +206,9 @@ namespace transtab1553
         return EX_OK;
     }
 
-    bool SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_level)  // GCOVR_EXCL_LINE
+    bool SetupLogging(const ManagedPath& log_dir, // GCOVR_EXCL_LINE
+        spdlog::level::level_enum stdout_level, // GCOVR_EXCL_LINE
+        spdlog::level::level_enum file_level)  // GCOVR_EXCL_LINE
     {
         // Use the chart on this page for logging level reference:
         // https://www.tutorialspoint.com/log4j/log4j_logging_levels.htm
@@ -231,10 +228,11 @@ namespace transtab1553
             console_sink->set_pattern("%^[%T %L] %v%$");  // GCOVR_EXCL_LINE
 
             // file sink
-            ManagedPath trans_log_path = log_dir / (TRANSLATE_1553_EXE_NAME ".log");  // GCOVR_EXCL_LINE
+            ManagedPath trans_log_path = // GCOVR_EXCL_LINE
+                log_dir / (TRANSLATE_1553_LOGNAME ".log");  // GCOVR_EXCL_LINE
             auto trans_log_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(trans_log_path.string(),  // GCOVR_EXCL_LINE
                                                                                         max_size, max_files);  // GCOVR_EXCL_LINE
-            trans_log_sink->set_level(spdlog::level::trace);  // GCOVR_EXCL_LINE
+            trans_log_sink->set_level(file_level);  // GCOVR_EXCL_LINE
             trans_log_sink->set_pattern("[%D %T %L] [%@] %v");  // GCOVR_EXCL_LINE
 
             // List of sinks for translator

@@ -81,6 +81,11 @@ set(CH10_PARSE_EXE_NAME "tip parse")
 set(TRANSLATE_1553_EXE_NAME "tip translate 1553")
 set(TRANSLATE_429_EXE_NAME "tip translate arinc429")
 
+set(CH10_PARSE_LOGNAME "tip_parse")
+set(TRANSLATE_1553_LOGNAME "tip_translate_1553")
+set(TRANSLATE_429_LOGNAME "tip_translate_arinc429")
+
+
 set(include_dir_name "include")
 set(source_dir_name "src")
 set(main_dir_name "main")
