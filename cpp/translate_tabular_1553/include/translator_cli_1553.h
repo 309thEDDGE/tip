@@ -98,6 +98,10 @@ inline bool ConfigureTranslatorCLI(CLIGroup& cli_group, TranslationConfigParams&
     cli->AddOption<std::string>("--log_level", "-L", 
         Translate1553CLIHelpStrings::stdout_log_level_help, "info", 
         config.stdout_log_level_)->ValidatePermittedValuesAre(permitted_log_levels);
+    cli->AddOption<std::string>("--file_log_level", "-F", 
+        Translate1553CLIHelpStrings::file_log_level_help, "info", config.file_log_level_)
+        ->ValidatePermittedValuesAre(permitted_log_levels);
+
 
     // Flags
     cli->AddOption("--tmats", "", 
