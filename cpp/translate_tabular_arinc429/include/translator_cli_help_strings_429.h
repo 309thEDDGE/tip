@@ -41,7 +41,23 @@ namespace TranslateARINC429CLIHelpStrings
         account for stdin, stdout and stderr (+3).)"; 
 
     const std::string stdout_log_level_help = 
-        R"(Set log level of sink to minimum log level. All log entries
+        R"(Set log level of stdout to minimum log level. All log entries
+    with level value greater or equal to minimum level value will
+    be printed to stdout. 
+
+    Log level and value:
+    - trace     = 0
+    - debug     = 1
+    - info      = 2
+    - warn      = 3
+    - error     = 4
+    - critical  = 5
+    - off       = 6
+
+    Accept values in the set {trace, debug, info, warn, error, critical, off}.)";
+
+    const std::string file_log_level_help = 
+        R"(Set log level of file logs to minimum log level. All log entries
     with level value greater or equal to minimum level value will
     be printed to stdout. 
 
