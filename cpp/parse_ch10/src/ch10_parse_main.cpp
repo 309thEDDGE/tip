@@ -32,11 +32,6 @@ int Ch10ParseMain(int argc, char** argv)
         return EX_OK;
     }
 
-    // if (show_version && nickname == "cliversion")
-    // {
-    //     printf(CH10_PARSE_EXE_NAME " version %s\n", GetVersionString().c_str());
-    //     return EX_OK;
-    // }
     config.MakeCh10PacketEnabledMap();
 
     ManagedPath input_path;
@@ -141,7 +136,7 @@ int SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_le
     try
     {
         // Set global logging level
-        spdlog::set_level(spdlog::level::debug);  // GCOVR_EXCL_LINE
+        spdlog::set_level(spdlog::level::trace);  // GCOVR_EXCL_LINE
 
         // Setup async thread pool.
         spdlog::init_thread_pool(8192, 2);  // GCOVR_EXCL_LINE
@@ -174,7 +169,8 @@ int SetupLogging(const ManagedPath& log_dir, spdlog::level::level_enum stdout_le
         // Parser primary threaded file sink.
         max_size = 1024 * 1024 * 10;  // GCOVR_EXCL_LINE
         max_files = 20;  // GCOVR_EXCL_LINE
-        ManagedPath parser_log_path = log_dir / std::string("parser.log");  // GCOVR_EXCL_LINE
+        ManagedPath parser_log_path = log_dir / // GCOVR_EXCL_LINE
+            std::string(CH10_PARSE_LOGNAME ".log");  // GCOVR_EXCL_LINE
         auto parser_log_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(parser_log_path.string(),  // GCOVR_EXCL_LINE
                                                                                       max_size, max_files);  // GCOVR_EXCL_LINE
         parser_log_sink->set_level(file_level);  // GCOVR_EXCL_LINE
