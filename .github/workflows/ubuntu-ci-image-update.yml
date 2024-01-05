@@ -20,7 +20,7 @@ jobs:
         id: changed-files
         uses: tj-actions/changed-files@v41
         with: 
-          match_directories: "false"
+          dir_names: "false"
 
       - name: match changed files
         id: match-changed-files
