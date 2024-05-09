@@ -75,17 +75,17 @@ jobs:
           META_FNAME: ./tip-feedstock/recipe/meta.yaml
         run: |
           python -c '\
-            import ruamel.yaml; \
-            import pathlib; \
-            fp = pathlib.Path("${{ env.META_FNAME }}"); \
-            yaml = ruamel.yaml.YAML(typ="jinja2"); \
-            yaml.preserve_quotes = True; \
-            data = list(yaml.load_all(fp)); \
-            del data[0]["source"]["url"]; \
-            del data[0]["source"]["sha256"]; \
-            data[0]["source"]["path"] = "../../"; \
-            yaml.dump_all(data, fp); \
-            '
+          import ruamel.yaml; \
+          import pathlib; \
+          fp = pathlib.Path("${{ env.META_FNAME }}"); \
+          yaml = ruamel.yaml.YAML(typ="jinja2"); \
+          yaml.preserve_quotes = True; \
+          data = list(yaml.load_all(fp)); \
+          del data[0]["source"]["url"]; \
+          del data[0]["source"]["sha256"]; \
+          data[0]["source"]["path"] = "../../"; \
+          yaml.dump_all(data, fp); \
+          '
 
       - name: cat meta.yaml
         run: |
