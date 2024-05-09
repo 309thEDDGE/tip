@@ -3,10 +3,10 @@ name: tip-conda-build
 channels:
  - conda-forge
 dependencies:
- - conda-build ==3.23.2
- - conda-verify ==3.1.1
- - python ==3.9.15
- - pip ==22.3.1
+ - conda-build
+ - conda-verify
+ - python
+ - pip
  - pip:
    - ruamel.yaml
    - ruamel.yaml.jinja2
