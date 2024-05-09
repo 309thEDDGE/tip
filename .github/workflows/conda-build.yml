@@ -58,7 +58,8 @@ jobs:
           activate-environment: ${{ env.ENV_NAME }}
           environment-file: conda/ci_environment_pinned.yaml
           auto-activate-base: false
-          python-version: 3.9
+          # Ensure that python version matches that in ci_environment_pinned.yaml
+          python-version: 3.11.9
 
       - name: Conda info debug
         shell: bash -l {0}
