@@ -8,6 +8,7 @@ dependencies:
  - ninja
  - pkgconfig
  - libpcap
+ - libparquet
  - libarrow
  - spdlog
  - yaml-cpp
