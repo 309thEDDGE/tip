@@ -184,10 +184,26 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 #ifdef NEWARROW
         std::shared_ptr<parquet::ArrowWriterProperties> arrow_props = 
             parquet::ArrowWriterProperties::Builder().store_schema()->build();
+
+        arrow::Result<std::unique_ptr<parquet::arrow::FileWriter>> result = 
+            parquet::arrow::FileWriter::Open(*schema_, pool_,
+            ostream_,
+            props_,
+            arrow_props);
+
+        if (!result.ok())
+        {
+            SPDLOG_CRITICAL("parquet::arrow::FileWriter::Open error (ID {:s}): {:s}",
+                            result.status().CodeAsString(), result.status().message());
+            return false;
+        }
+        else
+            writer_ = std::move(result).ValueOrDie(); 
 #else
          std::shared_ptr<parquet::arrow::ArrowWriterProperties> arrow_props = 
             parquet::arrow::ArrowWriterProperties::Builder().build();
-#endif
+
+        // Deprecated function since libarrow 11.0
         st_ = parquet::arrow::FileWriter::Open(*schema_, pool_,
             ostream_,
             props_,
@@ -200,6 +216,7 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
                             st_.CodeAsString(), st_.message());
             return false;
         }
+#endif
         have_created_writer_ = true;
     }
     return true;

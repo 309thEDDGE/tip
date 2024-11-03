@@ -11,7 +11,7 @@ jobs:
     uses: ./.github/workflows/ubuntu-build.yml
     secrets: inherit 
   build-conda-job:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env: 
       BUILD_DIR: build
       CODE_COV_FNAME: overall-coverage.xml
@@ -53,13 +53,15 @@ jobs:
         run: cp ${{ env.CONFIG_PATH }} ${{ env.COPY_PATH }}
 
       - name: Setup miniconda
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: ${{ env.ENV_NAME }}
           environment-file: conda/ci_environment_pinned.yaml
-          auto-activate-base: false
+          channels: conda-forge,defaults
+          channel-priority: true
+          mamba-version: "*"
           # Ensure that python version matches that in ci_environment_pinned.yaml
-          python-version: 3.11.9
+          python-version: 3.11.10
 
       - name: Conda info debug
         shell: bash -l {0}
