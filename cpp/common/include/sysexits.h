@@ -110,6 +110,5 @@
 #define EX_CONFIG	78	/* configuration error */
 
 #define EX__MAX	78	/* maximum listed value */
-#define TESTTTTTT 99  // force rebuild with tj-actions
 
 #endif /* sysexits.h */
