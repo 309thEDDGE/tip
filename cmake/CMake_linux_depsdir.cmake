@@ -6,6 +6,10 @@ if(${USE_NEWARROW})
 	add_definitions(-DNEWARROW)
 endif()
 
+if(${USE_NEWARROW21})
+	add_definitions(-DNEWARROW21)
+endif()
+
 #########################################################
 #                     Linux-specific
 #########################################################
