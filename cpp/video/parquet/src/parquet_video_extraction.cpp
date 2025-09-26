@@ -12,26 +12,57 @@ bool ParquetVideoExtraction::OpenParquetFile(ManagedPath file_path)
     }
     catch (...)
     {
-        printf("ReadableFile::Open error\n");
+        printf("parquet_video_extraction: ReadableFile::Open error\n");
         return false;
     }
+    st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
+    if (!st_.ok())
+    {
+        printf("parquet_video_extraction: parquet::arrow::OpenFile error (ID %s): %s\n",
+               st_.CodeAsString().c_str(), st_.message().c_str());
+        return false;
+    }
+
+#elif defined NEWARROW21
+	arrow::Result<std::shared_ptr<arrow::io::ReadableFile>> file_open_result = 
+		arrow::io::ReadableFile::Open(file_path.string(), pool_);
+	if (!file_open_result.ok())
+	{
+		printf("parquet_video_extraction: arrow::io::ReadableFile::Open error (ID %s): %s\n",
+               file_open_result.status().CodeAsString().c_str(), 
+			   file_open_result.status().message().c_str());
+        return false;
+	}
+	arrow_file_ = file_open_result.ValueOrDie();
+
+	arrow::Result<std::unique_ptr<parquet::arrow::FileReader>> parquet_open_result = 
+		parquet::arrow::OpenFile(arrow_file_, pool_);
+	if (!parquet_open_result.ok())
+	{
+        printf("parquet_video_extraction: parquet::arrow::OpenFile error (ID %s): %s\n",
+               parquet_open_result.status().CodeAsString().c_str(), 
+			   parquet_open_result.status().message().c_str());
+        return false;
+	}
+	arrow_reader_ = std::move(parquet_open_result).ValueOrDie();
+
 #else
     // Open file reader.
     st_ = arrow::io::ReadableFile::Open(file_path.string(), pool_, &arrow_file_);
     if (!st_.ok())
     {
-        printf("arrow::io::ReadableFile::Open error (ID %s): %s\n",
+        printf("parquet_video_extraction: arrow::io::ReadableFile::Open error (ID %s): %s\n",
+               st_.CodeAsString().c_str(), st_.message().c_str());
+        return false;
+    }
+    st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
+    if (!st_.ok())
+    {
+        printf("parquet_video_extraction: parquet::arrow::OpenFile error (ID %s): %s\n",
                st_.CodeAsString().c_str(), st_.message().c_str());
         return false;
     }
 #endif
-    st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
-    if (!st_.ok())
-    {
-        printf("parquet::arrow::OpenFile error (ID %s): %s\n",
-               st_.CodeAsString().c_str(), st_.message().c_str());
-        return false;
-    }
 
     arrow_reader_->set_use_threads(true);
 
@@ -39,7 +70,7 @@ bool ParquetVideoExtraction::OpenParquetFile(ManagedPath file_path)
     st_ = arrow_reader_->GetSchema(&schema_);
     if (!st_.ok())
     {
-        printf("GetSchema() error (ID %s): %s\n",
+        printf("parquet_video_extraction: GetSchema() error (ID %s): %s\n",
                st_.CodeAsString().c_str(), st_.message().c_str());
         return false;
     }
@@ -53,7 +84,7 @@ bool ParquetVideoExtraction::OpenParquetFile(ManagedPath file_path)
 
     if (temp_index == -1)
     {
-        printf("GetFieldIndex() error: field name %s does not exist\n",
+        printf("parquet_video_extraction: GetFieldIndex() error: field name %s does not exist\n",
                data_col_name.c_str());
         return false;
     }
@@ -65,7 +96,7 @@ bool ParquetVideoExtraction::OpenParquetFile(ManagedPath file_path)
 
     if (temp_index == -1)
     {
-        printf("GetFieldIndex() error: field name %s does not exist\n",
+        printf("parquet_video_extraction: GetFieldIndex() error: field name %s does not exist\n",
                channel_id_col_name.c_str());
         return false;
     }
@@ -89,12 +120,12 @@ bool ParquetVideoExtraction::ExtractFileTS()
 
         if (!st_.ok())
         {
-            printf("arrow::io::ReadableFile::ReadRowGroup error (ID %s): %s\n",
+            printf("parquet_video_extraction: arrow::io::ReadableFile::ReadRowGroup error (ID %s): %s\n",
                    st_.CodeAsString().c_str(), st_.message().c_str());
             return false;
         }
 
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
         arrow::ListArray data_list_arr =
             arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
 #else
@@ -105,7 +136,7 @@ bool ParquetVideoExtraction::ExtractFileTS()
         arrow::NumericArray<arrow::Int32Type> data_arr =
             arrow::NumericArray<arrow::Int32Type>(data_list_arr.values()->data());
 
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
         arrow::NumericArray<arrow::Int32Type> channel_ids =
             arrow::NumericArray<arrow::Int32Type>(arrow_table->column(1)->chunk(0)->data());
 #else

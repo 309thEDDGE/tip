@@ -184,7 +184,7 @@ class ParquetContextTest : public ::testing::Test
 
         if (list)
         {
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
             arrow::ListArray data_list_arr =
                 arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
 #else
@@ -206,7 +206,7 @@ class ParquetContextTest : public ::testing::Test
         }
         else
         {
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
             A data_array =
                 A(arrow_table->column(0)->chunk(0)->data());
 #else
@@ -266,7 +266,7 @@ class ParquetContextTest : public ::testing::Test
 
         if (list)
         {
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
             arrow::ListArray data_list_arr =
                 arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
 #else
@@ -289,7 +289,7 @@ class ParquetContextTest : public ::testing::Test
         }
         else
         {
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
             arrow::BooleanArray data_array =
                 arrow::BooleanArray(arrow_table->column(0)->chunk(0)->data());
 #else
@@ -350,7 +350,7 @@ class ParquetContextTest : public ::testing::Test
 
         if (list)
         {
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
             arrow::ListArray data_list_arr =
                 arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
 #else
@@ -373,7 +373,7 @@ class ParquetContextTest : public ::testing::Test
         }
         else
         {
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
             arrow::StringArray data_array =
                 arrow::StringArray(arrow_table->column(0)->chunk(0)->data());
 #else
@@ -458,32 +458,62 @@ class ParquetContextTest : public ::testing::Test
         }
         catch (...)
         {
-            printf("ReadableFile::Open error\n");
+            printf("parquet_context_u: ReadableFile::Open error\n");
             return false;
         }
 
+        st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
+        if (!st_.ok())
+        {
+            printf("parquet_context_u: parquet::arrow::OpenFile error (ID %s): %s\n",
+                   st_.CodeAsString().c_str(), st_.message().c_str());
+            return false;
+        }
+#elif defined NEWARROW21
+	arrow::Result<std::shared_ptr<arrow::io::ReadableFile>> file_open_result = 
+		arrow::io::ReadableFile::Open(file_path, pool_);
+	if (!file_open_result.ok())
+	{
+		printf("parquet_context_u: arrow::io::ReadableFile::Open error (ID %s): %s\n",
+               file_open_result.status().CodeAsString().c_str(), 
+			   file_open_result.status().message().c_str());
+        return false;
+	}
+	arrow_file_ = file_open_result.ValueOrDie();
+
+	arrow::Result<std::unique_ptr<parquet::arrow::FileReader>> parquet_open_result = 
+		parquet::arrow::OpenFile(arrow_file_, pool_);
+	if (!parquet_open_result.ok())
+	{
+        printf("parquet_context_u: parquet::arrow::OpenFile error (ID %s): %s\n",
+               parquet_open_result.status().CodeAsString().c_str(), 
+			   parquet_open_result.status().message().c_str());
+        return false;
+	}
+	arrow_reader_ = std::move(parquet_open_result).ValueOrDie();
 #else
         st_ = arrow::io::ReadableFile::Open(file_path, pool_, &arrow_file_);
         if (!st_.ok())
         {
-            printf("arrow::io::ReadableFile::Open error (ID %s): %s\n",
+            printf("parquet_context_u: arrow::io::ReadableFile::Open error (ID %s): %s\n",
+                   st_.CodeAsString().c_str(), st_.message().c_str());
+            return false;
+        }
+
+        st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
+        if (!st_.ok())
+        {
+            printf("parquet_context_u: parquet::arrow::OpenFile error (ID %s): %s\n",
                    st_.CodeAsString().c_str(), st_.message().c_str());
             return false;
         }
 #endif
-        st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
-        if (!st_.ok())
-        {
-            printf("parquet::arrow::OpenFile error (ID %s): %s\n",
-                   st_.CodeAsString().c_str(), st_.message().c_str());
-            return false;
-        }
 
         arrow_reader_->set_use_threads(true);
 
         if (!st_.ok())
         {
-            printf("GetSchema() error (ID %s): %s\n",
+            printf("parquet_context_u: GetSchema() error (ID %s): %s\n",
                    st_.CodeAsString().c_str(), st_.message().c_str());
             return false;
         }
@@ -2514,26 +2544,59 @@ class ParquetContextRowCountTrackingTest : public ::testing::Test
         }
         catch (...)
         {
-            printf("ReadableFile::Open error\n");
+            printf("parquet_context_u: ReadableFile::Open error\n");
             return false;
         }
-#else
-        st_ = arrow::io::ReadableFile::Open(pq_file_, pool_, &arrow_file_);
-        if (!st_.ok())
-        {
-            printf("arrow::io::ReadableFile::Open error (ID %s): %s\n",
-                   st_.CodeAsString().c_str(), st_.message().c_str());
-            return false;
-        }
-#endif
+
         st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
         if (!st_.ok())
         {
-            printf("parquet::arrow::OpenFile error (ID %s): %s\n",
+            printf("parquet_context_u: parquet::arrow::OpenFile error (ID %s): %s\n",
                    st_.CodeAsString().c_str(), st_.message().c_str());
             arrow_file_->Close();
             return false;
         }
+
+#elif defined NEWARROW21
+	arrow::Result<std::shared_ptr<arrow::io::ReadableFile>> file_open_result = 
+		arrow::io::ReadableFile::Open(pq_file_, pool_);
+	if (!file_open_result.ok())
+	{
+		printf("parquet_context_u: arrow::io::ReadableFile::Open error (ID %s): %s\n",
+               file_open_result.status().CodeAsString().c_str(), 
+			   file_open_result.status().message().c_str());
+        return false;
+	}
+	arrow_file_ = file_open_result.ValueOrDie();
+
+	arrow::Result<std::unique_ptr<parquet::arrow::FileReader>> parquet_open_result = 
+		parquet::arrow::OpenFile(arrow_file_, pool_);
+	if (!parquet_open_result.ok())
+	{
+        printf("parquet_context_u: parquet::arrow::OpenFile error (ID %s): %s\n",
+               parquet_open_result.status().CodeAsString().c_str(), 
+			   parquet_open_result.status().message().c_str());
+        return false;
+	}
+	arrow_reader_ = std::move(parquet_open_result).ValueOrDie();
+#else
+        st_ = arrow::io::ReadableFile::Open(pq_file_, pool_, &arrow_file_);
+        if (!st_.ok())
+        {
+            printf("parquet_context_u: arrow::io::ReadableFile::Open error (ID %s): %s\n",
+                   st_.CodeAsString().c_str(), st_.message().c_str());
+            return false;
+        }
+
+        st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
+        if (!st_.ok())
+        {
+            printf("parquet_context_u: parquet::arrow::OpenFile error (ID %s): %s\n",
+                   st_.CodeAsString().c_str(), st_.message().c_str());
+            arrow_file_->Close();
+            return false;
+        }
+#endif
 
         //arrow_reader_->set_use_threads(true);
         //arrow_reader_->set_num_threads(2);
@@ -2547,7 +2610,7 @@ class ParquetContextRowCountTrackingTest : public ::testing::Test
         st_ = arrow_reader_->ScanContents(col_inds, 1000, &row_count);
         if (!st_.ok())
         {
-            printf("parquet::arrow::FileReader::ScanContents error (ID %s): %s\n",
+            printf("parquet_context_u: parquet::arrow::FileReader::ScanContents error (ID %s): %s\n",
                    st_.CodeAsString().c_str(), st_.message().c_str());
             arrow_file_->Close();
             return false;

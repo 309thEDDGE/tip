@@ -149,7 +149,7 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
         }
         catch (...)
         {
-            SPDLOG_CRITICAL("FileOutputStream::Open error");
+            SPDLOG_CRITICAL("parquet_context: FileOutputStream::Open error");
             return false;
         }
 #elif defined NEWARROW21
@@ -158,7 +158,7 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 		if(!stream_open_result.ok())
 		{
 			st_ = stream_open_result.status();
-            SPDLOG_CRITICAL("FileOutputStream::Open error (ID {:s}): {:s}",
+            SPDLOG_CRITICAL("parquet_context: FileOutputStream::Open error (ID {:s}): {:s}",
                             st_.CodeAsString(), st_.message());
             return false;
 		}
@@ -170,7 +170,7 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 
         if (!st_.ok())
         {
-            SPDLOG_CRITICAL("FileOutputStream::Open error (ID {:s}): {:s}",
+            SPDLOG_CRITICAL("parquet_context: FileOutputStream::Open error (ID {:s}): {:s}",
                             st_.CodeAsString(), st_.message());
             return false;
         }
@@ -204,7 +204,7 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 
         if (!file_open_result.ok())
         {
-            SPDLOG_CRITICAL("parquet::arrow::FileWriter::Open error (ID {:s}): {:s}",
+            SPDLOG_CRITICAL("parquet_context: parquet::arrow::FileWriter::Open error (ID {:s}): {:s}",
                             file_open_result.status().CodeAsString(), 
 							file_open_result.status().message());
             return false;
@@ -224,7 +224,7 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 
         if (!st_.ok())
         {
-            SPDLOG_CRITICAL("parquet::arrow::FileWriter::Open error (ID {:s}): {:s}",
+            SPDLOG_CRITICAL("parquet_context: parquet::arrow::FileWriter::Open error (ID {:s}): {:s}",
                             st_.CodeAsString(), st_.message());
             return false;
         }
