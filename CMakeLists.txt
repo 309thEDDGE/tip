@@ -113,8 +113,6 @@ if(NOT "${USE_DEPS_DIR}" STREQUAL OFF)
         string(APPEND CMAKE_MODULE_PATH " ${CUSTOM_MODULE_PATH}")
     endif()
     message(STATUS "Module paths: ${CMAKE_MODULE_PATH}")
-else()
-	set(USE_NEWARROW TRUE)
 endif()
 
 # Common includes all of the tip-relevant directories. Do not include() until
