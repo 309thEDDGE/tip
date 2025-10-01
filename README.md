@@ -296,8 +296,8 @@ In preparation to `conda-forge` build, install `conda` and activate the base env
 ### `conda-forge` Build
 Steps for building the `conda-forge` package:
 1. Clone tip-feedstock repo: `git clone https://github.com/conda-forge/tip-feedstock.git`
-2. Create a `conda` environment which includes `conda-build`: `conda create -n tippkg -c conda-forge conda-build`
-3. Activate the environment: `conda activate tippkg`
+2. Create a `conda` environment which includes `conda-build`: `conda create -n tipcfbld -c conda-forge conda-build conda-verify`
+3. Activate the environment: `conda activate tipcfbld`
 4. (tip-feedstock root) Build TIP Conda package: `conda build -c conda-forge --error-overdepending --error-overlinking --override-channels -m .ci_support/<configuration yaml> ./recipe`
 
 The `configuration yaml` specifies compatible libraries for different `libarrow` versions. It also prescribes other package versions to ensure compatibility. Explicit reference to configuration is a requirement as of a recent change to the recipe requirements for `cstdlib` declaration. Reference a configuration file which is compatible with your operating system.  

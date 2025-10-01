@@ -4,19 +4,14 @@ set(BUILD_SHARED_LIBS ON)
 # Arrow is used. Currently the version of arrow supplied by the 
 # conda build requires NEWARROW to be defined.
 if("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
-
 	add_compile_definitions(
 		TINS_STATIC
-		NEWARROW
-      GTEST_LINKED_AS_SHARED_LIBRARY=1
-      )
+		GTEST_LINKED_AS_SHARED_LIBRARY=1)
    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
    link_directories("${CONDA_PREFIX}\\Library\\lib")
 elseif(("${CMAKE_SYSTEM_NAME}" MATCHES "Linux") 
    OR ("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin"))
-   add_definitions(
-		-DNEWARROW
-		-DTINS_STATIC)
+	add_definitions(-DTINS_STATIC)
 else()
     message(FATAL_ERROR "No system-specific options: " ${CMAKE_SYSTEM_NAME})
 endif()
@@ -46,6 +41,27 @@ endif()
 find_package(Arrow REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(spdlog REQUIRED)
+
+# Logic to define NEWARROW21 below will only work after find_package(Arrow..) is called.
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
+	if(${Arrow_VERSION} VERSION_GREATER_EQUAL "21.0")
+		add_compile_definitions(NEWARROW21)
+		message(STATUS "Define macro NEWARROW21: arrow version >= 21.0")
+	else()
+		add_compile_definitions(NEWARROW)
+	endif()
+elseif(("${CMAKE_SYSTEM_NAME}" MATCHES "Linux") 
+   OR ("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin"))
+	if(${Arrow_VERSION} VERSION_GREATER_EQUAL "21.0")
+		add_definitions(-DNEWARROW21)
+		message(STATUS "Define macro NEWARROW21: arrow version >= 21.0")
+	else()
+		add_definitions(-DNEWARROW)
+	endif()
+else()
+    message(FATAL_ERROR "No system-specific options: " ${CMAKE_SYSTEM_NAME})
+endif()
+
 
 if(("${CMAKE_SYSTEM_NAME}" MATCHES "Linux") 
    OR ("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin"))

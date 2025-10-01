@@ -1,5 +1,8 @@
-if(${USE_NEWARROW})
+if(NOT "${USE_NEWARROW}" STREQUAL OFF)
 	add_definitions(-DNEWARROW)
+endif()
+if(NOT "${USE_NEWARROW21}" STREQUAL OFF)
+	add_definitions(-DNEWARROW21)
 endif()
 
 add_definitions(

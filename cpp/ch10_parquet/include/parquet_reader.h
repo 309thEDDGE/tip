@@ -204,7 +204,7 @@ bool ParquetReader::GetNextRG(int col,
 
     if (list)
     {
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
         arrow::ListArray data_list_arr =
             arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
 #else
@@ -231,7 +231,7 @@ bool ParquetReader::GetNextRG(int col,
     }
     else
     {
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
         A data_array =
             A(arrow_table->column(0)->chunk(0)->data());
 #else

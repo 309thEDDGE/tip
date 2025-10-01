@@ -46,9 +46,11 @@ set(Arrow_LIBRARIES ${Arrow_LIBRARY})
 set(Arrow_INCLUDE_DIRS ${Arrow_INCLUDE_DIR})
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Arrow DEFAULT_MSG 
-    Arrow_LIBRARY Arrow_INCLUDE_DIR 
+find_package_handle_standard_args(Arrow 
+	REQUIRED_VARS Arrow_LIBRARY Arrow_INCLUDE_DIR 
+	VERSION_VAR Arrow_VERSION
 )
+message("Arrow_VERSION: ${Arrow_VERSION}")
 
 if(Arrow_FOUND)
     set(Arrow_FOUND TRUE)

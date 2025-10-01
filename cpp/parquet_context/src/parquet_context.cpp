@@ -149,9 +149,20 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
         }
         catch (...)
         {
-            SPDLOG_CRITICAL("FileOutputStream::Open error");
+            SPDLOG_CRITICAL("parquet_context: FileOutputStream::Open error");
             return false;
         }
+#elif defined NEWARROW21
+		arrow::Result<std::shared_ptr<arrow::io::FileOutputStream>> stream_open_result = 
+			arrow::io::FileOutputStream::Open(path);
+		if(!stream_open_result.ok())
+		{
+			st_ = stream_open_result.status();
+            SPDLOG_CRITICAL("parquet_context: FileOutputStream::Open error (ID {:s}): {:s}",
+                            st_.CodeAsString(), st_.message());
+            return false;
+		}
+		ostream_ = stream_open_result.ValueOrDie();
 #else
         st_ = arrow::io::FileOutputStream::Open(path,
                                                 !truncate_,
@@ -159,7 +170,7 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 
         if (!st_.ok())
         {
-            SPDLOG_CRITICAL("FileOutputStream::Open error (ID {:s}): {:s}",
+            SPDLOG_CRITICAL("parquet_context: FileOutputStream::Open error (ID {:s}): {:s}",
                             st_.CodeAsString(), st_.message());
             return false;
         }
@@ -181,24 +192,25 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
         props_builder.enable_statistics();
         props_ = props_builder.build();
 
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
         std::shared_ptr<parquet::ArrowWriterProperties> arrow_props = 
             parquet::ArrowWriterProperties::Builder().store_schema()->build();
 
-        arrow::Result<std::unique_ptr<parquet::arrow::FileWriter>> result = 
+        arrow::Result<std::unique_ptr<parquet::arrow::FileWriter>> file_open_result = 
             parquet::arrow::FileWriter::Open(*schema_, pool_,
             ostream_,
             props_,
             arrow_props);
 
-        if (!result.ok())
+        if (!file_open_result.ok())
         {
-            SPDLOG_CRITICAL("parquet::arrow::FileWriter::Open error (ID {:s}): {:s}",
-                            result.status().CodeAsString(), result.status().message());
+            SPDLOG_CRITICAL("parquet_context: parquet::arrow::FileWriter::Open error (ID {:s}): {:s}",
+                            file_open_result.status().CodeAsString(), 
+							file_open_result.status().message());
             return false;
         }
         else
-            writer_ = std::move(result).ValueOrDie(); 
+            writer_ = std::move(file_open_result).ValueOrDie(); 
 #else
          std::shared_ptr<parquet::arrow::ArrowWriterProperties> arrow_props = 
             parquet::arrow::ArrowWriterProperties::Builder().build();
@@ -212,7 +224,7 @@ bool ParquetContext::OpenForWrite(const std::string path, const bool truncate)
 
         if (!st_.ok())
         {
-            SPDLOG_CRITICAL("parquet::arrow::FileWriter::Open error (ID {:s}): {:s}",
+            SPDLOG_CRITICAL("parquet_context: parquet::arrow::FileWriter::Open error (ID {:s}): {:s}",
                             st_.CodeAsString(), st_.message());
             return false;
         }
@@ -335,7 +347,7 @@ void ParquetContext::CreateBuilders()
             it->second.type_, it->second.is_list_);
     }
 
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
     std::vector<std::string> syncb{
         "\x53\x55\x30\x74\x56\x56\x4e\x42\x52\x67\x3d\x3d"};
     std::vector<std::string> nullb{""};
@@ -350,7 +362,7 @@ bool ParquetContext::WriteColsIfReady()
     // Check if the table has been created. If not, then create it.
     if (!have_created_table_)
     {
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
         std::vector<std::shared_ptr<arrow::Array>> arr_vec;
 #else
         arrow::ArrayVector arr_vec;
@@ -386,7 +398,7 @@ bool ParquetContext::WriteColsIfReady()
         // Debug, check if table has metadata.
         if (table->schema()->HasMetadata())
             SPDLOG_DEBUG("after being written, table has metadata");
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
         if (writer_->schema()->HasMetadata())
             SPDLOG_DEBUG("after writetable, writer has metadata");
 #endif
@@ -394,7 +406,17 @@ bool ParquetContext::WriteColsIfReady()
     else
     {
         // Write columns in order.
+#ifdef NEWARROW21
+		st_ = writer_->NewRowGroup();
+		if (!st_.ok())
+		{
+			SPDLOG_ERROR("writer_->NewRowGroup() error (ID {:s}): {:s}",
+				 st_.CodeAsString(), st_.message());
+			return false;
+		}
+#else
         writer_->NewRowGroup(append_row_count_);
+#endif
         for (int field_ind = 0; field_ind < schema_->num_fields(); field_ind++)
         {
             std::shared_ptr<arrow::Array> temp_array_ptr;
@@ -402,14 +424,14 @@ bool ParquetContext::WriteColsIfReady()
 
             if (!st_.ok())
             {
-                SPDLOG_ERROR("\"Finish\" error (ID {:s}): {:s}",
+                SPDLOG_ERROR("\"Finish\" error (ID {:s}): {:s})",
                              st_.CodeAsString(), st_.message());
                 return false;
             }
             st_ = writer_->WriteColumnChunk(*temp_array_ptr);
             if (!st_.ok())
             {
-                SPDLOG_ERROR("WriteColumnChunk error (ID {:s}): {:s}",
+                SPDLOG_ERROR("WriteColumnChunk error (ID {:s}): {:s})",
                              st_.CodeAsString(), st_.message());
 
                 return false;

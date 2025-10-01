@@ -3,6 +3,10 @@ if(${USE_NEWARROW})
 	add_compile_definitions(NEWARROW)
 endif()
 
+if(${USE_NEWARROW21})
+	add_compile_definitions(NEWARROW21)
+endif()
+
 add_compile_definitions(
     PARQUET_STATIC
     ARROW_STATIC

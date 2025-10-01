@@ -56,6 +56,7 @@ option(CI_COMMIT_TAG "Manually specify git tag as version (if can't be obtained 
 option(CI_COMMIT_SHORT_SHA "Manually specify git short hash as version (if can't be obtained from git automatically)" OFF)
 option(USER_VERSION "Specify version string if commit hash or tag can't be obtained from git" OFF)
 option(USE_NEWARROW "Define NEWARROW macro to use modern arrow-cpp API. Not defined automatically when -DUSE_DEPS_DIR is configured" OFF)
+option(USE_NEWARROW21 "Define NEWARROW21 macro to use arrow-cpp API required in version 21.0. Not defined automatically when -DUSE_DEPS_DIR is configured" OFF)
 
 if(NOT "${USE_DEPS_DIR}" STREQUAL OFF)
 	if(EXISTS "${USE_DEPS_DIR}")
@@ -112,8 +113,6 @@ if(NOT "${USE_DEPS_DIR}" STREQUAL OFF)
         string(APPEND CMAKE_MODULE_PATH " ${CUSTOM_MODULE_PATH}")
     endif()
     message(STATUS "Module paths: ${CMAKE_MODULE_PATH}")
-else()
-	set(USE_NEWARROW TRUE)
 endif()
 
 # Common includes all of the tip-relevant directories. Do not include() until

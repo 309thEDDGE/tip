@@ -24,25 +24,56 @@ bool ParquetReader::OpenNextParquetFile()
     }
     catch (...)
     {
-        printf("arrow::io::ReadableFile::Open error\n");
+        printf("parquet_reader: arrow::io::ReadableFile::Open error\n");
         return false;
     }
+
+    st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
+    if (!st_.ok())
+    {
+        printf("parquet_reader: parquet::arrow::OpenFile error (ID %s): %s\n",
+               st_.CodeAsString().c_str(), st_.message().c_str());
+        return false;
+    }
+#elif defined NEWARROW21
+	arrow::Result<std::shared_ptr<arrow::io::ReadableFile>> file_open_result = 
+		arrow::io::ReadableFile::Open(file_path.string(), pool_);
+	if (!file_open_result.ok())
+	{
+		printf("parquet_reader: arrow::io::ReadableFile::Open error (ID %s): %s\n",
+               file_open_result.status().CodeAsString().c_str(), 
+			   file_open_result.status().message().c_str());
+        return false;
+	}
+	arrow_file_ = file_open_result.ValueOrDie();
+
+	arrow::Result<std::unique_ptr<parquet::arrow::FileReader>> parquet_open_result = 
+		parquet::arrow::OpenFile(arrow_file_, pool_);
+	if (!parquet_open_result.ok())
+	{
+        printf("parquet_reader: parquet::arrow::OpenFile error (ID %s): %s\n",
+               parquet_open_result.status().CodeAsString().c_str(), 
+			   parquet_open_result.status().message().c_str());
+        return false;
+	}
+	arrow_reader_ = std::move(parquet_open_result).ValueOrDie();
 #else
     st_ = arrow::io::ReadableFile::Open(file_path.string(), pool_, &arrow_file_);
     if (!st_.ok())
     {
-        printf("arrow::io::ReadableFile::Open error (ID %s): %s\n",
+        printf("parquet_reader: arrow::io::ReadableFile::Open error (ID %s): %s\n",
+               st_.CodeAsString().c_str(), st_.message().c_str());
+        return false;
+    }
+
+    st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
+    if (!st_.ok())
+    {
+        printf("parquet_reader: parquet::arrow::OpenFile error (ID %s): %s\n",
                st_.CodeAsString().c_str(), st_.message().c_str());
         return false;
     }
 #endif
-    st_ = parquet::arrow::OpenFile(arrow_file_, pool_, &arrow_reader_);
-    if (!st_.ok())
-    {
-        printf("parquet::arrow::OpenFile error (ID %s): %s\n",
-               st_.CodeAsString().c_str(), st_.message().c_str());
-        return false;
-    }
 
     arrow_reader_->set_use_threads(true);
 
@@ -50,7 +81,7 @@ bool ParquetReader::OpenNextParquetFile()
     st_ = arrow_reader_->GetSchema(&temp_schema);
     if (!st_.ok())
     {
-        printf("GetSchema() error (ID %s): %s\n",
+        printf("parquet_reader: GetSchema() error (ID %s): %s\n",
                st_.CodeAsString().c_str(), st_.message().c_str());
         return false;
     }
@@ -85,7 +116,7 @@ bool ParquetReader::SetPQPath(ManagedPath base_path)
         base_path.ListDirectoryEntries(list_dir_success, pq_paths_list);
         if (!list_dir_success)
         {
-            printf("Invalid directory %s: \n", base_path.RawString().c_str());
+            printf("parquet_reader: Invalid directory %s: \n", base_path.RawString().c_str());
             return false;
         }
 
@@ -124,7 +155,7 @@ bool ParquetReader::SetPQPath(ManagedPath base_path)
         }
         catch (...)
         {
-            printf("arrow::io::ReadableFile::Open error\n");
+            printf("parquet_reader: arrow::io::ReadableFile::Open error\n");
             if (arrow_file != nullptr)
             {
                 if (!arrow_file->closed())
@@ -132,11 +163,11 @@ bool ParquetReader::SetPQPath(ManagedPath base_path)
             }
             return false;
         }
-#else
-        st = arrow::io::ReadableFile::Open(it->string(), pool, &arrow_file);
+
+		st = parquet::arrow::OpenFile(arrow_file, pool, &arrow_reader);
         if (!st.ok())
         {
-            printf("arrow::io::ReadableFile::Open error (ID %s): %s\n",
+            printf("parquet_reader: parquet::arrow::OpenFile error (ID %s): %s\n",
                    st.CodeAsString().c_str(), st.message().c_str());
             if (arrow_file != nullptr)
             {
@@ -145,11 +176,33 @@ bool ParquetReader::SetPQPath(ManagedPath base_path)
             }
             return false;
         }
-#endif
-        st = parquet::arrow::OpenFile(arrow_file, pool, &arrow_reader);
+#elif defined NEWARROW21
+		arrow::Result<std::shared_ptr<arrow::io::ReadableFile>> file_open_result = 
+			arrow::io::ReadableFile::Open(it->string(), pool);
+		if (!file_open_result.ok())
+		{
+			printf("parquet_reader: arrow::io::ReadableFile::Open error (ID %s): %s\n",
+				   file_open_result.status().CodeAsString().c_str(), 
+				   file_open_result.status().message().c_str());
+			return false;
+		}
+		arrow_file = file_open_result.ValueOrDie();
+
+		arrow::Result<std::unique_ptr<parquet::arrow::FileReader>> parquet_open_result = 
+			parquet::arrow::OpenFile(arrow_file, pool);
+		if (!parquet_open_result.ok())
+		{
+			printf("parquet_reader: parquet::arrow::OpenFile error (ID %s): %s\n",
+				   parquet_open_result.status().CodeAsString().c_str(), 
+				   parquet_open_result.status().message().c_str());
+			return false;
+		}
+		arrow_reader = std::move(parquet_open_result).ValueOrDie();
+#else
+        st = arrow::io::ReadableFile::Open(it->string(), pool, &arrow_file);
         if (!st.ok())
         {
-            printf("parquet::arrow::OpenFile error (ID %s): %s\n",
+            printf("parquet_reader: arrow::io::ReadableFile::Open error (ID %s): %s\n",
                    st.CodeAsString().c_str(), st.message().c_str());
             if (arrow_file != nullptr)
             {
@@ -159,6 +212,20 @@ bool ParquetReader::SetPQPath(ManagedPath base_path)
             return false;
         }
 
+		st = parquet::arrow::OpenFile(arrow_file, pool, &arrow_reader);
+        if (!st.ok())
+        {
+            printf("parquet_reader: parquet::arrow::OpenFile error (ID %s): %s\n",
+                   st.CodeAsString().c_str(), st.message().c_str());
+            if (arrow_file != nullptr)
+            {
+                if (!arrow_file->closed())
+                    arrow_file->Close();
+            }
+            return false;
+        }
+#endif
+        
         arrow_reader->set_use_threads(true);
 
         // Get schema from the first parquet file and save
@@ -176,7 +243,7 @@ bool ParquetReader::SetPQPath(ManagedPath base_path)
 
         if (!st.ok())
         {
-            printf("GetSchema() error (ID %s): %s\n",
+            printf("parquet_reader: GetSchema() error (ID %s): %s\n",
                    st.CodeAsString().c_str(), st.message().c_str());
             if (arrow_file != nullptr)
             {
@@ -313,16 +380,16 @@ bool ParquetReader::GetNextRGBool(int col, std::vector<uint8_t>& data,
 
     if (!st_.ok())
     {
-        printf("arrow::io::ReadableFile::ReadRowGroup error (ID %s): %s\n",
+        printf("parquet_reader: arrow::io::ReadableFile::ReadRowGroup error (ID %s): %s\n",
                st_.CodeAsString().c_str(), st_.message().c_str());
         return false;
     }
 
     if (list)
     {
-#ifdef NEWARROW
-        arrow::ListArray data_list_arr =
-            arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
+#if defined NEWARROW || defined NEWARROW21
+		arrow::ListArray data_list_arr =
+			arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
 #else
         arrow::ListArray data_list_arr =
             arrow::ListArray(arrow_table->column(0)->data()->chunk(0)->data());
@@ -343,7 +410,7 @@ bool ParquetReader::GetNextRGBool(int col, std::vector<uint8_t>& data,
     }
     else
     {
-#ifdef NEWARROW
+#if defined NEWARROW || defined NEWARROW21
         arrow::BooleanArray data_array =
             arrow::BooleanArray(arrow_table->column(0)->chunk(0)->data());
 #else
@@ -411,15 +478,15 @@ bool ParquetReader::GetNextRGString(int col, std::vector<std::string>& data,
 
     if (!st_.ok())
     {
-        printf("arrow::io::ReadableFile::ReadRowGroup error (ID %s): %s\n",
+        printf("parquet_reader: arrow::io::ReadableFile::ReadRowGroup error (ID %s): %s\n",
                st_.CodeAsString().c_str(), st_.message().c_str());
         return false;
     }
 
     if (list)
     {
-#ifdef NEWARROW
-        arrow::ListArray data_list_arr =
+#if defined NEWARROW || defined NEWARROW21
+		arrow::ListArray data_list_arr =
             arrow::ListArray(arrow_table->column(0)->chunk(0)->data());
 #else
         arrow::ListArray data_list_arr =
@@ -446,8 +513,8 @@ bool ParquetReader::GetNextRGString(int col, std::vector<std::string>& data,
     }
     else
     {
-#ifdef NEWARROW
-        arrow::StringArray data_array =
+#if defined NEWARROW || defined NEWARROW21
+		arrow::StringArray data_array =
             arrow::StringArray(arrow_table->column(0)->chunk(0)->data());
 #else
         arrow::StringArray data_array =
