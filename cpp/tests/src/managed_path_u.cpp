@@ -388,7 +388,7 @@ TEST(ManagedPathTest, CreateDirectoryLongPath)
     EXPECT_TRUE(mp.RawString().length() <= max_len) << "test location path too long";
 
     const std::size_t section_len = section.length();
-    while (mp.RawString().length() + section_len <= max_len)
+    while (mp.RawString().length() + section_len + 1 <= max_len)
         mp /= section.next();
     EXPECT_TRUE(mp.RawString().length() <= max_len);
 
