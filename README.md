@@ -293,27 +293,70 @@ The TIP `conda-forge` package build automatically creates the necessary environm
 
 In preparation to `conda-forge` build, install `conda` and activate the base environment. It may be useful to review [Conda Environment Build](#conda-environment-build) for `conda` installation and activation procedures. 
 
-### `conda-forge` Build
-Steps for building the `conda-forge` package:
+## `conda-forge` Build
+### `conda-forge` `rattler-build` Build
+`rattler-build` is the most recent advancement in the `conda-forge` build ecosystem which signifcantly improves [performance](https://conda-forge.org/blog/2025/02/27/conda-forge-v1-recipe-support/). Due to automated PRs in the `tip-feedstock` `conda-forge` repo which recommended switching to the new `recipe.yaml` format and the `rattler-build` paradigm, these instructions are now included here and the `tip-feedstock` recipe has been converted and updated for compatibility. Note that the steps below are only compatible with `recipe.yaml` and not the older `meta.yaml` recipe type. 
+
+Steps for building the `conda-forge` package with `rattler-build`:
 1. Clone tip-feedstock repo: `git clone https://github.com/conda-forge/tip-feedstock.git`
+2. Create a `conda` environment which includes `rattler-build` and `conda-index`: 
+```shell
+conda create -n cfbld -c conda-forge rattler-build conda-index
+```
+3. Activate the environment: 
+```shell
+conda activate cfbld
+```
+4. (tip-feedstock root) Build TIP Conda package: 
+```shell
+rattler-build build --color always -v -m .ci_support/<configuration yaml> -r ./recipe
+```
+
+The `configuration yaml` specifies dependent library versions to ensure compatibility. Explicit reference to configuration is a requirement as of a recent change to the recipe requirements for `cstdlib` declaration. Reference a configuration file which is compatible with your operating system.  
 2. Create a `conda` environment which includes `conda-build`: `conda create -n tipcfbld -c conda-forge conda-build conda-verify`
 3. Activate the environment: `conda activate tipcfbld`
 4. (tip-feedstock root) Build TIP Conda package: `conda build -c conda-forge --error-overdepending --error-overlinking --override-channels -m .ci_support/<configuration yaml> ./recipe`
 
-The `configuration yaml` specifies compatible libraries for different `libarrow` versions. It also prescribes other package versions to ensure compatibility. Explicit reference to configuration is a requirement as of a recent change to the recipe requirements for `cstdlib` declaration. Reference a configuration file which is compatible with your operating system.  
+[Test](#rattler-build-specifics) the package after building and before committing to the feedstock.  
+
+### `conda-forge` `conda-build` Build
+Steps for building the `conda-forge` package with `conda-build`:
+1. Clone tip-feedstock repo: `git clone https://github.com/conda-forge/tip-feedstock.git`
+2. Create a `conda` environment which includes `conda-build`: 
+```shell
+conda create -n cfbld -c conda-forge conda-build conda-verify
+```
+3. Activate the environment: 
+```shell
+conda activate cfbld
+```
+4. (tip-feedstock root) Build TIP Conda package: 
+```shell
+conda build -c conda-forge --error-overdepending --error-overlinking --override-channels -m .ci_support/<configuration yaml> ./recipe
+```
+[Test](#conda-build-specifics) the package. 
 
 ## Test `conda-forge` Packages
+### `rattler-build` Specifics
+If the `rattler-build` succeeds, text printed near the end of the output to the terminal will include an artifact path, normally an `output` directory at the same location as the build path. This directory has most of the components of conda package channel. Index the directory in order to install the `tip` package from it:
+```shell
+python -m conda_index --bz2 ./output
+```
+Reference `output` as `<output_dir>` in the following instructions.
+### `conda-build` Specifics
 If the `conda-forge` build stage succeeds, text printed to the terminal will include
 
 ```
 Source and build intermediates have been left in <output dir>.
 ```
-Locate the directory within `<output_dir>` and notate the package hash. An example TIP Conda package name is `tip-2.0.1-h2bc3f7f_4.tar.bz2` which has the hash "h2bc3f7f". 
+### Install and Test
+The following instructions are build-paradigm agnostic. Locate the system-specific directory within `<output_dir>` and notate the package hash. An example TIP Conda package name is `tip-2.0.1-h2bc3f7f_4.tar.bz2` which has the hash "h2bc3f7f". 
 
-Create a new conda environment and install the TIP package from the local build dir
+Deactivate the build environment then create a new conda environment and install the TIP package from the local build dir. In Windows, include the full path to `<output_dir>`. 
 ```shell
- conda create -n tipcforge -c <output_dir> -c conda-forge tip
+ conda create -n testcfbld -c <output_dir> -c conda-forge tip
 ```
+
 The ordering of repeated `-c` flag to specify channel is important. Activate the new environment and use `conda list` to verify that the installed version of TIP has the same hash identified above and the fourth column in the list output shows local package origin. Execute `tests` in the active environment to confirm that the package is viable. 
 
 Official TIP `conda-forge` packages which have been built and published by `tip-feedstock` pipelines can be tested in a similar way. Choose from one of the [available packages](https://anaconda.org/conda-forge/tip/files), create a new Conda environment and install the chosen package, activate the environment, confirm the version, and execute tests. In example, a package with the name `linux-64/tip-2.0.2-he2bf4a2_1.conda` (version 2.0.2, hash he2bf4a2, build 1) can be installed in a new Linux environment via the command
@@ -327,7 +370,7 @@ Refer to the [`tip-feedstock` README](https://github.com/conda-forge/tip-feedsto
 * If the TIP [source code](https://github.com/309thEDDGE/tip) release version is updated in the recipe, reset the build number to 0
 * If only the recipe changes or the TIP source is modified and the version remains the same, increment the build number. 
 
-The motivation to update the recipe, `meta.yaml`, in `tip-feedstock/recipe` can be described by the scenarios
+The motivation to update the recipe, `recipe.yaml` (`meta.yaml` in the older build paradigm), in `tip-feedstock/recipe` can be described by the scenarios
 * A new version of TIP has been released and the change must be reflected in the published `conda-forge` package
 * TIP has new dependencies or new executables which must be checked for compatibility with the `conda-forge` build process. Both will also require updates to the recipe.
 * The recipe itself needs to be updated in some other way 
@@ -340,7 +383,7 @@ When prompted to `conda-forge` build in the following section, refer to the buil
 ### TIP and Recipe Updates
 There is an interplay between non-`conda-forge` compilation and the configuration in the `conda-forge` recipe because changes to dependencies or source code may need to be reflected in the recipe. Compilation iteration between non-`conda-forge` and `conda-forge` builds may be necessary to succeed at both. 
 
-The `meta.yaml` in `tip-feedstock/recipe` references an archived version of a TIP release in the parameters `source.url` and `source.sha256`. To iterate on a local version of TIP for simplicity instead of a formal TIP release, comment the above parameters, insert `source.path`, and define it as the local absolute path to the TIP repo root dir. If you reference the same directory in which TIP was previously built using the standard build paradigm then a `build` directory will be present and cause a failure in the `conda-forge` build. Delete the `build` directory prior to building.
+The `recipe.yaml` in `tip-feedstock/recipe` references an archived version of a TIP release in the parameters `source.url` and `source.sha256`. To iterate on a local version of TIP for simplicity instead of a formal TIP release, comment the above parameters, insert `source.path`, and define it as the local absolute path to the TIP repo root dir. If you reference the same directory in which TIP was previously built using the standard build paradigm then a `build` directory will be present and cause a failure in the `conda-forge` build. Delete the `build` directory prior to building.
 
 Note that the recipe has several checks that are executed after the package is built and automatically installed in a new environment as part of the Conda build process. Test commands are defined in `test.commands`. Update these commands if executable commands are changed or other features become available that should also be tested. The build will fail if one of the commands returns a non-zero exit code. 
 
@@ -348,12 +391,12 @@ The iterative build process is as follows
 1. Update local TIP source
 2. Build TIP following the non-`conda-forge` paradigm
 3. Revise as necessary until compilation is succesful
-4. Build TIP according to the `conda-forge` pattern using the *temporarily* modified `meta.yaml` in the `tip-feedstock` repo. (The insertion of `source.path` is temporary and the proper values for `source.url` and `source.sha256` should be inserted in place of `source.path` prior to pushing.)
-5. If both builds succeed, release a new version of TIP and generate a release archive, update `meta.yaml` with the correct `source.url` and `source.sha256` and attempt a local `conda-forge` build which references the new release tarball
+4. Build TIP according to the `conda-forge` pattern using the *temporarily* modified `recipe.yaml` in the `tip-feedstock` repo. (The insertion of `source.path` is temporary and the proper values for `source.url` and `source.sha256` should be inserted in place of `source.path` prior to pushing.)
+5. If both builds succeed, release a new version of TIP and generate a release archive, update `recipe.yaml` with the correct `source.url` and `source.sha256` and attempt a local `conda-forge` build which references the new release tarball
 6. If the build fails, return to step 1 or modify the recipe and return to step 4, depending on the fail mode.
 
 ### Recipe-only Updates
-Builds which involve only changes to the recipe should be relatively easy to iterate: modify `meta.yaml` and build according to [`conda-forge` build](#conda-forge-build). 
+Builds which involve only changes to the recipe should be relatively easy to iterate: modify `recipe.yaml` and build according to [`conda-forge` build](#conda-forge-build). 
 
 ### Post-update Procedure
 If the local `conda-forge` build has succeeded, [test the package](#test-conda-forge-packages) prior to proceeding. Ensure that the recipe refers to a formal TIP release, recipe parameters `source.url` and `source.sha256` have been restored and `source.path` has been removed.  Commit the recipe to a `tip-feedstock` PR branch and merge only after all pipelines have completed without failure.
@@ -371,5 +414,5 @@ If the `conda-forge` build step fails with the message
 
 > .. but ['ucrt'] not in reqs/run, (i.e. it is overlinking) (likely) or a missing dependency (less likely)
 
-the cause is likely due to a configuration red herring in the `meta.yaml` `requirements.build/host/run` sections. `tip-feedstock` pipelines pull a configuration yaml from another `conda-forge` repo which de-conflicts the aforementioned error. This file is located at `github.com/conda-forge/conda-forge-pinning-feedstock/recipe/conda_build_config.yaml`. If this is the only error, try disabling error on overlinking by using the `--no-error-overlinking` instead of `--error-overlinking`. The same may be true for `--error-overdepending`, in which case use `--no-error-overdepending`. Then if the build succeeds, try pushing to `tip-feedstock` to see if the pipelines succeed. `tip-feedstock` pipelines *are* the `conda-forge` pipelines for the TIP `conda-forge` package. They are the source of truth for a successful build. 
+the cause is likely due to a configuration red herring in the `meta.yaml`/`recipe.yaml` `requirements.build/host/run` sections. `tip-feedstock` pipelines pull a configuration yaml from another `conda-forge` repo which de-conflicts the aforementioned error. This file is located at `github.com/conda-forge/conda-forge-pinning-feedstock/recipe/conda_build_config.yaml`. If this is the only error, try disabling error on overlinking by using the `--no-error-overlinking` instead of `--error-overlinking`. The same may be true for `--error-overdepending`, in which case use `--no-error-overdepending`. Then if the build succeeds, try pushing to `tip-feedstock` to see if the pipelines succeed. `tip-feedstock` pipelines *are* the `conda-forge` pipelines for the TIP `conda-forge` package. They are the source of truth for a successful build. 
 
