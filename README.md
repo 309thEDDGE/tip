@@ -299,7 +299,7 @@ In preparation to `conda-forge` build, install `conda` and activate the base env
 
 Steps for building the `conda-forge` package with `rattler-build`:
 1. Clone tip-feedstock repo: `git clone https://github.com/conda-forge/tip-feedstock.git`
-2. Create a `conda` environment which includes `conda-build`: 
+2. Create a `conda` environment which includes `rattler-build` and `conda-index`: 
 ```shell
 conda create -n cfbld -c conda-forge rattler-build conda-index
 ```
@@ -312,7 +312,7 @@ conda activate cfbld
 rattler-build build --color always -v -m .ci_support/<configuration yaml> -r ./recipe
 ```
 
-The `configuration yaml` specifies compatible libraries for different `libarrow` versions. It also prescribes other package versions to ensure compatibility. Explicit reference to configuration is a requirement as of a recent change to the recipe requirements for `cstdlib` declaration. Reference a configuration file which is compatible with your operating system.  
+The `configuration yaml` specifies dependent library versions to ensure compatibility. Explicit reference to configuration is a requirement as of a recent change to the recipe requirements for `cstdlib` declaration. Reference a configuration file which is compatible with your operating system.  
 
 [Test](#rattler-build-specifics) the package after building and before committing to the feedstock.  
 
