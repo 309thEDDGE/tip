@@ -424,7 +424,7 @@ bool TranslateTabularContextARINC429::AppendTimeAndRawDataToTable(const size_t& 
         // of data, if necessary.
         if (!table->AppendRidealongColumnData(time_data, 1, "time"))
         {
-            SPDLOG_WARN("{:02d} Failed to append data for ridealong column \"time\" ",
+            SPDLOG_WARN("{:02d} Failed to append data for ridealong column \"time\" "
                         "for message: ", thread_index, table_name);
             return true;
         }
