@@ -313,9 +313,6 @@ rattler-build build --color always -v -m .ci_support/<configuration yaml> -r ./r
 ```
 
 The `configuration yaml` specifies dependent library versions to ensure compatibility. Explicit reference to configuration is a requirement as of a recent change to the recipe requirements for `cstdlib` declaration. Reference a configuration file which is compatible with your operating system.  
-2. Create a `conda` environment which includes `conda-build`: `conda create -n tipcfbld -c conda-forge conda-build conda-verify`
-3. Activate the environment: `conda activate tipcfbld`
-4. (tip-feedstock root) Build TIP Conda package: `conda build -c conda-forge --error-overdepending --error-overlinking --override-channels -m .ci_support/<configuration yaml> ./recipe`
 
 [Test](#rattler-build-specifics) the package after building and before committing to the feedstock.  
 
