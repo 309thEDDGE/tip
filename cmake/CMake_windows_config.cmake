@@ -8,6 +8,7 @@ if(${USE_NEWARROW21})
 endif()
 
 add_compile_definitions(
+    NOMINMAX
     PARQUET_STATIC
     ARROW_STATIC
     SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
